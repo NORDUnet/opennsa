@@ -1,0 +1,19 @@
+OpenNSA is a reference implementation of the NSI framework agent.
+
+NSI (Network Service Interface) is (or should be) a protocol agnostic interface
+for provisioning network links, i.e., providing networking as a service.
+
+There are several documents concerning NSI. See the OGF work group page for the
+latest revisions. http://forge.gridforum.org/sf/projects/nsi-wg
+
+OpenNSA consists of several modules for various functionality. These include
+topology database and parser, protocol handlers, and the core agent itself.
+
+OpenNSA is currently in a state of heavy prototyping and nothing is set in
+stone, and there are probably more temporary constructions in the code than
+final.
+
+
+Developer contact: htj <at> nordu.net
+
+
