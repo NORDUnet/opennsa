@@ -18,9 +18,19 @@ from twisted.protocols.basic import NetstringReceiver
 
 class JSONRPCError(Exception):
 
-    def __init__(self, error_message):
-        self.error_message = error_message
+    def __init__(self, message):
+        self.message = message
 
+
+class NoSuchMethodError(JSONRPCError):
+    pass
+
+
+NOSUCHMETHOD = '_NOSUCHMETHOD'
+
+EXCEPTIONS = {
+    NOSUCHMETHOD : NoSuchMethodError
+}
 
 
 class ServiceProxy(NetstringReceiver):
@@ -60,7 +70,8 @@ class ServiceProxy(NetstringReceiver):
             log.err('Unknown RPC id in message (%s)' % rpc_id)
 
         if 'error' in response:
-            d.errback(response['error'])
+            e = EXCEPTIONS.get(response['error'], JSONRPCError)
+            d.errback(e(response['error']))
         elif 'result' in response:
             d.callback(response['result'])
         else:
@@ -74,6 +85,10 @@ class ServiceProxy(NetstringReceiver):
 
 
 class JSONRPCService(NetstringReceiver):
+
+    def connectionMade(self):
+        self.rpc_ids = {}
+        self.rpc_timeouts = {}
 
     def __init__(self):
         self.functions = {}
@@ -109,17 +124,18 @@ class JSONRPCService(NetstringReceiver):
             method_args = request['params']
         except KeyError, e:
             log.msg('Missing method information, cannot dispatch')
-            self.errorReply(rpc_id, 'Missing method information')
+            return self.errorReply(rpc_id, 'Missing method information')
 
         try:
             f = self.functions[method_name]
         except KeyError:
-            self.errorReply(rpc_id, 'No such method (%s)' % method_name)
+            #return self.errorReply(rpc_id, 'No such method (%s)' % method_name)
+            return self.errorReply(rpc_id, NOSUCHMETHOD)
 
         try:
             result = f(*method_args)
         except Exception, e:
-            self.errorReply(rpc_id, str(e))
+            return self.errorReply(rpc_id, str(e))
 
         # FIXME handle serialization fail
         self.reply(rpc_id, result)
