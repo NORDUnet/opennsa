@@ -22,8 +22,14 @@ class JSONRPCError(Exception):
         self.message = message
 
 
+    def __str__(self):
+        return '<JSONRPCError:%s>' % self.message
+
+
+
 class NoSuchMethodError(JSONRPCError):
     pass
+
 
 
 NOSUCHMETHOD = '_NOSUCHMETHOD'
@@ -61,13 +67,13 @@ class ServiceProxy(NetstringReceiver):
             response = json.loads(string)
             rpc_id = response['id']
         except ValueError, e:
-            log.err('Error parsing incoming JSON payload')
+            return log.err('Error parsing incoming JSON payload')
         except KeyError, e:
-            log.err('No id in message')
+            return log.err('No id in message')
 
         d = self.rpc_ids.pop(rpc_id, None)
         if d is None:
-            log.err('Unknown RPC id in message (%s)' % rpc_id)
+            return log.err('Unknown RPC id in message (%s)' % rpc_id)
 
         if 'error' in response:
             e = EXCEPTIONS.get(response['error'], JSONRPCError)

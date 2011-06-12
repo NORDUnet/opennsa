@@ -26,6 +26,8 @@ class JSONRPCTest(unittest.TestCase):
     def pump(self):
         self.service_proto.dataReceived(self.client_transport.value())
         self.client_proto.dataReceived(self.service_transport.value())
+        self.service_transport.clear()
+        self.client_transport.clear()
 
 
     @defer.inlineCallbacks
@@ -34,10 +36,20 @@ class JSONRPCTest(unittest.TestCase):
         add = lambda *args : sum(args)
         self.service_proto.registerFunction('add',add)
 
-        d = self.client_proto.call('add', 1,2,3)
+        d1 = self.client_proto.call('add', 1,2,3)
         self.pump()
-        result = yield d
+        result = yield d1
         self.failUnlessEqual(result, 6)
+
+        d2 = self.client_proto.call('add', 1,2,'sager')
+        self.pump()
+        try:
+            _ = yield d2
+            self.fail('Incorrect method arguments should have raised exception')
+        except jsonrpc.JSONRPCError,e :
+            pass # expected
+        except Exception:
+            self.fail('Incorrect method arguments raised incorrect exception')
 
 
     @defer.inlineCallbacks
