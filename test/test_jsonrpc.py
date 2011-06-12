@@ -1,3 +1,7 @@
+"""
+Tests for opennsa.jsonrpc module.
+"""
+
 from twisted.trial import unittest
 from twisted.test import proto_helpers
 from twisted.internet import defer
