@@ -35,7 +35,7 @@ class NSIInterface(Interface):
         """
 
 
-    def releaseProvision(requester_nsa, provider_nsa, connetion_id, session_security_attributes):
+    def releaseProvision(requester_nsa, provider_nsa, connection_id, session_security_attributes):
         """
         Release the link from provisioned mode.
         """
