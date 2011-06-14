@@ -1,30 +1,31 @@
+#!/usr/bin/env python # syntax highlightning
+
 from twisted.internet import protocol
 from twisted.application import internet, service
 
-from opennsa import jsonrpc
+from opennsa import jsonrpc, nsirouter
+from opennsa.backends import dud
 
 PORT = 4321
 
 
-def add(*args):
-    return sum(args)
+dud_backend = dud.DUDNSIBackend('DUD NSI Backend')
+nsi_router  = nsirouter.NSIRouterAdaptor('dudnetwork', dud_backend)
 
-
-
-class JSONRPCFactory(protocol.Factory):
+class OpenNSAJSONRPCFactory(protocol.Factory):
 
     protocol = jsonrpc.JSONRPCService
 
     def buildProtocol(self, addr):
 
         p = self.protocol()
-        p.registerFunction('add', add)
         p.factory = self
+        jsonrpc.JSONRPCNSIServiceAdaptor(p, nsi_router)
         return p
 
 
-factory = JSONRPCFactory()
 
+factory = OpenNSAJSONRPCFactory()
 
 application = service.Application("OpenNSA")
 
