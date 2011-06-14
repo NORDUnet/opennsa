@@ -192,7 +192,7 @@ class JSONRPCNSIClient:
     def cancelReservation(self, requester_nsa, provider_nsa, connection_id, session_security_attributes):
 
         def gotProxy(proxy):
-            return proxy.call('CancelReservation', requester_nsa, provider_nsa, connection_id, session_security_attributes)
+            return proxy.call('CancelReservation', requester_nsa.dict(), provider_nsa.dict(), connection_id, session_security_attributes)
 
         return self._issueProxyCall(provider_nsa, gotProxy)
 
@@ -200,7 +200,7 @@ class JSONRPCNSIClient:
     def provision(self, requester_nsa, provider_nsa, connection_id, session_security_attributes):
 
         def gotProxy(proxy):
-            return proxy.call('Provision', requester_nsa, provider_nsa, connection_id, session_security_attributes)
+            return proxy.call('Provision', requester_nsa.dict(), provider_nsa.dict(), connection_id, session_security_attributes)
 
         return self._issueProxyCall(provider_nsa, gotProxy)
 
