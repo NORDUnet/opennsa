@@ -22,6 +22,11 @@ class NetworkServiceAgent:
         return host, port
 
 
+    def dict(self):
+        return { 'address' : self.address,
+                 'service_attributes' : self.service_attributes }
+
+
 NSA = NetworkServiceAgent # short hand
 
 
@@ -31,6 +36,10 @@ class ServiceTerminationEndpoint:
     def __init__(self, network, endpoint):
         self.network = network
         self.endpoint = endpoint
+
+    def dict(self):
+        return { 'network'  : self.network,
+                 'endpoint' : self.endpoint }
 
 
 STP = ServiceTerminationEndpoint # short hand
@@ -47,5 +56,14 @@ class ServiceParameters:
         self.source_stp = source_stp
         self.dest_stp   = dest_stp
         self.stps       = stps
+
+
+    def dict(self):
+        return { 'start_time' : self.start_time,
+                 'end_time'   : self.end_time,
+                 'source_stp' : self.source_stp.dict(),
+                 'dest_stp'   : self.dest_stp.dict(),
+                 'stps'       : self.stps        }
+
 
 
