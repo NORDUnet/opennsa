@@ -17,6 +17,7 @@ from twisted.internet import reactor, protocol, endpoints, defer
 from twisted.protocols.basic import NetstringReceiver
 
 from opennsa.interface import NSIInterface
+from opennsa import nsa
 
 
 
@@ -120,7 +121,6 @@ class JSONRPCService(NetstringReceiver):
 
 
     def stringReceived(self, string):
-
         try:
             request = json.loads(string)
             rpc_id = request['id']
@@ -139,27 +139,25 @@ class JSONRPCService(NetstringReceiver):
         try:
             f = self.functions[method_name]
         except KeyError:
-            #return self.errorReply(rpc_id, 'No such method (%s)' % method_name)
             return self.errorReply(rpc_id, NOSUCHMETHOD)
 
+        def logFailure(failure):
+            failure.printTraceback()
+            return failure
+
         try:
-            result = f(*method_args)
-            if isinstance(result, defer.Deferred):
-                result.addCallbacks(lambda r : self.reply(rpc_id, r),
-                                    lambda f : self.errorReply(rpc_id, str(f)))
-                result.addErrback(lambda f : self.errorReply('Error constructing reply: %s' % (str(f))))
-            else:
-                try:
-                    self.reply(rpc_id, result)
-                except Exception, e:
-                    self.errorReply(rpc_id, 'Error constructing reply: %s' % str(e))
+            d = defer.maybeDeferred(f, *method_args)
+            d.addErrback(logFailure)
+            d.addCallbacks(lambda r : self.reply(rpc_id, r),
+                           lambda f : self.errorReply(rpc_id, f.getErrorMessage()))
+            d.addErrback(lambda f : self.errorReply('Error constructing reply: %s' % str(f)))
         except Exception, e:
             return self.errorReply(rpc_id, str(e))
 
 
 
 
-class JSONRPCClient:
+class JSONRPCNSIClient:
 
     implements(NSIInterface)
 
@@ -177,7 +175,7 @@ class JSONRPCClient:
 
     def _issueProxyCall(self, nsa, func):
         d = self._getProxy(nsa)
-        d.addCallback(nsa)
+        d.addCallback(func)
         return d
 
 
@@ -185,7 +183,8 @@ class JSONRPCClient:
                 service_parameters, session_security_attributes):
 
         def gotProxy(proxy):
-            return proxy.call('Reserve', requester_nsa, provider_nsa, reservation_id, description, connection_id, service_parameters, session_security_attributes)
+            return proxy.call('Reserve', requester_nsa.dict(), provider_nsa.dict(), reservation_id, description, connection_id,
+                              service_parameters.dict(), session_security_attributes)
 
         return self._issueProxyCall(provider_nsa, gotProxy)
 
@@ -224,9 +223,26 @@ class JSONRPCNSIServiceAdaptor:
 
     def __init__(self, jsonrpc_service, nsi_service):
 
-        jsonrpc_service.registerFunction('Reserve',             nsi_service.reserve)
+        self.nsi_service = nsi_service
+
+        #jsonrpc_service.registerFunction('Reserve',             nsi_service.reserve)
+        jsonrpc_service.registerFunction('Reserve',             self.decodeReserve)
+
         jsonrpc_service.registerFunction('CancelReservation',   nsi_service.cancelReservation)
         jsonrpc_service.registerFunction('Provision',           nsi_service.provision)
         jsonrpc_service.registerFunction('ReleaseProvision',    nsi_service.releaseProvision)
         jsonrpc_service.registerFunction('Query',               nsi_service.query)
+
+
+    def decodeReserve(self, req_nsa, prov_nsa, reservation_id, description, connection_id, service_params, session_security_attr):
+
+        # make these into functions sometime
+        requester_nsa = nsa.NSA(req_nsa['address'], req_nsa['service_attributes'])
+        provider_nsa  = nsa.NSA(prov_nsa['address'], req_nsa['service_attributes'])
+
+        source_stp  = nsa.STP(service_params['source_stp']['network'], service_params['source_stp']['endpoint'])
+        dest_stp    = nsa.STP(service_params['dest_stp']['network'], service_params['dest_stp']['endpoint'])
+        service_parameters = nsa.ServiceParameters(service_params['start_time'], service_params['end_time'], source_stp, dest_stp, service_params['stps'])
+
+        return self.nsi_service.reserve(requester_nsa, provider_nsa, reservation_id, description, connection_id, service_parameters, session_security_attr)
 
