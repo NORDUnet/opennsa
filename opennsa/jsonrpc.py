@@ -10,9 +10,13 @@ Copyright: NORDUnet (2011)
 import json
 import uuid
 
+from zope.interface import implements
+
 from twisted.python import log
-from twisted.internet import defer
+from twisted.internet import reactor, protocol, endpoints, defer
 from twisted.protocols.basic import NetstringReceiver
+
+from opennsa.interface import NSIInterface
 
 
 
@@ -146,4 +150,77 @@ class JSONRPCService(NetstringReceiver):
         # FIXME handle serialization fail
         self.reply(rpc_id, result)
 
+
+
+
+class JSONRPCClient:
+
+    implements(NSIInterface)
+
+    def __init__(self):
+        self.factory = protocol.Factory()
+        self.factory.protocol = ServiceProxy
+
+
+    def _getProxy(self, nsa):
+        host, port = nsa.getHostPort()
+        point = endpoints.TCP4ClientEndpoint(reactor, host, port)
+        d = point.connect(self.factory)
+        return d
+
+
+    def _issueProxyCall(self, nsa, func):
+        d = self._getProxy(nsa)
+        d.addCallback(nsa)
+        return d
+
+
+    def reserve(self, requester_nsa, provider_nsa, reservation_id, description, connection_id,
+                service_parameters, session_security_attributes):
+
+        def gotProxy(proxy):
+            return proxy.call('Reserve', requester_nsa, provider_nsa, reservation_id, description, connection_id, service_parameters, session_security_attributes)
+
+        return self._issueProxyCall(provider_nsa, gotProxy)
+
+
+    def cancelReservation(self, requester_nsa, provider_nsa, connection_id, session_security_attributes):
+
+        def gotProxy(proxy):
+            return proxy.call('CancelReservation', requester_nsa, provider_nsa, connection_id, session_security_attributes)
+
+        return self._issueProxyCall(provider_nsa, gotProxy)
+
+
+    def provision(self, requester_nsa, provider_nsa, connection_id, session_security_attributes):
+
+        def gotProxy(proxy):
+            return proxy.call('Provision', requester_nsa, provider_nsa, connection_id, session_security_attributes)
+
+        return self._issueProxyCall(provider_nsa, gotProxy)
+
+
+    def releaseProvision(self, requester_nsa, provider_nsa, connection_id, session_security_attributes):
+
+        def gotProxy(proxy):
+            return proxy.call('ReleaseProvision', requester_nsa, provider_nsa, connection_id, session_security_attributes)
+
+        return self._issueProxyCall(provider_nsa, gotProxy)
+
+
+    def query(self, requester_nsa, provider_nsa, session_security_attributes):
+
+        raise NotImplementedError('Query, nahh..')
+
+
+
+class JSONRPCNSIServiceAdaptor:
+
+    def __init__(self, jsonrpc_service, nsi_service):
+
+        jsonrpc_service.registerFunction('Reserve',             nsi_service.reserve)
+        jsonrpc_service.registerFunction('CancelReservation',   nsi_service.cancelReservation)
+        jsonrpc_service.registerFunction('Provision',           nsi_service.provision)
+        jsonrpc_service.registerFunction('ReleaseProvision',    nsi_service.releaseProvision)
+        jsonrpc_service.registerFunction('Query',               nsi_service.query)
 
