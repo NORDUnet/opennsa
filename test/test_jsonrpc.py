@@ -35,7 +35,7 @@ class JSONRPCTest(unittest.TestCase):
 
 
     @defer.inlineCallbacks
-    def testSumCall(self):
+    def testBasicCall(self):
 
         add = lambda *args : sum(args)
         self.service_proto.registerFunction('add',add)
@@ -54,6 +54,21 @@ class JSONRPCTest(unittest.TestCase):
             pass # expected
         except Exception:
             self.fail('Incorrect method arguments raised incorrect exception')
+
+
+    @defer.inlineCallbacks
+    def testDeferredCall(self):
+
+        def deferSum(*args):
+            s = sum(args)
+            return defer.succeed(s)
+
+        self.service_proto.registerFunction('add',deferSum)
+
+        d1 = self.client_proto.call('add', 1,2,3)
+        self.pump()
+        result = yield d1
+        self.failUnlessEqual(result, 6)
 
 
     @defer.inlineCallbacks

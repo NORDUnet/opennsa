@@ -144,11 +144,15 @@ class JSONRPCService(NetstringReceiver):
 
         try:
             result = f(*method_args)
+            if isinstance(result, defer.Deferred):
+                result.addCallbacks(lambda r : self.reply(rpc_id, r),
+                                    lambda f : self.errorReply(rpc_id, str(f)))
+                # FIXME handle serialization fail in reply callback
+            else:
+                # FIXME handle serialization fail
+                self.reply(rpc_id, result)
         except Exception, e:
             return self.errorReply(rpc_id, str(e))
-
-        # FIXME handle serialization fail
-        self.reply(rpc_id, result)
 
 
 
