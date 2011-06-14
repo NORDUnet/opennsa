@@ -19,7 +19,7 @@ class NSIInterface(Interface):
 
 
     def reserve(requester_nsa, provider_nsa, reservation_id, description, connection_id,
-                service_paramters, session_security_attributes):
+                service_parameters, session_security_attributes):
         """
         Make a link reservation.
         """
