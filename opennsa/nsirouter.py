@@ -34,6 +34,7 @@ class NSIRouterAdaptor:
             raise ReserveError('Sub-connections cannot be specified in router adaptor')
 
         d = self.backend.reserve(source_stp.endpoint, dest_stp.endpoint, service_parameters)
+        #d.addCallback(lambda internal_reservation_id : reservation_id) # client should not get internal reservation id
         return d
 
 
@@ -46,6 +47,7 @@ class NSIRouterAdaptor:
     def provision(self, requester_nsa, provider_nsa, connection_id, session_security_attributes):
 
         d = self.backend.provision(connection_id)
+        d.addCallback(lambda internal_connection_id : connection_id)
         return d
 
 
