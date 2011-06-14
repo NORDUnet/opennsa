@@ -51,7 +51,7 @@ class NSIClientInterface(NSIInterface):
     pass
 
 
-class NSIService(NSIInterface):
+class NSIServiceInterface(NSIInterface):
     pass
 
 
