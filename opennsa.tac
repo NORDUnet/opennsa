@@ -4,13 +4,13 @@ from twisted.internet import protocol
 from twisted.application import internet, service
 
 from opennsa import jsonrpc, nsirouter
-from opennsa.backends import dud
+from opennsa.proxies import dud
 
 PORT = 4321
 
 
-dud_backend = dud.DUDNSIBackend('DUD NSI Backend')
-nsi_router  = nsirouter.NSIRouterAdaptor('dudnetwork', dud_backend)
+dud_proxy = dud.DUDNSIProxy('DUD NSI Backend')
+nsi_router  = nsirouter.NSIRouterAdaptor('dudnetwork', dud_proxy)
 
 class OpenNSAJSONRPCFactory(protocol.Factory):
 
