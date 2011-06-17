@@ -232,27 +232,43 @@ class JSONRPCNSIServiceAdaptor:
         jsonrpc_service.registerFunction('Query',               nsi_service.query)
 
 
+    def _parseNSA(self, in_nsa):
+        return nsa.NSA(in_nsa['address'], in_nsa['service_attributes'])
+
+    def _parseSTP(self, in_stp):
+        return nsa.STP(in_stp['network'], in_stp['endpoint'])
+
+    def _parseServiceParameters(self, in_service_params):
+        source_stp = self._parseSTP(in_service_params['source_stp'])
+        dest_stp   = self._parseSTP(in_service_params['dest_stp'])
+        return nsa.ServiceParameters(in_service_params['start_time'], in_service_params['end_time'], source_stp, dest_stp, in_service_params['stps'])
+
+
     def decodeReserve(self, req_nsa, prov_nsa, connection_id, global_reservation_id, description, service_params, session_security_attr):
 
-        # make these into functions sometime
-        requester_nsa = nsa.NSA(req_nsa['address'], req_nsa['service_attributes'])
-        provider_nsa  = nsa.NSA(prov_nsa['address'], req_nsa['service_attributes'])
-
-        source_stp  = nsa.STP(service_params['source_stp']['network'], service_params['source_stp']['endpoint'])
-        dest_stp    = nsa.STP(service_params['dest_stp']['network'], service_params['dest_stp']['endpoint'])
-        service_parameters = nsa.ServiceParameters(service_params['start_time'], service_params['end_time'], source_stp, dest_stp, service_params['stps'])
-
+        requester_nsa = self._parseNSA(req_nsa)
+        provider_nsa  = self._parseNSA(prov_nsa)
+        service_parameters = self._parseServiceParameters(service_params)
         return self.nsi_service.reserve(requester_nsa, provider_nsa, connection_id, global_reservation_id, description, service_parameters, session_security_attr)
+
+
+    def decodeCancelReservation(self, req_nsa, prov_nsa, connection_id, session_security_attr):
+
+        requester_nsa = self._parseNSA(req_nsa)
+        provider_nsa  = self._parseNSA(prov_nsa)
+        return self.nsi_service.cancelReservation(requester_nsa, provider_nsa, connection_id, session_security_attr)
 
 
     def decodeProvision(self, req_nsa, prov_nsa, connection_id, session_security_attr):
 
         requester_nsa = nsa.NSA(req_nsa['address'], req_nsa['service_attributes'])
         provider_nsa  = nsa.NSA(prov_nsa['address'], req_nsa['service_attributes'])
-
         return self.nsi_service.provision(requester_nsa, provider_nsa, connection_id, session_security_attr)
 
 
-#    def decodeReleaseProvision(self, req_nsa, prov_nsa, reservation_id, connection_id, 
+    def decodeReleaseProvision(self, req_nsa, prov_nsa, connection_id, session_security_attr):
 
+        requester_nsa = nsa.NSA(req_nsa['address'], req_nsa['service_attributes'])
+        provider_nsa  = nsa.NSA(prov_nsa['address'], req_nsa['service_attributes'])
+        return self.nsi_service.releaseProvision(requester_nsa, provider_nsa, connection_id, session_security_attr)
 
