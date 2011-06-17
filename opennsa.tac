@@ -8,9 +8,10 @@ from opennsa.proxies import dud
 
 PORT = 4321
 
+NETWORK_NAME = 'dudnetwork'
 
-dud_proxy = dud.DUDNSIProxy('DUD NSI Backend')
-nsi_router  = nsirouter.NSIRouterAdaptor('dudnetwork', dud_proxy)
+dud_proxy = dud.DUDNSIProxy(NETWORK_NAME)
+nsi_router  = nsirouter.NSIRouterAdaptor(NETWORK_NAME, dud_proxy)
 
 class OpenNSAJSONRPCFactory(protocol.Factory):
 
