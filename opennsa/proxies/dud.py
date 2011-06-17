@@ -1,5 +1,5 @@
 """
-Backend which just logs actions performed.
+NRM Proxy which just logs actions performed.
 
 Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2011)
@@ -17,7 +17,7 @@ from opennsa import error as nsaerror
 
 
 
-class DUDNSIBackend:
+class DUDNSIProxy:
 
     implements(nsainterface.NSIBackendInterface)
 
@@ -25,6 +25,7 @@ class DUDNSIBackend:
         self.name = name
         self.reservations = {}
         self.connections = {}
+
 
     def reserve(self, source_endpoint, dest_endpoint, service_parameters):
         reservation_id = uuid.uuid1().hex[0:8]

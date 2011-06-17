@@ -179,11 +179,10 @@ class JSONRPCNSIClient:
         return d
 
 
-    def reserve(self, requester_nsa, provider_nsa, reservation_id, description, connection_id,
-                service_parameters, session_security_attributes):
+    def reserve(self, requester_nsa, provider_nsa, connection_id, global_reservation_id, description, service_parameters, session_security_attributes):
 
         def gotProxy(proxy):
-            return proxy.call('Reserve', requester_nsa.dict(), provider_nsa.dict(), reservation_id, description, connection_id,
+            return proxy.call('Reserve', requester_nsa.dict(), provider_nsa.dict(), connection_id, global_reservation_id, description,
                               service_parameters.dict(), session_security_attributes)
 
         return self._issueProxyCall(provider_nsa, gotProxy)
@@ -208,7 +207,7 @@ class JSONRPCNSIClient:
     def releaseProvision(self, requester_nsa, provider_nsa, connection_id, session_security_attributes):
 
         def gotProxy(proxy):
-            return proxy.call('ReleaseProvision', requester_nsa, provider_nsa, connection_id, session_security_attributes)
+            return proxy.call('ReleaseProvision', requester_nsa.dict(), provider_nsa.dict(), connection_id, session_security_attributes)
 
         return self._issueProxyCall(provider_nsa, gotProxy)
 
@@ -225,16 +224,15 @@ class JSONRPCNSIServiceAdaptor:
 
         self.nsi_service = nsi_service
 
-        #jsonrpc_service.registerFunction('Reserve',             nsi_service.reserve)
         jsonrpc_service.registerFunction('Reserve',             self.decodeReserve)
+        jsonrpc_service.registerFunction('Provision',           self.decodeProvision)
 
         jsonrpc_service.registerFunction('CancelReservation',   nsi_service.cancelReservation)
-        jsonrpc_service.registerFunction('Provision',           nsi_service.provision)
         jsonrpc_service.registerFunction('ReleaseProvision',    nsi_service.releaseProvision)
         jsonrpc_service.registerFunction('Query',               nsi_service.query)
 
 
-    def decodeReserve(self, req_nsa, prov_nsa, reservation_id, description, connection_id, service_params, session_security_attr):
+    def decodeReserve(self, req_nsa, prov_nsa, connection_id, global_reservation_id, description, service_params, session_security_attr):
 
         # make these into functions sometime
         requester_nsa = nsa.NSA(req_nsa['address'], req_nsa['service_attributes'])
@@ -244,5 +242,17 @@ class JSONRPCNSIServiceAdaptor:
         dest_stp    = nsa.STP(service_params['dest_stp']['network'], service_params['dest_stp']['endpoint'])
         service_parameters = nsa.ServiceParameters(service_params['start_time'], service_params['end_time'], source_stp, dest_stp, service_params['stps'])
 
-        return self.nsi_service.reserve(requester_nsa, provider_nsa, reservation_id, description, connection_id, service_parameters, session_security_attr)
+        return self.nsi_service.reserve(requester_nsa, provider_nsa, connection_id, global_reservation_id, description, service_parameters, session_security_attr)
+
+
+    def decodeProvision(self, req_nsa, prov_nsa, connection_id, session_security_attr):
+
+        requester_nsa = nsa.NSA(req_nsa['address'], req_nsa['service_attributes'])
+        provider_nsa  = nsa.NSA(prov_nsa['address'], req_nsa['service_attributes'])
+
+        return self.nsi_service.provision(requester_nsa, provider_nsa, connection_id, session_security_attr)
+
+
+#    def decodeReleaseProvision(self, req_nsa, prov_nsa, reservation_id, connection_id, 
+
 

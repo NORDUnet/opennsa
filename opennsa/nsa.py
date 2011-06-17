@@ -66,4 +66,7 @@ class ServiceParameters:
                  'stps'       : self.stps        }
 
 
+    def __str__(self):
+        return '<ServiceParameters %s>' % str(self.dict())
+
 
