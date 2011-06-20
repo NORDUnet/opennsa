@@ -6,15 +6,17 @@ from opennsa import setup
 from opennsa.proxies import dud
 
 
+TOPOFILE = 'topology_simple.json'
+
 PORT = 4321
 
-NETWORK_NAME = 'dudnetwork'
+NETWORK_NAME = 'B'
 
 
 
 proxy = dud.DUDNSIProxy(NETWORK_NAME)
 
-factory = setup.createFactory(NETWORK_NAME, proxy)
+factory = setup.createFactory(NETWORK_NAME, TOPOFILE, proxy)
 
 
 
