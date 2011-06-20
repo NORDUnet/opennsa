@@ -10,7 +10,7 @@ class TimeoutError(Exception):
     pass
 
 
-class ReservationError(Exception):
+class ReserveError(Exception):
     pass
 
 
