@@ -18,7 +18,7 @@ class NSIAggregator:
 
     implements(NSIServiceInterface)
 
-    def __init__(self, network, backend):
+    def __init__(self, network, topology_file, backend):
         self.network = network
         self.backend = backend
         # these need to be pr nsa (network actually)
