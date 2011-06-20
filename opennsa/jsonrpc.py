@@ -218,25 +218,26 @@ class JSONRPCNSIClient:
 
 
 
-class JSONRPCNSIServiceAdaptor:
+class JSONRPCNSIServiceDecoder:
 
     def __init__(self, jsonrpc_service, nsi_service):
 
         self.nsi_service = nsi_service
 
         jsonrpc_service.registerFunction('Reserve',             self.decodeReserve)
+        jsonrpc_service.registerFunction('CancelReservation',   self.decodeCancelReservation)
         jsonrpc_service.registerFunction('Provision',           self.decodeProvision)
-
-        jsonrpc_service.registerFunction('CancelReservation',   nsi_service.cancelReservation)
-        jsonrpc_service.registerFunction('ReleaseProvision',    nsi_service.releaseProvision)
-        jsonrpc_service.registerFunction('Query',               nsi_service.query)
+        jsonrpc_service.registerFunction('ReleaseProvision',    self.decodeReleaseProvision)
+        jsonrpc_service.registerFunction('Query',               self.decodeQuery)
 
 
     def _parseNSA(self, in_nsa):
         return nsa.NSA(in_nsa['address'], in_nsa['service_attributes'])
 
+
     def _parseSTP(self, in_stp):
         return nsa.STP(in_stp['network'], in_stp['endpoint'])
+
 
     def _parseServiceParameters(self, in_service_params):
         source_stp = self._parseSTP(in_service_params['source_stp'])
@@ -271,4 +272,25 @@ class JSONRPCNSIServiceAdaptor:
         requester_nsa = nsa.NSA(req_nsa['address'], req_nsa['service_attributes'])
         provider_nsa  = nsa.NSA(prov_nsa['address'], req_nsa['service_attributes'])
         return self.nsi_service.releaseProvision(requester_nsa, provider_nsa, connection_id, session_security_attr)
+
+
+    def decodeQuery(self, req_nsa, prov_nsa, query_filter, session_security_attr):
+        raise NotImplementedError('Query decoding not done yet')
+
+
+
+class OpenNSAJSONRPCFactory(protocol.Factory):
+
+    protocol = JSONRPCService
+
+    def __init__(self, nsi_aggregator):
+        self.nsi_aggregator = nsi_aggregator
+
+
+    def buildProtocol(self, addr):
+
+        proto = self.protocol()
+        proto.factory = self
+        JSONRPCNSIServiceDecoder(proto, self.nsi_aggregator)
+        return proto
 
