@@ -282,6 +282,7 @@ class JSONRPCNSIServiceDecoder:
 class OpenNSAJSONRPCFactory(protocol.Factory):
 
     protocol = JSONRPCService
+    noisy = False
 
     def __init__(self, nsi_aggregator):
         self.nsi_aggregator = nsi_aggregator
