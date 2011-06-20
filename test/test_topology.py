@@ -5,23 +5,32 @@ from opennsa import topology
 
 TEST_TOPOLOGY_1 = """
 {
-    "Denmark"   : [
+    "Denmark"   : {
+      "address"   : "addr-dk",
+      "endpoints" : [
         { "name" : "DK-Tjele",          "config" : "1234"                                                                   },
         { "name" : "DK-Hirtshals",      "config" : "params",    "dest-network" : "Norway",  "dest-ep" : "NO-Kristianssand"  },
         { "name" : "DK-Frederikshavn",  "config" : "redu",      "dest-network" : "Sweden",  "dest-ep" : "SE-Goteborg"       },
         { "name" : "DK-Orestad",        "config" : "shorty",    "dest-network" : "Sweden",  "dest-ep" : "SE-Malmo"          }
-    ],
+      ]
+    },
 
-    "Sweden"    : [
+    "Sweden"    : {
+      "address"   : "addr-se",
+      "endpoints" : [
         { "name" : "SE-Malmo",          "config" : "kalmar",    "dest-network" : "Denmark", "dest-ep" : "DK-Orestad"        },
         { "name" : "SE-Goteborg",       "config" : "nocod",     "dest-network" : "Denmark", "dest-ep" : "DK-Frederikshavn"  },
         { "name" : "SE-NSC",            "config" : "scrus"                                                                  }
-    ],
+      ]
+    },
 
-    "Norway"    : [
+    "Norway"    : {
+      "address"   : "addr-no",
+      "endpoints" : [
         { "name" : "NO-Kristianssand",  "config" : "southty",   "dest-network" : "Denmark", "dest-ep" : "DK-Hirtshals"      },
         { "name" : "NO-Trondheim",      "config" : "goodlife"                                                               }
-    ]
+      ]
+    }
 }
 """
 

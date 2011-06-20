@@ -35,8 +35,10 @@ class Endpoint:
 
 class Network:
 
-    def __init__(self, name):
+    def __init__(self, name, nsa_address, protocol=None):
         self.name = name
+        self.nsa_address = nsa_address
+        self.protocol = protocol or 'nsa-jsonrpc'
         self.endpoints = []
 
 
@@ -69,8 +71,8 @@ class Link:
         self.endpoint_pairs  = endpoint_pairs
 
     def __str__(self):
-        eps = ' -> '.join( [ '%s:%s - %s:%s' % (ep[0], ep[1], ep[2], ep[3]) for ep in self.endpoint_pairs ] )
-        return '%s:%s => %s => %s:%s' % (self.source_network, self.source_endpoint, eps, self.dest_network, self.dest_endpoint)
+        eps = ' - '.join( [ '%s:%s = %s:%s' % (ep[0], ep[1], ep[2], ep[3]) for ep in self.endpoint_pairs ] )
+        return '%s:%s - %s - %s:%s' % (self.source_network, self.source_endpoint, eps, self.dest_network, self.dest_endpoint)
 
 
 
@@ -96,9 +98,9 @@ class Topology:
         else:
             raise TopologyError('Invalid topology source')
 
-        for network_name, endpoint_data in topology_data.items():
-            nw = Network(network_name)
-            for epd in endpoint_data:
+        for network_name, network_info in topology_data.items():
+            nw = Network(network_name, network_info['address'], network_info.get('protocol'))
+            for epd in network_info.get('endpoints', []):
                 ep = Endpoint(epd['name'], epd['config'], (epd.get('dest-network'), epd.get('dest-ep') ) )
                 nw.addEndpoint(ep)
 
