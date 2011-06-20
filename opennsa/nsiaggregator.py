@@ -14,14 +14,14 @@ from opennsa import error
 
 
 
-class NSIRouter:
+class NSIAggregator:
 
     implements(NSIServiceInterface)
 
     def __init__(self, network, backend):
         self.network = network
         self.backend = backend
-        # these need to be pr nsa
+        # these need to be pr nsa (network actually)
         self.reservations = {}
         self.connections = {}
 
