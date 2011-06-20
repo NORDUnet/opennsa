@@ -1,13 +1,13 @@
 # setup opennsa
 # someday there will (hopefully) be more here
 
-from opennsa import jsonrpc, nsirouter
+from opennsa import jsonrpc, nsiaggregator
 
 
 
-def createFactory(network_name, proxy):
+def createFactory(network_name, topology_file, proxy):
 
-    nsi_aggregator  = nsirouter.NSIRouter(network_name, proxy)
+    nsi_aggregator  = nsiaggregator.NSIAggregator(network_name, topology_file, proxy)
     factory = jsonrpc.OpenNSAJSONRPCFactory(nsi_aggregator)
     return factory
 
