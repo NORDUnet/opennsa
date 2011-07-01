@@ -71,16 +71,20 @@ class ServiceParameters:
 
 
 
-class Reservation:
+RESERVING = 'RESERVING'
+RESERVED  = 'RESERVED'
 
-    def __init__(self, connection_id, local_reservation_id, source_stp, dest_stp, global_reservation_id=None, sub_reservations=None, local_connection_id=None):
-        self.connection_id          = connection_id
-        self.local_reservation_id   = local_reservation_id
-        self.local_connection_id    = local_connection_id # pretty much never available at creation
-        self.source_stp             = source_stp
-        self.dest_stp               = dest_stp
-        self.global_reservation_id  = global_reservation_id
-        self.sub_reservations       = sub_reservations
+
+class Connection:
+
+    def __init__(self, connection_id, internal_reservation_id, source_stp, dest_stp, global_reservation_id=None, sub_reservations=None, internal_connection_id=None):
+        self.connection_id              = connection_id
+        self.internal_reservation_id    = internal_reservation_id
+        self.internal_connection_id     = internal_connection_id # pretty much never available at creation
+        self.source_stp                 = source_stp
+        self.dest_stp                   = dest_stp
+        self.global_reservation_id      = global_reservation_id
+        self.sub_reservations           = sub_reservations
 
         self.state = RESERVING
 
