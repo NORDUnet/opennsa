@@ -29,8 +29,7 @@ class DUDNSIProxy:
 
     def reserve(self, source_endpoint, dest_endpoint, service_parameters):
         reservation_id = uuid.uuid1().hex[0:8]
-        #log.msg('DUD Proxy (%s): Reservation %s, %s -> %s (%s)' % (self.name, reservation_id, source_endpoint, dest_endpoint, service_parameters))
-        log.msg('DUD Proxy (%s): RESERVE, Reservation id: %s, Link: %s -> %s' % (self.name, reservation_id, source_endpoint, dest_endpoint))
+        log.msg('RESERVE. Reservation id: %s, Link: %s -> %s' % (reservation_id, source_endpoint, dest_endpoint), system='DUD Proxy (%s)' % self.name)
         self.reservations[reservation_id] = {} # service params can go in dict when needed
         return defer.succeed(reservation_id)
 
@@ -38,7 +37,7 @@ class DUDNSIProxy:
     def cancelReservation(self, reservation_id):
         try:
             self.reservations.pop(reservation_id)
-            log.msg('DUD Proxy (%s): CANCEL, Reservation id: %s' % (self.name, reservation_id))
+            log.msg('CANCEL. Reservation id: %s' % (reservation_id), system='DUD Proxy (%s)' % self.name)
             return defer.succeed(None)
         except KeyError:
             raise nsaerror.CancelReservationError('No such reservation (%s)' % reservation_id)
@@ -53,7 +52,7 @@ class DUDNSIProxy:
 
         connection_id = uuid.uuid1().hex[0:8]
         self.connections[connection_id] = {}
-        log.msg('DUD Proxy (%s): PROVISION, Connection id: %s, Reservation id: %s' % (self.name, connection_id, reservation_id))
+        log.msg('PROVISION. Connection id: %s, Reservation id: %s' % (connection_id, reservation_id), system='DUD Proxy (%s)' % self.name)
         return defer.succeed(connection_id)
 
 
@@ -64,7 +63,7 @@ class DUDNSIProxy:
             raise nsaerror.ReleaseProvisionError('No such provisioned connection (%s)' % connection_id)
 
         reservation_id = uuid.uuid1().hex[0:8]
-        log.msg('DUD Proxy (%s): RELEASE, Connection id: %s, Reservation id: %s' % (self.name, connection_id, reservation_id))
+        log.msg('RELEASE. Connection id: %s, Reservation id: %s' % (connection_id, reservation_id), system='DUD Proxy (%s)' % self.name)
         self.reservations[reservation_id] = {} # service params can go in dict when needed
         return defer.succeed(reservation_id)
 
