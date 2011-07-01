@@ -8,6 +8,21 @@ Copyright: NORDUnet (2011)
 import urlparse
 
 
+class ServiceTerminationEndpoint:
+
+    def __init__(self, network, endpoint):
+        self.network = network
+        self.endpoint = endpoint
+
+    def dict(self):
+        return { 'network'  : self.network,
+                 'endpoint' : self.endpoint }
+
+
+STP = ServiceTerminationEndpoint # short hand
+
+
+
 class NetworkServiceAgent:
 
     def __init__(self, address, service_attributes):
@@ -28,21 +43,6 @@ class NetworkServiceAgent:
 
 
 NSA = NetworkServiceAgent # short hand
-
-
-
-class ServiceTerminationEndpoint:
-
-    def __init__(self, network, endpoint):
-        self.network = network
-        self.endpoint = endpoint
-
-    def dict(self):
-        return { 'network'  : self.network,
-                 'endpoint' : self.endpoint }
-
-
-STP = ServiceTerminationEndpoint # short hand
 
 
 
@@ -69,4 +69,26 @@ class ServiceParameters:
     def __str__(self):
         return '<ServiceParameters %s>' % str(self.dict())
 
+
+
+class Reservation:
+
+    def __init__(self, connection_id, local_reservation_id, source_stp, dest_stp, global_reservation_id=None, sub_reservations=None, local_connection_id=None):
+        self.connection_id          = connection_id
+        self.local_reservation_id   = local_reservation_id
+        self.local_connection_id    = local_connection_id # pretty much never available at creation
+        self.source_stp             = source_stp
+        self.dest_stp               = dest_stp
+        self.global_reservation_id  = global_reservation_id
+        self.sub_reservations       = sub_reservations
+
+        self.state = RESERVING
+
+
+    def state(self):
+        return self.state
+
+
+    def setState(self, new_state):
+        raise NotImplementedError('State changing not yet implemented')
 
