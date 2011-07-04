@@ -123,14 +123,16 @@ class Topology:
                 continue
 
             if ep.dest_stp.network == dest_stp.network:
-                routes.append( [ ( source_stp.network, ep.endpoint, ep.dest_stp.network, ep.dest_stp.endpoint) ] )
+                sp = nsa.STPPair(ep, ep.dest_stp)
+                routes.append( [ sp ] )
             else:
                 nvn = visited_networks[:] + [ ep.dest_stp.network ]
                 subroutes = self.findLinkEndpoints(ep.dest_stp, dest_stp, nvn)
                 if subroutes:
                     for sr in subroutes:
                         src = sr[:]
-                        src.insert(0, (source_stp.network, ep.endpoint, ep.dest_stp.network, ep.dest_stp.endpoint) )
+                        sp = nsa.STPPair(ep, ep.dest_stp)
+                        src.insert(0, sp)
                         routes.append(  src  )
 
         return routes

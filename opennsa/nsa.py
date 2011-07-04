@@ -16,9 +16,17 @@ class STP: # Service Termination Point
         self.network = network
         self.endpoint = endpoint
 
+
     def protoSTP(self):
         return { 'network'  : self.network,
                  'endpoint' : self.endpoint }
+
+
+    def __eq__(self, other):
+        if not isinstance(other, STP):
+            return False
+        return self.network == other.network and self.endpoint == other.endpoint
+
 
     def __str__(self):
         return '<ServiceTerminationEndpoint %s:%s>' % (self.network, self.endpoint)
@@ -30,6 +38,12 @@ class STPPair:
     def __init__(self, stp1, stp2):
         self.stp1 = stp1
         self.stp2 = stp2
+
+
+    def __eq__(self, other):
+        if not isinstance(other, STPPair):
+            return False
+        return self.stp1 == other.stp1 and self.stp2 == other.stp2
 
 
 
