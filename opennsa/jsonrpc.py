@@ -150,7 +150,7 @@ class JSONRPCService(NetstringReceiver):
             d.addErrback(logFailure)
             d.addCallbacks(lambda r : self.reply(rpc_id, r),
                            lambda f : self.errorReply(rpc_id, f.getErrorMessage()))
-            d.addErrback(lambda f : self.errorReply('Error constructing reply: %s' % str(f)))
+            d.addErrback(lambda f : self.errorReply(rpc_id, 'Error constructing reply: %s' % str(f)))
         except Exception, e:
             return self.errorReply(rpc_id, str(e))
 
