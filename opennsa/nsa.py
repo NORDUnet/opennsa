@@ -29,7 +29,7 @@ class STP: # Service Termination Point
 
 
     def __str__(self):
-        return '<ServiceTerminationEndpoint %s:%s>' % (self.network, self.endpoint)
+        return '<STP %s:%s>' % (self.network, self.endpoint)
 
 
 
@@ -46,6 +46,10 @@ class STPPair:
         return self.stp1 == other.stp1 and self.stp2 == other.stp2
 
 
+    def __str__(self):
+        return '<STPPair %s:%s>' % (self.stp1, self.stp2)
+
+
 
 class NetworkEndpoint(STP):
 
@@ -60,13 +64,36 @@ class NetworkEndpoint(STP):
 
 
 
+class NetworkServiceAgent:
+
+    def __init__(self, address, service_attributes=None, protocol=None):
+        self.address = address
+        self.service_attributes = service_attributes
+        self.protocol = protocol or 'nsa-jsonrpc'
+
+
+    def getHostPort(self):
+        url = urlparse.urlparse(self.address)
+        host, port = url.netloc.split(':',2)
+        port = int(port)
+        return host, port
+
+
+    def protoNSA(self):
+        return { 'address' : self.address,
+                 'service_attributes' : self.service_attributes }
+
+
+    def __str__(self):
+        return '<NetworkServiceAgent %s,%s>' % (self.address, self.protocol)
+
+
+
 class Network:
 
-    def __init__(self, name, nsa_address, nsa_service_attributes=None, protocol=None):
+    def __init__(self, name, nsa):
         self.name = name
-        self.nsa_address = nsa_address
-        self.nsa_service_attributes = nsa_service_attributes
-        self.protocol = protocol or 'nsa-jsonrpc'
+        self.nsa = nsa
         self.endpoints = []
 
 
@@ -80,18 +107,6 @@ class Network:
                 return ep
 
         raise TopologyError('No such endpoint (%s)' % (endpoint_name))
-
-
-    def geNSAHostPort(self):
-        url = urlparse.urlparse(self.address)
-        host, port = url.netloc.split(':',2)
-        port = int(port)
-        return host, port
-
-
-    def dict(self):
-        return { 'address' : self.nsa_address,
-                 'service_attributes' : self.nsa_service_attributes }
 
 
     def __str__(self):
@@ -111,16 +126,16 @@ class ServiceParameters:
         self.stps       = stps
 
 
-    def dict(self):
+    def protoSP(self):
         return { 'start_time' : self.start_time,
                  'end_time'   : self.end_time,
-                 'source_stp' : self.source_stp.dict(),
-                 'dest_stp'   : self.dest_stp.dict(),
+                 'source_stp' : self.source_stp.protoSTP(),
+                 'dest_stp'   : self.dest_stp.protoSTP(),
                  'stps'       : self.stps        }
 
 
     def __str__(self):
-        return '<ServiceParameters %s>' % str(self.dict())
+        return '<ServiceParameters %s>' % str(self.protoSP())
 
 
 

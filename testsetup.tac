@@ -15,8 +15,7 @@ top = json.load(open(TOPOFILE))
 networks = {}
 
 for network, info in top.items():
-    nsa_address = info['address']
-    hostport = urlparse.urlparse(nsa_address).netloc
+    hostport = urlparse.urlparse(info['address']).netloc
     port = int(hostport.split(':',2)[1])
 
     networks[network] = port

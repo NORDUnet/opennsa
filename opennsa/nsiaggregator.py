@@ -62,34 +62,33 @@ class NSIAggregator:
             # make link and chain on - common chaining
             log.msg('Common chain creation: %s:%s -> %s:%s (%s)' % link_info, system='opennsa.NSIAggregator')
 
-            links = self.topology.findLinks(source_stp.network, source_stp.endpoint, dest_stp.network, dest_stp.endpoint)
+            links = self.topology.findLinks(source_stp, dest_stp)
             # check for no links
             links.sort(key=lambda e : len(e.endpoint_pairs))
-            shortest_link = links[0]
-            log.msg('Attempting to create link %s' % shortest_link)
+            selected_link = links[0] # shortest link
+            log.msg('Attempting to create link %s' % selected_link, system='opennsa.NSIAggregator')
 
-            assert shortest_link.source_network == self.network
+            assert selected_link.source_stp.network == self.network
 
-            chain_network = shortest_link.endpoint_pairs[0][2]
+            chain_network = selected_link.endpoint_pairs[0].stp2.network
 
             def issueChainReservation(connection_id):
-                own_address = self.topology.getNetwork(self.network).nsa_address # is this ok? why not?
+                own_address = self.topology.getNetwork(self.network).nsa.address # is this ok? why not?
                 own_nsa = nsa.NetworkServiceAgent(own_address, None)
 
-                network_nsa_url = self.topology.getNetwork(chain_network).nsa_address
-                chain_nsa = nsa.NetworkServiceAgent(network_nsa_url, None)
+                chain_network_nsa = self.topology.getNetwork(chain_network).nsa
 
                 conn_id = 'sager'
 
-                new_source_stp      = nsa.STP(shortest_link.endpoint_pairs[0][2], shortest_link.endpoint_pairs[0][3] )
+                new_source_stp      = selected_link.endpoint_pairs[0].stp2
                 new_service_params  = nsa.ServiceParameters('', '', new_source_stp, dest_stp)
 
                 proxy = jsonrpc.JSONRPCNSIClient()
-                d = proxy.reserve(own_nsa, chain_nsa, conn_id, global_reservation_id, description, new_service_params, None)
+                d = proxy.reserve(own_nsa, chain_network_nsa, conn_id, global_reservation_id, description, new_service_params, None)
                 d.addCallback(lambda e : connection_id)
                 return d
 
-            d = self.backend.reserve(shortest_link.source_endpoint, shortest_link.endpoint_pairs[0][1], service_parameters)
+            d = self.backend.reserve(selected_link.source_stp.endpoint, selected_link.endpoint_pairs[0].stp1.endpoint, service_parameters)
             d.addCallback(reservationMade)
             d.addCallback(issueChainReservation)
             return d

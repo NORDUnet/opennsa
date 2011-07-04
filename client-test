@@ -15,8 +15,8 @@ def doMain():
 
     proxy = jsonrpc.JSONRPCNSIClient()
 
-    client_nsa      = nsa.NSA('nsa://none:0', None)
-    provider_nsa    = nsa.NSA('nsa://localhost:4322', None)
+    client_nsa      = nsa.NetworkServiceAgent('nsa://none:0')
+    provider_net    = nsa.Network('B', nsa.NetworkServiceAgent('nsa://localhost:4322') )
     source_stp      = nsa.STP('B', 'B1' )
     dest_stp        = nsa.STP('E', 'E1')
     #dest_stp        = nsa.STP('D', 'D1')
@@ -26,16 +26,16 @@ def doMain():
     conn_id = 'ccid' + ''.join( [ str(int(random.random() * 10)) for _ in range(4) ] )
     print "Connection id", conn_id
 
-    _ = yield proxy.reserve(client_nsa, provider_nsa, conn_id, reservation_id, 'Test Connection', service_params, None)
+    _ = yield proxy.reserve(client_nsa, provider_net.nsa, conn_id, reservation_id, 'Test Connection', service_params, None)
     print "Reservation made"
 
-    _ = yield proxy.provision(client_nsa, provider_nsa, conn_id, None)
+    _ = yield proxy.provision(client_nsa, provider_net.nsa, conn_id, None)
     print "Provision made"
 
-    _ = yield proxy.releaseProvision(client_nsa, provider_nsa, conn_id, None)
+    _ = yield proxy.releaseProvision(client_nsa, provider_net.nsa, conn_id, None)
     print "Provision released"
 
-    _ = yield proxy.cancelReservation(client_nsa, provider_nsa, conn_id, None)
+    _ = yield proxy.cancelReservation(client_nsa, provider_net.nsa, conn_id, None)
     print "Reservation cancelled"
 
 
