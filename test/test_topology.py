@@ -1,6 +1,6 @@
 from twisted.trial import unittest
 
-from opennsa import topology
+from opennsa import nsa, topology
 
 
 TEST_TOPOLOGY_1 = """
@@ -72,12 +72,14 @@ class TopologyTest(unittest.TestCase):
         t.parseTopology(TEST_TOPOLOGY_1)
 
         for ts in TEST_LINKS_1:
-            links = t.findLinks(ts['source_network'], ts['source_endpoint'], ts['dest_network'], ts['dest_endpoint'])
+            source_stp = nsa.STP(ts['source_network'], ts['source_endpoint'])
+            dest_stp   = nsa.STP(ts['dest_network'], ts['dest_endpoint'])
+            links = t.findLinks(source_stp, dest_stp)
             for link in links:
-                self.assertEquals(ts['source_network'],  link.source_network)
-                self.assertEquals(ts['source_endpoint'], link.source_endpoint)
-                self.assertEquals(ts['dest_network'],    link.dest_network)
-                self.assertEquals(ts['dest_endpoint'],   link.dest_endpoint)
+                self.assertEquals(ts['source_network'],  link.source_stp.network)
+                self.assertEquals(ts['source_endpoint'], link.source_stp.endpoint)
+                self.assertEquals(ts['dest_network'],    link.dest_stp.network)
+                self.assertEquals(ts['dest_endpoint'],   link.dest_stp.endpoint)
 
             leps = [ link.endpoint_pairs for link in links ]
 

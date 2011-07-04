@@ -77,34 +77,34 @@ class Topology:
         raise TopologyError('No network named %s' % network_name)
 
 
-    def findLinks(self, source_network, source_endpoint, dest_network, dest_endpoint, service_params=None):
+    def findLinks(self, source_stp, dest_stp, service_params=None):
         """
         Find possible links between two STPs.
         """
         # check that STPs exist
-        snw = self.getNetwork(source_network)
-        snw.getEndpoint(source_endpoint)
+        snw = self.getNetwork(source_stp.network)
+        snw.getEndpoint(source_stp.endpoint)
 
-        dnw = self.getNetwork(dest_network)
-        dnw.getEndpoint(dest_endpoint)
+        dnw = self.getNetwork(dest_stp.network)
+        dnw.getEndpoint(dest_stp.endpoint)
 
         # find endpoint pairs
-        #print "FIND LINK", source_network, source_endpoint, dest_network, dest_endpoint
+        #print "FIND LINK", source_stp, dest_stp
 
-        link_endpoint_pairs = self.findLinkEndpoints(source_network, source_endpoint, dest_network, dest_endpoint)
+        link_endpoint_pairs = self.findLinkEndpoints(source_stp, dest_stp)
 
         links = []
         for lep in link_endpoint_pairs:
-            links.append( Link(nsa.STP(source_network, source_endpoint), nsa.STP(dest_network, dest_endpoint), lep ) )
+            links.append( Link(source_stp, dest_stp, lep ) )
 
         return links
 
 
-    def findLinkEndpoints(self, source_network, source_endpoint, dest_network, dest_endpoint, visited_networks=None):
+    def findLinkEndpoints(self, source_stp, dest_stp, visited_networks=None):
 
-        #print "FIND LINK EPS", source_network, source_endpoint, visited_networks
+        #print "FIND LINK EPS", source_stp, visited_networks
 
-        snw = self.getNetwork(source_network)
+        snw = self.getNetwork(source_stp.network)
         routes = []
 
         for ep in snw.endpoints:
@@ -116,21 +116,21 @@ class Topology:
                 continue
 
             if visited_networks is None:
-                visited_networks = [ source_network ]
+                visited_networks = [ source_stp.network ]
 
             if ep.dest_stp.network in visited_networks:
                 #print "    Rejecting endpoint due to loop"
                 continue
 
-            if ep.dest_stp.network == dest_network:
-                routes.append( [ ( source_network, ep.endpoint, ep.dest_stp.network, ep.dest_stp.endpoint) ] )
+            if ep.dest_stp.network == dest_stp.network:
+                routes.append( [ ( source_stp.network, ep.endpoint, ep.dest_stp.network, ep.dest_stp.endpoint) ] )
             else:
                 nvn = visited_networks[:] + [ ep.dest_stp.network ]
-                subroutes = self.findLinkEndpoints(ep.dest_stp.network, ep.dest_stp.endpoint, dest_network, dest_endpoint, nvn)
+                subroutes = self.findLinkEndpoints(ep.dest_stp, dest_stp, nvn)
                 if subroutes:
                     for sr in subroutes:
                         src = sr[:]
-                        src.insert(0, (source_network, ep.endpoint, ep.dest_stp.network, ep.dest_stp.endpoint) )
+                        src.insert(0, (source_stp.network, ep.endpoint, ep.dest_stp.network, ep.dest_stp.endpoint) )
                         routes.append(  src  )
 
         return routes
