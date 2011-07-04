@@ -5,9 +5,12 @@ Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2011)
 """
 
+import random
+
 from zope.interface import implements
 
 from twisted.python import log
+from twisted.internet import defer
 
 from opennsa.interface import NSIServiceInterface
 from opennsa import nsa, error, topology, jsonrpc
@@ -43,9 +46,9 @@ class NSIAggregator:
         def reservationMade(internal_reservation_id, sub_reservations=None):
             #nsa_identity = requester_nsa.address
             self.connections.setdefault(nsa_identity, {})
-            conn = nsa.Connection(connection_id, internal_reservation_id, source_stp, dest_stp, global_reservation_id, sub_reservations)
-            self.connections[nsa_identity][connection_id] = conn
-            return connection_id
+            connection = nsa.Connection(connection_id, internal_reservation_id, source_stp, dest_stp, global_reservation_id, sub_reservations)
+            self.connections[nsa_identity][connection_id] = connection
+            return connection
 
         # figure out nature of request
 
@@ -56,6 +59,7 @@ class NSIAggregator:
             # make an internal link, no sub requests
             d = self.backend.reserve(source_stp.endpoint, dest_stp.endpoint, service_parameters)
             d.addCallback(reservationMade)
+            d.addCallback(lambda _ : connection_id)
             return d
 
         elif source_stp.network == self.network:
@@ -72,20 +76,25 @@ class NSIAggregator:
 
             chain_network = selected_link.endpoint_pairs[0].stp2.network
 
-            def issueChainReservation(connection_id):
+            def issueChainReservation(connection):
                 own_address = self.topology.getNetwork(self.network).nsa.address # is this ok? why not?
                 own_nsa = nsa.NetworkServiceAgent(own_address, None)
 
                 chain_network_nsa = self.topology.getNetwork(chain_network).nsa
 
-                conn_id = 'sager'
+                sub_conn_id = 'int-ccid' + ''.join( [ str(int(random.random() * 10)) for _ in range(4) ] )
 
                 new_source_stp      = selected_link.endpoint_pairs[0].stp2
                 new_service_params  = nsa.ServiceParameters('', '', new_source_stp, dest_stp)
 
+                def chainedReservationMade(sub_conn_id):
+                    connection.sub_reservations.append( ( chain_network, sub_conn_id) )
+                    return connection
+
                 proxy = jsonrpc.JSONRPCNSIClient()
-                d = proxy.reserve(own_nsa, chain_network_nsa, conn_id, global_reservation_id, description, new_service_params, None)
-                d.addCallback(lambda e : connection_id)
+                d = proxy.reserve(own_nsa, chain_network_nsa, sub_conn_id, global_reservation_id, description, new_service_params, None)
+                d.addCallback(chainedReservationMade)
+                d.addCallback(lambda _ : connection_id)
                 return d
 
             d = self.backend.reserve(selected_link.source_stp.endpoint, selected_link.endpoint_pairs[0].stp1.endpoint, service_parameters)
@@ -129,14 +138,43 @@ class NSIAggregator:
             raise error.ProvisionError('No connection with id %s for NSA with address %s' % (connection_id, requester_nsa.address))
         # check state is ok before provisioning
 
-        def provisionMade(internal_connection_id):
+        def internalProvisionMade(internal_connection_id):
+            log.msg('Connection %s/%s internally provisioned' % (connection_id, internal_connection_id), system='opennsa.NSIAggregator')
             conn.internal_connection_id = internal_connection_id
-            # update state
+            # update state!
+            return connection_id
+
+        def provisionComplete(results):
+            log.msg('Connection %s and all sub connections provisioned' % connection_id, system='opennsa.NSIAggregator')
+            print "R", results
             return connection_id
 
         # if there are any sub connections, call must be issues to those
-        d = self.backend.provision(conn.internal_reservation_id)
-        d.addCallback(provisionMade)
+        di = self.backend.provision(conn.internal_reservation_id)
+        di.addCallback(internalProvisionMade)
+
+        defs = [ di ]
+
+        for sub_network, sub_conn_id in conn.sub_reservations:
+            sub_network_nsa = self.topology.getNetwork(sub_network).nsa
+
+            # this should be made class wide sometime
+            own_address = self.topology.getNetwork(self.network).nsa.address # is this ok? why not?
+            own_nsa = nsa.NetworkServiceAgent(own_address, None)
+
+            def subProvisionMade(conn_id, sub_conn_id, sub_network):
+                log.msg('Sub connection %s in network %s provisioned' % (sub_conn_id, sub_network), system='opennsa.NSIAggregator')
+                return conn_id
+
+            proxy = jsonrpc.JSONRPCNSIClient()
+            d = proxy.provision(own_nsa, sub_network_nsa, sub_conn_id, None)
+            d.addCallback(subProvisionMade, sub_conn_id, sub_network)
+            defs.append(d)
+
+        d = defer.DeferredList(defs)
+        d.addCallback(provisionComplete) # error handling, nahh :-)
+
+
         return d
 
 
