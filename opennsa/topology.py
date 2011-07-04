@@ -20,46 +20,6 @@ class TopologyError(Exception):
 
 
 
-#class Endpoint:
-#
-#    def __init__(self, name, config, dest=None):
-#        self.name = name
-#        self.config = config
-#        self.dest = dest
-#
-#
-#    def __str__(self):
-#        return '%s:%s:%s' % (self.name, self.dest, self.config)
-#
-
-
-
-#class Network:
-#
-#    def __init__(self, name, nsa_address, protocol=None):
-#        self.name = name
-#        self.nsa_address = nsa_address
-#        self.protocol = protocol or 'nsa-jsonrpc'
-#        self.endpoints = []
-#
-#
-#    def addEndpoint(self, endpoint):
-#        self.endpoints.append(endpoint)
-#
-#
-#    def getEndpoint(self, endpoint_name):
-#        for ep in self.endpoints:
-#            if ep.name == endpoint_name:
-#                return ep
-#
-#        raise TopologyError('No such endpoint (%s)' % (endpoint_name))
-#
-#
-#    def __str__(self):
-#        return '%s,%i' % (self.name, len(self.endpoints))
-
-
-
 class Link:
     """
     Represent a from a source and destitionation STP, with the endpoints between them.
