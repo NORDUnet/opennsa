@@ -30,8 +30,6 @@ class Link:
         self.endpoint_pairs  = endpoint_pairs
 
     def __str__(self):
-#        eps = ' - '.join( [ '%s:%s = %s:%s' % (ep[0], ep[1], ep[2], ep[3]) for ep in self.endpoint_pairs ] )
-#        return '%s:%s - %s - %s:%s' % (self.source_stp, eps, self.dest_network, self.dest_stp)
         return '%s - %s - %s' % (self.source_stp, ' - '.join( [ str(e) for e in self.endpoint_pairs ] ), self.dest_stp)
 
 
