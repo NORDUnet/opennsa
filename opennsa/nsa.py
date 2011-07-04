@@ -1,36 +1,74 @@
 """
-Various "core" abstractions used in OpenNSA.
+Core abstractions used in OpenNSA.
 
 Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2011)
 """
 
+
 import urlparse
 
 
-class ServiceTerminationEndpoint:
+
+class STP: # Service Termination Point
 
     def __init__(self, network, endpoint):
         self.network = network
         self.endpoint = endpoint
 
-    def dict(self):
+    def protoSTP(self):
         return { 'network'  : self.network,
                  'endpoint' : self.endpoint }
 
-
-STP = ServiceTerminationEndpoint # short hand
-
-
-
-class NetworkServiceAgent:
-
-    def __init__(self, address, service_attributes):
-        self.address = address
-        self.service_attributes = service_attributes
+    def __str__(self):
+        return '<ServiceTerminationEndpoint %s:%s>' % (self.network, self.endpoint)
 
 
-    def getHostPort(self):
+
+class STPPair:
+
+    def __init__(self, stp1, stp2):
+        self.stp1 = stp1
+        self.stp2 = stp2
+
+
+
+class NetworkEndpoint(STP):
+
+    def __init__(self, network, endpoint, config, dest_stp=None):
+        STP.__init__(self, network, endpoint)
+        self.config = config
+        self.dest_stp = dest_stp
+
+
+    def __str__(self):
+        return '<NetworkEndpoint %s:%s-%s#%s>' % (self.network, self.endpoint, self.dest_stp, self.config)
+
+
+
+class Network:
+
+    def __init__(self, name, nsa_address, nsa_service_attributes=None, protocol=None):
+        self.name = name
+        self.nsa_address = nsa_address
+        self.nsa_service_attributes = nsa_service_attributes
+        self.protocol = protocol or 'nsa-jsonrpc'
+        self.endpoints = []
+
+
+    def addEndpoint(self, endpoint):
+        self.endpoints.append(endpoint)
+
+
+    def getEndpoint(self, endpoint_name):
+        for ep in self.endpoints:
+            if ep.endpoint == endpoint_name:
+                return ep
+
+        raise TopologyError('No such endpoint (%s)' % (endpoint_name))
+
+
+    def geNSAHostPort(self):
         url = urlparse.urlparse(self.address)
         host, port = url.netloc.split(':',2)
         port = int(port)
@@ -38,11 +76,12 @@ class NetworkServiceAgent:
 
 
     def dict(self):
-        return { 'address' : self.address,
-                 'service_attributes' : self.service_attributes }
+        return { 'address' : self.nsa_address,
+                 'service_attributes' : self.nsa_service_attributes }
 
 
-NSA = NetworkServiceAgent # short hand
+    def __str__(self):
+        return '<Network %s,%i>' % (self.name, len(self.endpoints))
 
 
 

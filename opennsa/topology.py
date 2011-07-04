@@ -8,6 +8,7 @@ Copyright: NORDUnet (2011)
 
 import json
 
+from opennsa import nsa
 
 
 
@@ -19,43 +20,43 @@ class TopologyError(Exception):
 
 
 
-class Endpoint:
-
-    def __init__(self, name, config, dest=None):
-        self.name = name
-        self.config = config
-        self.dest = dest
-
-
-    def __str__(self):
-        return '%s:%s:%s' % (self.name, self.dest, self.config)
-
-
-
-
-class Network:
-
-    def __init__(self, name, nsa_address, protocol=None):
-        self.name = name
-        self.nsa_address = nsa_address
-        self.protocol = protocol or 'nsa-jsonrpc'
-        self.endpoints = []
+#class Endpoint:
+#
+#    def __init__(self, name, config, dest=None):
+#        self.name = name
+#        self.config = config
+#        self.dest = dest
+#
+#
+#    def __str__(self):
+#        return '%s:%s:%s' % (self.name, self.dest, self.config)
+#
 
 
-    def addEndpoint(self, endpoint):
-        self.endpoints.append(endpoint)
 
-
-    def getEndpoint(self, endpoint_name):
-        for ep in self.endpoints:
-            if ep.name == endpoint_name:
-                return ep
-
-        raise TopologyError('No such endpoint (%s)' % (endpoint_name))
-
-
-    def __str__(self):
-        return '%s,%i' % (self.name, len(self.endpoints))
+#class Network:
+#
+#    def __init__(self, name, nsa_address, protocol=None):
+#        self.name = name
+#        self.nsa_address = nsa_address
+#        self.protocol = protocol or 'nsa-jsonrpc'
+#        self.endpoints = []
+#
+#
+#    def addEndpoint(self, endpoint):
+#        self.endpoints.append(endpoint)
+#
+#
+#    def getEndpoint(self, endpoint_name):
+#        for ep in self.endpoints:
+#            if ep.name == endpoint_name:
+#                return ep
+#
+#        raise TopologyError('No such endpoint (%s)' % (endpoint_name))
+#
+#
+#    def __str__(self):
+#        return '%s,%i' % (self.name, len(self.endpoints))
 
 
 
@@ -63,16 +64,14 @@ class Link:
     """
     Represent a from a source and destitionation STP, with the endpoints between them.
     """
-    def __init__(self, source_network, source_endpoint, dest_network, dest_endpoint, endpoint_pairs):
-        self.source_network  = source_network
-        self.source_endpoint = source_endpoint
-        self.dest_network    = dest_network
-        self.dest_endpoint   = dest_endpoint
+    def __init__(self, source_stp, dest_stp, endpoint_pairs):
+        self.source_stp      = source_stp
+        self.dest_stp        = dest_stp
         self.endpoint_pairs  = endpoint_pairs
 
     def __str__(self):
         eps = ' - '.join( [ '%s:%s = %s:%s' % (ep[0], ep[1], ep[2], ep[3]) for ep in self.endpoint_pairs ] )
-        return '%s:%s - %s - %s:%s' % (self.source_network, self.source_endpoint, eps, self.dest_network, self.dest_endpoint)
+        return '%s:%s - %s - %s:%s' % (self.source_stp, eps, self.dest_network, self.dest_stp)
 
 
 
@@ -99,9 +98,12 @@ class Topology:
             raise TopologyError('Invalid topology source')
 
         for network_name, network_info in topology_data.items():
-            nw = Network(network_name, network_info['address'], network_info.get('protocol'))
+            nw = nsa.Network(network_name, network_info['address'], network_info.get('protocol'))
             for epd in network_info.get('endpoints', []):
-                ep = Endpoint(epd['name'], epd['config'], (epd.get('dest-network'), epd.get('dest-ep') ) )
+                dest_stp = None
+                if 'dest-network' in epd and 'dest-ep' in epd:
+                    dest_stp = nsa.STP( epd['dest-network'], epd['dest-ep'] )
+                ep = nsa.NetworkEndpoint(network_name, epd['name'], epd['config'], dest_stp)
                 nw.addEndpoint(ep)
 
             self.addNetwork(nw)
@@ -133,7 +135,7 @@ class Topology:
 
         links = []
         for lep in link_endpoint_pairs:
-            links.append( Link(source_network, source_endpoint, dest_network, dest_endpoint, lep ) )
+            links.append( Link(nsa.STP(source_network, source_endpoint), nsa.STP(dest_network, dest_endpoint), lep ) )
 
         return links
 
@@ -141,34 +143,34 @@ class Topology:
     def findLinkEndpoints(self, source_network, source_endpoint, dest_network, dest_endpoint, visited_networks=None):
 
         #print "FIND LINK EPS", source_network, source_endpoint, visited_networks
+
         snw = self.getNetwork(source_network)
         routes = []
 
         for ep in snw.endpoints:
-            ep_network, ep_endpoint = ep.dest
 
-            #print "  Link:", ep.name, ep_network, ep_endpoint
+            #print "  Link:", ep, dest_network, dest_endpoint
 
-            if not (ep_network and ep_endpoint):
+            if ep.dest_stp is None:
                 #print "    Rejecting endpoint due to no pairing"
                 continue
 
             if visited_networks is None:
                 visited_networks = [ source_network ]
 
-            if ep_network in visited_networks:
+            if ep.dest_stp.network in visited_networks:
                 #print "    Rejecting endpoint due to loop"
                 continue
 
-            if ep_network == dest_network:
-                routes.append( [ ( source_network, ep.name, ep_network, ep_endpoint) ] )
+            if ep.dest_stp.network == dest_network:
+                routes.append( [ ( source_network, ep.endpoint, ep.dest_stp.network, ep.dest_stp.endpoint) ] )
             else:
-                nvn = visited_networks[:] + [ ep_network ]
-                subroutes = self.findLinkEndpoints(ep_network, ep_endpoint, dest_network, dest_endpoint, nvn)
+                nvn = visited_networks[:] + [ ep.dest_stp.network ]
+                subroutes = self.findLinkEndpoints(ep.dest_stp.network, ep.dest_stp.endpoint, dest_network, dest_endpoint, nvn)
                 if subroutes:
                     for sr in subroutes:
                         src = sr[:]
-                        src.insert(0, (source_network, ep.name, ep_network, ep_endpoint) )
+                        src.insert(0, (source_network, ep.endpoint, ep.dest_stp.network, ep.dest_stp.endpoint) )
                         routes.append(  src  )
 
         return routes
