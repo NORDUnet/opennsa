@@ -152,7 +152,7 @@ class Connection:
         self.source_stp                 = source_stp
         self.dest_stp                   = dest_stp
         self.global_reservation_id      = global_reservation_id
-        self.sub_reservations           = sub_reservations
+        self.sub_reservations           = sub_reservations or []
 
         self.state = RESERVING
 
