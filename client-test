@@ -23,7 +23,7 @@ def doMain():
     service_params  = nsa.ServiceParameters('', '', source_stp, dest_stp)
 
     reservation_id = uuid.uuid1().hex
-    conn_id = 'ccid' + ''.join( [ str(int(random.random() * 10)) for _ in range(4) ] )
+    conn_id = 'cli-ccid' + ''.join( [ str(int(random.random() * 10)) for _ in range(4) ] )
     print "Connection id", conn_id
 
     _ = yield proxy.query(client_nsa, provider_net.nsa, None, None)

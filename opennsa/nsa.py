@@ -47,7 +47,7 @@ class STPPair:
 
 
     def __str__(self):
-        return '<STPPair %s:%s>' % (self.stp1, self.stp2)
+        return '<STPPair %s:%s-%s:%s>' % (self.stp1.network, self.stp1.endpoint, self.stp2.network, self.stp2.endpoint)
 
 
 
