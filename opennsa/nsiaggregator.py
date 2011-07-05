@@ -43,10 +43,10 @@ class NSIAggregator:
         source_stp = service_parameters.source_stp
         dest_stp   = service_parameters.dest_stp
 
-        def reservationMade(internal_reservation_id, sub_reservations=None):
+        def reservationMade(internal_reservation_id, sub_connections=None):
             #nsa_identity = requester_nsa.address
             self.connections.setdefault(nsa_identity, {})
-            connection = nsa.Connection(connection_id, internal_reservation_id, source_stp, dest_stp, global_reservation_id, sub_reservations)
+            connection = nsa.Connection(connection_id, internal_reservation_id, source_stp, dest_stp, global_reservation_id, sub_connections)
             self.connections[nsa_identity][connection_id] = connection
             log.msg('Reservation for connection %s (%s) created. Global id %s' % (connection_id, internal_reservation_id, global_reservation_id), system='opennsa.NSIAggregator')
             return connection
@@ -89,7 +89,7 @@ class NSIAggregator:
                 new_service_params  = nsa.ServiceParameters('', '', new_source_stp, dest_stp)
 
                 def chainedReservationMade(sub_conn_id):
-                    connection.sub_reservations.append( ( chain_network, sub_conn_id) )
+                    connection.sub_connections.append( ( chain_network, sub_conn_id) )
                     return connection
 
                 proxy = jsonrpc.JSONRPCNSIClient()
@@ -156,7 +156,7 @@ class NSIAggregator:
 
         defs = [ di ]
 
-        for sub_network, sub_conn_id in conn.sub_reservations:
+        for sub_network, sub_conn_id in conn.sub_connections:
             sub_network_nsa = self.topology.getNetwork(sub_network).nsa
 
             # this should be made class wide sometime

@@ -145,14 +145,14 @@ RESERVED  = 'RESERVED'
 
 class Connection:
 
-    def __init__(self, connection_id, internal_reservation_id, source_stp, dest_stp, global_reservation_id=None, sub_reservations=None, internal_connection_id=None):
+    def __init__(self, connection_id, internal_reservation_id, source_stp, dest_stp, global_reservation_id=None, sub_connections=None, internal_connection_id=None):
         self.connection_id              = connection_id
         self.internal_reservation_id    = internal_reservation_id
         self.internal_connection_id     = internal_connection_id # pretty much never available at creation
         self.source_stp                 = source_stp
         self.dest_stp                   = dest_stp
         self.global_reservation_id      = global_reservation_id
-        self.sub_reservations           = sub_reservations or []
+        self.sub_connections            = sub_connections or []
 
         self.state = RESERVING
 
