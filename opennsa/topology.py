@@ -8,15 +8,7 @@ Copyright: NORDUnet (2011)
 
 import json
 
-from opennsa import nsa
-
-
-
-class TopologyError(Exception):
-    """
-    Generic topology error.
-    """
-    pass
+from opennsa import nsa, error
 
 
 
@@ -42,7 +34,7 @@ class Topology:
 
     def addNetwork(self, network):
         if network.name in [ n.name for n in self.networks ]:
-            raise TopologyError('Network name must be unique (name: %s)' % network.name)
+            raise error.TopologyError('Network name must be unique (name: %s)' % network.name)
 
         self.networks.append(network)
 
@@ -54,7 +46,7 @@ class Topology:
         elif isinstance(topology_source, str):
             topology_data = json.loads(topology_source)
         else:
-            raise TopologyError('Invalid topology source')
+            raise error.TopologyError('Invalid topology source')
 
         for network_name, network_info in topology_data.items():
             nn = nsa.NetworkServiceAgent(network_info['address'], protocol=network_info.get('protocol'))
@@ -74,7 +66,7 @@ class Topology:
             if network.name == network_name:
                 return network
 
-        raise TopologyError('No network named %s' % network_name)
+        raise error.TopologyError('No network named %s' % network_name)
 
 
     def findLinks(self, source_stp, dest_stp, service_params=None):

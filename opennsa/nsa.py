@@ -106,7 +106,7 @@ class Network:
             if ep.endpoint == endpoint_name:
                 return ep
 
-        raise TopologyError('No such endpoint (%s)' % (endpoint_name))
+        raise error.TopologyError('No such endpoint (%s)' % (endpoint_name))
 
 
     def __str__(self):

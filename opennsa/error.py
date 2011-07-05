@@ -1,5 +1,5 @@
 """
-Various generic errors (exceptions) for OpenNSA.
+Various errors (exceptions) for OpenNSA.
 
 Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2011)
@@ -10,11 +10,19 @@ class TimeoutError(Exception):
     pass
 
 
-class ReserveError(Exception):
+class TopologyError(Exception):
     pass
 
 
 class NoSuchConnectionError(Exception):
+    pass
+
+
+class ConnectionStateTransitionError(Exception):
+    pass
+
+
+class ReserveError(Exception):
     pass
 
 
