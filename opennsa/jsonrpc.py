@@ -212,9 +212,12 @@ class JSONRPCNSIClient:
         return self._issueProxyCall(provider_nsa, gotProxy)
 
 
-    def query(self, requester_nsa, provider_nsa, session_security_attributes):
+    def query(self, requester_nsa, provider_nsa, query_filter, session_security_attributes):
 
-        raise NotImplementedError('Query, nahh..')
+        def gotProxy(proxy):
+            return proxy.call('Query', requester_nsa.protoNSA(), provider_nsa.protoNSA(), query_filter, session_security_attributes)
+
+        return self._issueProxyCall(provider_nsa, gotProxy)
 
 
 
@@ -275,7 +278,12 @@ class JSONRPCNSIServiceDecoder:
 
 
     def decodeQuery(self, req_nsa, prov_nsa, query_filter, session_security_attr):
-        raise NotImplementedError('Query decoding not done yet')
+
+        requester_nsa = self._parseNSA(req_nsa)
+        provider_nsa  = self._parseNSA(prov_nsa)
+        # decode query filter
+        return self.nsi_service.query(requester_nsa, provider_nsa, query_filter, session_security_attr)
+
 
 
 

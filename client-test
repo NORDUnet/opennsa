@@ -29,11 +29,17 @@ def doMain():
     _ = yield proxy.reserve(client_nsa, provider_net.nsa, conn_id, reservation_id, 'Test Connection', service_params, None)
     print "Reservation made"
 
+    _ = yield proxy.query(client_nsa, provider_net.nsa, None, None)
+
     _ = yield proxy.provision(client_nsa, provider_net.nsa, conn_id, None)
     print "Provision made"
 
+    _ = yield proxy.query(client_nsa, provider_net.nsa, None, None)
+
     _ = yield proxy.releaseProvision(client_nsa, provider_net.nsa, conn_id, None)
     print "Provision released"
+
+    _ = yield proxy.query(client_nsa, provider_net.nsa, None, None)
 
     _ = yield proxy.cancelReservation(client_nsa, provider_net.nsa, conn_id, None)
     print "Reservation cancelled"

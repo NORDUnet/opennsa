@@ -194,8 +194,8 @@ class NSIAggregator:
         return d
 
 
-    def query(self, requester_nsa, provider_nsa, session_security_attributes):
+    def query(self, requester_nsa, provider_nsa, query_filter, session_security_attributes):
 
-        raise NotImplementedError('NSIService Query for Router adaptor not implemented.')
+        log.msg('-', system='opennsa.NSIAggregator')
 
 
