@@ -28,7 +28,10 @@ class NSIAggregator:
         self.topology = topology.Topology()
         self.topology.parseTopology(open(topology_file))
 
-        self.connections = {}
+        # get own nsa from topology
+        self.nsa = self.topology.getNetwork(self.network).nsa
+
+        self.connections = {} # persistence, ha!
 
 
     def reserve(self, requester_nsa, provider_nsa, connection_id, global_reservation_id, description, service_parameters, session_security_attributes):
@@ -78,8 +81,6 @@ class NSIAggregator:
             chain_network = selected_link.endpoint_pairs[0].stp2.network
 
             def issueChainReservation(connection):
-                own_address = self.topology.getNetwork(self.network).nsa.address # is this ok? why not?
-                own_nsa = nsa.NetworkServiceAgent(own_address, None)
 
                 chain_network_nsa = self.topology.getNetwork(chain_network).nsa
 
@@ -93,7 +94,7 @@ class NSIAggregator:
                     return connection
 
                 proxy = jsonrpc.JSONRPCNSIClient()
-                d = proxy.reserve(own_nsa, chain_network_nsa, sub_conn_id, global_reservation_id, description, new_service_params, None)
+                d = proxy.reserve(self.nsa, chain_network_nsa, sub_conn_id, global_reservation_id, description, new_service_params, None)
                 d.addCallback(chainedReservationMade)
                 d.addCallback(lambda _ : connection_id)
                 return d
@@ -158,16 +159,12 @@ class NSIAggregator:
         for sub_network, sub_conn_id in conn.sub_connections:
             sub_network_nsa = self.topology.getNetwork(sub_network).nsa
 
-            # this should be made class wide sometime
-            own_address = self.topology.getNetwork(self.network).nsa.address # is this ok? why not?
-            own_nsa = nsa.NetworkServiceAgent(own_address, None)
-
             def subProvisionMade(conn_id, sub_conn_id, sub_network):
                 log.msg('Sub connection %s in network %s provisioned' % (sub_conn_id, sub_network), system='opennsa.NSIAggregator')
                 return conn_id
 
             proxy = jsonrpc.JSONRPCNSIClient()
-            d = proxy.provision(own_nsa, sub_network_nsa, sub_conn_id, None)
+            d = proxy.provision(self.nsa, sub_network_nsa, sub_conn_id, None)
             d.addCallback(subProvisionMade, sub_conn_id, sub_network)
             defs.append(d)
 
