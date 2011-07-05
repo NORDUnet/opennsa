@@ -52,7 +52,7 @@ class DUDNSIProxy:
 
         connection_id = uuid.uuid1().hex[0:8]
         self.connections[connection_id] = {}
-        log.msg('PROVISION. IC ID: %s, Reservation id: %s' % (connection_id, reservation_id), system='DUD Proxy. Network %s ' % self.name)
+        log.msg('PROVISION. IC ID: %s, IR ID: %s' % (connection_id, reservation_id), system='DUD Proxy. Network %s ' % self.name)
         return defer.succeed(connection_id)
 
 
