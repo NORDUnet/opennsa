@@ -34,6 +34,18 @@ class NSIAggregator:
 
         self.connections = {} # persistence, ha!
 
+    # utility functionality
+
+    def getConnection(self, requester_nsa, connection_id):
+
+        conn = self.connections.get(requester_nsa.address, {}).get(connection_id, None)
+        if conn is None:
+            raise error.NoSuchConnectionError('No connection with id %s for NSA with address %s' % (connection_id, requester_nsa.address))
+        else:
+            return conn
+
+
+    # command functionality
 
     def reserve(self, requester_nsa, provider_nsa, connection_id, global_reservation_id, description, service_parameters, session_security_attributes):
 
@@ -120,24 +132,41 @@ class NSIAggregator:
 
     def cancelReservation(self, requester_nsa, provider_nsa, connection_id, session_security_attributes):
 
-        conn = self.connections.get(requester_nsa.address, {}).get(connection_id, None)
-        if conn is None:
-            raise error.CancelReservationError('No connection with id %s for NSA with address %s' % (connection_id, requester_nsa.address))
+        conn = self.getConnection(requester_nsa, connection_id)
         # check state before cancelling
 
-        def reservationCancelled(_):
-            pass
+        def internalReservationCancelled(_):
+            log.msg('Connection %s/%s internally cancelled' % (conn.connection_id, conn.internal_reservation_id), system='opennsa.NSIAggregator')
             # update state
 
-        d = self.backend.cancelReservation(conn.internal_reservation_id)
+        def connectionCancelled(results):
+            log.msg('Connection %s and all sub connections(%i) cancelled' % (conn.connection_id, len(results)-1), system='opennsa.NSIAggregator')
+            return conn.connection_id
+
+        di = self.backend.cancelReservation(conn.internal_reservation_id)
+        di.addCallback(internalReservationCancelled)
+
+        defs = [ di ]
+
+        for sub_network, sub_connection_id in conn.sub_connections:
+            sub_network_nsa = self.topology.getNetwork(sub_network).nsa
+
+            def subReservationCancelled(_, sub_connection_id, sub_network):
+                log.msg('Sub connection %s in network %s cancelled' % (sub_connection_id, sub_network), system='opennsa.NSIAggregator')
+                return conn_id
+
+            d = self.proxy.cancelReservation(self.nsa, sub_network_nsa, sub_connection_id, None)
+            d.addCallback(subReservationCancelled, sub_connection_id, sub_network)
+            defs.append(d)
+
+        d = defer.DeferredList(defs)
+        d.addCallback(connectionCancelled)
         return d
 
 
     def provision(self, requester_nsa, provider_nsa, connection_id, session_security_attributes):
 
-        conn = self.connections.get(requester_nsa.address, {}).get(connection_id, None)
-        if conn is None:
-            raise error.ProvisionError('No connection with id %s for NSA with address %s' % (connection_id, requester_nsa.address))
+        conn = self.getConnection(requester_nsa, connection_id)
         # check state is ok before provisioning
 
         def internalProvisionMade(internal_connection_id):
@@ -147,7 +176,7 @@ class NSIAggregator:
             return connection_id
 
         def provisionComplete(results):
-            log.msg('Connection %s and all sub connections provisioned' % connection_id, system='opennsa.NSIAggregator')
+            log.msg('Connection %s and all sub connections(%i) provisioned' % (connection_id, len(results)-1), system='opennsa.NSIAggregator')
             return connection_id
 
         # if there are any sub connections, call must be issues to those
@@ -159,33 +188,47 @@ class NSIAggregator:
         for sub_network, sub_conn_id in conn.sub_connections:
             sub_network_nsa = self.topology.getNetwork(sub_network).nsa
 
-            def subProvisionMade(conn_id, sub_conn_id, sub_network):
+            def subProvisionDone(conn_id, sub_conn_id, sub_network):
                 log.msg('Sub connection %s in network %s provisioned' % (sub_conn_id, sub_network), system='opennsa.NSIAggregator')
                 return conn_id
 
             d = self.proxy.provision(self.nsa, sub_network_nsa, sub_conn_id, None)
-            d.addCallback(subProvisionMade, sub_conn_id, sub_network)
+            d.addCallback(subProvisionDone, sub_conn_id, sub_network)
             defs.append(d)
 
         d = defer.DeferredList(defs)
         d.addCallback(provisionComplete) # error handling, nahh :-)
-
-
         return d
 
 
     def releaseProvision(self, requester_nsa, provider_nsa, connection_id, session_security_attributes):
 
-        conn = self.connections.get(requester_nsa.address, {}).get(connection_id, None)
-        if conn is None:
-            raise error.ReleaseProvisionError('No connection with id %s for NSA with address %s' % (connection_id, requester_nsa.address))
+        conn = self.getConnection(requester_nsa, connection_id)
 
-        def provisionReleased(internal_reservation_id):
+        def internalProvisionReleased(internal_reservation_id):
             conn.internal_reservation_id = internal_reservation_id
             conn.internal_connection_id = None
 
-        d = self.backend.releaseProvision(conn.internal_connection_id)
-        d.addCallback(provisionReleased)
+        def connectionReleased(results):
+            log.msg('Connection %s and all sub connections(%i) released' % (connection_id, len(results)-1), system='opennsa.NSIAggregator')
+
+        di = self.backend.releaseProvision(conn.internal_connection_id)
+        di.addCallback(internalProvisionReleased)
+
+        defs = [ di ]
+
+        for sub_network, sub_connection_id in conn.sub_connections:
+            sub_network_nsa = self.topology.getNetwork(sub_network).nsa
+
+            def subReleaseProvisionDone(_, sub_connection_id, sub_network):
+                log.msg('Sub connection %s in network %s released' % (sub_conn_id, sub_network), system='opennsa.NSIAggregator')
+
+            d = self.proxy.releaseProvision(self.nsa, sub_network_nsa, sub_connection_id, None)
+            d.addCallback(subReleaseProvisionDone, sub_connection_id, sub_network)
+            defs.append(d)
+
+        d = defer.DeferredList(defs)
+        d.addCallback(connectionReleased)
         return d
 
 

@@ -14,6 +14,10 @@ class ReserveError(Exception):
     pass
 
 
+class NoSuchConnectionError(Exception):
+    pass
+
+
 class CancelReservationError(Exception):
     pass
 
