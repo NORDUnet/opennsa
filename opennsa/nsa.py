@@ -8,6 +8,8 @@ Copyright: NORDUnet (2011)
 
 import urlparse
 
+from opennsa import error
+
 
 
 class STP: # Service Termination Point
