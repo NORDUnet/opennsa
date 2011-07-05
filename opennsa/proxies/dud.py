@@ -29,7 +29,7 @@ class DUDNSIProxy:
 
     def reserve(self, source_endpoint, dest_endpoint, service_parameters):
         reservation_id = uuid.uuid1().hex[0:8]
-        log.msg('RESERVE. IR ID: %s, Link: %s -> %s' % (reservation_id, source_endpoint, dest_endpoint), system='DUD Proxy (%s)' % self.name)
+        log.msg('RESERVE. IR ID: %s, Link: %s -> %s' % (reservation_id, source_endpoint, dest_endpoint), system='DUD Proxy. Network %s ' % self.name)
         self.reservations[reservation_id] = {} # service params can go in dict when needed
         return defer.succeed(reservation_id)
 
@@ -37,7 +37,7 @@ class DUDNSIProxy:
     def cancelReservation(self, reservation_id):
         try:
             self.reservations.pop(reservation_id)
-            log.msg('CANCEL. IR ID: %s' % (reservation_id), system='DUD Proxy (%s)' % self.name)
+            log.msg('CANCEL. IR ID: %s' % (reservation_id), system='DUD Proxy. Network %s ' % self.name)
             return defer.succeed(None)
         except KeyError:
             raise nsaerror.CancelReservationError('No such reservation (%s)' % reservation_id)
@@ -52,7 +52,7 @@ class DUDNSIProxy:
 
         connection_id = uuid.uuid1().hex[0:8]
         self.connections[connection_id] = {}
-        log.msg('PROVISION. IC ID: %s, Reservation id: %s' % (connection_id, reservation_id), system='DUD Proxy (%s)' % self.name)
+        log.msg('PROVISION. IC ID: %s, Reservation id: %s' % (connection_id, reservation_id), system='DUD Proxy. Network %s ' % self.name)
         return defer.succeed(connection_id)
 
 
@@ -63,7 +63,7 @@ class DUDNSIProxy:
             raise nsaerror.ReleaseProvisionError('No such provisioned connection (%s)' % connection_id)
 
         reservation_id = uuid.uuid1().hex[0:8]
-        log.msg('RELEASE. IC ID: %s, IR ID: %s' % (connection_id, reservation_id), system='DUD Proxy (%s)' % self.name)
+        log.msg('RELEASE. IC ID: %s, IR ID: %s' % (connection_id, reservation_id), system='DUD Proxy. Network %s ' % self.name)
         self.reservations[reservation_id] = {} # service params can go in dict when needed
         return defer.succeed(reservation_id)
 
