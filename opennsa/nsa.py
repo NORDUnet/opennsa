@@ -141,20 +141,52 @@ class ServiceParameters:
 
 
 
-RESERVING = 'RESERVING'
-RESERVED  = 'RESERVED'
+RESERVING        = 'RESERVING'
+RESERVED         = 'RESERVED'
+RESERVE_FAILED   = 'RESERVE_FAILED'
+
+PROVISIONED      = 'PROVISIONED'
+PROVISION_FAILED = 'PROVISION_FAILED'
+
+RELEASE_FAILED   = 'RELEASE_FAILED'
+
+CANCELLED        = 'CANCELLED'
+CANCEL_FAILED    = 'CANCEL_FAILED'
+
+TRANSITIONS = {
+    RESERVING       : [ RESERVED, RESERVE_FAILED ],
+    RESERVED        : [ PROVISIONED, PROVISION_FAILED, CANCELLED, CANCEL_FAILED ],
+    PROVISIONED     : [ RESERVED, RELEASE_FAILED ]
+}
 
 
 
-class SubConnection:
+class ConnectionState:
+
+    def __init__(self, state=RESERVING):
+        self._state = state
+
+
+    def state(self):
+        return self._state
+
+
+    def switchState(self, new_state):
+        if new_state in TRANSITIONS[self._state]:
+            self._state = new_state
+        else:
+            raise error.ConnectionStateTransitionError('Transition from state %s to %s not allowed' % (self.state, new_state))
+
+
+
+class SubConnection(ConnectionState):
 
     def __init__(self, source_stp, dest_stp, network, connection_id):
+        ConnectionState.__init__(self)
         self.source_stp = source_stp
         self.dest_stp   = dest_stp
         self.network    = network
         self.connection_id = connection_id
-
-        self.state = RESERVING
 
 
 
@@ -164,12 +196,12 @@ class Connection:
         self.connection_id              = connection_id
         self.internal_reservation_id    = internal_reservation_id
         self.internal_connection_id     = internal_connection_id # pretty much never available at creation
+        self.internal_state             = ConnectionState()
         self.source_stp                 = source_stp
         self.dest_stp                   = dest_stp
         self.global_reservation_id      = global_reservation_id
         self.sub_connections            = sub_connections or []
 
-        self.state = RESERVING
 
 
     def setState(self, new_state):
