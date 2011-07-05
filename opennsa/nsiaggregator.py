@@ -48,7 +48,7 @@ class NSIAggregator:
             self.connections.setdefault(nsa_identity, {})
             connection = nsa.Connection(connection_id, internal_reservation_id, source_stp, dest_stp, global_reservation_id, sub_connections)
             self.connections[nsa_identity][connection_id] = connection
-            log.msg('Reservation for connection %s (%s) created. Global id %s' % (connection_id, internal_reservation_id, global_reservation_id), system='opennsa.NSIAggregator')
+            log.msg('Reservation created. Connection id: %s (%s). Global id %s' % (connection_id, internal_reservation_id, global_reservation_id), system='opennsa.NSIAggregator')
             return connection
 
         # figure out nature of request
@@ -147,7 +147,6 @@ class NSIAggregator:
 
         def provisionComplete(results):
             log.msg('Connection %s and all sub connections provisioned' % connection_id, system='opennsa.NSIAggregator')
-            print "R", results
             return connection_id
 
         # if there are any sub connections, call must be issues to those
@@ -196,6 +195,6 @@ class NSIAggregator:
 
     def query(self, requester_nsa, provider_nsa, query_filter, session_security_attributes):
 
-        log.msg('-', system='opennsa.NSIAggregator')
+        log.msg('', system='opennsa.NSIAggregator')
 
 

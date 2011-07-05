@@ -26,6 +26,8 @@ def doMain():
     conn_id = 'ccid' + ''.join( [ str(int(random.random() * 10)) for _ in range(4) ] )
     print "Connection id", conn_id
 
+    _ = yield proxy.query(client_nsa, provider_net.nsa, None, None)
+
     _ = yield proxy.reserve(client_nsa, provider_net.nsa, conn_id, reservation_id, 'Test Connection', service_params, None)
     print "Reservation made"
 
