@@ -30,6 +30,7 @@ class NSIAggregator:
 
         # get own nsa from topology
         self.nsa = self.topology.getNetwork(self.network).nsa
+        self.proxy = jsonrpc.JSONRPCNSIClient()
 
         self.connections = {} # persistence, ha!
 
@@ -93,8 +94,7 @@ class NSIAggregator:
                     connection.sub_connections.append( ( chain_network, sub_conn_id) )
                     return connection
 
-                proxy = jsonrpc.JSONRPCNSIClient()
-                d = proxy.reserve(self.nsa, chain_network_nsa, sub_conn_id, global_reservation_id, description, new_service_params, None)
+                d = self.proxy.reserve(self.nsa, chain_network_nsa, sub_conn_id, global_reservation_id, description, new_service_params, None)
                 d.addCallback(chainedReservationMade)
                 d.addCallback(lambda _ : connection_id)
                 return d
@@ -163,8 +163,7 @@ class NSIAggregator:
                 log.msg('Sub connection %s in network %s provisioned' % (sub_conn_id, sub_network), system='opennsa.NSIAggregator')
                 return conn_id
 
-            proxy = jsonrpc.JSONRPCNSIClient()
-            d = proxy.provision(self.nsa, sub_network_nsa, sub_conn_id, None)
+            d = self.proxy.provision(self.nsa, sub_network_nsa, sub_conn_id, None)
             d.addCallback(subProvisionMade, sub_conn_id, sub_network)
             defs.append(d)
 
