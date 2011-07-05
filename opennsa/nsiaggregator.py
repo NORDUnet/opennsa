@@ -48,6 +48,7 @@ class NSIAggregator:
             self.connections.setdefault(nsa_identity, {})
             connection = nsa.Connection(connection_id, internal_reservation_id, source_stp, dest_stp, global_reservation_id, sub_reservations)
             self.connections[nsa_identity][connection_id] = connection
+            log.msg('Reservation for connection %s (%s) created. Global id %s' % (connection_id, internal_reservation_id, global_reservation_id), system='opennsa.NSIAggregator')
             return connection
 
         # figure out nature of request
