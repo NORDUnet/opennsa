@@ -143,6 +143,19 @@ RESERVING = 'RESERVING'
 RESERVED  = 'RESERVED'
 
 
+
+class SubConnection:
+
+    def __init__(self, source_stp, dest_stp, network, connection_id):
+        self.source_stp = source_stp
+        self.dest_stp   = dest_stp
+        self.network    = network
+        self.connection_id = connection_id
+
+        self.state = RESERVING
+
+
+
 class Connection:
 
     def __init__(self, connection_id, internal_reservation_id, source_stp, dest_stp, global_reservation_id=None, sub_connections=None, internal_connection_id=None):
@@ -155,10 +168,6 @@ class Connection:
         self.sub_connections            = sub_connections or []
 
         self.state = RESERVING
-
-
-    def state(self):
-        return self.state
 
 
     def setState(self, new_state):

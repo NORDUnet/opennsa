@@ -103,7 +103,7 @@ class NSIAggregator:
                 new_service_params  = nsa.ServiceParameters('', '', new_source_stp, dest_stp)
 
                 def chainedReservationMade(sub_conn_id):
-                    connection.sub_connections.append( ( chain_network, sub_conn_id) )
+                    connection.sub_connections.append( nsa.SubConnection(new_source_stp, dest_stp, chain_network, sub_conn_id) )
                     return connection
 
                 d = self.proxy.reserve(self.nsa, chain_network_nsa, sub_conn_id, global_reservation_id, description, new_service_params, None)
@@ -148,15 +148,15 @@ class NSIAggregator:
 
         defs = [ di ]
 
-        for sub_network, sub_connection_id in conn.sub_connections:
-            sub_network_nsa = self.topology.getNetwork(sub_network).nsa
+        for sub_conn in conn.sub_connections:
+            sub_network_nsa = self.topology.getNetwork(sub_conn.network).nsa
 
-            def subReservationCancelled(_, sub_connection_id, sub_network):
-                log.msg('Sub connection %s in network %s cancelled' % (sub_connection_id, sub_network), system='opennsa.NSIAggregator')
+            def subReservationCancelled(_, sub_conne):
+                log.msg('Sub connection %s in network %s cancelled' % (sub_conn.connection_id, sub_conn.network), system='opennsa.NSIAggregator')
                 return conn_id
 
-            d = self.proxy.cancelReservation(self.nsa, sub_network_nsa, sub_connection_id, None)
-            d.addCallback(subReservationCancelled, sub_connection_id, sub_network)
+            d = self.proxy.cancelReservation(self.nsa, sub_network_nsa, sub_conn.connection_id, None)
+            d.addCallback(subReservationCancelled, sub_conn.connection_id, sub_conn.network)
             defs.append(d)
 
         d = defer.DeferredList(defs)
@@ -185,15 +185,15 @@ class NSIAggregator:
 
         defs = [ di ]
 
-        for sub_network, sub_conn_id in conn.sub_connections:
-            sub_network_nsa = self.topology.getNetwork(sub_network).nsa
+        for sub_conn in conn.sub_connections:
+            sub_network_nsa = self.topology.getNetwork(sub_conn.network).nsa
 
-            def subProvisionDone(conn_id, sub_conn_id, sub_network):
-                log.msg('Sub connection %s in network %s provisioned' % (sub_conn_id, sub_network), system='opennsa.NSIAggregator')
+            def subProvisionDone(conn_id, sub_conn):
+                log.msg('Sub connection %s in network %s provisioned' % (sub_conn.connection_id, sub_conn.network), system='opennsa.NSIAggregator')
                 return conn_id
 
-            d = self.proxy.provision(self.nsa, sub_network_nsa, sub_conn_id, None)
-            d.addCallback(subProvisionDone, sub_conn_id, sub_network)
+            d = self.proxy.provision(self.nsa, sub_network_nsa, sub_conn.connection_id, None)
+            d.addCallback(subProvisionDone, sub_conn)
             defs.append(d)
 
         d = defer.DeferredList(defs)
@@ -217,14 +217,14 @@ class NSIAggregator:
 
         defs = [ di ]
 
-        for sub_network, sub_connection_id in conn.sub_connections:
-            sub_network_nsa = self.topology.getNetwork(sub_network).nsa
+        for sub_conn in conn.sub_connections:
+            sub_network_nsa = self.topology.getNetwork(sub_conn.network).nsa
 
-            def subReleaseProvisionDone(_, sub_connection_id, sub_network):
-                log.msg('Sub connection %s in network %s released' % (sub_conn_id, sub_network), system='opennsa.NSIAggregator')
+            def subReleaseProvisionDone(_, sub_conn):
+                log.msg('Sub connection %s in network %s released' % (sub_conn.connection_id, sub_conn.network), system='opennsa.NSIAggregator')
 
-            d = self.proxy.releaseProvision(self.nsa, sub_network_nsa, sub_connection_id, None)
-            d.addCallback(subReleaseProvisionDone, sub_connection_id, sub_network)
+            d = self.proxy.releaseProvision(self.nsa, sub_network_nsa, sub_conn.connection_id, None)
+            d.addCallback(subReleaseProvisionDone, sub_conn)
             defs.append(d)
 
         d = defer.DeferredList(defs)
