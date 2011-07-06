@@ -141,22 +141,28 @@ class ServiceParameters:
 
 
 
-RESERVING        = 'RESERVING'
-RESERVED         = 'RESERVED'
-RESERVE_FAILED   = 'RESERVE_FAILED'
+RESERVING           = 'RESERVING'
+RESERVED            = 'RESERVED'
+RESERVE_FAILED      = 'RESERVE_FAILED'
 
-PROVISIONED      = 'PROVISIONED'
-PROVISION_FAILED = 'PROVISION_FAILED'
+PROVISIONING        = 'PROVISIONING'
+PROVISIONED         = 'PROVISIONED'
+PROVISION_FAILED    = 'PROVISION_FAILED'
 
-RELEASE_FAILED   = 'RELEASE_FAILED'
+RELEASING           = 'RELEASING'
+RELEASE_FAILED      = 'RELEASE_FAILED'
 
-CANCELLED        = 'CANCELLED'
-CANCEL_FAILED    = 'CANCEL_FAILED'
+CANCELLING          = 'CANCELLING'
+CANCELLED           = 'CANCELLED'
+CANCEL_FAILED       = 'CANCEL_FAILED'
 
 TRANSITIONS = {
-    RESERVING       : [ RESERVED, RESERVE_FAILED ],
-    RESERVED        : [ PROVISIONED, PROVISION_FAILED, CANCELLED, CANCEL_FAILED ],
-    PROVISIONED     : [ RESERVED, RELEASE_FAILED ]
+    RESERVING       : [ RESERVED,     RESERVE_FAILED    ],
+    RESERVED        : [ PROVISIONING, CANCELLING         ],
+    PROVISIONING    : [ PROVISIONED,  PROVISION_FAILED  ],
+    PROVISIONED     : [ RELEASING                       ],
+    RELEASING       : [ RESERVED,     RELEASE_FAILED    ],
+    CANCELLING      : [ CANCELLED,    CANCEL_FAILED     ]
 }
 
 
@@ -173,9 +179,10 @@ class ConnectionState:
 
     def switchState(self, new_state):
         if new_state in TRANSITIONS[self._state]:
+            print "sS", self._state, "->", new_state
             self._state = new_state
         else:
-            raise error.ConnectionStateTransitionError('Transition from state %s to %s not allowed' % (self.state, new_state))
+            raise error.ConnectionStateTransitionError('Transition from state %s to %s not allowed' % (self._state, new_state))
 
 
 
@@ -190,9 +197,10 @@ class SubConnection(ConnectionState):
 
 
 
-class Connection:
+class Connection(ConnectionState):
 
     def __init__(self, connection_id, internal_reservation_id, source_stp, dest_stp, global_reservation_id=None, sub_connections=None, internal_connection_id=None):
+        ConnectionState.__init__(self)
         self.connection_id              = connection_id
         self.internal_reservation_id    = internal_reservation_id
         self.internal_connection_id     = internal_connection_id # pretty much never available at creation
@@ -203,7 +211,7 @@ class Connection:
         self.sub_connections            = sub_connections or []
 
 
-
-    def setState(self, new_state):
-        raise NotImplementedError('State changing not yet implemented')
+    def switchState(self, new_state):
+        # do we want constraints here, and how to deal with partial failures... hmm
+        ConnectionState.switchState(self, new_state)
 

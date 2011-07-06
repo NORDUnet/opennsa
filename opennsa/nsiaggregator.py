@@ -64,6 +64,7 @@ class NSIAggregator:
             self.connections.setdefault(nsa_identity, {})
             connection = nsa.Connection(connection_id, internal_reservation_id, source_stp, dest_stp, global_reservation_id, sub_connections)
             connection.internal_state.switchState(nsa.RESERVED)
+            connection.switchState(nsa.RESERVED)
             self.connections[nsa_identity][connection_id] = connection
             log.msg('Reservation created. Connection id: %s (%s). Global id %s' % (connection_id, internal_reservation_id, global_reservation_id), system='opennsa.NSIAggregator')
             return connection
@@ -136,36 +137,50 @@ class NSIAggregator:
     def cancelReservation(self, requester_nsa, provider_nsa, connection_id, session_security_attributes):
 
         def internalReservationCancelled(_, conn):
+            print "iRC", self.network
             conn.internal_state.switchState(nsa.CANCELLED)
             log.msg('Connection %s/%s internally cancelled' % (conn.connection_id, conn.internal_reservation_id), system='opennsa.NSIAggregator')
-            # update state
 
         def subReservationCancelled(conn_id, sub_conn):
+            print "sRC", self.network
             sub_conn.switchState(nsa.CANCELLED)
             log.msg('Sub connection %s in network %s cancelled' % (sub_conn.connection_id, sub_conn.network), system='opennsa.NSIAggregator')
             return conn_id
 
         def connectionCancelled(results):
-            if len(results) > 1:
+            print "cC", self.network
+            conn.switchState(nsa.CANCELLED)
+            successes = [ r[0] for r in results ]
+            if all(successes):
                 log.msg('Connection %s and all sub connections(%i) cancelled' % (conn.connection_id, len(results)-1), system='opennsa.NSIAggregator')
-            return conn.connection_id
+                return conn.connection_id
+            if any(successes):
+                print "Partial cancelation, gahh"
+            else:
+                log.msg('Failed to cancel connection %s and all sub connections(%i)' % (conn.connection_id, len(results)-1), system='opennsa.NSIAggregator')
+
 
         conn = self.getConnection(requester_nsa, connection_id)
-        # check state before cancelling
 
+        conn.switchState(nsa.CANCELLING)
+
+        conn.internal_state.switchState(nsa.CANCELLING)
         di = self.backend.cancelReservation(conn.internal_reservation_id)
         di.addCallback(internalReservationCancelled, conn)
+        if not conn.sub_connections:
+            return di # no sub connections -> no need for handling them
 
         defs = [ di ]
         for sub_conn in conn.sub_connections:
             sub_network_nsa = self.topology.getNetwork(sub_conn.network).nsa
-            d = self.proxy.cancelReservation(self.nsa, sub_network_nsa, sub_conn.connection_id, None)
-            d.addCallback(subReservationCancelled, sub_conn)
-            defs.append(d)
+            sub_conn.switchState(nsa.CANCELLING)
+            ds = self.proxy.cancelReservation(self.nsa, sub_network_nsa, sub_conn.connection_id, None)
+            ds.addCallback(subReservationCancelled, sub_conn)
+            defs.append(ds)
 
-        d = defer.DeferredList(defs)
-        d.addCallback(connectionCancelled)
-        return d
+        dl = defer.DeferredList(defs)
+        dl.addCallback(connectionCancelled)
+        return dl
 
 
     def provision(self, requester_nsa, provider_nsa, connection_id, session_security_attributes):
@@ -174,7 +189,6 @@ class NSIAggregator:
             conn.internal_state.switchState(nsa.PROVISIONED)
             log.msg('Connection %s/%s internally provisioned in network %s' % (connection_id, internal_connection_id, self.network), system='opennsa.NSIAggregator')
             conn.internal_connection_id = internal_connection_id
-            # update state!
             return connection_id
 
         def subProvisionDone(conn_id, sub_conn):
@@ -183,20 +197,23 @@ class NSIAggregator:
             return conn_id
 
         def provisionComplete(results):
+            conn.switchState(nsa.PROVISIONED)
             if len(results) > 1:
                 log.msg('Connection %s and all sub connections(%i) provisioned' % (connection_id, len(results)-1), system='opennsa.NSIAggregator')
             return connection_id
 
         conn = self.getConnection(requester_nsa, connection_id)
-        # check state is ok before provisioning
 
-        # if there are any sub connections, call must be issued to those
+        conn.switchState(nsa.PROVISIONING)
+
+        conn.internal_state.switchState(nsa.PROVISIONING)
         di = self.backend.provision(conn.internal_reservation_id)
         di.addCallback(internalProvisionMade, conn)
 
         defs = [ di ]
         for sub_conn in conn.sub_connections:
             sub_network_nsa = self.topology.getNetwork(sub_conn.network).nsa
+            sub_conn.switchState(nsa.PROVISIONING)
             d = self.proxy.provision(self.nsa, sub_network_nsa, sub_conn.connection_id, None)
             d.addCallback(subProvisionDone, sub_conn)
             defs.append(d)
@@ -207,8 +224,6 @@ class NSIAggregator:
 
 
     def releaseProvision(self, requester_nsa, provider_nsa, connection_id, session_security_attributes):
-
-        conn = self.getConnection(requester_nsa, connection_id)
 
         def internalProvisionReleased(internal_reservation_id, conn):
             conn.internal_state.switchState(nsa.RESERVED)
@@ -222,16 +237,22 @@ class NSIAggregator:
             log.msg('Sub connection %s in network %s released' % (sub_conn.connection_id, sub_conn.network), system='opennsa.NSIAggregator')
 
         def connectionReleased(results):
+            conn.switchState(nsa.RESERVED)
             if len(results) > 1:
                 log.msg('Connection %s and all sub connections(%i) released' % (connection_id, len(results)-1), system='opennsa.NSIAggregator')
             return conn.connection_id
 
+        conn = self.getConnection(requester_nsa, connection_id)
+        conn.switchState(nsa.RELEASING)
+
+        conn.internal_state.switchState(nsa.RELEASING)
         di = self.backend.releaseProvision(conn.internal_connection_id)
         di.addCallback(internalProvisionReleased, conn)
 
         defs = [ di ]
         for sub_conn in conn.sub_connections:
             sub_network_nsa = self.topology.getNetwork(sub_conn.network).nsa
+            sub_conn.switchState(nsa.RELEASING)
             d = self.proxy.releaseProvision(self.nsa, sub_network_nsa, sub_conn.connection_id, None)
             d.addCallback(subProvisionReleased, sub_conn)
             defs.append(d)
