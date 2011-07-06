@@ -179,7 +179,6 @@ class ConnectionState:
 
     def switchState(self, new_state):
         if new_state in TRANSITIONS[self._state]:
-            print "sS", self._state, "->", new_state
             self._state = new_state
         else:
             raise error.ConnectionStateTransitionError('Transition from state %s to %s not allowed' % (self._state, new_state))
@@ -197,16 +196,26 @@ class SubConnection(ConnectionState):
 
 
 
-class Connection(ConnectionState):
+class LocalConnection(ConnectionState):
 
-    def __init__(self, connection_id, internal_reservation_id, source_stp, dest_stp, global_reservation_id=None, sub_connections=None, internal_connection_id=None):
+    def __init__(self, source_endpoint, dest_endpoint, internal_reservation_id, internal_connection_id=None):
         ConnectionState.__init__(self)
-        self.connection_id              = connection_id
+        self.source_endpoint            = source_endpoint
+        self.dest_endpoint              = dest_endpoint
         self.internal_reservation_id    = internal_reservation_id
         self.internal_connection_id     = internal_connection_id # pretty much never available at creation
-        self.internal_state             = ConnectionState()
+
+
+
+class Connection(ConnectionState):
+
+    def __init__(self, connection_id, source_stp, dest_stp, local_connection, global_reservation_id=None, sub_connections=None):
+        ConnectionState.__init__(self)
+        self.connection_id              = connection_id
+        self.local_connection           = local_connection
         self.source_stp                 = source_stp
         self.dest_stp                   = dest_stp
+        self.local_connection           = local_connection
         self.global_reservation_id      = global_reservation_id
         self.sub_connections            = sub_connections or []
 

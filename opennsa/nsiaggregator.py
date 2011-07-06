@@ -59,13 +59,14 @@ class NSIAggregator:
         source_stp = service_parameters.source_stp
         dest_stp   = service_parameters.dest_stp
 
-        def reservationMade(internal_reservation_id, sub_connections=None):
-            #nsa_identity = requester_nsa.address
-            self.connections.setdefault(nsa_identity, {})
-            connection = nsa.Connection(connection_id, internal_reservation_id, source_stp, dest_stp, global_reservation_id, sub_connections)
-            connection.internal_state.switchState(nsa.RESERVED)
-            connection.switchState(nsa.RESERVED)
-            self.connections[nsa_identity][connection_id] = connection
+        def localReservationMade(internal_reservation_id, local_source_endpoint, local_dest_endpoint):
+
+            local_connection = nsa.LocalConnection(local_source_endpoint, local_dest_endpoint, internal_reservation_id)
+            local_connection.switchState(nsa.RESERVED)
+
+            connection = nsa.Connection(connection_id, source_stp, dest_stp, local_connection, global_reservation_id, None)
+            connection.switchState(nsa.RESERVED) # WRONG! (not everything is reserved switched yet)
+            self.connections.setdefault(nsa_identity, {})[connection_id] = connection
             log.msg('Reservation created. Connection id: %s (%s). Global id %s' % (connection_id, internal_reservation_id, global_reservation_id), system='opennsa.NSIAggregator')
             return connection
 
@@ -77,7 +78,7 @@ class NSIAggregator:
             log.msg('Simple link creation: %s:%s -> %s:%s (%s)' % link_info, system='opennsa.NSIAggregator')
             # make an internal link, no sub requests
             d = self.backend.reserve(source_stp.endpoint, dest_stp.endpoint, service_parameters)
-            d.addCallback(reservationMade)
+            d.addCallback(localReservationMade, source_stp.endpoint, dest_stp.endpoint)
             d.addCallback(lambda _ : connection_id)
             return d
 
@@ -116,7 +117,7 @@ class NSIAggregator:
                 return d
 
             d = self.backend.reserve(selected_link.source_stp.endpoint, selected_link.endpoint_pairs[0].stp1.endpoint, service_parameters)
-            d.addCallback(reservationMade)
+            d.addCallback(localReservationMade, selected_link.source_stp.endpoint, selected_link.endpoint_pairs[0].stp1.endpoint)
             d.addCallback(issueChainReservation)
             return d
 
@@ -137,18 +138,15 @@ class NSIAggregator:
     def cancelReservation(self, requester_nsa, provider_nsa, connection_id, session_security_attributes):
 
         def internalReservationCancelled(_, conn):
-            print "iRC", self.network
-            conn.internal_state.switchState(nsa.CANCELLED)
-            log.msg('Connection %s/%s internally cancelled' % (conn.connection_id, conn.internal_reservation_id), system='opennsa.NSIAggregator')
+            conn.local_connection.switchState(nsa.CANCELLED)
+            log.msg('Connection %s/%s internally cancelled' % (conn.connection_id, conn.local_connection), system='opennsa.NSIAggregator')
 
         def subReservationCancelled(conn_id, sub_conn):
-            print "sRC", self.network
             sub_conn.switchState(nsa.CANCELLED)
             log.msg('Sub connection %s in network %s cancelled' % (sub_conn.connection_id, sub_conn.network), system='opennsa.NSIAggregator')
             return conn_id
 
         def connectionCancelled(results):
-            print "cC", self.network
             conn.switchState(nsa.CANCELLED)
             successes = [ r[0] for r in results ]
             if all(successes):
@@ -164,8 +162,8 @@ class NSIAggregator:
 
         conn.switchState(nsa.CANCELLING)
 
-        conn.internal_state.switchState(nsa.CANCELLING)
-        di = self.backend.cancelReservation(conn.internal_reservation_id)
+        conn.local_connection.switchState(nsa.CANCELLING)
+        di = self.backend.cancelReservation(conn.local_connection.internal_reservation_id)
         di.addCallback(internalReservationCancelled, conn)
         if not conn.sub_connections:
             return di # no sub connections -> no need for handling them
@@ -186,9 +184,9 @@ class NSIAggregator:
     def provision(self, requester_nsa, provider_nsa, connection_id, session_security_attributes):
 
         def internalProvisionMade(internal_connection_id, conn):
-            conn.internal_state.switchState(nsa.PROVISIONED)
+            conn.local_connection.switchState(nsa.PROVISIONED)
             log.msg('Connection %s/%s internally provisioned in network %s' % (connection_id, internal_connection_id, self.network), system='opennsa.NSIAggregator')
-            conn.internal_connection_id = internal_connection_id
+            conn.local_connection.internal_connection_id = internal_connection_id
             return connection_id
 
         def subProvisionDone(conn_id, sub_conn):
@@ -206,8 +204,8 @@ class NSIAggregator:
 
         conn.switchState(nsa.PROVISIONING)
 
-        conn.internal_state.switchState(nsa.PROVISIONING)
-        di = self.backend.provision(conn.internal_reservation_id)
+        conn.local_connection.switchState(nsa.PROVISIONING)
+        di = self.backend.provision(conn.local_connection.internal_reservation_id)
         di.addCallback(internalProvisionMade, conn)
 
         defs = [ di ]
@@ -226,11 +224,11 @@ class NSIAggregator:
     def releaseProvision(self, requester_nsa, provider_nsa, connection_id, session_security_attributes):
 
         def internalProvisionReleased(internal_reservation_id, conn):
-            conn.internal_state.switchState(nsa.RESERVED)
+            conn.local_connection.switchState(nsa.RESERVED)
             log.msg('Connection %s/(%s -> %s) internally released in network %s' % \
-                    (conn.connection_id, conn.internal_connection_id, internal_reservation_id, self.network), system='opennsa.NSIAggregator')
-            conn.internal_reservation_id = internal_reservation_id
-            conn.internal_connection_id = None
+                    (conn.connection_id, conn.local_connection.internal_connection_id, internal_reservation_id, self.network), system='opennsa.NSIAggregator')
+            conn.local_connection.internal_reservation_id = internal_reservation_id
+            conn.local_connection.internal_connection_id = None
 
         def subProvisionReleased(conn_id, sub_conn):
             sub_conn.switchState(nsa.RESERVED)
@@ -245,8 +243,8 @@ class NSIAggregator:
         conn = self.getConnection(requester_nsa, connection_id)
         conn.switchState(nsa.RELEASING)
 
-        conn.internal_state.switchState(nsa.RELEASING)
-        di = self.backend.releaseProvision(conn.internal_connection_id)
+        conn.local_connection.switchState(nsa.RELEASING)
+        di = self.backend.releaseProvision(conn.local_connection.internal_connection_id)
         di.addCallback(internalProvisionReleased, conn)
 
         defs = [ di ]
