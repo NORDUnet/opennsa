@@ -58,12 +58,12 @@ class ConnectionState:
 
 class SubConnection(ConnectionState):
 
-    def __init__(self, source_stp, dest_stp, network, connection_id, proxy=None):
+    def __init__(self, connection_id, network, source_stp, dest_stp, proxy=None):
         ConnectionState.__init__(self)
-        self.source_stp = source_stp
-        self.dest_stp   = dest_stp
-        self.network    = network
-        self.connection_id = connection_id
+        self.connection_id  = connection_id
+        self.network        = network
+        self.source_stp     = source_stp
+        self.dest_stp       = dest_stp
 
         # the one should not be persistent, but should be set when re-created at startup
         self._proxy = proxy

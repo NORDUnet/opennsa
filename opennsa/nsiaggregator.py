@@ -98,15 +98,13 @@ class NSIAggregator:
 
             def issueChainReservation(conn):
 
-                #chain_network_nsa = self.topology.getNetwork(chain_network).nsa
-
                 sub_conn_id = 'int-ccid' + ''.join( [ str(int(random.random() * 10)) for _ in range(4) ] )
 
                 new_source_stp      = selected_link.endpoint_pairs[0].stp2
                 new_service_params  = nsa.ServiceParameters('', '', new_source_stp, dest_stp)
 
                 def chainedReservationMade(sub_conn_id):
-                    sub_conn = connection.SubConnection(new_source_stp, dest_stp, chain_network, sub_conn_id, proxy=self.proxy)
+                    sub_conn = connection.SubConnection(sub_conn_id, chain_network, new_source_stp, dest_stp, proxy=self.proxy)
                     sub_conn.switchState(connection.RESERVED)
                     conn.sub_connections.append( sub_conn )
                     return conn
