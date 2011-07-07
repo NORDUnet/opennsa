@@ -13,7 +13,7 @@ from twisted.python import log
 from twisted.internet import defer
 
 from opennsa.interface import NSIServiceInterface
-from opennsa import nsa, error, topology, jsonrpc
+from opennsa import nsa, error, topology, jsonrpc, proxy
 
 
 
@@ -30,7 +30,7 @@ class NSIAggregator:
 
         # get own nsa from topology
         self.nsa = self.topology.getNetwork(self.network).nsa
-        self.proxy = jsonrpc.JSONRPCNSIClient()
+        self.proxy = proxy.NSIProxy(jsonrpc.JSONRPCNSIClient(), self.nsa, self.topology)
 
         self.connections = {} # persistence, ha!
 
@@ -98,7 +98,7 @@ class NSIAggregator:
 
             def issueChainReservation(connection):
 
-                chain_network_nsa = self.topology.getNetwork(chain_network).nsa
+                #chain_network_nsa = self.topology.getNetwork(chain_network).nsa
 
                 sub_conn_id = 'int-ccid' + ''.join( [ str(int(random.random() * 10)) for _ in range(4) ] )
 
@@ -111,7 +111,8 @@ class NSIAggregator:
                     connection.sub_connections.append( sub_conn )
                     return connection
 
-                d = self.proxy.reserve(self.nsa, chain_network_nsa, sub_conn_id, global_reservation_id, description, new_service_params, None)
+                #d = self.proxy.reserve(self.nsa, chain_network_nsa, sub_conn_id, global_reservation_id, description, new_service_params, None)
+                d = self.proxy.reserve(chain_network, sub_conn_id, global_reservation_id, description, new_service_params, None)
                 d.addCallback(chainedReservationMade)
                 d.addCallback(lambda _ : connection_id)
                 return d
@@ -170,9 +171,8 @@ class NSIAggregator:
 
         defs = [ di ]
         for sub_conn in conn.sub_connections:
-            sub_network_nsa = self.topology.getNetwork(sub_conn.network).nsa
             sub_conn.switchState(nsa.CANCELLING)
-            ds = self.proxy.cancelReservation(self.nsa, sub_network_nsa, sub_conn.connection_id, None)
+            ds = self.proxy.cancelReservation(sub_conn.network, sub_conn.connection_id, None)
             ds.addCallback(subReservationCancelled, sub_conn)
             defs.append(ds)
 
@@ -182,17 +182,6 @@ class NSIAggregator:
 
 
     def provision(self, requester_nsa, provider_nsa, connection_id, session_security_attributes):
-
-        def internalProvisionMade(internal_connection_id, conn):
-            conn.local_connection.switchState(nsa.PROVISIONED)
-            log.msg('Connection %s/%s internally provisioned in network %s' % (connection_id, internal_connection_id, self.network), system='opennsa.NSIAggregator')
-            conn.local_connection.internal_connection_id = internal_connection_id
-            return connection_id
-
-        def subProvisionDone(conn_id, sub_conn):
-            sub_conn.switchState(nsa.PROVISIONED)
-            log.msg('Sub connection %s in network %s provisioned' % (sub_conn.connection_id, sub_conn.network), system='opennsa.NSIAggregator')
-            return conn_id
 
         def provisionComplete(results):
             conn.switchState(nsa.PROVISIONED)
@@ -204,21 +193,14 @@ class NSIAggregator:
 
         conn.switchState(nsa.PROVISIONING)
 
-        conn.local_connection.switchState(nsa.PROVISIONING)
-        di = self.backend.provision(conn.local_connection.internal_reservation_id)
-        di.addCallback(internalProvisionMade, conn)
-
-        defs = [ di ]
-        for sub_conn in conn.sub_connections:
-            sub_network_nsa = self.topology.getNetwork(sub_conn.network).nsa
-            sub_conn.switchState(nsa.PROVISIONING)
-            d = self.proxy.provision(self.nsa, sub_network_nsa, sub_conn.connection_id, None)
-            d.addCallback(subProvisionDone, sub_conn)
+        defs = []
+        for sc in conn.connections():
+            d = sc.provision(self.backend, self.proxy)
             defs.append(d)
 
-        d = defer.DeferredList(defs)
-        d.addCallback(provisionComplete) # error handling, nahh :-)
-        return d
+        dl = defer.DeferredList(defs)
+        dl.addCallback(provisionComplete)
+        return dl
 
 
     def releaseProvision(self, requester_nsa, provider_nsa, connection_id, session_security_attributes):
@@ -249,9 +231,8 @@ class NSIAggregator:
 
         defs = [ di ]
         for sub_conn in conn.sub_connections:
-            sub_network_nsa = self.topology.getNetwork(sub_conn.network).nsa
             sub_conn.switchState(nsa.RELEASING)
-            d = self.proxy.releaseProvision(self.nsa, sub_network_nsa, sub_conn.connection_id, None)
+            d = self.proxy.releaseProvision(sub_conn.network, sub_conn.connection_id, None)
             d.addCallback(subProvisionReleased, sub_conn)
             defs.append(d)
 

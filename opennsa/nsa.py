@@ -195,6 +195,19 @@ class SubConnection(ConnectionState):
         self.connection_id = connection_id
 
 
+    def provision(self, _backend, proxy):
+
+        def provisionDone(conn_id):
+            assert conn_id == self.connection_id
+            self.switchState(PROVISIONED)
+            return self
+
+        self.switchState(PROVISIONING)
+        d = proxy.provision(self.network, self.connection_id, None)
+        d.addCallback(provisionDone)
+        return d
+
+
 
 class LocalConnection(ConnectionState):
 
@@ -204,6 +217,19 @@ class LocalConnection(ConnectionState):
         self.dest_endpoint              = dest_endpoint
         self.internal_reservation_id    = internal_reservation_id
         self.internal_connection_id     = internal_connection_id # pretty much never available at creation
+
+
+    def provision(self, backend, _proxy):
+
+        def provisionDone(int_conn_id):
+            self.internal_connection_id = int_conn_id
+            self.switchState(PROVISIONED)
+            return self
+
+        self.switchState(PROVISIONING)
+        d = backend.provision(self.internal_reservation_id)
+        d.addCallback(provisionDone)
+        return d
 
 
 
@@ -220,7 +246,13 @@ class Connection(ConnectionState):
         self.sub_connections            = sub_connections or []
 
 
-    def switchState(self, new_state):
-        # do we want constraints here, and how to deal with partial failures... hmm
-        ConnectionState.switchState(self, new_state)
+    def hasLocalConnection(self):
+        return self.local_connection is not None
+
+
+    def connections(self):
+        if self.local_connection is not None:
+            return [ self.local_connection ] + self.sub_connections
+        else:
+            return self.sub_connections
 
