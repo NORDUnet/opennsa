@@ -106,6 +106,25 @@ class SubConnection(ConnectionState):
         return d
 
 
+    def releaseProvision(self):
+
+        assert self._proxy is not None, 'Proxy not set for SubConnection, cannot invoke method'
+
+        def releaseDone(conn_id):
+            assert conn_id == self.connection_id
+            self.switchState(RESERVED)
+            return self
+
+        def releaseFailed(err):
+            self.switchState(RELEASE_FAILED)
+            return err
+
+        self.switchState(RELEASING)
+        d = self._proxy.releaseProvision(self.network, self.connection_id, None)
+        d.addCallbacks(releaseDone, releaseFailed)
+        return d
+
+
 
 class LocalConnection(ConnectionState):
 
@@ -154,6 +173,26 @@ class LocalConnection(ConnectionState):
         self.switchState(PROVISIONING)
         d = self._backend.provision(self.internal_reservation_id)
         d.addCallbacks(provisionDone, provisionFailed)
+        return d
+
+
+    def releaseProvision(self):
+
+        assert self._backend is not None, 'Backend not set for LocalConnection, cannot invoke method'
+
+        def releaseDone(int_res_id):
+            self.internal_reservation_id = int_res_id
+            self.internal_connection_id = None
+            self.switchState(RESERVED)
+            return self
+
+        def releaseFailed(err):
+            self.switchState(RELEASE_FAILED)
+            return err
+
+        self.switchState(RELEASING)
+        d = self._backend.releaseProvision(self.internal_connection_id)
+        d.addCallbacks(releaseDone, releaseFailed)
         return d
 
 

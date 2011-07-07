@@ -188,17 +188,6 @@ class NSIAggregator:
 
     def releaseProvision(self, requester_nsa, provider_nsa, connection_id, session_security_attributes):
 
-        def internalProvisionReleased(internal_reservation_id, conn):
-            conn.local_connection.switchState(connection.RESERVED)
-            log.msg('Connection %s/(%s -> %s) internally released in network %s' % \
-                    (conn.connection_id, conn.local_connection.internal_connection_id, internal_reservation_id, self.network), system='opennsa.NSIAggregator')
-            conn.local_connection.internal_reservation_id = internal_reservation_id
-            conn.local_connection.internal_connection_id = None
-
-        def subProvisionReleased(conn_id, sub_conn):
-            sub_conn.switchState(connection.RESERVED)
-            log.msg('Sub connection %s in network %s released' % (sub_conn.connection_id, sub_conn.network), system='opennsa.NSIAggregator')
-
         def connectionReleased(results):
             conn.switchState(connection.RESERVED)
             if len(results) > 1:
@@ -208,20 +197,14 @@ class NSIAggregator:
         conn = self.getConnection(requester_nsa, connection_id)
         conn.switchState(connection.RELEASING)
 
-        conn.local_connection.switchState(connection.RELEASING)
-        di = self.backend.releaseProvision(conn.local_connection.internal_connection_id)
-        di.addCallback(internalProvisionReleased, conn)
-
-        defs = [ di ]
-        for sub_conn in conn.sub_connections:
-            sub_conn.switchState(connection.RELEASING)
-            d = self.proxy.releaseProvision(sub_conn.network, sub_conn.connection_id, None)
-            d.addCallback(subProvisionReleased, sub_conn)
+        defs = []
+        for sc in conn.connections():
+            d = sc.releaseProvision()
             defs.append(d)
 
-        d = defer.DeferredList(defs)
-        d.addCallback(connectionReleased)
-        return d
+        dl = defer.DeferredList(defs)
+        dl.addCallback(connectionReleased)
+        return dl
 
 
     def query(self, requester_nsa, provider_nsa, query_filter, session_security_attributes):
