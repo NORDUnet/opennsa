@@ -137,20 +137,12 @@ class NSIAggregator:
 
     def cancelReservation(self, requester_nsa, provider_nsa, connection_id, session_security_attributes):
 
-        def internalReservationCancelled(_, conn):
-            conn.local_connection.switchState(connection.CANCELLED)
-            log.msg('Connection %s/%s internally cancelled' % (conn.connection_id, conn.local_connection), system='opennsa.NSIAggregator')
-
-        def subReservationCancelled(conn_id, sub_conn):
-            sub_conn.switchState(connection.CANCELLED)
-            log.msg('Sub connection %s in network %s cancelled' % (sub_conn.connection_id, sub_conn.network), system='opennsa.NSIAggregator')
-            return conn_id
-
         def connectionCancelled(results):
             conn.switchState(connection.CANCELLED)
             successes = [ r[0] for r in results ]
             if all(successes):
-                log.msg('Connection %s and all sub connections(%i) cancelled' % (conn.connection_id, len(results)-1), system='opennsa.NSIAggregator')
+                if len(successes) > 1:
+                    log.msg('Connection %s and all sub connections(%i) cancelled' % (conn.connection_id, len(results)-1), system='opennsa.NSIAggregator')
                 return conn.connection_id
             if any(successes):
                 print "Partial cancelation, gahh"
@@ -162,18 +154,10 @@ class NSIAggregator:
 
         conn.switchState(connection.CANCELLING)
 
-        conn.local_connection.switchState(connection.CANCELLING)
-        di = self.backend.cancelReservation(conn.local_connection.internal_reservation_id)
-        di.addCallback(internalReservationCancelled, conn)
-        if not conn.sub_connections:
-            return di # no sub connections -> no need for handling them
-
-        defs = [ di ]
-        for sub_conn in conn.sub_connections:
-            sub_conn.switchState(connection.CANCELLING)
-            ds = self.proxy.cancelReservation(sub_conn.network, sub_conn.connection_id, None)
-            ds.addCallback(subReservationCancelled, sub_conn)
-            defs.append(ds)
+        defs = []
+        for sc in conn.connections():
+            d = sc.cancelReservation()
+            defs.append(d)
 
         dl = defer.DeferredList(defs)
         dl.addCallback(connectionCancelled)

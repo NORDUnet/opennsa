@@ -69,6 +69,24 @@ class SubConnection(ConnectionState):
         self._proxy = proxy
 
 
+    def cancelReservation(self):
+
+        assert self._proxy is not None, 'Proxy not set for SubConnection, cannot invoke method'
+
+        def cancelDone(_):
+            self.switchState(CANCELLED)
+            return self
+
+        def cancelFailed(err):
+            self.switchState(CANCEL_FAILED)
+            return err
+
+        self.switchState(CANCELLING)
+        d = self._proxy.cancelReservation(self.network, self.connection_id, None)
+        d.addCallbacks(cancelDone, cancelFailed)
+        return d
+
+
     def provision(self):
 
         assert self._proxy is not None, 'Proxy not set for SubConnection, cannot invoke method'
@@ -100,6 +118,24 @@ class LocalConnection(ConnectionState):
 
         # the one should not be persistent, but should be set when re-created at startup
         self._backend = backend
+
+
+    def cancelReservation(self):
+
+        assert self._backend is not None, 'Backend not set for LocalConnection, cannot invoke method'
+
+        def cancelDone(_):
+            self.switchState(CANCELLED)
+            return self
+
+        def cancelFailed(err):
+            self.switchState(CANCEL_FAILED)
+            return err
+
+        self.switchState(CANCELLING)
+        d = self._backend.cancelReservation(self.internal_reservation_id)
+        d.addCallbacks(cancelDone, cancelFailed)
+        return d
 
 
     def provision(self):
