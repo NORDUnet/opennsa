@@ -73,9 +73,13 @@ class SubConnection(ConnectionState):
             self.switchState(PROVISIONED)
             return self
 
+        def provisionFailed(err):
+            self.switchState(PROVISION_FAILED)
+            return err
+
         self.switchState(PROVISIONING)
         d = proxy.provision(self.network, self.connection_id, None)
-        d.addCallback(provisionDone)
+        d.addCallbacks(provisionDone, provisionFailed)
         return d
 
 
@@ -97,9 +101,13 @@ class LocalConnection(ConnectionState):
             self.switchState(PROVISIONED)
             return self
 
+        def provisionFailed(err):
+            self.switchState(PROVISION_FAILED)
+            return err
+
         self.switchState(PROVISIONING)
         d = backend.provision(self.internal_reservation_id)
-        d.addCallback(provisionDone)
+        d.addCallbacks(provisionDone, provisionFailed)
         return d
 
 
