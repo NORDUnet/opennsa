@@ -58,15 +58,20 @@ class ConnectionState:
 
 class SubConnection(ConnectionState):
 
-    def __init__(self, source_stp, dest_stp, network, connection_id):
+    def __init__(self, source_stp, dest_stp, network, connection_id, proxy=None):
         ConnectionState.__init__(self)
         self.source_stp = source_stp
         self.dest_stp   = dest_stp
         self.network    = network
         self.connection_id = connection_id
 
+        # the one should not be persistent, but should be set when re-created at startup
+        self._proxy = proxy
 
-    def provision(self, _backend, proxy):
+
+    def provision(self):
+
+        assert self._proxy is not None, 'Proxy not set for SubConnection, cannot invoke method'
 
         def provisionDone(conn_id):
             assert conn_id == self.connection_id
@@ -78,7 +83,7 @@ class SubConnection(ConnectionState):
             return err
 
         self.switchState(PROVISIONING)
-        d = proxy.provision(self.network, self.connection_id, None)
+        d = self._proxy.provision(self.network, self.connection_id, None)
         d.addCallbacks(provisionDone, provisionFailed)
         return d
 
@@ -86,15 +91,20 @@ class SubConnection(ConnectionState):
 
 class LocalConnection(ConnectionState):
 
-    def __init__(self, source_endpoint, dest_endpoint, internal_reservation_id, internal_connection_id=None):
+    def __init__(self, source_endpoint, dest_endpoint, internal_reservation_id, internal_connection_id=None, backend=None):
         ConnectionState.__init__(self)
         self.source_endpoint            = source_endpoint
         self.dest_endpoint              = dest_endpoint
         self.internal_reservation_id    = internal_reservation_id
         self.internal_connection_id     = internal_connection_id # pretty much never available at creation
 
+        # the one should not be persistent, but should be set when re-created at startup
+        self._backend = backend
 
-    def provision(self, backend, _proxy):
+
+    def provision(self):
+
+        assert self._backend is not None, 'Backend not set for LocalConnection, cannot invoke method'
 
         def provisionDone(int_conn_id):
             self.internal_connection_id = int_conn_id
@@ -106,7 +116,7 @@ class LocalConnection(ConnectionState):
             return err
 
         self.switchState(PROVISIONING)
-        d = backend.provision(self.internal_reservation_id)
+        d = self._backend.provision(self.internal_reservation_id)
         d.addCallbacks(provisionDone, provisionFailed)
         return d
 

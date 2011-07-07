@@ -61,7 +61,7 @@ class NSIAggregator:
 
         def localReservationMade(internal_reservation_id, local_source_endpoint, local_dest_endpoint):
 
-            local_connection = connection.LocalConnection(local_source_endpoint, local_dest_endpoint, internal_reservation_id)
+            local_connection = connection.LocalConnection(local_source_endpoint, local_dest_endpoint, internal_reservation_id, backend=self.backend)
             local_connection.switchState(connection.RESERVED)
 
             conn = connection.Connection(connection_id, source_stp, dest_stp, local_connection, global_reservation_id, None)
@@ -106,12 +106,11 @@ class NSIAggregator:
                 new_service_params  = nsa.ServiceParameters('', '', new_source_stp, dest_stp)
 
                 def chainedReservationMade(sub_conn_id):
-                    sub_conn = connection.SubConnection(new_source_stp, dest_stp, chain_network, sub_conn_id)
+                    sub_conn = connection.SubConnection(new_source_stp, dest_stp, chain_network, sub_conn_id, proxy=self.proxy)
                     sub_conn.switchState(connection.RESERVED)
                     conn.sub_connections.append( sub_conn )
                     return conn
 
-                #d = self.proxy.reserve(self.nsa, chain_network_nsa, sub_conn_id, global_reservation_id, description, new_service_params, None)
                 d = self.proxy.reserve(chain_network, sub_conn_id, global_reservation_id, description, new_service_params, None)
                 d.addCallback(chainedReservationMade)
                 d.addCallback(lambda _ : connection_id)
@@ -195,7 +194,7 @@ class NSIAggregator:
 
         defs = []
         for sc in conn.connections():
-            d = sc.provision(self.backend, self.proxy)
+            d = sc.provision()
             defs.append(d)
 
         dl = defer.DeferredList(defs)
