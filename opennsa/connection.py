@@ -11,6 +11,8 @@ from opennsa import error
 
 
 # connection states
+INITIAL             = 'INITIAL'
+
 RESERVING           = 'RESERVING'
 RESERVED            = 'RESERVED'
 RESERVE_FAILED      = 'RESERVE_FAILED'
@@ -28,8 +30,9 @@ CANCEL_FAILED       = 'CANCEL_FAILED'
 
 # allowed state transitions
 TRANSITIONS = {
+    INITIAL         : [ RESERVING                       ],
     RESERVING       : [ RESERVED,     RESERVE_FAILED    ],
-    RESERVED        : [ PROVISIONING, CANCELLING         ],
+    RESERVED        : [ PROVISIONING, CANCELLING        ],
     PROVISIONING    : [ PROVISIONED,  PROVISION_FAILED  ],
     PROVISIONED     : [ RELEASING                       ],
     RELEASING       : [ RESERVED,     RELEASE_FAILED    ],
@@ -40,7 +43,7 @@ TRANSITIONS = {
 
 class ConnectionState:
 
-    def __init__(self, state=RESERVING):
+    def __init__(self, state=INITIAL):
         self._state = state
 
 
@@ -128,15 +131,35 @@ class SubConnection(ConnectionState):
 
 class LocalConnection(ConnectionState):
 
-    def __init__(self, source_endpoint, dest_endpoint, internal_reservation_id, internal_connection_id=None, backend=None):
+    def __init__(self, source_endpoint, dest_endpoint, internal_reservation_id=None, internal_connection_id=None, backend=None):
         ConnectionState.__init__(self)
         self.source_endpoint            = source_endpoint
         self.dest_endpoint              = dest_endpoint
+        # the two latter are usually not available at creation time
         self.internal_reservation_id    = internal_reservation_id
-        self.internal_connection_id     = internal_connection_id # pretty much never available at creation
+        self.internal_connection_id     = internal_connection_id
 
         # the one should not be persistent, but should be set when re-created at startup
         self._backend = backend
+
+
+    def reserve(self, service_parameters):
+
+        assert self._backend is not None, 'Backend not set for LocalConnection, cannot invoke method'
+
+        def reserveDone(int_res_id):
+            self.internal_reservation_id = int_res_id
+            self.switchState(RESERVED)
+            return self
+
+        def reserveFailed(err):
+            self.switchState(RESERVE_FAILED)
+            return err
+
+        self.switchState(RESERVING)
+        d = self._backend.reserve(self.source_endpoint, self.dest_endpoint, service_parameters)
+        d.addCallbacks(reserveDone, reserveFailed)
+        return d
 
 
     def cancelReservation(self):
@@ -199,14 +222,13 @@ class LocalConnection(ConnectionState):
 
 class Connection(ConnectionState):
 
-    def __init__(self, connection_id, source_stp, dest_stp, local_connection, global_reservation_id=None, sub_connections=None):
+    def __init__(self, connection_id, source_stp, dest_stp, global_reservation_id=None, local_connection=None, sub_connections=None):
         ConnectionState.__init__(self)
         self.connection_id              = connection_id
-        self.local_connection           = local_connection
         self.source_stp                 = source_stp
         self.dest_stp                   = dest_stp
-        self.local_connection           = local_connection
         self.global_reservation_id      = global_reservation_id
+        self.local_connection           = local_connection
         self.sub_connections            = sub_connections or []
 
 
