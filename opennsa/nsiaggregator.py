@@ -113,21 +113,21 @@ class NSIAggregator:
 
             def issueChainReservation(local_conn):
 
+                def chainedReservationMade(sub_conn):
+                    # do we need this for something?
+                    return sub_conn
+
                 sub_conn_id = 'int-ccid' + ''.join( [ str(int(random.random() * 10)) for _ in range(4) ] )
 
                 new_source_stp      = selected_link.endpoint_pairs[0].stp2
                 new_service_params  = nsa.ServiceParameters('', '', new_source_stp, dest_stp)
 
-                def chainedReservationMade(sub_conn_id):
-                    sub_conn = connection.SubConnection(sub_conn_id, chain_network, new_source_stp, dest_stp, proxy=self.proxy)
-                    sub_conn.switchState(connection.RESERVING) # ermm..
-                    sub_conn.switchState(connection.RESERVED)
-                    conn.sub_connections.append( sub_conn )
-                    return conn
+                sub_conn = connection.SubConnection(sub_conn_id, chain_network, new_source_stp, dest_stp, proxy=self.proxy)
+                conn.sub_connections.append(sub_conn)
 
-                d = self.proxy.reserve(chain_network, sub_conn_id, global_reservation_id, description, new_service_params, None)
+                d = sub_conn.reserve(new_service_params, global_reservation_id, description)
                 d.addCallback(chainedReservationMade)
-                d.addCallback(lambda conn : [ (True, local_conn), (True, conn) ] )
+                d.addCallback(lambda sub_conn : [ (True, local_conn), (True, conn) ] )
                 return d
 
             local_conn = connection.LocalConnection(selected_link.source_stp.endpoint, selected_link.endpoint_pairs[0].stp1.endpoint, backend=self.backend)

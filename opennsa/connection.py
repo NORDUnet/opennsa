@@ -72,6 +72,25 @@ class SubConnection(ConnectionState):
         self._proxy = proxy
 
 
+    def reserve(self, service_parameters, global_reservation_id=None, description=None):
+
+        assert self._proxy is not None, 'Proxy not set for SubConnection, cannot invoke method'
+
+        def reserveDone(int_res_id):
+            self.internal_reservation_id = int_res_id
+            self.switchState(RESERVED)
+            return self
+
+        def reserveFailed(err):
+            self.switchState(RESERVE_FAILED)
+            return err
+
+        self.switchState(RESERVING)
+        d = self._proxy.reserve(self.network, self.connection_id, global_reservation_id, description, service_parameters, None)
+        d.addCallbacks(reserveDone, reserveFailed)
+        return d
+
+
     def cancelReservation(self):
 
         assert self._proxy is not None, 'Proxy not set for SubConnection, cannot invoke method'
