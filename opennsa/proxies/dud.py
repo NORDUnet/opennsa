@@ -37,7 +37,7 @@ class DUDNSIProxy:
     def cancelReservation(self, reservation_id):
         try:
             self.reservations.pop(reservation_id)
-            log.msg('CANCEL. IR ID: %s' % (reservation_id), system='DUDProxy. Network %s ' % self.name)
+            log.msg('CANCEL. IR ID: %s' % (reservation_id), system='DUDProxy Network %s ' % self.name)
             return defer.succeed(None)
         except KeyError:
             raise nsaerror.CancelReservationError('No such reservation (%s)' % reservation_id)
