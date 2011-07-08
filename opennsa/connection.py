@@ -303,7 +303,7 @@ class Connection(ConnectionState):
             if all(successes):
                 self.switchState(CANCELLED)
                 if len(successes) > 1:
-                    log.msg('Connection %s and all sub connections(%i) cancelled' % (self.connection_id, len(results)-1), system='opennsa.NSIAggregator')
+                    log.msg('Connection %s and all sub connections(%i) cancelled' % (self.connection_id, len(results)-1), system='opennsa.NSIService')
                 return self
             if any(successes):
                 self.switchState(CANCEL_FAILED)
@@ -331,7 +331,7 @@ class Connection(ConnectionState):
             if all(successes):
                 self.switchState(PROVISIONED)
                 if len(results) > 1:
-                    log.msg('Connection %s and all sub connections(%i) provisioned' % (self.connection_id, len(results)-1), system='opennsa.NSIAggregator')
+                    log.msg('Connection %s and all sub connections(%i) provisioned' % (self.connection_id, len(results)-1), system='opennsa.NSIService')
                 return self
             if any(successes):
                 self.switchState(PROVISION_FAILED)
@@ -359,7 +359,7 @@ class Connection(ConnectionState):
             if all(successes):
                 self.switchState(RESERVED)
                 if len(results) > 1:
-                    log.msg('Connection %s and all sub connections(%i) released' % (self.connection_id, len(results)-1), system='opennsa.NSIAggregator')
+                    log.msg('Connection %s and all sub connections(%i) released' % (self.connection_id, len(results)-1), system='opennsa.NSIService')
                 return self
             if any(successes):
                 self.switchState(RELEASE_FAILED)
