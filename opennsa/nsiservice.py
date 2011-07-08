@@ -119,7 +119,7 @@ class NSIService:
     def cancelReservation(self, requester_nsa, provider_nsa, connection_id, session_security_attributes):
 
         conn = self.getConnection(requester_nsa, connection_id)
-        # security check should be here
+        # security check here
 
         d = conn.cancelReservation()
         d.addCallback(lambda conn : conn.connection_id)
@@ -128,24 +128,12 @@ class NSIService:
 
     def provision(self, requester_nsa, provider_nsa, connection_id, session_security_attributes):
 
-        def provisionComplete(results):
-            conn.switchState(connection.PROVISIONED)
-            if len(results) > 1:
-                log.msg('Connection %s and all sub connections(%i) provisioned' % (connection_id, len(results)-1), system='opennsa.NSIAggregator')
-            return connection_id
-
         conn = self.getConnection(requester_nsa, connection_id)
+        # security check here
 
-        conn.switchState(connection.PROVISIONING)
-
-        defs = []
-        for sc in conn.connections():
-            d = sc.provision()
-            defs.append(d)
-
-        dl = defer.DeferredList(defs)
-        dl.addCallback(provisionComplete)
-        return dl
+        d = conn.provision()
+        d.addCallback(lambda conn : conn.connection_id)
+        return d
 
 
     def releaseProvision(self, requester_nsa, provider_nsa, connection_id, session_security_attributes):

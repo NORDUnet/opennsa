@@ -323,3 +323,32 @@ class Connection(ConnectionState):
         dl.addCallback(connectionCancelled)
         return dl
 
+
+    def provision(self):
+
+        def provisionComplete(results):
+            successes = [ r[0] for r in results ]
+            if all(successes):
+                self.switchState(PROVISIONED)
+                if len(results) > 1:
+                    log.msg('Connection %s and all sub connections(%i) provisioned' % (self.connection_id, len(results)-1), system='opennsa.NSIAggregator')
+                return self
+            if any(successes):
+                self.switchState(PROVISION_FAILED)
+                raise error.ProvisionError('Provision partially failed (may require manual cleanup)')
+            else:
+                self.switchState(PROVISION_FAILED)
+                raise error.ProvisionError('Provision failed for all local/sub connections')
+            return self
+
+        self.switchState(PROVISIONING)
+
+        defs = []
+        for sc in self.connections():
+            d = sc.provision()
+            defs.append(d)
+
+        dl = defer.DeferredList(defs)
+        dl.addCallback(provisionComplete)
+        return dl
+
