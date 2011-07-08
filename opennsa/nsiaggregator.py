@@ -59,32 +59,45 @@ class NSIAggregator:
         source_stp = service_parameters.source_stp
         dest_stp   = service_parameters.dest_stp
 
-        def localReservationMade(internal_reservation_id, local_source_endpoint, local_dest_endpoint):
+        conn = connection.Connection(connection_id, source_stp, dest_stp, global_reservation_id)
 
-            local_connection = connection.LocalConnection(local_source_endpoint, local_dest_endpoint, internal_reservation_id, backend=self.backend)
-            local_connection.switchState(connection.RESERVED)
+        def reservationMade(results):
 
-            conn = connection.Connection(connection_id, source_stp, dest_stp, local_connection, global_reservation_id, None)
-            conn.switchState(connection.RESERVED) # WRONG! (not everything is reserved switched yet)
+            local_conn = results[0][1]
+
+            conn.switchState(connection.RESERVED)
             self.connections.setdefault(nsa_identity, {})[connection_id] = conn
-            log.msg('Reservation created. Connection id: %s (%s). Global id %s' % (connection_id, internal_reservation_id, global_reservation_id), system='opennsa.NSIAggregator')
-            return conn
+            log.msg('Reservation created. Connection id: %s (%s). Global id %s' % (connection_id, local_conn.internal_reservation_id, global_reservation_id), system='opennsa.NSIAggregator')
+            return conn.connection_id
+
+
+        def localReservationMade(local_conn):
+            # should we do anything here..?
+            return local_conn
 
         # figure out nature of request
 
-        link_info = (source_stp.network, source_stp.endpoint, dest_stp.network, dest_stp.endpoint, self.network)
+        link_info = ( connection_id, source_stp.network, source_stp.endpoint, dest_stp.network, dest_stp.endpoint, self.network)
 
         if source_stp.network == self.network and dest_stp.network == self.network:
-            log.msg('Simple link creation: %s:%s -> %s:%s (%s)' % link_info, system='opennsa.NSIAggregator')
+            log.msg('Reserve %s: Simple link creation: %s:%s -> %s:%s (%s)' % link_info, system='opennsa.NSIAggregator')
             # make an internal link, no sub requests
-            d = self.backend.reserve(source_stp.endpoint, dest_stp.endpoint, service_parameters)
-            d.addCallback(localReservationMade, source_stp.endpoint, dest_stp.endpoint)
-            d.addCallback(lambda _ : connection_id)
-            return d
+
+            local_conn = connection.LocalConnection(source_stp.endpoint, dest_stp.endpoint, backend=self.backend)
+
+            conn.local_connection = local_conn
+            conn.switchState(connection.RESERVING)
+
+            d = local_conn.reserve(service_parameters)
+            d.addCallback(localReservationMade)
+
+            dl = defer.DeferredList( [ d ] )
+            dl.addCallback(reservationMade)
+            return dl
 
         elif source_stp.network == self.network:
             # make link and chain on - common chaining
-            log.msg('Common chain creation: %s:%s -> %s:%s (%s)' % link_info, system='opennsa.NSIAggregator')
+            log.msg('Reserve %s: Common chain creation: %s:%s -> %s:%s (%s)' % link_info, system='opennsa.NSIAggregator')
 
             links = self.topology.findLinks(source_stp, dest_stp)
             # check for no links
@@ -96,7 +109,9 @@ class NSIAggregator:
 
             chain_network = selected_link.endpoint_pairs[0].stp2.network
 
-            def issueChainReservation(conn):
+            conn.switchState(connection.RESERVING)
+
+            def issueChainReservation(local_conn):
 
                 sub_conn_id = 'int-ccid' + ''.join( [ str(int(random.random() * 10)) for _ in range(4) ] )
 
@@ -105,20 +120,25 @@ class NSIAggregator:
 
                 def chainedReservationMade(sub_conn_id):
                     sub_conn = connection.SubConnection(sub_conn_id, chain_network, new_source_stp, dest_stp, proxy=self.proxy)
+                    sub_conn.switchState(connection.RESERVING) # ermm..
                     sub_conn.switchState(connection.RESERVED)
                     conn.sub_connections.append( sub_conn )
                     return conn
 
                 d = self.proxy.reserve(chain_network, sub_conn_id, global_reservation_id, description, new_service_params, None)
                 d.addCallback(chainedReservationMade)
-                d.addCallback(lambda _ : connection_id)
+                d.addCallback(lambda conn : [ (True, local_conn), (True, conn) ] )
                 return d
 
-            d = self.backend.reserve(selected_link.source_stp.endpoint, selected_link.endpoint_pairs[0].stp1.endpoint, service_parameters)
-            d.addCallback(localReservationMade, selected_link.source_stp.endpoint, selected_link.endpoint_pairs[0].stp1.endpoint)
-            d.addCallback(issueChainReservation)
-            return d
+            local_conn = connection.LocalConnection(selected_link.source_stp.endpoint, selected_link.endpoint_pairs[0].stp1.endpoint, backend=self.backend)
 
+            conn.local_connection = local_conn
+
+            d = local_conn.reserve(service_parameters) # should probably make a new service params...
+            d.addCallback(localReservationMade)
+            d.addCallback(issueChainReservation)
+            d.addCallback(reservationMade)
+            return d
 
 
         elif dest_stp.network == self.network:
