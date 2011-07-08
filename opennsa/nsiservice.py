@@ -88,10 +88,7 @@ class NSIService:
         if source_stp.network == self.network and dest_stp.network == self.network:
             log.msg('Reserve %s: Simple path creation: %s:%s -> %s:%s (%s)' % path_info, system='opennsa.NSIService')
 
-            conn.local_connection = connection.LocalConnection(source_stp.endpoint, dest_stp.endpoint, backend=self.backend)
-
-            dl = conn.reserve(service_parameters)
-            dl.addCallback(reservationMade)
+            setupSubConnection(source_stp, dest_stp, conn)
 
         elif source_stp.network == self.network:
             # make path and chain on - common chaining
@@ -108,12 +105,6 @@ class NSIService:
             # setup connection data
             setupSubConnection(selected_path.source_stp, selected_path.endpoint_pairs[0].stp1, conn)
             setupSubConnection(selected_path.endpoint_pairs[0].stp2, dest_stp, conn)
-
-            # create connection
-            d = conn.reserve(service_parameters)
-            d.addCallback(reservationMade)
-            return d
-
 
         elif dest_stp.network == self.network:
             # make path and chain on - backwards chaining
@@ -134,13 +125,14 @@ class NSIService:
             for stp_pair in selected_path.endpoint_pairs:
                 setupSubConnection(prev_source_stp, stp_pair.stp1, conn)
                 prev_source_stp = stp_pair.stp2
-
             # last hop
             setupSubConnection(prev_source_stp, dest_stp, conn)
 
-            d = conn.reserve(service_parameters)
-            d.addCallback(reservationMade)
-            return d
+        # now reserve connections needed to create path
+
+        d = conn.reserve(service_parameters)
+        d.addCallback(reservationMade)
+        return d
 
 
     def cancelReservation(self, requester_nsa, provider_nsa, connection_id, session_security_attributes):
