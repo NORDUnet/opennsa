@@ -49,8 +49,6 @@ class NSIAggregator:
 
     def reserve(self, requester_nsa, provider_nsa, connection_id, global_reservation_id, description, service_parameters, session_security_attributes):
 
-#        log.msg("Reserve request: %s, %s, %s" % (connection_id, global_reservation_id, description))
-
         nsa_identity = requester_nsa.address
 
         if connection_id in self.connections.get(nsa_identity, {}):
@@ -62,18 +60,11 @@ class NSIAggregator:
         conn = connection.Connection(connection_id, source_stp, dest_stp, global_reservation_id)
 
         def reservationMade(results):
-
             local_conn = results[0][1]
-
             conn.switchState(connection.RESERVED)
             self.connections.setdefault(nsa_identity, {})[connection_id] = conn
             log.msg('Reservation created. Connection id: %s (%s). Global id %s' % (connection_id, local_conn.internal_reservation_id, global_reservation_id), system='opennsa.NSIAggregator')
             return conn.connection_id
-
-
-        def localReservationMade(local_conn):
-            # should we do anything here..?
-            return local_conn
 
         # figure out nature of request
 
@@ -89,8 +80,6 @@ class NSIAggregator:
             conn.switchState(connection.RESERVING)
 
             d = local_conn.reserve(service_parameters)
-            d.addCallback(localReservationMade)
-
             dl = defer.DeferredList( [ d ] )
             dl.addCallback(reservationMade)
             return dl
@@ -109,16 +98,9 @@ class NSIAggregator:
 
             chain_network = selected_link.endpoint_pairs[0].stp2.network
 
-            conn.switchState(connection.RESERVING)
-
             def issueChainReservation(local_conn):
 
-                def chainedReservationMade(sub_conn):
-                    # do we need this for something?
-                    return sub_conn
-
                 sub_conn_id = 'int-ccid' + ''.join( [ str(int(random.random() * 10)) for _ in range(4) ] )
-
                 new_source_stp      = selected_link.endpoint_pairs[0].stp2
                 new_service_params  = nsa.ServiceParameters('', '', new_source_stp, dest_stp)
 
@@ -126,16 +108,15 @@ class NSIAggregator:
                 conn.sub_connections.append(sub_conn)
 
                 d = sub_conn.reserve(new_service_params, global_reservation_id, description)
-                d.addCallback(chainedReservationMade)
                 d.addCallback(lambda sub_conn : [ (True, local_conn), (True, conn) ] )
                 return d
 
             local_conn = connection.LocalConnection(selected_link.source_stp.endpoint, selected_link.endpoint_pairs[0].stp1.endpoint, backend=self.backend)
 
             conn.local_connection = local_conn
+            conn.switchState(connection.RESERVING)
 
             d = local_conn.reserve(service_parameters) # should probably make a new service params...
-            d.addCallback(localReservationMade)
             d.addCallback(issueChainReservation)
             d.addCallback(reservationMade)
             return d
