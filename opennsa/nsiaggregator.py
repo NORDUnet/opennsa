@@ -13,7 +13,7 @@ from twisted.python import log
 from twisted.internet import defer
 
 from opennsa.interface import NSIServiceInterface
-from opennsa import nsa, error, topology, jsonrpc, proxy, connection
+from opennsa import error, topology, jsonrpc, proxy, connection
 
 
 
@@ -57,13 +57,10 @@ class NSIAggregator:
         source_stp = service_parameters.source_stp
         dest_stp   = service_parameters.dest_stp
 
-        conn = connection.Connection(connection_id, source_stp, dest_stp, global_reservation_id)
+        conn = connection.Connection(connection_id, source_stp, dest_stp, global_reservation_id, description)
 
-        def reservationMade(results):
-            local_conn = results[0][1]
-            conn.switchState(connection.RESERVED)
+        def reservationMade(conn):
             self.connections.setdefault(nsa_identity, {})[connection_id] = conn
-            log.msg('Reservation created. Connection id: %s (%s). Global id %s' % (connection_id, local_conn.internal_reservation_id, global_reservation_id), system='opennsa.NSIAggregator')
             return conn.connection_id
 
         # figure out nature of request
@@ -72,17 +69,11 @@ class NSIAggregator:
 
         if source_stp.network == self.network and dest_stp.network == self.network:
             log.msg('Reserve %s: Simple path creation: %s:%s -> %s:%s (%s)' % path_info, system='opennsa.NSIAggregator')
-            # make an internal path, no sub requests
 
-            local_conn = connection.LocalConnection(source_stp.endpoint, dest_stp.endpoint, backend=self.backend)
+            conn.local_connection = connection.LocalConnection(source_stp.endpoint, dest_stp.endpoint, backend=self.backend)
 
-            conn.local_connection = local_conn
-            conn.switchState(connection.RESERVING)
-
-            d = local_conn.reserve(service_parameters)
-            dl = defer.DeferredList( [ d ] )
+            dl = conn.reserve(service_parameters)
             dl.addCallback(reservationMade)
-            return dl
 
         elif source_stp.network == self.network:
             # make path and chain on - common chaining
@@ -96,28 +87,19 @@ class NSIAggregator:
 
             assert selected_path.source_stp.network == self.network
 
-            chain_network = selected_path.endpoint_pairs[0].stp2.network
-
-            def issueChainReservation(local_conn):
-
-                sub_conn_id = 'int-ccid' + ''.join( [ str(int(random.random() * 10)) for _ in range(4) ] )
-                new_source_stp      = selected_path.endpoint_pairs[0].stp2
-                new_service_params  = nsa.ServiceParameters('', '', new_source_stp, dest_stp)
-
-                sub_conn = connection.SubConnection(sub_conn_id, chain_network, new_source_stp, dest_stp, proxy=self.proxy)
-                conn.sub_connections.append(sub_conn)
-
-                d = sub_conn.reserve(new_service_params, global_reservation_id, description)
-                d.addCallback(lambda sub_conn : [ (True, local_conn), (True, conn) ] )
-                return d
-
+            # setup connection data
             local_conn = connection.LocalConnection(selected_path.source_stp.endpoint, selected_path.endpoint_pairs[0].stp1.endpoint, backend=self.backend)
-
             conn.local_connection = local_conn
-            conn.switchState(connection.RESERVING)
 
-            d = local_conn.reserve(service_parameters) # should probably make a new service params...
-            d.addCallback(issueChainReservation)
+            sub_conn_id = 'int-ccid' + ''.join( [ str(int(random.random() * 10)) for _ in range(4) ] )
+            chain_network = selected_path.endpoint_pairs[0].stp2.network
+            new_source_stp      = selected_path.endpoint_pairs[0].stp2
+            sub_conn = connection.SubConnection(sub_conn_id, chain_network, new_source_stp, dest_stp, proxy=self.proxy)
+
+            conn.sub_connections.append(sub_conn)
+
+            # create connection
+            d = conn.reserve(service_parameters)
             d.addCallback(reservationMade)
             return d
 

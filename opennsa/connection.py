@@ -6,7 +6,10 @@ Copyright: NORDUnet (2011)
 """
 
 
-from opennsa import error
+from twisted.python import log
+from twisted.internet import defer
+
+from opennsa import error, nsa
 
 
 
@@ -241,12 +244,13 @@ class LocalConnection(ConnectionState):
 
 class Connection(ConnectionState):
 
-    def __init__(self, connection_id, source_stp, dest_stp, global_reservation_id=None, local_connection=None, sub_connections=None):
+    def __init__(self, connection_id, source_stp, dest_stp, global_reservation_id=None, description=None, local_connection=None, sub_connections=None):
         ConnectionState.__init__(self)
         self.connection_id              = connection_id
         self.source_stp                 = source_stp
         self.dest_stp                   = dest_stp
         self.global_reservation_id      = global_reservation_id
+        self.description                = description
         self.local_connection           = local_connection
         self.sub_connections            = sub_connections or []
 
@@ -260,4 +264,26 @@ class Connection(ConnectionState):
             return [ self.local_connection ] + self.sub_connections
         else:
             return self.sub_connections
+
+
+    def reserve(self, service_parameters):
+
+        def reservationDone(results):
+            self.switchState(RESERVED)
+            log_info = (self.connection_id, self.local_connection.internal_reservation_id, len(self.sub_connections), self.global_reservation_id)
+            log.msg('Reservation created. Connection id: %s (%s)/%i. Global id %s' % log_info, system='opennsa.Connection')
+            return self
+
+        self.switchState(RESERVING)
+        d = self.local_connection.reserve(service_parameters)
+
+        defs = [ d ]
+        for sc in self.sub_connections:
+            sc_service_params  = nsa.ServiceParameters('', '', sc.source_stp, sc.dest_stp)
+            ds = sc.reserve(sc_service_params, self.global_reservation_id, self.description)
+            defs.append(ds)
+
+        dl = defer.DeferredList(defs)
+        dl.addCallbacks(reservationDone)
+        return dl
 
