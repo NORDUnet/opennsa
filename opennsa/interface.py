@@ -21,23 +21,23 @@ class NSIInterface(Interface):
     def reserve(requester_nsa, provider_nsa, reservation_id, description, connection_id,
                 service_parameters, session_security_attributes):
         """
-        Make a link reservation.
+        Make a path reservation.
         """
 
     def cancelReservation(requester_nsa, provider_nsa, connection_id, session_security_attributes):
         """
-        Cancel a link reservation.
+        Cancel a path reservation.
         """
 
     def provision(requester_nsa, provider_nsa, connection_id, session_security_attributes):
         """
-        Provisions a link.
+        Provisions a path.
         """
 
 
     def releaseProvision(requester_nsa, provider_nsa, connection_id, session_security_attributes):
         """
-        Release the link from provisioned mode.
+        Release the path from provisioned mode.
         """
 
 
@@ -83,7 +83,7 @@ class NSIBackendInterface(Interface):
 
     def releaseProvision(connection_id):
         """
-        Release the link from provisioned mode.
+        Release the path from provisioned mode.
 
         @return: A L{defer.Deferred}, which if successfull will fire with a
         C{string} with reservation id.

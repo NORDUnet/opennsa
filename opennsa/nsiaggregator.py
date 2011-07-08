@@ -68,11 +68,11 @@ class NSIAggregator:
 
         # figure out nature of request
 
-        link_info = ( connection_id, source_stp.network, source_stp.endpoint, dest_stp.network, dest_stp.endpoint, self.network)
+        path_info = ( connection_id, source_stp.network, source_stp.endpoint, dest_stp.network, dest_stp.endpoint, self.network)
 
         if source_stp.network == self.network and dest_stp.network == self.network:
-            log.msg('Reserve %s: Simple link creation: %s:%s -> %s:%s (%s)' % link_info, system='opennsa.NSIAggregator')
-            # make an internal link, no sub requests
+            log.msg('Reserve %s: Simple path creation: %s:%s -> %s:%s (%s)' % path_info, system='opennsa.NSIAggregator')
+            # make an internal path, no sub requests
 
             local_conn = connection.LocalConnection(source_stp.endpoint, dest_stp.endpoint, backend=self.backend)
 
@@ -85,23 +85,23 @@ class NSIAggregator:
             return dl
 
         elif source_stp.network == self.network:
-            # make link and chain on - common chaining
-            log.msg('Reserve %s: Common chain creation: %s:%s -> %s:%s (%s)' % link_info, system='opennsa.NSIAggregator')
+            # make path and chain on - common chaining
+            log.msg('Reserve %s: Common chain creation: %s:%s -> %s:%s (%s)' % path_info, system='opennsa.NSIAggregator')
 
-            links = self.topology.findLinks(source_stp, dest_stp)
-            # check for no links
-            links.sort(key=lambda e : len(e.endpoint_pairs))
-            selected_link = links[0] # shortest link
-            log.msg('Attempting to create link %s' % selected_link, system='opennsa.NSIAggregator')
+            paths = self.topology.findPaths(source_stp, dest_stp)
+            # check for no paths
+            paths.sort(key=lambda e : len(e.endpoint_pairs))
+            selected_path = paths[0] # shortest path
+            log.msg('Attempting to create path %s' % selected_path, system='opennsa.NSIAggregator')
 
-            assert selected_link.source_stp.network == self.network
+            assert selected_path.source_stp.network == self.network
 
-            chain_network = selected_link.endpoint_pairs[0].stp2.network
+            chain_network = selected_path.endpoint_pairs[0].stp2.network
 
             def issueChainReservation(local_conn):
 
                 sub_conn_id = 'int-ccid' + ''.join( [ str(int(random.random() * 10)) for _ in range(4) ] )
-                new_source_stp      = selected_link.endpoint_pairs[0].stp2
+                new_source_stp      = selected_path.endpoint_pairs[0].stp2
                 new_service_params  = nsa.ServiceParameters('', '', new_source_stp, dest_stp)
 
                 sub_conn = connection.SubConnection(sub_conn_id, chain_network, new_source_stp, dest_stp, proxy=self.proxy)
@@ -111,7 +111,7 @@ class NSIAggregator:
                 d.addCallback(lambda sub_conn : [ (True, local_conn), (True, conn) ] )
                 return d
 
-            local_conn = connection.LocalConnection(selected_link.source_stp.endpoint, selected_link.endpoint_pairs[0].stp1.endpoint, backend=self.backend)
+            local_conn = connection.LocalConnection(selected_path.source_stp.endpoint, selected_path.endpoint_pairs[0].stp1.endpoint, backend=self.backend)
 
             conn.local_connection = local_conn
             conn.switchState(connection.RESERVING)
@@ -123,13 +123,13 @@ class NSIAggregator:
 
 
         elif dest_stp.network == self.network:
-            # make link and chain on - backwards chaining
-            log.msg('Backwards chain creation: %s:%s -> %s:%s (%s)' % link_info, system='opennsa.NSIAggregator')
+            # make path and chain on - backwards chaining
+            log.msg('Backwards chain creation: %s:%s -> %s:%s (%s)' % path_info, system='opennsa.NSIAggregator')
             raise NotImplementedError('Backwards chain reservation')
 
 
         else:
-            log.msg('Tree creation:  %s:%s -> %s:%s (%s)' % link_info, system='opennsa.NSIAggregator')
+            log.msg('Tree creation:  %s:%s -> %s:%s (%s)' % path_info, system='opennsa.NSIAggregator')
             raise NotImplementedError('Tree reservation')
 
 

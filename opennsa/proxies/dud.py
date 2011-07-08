@@ -29,7 +29,7 @@ class DUDNSIProxy:
 
     def reserve(self, source_endpoint, dest_endpoint, service_parameters):
         reservation_id = uuid.uuid1().hex[0:8]
-        log.msg('RESERVE. IR ID: %s, Link: %s -> %s' % (reservation_id, source_endpoint, dest_endpoint), system='DUD Proxy. Network %s ' % self.name)
+        log.msg('RESERVE. IR ID: %s, Path: %s -> %s' % (reservation_id, source_endpoint, dest_endpoint), system='DUD Proxy. Network %s ' % self.name)
         self.reservations[reservation_id] = {} # service params can go in dict when needed
         return defer.succeed(reservation_id)
 

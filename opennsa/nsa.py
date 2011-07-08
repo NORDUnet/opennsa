@@ -53,6 +53,20 @@ class STPPair:
 
 
 
+class Path:
+    """
+    Represent a path from a source and destitionation STP, with the endpoint pairs between them.
+    """
+    def __init__(self, source_stp, dest_stp, endpoint_pairs):
+        self.source_stp      = source_stp
+        self.dest_stp        = dest_stp
+        self.endpoint_pairs  = endpoint_pairs
+
+    def __str__(self):
+        return '%s - %s - %s' % (self.source_stp, ' - '.join( [ str(e) for e in self.endpoint_pairs ] ), self.dest_stp)
+
+
+
 class NetworkEndpoint(STP):
 
     def __init__(self, network, endpoint, config, dest_stp=None):

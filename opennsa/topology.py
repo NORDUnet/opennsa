@@ -12,20 +12,6 @@ from opennsa import nsa, error
 
 
 
-class Link:
-    """
-    Represent a from a source and destitionation STP, with the endpoints between them.
-    """
-    def __init__(self, source_stp, dest_stp, endpoint_pairs):
-        self.source_stp      = source_stp
-        self.dest_stp        = dest_stp
-        self.endpoint_pairs  = endpoint_pairs
-
-    def __str__(self):
-        return '%s - %s - %s' % (self.source_stp, ' - '.join( [ str(e) for e in self.endpoint_pairs ] ), self.dest_stp)
-
-
-
 class Topology:
 
     def __init__(self):
@@ -69,9 +55,9 @@ class Topology:
         raise error.TopologyError('No network named %s' % network_name)
 
 
-    def findLinks(self, source_stp, dest_stp, service_params=None):
+    def findPaths(self, source_stp, dest_stp, service_params=None):
         """
-        Find possible links between two STPs.
+        Find possible paths between two STPs.
         """
         # check that STPs exist
         snw = self.getNetwork(source_stp.network)
@@ -81,27 +67,27 @@ class Topology:
         dnw.getEndpoint(dest_stp.endpoint)
 
         # find endpoint pairs
-        #print "FIND LINK", source_stp, dest_stp
+        #print "FIND PATH", source_stp, dest_stp
 
-        link_endpoint_pairs = self.findLinkEndpoints(source_stp, dest_stp)
+        path_endpoint_pairs = self.findPathEndpoints(source_stp, dest_stp)
 
-        links = []
-        for lep in link_endpoint_pairs:
-            links.append( Link(source_stp, dest_stp, lep ) )
+        paths = []
+        for lep in path_endpoint_pairs:
+            paths.append( nsa.Path(source_stp, dest_stp, lep ) )
 
-        return links
+        return paths
 
 
-    def findLinkEndpoints(self, source_stp, dest_stp, visited_networks=None):
+    def findPathEndpoints(self, source_stp, dest_stp, visited_networks=None):
 
-        #print "FIND LINK EPS", source_stp, visited_networks
+        #print "FIND PATH EPS", source_stp, visited_networks
 
         snw = self.getNetwork(source_stp.network)
         routes = []
 
         for ep in snw.endpoints:
 
-            #print "  Link:", ep, dest_network, dest_endpoint
+            #print "  Path:", ep, dest_network, dest_endpoint
 
             if ep.dest_stp is None:
                 #print "    Rejecting endpoint due to no pairing"
@@ -119,7 +105,7 @@ class Topology:
                 routes.append( [ sp ] )
             else:
                 nvn = visited_networks[:] + [ ep.dest_stp.network ]
-                subroutes = self.findLinkEndpoints(ep.dest_stp, dest_stp, nvn)
+                subroutes = self.findPathEndpoints(ep.dest_stp, dest_stp, nvn)
                 if subroutes:
                     for sr in subroutes:
                         src = sr[:]
