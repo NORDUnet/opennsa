@@ -138,23 +138,12 @@ class NSIService:
 
     def releaseProvision(self, requester_nsa, provider_nsa, connection_id, session_security_attributes):
 
-        def connectionReleased(results):
-            conn.switchState(connection.RESERVED)
-            if len(results) > 1:
-                log.msg('Connection %s and all sub connections(%i) released' % (connection_id, len(results)-1), system='opennsa.NSIAggregator')
-            return conn.connection_id
-
         conn = self.getConnection(requester_nsa, connection_id)
-        conn.switchState(connection.RELEASING)
+        # security check here
 
-        defs = []
-        for sc in conn.connections():
-            d = sc.releaseProvision()
-            defs.append(d)
-
-        dl = defer.DeferredList(defs)
-        dl.addCallback(connectionReleased)
-        return dl
+        d = conn.releaseProvision()
+        d.addCallback(lambda conn : conn.connection_id)
+        return d
 
 
     def query(self, requester_nsa, provider_nsa, query_filter, session_security_attributes):

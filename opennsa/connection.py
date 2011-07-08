@@ -339,7 +339,6 @@ class Connection(ConnectionState):
             else:
                 self.switchState(PROVISION_FAILED)
                 raise error.ProvisionError('Provision failed for all local/sub connections')
-            return self
 
         self.switchState(PROVISIONING)
 
@@ -350,5 +349,33 @@ class Connection(ConnectionState):
 
         dl = defer.DeferredList(defs)
         dl.addCallback(provisionComplete)
+        return dl
+
+
+    def releaseProvision(self):
+
+        def connectionReleased(results):
+            successes = [ r[0] for r in results ]
+            if all(successes):
+                self.switchState(RESERVED)
+                if len(results) > 1:
+                    log.msg('Connection %s and all sub connections(%i) released' % (self.connection_id, len(results)-1), system='opennsa.NSIAggregator')
+                return self
+            if any(successes):
+                self.switchState(RELEASE_FAILED)
+                raise error.ReleaseError('Release partially failed (may require manual cleanup)')
+            else:
+                self.switchState(RELEASE_FAILED)
+                raise error.ReleaseError('Release failed for all local/sub connection')
+
+        self.switchState(RELEASING)
+
+        defs = []
+        for sc in self.connections():
+            d = sc.releaseProvision()
+            defs.append(d)
+
+        dl = defer.DeferredList(defs)
+        dl.addCallback(connectionReleased)
         return dl
 
