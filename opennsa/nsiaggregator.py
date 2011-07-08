@@ -118,31 +118,12 @@ class NSIAggregator:
 
     def cancelReservation(self, requester_nsa, provider_nsa, connection_id, session_security_attributes):
 
-        def connectionCancelled(results):
-            conn.switchState(connection.CANCELLED)
-            successes = [ r[0] for r in results ]
-            if all(successes):
-                if len(successes) > 1:
-                    log.msg('Connection %s and all sub connections(%i) cancelled' % (conn.connection_id, len(results)-1), system='opennsa.NSIAggregator')
-                return conn.connection_id
-            if any(successes):
-                print "Partial cancelation, gahh"
-            else:
-                log.msg('Failed to cancel connection %s and all sub connections(%i)' % (conn.connection_id, len(results)-1), system='opennsa.NSIAggregator')
-
-
         conn = self.getConnection(requester_nsa, connection_id)
+        # security check should be here
 
-        conn.switchState(connection.CANCELLING)
-
-        defs = []
-        for sc in conn.connections():
-            d = sc.cancelReservation()
-            defs.append(d)
-
-        dl = defer.DeferredList(defs)
-        dl.addCallback(connectionCancelled)
-        return dl
+        d = conn.cancelReservation()
+        d.addCallback(lambda conn : conn.connection_id)
+        return d
 
 
     def provision(self, requester_nsa, provider_nsa, connection_id, session_security_attributes):

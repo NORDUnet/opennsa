@@ -276,9 +276,10 @@ class Connection(ConnectionState):
                 log.msg('Reservation created. Connection id: %s (%s)/%i. Global id %s' % log_info, system='opennsa.Connection')
                 return self
             elif any(successes):
-                # partial failure, sigh
+                self.switchState(RESERVE_FAILED)
                 raise error.ReserveError('Partial failure in reservation (may require manual cleanup)')
             else:
+                self.switchState(RESERVE_FAILED)
                 raise error.ReserveError('Reservation failed for all local/sub connections')
 
         self.switchState(RESERVING)
@@ -292,5 +293,33 @@ class Connection(ConnectionState):
 
         dl = defer.DeferredList(defs)
         dl.addCallbacks(reservationDone)
+        return dl
+
+
+    def cancelReservation(self):
+
+        def connectionCancelled(results):
+            successes = [ r[0] for r in results ]
+            if all(successes):
+                self.switchState(CANCELLED)
+                if len(successes) > 1:
+                    log.msg('Connection %s and all sub connections(%i) cancelled' % (self.connection_id, len(results)-1), system='opennsa.NSIAggregator')
+                return self
+            if any(successes):
+                self.switchState(CANCEL_FAILED)
+                raise error.CancelReservationError('Cancel partially failed (may require manual cleanup)')
+            else:
+                self.switchState(CANCEL_FAILED)
+                raise error.CancelReservationError('Cancel failed for all local/sub connections')
+
+        self.switchState(CANCELLING)
+
+        defs = []
+        for sc in self.connections():
+            d = sc.cancelReservation()
+            defs.append(d)
+
+        dl = defer.DeferredList(defs)
+        dl.addCallback(connectionCancelled)
         return dl
 
