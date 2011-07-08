@@ -269,10 +269,17 @@ class Connection(ConnectionState):
     def reserve(self, service_parameters):
 
         def reservationDone(results):
-            self.switchState(RESERVED)
-            log_info = (self.connection_id, self.local_connection.internal_reservation_id, len(self.sub_connections), self.global_reservation_id)
-            log.msg('Reservation created. Connection id: %s (%s)/%i. Global id %s' % log_info, system='opennsa.Connection')
-            return self
+            successes = [ r[0] for r in results ]
+            if all(successes):
+                self.switchState(RESERVED)
+                log_info = (self.connection_id, self.local_connection.internal_reservation_id, len(self.sub_connections), self.global_reservation_id)
+                log.msg('Reservation created. Connection id: %s (%s)/%i. Global id %s' % log_info, system='opennsa.Connection')
+                return self
+            elif any(successes):
+                # partial failure, sigh
+                raise error.ReserveError('Partial failure in reservation (may require manual cleanup)')
+            else:
+                raise error.ReserveError('Reservation failed for all local/sub connections')
 
         self.switchState(RESERVING)
         d = self.local_connection.reserve(service_parameters)
