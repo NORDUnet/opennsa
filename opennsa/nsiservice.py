@@ -17,7 +17,7 @@ from opennsa import error, topology, jsonrpc, proxy, connection
 
 
 
-class NSIAggregator:
+class NSIService:
 
     implements(NSIServiceInterface)
 
