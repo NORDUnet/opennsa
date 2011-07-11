@@ -64,18 +64,19 @@ class ConnectionState:
 
 class SubConnection(ConnectionState):
 
-    def __init__(self, connection_id, network, source_stp, dest_stp, proxy=None):
+    def __init__(self, parent_connection, connection_id, network, source_stp, dest_stp, proxy=None):
         ConnectionState.__init__(self)
-        self.connection_id  = connection_id
-        self.network        = network
-        self.source_stp     = source_stp
-        self.dest_stp       = dest_stp
+        self.parent_connection  = parent_connection
+        self.connection_id      = connection_id
+        self.network            = network
+        self.source_stp         = source_stp
+        self.dest_stp           = dest_stp
 
         # the one should not be persistent, but should be set when re-created at startup
         self._proxy = proxy
 
 
-    def reserve(self, service_parameters, global_reservation_id=None, description=None):
+    def reserve(self, service_parameters):
 
         assert self._proxy is not None, 'Proxy not set for SubConnection, cannot invoke method'
 
@@ -88,8 +89,9 @@ class SubConnection(ConnectionState):
             self.switchState(RESERVE_FAILED)
             return err
 
+        sub_service_params  = nsa.ServiceParameters('', '', self.source_stp, self.dest_stp)
         self.switchState(RESERVING)
-        d = self._proxy.reserve(self.network, self.connection_id, global_reservation_id, description, service_parameters, None)
+        d = self._proxy.reserve(self.network, self.connection_id, self.parent_connection.global_reservation_id, self.parent_connection.description, sub_service_params, None)
         d.addCallbacks(reserveDone, reserveFailed)
         return d
 
@@ -153,8 +155,9 @@ class SubConnection(ConnectionState):
 
 class LocalConnection(ConnectionState):
 
-    def __init__(self, source_endpoint, dest_endpoint, internal_reservation_id=None, internal_connection_id=None, backend=None):
+    def __init__(self, parent_connection, source_endpoint, dest_endpoint, internal_reservation_id=None, internal_connection_id=None, backend=None):
         ConnectionState.__init__(self)
+        self.parent_connection          = parent_connection
         self.source_endpoint            = source_endpoint
         self.dest_endpoint              = dest_endpoint
         # the two latter are usually not available at creation time
@@ -272,7 +275,10 @@ class Connection(ConnectionState):
             successes = [ r[0] for r in results ]
             if all(successes):
                 self.switchState(RESERVED)
-                log_info = (self.connection_id, self.local_connection.internal_reservation_id, len(self.sub_connections), self.global_reservation_id)
+                if self.local_connection is not None:
+                    log_info = (self.connection_id, self.local_connection.internal_reservation_id, len(self.sub_connections), self.global_reservation_id)
+                else:
+                    log_info = (self.connection_id, '-', len(self.sub_connections), self.global_reservation_id)
                 log.msg('Reservation created. Connection id: %s (%s)/%i. Global id %s' % log_info, system='opennsa.Connection')
                 return self
             elif any(successes):
@@ -283,13 +289,11 @@ class Connection(ConnectionState):
                 raise error.ReserveError('Reservation failed for all local/sub connections')
 
         self.switchState(RESERVING)
-        d = self.local_connection.reserve(service_parameters)
 
-        defs = [ d ]
-        for sc in self.sub_connections:
-            sc_service_params  = nsa.ServiceParameters('', '', sc.source_stp, sc.dest_stp)
-            ds = sc.reserve(sc_service_params, self.global_reservation_id, self.description)
-            defs.append(ds)
+        defs = []
+        for sc in self.connections():
+            d = sc.reserve(service_parameters)
+            defs.append(d)
 
         dl = defer.DeferredList(defs)
         dl.addCallbacks(reservationDone)
