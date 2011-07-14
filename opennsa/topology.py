@@ -101,7 +101,7 @@ class Topology:
                 continue
 
             if ep.dest_stp.network == dest_stp.network:
-                sp = nsa.STPPair(ep, ep.dest_stp)
+                sp = nsa.SDP(ep, ep.dest_stp)
                 routes.append( [ sp ] )
             else:
                 nvn = visited_networks[:] + [ ep.dest_stp.network ]
@@ -109,7 +109,7 @@ class Topology:
                 if subroutes:
                     for sr in subroutes:
                         src = sr[:]
-                        sp = nsa.STPPair(ep, ep.dest_stp)
+                        sp = nsa.SDP(ep, ep.dest_stp)
                         src.insert(0, sp)
                         routes.append(  src  )
 

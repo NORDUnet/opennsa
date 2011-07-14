@@ -35,7 +35,7 @@ class STP: # Service Termination Point
 
 
 
-class STPPair:
+class SDP: # service demarcation point
 
     def __init__(self, stp1, stp2):
         self.stp1 = stp1
@@ -43,13 +43,13 @@ class STPPair:
 
 
     def __eq__(self, other):
-        if not isinstance(other, STPPair):
+        if not isinstance(other, SDP):
             return False
         return self.stp1 == other.stp1 and self.stp2 == other.stp2
 
 
     def __str__(self):
-        return '<STPPair %s:%s-%s:%s>' % (self.stp1.network, self.stp1.endpoint, self.stp2.network, self.stp2.endpoint)
+        return '<SDP %s:%s-%s:%s>' % (self.stp1.network, self.stp1.endpoint, self.stp2.network, self.stp2.endpoint)
 
 
 

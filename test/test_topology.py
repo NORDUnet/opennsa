@@ -41,8 +41,8 @@ TEST_PATHS_1 = [
       'source_endpoint' : 'DK-Tjele',
       'dest_network'    : 'Sweden',
       'dest_endpoint'   : 'SE-NSC',
-      'paths'           :  [ [ nsa.STPPair( nsa.STP('Denmark', 'DK-Frederikshavn'), nsa.STP('Sweden', 'SE-Goteborg') ) ],
-                             [ nsa.STPPair( nsa.STP('Denmark', 'DK-Orestad'),       nsa.STP('Sweden', 'SE-Malmo') )    ]
+      'paths'           :  [ [ nsa.SDP( nsa.STP('Denmark', 'DK-Frederikshavn'), nsa.STP('Sweden', 'SE-Goteborg') ) ],
+                             [ nsa.SDP( nsa.STP('Denmark', 'DK-Orestad'),       nsa.STP('Sweden', 'SE-Malmo') )    ]
                            ]
     },
 
@@ -51,11 +51,11 @@ TEST_PATHS_1 = [
       'source_endpoint' : 'NO-Trondheim',
       'dest_network'    : 'Sweden',
       'dest_endpoint'   : 'SE-NSC',
-      'paths'           : [ [ nsa.STPPair( nsa.STP('Norway', 'NO-Kristianssand'),  nsa.STP('Denmark', 'DK-Hirtshals') ),
-                              nsa.STPPair( nsa.STP('Denmark', 'DK-Frederikshavn'), nsa.STP('Sweden', 'SE-Goteborg') )
+      'paths'           : [ [ nsa.SDP( nsa.STP('Norway', 'NO-Kristianssand'),  nsa.STP('Denmark', 'DK-Hirtshals') ),
+                              nsa.SDP( nsa.STP('Denmark', 'DK-Frederikshavn'), nsa.STP('Sweden', 'SE-Goteborg') )
                             ],
-                            [ nsa.STPPair( nsa.STP('Norway', 'NO-Kristianssand'),  nsa.STP('Denmark', 'DK-Hirtshals') ),
-                              nsa.STPPair( nsa.STP('Denmark', 'DK-Orestad'),       nsa.STP('Sweden', 'SE-Malmo') )
+                            [ nsa.SDP( nsa.STP('Norway', 'NO-Kristianssand'),  nsa.STP('Denmark', 'DK-Hirtshals') ),
+                              nsa.SDP( nsa.STP('Denmark', 'DK-Orestad'),       nsa.STP('Sweden', 'SE-Malmo') )
                             ]
                           ]
     }
