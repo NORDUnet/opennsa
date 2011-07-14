@@ -54,19 +54,19 @@ class NSIService:
 
             # should check for local network
             if source_stp.network == self.network:
-                local_conn = connection.LocalConnection(source_stp.endpoint, dest_stp.endpoint, backend=self.backend)
+                local_conn = connection.LocalConnection(conn, source_stp.endpoint, dest_stp.endpoint, backend=self.backend)
                 assert conn.local_connection is None
                 conn.local_connection = local_conn
             else:
                 sub_conn_id = 'int-ccid' + ''.join( [ str(int(random.random() * 10)) for _ in range(4) ] )
-                sub_conn = connection.SubConnection(sub_conn_id, source_stp.network, source_stp, dest_stp, proxy=self.proxy)
+                sub_conn = connection.SubConnection(conn, sub_conn_id, source_stp.network, source_stp, dest_stp, proxy=self.proxy)
                 conn.sub_connections.append(sub_conn)
 
             return conn
 
 
-        def reservationMade(conn):
-            self.connections.setdefault(nsa_identity, {})[connection_id] = conn
+        def reservationMade(conn, nsa_identity):
+            self.connections.setdefault(nsa_identity, {})[conn.connection_id] = conn
             return conn.connection_id
 
         # --
@@ -90,29 +90,42 @@ class NSIService:
 
             setupSubConnection(source_stp, dest_stp, conn)
 
-        elif source_stp.network == self.network:
-            # make path and chain on - common chaining
-            log.msg('Reserve %s: Common chain creation: %s:%s -> %s:%s (%s)' % path_info, system='opennsa.NSIService')
+        # This code is for chaining requests and is currently not used, but might be needed sometime in the future
+        # Once we get proper a topology service, some chaining will be necessary.
 
-            paths = self.topology.findPaths(source_stp, dest_stp)
-            # check for no paths
-            paths.sort(key=lambda e : len(e.endpoint_pairs))
-            selected_path = paths[0] # shortest path
-            log.msg('Attempting to create path %s' % selected_path, system='opennsa.NSIService')
+        #elif source_stp.network == self.network:
+        #    # make path and chain on - common chaining
+        #    log.msg('Reserve %s: Common chain creation: %s:%s -> %s:%s (%s)' % path_info, system='opennsa.NSIService')
+        #    paths = self.topology.findPaths(source_stp, dest_stp)
+        #    # check for no paths
+        #    paths.sort(key=lambda e : len(e.endpoint_pairs))
+        #    selected_path = paths[0] # shortest path
+        #    log.msg('Attempting to create path %s' % selected_path, system='opennsa.NSIService')
+        #    assert selected_path.source_stp.network == self.network
+        #   # setup connection data - does this work with more than one hop?
+        #    setupSubConnection(selected_path.source_stp, selected_path.endpoint_pairs[0].stp1, conn)
+        #    setupSubConnection(selected_path.endpoint_pairs[0].stp2, dest_stp, conn)
+        #elif dest_stp.network == self.network:
+        #    # make path and chain on - backwards chaining
+        #    log.msg('Backwards chain creation %s: %s:%s -> %s:%s (%s)' % path_info, system='opennsa.NSIService')
+        #    paths = self.topology.findPaths(source_stp, dest_stp)
+        #    # check for no paths
+        #    paths.sort(key=lambda e : len(e.endpoint_pairs))
+        #    selected_path = paths[0] # shortest path
+        #    log.msg('Attempting to create path %s' % selected_path, system='opennsa.NSIService')
+        #    assert selected_path.dest_stp.network == self.network
+        #   # setup connection data
+        #    setupSubConnection(selected_path.source_stp, selected_path.endpoint_pairs[0].stp1, conn)
+        #    setupSubConnection(selected_path.endpoint_pairs[0].stp2, dest_stp, conn)
+        #else:
+        #    log.msg('Tree creation %s:  %s:%s -> %s:%s (%s)' % path_info, system='opennsa.NSIService')
 
-            assert selected_path.source_stp.network == self.network
-
-            # setup connection data
-            setupSubConnection(selected_path.source_stp, selected_path.endpoint_pairs[0].stp1, conn)
-            setupSubConnection(selected_path.endpoint_pairs[0].stp2, dest_stp, conn)
-
-        elif dest_stp.network == self.network:
-            # make path and chain on - backwards chaining
-            log.msg('Backwards chain creation %s: %s:%s -> %s:%s (%s)' % path_info, system='opennsa.NSIService')
-            raise NotImplementedError('Backwards chain reservation')
-
+        # create the connection in tree/fanout style
         else:
-            log.msg('Tree creation %s:  %s:%s -> %s:%s (%s)' % path_info, system='opennsa.NSIService')
+            # log about creation and the connection type
+            log.msg('Reserve %s: Aggregate path creation: %s:%s -> %s:%s (%s)' % path_info, system='opennsa.NSIService')
+
+            # making the connection is the same for all though :-)
 
             paths = self.topology.findPaths(source_stp, dest_stp)
             # check for no paths
@@ -131,7 +144,7 @@ class NSIService:
         # now reserve connections needed to create path
 
         d = conn.reserve(service_parameters)
-        d.addCallback(reservationMade)
+        d.addCallback(reservationMade, nsa_identity)
         return d
 
 
