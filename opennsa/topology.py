@@ -7,6 +7,7 @@ Copyright: NORDUnet (2011)
 """
 
 import json
+import StringIO
 
 from opennsa import nsa, error
 
@@ -27,7 +28,7 @@ class Topology:
 
     def parseTopology(self, topology_source):
 
-        if isinstance(topology_source, file):
+        if isinstance(topology_source, file) or isinstance(topology_source, StringIO.StringIO):
             topology_data = json.load(topology_source)
         elif isinstance(topology_source, str):
             topology_data = json.loads(topology_source)
