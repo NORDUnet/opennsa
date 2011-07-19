@@ -25,7 +25,7 @@ class NSIService:
         self.backend = backend
 
         self.topology = topology.Topology()
-        self.topology.parseTopology(open(topology_file))
+        self.topology.parseTopology(topology_file)
 
         # get own nsa from topology
         self.nsa = self.topology.getNetwork(self.network).nsa
