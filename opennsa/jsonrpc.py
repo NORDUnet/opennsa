@@ -156,6 +156,11 @@ class JSONRPCService(NetstringReceiver):
 
 
 
+# helper function for jsonrpcnsiclient
+def _dropConnection(passthru, proxy):
+    r = proxy.transport.loseConnection()
+    return passthru
+
 
 class JSONRPCNSIClient:
 
@@ -182,8 +187,10 @@ class JSONRPCNSIClient:
     def reserve(self, requester_nsa, provider_nsa, connection_id, global_reservation_id, description, service_parameters, session_security_attributes):
 
         def gotProxy(proxy):
-            return proxy.call('Reserve', requester_nsa.protoNSA(), provider_nsa.protoNSA(), connection_id, global_reservation_id, description,
-                              service_parameters.protoSP(), session_security_attributes)
+            d = proxy.call('Reserve', requester_nsa.protoNSA(), provider_nsa.protoNSA(), connection_id, global_reservation_id, description,
+                           service_parameters.protoSP(), session_security_attributes)
+            d.addCallback(_dropConnection, proxy)
+            return d
 
         return self._issueProxyCall(provider_nsa, gotProxy)
 
@@ -191,7 +198,9 @@ class JSONRPCNSIClient:
     def cancelReservation(self, requester_nsa, provider_nsa, connection_id, session_security_attributes):
 
         def gotProxy(proxy):
-            return proxy.call('CancelReservation', requester_nsa.protoNSA(), provider_nsa.protoNSA(), connection_id, session_security_attributes)
+            d = proxy.call('CancelReservation', requester_nsa.protoNSA(), provider_nsa.protoNSA(), connection_id, session_security_attributes)
+            d.addCallback(_dropConnection, proxy)
+            return d
 
         return self._issueProxyCall(provider_nsa, gotProxy)
 
@@ -199,7 +208,9 @@ class JSONRPCNSIClient:
     def provision(self, requester_nsa, provider_nsa, connection_id, session_security_attributes):
 
         def gotProxy(proxy):
-            return proxy.call('Provision', requester_nsa.protoNSA(), provider_nsa.protoNSA(), connection_id, session_security_attributes)
+            d = proxy.call('Provision', requester_nsa.protoNSA(), provider_nsa.protoNSA(), connection_id, session_security_attributes)
+            d.addCallback(_dropConnection, proxy)
+            return d
 
         return self._issueProxyCall(provider_nsa, gotProxy)
 
@@ -207,7 +218,9 @@ class JSONRPCNSIClient:
     def releaseProvision(self, requester_nsa, provider_nsa, connection_id, session_security_attributes):
 
         def gotProxy(proxy):
-            return proxy.call('ReleaseProvision', requester_nsa.protoNSA(), provider_nsa.protoNSA(), connection_id, session_security_attributes)
+            d = proxy.call('ReleaseProvision', requester_nsa.protoNSA(), provider_nsa.protoNSA(), connection_id, session_security_attributes)
+            d.addCallback(_dropConnection, proxy)
+            return d
 
         return self._issueProxyCall(provider_nsa, gotProxy)
 
@@ -215,7 +228,9 @@ class JSONRPCNSIClient:
     def query(self, requester_nsa, provider_nsa, query_filter, session_security_attributes):
 
         def gotProxy(proxy):
-            return proxy.call('Query', requester_nsa.protoNSA(), provider_nsa.protoNSA(), query_filter, session_security_attributes)
+            d = proxy.call('Query', requester_nsa.protoNSA(), provider_nsa.protoNSA(), query_filter, session_security_attributes)
+            d.addCallback(_dropConnection, proxy)
+            return d
 
         return self._issueProxyCall(provider_nsa, gotProxy)
 
