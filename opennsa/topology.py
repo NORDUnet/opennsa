@@ -70,11 +70,11 @@ class Topology:
         # find endpoint pairs
         #print "FIND PATH", source_stp, dest_stp
 
-        path_endpoint_pairs = self.findPathEndpoints(source_stp, dest_stp)
+        path_sdps = self.findPathEndpoints(source_stp, dest_stp)
 
         paths = []
-        for lep in path_endpoint_pairs:
-            paths.append( nsa.Path(source_stp, dest_stp, lep ) )
+        for sdps in path_sdps:
+            paths.append( nsa.Path(source_stp, dest_stp, sdps ) )
 
         return paths
 
