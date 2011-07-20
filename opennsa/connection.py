@@ -80,8 +80,8 @@ class SubConnection(ConnectionState):
 
         assert self._proxy is not None, 'Proxy not set for SubConnection, cannot invoke method'
 
-        def reserveDone(int_res_id):
-            self.internal_reservation_id = int_res_id
+        def reserveDone(connection_id):
+            assert connection_id == self.connection_id, 'Reservation returned mismatching connection id'
             self.switchState(RESERVED)
             return self
 
