@@ -80,11 +80,6 @@ class SubConnection(ConnectionState):
 
         assert self._proxy is not None, 'Proxy not set for SubConnection, cannot invoke method'
 
-        def reserveDone(connection_id):
-            assert connection_id == self.connection_id, 'Reservation returned mismatching connection id'
-            self.switchState(RESERVED)
-            return self
-
         def reserveFailed(err):
             self.switchState(RESERVE_FAILED)
             return err
@@ -92,8 +87,20 @@ class SubConnection(ConnectionState):
         sub_service_params  = nsa.ServiceParameters('', '', self.source_stp, self.dest_stp)
         self.switchState(RESERVING)
         d = self._proxy.reserve(self.network, self.connection_id, self.parent_connection.global_reservation_id, self.parent_connection.description, sub_service_params, None)
-        d.addCallbacks(reserveDone, reserveFailed)
+        d.addErrback(reserveFailed) # nothing is required for reservation creation confirmation
         return d
+
+
+    def reserveConfirmed(self):
+        self.switchState(RESERVED)
+        self.parent_connection.reservationStateUpdated(False)
+        return self
+
+
+    def reserveFailed(self, err):
+        self.switchState(RESERVE_FAILED)
+        self.parent_connection.reservationStateUpdated(True, err)
+        return err
 
 
     def cancelReservation(self):
@@ -175,10 +182,12 @@ class LocalConnection(ConnectionState):
         def reserveDone(int_res_id):
             self.internal_reservation_id = int_res_id
             self.switchState(RESERVED)
+            self.parent_connection.reservationStateUpdated(False)
             return self
 
         def reserveFailed(err):
             self.switchState(RESERVE_FAILED)
+            self.parent_connection.reservationStateUpdated(True, err)
             return err
 
         self.switchState(RESERVING)
@@ -247,8 +256,9 @@ class LocalConnection(ConnectionState):
 
 class Connection(ConnectionState):
 
-    def __init__(self, connection_id, source_stp, dest_stp, global_reservation_id=None, description=None, local_connection=None, sub_connections=None):
+    def __init__(self, requester_nsa, connection_id, source_stp, dest_stp, global_reservation_id=None, description=None, local_connection=None, sub_connections=None):
         ConnectionState.__init__(self)
+        self.requester_nsa              = requester_nsa
         self.connection_id              = connection_id
         self.source_stp                 = source_stp
         self.dest_stp                   = dest_stp
@@ -256,6 +266,8 @@ class Connection(ConnectionState):
         self.description                = description
         self.local_connection           = local_connection
         self.sub_connections            = sub_connections or []
+
+        self._reservation_deferred      = None
 
 
     def hasLocalConnection(self):
@@ -269,26 +281,25 @@ class Connection(ConnectionState):
             return self.sub_connections
 
 
-    def reserve(self, service_parameters):
+    def reserve(self, service_parameters, nsa_identity=None):
 
-        def reservationDone(results):
+        def reservationRequestsDone(results):
             successes = [ r[0] for r in results ]
             if all(successes):
-                self.switchState(RESERVED)
-                if self.local_connection is not None:
-                    log_info = (self.connection_id, self.local_connection.internal_reservation_id, len(self.sub_connections), self.global_reservation_id)
-                else:
-                    log_info = (self.connection_id, '-', len(self.sub_connections), self.global_reservation_id)
-                log.msg('Reservation created. Connection id: %s (%s)/%i. Global id %s' % log_info, system='opennsa.Connection')
-                return self
+                return self, self._reservation_deferred
             elif any(successes):
                 self.switchState(RESERVE_FAILED)
+                self._reservation_deferred = None
                 raise error.ReserveError('Partial failure in reservation (may require manual cleanup)')
             else:
                 self.switchState(RESERVE_FAILED)
+                self._reservation_deferred = None
                 raise error.ReserveError('Reservation failed for all local/sub connections')
 
         self.switchState(RESERVING)
+
+        # we need to setup it up here as there might be callbacks to it before we get the callback
+        self._reservation_deferred = defer.Deferred()
 
         defs = []
         for sc in self.connections():
@@ -296,8 +307,23 @@ class Connection(ConnectionState):
             defs.append(d)
 
         dl = defer.DeferredList(defs)
-        dl.addCallbacks(reservationDone)
+        dl.addCallbacks(reservationRequestsDone)
         return dl
+
+
+    def reservationStateUpdated(self, reservation_failed, error=None):
+
+        if self._reservation_deferred is None:
+            return # nothing to do
+
+        if reservation_failed:
+            self._reservation_deferred.errback(error)
+        else:
+            if all( [ conn.state() == RESERVED for conn in self.connections() ] ):
+                self.switchState(RESERVED)
+                self._reservation_deferred.callback(self)
+            else:
+                pass # awaiting more responses
 
 
     def cancelReservation(self):
