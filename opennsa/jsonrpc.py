@@ -195,6 +195,27 @@ class JSONRPCNSIClient:
         return self._issueProxyCall(provider_nsa, gotProxy)
 
 
+    def reserveConfirmed(self, requester_nsa, provider_nsa, connection_id, global_reservation_id, description, service_parameters, session_security_attributes):
+
+        def gotProxy(proxy):
+            d = proxy.call('ReserveConfirmed', requester_nsa.protoNSA(), provider_nsa.protoNSA(), connection_id, global_reservation_id, description,
+                            service_parameters.protoSP(), session_security_attributes)
+            d.addCallback(_dropConnection, proxy)
+            return d
+
+        return self._issueProxyCall(requester_nsa, gotProxy) # yes requester, roles are reversed due to "backwards" RPC
+
+
+    def reserveFailed(self, requester_nsa, provider_nsa, connection_id, session_security_attributes, service_exception):
+
+        def gotProxy(proxy):
+            d = proxy.call('ReserveFailed', requester_nsa.protoNSA(), provider_nsa.protoNSA(), connection_id, session_security_attributes, service_exception)
+            d.addCallback(_dropConnection, proxy)
+            return d
+
+        return self._issueProxyCall(requester_nsa, gotProxy) # yes requester, roles are reversed due to "backwards" RPC
+
+
     def cancelReservation(self, requester_nsa, provider_nsa, connection_id, session_security_attributes):
 
         def gotProxy(proxy):
@@ -243,6 +264,8 @@ class JSONRPCNSIServiceDecoder:
         self.nsi_service = nsi_service
 
         jsonrpc_service.registerFunction('Reserve',             self.decodeReserve)
+        jsonrpc_service.registerFunction('ReserveConfirmed',    self.decodeReserveConfirmed)
+        jsonrpc_service.registerFunction('ReserveFailed',       self.decodeReserveFailed)
         jsonrpc_service.registerFunction('CancelReservation',   self.decodeCancelReservation)
         jsonrpc_service.registerFunction('Provision',           self.decodeProvision)
         jsonrpc_service.registerFunction('ReleaseProvision',    self.decodeReleaseProvision)
@@ -269,6 +292,21 @@ class JSONRPCNSIServiceDecoder:
         provider_nsa  = self._parseNSA(prov_nsa)
         service_parameters = self._parseServiceParameters(service_params)
         return self.nsi_service.reserve(requester_nsa, provider_nsa, connection_id, global_reservation_id, description, service_parameters, session_security_attr)
+
+
+    def decodeReserveConfirmed(self, req_nsa, prov_nsa, connection_id, global_reservation_id, description, service_params, session_security_attr):
+
+        requester_nsa = self._parseNSA(req_nsa)
+        provider_nsa  = self._parseNSA(prov_nsa)
+        service_parameters = self._parseServiceParameters(service_params)
+        return self.nsi_service.reserveConfirmed(requester_nsa, provider_nsa, connection_id, global_reservation_id, description, service_parameters, session_security_attr)
+
+
+    def decodeReserveFailed(self, req_nsa, prov_nsa, connection_id, session_security_attr, service_exception):
+
+        requester_nsa = self._parseNSA(req_nsa)
+        provider_nsa  = self._parseNSA(prov_nsa)
+        return self.nsi_service.reserveFailed(requester_nsa, provider_nsa, connection_id, session_security_attr, service_exception)
 
 
     def decodeCancelReservation(self, req_nsa, prov_nsa, connection_id, session_security_attr):
