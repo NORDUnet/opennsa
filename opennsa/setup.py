@@ -1,8 +1,7 @@
 # setup opennsa
 # someday there will (hopefully) be more here
 
-from opennsa import jsonrpc, nsiservice
-
+from opennsa import jsonrpc, nsiservice, nsiclient
 
 
 def createFactory(network_name, topology_file, proxy):
@@ -10,4 +9,17 @@ def createFactory(network_name, topology_file, proxy):
     nsi_service  = nsiservice.NSIService(network_name, proxy, topology_file)
     factory = jsonrpc.OpenNSAJSONRPCFactory(nsi_service)
     return factory
+
+
+
+def createClient():
+
+    nsi_service_client = nsiclient.NSIServiceClient()
+    factory = jsonrpc.OpenNSAJSONRPCFactory(nsi_service_client)
+
+    client = jsonrpc.JSONRPCNSIClient()
+
+    return client, nsi_service_client, factory
+
+
 

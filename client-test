@@ -4,7 +4,7 @@ import uuid, random
 
 from twisted.internet import reactor, defer
 
-from opennsa import jsonrpc, nsa
+from opennsa import jsonrpc, nsa, setup
 
 
 
@@ -13,9 +13,16 @@ def doMain():
 
     print 'OpenNSA test client'
 
-    proxy = jsonrpc.JSONRPCNSIClient()
+    HOST, PORT = 'localhost', 4810
 
-    client_nsa      = nsa.NetworkServiceAgent('nsa://none:0')
+    client, service, factory  = setup.createClient()
+
+    reactor.listenTCP(PORT, factory)
+
+    #client = jsonrpc.JSONRPCNSIClient('localhost', 4810)
+
+    client_nsa      = nsa.NetworkServiceAgent('nsa://%s:%s' % (HOST, PORT))
+
     provider_net    = nsa.Network('B', nsa.NetworkServiceAgent('nsa://localhost:4322') )
     #provider_net    = nsa.Network('E', nsa.NetworkServiceAgent('nsa://localhost:4325') )
 
@@ -29,24 +36,29 @@ def doMain():
     conn_id = 'cli-ccid' + ''.join( [ str(int(random.random() * 10)) for _ in range(4) ] )
     print "Connection id", conn_id
 
-    _ = yield proxy.query(client_nsa, provider_net.nsa, None, None)
+    _ = yield client.query(client_nsa, provider_net.nsa, None, None)
 
-    _ = yield proxy.reserve(client_nsa, provider_net.nsa, conn_id, reservation_id, 'Test Connection', service_params, None)
-    print "Reservation made"
+    rd = service.addReservation(provider_net.nsa, conn_id)
 
-    _ = yield proxy.query(client_nsa, provider_net.nsa, None, None)
+    r = yield client.reserve(client_nsa, provider_net.nsa, conn_id, reservation_id, 'Test Connection', service_params, None)
+    print "Reservation issued"
+    r = yield rd
+    print "Reservation created"
 
-    _ = yield proxy.provision(client_nsa, provider_net.nsa, conn_id, None)
+
+    _ = yield client.query(client_nsa, provider_net.nsa, None, None)
+
+    _ = yield client.provision(client_nsa, provider_net.nsa, conn_id, None)
     print "Provision made"
 
-    _ = yield proxy.query(client_nsa, provider_net.nsa, None, None)
+    _ = yield client.query(client_nsa, provider_net.nsa, None, None)
 
-    _ = yield proxy.releaseProvision(client_nsa, provider_net.nsa, conn_id, None)
+    _ = yield client.releaseProvision(client_nsa, provider_net.nsa, conn_id, None)
     print "Provision released"
 
-    _ = yield proxy.query(client_nsa, provider_net.nsa, None, None)
+    _ = yield client.query(client_nsa, provider_net.nsa, None, None)
 
-    _ = yield proxy.cancelReservation(client_nsa, provider_net.nsa, conn_id, None)
+    _ = yield client.cancelReservation(client_nsa, provider_net.nsa, conn_id, None)
     print "Reservation cancelled"
 
 
