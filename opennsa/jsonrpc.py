@@ -158,7 +158,7 @@ class JSONRPCService(NetstringReceiver):
 
 # helper function for jsonrpcnsiclient
 def _dropConnection(passthru, proxy):
-    r = proxy.transport.loseConnection()
+    proxy.transport.loseConnection()
     return passthru
 
 
