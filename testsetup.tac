@@ -28,7 +28,7 @@ application = service.Application("OpenNSA")
 for network_name, port in networks.items():
 
     proxy = dud.DUDNSIBackend(network_name)
-    factory = setup.createFactory(network_name, open(TOPOFILE), proxy)
+    factory = setup.createService(network_name, open(TOPOFILE), proxy)
 
     internet.TCPServer(port, factory, interface='localhost').setServiceParent(application)
 

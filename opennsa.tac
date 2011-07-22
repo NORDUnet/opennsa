@@ -16,7 +16,7 @@ NETWORK_NAME = 'B'
 
 proxy = dud.DUDNSIBackend(NETWORK_NAME)
 
-factory = setup.createFactory(NETWORK_NAME, open(TOPOFILE), proxy)
+factory = setup.createService(NETWORK_NAME, open(TOPOFILE), proxy)
 
 
 

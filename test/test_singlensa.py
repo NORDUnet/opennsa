@@ -65,7 +65,7 @@ class JSONRPCSingleNSATestCase(GenericSingleNSATestCase, unittest.TestCase):
         port = int(nsa_url.split(':',2)[1])
 
         backend = dud.DUDNSIBackend(network_name)
-        service_factory = setup.createFactory(network_name, StringIO.StringIO(topology.SIMPLE_TOPOLOGY), backend)
+        service_factory = setup.createService(network_name, StringIO.StringIO(topology.SIMPLE_TOPOLOGY), backend)
 
         self.service_iport = reactor.listenTCP(port, service_factory)
 
