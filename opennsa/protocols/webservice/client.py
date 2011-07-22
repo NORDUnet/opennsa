@@ -110,8 +110,14 @@ class NSIWebServiceClient:
         # print "R",r 
         RESERVE_SOAPACTION = 'http://schemas.ogf.org/nsi/2011/07/connection/service/reserve'
 
+
+        def handleReserveResponse(data, factory):
+            # should handle de-serialization, response code, connection closing, etc.
+            print "D", data
+            print "F", factory
+
         d, factory = self._httpRequest(str(provider_nsa.address), RESERVE_SOAPACTION, r)
-        # should add callback and do serialization, response code, connection closing, etc.
+        d.addCallback(handleReserveResponse, factory)
         return d
 
         #parseSOAPEnvelope(r, b.wsdl.schema, rrt)
