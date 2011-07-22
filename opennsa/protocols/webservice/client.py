@@ -10,20 +10,21 @@ import uuid
 from zope.interface import implements
 
 from twisted.python import log
-#from twisted.web import client
+from twisted.internet import reactor
+from twisted.web import client as webclient
 
 from suds.client import Client, SoapClient
 from suds.bindings import binding, rpc, document
 
 from opennsa.interface import NSIInterface
-from opennsa.protocol.webservice import soap as nsisoap
+from opennsa.protocols.webservice import soap as nsisoap
 
 
-class WebServiceNSIClient:
+class NSIWebServiceClient:
 
     implements(NSIInterface)
 
-    def __init__(self, reply_to):
+    def __init__(self, reply_to=None):
 
         self.reply_to = reply_to or 'http://localhost:7080/NSI/services/ConnectionService' # remove once testing is done
 
@@ -36,10 +37,32 @@ class WebServiceNSIClient:
         return uuid.uuid1().int
 
 
+    def _httpRequest(self, url, soapaction, payload, method='POST'):
+        # copied from twisted.web.client in order to get access to the
+        # factory (which contains response codes, headers, etc)
+
+        scheme, host, port, path = webclient._parse(url)
+
+        factory = webclient.HTTPClientFactory(url, method=method, postdata=payload)
+        factory.noisy = False # stop spewing about factory start/stop
+        # fix missing port in header (bug in twisted.web.client)
+        if port:
+            factory.headers['host'] = host + ':' + str(port)
+        factory.headers['soapaction'] = soapaction
+
+        if scheme == 'https':
+            raise NotImplementedError('https currently not supported')
+            reactor.connectSSL(host, port, factory, ctxFactory)
+        else:
+            reactor.connectTCP(host, port, factory)
+
+        return factory.deferred, factory
+
+
     def reserve(self, requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters):
         # reserve(xs:anyURI transactionId, xs:anyURI replyTo, ns1:ReserveType reserveRequest, )
 
-        transaction_id = 'sager'
+        transaction_id = self._createTransactionId()
 
         reserve = self.ws_client.factory.create('ns1:ReserveType')
         # print reserve
@@ -84,7 +107,12 @@ class WebServiceNSIClient:
         soapenv = doc.get_message(method.method, args, kwargs={})
         r = str(soapenv)
 
-        print "R",r 
+        # print "R",r 
+        RESERVE_SOAPACTION = 'http://schemas.ogf.org/nsi/2011/07/connection/service/reserve'
+
+        d, factory = self._httpRequest(str(provider_nsa.address), RESERVE_SOAPACTION, r)
+        # should add callback and do serialization, response code, connection closing, etc.
+        return d
 
         #parseSOAPEnvelope(r, b.wsdl.schema, rrt)
 
