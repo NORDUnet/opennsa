@@ -4,7 +4,8 @@ import uuid, random
 
 from twisted.internet import reactor, defer
 
-from opennsa import jsonrpc, nsa, setup
+from opennsa import nsa, setup
+from opennsa.protocols.jsonrpc import jsonrpc
 
 
 
