@@ -184,72 +184,71 @@ class JSONRPCNSIClient:
         return d
 
 
-    def reserve(self, requester_nsa, provider_nsa, connection_id, global_reservation_id, description, service_parameters, session_security_attributes):
+    def reserve(self, requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters):
 
         def gotProxy(proxy):
-            d = proxy.call('Reserve', requester_nsa.protoNSA(), provider_nsa.protoNSA(), connection_id, global_reservation_id, description,
-                           service_parameters.protoSP(), session_security_attributes)
+            d = proxy.call('Reserve', requester_nsa.protoNSA(), provider_nsa.protoNSA(), session_security_attr,
+                           global_reservation_id, description, connection_id, service_parameters.protoSP())
             d.addCallback(_dropConnection, proxy)
             return d
 
         return self._issueProxyCall(provider_nsa, gotProxy)
 
 
-    def reserveConfirmed(self, requester_nsa, provider_nsa, connection_id, global_reservation_id, description, service_parameters, session_security_attributes):
+    def reserveConfirmed(self, requester_nsa, provider_nsa, global_reservation_id, description, connection_id, service_parameters):
 
         def gotProxy(proxy):
-            d = proxy.call('ReserveConfirmed', requester_nsa.protoNSA(), provider_nsa.protoNSA(), connection_id, global_reservation_id, description,
-                            service_parameters.protoSP(), session_security_attributes)
+            d = proxy.call('ReserveConfirmed', requester_nsa.protoNSA(), provider_nsa.protoNSA(), global_reservation_id, description, connection_id, service_parameters.protoSP())
             d.addCallback(_dropConnection, proxy)
             return d
 
         return self._issueProxyCall(requester_nsa, gotProxy) # yes requester, roles are reversed due to "backwards" RPC
 
 
-    def reserveFailed(self, requester_nsa, provider_nsa, connection_id, session_security_attributes, service_exception):
+    def reserveFailed(self, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, service_exception):
 
         def gotProxy(proxy):
-            d = proxy.call('ReserveFailed', requester_nsa.protoNSA(), provider_nsa.protoNSA(), connection_id, session_security_attributes, service_exception)
+            d = proxy.call('ReserveFailed', requester_nsa.protoNSA(), provider_nsa.protoNSA(), connection_id, service_exception)
             d.addCallback(_dropConnection, proxy)
             return d
 
         return self._issueProxyCall(requester_nsa, gotProxy) # yes requester, roles are reversed due to "backwards" RPC
 
 
-    def cancelReservation(self, requester_nsa, provider_nsa, connection_id, session_security_attributes):
+    def terminateReservation(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
         def gotProxy(proxy):
-            d = proxy.call('CancelReservation', requester_nsa.protoNSA(), provider_nsa.protoNSA(), connection_id, session_security_attributes)
+            d = proxy.call('TerminateReservation', requester_nsa.protoNSA(), provider_nsa.protoNSA(), session_security_attr, connection_id)
             d.addCallback(_dropConnection, proxy)
             return d
 
         return self._issueProxyCall(provider_nsa, gotProxy)
 
 
-    def provision(self, requester_nsa, provider_nsa, connection_id, session_security_attributes):
+    def provision(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
         def gotProxy(proxy):
-            d = proxy.call('Provision', requester_nsa.protoNSA(), provider_nsa.protoNSA(), connection_id, session_security_attributes)
+            d = proxy.call('Provision', requester_nsa.protoNSA(), provider_nsa.protoNSA(), session_security_attr, connection_id)
             d.addCallback(_dropConnection, proxy)
             return d
 
         return self._issueProxyCall(provider_nsa, gotProxy)
 
 
-    def releaseProvision(self, requester_nsa, provider_nsa, connection_id, session_security_attributes):
+    def releaseProvision(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
         def gotProxy(proxy):
-            d = proxy.call('ReleaseProvision', requester_nsa.protoNSA(), provider_nsa.protoNSA(), connection_id, session_security_attributes)
+            d = proxy.call('ReleaseProvision', requester_nsa.protoNSA(), provider_nsa.protoNSA(), session_security_attr, connection_id)
             d.addCallback(_dropConnection, proxy)
             return d
 
         return self._issueProxyCall(provider_nsa, gotProxy)
 
 
-    def query(self, requester_nsa, provider_nsa, query_filter, session_security_attributes):
+    def query(self, requester_nsa, provider_nsa, session_security_attr, query_filter):
 
         def gotProxy(proxy):
-            d = proxy.call('Query', requester_nsa.protoNSA(), provider_nsa.protoNSA(), query_filter, session_security_attributes)
+            d = proxy.call('Query', requester_nsa.protoNSA(), provider_nsa.protoNSA(), query_filter, session_security_attr)
             d.addCallback(_dropConnection, proxy)
             return d
 
@@ -266,7 +265,7 @@ class JSONRPCNSIServiceDecoder:
         jsonrpc_service.registerFunction('Reserve',             self.decodeReserve)
         jsonrpc_service.registerFunction('ReserveConfirmed',    self.decodeReserveConfirmed)
         jsonrpc_service.registerFunction('ReserveFailed',       self.decodeReserveFailed)
-        jsonrpc_service.registerFunction('CancelReservation',   self.decodeCancelReservation)
+        jsonrpc_service.registerFunction('TerminateReservation',self.decodeTerminateReservation)
         jsonrpc_service.registerFunction('Provision',           self.decodeProvision)
         jsonrpc_service.registerFunction('ReleaseProvision',    self.decodeReleaseProvision)
         jsonrpc_service.registerFunction('Query',               self.decodeQuery)
@@ -286,56 +285,56 @@ class JSONRPCNSIServiceDecoder:
         return nsa.ServiceParameters(in_service_params['start_time'], in_service_params['end_time'], source_stp, dest_stp, in_service_params['stps'])
 
 
-    def decodeReserve(self, req_nsa, prov_nsa, connection_id, global_reservation_id, description, service_params, session_security_attr):
+    def decodeReserve(self, req_nsa, prov_nsa, session_security_attr, global_reservation_id, description, connection_id, service_params):
 
         requester_nsa = self._parseNSA(req_nsa)
         provider_nsa  = self._parseNSA(prov_nsa)
         service_parameters = self._parseServiceParameters(service_params)
-        return self.nsi_service.reserve(requester_nsa, provider_nsa, connection_id, global_reservation_id, description, service_parameters, session_security_attr)
+        return self.nsi_service.reserve(requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters)
 
 
-    def decodeReserveConfirmed(self, req_nsa, prov_nsa, connection_id, global_reservation_id, description, service_params, session_security_attr):
+    def decodeReserveConfirmed(self, req_nsa, prov_nsa, global_reservation_id, description, connection_id, service_params):
 
         requester_nsa = self._parseNSA(req_nsa)
         provider_nsa  = self._parseNSA(prov_nsa)
         service_parameters = self._parseServiceParameters(service_params)
-        return self.nsi_service.reserveConfirmed(requester_nsa, provider_nsa, connection_id, global_reservation_id, description, service_parameters, session_security_attr)
+        return self.nsi_service.reserveConfirmed(requester_nsa, provider_nsa, global_reservation_id, description, connection_id, service_parameters)
 
 
-    def decodeReserveFailed(self, req_nsa, prov_nsa, connection_id, session_security_attr, service_exception):
-
-        requester_nsa = self._parseNSA(req_nsa)
-        provider_nsa  = self._parseNSA(prov_nsa)
-        return self.nsi_service.reserveFailed(requester_nsa, provider_nsa, connection_id, session_security_attr, service_exception)
-
-
-    def decodeCancelReservation(self, req_nsa, prov_nsa, connection_id, session_security_attr):
+    def decodeReserveFailed(self, req_nsa, prov_nsa, global_reservation_id, connection_id, connection_state, service_exception):
 
         requester_nsa = self._parseNSA(req_nsa)
         provider_nsa  = self._parseNSA(prov_nsa)
-        return self.nsi_service.cancelReservation(requester_nsa, provider_nsa, connection_id, session_security_attr)
+        return self.nsi_service.reserveFailed(requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, service_exception)
 
 
-    def decodeProvision(self, req_nsa, prov_nsa, connection_id, session_security_attr):
-
-        requester_nsa = self._parseNSA(req_nsa)
-        provider_nsa  = self._parseNSA(prov_nsa)
-        return self.nsi_service.provision(requester_nsa, provider_nsa, connection_id, session_security_attr)
-
-
-    def decodeReleaseProvision(self, req_nsa, prov_nsa, connection_id, session_security_attr):
+    def decodeTerminateReservation(self, req_nsa, prov_nsa, session_security_attr, connection_id):
 
         requester_nsa = self._parseNSA(req_nsa)
         provider_nsa  = self._parseNSA(prov_nsa)
-        return self.nsi_service.releaseProvision(requester_nsa, provider_nsa, connection_id, session_security_attr)
+        return self.nsi_service.terminateReservation(requester_nsa, provider_nsa, session_security_attr, connection_id)
 
 
-    def decodeQuery(self, req_nsa, prov_nsa, query_filter, session_security_attr):
+    def decodeProvision(self, req_nsa, prov_nsa, session_security_attr, connection_id):
+
+        requester_nsa = self._parseNSA(req_nsa)
+        provider_nsa  = self._parseNSA(prov_nsa)
+        return self.nsi_service.provision(requester_nsa, provider_nsa, session_security_attr, connection_id)
+
+
+    def decodeReleaseProvision(self, req_nsa, prov_nsa, session_security_attr, connection_id):
+
+        requester_nsa = self._parseNSA(req_nsa)
+        provider_nsa  = self._parseNSA(prov_nsa)
+        return self.nsi_service.releaseProvision(requester_nsa, provider_nsa, session_security_attr, connection_id)
+
+
+    def decodeQuery(self, req_nsa, prov_nsa, session_security_attr, query_filter):
 
         requester_nsa = self._parseNSA(req_nsa)
         provider_nsa  = self._parseNSA(prov_nsa)
         # decode query filter
-        return self.nsi_service.query(requester_nsa, provider_nsa, query_filter, session_security_attr)
+        return self.nsi_service.query(requester_nsa, provider_nsa, session_security_attr, query_filter)
 
 
 

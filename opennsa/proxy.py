@@ -15,41 +15,42 @@ class NSIProxy:
         self.topology   = topology  # used for network -> nsa lookups
 
 
-    def reserve(self, network, connection_id, global_reservation_id, description, service_parameters, session_security_attributes):
+    def reserve(self, network, session_security_attr, global_reservation_id, description, connection_id, service_parameters):
 
         remote_nsa = self.topology.getNetwork(network).nsa
-        return self.client.reserve(self.nsa_, remote_nsa, connection_id, global_reservation_id, description, service_parameters, session_security_attributes)
+        return self.client.reserve(self.nsa_, remote_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters)
 
 
-    def reserveConfirmed(self, remote_nsa, connection_id, global_reservation_id, description, service_parameters, session_security_attributes):
+    def reserveConfirmed(self, remote_nsa, global_reservation_id, description, connection_id, service_parameters):
 
-        return self.client.reserveConfirmed(remote_nsa, self.nsa_, connection_id, global_reservation_id, description, service_parameters, session_security_attributes)
-
-    def reserveFailed(self, remote_nsa, connection_id, session_security_attributes, service_exception):
-
-        return self.clent.reserveFailed(remote_nsa, self.nsa_, connection_id, session_security_attributes, service_exception)
+        return self.client.reserveConfirmed(remote_nsa, self.nsa_, global_reservation_id, description, connection_id, service_parameters)
 
 
-    def cancelReservation(self, network, connection_id, session_security_attributes):
+    def reserveFailed(self, remote_nsa, global_reservation_id, description, connection_id, service_exception):
 
-        remote_nsa = self.topology.getNetwork(network).nsa
-        return self.client.cancelReservation(self.nsa_, remote_nsa, connection_id, session_security_attributes)
+        return self.clent.reserveFailed(remote_nsa, self.nsa_, global_reservation_id, description, connection_id, service_exception)
 
 
-    def provision(self, network, connection_id, session_security_attributes):
+    def terminateReservation(self, network, session_security_attr, connection_id):
 
         remote_nsa = self.topology.getNetwork(network).nsa
-        return self.client.provision(self.nsa_, remote_nsa, connection_id, session_security_attributes)
+        return self.client.terminateReservation(self.nsa_, remote_nsa, session_security_attr, connection_id)
 
 
-    def releaseProvision(self, network, connection_id, session_security_attributes):
-
-        remote_nsa = self.topology.getNetwork(network).nsa
-        return self.client.releaseProvision(self.nsa_, remote_nsa, connection_id, session_security_attributes)
-
-
-    def query(self, network, query_filter, session_security_attributes):
+    def provision(self, network, session_security_attr, connection_id):
 
         remote_nsa = self.topology.getNetwork(network).nsa
-        return self.client.query(self.nsa_, remote_nsa, query_filter, session_security_attributes)
+        return self.client.provision(self.nsa_, remote_nsa, session_security_attr, connection_id)
+
+
+    def releaseProvision(self, network, session_security_attr, connection_id):
+
+        remote_nsa = self.topology.getNetwork(network).nsa
+        return self.client.releaseProvision(self.nsa_, remote_nsa, session_security_attr, connection_id)
+
+
+    def query(self, network, session_security_attributes, query_filter):
+
+        remote_nsa = self.topology.getNetwork(network).nsa
+        return self.client.query(self.nsa_, remote_nsa, session_security_attr, query_filter)
 

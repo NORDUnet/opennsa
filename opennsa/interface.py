@@ -18,30 +18,37 @@ from zope.interface import Interface
 class NSIInterface(Interface):
 
 
-    def reserve(requester_nsa, provider_nsa, reservation_id, description, connection_id,
-                service_parameters, session_security_attributes):
+    def reserve(requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters):
         """
         Make a path reservation.
         """
 
-    def cancelReservation(requester_nsa, provider_nsa, connection_id, session_security_attributes):
+    def reserveConfirmed(requester_nsa, provider_nsa, global_reservation_id, description, connection_id, service_parameters):
+        """
+        Confirm a reservation.
+        """
+
+    def reserveFailed(requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, service_exception):
+        """
+        Notify that a reservation has failed.
+        """
+
+    def terminateReservation(requester_nsa, provider_nsa, session_security_attr, connection_id):
         """
         Cancel a path reservation.
         """
 
-    def provision(requester_nsa, provider_nsa, connection_id, session_security_attributes):
+    def provision(requester_nsa, provider_nsa, session_security_attr, connection_id):
         """
         Provisions a path.
         """
 
-
-    def releaseProvision(requester_nsa, provider_nsa, connection_id, session_security_attributes):
+    def releaseProvision(requester_nsa, provider_nsa, session_security_attr, connection_id):
         """
         Release the path from provisioned mode.
         """
 
-
-    def query(requester_nsa, provider_nsa, session_security_attributes):
+    def query(requester_nsa, provider_nsa, session_security_attr, query_filter):
         """
         Query reservations and provisions.
         """
@@ -89,7 +96,7 @@ class NSIBackendInterface(Interface):
         C{string} with reservation id.
         """
 
-    def query(filter_attributes):
+    def query(query_filter):
         """
         Queries the backend.
         """

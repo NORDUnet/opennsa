@@ -32,7 +32,7 @@ def doMain():
     #dest_stp        = nsa.STP('D', 'D1')
     service_params  = nsa.ServiceParameters('', '', source_stp, dest_stp)
 
-    reservation_id = uuid.uuid1().hex
+    global_reservation_id = uuid.uuid1().hex
     conn_id = 'cli-ccid' + ''.join( [ str(int(random.random() * 10)) for _ in range(4) ] )
     print "Connection id", conn_id
 
@@ -40,7 +40,7 @@ def doMain():
 
     rd = service.addReservation(provider_net.nsa, conn_id)
 
-    r = yield client.reserve(client_nsa, provider_net.nsa, conn_id, reservation_id, 'Test Connection', service_params, None)
+    r = yield client.reserve(client_nsa, provider_net.nsa, None, global_reservation_id, 'Test Connection', conn_id, service_params)
     print "Reservation issued"
     r = yield rd
     print "Reservation created"
@@ -48,17 +48,17 @@ def doMain():
 
     _ = yield client.query(client_nsa, provider_net.nsa, None, None)
 
-    _ = yield client.provision(client_nsa, provider_net.nsa, conn_id, None)
+    _ = yield client.provision(client_nsa, provider_net.nsa, None, conn_id)
     print "Provision made"
 
     _ = yield client.query(client_nsa, provider_net.nsa, None, None)
 
-    _ = yield client.releaseProvision(client_nsa, provider_net.nsa, conn_id, None)
+    _ = yield client.releaseProvision(client_nsa, provider_net.nsa, None, conn_id)
     print "Provision released"
 
     _ = yield client.query(client_nsa, provider_net.nsa, None, None)
 
-    _ = yield client.cancelReservation(client_nsa, provider_net.nsa, conn_id, None)
+    _ = yield client.terminateReservation(client_nsa, provider_net.nsa, None, conn_id)
     print "Reservation cancelled"
 
 

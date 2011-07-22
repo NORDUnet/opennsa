@@ -21,7 +21,6 @@ class GenericSingleNSATestCase: #(unittest.TestCase):
     @defer.inlineCallbacks
     def testConnectionLifeCycle(self):
 
-        client_nsa      = nsa.NetworkServiceAgent('nsa://none:0')
         provider_net    = nsa.Network('A', nsa.NetworkServiceAgent('nsa://localhost:4321') )
 
         source_stp      = nsa.STP('A', 'A1' )
@@ -31,24 +30,28 @@ class GenericSingleNSATestCase: #(unittest.TestCase):
         reservation_id = uuid.uuid1().hex
         conn_id = 'cli-ccid-test'
 
-        yield self.proxy.reserve(client_nsa, provider_net.nsa, conn_id, reservation_id, 'Test Connection', service_params, None)
+        rd = self.client_service.addReservation(provider_net.nsa, conn_id)
 
-        # _ = yield proxy.query(client_nsa, provider_net.nsa, None, None)
+        yield self.client.reserve(self.client_nsa, provider_net.nsa, None, reservation_id, 'Test Connection', conn_id, service_params)
+        yield rd # await confirmation
 
-        _ = yield self.proxy.provision(client_nsa, provider_net.nsa, conn_id, None)
+        # _ = yield client.query(client_nsa, provider_net.nsa, None, None)
 
-        # _ = yield proxy.query(client_nsa, provider_net.nsa, None, None)
+        _ = yield self.client.provision(self.client_nsa, provider_net.nsa, None, conn_id)
 
-        _ = yield self.proxy.releaseProvision(client_nsa, provider_net.nsa, conn_id, None)
+        # _ = yield client.query(client_nsa, provider_net.nsa, None, None)
 
-        # _ = yield proxy.query(client_nsa, provider_net.nsa, None, None)
+        _ = yield self.client.releaseProvision(self.client_nsa, provider_net.nsa, None, conn_id)
 
-        _ = yield self.proxy.cancelReservation(client_nsa, provider_net.nsa, conn_id, None)
+        # _ = yield client.query(client_nsa, provider_net.nsa, None, None)
+
+        _ = yield self.client.terminateReservation(self.client_nsa, provider_net.nsa, None, conn_id)
 
 
 
 class JSONRPCSingleNSATestCase(GenericSingleNSATestCase, unittest.TestCase):
 
+    CLIENT_PORT = 4810
 
     def setUp(self):
 
@@ -61,16 +64,20 @@ class JSONRPCSingleNSATestCase(GenericSingleNSATestCase, unittest.TestCase):
         nsa_url = urlparse.urlparse(network_info['address']).netloc
         port = int(nsa_url.split(':',2)[1])
 
-        proxy = dud.DUDNSIBackend(network_name)
-        factory = setup.createFactory(network_name, StringIO.StringIO(topology.SIMPLE_TOPOLOGY), proxy)
+        backend = dud.DUDNSIBackend(network_name)
+        service_factory = setup.createFactory(network_name, StringIO.StringIO(topology.SIMPLE_TOPOLOGY), backend)
 
-        self.iport = reactor.listenTCP(port, factory)
+        self.service_iport = reactor.listenTCP(port, service_factory)
 
         # client
-        self.proxy = jsonrpc.JSONRPCNSIClient()
+        self.client, self.client_service, client_factory  = setup.createClient()
+        self.client_nsa = nsa.NetworkServiceAgent('nsa://localhost:%i' % self.CLIENT_PORT)
+
+        self.client_iport = reactor.listenTCP(self.CLIENT_PORT, client_factory)
 
 
     def tearDown(self):
 
-        self.iport.stopListening()
+        self.client_iport.stopListening()
+        self.service_iport.stopListening()
 

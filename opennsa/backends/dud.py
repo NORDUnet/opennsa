@@ -68,7 +68,7 @@ class DUDNSIBackend:
         return defer.succeed(reservation_id)
 
 
-    def query(self, filter_attributes):
+    def query(self, query_filter):
         pass
 
 

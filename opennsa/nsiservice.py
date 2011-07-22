@@ -47,7 +47,7 @@ class NSIService:
 
     # command functionality
 
-    def reserve(self, requester_nsa, provider_nsa, connection_id, global_reservation_id, description, service_parameters, session_security_attributes):
+    def reserve(self, requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters):
 
         def setupSubConnection(source_stp, dest_stp, conn):
 
@@ -142,11 +142,11 @@ class NSIService:
             setupSubConnection(prev_source_stp, dest_stp, conn)
 
         def notifyReservationSuccess(_):
-            d = self.proxy.reserveConfirmed(requester_nsa, connection_id, global_reservation_id, description, service_parameters, session_security_attributes)
+            d = self.proxy.reserveConfirmed(requester_nsa, global_reservation_id, description, connection_id, service_parameters)
             return d
 
         def notifyReservationFailure(error):
-            d = self.proxy.reserveFailed(requester_nsa, connection_id, session_security_attributes, error)
+            d = self.proxy.reserveFailed(requester_nsa, global_reservation_id, connection_id, None, error)
             return d
 
         def reserveConfirmed((conn, d)):
@@ -159,19 +159,19 @@ class NSIService:
         return d
 
 
-    def reserveConfirmed(self, requester_nsa, provider_nsa, connection_id, global_reservation_id, description, service_parameters, session_security_attributes):
+    def reserveConfirmed(self, requester_nsa, provider_nsa, global_reservation_id, description, connection_id, service_parameters):
 
         sub_conn = self.reservations.pop(connection_id)
         sub_conn.reserveConfirmed()
 
 
-    def reserveFailed(self, requester_nsa, provider_nsa, connection_id, session_security_attributes, error):
+    def reserveFailed(self, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, service_exception):
 
         sub_conn = self.reservations.pop(connection_id)
         sub_conn.reserveFailed(error)
 
 
-    def cancelReservation(self, requester_nsa, provider_nsa, connection_id, session_security_attributes):
+    def terminateReservation(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
         conn = self.getConnection(requester_nsa, connection_id)
         # security check here
@@ -181,7 +181,7 @@ class NSIService:
         return d
 
 
-    def provision(self, requester_nsa, provider_nsa, connection_id, session_security_attributes):
+    def provision(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
         conn = self.getConnection(requester_nsa, connection_id)
         # security check here
@@ -191,7 +191,7 @@ class NSIService:
         return d
 
 
-    def releaseProvision(self, requester_nsa, provider_nsa, connection_id, session_security_attributes):
+    def releaseProvision(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
         conn = self.getConnection(requester_nsa, connection_id)
         # security check here
@@ -201,8 +201,7 @@ class NSIService:
         return d
 
 
-    def query(self, requester_nsa, provider_nsa, query_filter, session_security_attributes):
+    def query(self, requester_nsa, provider_nsa, session_security_attr, query_filter):
 
         log.msg('', system='opennsa.NSIService')
-
 

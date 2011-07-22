@@ -86,7 +86,7 @@ class SubConnection(ConnectionState):
 
         sub_service_params  = nsa.ServiceParameters('', '', self.source_stp, self.dest_stp)
         self.switchState(RESERVING)
-        d = self._proxy.reserve(self.network, self.connection_id, self.parent_connection.global_reservation_id, self.parent_connection.description, sub_service_params, None)
+        d = self._proxy.reserve(self.network, None, self.parent_connection.global_reservation_id, self.parent_connection.description, self.connection_id, sub_service_params)
         d.addErrback(reserveFailed) # nothing is required for reservation creation confirmation
         return d
 
@@ -116,7 +116,7 @@ class SubConnection(ConnectionState):
             return err
 
         self.switchState(CANCELLING)
-        d = self._proxy.cancelReservation(self.network, self.connection_id, None)
+        d = self._proxy.terminateReservation(self.network, None, self.connection_id)
         d.addCallbacks(cancelDone, cancelFailed)
         return d
 
@@ -135,7 +135,7 @@ class SubConnection(ConnectionState):
             return err
 
         self.switchState(PROVISIONING)
-        d = self._proxy.provision(self.network, self.connection_id, None)
+        d = self._proxy.provision(self.network, None, self.connection_id)
         d.addCallbacks(provisionDone, provisionFailed)
         return d
 
@@ -154,7 +154,7 @@ class SubConnection(ConnectionState):
             return err
 
         self.switchState(RELEASING)
-        d = self._proxy.releaseProvision(self.network, self.connection_id, None)
+        d = self._proxy.releaseProvision(self.network, None, self.connection_id)
         d.addCallbacks(releaseDone, releaseFailed)
         return d
 
