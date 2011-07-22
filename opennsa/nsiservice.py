@@ -12,7 +12,8 @@ from zope.interface import implements
 from twisted.python import log
 
 from opennsa.interface import NSIServiceInterface
-from opennsa import error, topology, jsonrpc, proxy, connection
+from opennsa import error, topology, proxy, connection
+from opennsa.protocols.jsonrpc import jsonrpc
 
 
 

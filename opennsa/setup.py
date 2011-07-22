@@ -1,7 +1,8 @@
 # setup opennsa
 # someday there will (hopefully) be more here
 
-from opennsa import jsonrpc, nsiservice, nsiclient
+from opennsa import nsiservice, nsiclient
+from opennsa.protocols.jsonrpc import jsonrpc
 
 
 def createFactory(network_name, topology_file, proxy):
