@@ -36,7 +36,7 @@ class Topology:
             raise error.TopologyError('Invalid topology source')
 
         for network_name, network_info in topology_data.items():
-            nn = nsa.NetworkServiceAgent(network_info['address'], protocol=network_info.get('protocol'))
+            nn = nsa.NetworkServiceAgent(network_info['address'])
             nw = nsa.Network(network_name, nn)
             for epd in network_info.get('endpoints', []):
                 dest_stp = None

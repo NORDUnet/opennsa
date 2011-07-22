@@ -82,10 +82,9 @@ class NetworkEndpoint(STP):
 
 class NetworkServiceAgent:
 
-    def __init__(self, address, service_attributes=None, protocol=None):
+    def __init__(self, address, service_attributes=None):
         self.address = address
         self.service_attributes = service_attributes
-        self.protocol = protocol or 'nsa-jsonrpc'
 
 
     def getHostPort(self):
