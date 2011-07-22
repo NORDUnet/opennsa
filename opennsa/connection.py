@@ -81,6 +81,7 @@ class SubConnection(ConnectionState):
         assert self._proxy is not None, 'Proxy not set for SubConnection, cannot invoke method'
 
         def reserveFailed(err):
+            log.err(err)
             self.switchState(RESERVE_FAILED)
             return err
 
