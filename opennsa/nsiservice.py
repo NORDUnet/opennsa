@@ -13,7 +13,6 @@ from twisted.python import log
 
 from opennsa.interface import NSIServiceInterface
 from opennsa import error, topology, proxy, connection
-from opennsa.protocols.jsonrpc import jsonrpc
 
 
 
@@ -21,7 +20,7 @@ class NSIService:
 
     implements(NSIServiceInterface)
 
-    def __init__(self, network, backend, topology_file):
+    def __init__(self, network, backend, topology_file, client):
         self.network = network
         self.backend = backend
 
@@ -30,7 +29,7 @@ class NSIService:
 
         # get own nsa from topology
         self.nsa = self.topology.getNetwork(self.network).nsa
-        self.proxy = proxy.NSIProxy(jsonrpc.JSONRPCNSIClient(), self.nsa, self.topology)
+        self.proxy = proxy.NSIProxy(client, self.nsa, self.topology)
 
         self.connections = {} # persistence, ha!
         self.reservations = {} # outstanding reservations
