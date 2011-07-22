@@ -2,7 +2,7 @@ from twisted.trial import unittest
 from twisted.internet import defer
 
 from opennsa import error as nsaerror
-from opennsa.proxies import dud as dudproxy
+from opennsa.backends import dud
 
 
 
@@ -10,7 +10,7 @@ from opennsa.proxies import dud as dudproxy
 class DUDBackendTest(unittest.TestCase):
 
     def setUp(self):
-        self.backend = dudproxy.DUDNSIProxy('TestDUD')
+        self.backend = dud.DUDNSIBackend('TestDUD')
         pass
 
 

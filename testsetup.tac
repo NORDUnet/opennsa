@@ -5,7 +5,7 @@ import json, urlparse
 from twisted.application import internet, service
 
 from opennsa import setup
-from opennsa.proxies import dud
+from opennsa.backends import dud
 
 
 TOPOFILE = 'topology_simple.json'
@@ -27,7 +27,7 @@ application = service.Application("OpenNSA")
 
 for network_name, port in networks.items():
 
-    proxy = dud.DUDNSIProxy(network_name)
+    proxy = dud.DUDNSIBackend(network_name)
     factory = setup.createFactory(network_name, open(TOPOFILE), proxy)
 
     internet.TCPServer(port, factory, interface='localhost').setServiceParent(application)

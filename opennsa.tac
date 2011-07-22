@@ -3,7 +3,7 @@
 from twisted.application import internet, service
 
 from opennsa import setup
-from opennsa.proxies import dud
+from opennsa.backends import dud
 
 
 TOPOFILE = 'topology_simple.json'
@@ -14,7 +14,7 @@ NETWORK_NAME = 'B'
 
 
 
-proxy = dud.DUDNSIProxy(NETWORK_NAME)
+proxy = dud.DUDNSIBackend(NETWORK_NAME)
 
 factory = setup.createFactory(NETWORK_NAME, open(TOPOFILE), proxy)
 

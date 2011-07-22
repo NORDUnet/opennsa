@@ -11,7 +11,7 @@ from twisted.trial import unittest
 from twisted.internet import defer, reactor
 
 from opennsa import nsa, setup, jsonrpc
-from opennsa.proxies import dud
+from opennsa.backends import dud
 
 from . import topology
 
@@ -61,7 +61,7 @@ class JSONRPCSingleNSATestCase(GenericSingleNSATestCase, unittest.TestCase):
         nsa_url = urlparse.urlparse(network_info['address']).netloc
         port = int(nsa_url.split(':',2)[1])
 
-        proxy = dud.DUDNSIProxy(network_name)
+        proxy = dud.DUDNSIBackend(network_name)
         factory = setup.createFactory(network_name, StringIO.StringIO(topology.SIMPLE_TOPOLOGY), proxy)
 
         self.iport = reactor.listenTCP(port, factory)
