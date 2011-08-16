@@ -21,14 +21,14 @@ class NSIProxy:
         return self.client.reserve(self.nsa_, remote_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters)
 
 
-    def reserveConfirmed(self, remote_nsa, global_reservation_id, description, connection_id, service_parameters):
+    def reservationConfirmed(self, remote_nsa, global_reservation_id, description, connection_id, service_parameters, reply_to):
 
-        return self.client.reserveConfirmed(remote_nsa, self.nsa_, global_reservation_id, description, connection_id, service_parameters)
+        return self.client.reservationConfirmed(remote_nsa, self.nsa_, global_reservation_id, description, connection_id, service_parameters, reply_to)
 
 
-    def reserveFailed(self, remote_nsa, global_reservation_id, description, connection_id, service_exception):
+    def reservationFailed(self, remote_nsa, global_reservation_id, description, connection_id, service_exception):
 
-        return self.clent.reserveFailed(remote_nsa, self.nsa_, global_reservation_id, description, connection_id, service_exception)
+        return self.clent.reservationFailed(remote_nsa, self.nsa_, global_reservation_id, description, connection_id, service_exception)
 
 
     def terminateReservation(self, network, session_security_attr, connection_id):

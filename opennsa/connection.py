@@ -80,7 +80,7 @@ class SubConnection(ConnectionState):
 
         assert self._proxy is not None, 'Proxy not set for SubConnection, cannot invoke method'
 
-        def reserveFailed(err):
+        def reservationFailed(err):
             log.err(err)
             self.switchState(RESERVE_FAILED)
             return err
@@ -88,17 +88,17 @@ class SubConnection(ConnectionState):
         sub_service_params  = nsa.ServiceParameters('', '', self.source_stp, self.dest_stp)
         self.switchState(RESERVING)
         d = self._proxy.reserve(self.network, None, self.parent_connection.global_reservation_id, self.parent_connection.description, self.connection_id, sub_service_params)
-        d.addErrback(reserveFailed) # nothing is required for reservation creation confirmation
+        d.addErrback(reservationFailed) # nothing is required for reservation creation confirmation
         return d
 
 
-    def reserveConfirmed(self):
+    def reservationConfirmed(self):
         self.switchState(RESERVED)
         self.parent_connection.reservationStateUpdated(False)
         return self
 
 
-    def reserveFailed(self, err):
+    def reservationFailed(self, err):
         self.switchState(RESERVE_FAILED)
         self.parent_connection.reservationStateUpdated(True, err)
         return err
@@ -186,14 +186,14 @@ class LocalConnection(ConnectionState):
             self.parent_connection.reservationStateUpdated(False)
             return self
 
-        def reserveFailed(err):
+        def reservationFailed(err):
             self.switchState(RESERVE_FAILED)
             self.parent_connection.reservationStateUpdated(True, err)
             return err
 
         self.switchState(RESERVING)
         d = self._backend.reserve(self.source_endpoint, self.dest_endpoint, service_parameters)
-        d.addCallbacks(reserveDone, reserveFailed)
+        d.addCallbacks(reserveDone, reservationFailed)
         return d
 
 

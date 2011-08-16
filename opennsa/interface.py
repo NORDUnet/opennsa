@@ -23,12 +23,12 @@ class NSIInterface(Interface):
         Make a path reservation.
         """
 
-    def reserveConfirmed(requester_nsa, provider_nsa, global_reservation_id, description, connection_id, service_parameters):
+    def reservationConfirmed(requester_nsa, provider_nsa, global_reservation_id, description, connection_id, service_parameters):
         """
         Confirm a reservation.
         """
 
-    def reserveFailed(requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, service_exception):
+    def reservationFailed(requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, service_exception):
         """
         Notify that a reservation has failed.
         """

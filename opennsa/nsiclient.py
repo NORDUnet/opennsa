@@ -43,15 +43,17 @@ class NSIServiceClient:
     def reserve(self, requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters):
         raise error.ReservationError('Cannot invoke reserve at NSA client')
 
-    def reserveConfirmed(self, requester_nsa, provider_nsa, global_reservation_id, description, connection_id, service_parameters):
+    def reservationConfirmed(self, requester_nsa, provider_nsa, global_reservation_id, description, connection_id, service_parameters):
         d = self.reservations.get(provider_nsa.address, {}).pop(connection_id, None)
         if d is None:
-            print "Got reservation confirmation for non-existing reservation. Id %s" % connection_id
+            print "Got reservation confirmation for non-existing reservation. NSA: %s, Id %s" % (provider_nsa.address, connection_id)
+            print self.reservations
+            print type(connection_id)
         else:
             d.callback(connection_id)
 
 
-    def reserveFailed(self, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, service_exception):
+    def reservationFailed(self, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, service_exception):
 
         d = self.reservations.get(provider_nsa.address, {}).pop(connection_id, None)
         if d is None:

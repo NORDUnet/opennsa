@@ -8,6 +8,7 @@ Copyright: NORDUnet (2011)
 from twisted.python import log
 from twisted.web import resource, server
 
+from opennsa import nsa
 from opennsa.protocols.webservice.ext import sudsservice
 
 
@@ -23,6 +24,8 @@ class ConnectionServiceResource(resource.Resource):
 
     def __init__(self, nsi_service):
         resource.Resource.__init__(self)
+        self.nsi_service = nsi_service
+
         self.provider_decoder  = sudsservice.WSDLMarshaller(WSDL_PROVIDER)
         self.requester_decoder = sudsservice.WSDLMarshaller(WSDL_REQUESTER)
 
@@ -49,14 +52,53 @@ class ConnectionServiceResource(resource.Resource):
 
         if short_soap_action == 'reservation':
             #correlation_id_tuple, reply_to_tuple, reservation_requesa_tuple = objs
-            correlation_id, reply_to, reservation_request = [ a for (_,a) in objs ]
-            print "Received request. Correlation ID: %s. Connection ID: %s" % (correlation_id, reservation_request.reservation.connectionId)
-            #self.nsi_service.reserve(requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters)
+            correlation_id, reply_to, res_req = [ a for (_,a) in objs ]
+            #log.msg("Received SOAP request. Correlation ID: %s. Connection ID: %s" % (correlation_id, res_req.reservation.connectionId))
+            #print res_req
+
+            requester_nsa           = nsa.NetworkServiceAgent(res_req.requesterNSA)
+            provider_nsa            = nsa.NetworkServiceAgent(res_req.providerNSA)
+            session_security_attr   = None
+            global_reservation_id   = res_req.reservation.globalReservationId
+            description             = res_req.reservation.description
+            connection_id           = res_req.reservation.connectionId
+
+            sp      = res_req.reservation.serviceParameters
+            path    = res_req.reservation.path
+
+            def parseSTPID(std_id):
+                tokens = path.sourceSTP.stpId.replace(nsa.STP_PREFIX, '').split(':', 2)
+                return nsa.STP(tokens[0], tokens[1])
+
+            source_stp  = parseSTPID(path.sourceSTP.stpId)
+            dest_stp    = parseSTPID(path.destSTP.stpId)
+            # how to check for existence of optional parameters easily...
+            service_parameters      = nsa.ServiceParameters(sp.schedule.startTime, None, source_stp, dest_stp, bandwidth_desired=sp.bandwidth.desired)
+
+            d = self.nsi_service.reserve(requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters, reply_to)
+            d.addErrback(lambda err : log.err(err))
+            # The deferred will fire when the reservation is made.
+
+            # The initial reservation ACK should be send when the reservation
+            # request is persistent, and a callback should then be issued once
+            # the connection has been reserved. Unfortuantely there is
+            # currently no way of telling when the request is persitent, so we
+            # just return immediately.
             reply = decoder.marshal_result(correlation_id, method)
 
+
         elif short_soap_action == 'reservationConfirmed':
-            corr_id = objs[0]
-            reply = decoder.marshal_result(corr_id, method)
+
+            res_conf = objs
+            rc = res_conf.reservationConfirmed
+            res = rc.reservation
+
+            requester_nsa = nsa.NetworkServiceAgent(rc.requesterNSA)
+            provider_nsa  = nsa.NetworkServiceAgent(rc.providerNSA)
+
+            d = self.nsi_service.reservationConfirmed(requester_nsa, provider_nsa, str(res.globalReservationId), str(res.description), str(res.connectionId), None)
+            print d
+            reply = decoder.marshal_result(res_conf.correlationId, method)
 
 
         return reply

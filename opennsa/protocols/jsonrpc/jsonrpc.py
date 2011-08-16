@@ -195,7 +195,7 @@ class JSONRPCNSIClient:
         return self._issueProxyCall(provider_nsa, gotProxy)
 
 
-    def reserveConfirmed(self, requester_nsa, provider_nsa, global_reservation_id, description, connection_id, service_parameters):
+    def reservationConfirmed(self, requester_nsa, provider_nsa, global_reservation_id, description, connection_id, service_parameters):
 
         def gotProxy(proxy):
             d = proxy.call('ReserveConfirmed', requester_nsa.protoNSA(), provider_nsa.protoNSA(), global_reservation_id, description, connection_id, service_parameters.protoSP())
@@ -205,7 +205,7 @@ class JSONRPCNSIClient:
         return self._issueProxyCall(requester_nsa, gotProxy) # yes requester, roles are reversed due to "backwards" RPC
 
 
-    def reserveFailed(self, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, service_exception):
+    def reservationFailed(self, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, service_exception):
 
         def gotProxy(proxy):
             d = proxy.call('ReserveFailed', requester_nsa.protoNSA(), provider_nsa.protoNSA(), connection_id, service_exception)
@@ -298,14 +298,14 @@ class JSONRPCNSIServiceDecoder:
         requester_nsa = self._parseNSA(req_nsa)
         provider_nsa  = self._parseNSA(prov_nsa)
         service_parameters = self._parseServiceParameters(service_params)
-        return self.nsi_service.reserveConfirmed(requester_nsa, provider_nsa, global_reservation_id, description, connection_id, service_parameters)
+        return self.nsi_service.reservationConfirmed(requester_nsa, provider_nsa, global_reservation_id, description, connection_id, service_parameters)
 
 
     def decodeReserveFailed(self, req_nsa, prov_nsa, global_reservation_id, connection_id, connection_state, service_exception):
 
         requester_nsa = self._parseNSA(req_nsa)
         provider_nsa  = self._parseNSA(prov_nsa)
-        return self.nsi_service.reserveFailed(requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, service_exception)
+        return self.nsi_service.reservationFailed(requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, service_exception)
 
 
     def decodeTerminateReservation(self, req_nsa, prov_nsa, session_security_attr, connection_id):

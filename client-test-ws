@@ -32,7 +32,7 @@ def doMain():
     #dest_stp        = nsa.STP('E', 'E1')
     #dest_stp        = nsa.STP('D', 'D1')
 
-    service_params  = nsa.ServiceParameters('2011-09-01T08:56:00Z', '2011-10-01T08:56:00Z' , source_stp, dest_stp)
+    service_params  = nsa.ServiceParameters('2011-09-01T08:56:00Z', '2011-10-01T08:56:00Z' , source_stp, dest_stp, bandwidth_desired = 1000)
     global_reservation_id = 'gid-' + ''.join( [ str(int(random.random() * 10)) for _ in range(4) ] )
     connection_id = 'conn-' + ''.join( [ str(int(random.random() * 10)) for _ in range(3) ] )
 
@@ -40,14 +40,15 @@ def doMain():
 
 #    _ = yield client.query(client_nsa, provider_net.nsa, None, None)
 
+    # We need to be aware of the reservation request before it is issued as the
+    # reservation callback might arrive before the reservation received ACK.
     rd = service.addReservation(provider_net.nsa, connection_id)
 
     r = yield client.reserve(client_nsa, provider_net.nsa, None, global_reservation_id, 'Test Connection', connection_id, service_params)
     print "Reservation request issued. Reply (correlation id):", r
     r = yield rd
-    print "Reservation created", r
+    print "Reservation created"
 
-    return
 
 #    _ = yield client.query(client_nsa, provider_net.nsa, None, None)
 #

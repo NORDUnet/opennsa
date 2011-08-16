@@ -47,7 +47,7 @@ class NSIService:
 
     # command functionality
 
-    def reserve(self, requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters):
+    def reserve(self, requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters, reply_to):
 
         def setupSubConnection(source_stp, dest_stp, conn):
 
@@ -86,7 +86,7 @@ class NSIService:
         path_info = ( connection_id, source_stp.network, source_stp.endpoint, dest_stp.network, dest_stp.endpoint, self.network)
 
         if source_stp.network == self.network and dest_stp.network == self.network:
-            log.msg('Reserve %s: Simple path creation: %s:%s -> %s:%s (%s)' % path_info, system='opennsa.NSIService')
+            log.msg('Reservation %s: Simple path creation: %s:%s -> %s:%s (%s)' % path_info, system='opennsa.NSIService')
 
             setupSubConnection(source_stp, dest_stp, conn)
 
@@ -123,7 +123,7 @@ class NSIService:
         # create the connection in tree/fanout style
         else:
             # log about creation and the connection type
-            log.msg('Reserve %s: Aggregate path creation: %s:%s -> %s:%s (%s)' % path_info, system='opennsa.NSIService')
+            log.msg('Reservation %s: Aggregate path creation: %s:%s -> %s:%s (%s)' % path_info, system='opennsa.NSIService')
 
             # making the connection is the same for all though :-)
 
@@ -142,33 +142,33 @@ class NSIService:
             setupSubConnection(prev_source_stp, dest_stp, conn)
 
         def notifyReservationSuccess(_):
-            d = self.proxy.reserveConfirmed(requester_nsa, global_reservation_id, description, connection_id, service_parameters)
+            d = self.proxy.reservationConfirmed(requester_nsa, global_reservation_id, description, connection_id, service_parameters, reply_to)
             return d
 
         def notifyReservationFailure(error):
-            d = self.proxy.reserveFailed(requester_nsa, global_reservation_id, connection_id, None, error)
+            d = self.proxy.reservationFailed(requester_nsa, global_reservation_id, connection_id, None, error)
             return d
 
-        def reserveConfirmed((conn, d)):
+        def reservationConfirmed((conn, d)):
             d.addCallbacks(notifyReservationSuccess, notifyReservationFailure)
             return conn.connection_id
 
         # now reserve connections needed to create path
         d = conn.reserve(service_parameters, nsa_identity)
-        d.addCallback(reserveConfirmed)
+        d.addCallback(reservationConfirmed)
         return d
 
 
-    def reserveConfirmed(self, requester_nsa, provider_nsa, global_reservation_id, description, connection_id, service_parameters):
+    def reservationConfirmed(self, requester_nsa, provider_nsa, global_reservation_id, description, connection_id, service_parameters):
 
         sub_conn = self.reservations.pop(connection_id)
-        sub_conn.reserveConfirmed()
+        sub_conn.reservationConfirmed()
 
 
-    def reserveFailed(self, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, service_exception):
+    def reservationFailed(self, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, service_exception):
 
         sub_conn = self.reservations.pop(connection_id)
-        sub_conn.reserveFailed(error)
+        sub_conn.reservationFailed(error)
 
 
     def terminateReservation(self, requester_nsa, provider_nsa, session_security_attr, connection_id):

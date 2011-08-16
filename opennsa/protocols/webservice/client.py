@@ -47,7 +47,9 @@ class NSIWebServiceClient:
         res_req.requesterNSA                = requester_nsa.uri()
         res_req.providerNSA                 = provider_nsa.uri()
 
-        res_req.reservation.connectionId    = connection_id
+        res_req.reservation.globalReservationId     = global_reservation_id
+        res_req.reservation.description             = description
+        res_req.reservation.connectionId            = connection_id
 
         res_req.reservation.path.directionality     = service_parameters.directionality
         res_req.reservation.path.sourceSTP.stpId    = service_parameters.source_stp.uri()
@@ -67,10 +69,27 @@ class NSIWebServiceClient:
         return d
 
 
-    def reserveConfirmed(self, requester_nsa, provider_nsa, global_reservation_id, description, connection_id, service_parameters):
-        raise NotImplementedError('OpenNSA WS protocol under development')
+    def reservationConfirmed(self, requester_nsa, provider_nsa, global_reservation_id, description, connection_id, service_parameters, reply_to):
 
-    def reserveFailed(self, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, service_exception):
+#        print "CONFIRM RESERVATION PLZ"
+
+        correlation_id = self._createCorrelationId()
+
+        res_conf = self.requester_client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}ReservationConfirmedType')
+        #print res_conf
+
+        res_conf.requesterNSA   = requester_nsa.uri()
+        res_conf.providerNSA    = provider_nsa.uri()
+
+        res_conf.reservation.globalReservationId    = global_reservation_id
+        res_conf.reservation.description            = description
+        res_conf.reservation.connectionId           = connection_id
+
+        d = self.requester_client.invoke(str(reply_to), 'reservationConfirmed', correlation_id, res_conf)
+        return d
+
+
+    def reservationFailed(self, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, service_exception):
         raise NotImplementedError('OpenNSA WS protocol under development')
 
     def terminateReservation(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
