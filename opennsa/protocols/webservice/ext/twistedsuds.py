@@ -11,7 +11,7 @@ import os
 import urlparse
 import StringIO
 
-from twisted.internet import reactor
+from twisted.internet import reactor, defer
 from twisted.web import client as twclient
 
 from suds.transport import Transport, TransportError
@@ -93,6 +93,8 @@ class TwistedSUDSClient:
         # dispatch
         d, factory = self._httpRequest(url, soap_action, soap_envelope)
         d.addCallback(self._parseResponse, factory, method)
+        from twisted.python import log
+        d.addErrback(lambda e : log.err(e))
         return d
 
 
@@ -112,6 +114,10 @@ class TwistedSUDSClient:
     def _httpRequest(self, url, soap_action, soap_envelope):
         # copied from twisted.web.client in order to get access to the
         # factory (which contains response codes, headers, etc)
+
+        if type(url) is not str:
+            e = ValueError('URL must be string, not %s' % type(url))
+            return defer.fail(e), None
 
         scheme, host, port, _ = twclient._parse(url)
 
