@@ -8,7 +8,7 @@ from opennsa.backends import dud
 
 TOPOFILE = 'topology_simple.json'
 
-PORT = 4321
+PORT = 9080
 
 NETWORK_NAME = 'B'
 
@@ -16,7 +16,7 @@ NETWORK_NAME = 'B'
 
 proxy = dud.DUDNSIBackend(NETWORK_NAME)
 
-factory = setup.createService(NETWORK_NAME, open(TOPOFILE), proxy)
+factory = setup.createService(NETWORK_NAME, open(TOPOFILE), proxy, PORT)
 
 
 

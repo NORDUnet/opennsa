@@ -37,14 +37,14 @@ def doMain():
     conn_id = 'cli-ccid' + ''.join( [ str(int(random.random() * 10)) for _ in range(4) ] )
     print "Connection id", conn_id
 
-    _ = yield client.query(client_nsa, provider_net.nsa, None, None)
+#    _ = yield client.query(client_nsa, provider_net.nsa, None, None)
 
     rd = service.addReservation(provider_net.nsa, conn_id)
 
     r = yield client.reserve(client_nsa, provider_net.nsa, None, global_reservation_id, 'Test Connection', conn_id, service_params)
-    print "Reservation issued"
+    print "Reservation issued", r
     r = yield rd
-    print "Reservation created"
+    print "Reservation created", r
 
 
     _ = yield client.query(client_nsa, provider_net.nsa, None, None)

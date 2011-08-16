@@ -11,6 +11,9 @@ import urlparse
 from opennsa import error
 
 
+STP_PREFIX = 'urn:ogf:network:stp:'
+
+
 
 class STP: # Service Termination Point
 
@@ -19,9 +22,12 @@ class STP: # Service Termination Point
         self.endpoint = endpoint
 
 
-    def protoSTP(self):
-        return { 'network'  : self.network,
-                 'endpoint' : self.endpoint }
+    def uri(self):
+        return STP_PREFIX + self.network + ':' + self.endpoint
+
+#    def protoSTP(self):
+#        return { 'network'  : self.network,
+#                 'endpoint' : self.endpoint }
 
 
     def __eq__(self, other):
@@ -82,9 +88,9 @@ class NetworkEndpoint(STP):
 
 class NetworkServiceAgent:
 
-    def __init__(self, address, service_attributes=None):
+    def __init__(self, address): #, service_attributes=None):
         self.address = address
-        self.service_attributes = service_attributes
+#        self.service_attributes = service_attributes
 
 
     def getHostPort(self):
@@ -94,13 +100,17 @@ class NetworkServiceAgent:
         return host, port
 
 
-    def protoNSA(self):
-        return { 'address' : self.address,
-                 'service_attributes' : self.service_attributes }
+    def uri(self):
+        return self.address
+
+
+#    def protoNSA(self):
+#        return { 'address' : self.address,
+#                 'service_attributes' : self.service_attributes }
 
 
     def __str__(self):
-        return '<NetworkServiceAgent %s,%s>' % (self.address, self.protocol)
+        return '<NetworkServiceAgent %s>' % self.address #, self.protocol)
 
 
 
@@ -131,14 +141,23 @@ class Network:
 
 class ServiceParameters:
 
-    def __init__(self, start_time, end_time, source_stp, dest_stp, stps=None):
-        # scheudle
+    def __init__(self, start_time, end_time, source_stp, dest_stp, stps=None, directionality='unidirectional',
+                 bandwidth_desired=None, bandwidth_minimum=None, bandwidth_maximum=None):
+
+        # should probably make path object sometime..
+
+        # schedule
         self.start_time = start_time
         self.end_time   = end_time
         # path
         self.source_stp = source_stp
         self.dest_stp   = dest_stp
         self.stps       = stps
+        self.directionality = directionality
+        # bandwidth
+        self.bandwidth_desired = bandwidth_desired
+        self.bandwidth_minimum = bandwidth_minimum
+        self.bandwidth_maximum = bandwidth_maximum
 
 
     def protoSP(self):
