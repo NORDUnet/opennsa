@@ -37,6 +37,11 @@ class ConnectionServiceResource(resource.Resource):
                 request.write(reply)
                 request.finish()
 
+        def decodeNSAs(subreq):
+            requester_nsa = nsa.NetworkServiceAgent(subreq.requesterNSA)
+            provider_nsa  = nsa.NetworkServiceAgent(subreq.providerNSA)
+            return requester_nsa, provider_nsa
+
         # --
 
         soap_action = request.requestHeaders.getRawHeaders('soapaction',[None])[0]
@@ -59,19 +64,18 @@ class ConnectionServiceResource(resource.Resource):
 
         if short_soap_action == 'reservation':
             #correlation_id_tuple, reply_to_tuple, reservation_requesa_tuple = objs
-            correlation_id, reply_to, res_req = [ a for (_,a) in objs ]
-            #log.msg("Received SOAP request. Correlation ID: %s. Connection ID: %s" % (correlation_id, res_req.reservation.connectionId))
-            #print res_req
+            correlation_id, reply_to, req = [ a for (_,a) in objs ]
+            #log.msg("Received SOAP request. Correlation ID: %s. Connection ID: %s" % (correlation_id, req.reservation.connectionId))
+            #print req
 
-            requester_nsa           = nsa.NetworkServiceAgent(res_req.requesterNSA)
-            provider_nsa            = nsa.NetworkServiceAgent(res_req.providerNSA)
+            requester_nsa, provider_nsa = decodeNSAs(req)
             session_security_attr   = None
-            global_reservation_id   = res_req.reservation.globalReservationId
-            description             = res_req.reservation.description
-            connection_id           = res_req.reservation.connectionId
+            global_reservation_id   = req.reservation.globalReservationId
+            description             = req.reservation.description
+            connection_id           = req.reservation.connectionId
 
-            sp      = res_req.reservation.serviceParameters
-            path    = res_req.reservation.path
+            sp      = req.reservation.serviceParameters
+            path    = req.reservation.path
 
             def parseSTPID(std_id):
                 tokens = path.sourceSTP.stpId.replace(nsa.STP_PREFIX, '').split(':', 2)
@@ -96,29 +100,19 @@ class ConnectionServiceResource(resource.Resource):
 
         elif short_soap_action == 'reservationConfirmed':
 
-            res_conf = objs
-            rc = res_conf.reservationConfirmed
-            res = rc.reservation
-
-            def reply(connection_id):
-                reply = decoder.marshal_result(res_conf.correlationId, method)
-                request.write(reply)
-                request.finish()
-
-            requester_nsa = nsa.NetworkServiceAgent(rc.requesterNSA)
-            provider_nsa  = nsa.NetworkServiceAgent(rc.providerNSA)
+            req = objs
+            requester_nsa, provider_nsa = decodeNSAs(req.reservationConfirmed)
+            res = req.reservationConfirmed.reservation
 
             d = self.nsi_service.reservationConfirmed(requester_nsa, provider_nsa, str(res.globalReservationId), str(res.description), str(res.connectionId), None)
-            d.addCallback(reply)
+            d.addCallback(genericReply, request, decoder, method, str(req.correlationId))
             return server.NOT_DONE_YET
 
 
         elif short_soap_action == 'provision':
 
             req = objs
-
-            requester_nsa = nsa.NetworkServiceAgent(req.provision.requesterNSA)
-            provider_nsa  = nsa.NetworkServiceAgent(req.provision.providerNSA)
+            requester_nsa, provider_nsa = decodeNSAs(req.provision)
 
             d = self.nsi_service.provision(requester_nsa, provider_nsa, None, str(req.provision.connectionId))
             d.addCallback(genericReply, request, decoder, method, str(req.correlationId))
@@ -127,9 +121,7 @@ class ConnectionServiceResource(resource.Resource):
         elif short_soap_action == 'release':
 
             req = objs
-
-            requester_nsa = nsa.NetworkServiceAgent(req.release.requesterNSA)
-            provider_nsa  = nsa.NetworkServiceAgent(req.release.providerNSA)
+            requester_nsa, provider_nsa = decodeNSAs(req.release)
 
             d = self.nsi_service.releaseProvision(requester_nsa, provider_nsa, None, str(req.release.connectionId))
             d.addCallback(genericReply, request, decoder, method, str(req.correlationId))
@@ -139,9 +131,7 @@ class ConnectionServiceResource(resource.Resource):
         elif short_soap_action == 'terminate':
 
             req = objs
-
-            requester_nsa = nsa.NetworkServiceAgent(req.terminate.requesterNSA)
-            provider_nsa  = nsa.NetworkServiceAgent(req.terminate.providerNSA)
+            requester_nsa, provider_nsa = decodeNSAs(req.terminate)
 
             d = self.nsi_service.terminateReservation(requester_nsa, provider_nsa, None, str(req.terminate.connectionId))
             d.addCallback(genericReply, request, decoder, method, str(req.correlationId))
