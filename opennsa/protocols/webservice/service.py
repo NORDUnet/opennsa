@@ -38,8 +38,8 @@ class ConnectionServiceResource(resource.Resource):
                 request.finish()
 
         def decodeNSAs(subreq):
-            requester_nsa = nsa.NetworkServiceAgent(subreq.requesterNSA)
-            provider_nsa  = nsa.NetworkServiceAgent(subreq.providerNSA)
+            requester_nsa = nsa.NetworkServiceAgent(str(subreq.requesterNSA))
+            provider_nsa  = nsa.NetworkServiceAgent(str(subreq.providerNSA))
             return requester_nsa, provider_nsa
 
         # --

@@ -89,6 +89,7 @@ class NetworkEndpoint(STP):
 class NetworkServiceAgent:
 
     def __init__(self, address): #, service_attributes=None):
+        assert type(address) is str, 'NSA Address type must be string'
         self.address = address
 #        self.service_attributes = service_attributes
 
