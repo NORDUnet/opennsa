@@ -139,6 +139,23 @@ class ConnectionServiceResource(resource.Resource):
             return server.NOT_DONE_YET
 
 
+        elif short_soap_action == 'terminate':
+
+            req = objs
+
+            def reply(connection_id):
+                reply = decoder.marshal_result(str(req.correlationId), method)
+                request.write(reply)
+                request.finish()
+
+            requester_nsa = nsa.NetworkServiceAgent(req.terminate.requesterNSA)
+            provider_nsa  = nsa.NetworkServiceAgent(req.terminate.providerNSA)
+
+            d = self.nsi_service.terminateReservation(requester_nsa, provider_nsa, None, str(req.terminate.connectionId))
+            d.addCallback(reply)
+            return server.NOT_DONE_YET
+
+
 
         return reply
 
