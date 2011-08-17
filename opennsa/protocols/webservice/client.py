@@ -36,6 +36,14 @@ class NSIWebServiceClient:
     def _createCorrelationId(self):
         return uuid.uuid1().int
 
+    def _createGenericRequestType(self, requester_nsa, provider_nsa, connection_id):
+
+        req = self.provider_client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}GenericRequestType')
+        req.requesterNSA = requester_nsa.uri()
+        req.providerNSA  = provider_nsa.uri()
+        req.connectionId = connection_id
+        return req
+
 
     def reserve(self, requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters):
         # reserve(xs:anyURI transactionId, xs:anyURI replyTo, ns1:ReserveType reserveRequest, )
@@ -93,12 +101,7 @@ class NSIWebServiceClient:
     def terminateReservation(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
         correlation_id = self._createCorrelationId()
-
-        req = self.provider_client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}GenericRequestType')
-        req.requesterNSA = requester_nsa.uri()
-        req.providerNSA  = provider_nsa.uri()
-        req.connectionId = connection_id
-
+        req = self._createGenericRequestType(requester_nsa, provider_nsa, connection_id)
         d = self.provider_client.invoke(provider_nsa.uri(), 'terminate', correlation_id, self.reply_to, req)
         return d
 
@@ -106,12 +109,7 @@ class NSIWebServiceClient:
     def provision(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
         correlation_id = self._createCorrelationId()
-
-        req = self.provider_client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}GenericRequestType')
-        req.requesterNSA = requester_nsa.uri()
-        req.providerNSA  = provider_nsa.uri()
-        req.connectionId = connection_id
-
+        req = self._createGenericRequestType(requester_nsa, provider_nsa, connection_id)
         d = self.provider_client.invoke(provider_nsa.uri(), 'provision', correlation_id, self.reply_to, req)
         return d
 
@@ -119,12 +117,7 @@ class NSIWebServiceClient:
     def releaseProvision(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
         correlation_id = self._createCorrelationId()
-
-        req = self.provider_client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}GenericRequestType')
-        req.requesterNSA = requester_nsa.uri()
-        req.providerNSA  = provider_nsa.uri()
-        req.connectionId = connection_id
-
+        req = self._createGenericRequestType(requester_nsa, provider_nsa, connection_id)
         d = self.provider_client.invoke(provider_nsa.uri(), 'release', correlation_id, self.reply_to, req)
         return d
 
