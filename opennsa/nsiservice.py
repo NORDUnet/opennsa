@@ -149,13 +149,13 @@ class NSIService:
             d = self.proxy.reservationFailed(requester_nsa, global_reservation_id, connection_id, None, error)
             return d
 
-        def reservationConfirmed((conn, d)):
+        def reservationCompleted((conn, d)):
             d.addCallbacks(notifyReservationSuccess, notifyReservationFailure)
             return conn.connection_id
 
         # now reserve connections needed to create path
         d = conn.reserve(service_parameters, nsa_identity)
-        d.addCallback(reservationConfirmed)
+        d.addCallback(reservationCompleted)
         return d
 
 
