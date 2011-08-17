@@ -122,6 +122,23 @@ class ConnectionServiceResource(resource.Resource):
             d.addCallback(reply)
             return server.NOT_DONE_YET
 
+        elif short_soap_action == 'release':
+
+            req = objs
+
+            def reply(connection_id):
+                reply = decoder.marshal_result(str(req.correlationId), method)
+                request.write(reply)
+                request.finish()
+
+            requester_nsa = nsa.NetworkServiceAgent(req.release.requesterNSA)
+            provider_nsa  = nsa.NetworkServiceAgent(req.release.providerNSA)
+
+            d = self.nsi_service.releaseProvision(requester_nsa, provider_nsa, None, str(req.release.connectionId))
+            d.addCallback(reply)
+            return server.NOT_DONE_YET
+
+
 
         return reply
 

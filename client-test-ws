@@ -56,10 +56,10 @@ def doMain():
     print "Provision made"
 #
 #    _ = yield client.query(client_nsa, provider_net.nsa, None, None)
-#
-#    _ = yield client.releaseProvision(client_nsa, provider_net.nsa, None, connection_id)
-#    print "Provision released"
-#
+
+    _ = yield client.releaseProvision(client_nsa, provider_net.nsa, None, connection_id)
+    print "Provision released"
+
 #    _ = yield client.query(client_nsa, provider_net.nsa, None, None)
 #
 #    _ = yield client.terminateReservation(client_nsa, provider_net.nsa, None, connection_id)
