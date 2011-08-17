@@ -138,6 +138,39 @@ class ConnectionServiceResource(resource.Resource):
             return server.NOT_DONE_YET
 
 
+        elif short_soap_action == 'query':
+
+            req = objs
+            #print "Q", req
+            requester_nsa, provider_nsa = decodeNSAs(req.query)
+
+            operation = req.query.operation
+            qf = req.query.queryFilter
+
+            connection_ids = []
+            global_reservation_ids = []
+
+            if 'connectionId' in qf:
+                connection_ids = qf.connectionId
+            if 'globalReservationId' in qf:
+                global_reservation_ids = qf.globalReservationId
+
+#            print "QQ", operation, connection_ids, global_reservation_ids
+
+            def queryReply(query_result):
+
+                res = decoder.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}QueryConfirmedType')
+                #print "QRES", res
+                reply = decoder.marshal_result(str(req.correlationId), method)
+                #print "QREP", reply
+                request.write(reply)
+                request.finish()
+
+            d = self.nsi_service.query(requester_nsa, provider_nsa, None, operation, connection_ids, global_reservation_ids)
+            d.addCallback(queryReply)
+            return server.NOT_DONE_YET
+
+
         return reply
 
 

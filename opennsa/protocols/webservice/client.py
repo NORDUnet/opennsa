@@ -122,6 +122,19 @@ class NSIWebServiceClient:
         return d
 
 
-    def query(self, requester_nsa, provider_nsa, session_security_attr, query_filter):
-        raise NotImplementedError('OpenNSA WS protocol under development')
+    def query(self, requester_nsa, provider_nsa, session_security_attr, operation="Summary", connection_ids=None, global_reservation_ids=None):
+
+        correlation_id = self._createCorrelationId()
+        req = self.requester_client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}QueryType')
+        #print req
+
+        req.requesterNSA = requester_nsa.uri()
+        req.providerNSA  = provider_nsa.uri()
+        req.operation = operation
+        req.queryFilter.connectionId = connection_ids or []
+        req.queryFilter.globalReservationId = global_reservation_ids or []
+        #print req
+
+        d = self.provider_client.invoke(provider_nsa.uri(), 'query', correlation_id, self.reply_to, req)
+        return d
 

@@ -10,6 +10,7 @@ import random
 from zope.interface import implements
 
 from twisted.python import log
+from twisted.internet import defer
 
 from opennsa.interface import NSIServiceInterface
 from opennsa import error, topology, proxy, connection
@@ -202,7 +203,8 @@ class NSIService:
         return d
 
 
-    def query(self, requester_nsa, provider_nsa, session_security_attr, query_filter):
+    def query(self, requester_nsa, provider_nsa, session_security_attr, operation, connection_ids=None, global_reservation_ids=None):
 
         log.msg('', system='opennsa.NSIService')
+        return defer.succeed(None)
 
