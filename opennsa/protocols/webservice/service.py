@@ -32,6 +32,13 @@ class ConnectionServiceResource(resource.Resource):
 
     def render_POST(self, request):
 
+        def genericReply(connection_id, request, decoder, method, correlation_id):
+                reply = decoder.marshal_result(correlation_id, method)
+                request.write(reply)
+                request.finish()
+
+        # --
+
         soap_action = request.requestHeaders.getRawHeaders('soapaction',[None])[0]
 
         if self.provider_decoder.recognizedSOAPAction(soap_action):
@@ -110,32 +117,22 @@ class ConnectionServiceResource(resource.Resource):
 
             req = objs
 
-            def reply(connection_id):
-                reply = decoder.marshal_result(str(req.correlationId), method)
-                request.write(reply)
-                request.finish()
-
             requester_nsa = nsa.NetworkServiceAgent(req.provision.requesterNSA)
             provider_nsa  = nsa.NetworkServiceAgent(req.provision.providerNSA)
 
             d = self.nsi_service.provision(requester_nsa, provider_nsa, None, str(req.provision.connectionId))
-            d.addCallback(reply)
+            d.addCallback(genericReply, request, decoder, method, str(req.correlationId))
             return server.NOT_DONE_YET
 
         elif short_soap_action == 'release':
 
             req = objs
 
-            def reply(connection_id):
-                reply = decoder.marshal_result(str(req.correlationId), method)
-                request.write(reply)
-                request.finish()
-
             requester_nsa = nsa.NetworkServiceAgent(req.release.requesterNSA)
             provider_nsa  = nsa.NetworkServiceAgent(req.release.providerNSA)
 
             d = self.nsi_service.releaseProvision(requester_nsa, provider_nsa, None, str(req.release.connectionId))
-            d.addCallback(reply)
+            d.addCallback(genericReply, request, decoder, method, str(req.correlationId))
             return server.NOT_DONE_YET
 
 
@@ -143,18 +140,12 @@ class ConnectionServiceResource(resource.Resource):
 
             req = objs
 
-            def reply(connection_id):
-                reply = decoder.marshal_result(str(req.correlationId), method)
-                request.write(reply)
-                request.finish()
-
             requester_nsa = nsa.NetworkServiceAgent(req.terminate.requesterNSA)
             provider_nsa  = nsa.NetworkServiceAgent(req.terminate.providerNSA)
 
             d = self.nsi_service.terminateReservation(requester_nsa, provider_nsa, None, str(req.terminate.connectionId))
-            d.addCallback(reply)
+            d.addCallback(genericReply, request, decoder, method, str(req.correlationId))
             return server.NOT_DONE_YET
-
 
 
         return reply
