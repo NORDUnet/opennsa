@@ -95,8 +95,20 @@ class NSIWebServiceClient:
     def terminateReservation(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
         raise NotImplementedError('OpenNSA WS protocol under development')
 
+
     def provision(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
-        raise NotImplementedError('OpenNSA WS protocol under development')
+
+        correlation_id = self._createCorrelationId()
+
+        req = self.provider_client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}GenericRequestType')
+
+        req.requesterNSA = requester_nsa.uri()
+        req.providerNSA  = provider_nsa.uri()
+        req.connectionId = connection_id
+
+        d = self.provider_client.invoke(provider_nsa.uri(), 'provision', correlation_id, self.reply_to, req)
+        return d
+
 
     def releaseProvision(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
         raise NotImplementedError('OpenNSA WS protocol under development')

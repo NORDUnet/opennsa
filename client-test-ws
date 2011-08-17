@@ -51,9 +51,9 @@ def doMain():
 
 
 #    _ = yield client.query(client_nsa, provider_net.nsa, None, None)
-#
-#    _ = yield client.provision(client_nsa, provider_net.nsa, None, connection_id)
-#    print "Provision made"
+
+    _ = yield client.provision(client_nsa, provider_net.nsa, None, connection_id)
+    print "Provision made"
 #
 #    _ = yield client.query(client_nsa, provider_net.nsa, None, None)
 #

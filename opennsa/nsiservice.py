@@ -163,6 +163,7 @@ class NSIService:
 
         sub_conn = self.reservations.pop(connection_id)
         sub_conn.reservationConfirmed()
+        return defer.success(connection_id)
 
 
     def reservationFailed(self, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, service_exception):

@@ -52,6 +52,8 @@ class NSIServiceClient:
         else:
             d.callback(connection_id)
 
+        return defer.succeed(connection_id)
+
 
     def reservationFailed(self, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, service_exception):
 

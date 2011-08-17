@@ -93,12 +93,34 @@ class ConnectionServiceResource(resource.Resource):
             rc = res_conf.reservationConfirmed
             res = rc.reservation
 
+            def reply(connection_id):
+                reply = decoder.marshal_result(res_conf.correlationId, method)
+                request.write(reply)
+                request.finish()
+
             requester_nsa = nsa.NetworkServiceAgent(rc.requesterNSA)
             provider_nsa  = nsa.NetworkServiceAgent(rc.providerNSA)
 
             d = self.nsi_service.reservationConfirmed(requester_nsa, provider_nsa, str(res.globalReservationId), str(res.description), str(res.connectionId), None)
-            print d
-            reply = decoder.marshal_result(res_conf.correlationId, method)
+            d.addCallback(reply)
+            return server.NOT_DONE_YET
+
+
+        elif short_soap_action == 'provision':
+
+            req = objs
+
+            def reply(connection_id):
+                reply = decoder.marshal_result(str(req.correlationId), method)
+                request.write(reply)
+                request.finish()
+
+            requester_nsa = nsa.NetworkServiceAgent(req.provision.requesterNSA)
+            provider_nsa  = nsa.NetworkServiceAgent(req.provision.providerNSA)
+
+            d = self.nsi_service.provision(requester_nsa, provider_nsa, None, str(req.provision.connectionId))
+            d.addCallback(reply)
+            return server.NOT_DONE_YET
 
 
         return reply
