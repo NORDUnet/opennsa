@@ -71,12 +71,9 @@ class NSIWebServiceClient:
 
     def reservationConfirmed(self, requester_nsa, provider_nsa, global_reservation_id, description, connection_id, service_parameters, reply_to):
 
-#        print "CONFIRM RESERVATION PLZ"
-
         correlation_id = self._createCorrelationId()
 
         res_conf = self.requester_client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}ReservationConfirmedType')
-        #print res_conf
 
         res_conf.requesterNSA   = requester_nsa.uri()
         res_conf.providerNSA    = provider_nsa.uri()
