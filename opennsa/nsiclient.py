@@ -43,6 +43,18 @@ class NSIServiceClient:
     def reserve(self, requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters):
         raise error.ReservationError('Cannot invoke reserve at NSA client')
 
+    def provision(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
+        raise error.ProvisionError('Cannot invoke provision at NSA client')
+
+    def releaseProvision(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
+        raise error.ReleaseProvisionError('Cannot invoke release at NSA client')
+
+    def terminateReservation(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
+        raise error.CancelReservationError('Cannot invoke cancel at NSA client')
+
+    def query(self, requester_nsa, provider_nsa, session_security_attr, query_filter):
+        raise error.QueryError('Cannot invoke query at NSA client')
+
     def reservationConfirmed(self, requester_nsa, provider_nsa, global_reservation_id, description, connection_id, service_parameters):
         d = self.reservations.get(provider_nsa.address, {}).pop(connection_id, None)
         if d is None:
@@ -64,17 +76,27 @@ class NSIServiceClient:
             d.callback(error)
 
 
-    def terminateReservation(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
-        raise error.CancelReservationError('Cannot invoke cancel at NSA client')
+    def provisionConfirmed(self, requester_nsa, provider_nsa, global_reservation_id, connection_id):
+        raise NotImplementedError('provisionConfirmed')
 
+    def provisionFailed(self, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, service_exception):
+        raise NotImplementedError('provisionFailed')
 
-    def provision(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
-        raise error.ProvisionError('Cannot invoke provision at NSA client')
+    def releaseConfirmed(self, requester_nsa, provider_nsa, global_reservation_id, connection_id):
+        raise NotImplementedError('releaseConfirmed')
 
-    def releaseProvision(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
-        raise error.ReleaseProvisionError('Cannot invoke release at NSA client')
+    def releaseFailed(self, requester_nsa, provider_nsa, global_reservation_id, connetion_id, connection_state, service_exception):
+        raise NotImplementedError('releaseFailed')
 
+    def terminateConfirmed(self, requester_nsa, provider_nsa, global_reservation_id, connection_id):
+        raise NotImplementedError('terminateConfirmed')
 
-    def query(self, requester_nsa, provider_nsa, session_security_attr, query_filter):
-        raise error.QueryError('Cannot invoke query at NSA client')
+    def terminateFailed(self, requester_nsa, provider_nsa, global_reservation_id, connetion_id, connection_state, service_exception):
+        raise NotImplementedError('releaseFailed')
+
+    def queryConfirmed(self, requester_nsa, provider_nsa, global_reservation_id, connection_id):
+        raise NotImplementedError('queryConfirmed')
+
+    def queryFailed(self, requester_nsa, provider_nsa, global_reservation_id, connetion_id, connection_state, service_exception):
+        raise NotImplementedError('queryFailed')
 
