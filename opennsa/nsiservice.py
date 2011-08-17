@@ -13,7 +13,7 @@ from twisted.python import log
 from twisted.internet import defer
 
 from opennsa.interface import NSIServiceInterface
-from opennsa import error, topology, proxy, connection
+from opennsa import nsa, error, topology, proxy, connection
 
 
 
@@ -143,7 +143,7 @@ class NSIService:
             setupSubConnection(prev_source_stp, dest_stp, conn)
 
         def notifyReservationSuccess(_):
-            d = self.proxy.reservationConfirmed(requester_nsa, global_reservation_id, description, connection_id, service_parameters, reply_to)
+            d = self.proxy.reservationConfirmed(reply_to, requester_nsa, global_reservation_id, description, connection_id, service_parameters)
             return d
 
         def notifyReservationFailure(error):
@@ -183,14 +183,24 @@ class NSIService:
         return d
 
 
-    def provision(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
+    def provision(self, requester_nsa, provider_nsa, reply_to, session_security_attr, connection_id):
 
         conn = self.getConnection(requester_nsa, connection_id)
         # security check here
 
+        def notifyProvisionSuccess(_):
+            d = self.proxy.provisionConfirmed(reply_to, requester_nsa, conn.global_reservation_id, conn.connection_id)
+            return d
+
+        def notifyProvisionFailure(error):
+            raise NotImplementedError('notifyProvisionFailure')
+            #d = self.proxy.reservationFailed(requester_nsa, global_reservation_id, connection_id, None, error)
+            #return d
+
         d = conn.provision()
-        d.addCallback(lambda conn : conn.connection_id)
-        return d
+        d.addCallbacks(notifyProvisionSuccess, notifyProvisionFailure)
+        d.addErrback(lambda e : log.err(e))
+        return defer.succeed(conn.connection_id)
 
 
     def releaseProvision(self, requester_nsa, provider_nsa, session_security_attr, connection_id):

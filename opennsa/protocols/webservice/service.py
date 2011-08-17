@@ -112,11 +112,21 @@ class ConnectionServiceResource(resource.Resource):
         elif short_soap_action == 'provision':
 
             req = objs
+            reply_to = str(req.replyTo)
+            print "TYPE", type(reply_to)
             requester_nsa, provider_nsa = decodeNSAs(req.provision)
 
-            d = self.nsi_service.provision(requester_nsa, provider_nsa, None, str(req.provision.connectionId))
+            d = self.nsi_service.provision(requester_nsa, provider_nsa, reply_to, None, str(req.provision.connectionId))
             d.addCallback(genericReply, request, decoder, method, str(req.correlationId))
             return server.NOT_DONE_YET
+
+        elif short_soap_action == 'provisionConfirmed':
+
+            req = objs
+            requester_nsa, provider_nsa = decodeNSAs(req.provisionConfirmed)
+
+            d = self.nsi_service.provisionConfirmed(requester_nsa, provider_nsa, None, str(req.provisionConfirmed.connectionId))
+
 
         elif short_soap_action == 'release':
 

@@ -21,9 +21,9 @@ class NSIProxy:
         return self.client.reserve(self.nsa_, remote_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters)
 
 
-    def reservationConfirmed(self, remote_nsa, global_reservation_id, description, connection_id, service_parameters, reply_to):
+    def reservationConfirmed(self, reply_to, remote_nsa, global_reservation_id, description, connection_id, service_parameters):
 
-        return self.client.reservationConfirmed(remote_nsa, self.nsa_, global_reservation_id, description, connection_id, service_parameters, reply_to)
+        return self.client.reservationConfirmed(reply_to, remote_nsa, self.nsa_, global_reservation_id, description, connection_id, service_parameters)
 
 
     def reservationFailed(self, remote_nsa, global_reservation_id, description, connection_id, service_exception):
@@ -41,6 +41,11 @@ class NSIProxy:
 
         remote_nsa = self.topology.getNetwork(network).nsa
         return self.client.provision(self.nsa_, remote_nsa, session_security_attr, connection_id)
+
+
+    def provisionConfirmed(self, reply_to, remote_nsa, global_reservation_id, connection_id):
+
+        return self.client.provisionConfirmed(reply_to, remote_nsa, self.nsa_, global_reservation_id, connection_id)
 
 
     def releaseProvision(self, network, session_security_attr, connection_id):

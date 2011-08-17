@@ -77,6 +77,7 @@ class NSIServiceClient:
 
 
     def provisionConfirmed(self, requester_nsa, provider_nsa, global_reservation_id, connection_id):
+        print "PROVISION CALLBACK"
         raise NotImplementedError('provisionConfirmed')
 
     def provisionFailed(self, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, service_exception):
