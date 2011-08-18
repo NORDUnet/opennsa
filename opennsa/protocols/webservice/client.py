@@ -7,13 +7,9 @@ Copyright: NORDUnet (2011)
 
 import uuid
 
-from zope.interface import implements
-
 from twisted.python import log
 
-from opennsa.interface import NSIInterface
 from opennsa.protocols.webservice.ext import twistedsuds
-
 
 
 WSDL_PROVIDER   = 'file:///home/htj/nsi/opennsa/wsdl/ogf_nsi_connection_provider_v1_0.wsdl'
@@ -21,47 +17,32 @@ WSDL_REQUESTER  = 'file:///home/htj/nsi/opennsa/wsdl/ogf_nsi_connection_requeste
 
 
 
-class NSIWebServiceClient:
+def createCorrelationId():
+    return str(uuid.uuid1().int)
 
-    implements(NSIInterface)
+
+class ProviderClient:
 
     def __init__(self, reply_to):
 
-        self.provider_client  = twistedsuds.TwistedSUDSClient(WSDL_PROVIDER)
-        self.requester_client = twistedsuds.TwistedSUDSClient(WSDL_REQUESTER)
-
         self.reply_to = reply_to
-
-
-    def _createCorrelationId(self):
-        return uuid.uuid1().int
+        self.client = twistedsuds.TwistedSUDSClient(WSDL_PROVIDER)
 
 
     def _createGenericRequestType(self, requester_nsa, provider_nsa, connection_id):
 
-        req = self.provider_client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}GenericRequestType')
+        req = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}GenericRequestType')
         req.requesterNSA = requester_nsa.uri()
         req.providerNSA  = provider_nsa.uri()
         req.connectionId = connection_id
         return req
 
 
-    def _createGenericConfirmType(self, requester_nsa, provider_nsa, global_reservation_id, connection_id):
+    def reservation(self, correlation_id, requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters):
 
-        conf = self.provider_client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}GenericConfirmedType')
-        conf.requesterNSA        = requester_nsa.uri()
-        conf.providerNSA         = provider_nsa.uri()
-        conf.globalReservationId = global_reservation_id
-        conf.connectionId        = connection_id
-        return conf
+        #correlation_id = self._createCorrelationId()
 
-
-    def reserve(self, requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters):
-        # reserve(xs:anyURI transactionId, xs:anyURI replyTo, ns1:ReserveType reserveRequest, )
-
-        correlation_id = self._createCorrelationId()
-
-        res_req = self.provider_client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}ReservationType')
+        res_req = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}ReservationType')
 
         res_req.requesterNSA                = requester_nsa.uri()
         res_req.providerNSA                 = provider_nsa.uri()
@@ -84,87 +65,35 @@ class NSIWebServiceClient:
         #res_req.reservation.serviceParameters.serviceAttributes.guaranteed = [ '1a' ]
         #res_req.reservation.serviceParameters.serviceAttributes.preferred  = [ '2c', '3d' ]
 
-        d = self.provider_client.invoke(provider_nsa.uri(), 'reservation', correlation_id, self.reply_to, res_req)
+        d = self.client.invoke(provider_nsa.uri(), 'reservation', correlation_id, self.reply_to, res_req)
         return d
 
 
-    def reservationConfirmed(self, reply_to, requester_nsa, provider_nsa, global_reservation_id, description, connection_id, service_parameters):
+    def provision(self, correlation_id, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
-        correlation_id = self._createCorrelationId()
-
-        res_conf = self.requester_client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}ReservationConfirmedType')
-
-        res_conf.requesterNSA   = requester_nsa.uri()
-        res_conf.providerNSA    = provider_nsa.uri()
-
-        res_conf.reservation.globalReservationId    = global_reservation_id
-        res_conf.reservation.description            = description
-        res_conf.reservation.connectionId           = connection_id
-
-        d = self.requester_client.invoke(str(reply_to), 'reservationConfirmed', correlation_id, res_conf)
-        return d
-
-
-    def reservationFailed(self, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, service_exception):
-        raise NotImplementedError('OpenNSA WS protocol under development')
-
-
-    def provision(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
-
-        correlation_id = self._createCorrelationId()
         req = self._createGenericRequestType(requester_nsa, provider_nsa, connection_id)
-        d = self.provider_client.invoke(provider_nsa.uri(), 'provision', correlation_id, self.reply_to, req)
+        d = self.client.invoke(provider_nsa.uri(), 'provision', correlation_id, self.reply_to, req)
         return d
 
 
-    def provisionConfirmed(self, reply_to, requester_nsa, provider_nsa, global_reservation_id, connection_id):
+    def release(self, correlation_id, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
-        correlation_id = self._createCorrelationId()
-        conf = self._createGenericConfirmType(requester_nsa, provider_nsa, global_reservation_id, connection_id)
-        d = self.requester_client.invoke(reply_to, 'provisionConfirmed', correlation_id, conf)
-        return d
-
-    #def provisionFailed(self, 
-
-    def releaseProvision(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
-
-        correlation_id = self._createCorrelationId()
         req = self._createGenericRequestType(requester_nsa, provider_nsa, connection_id)
-        d = self.provider_client.invoke(provider_nsa.uri(), 'release', correlation_id, self.reply_to, req)
+        d = self.client.invoke(provider_nsa.uri(), 'release', correlation_id, self.reply_to, req)
         return d
 
 
-    def releaseConfirmed(self, requester_nsa, provider_nsa, global_reservation_id, connection_id):
+    def terminateReservation(self, correlation_id, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
-        correlation_id = self._createCorrelationId()
-        conf = self._createGenericConfirmType(requester_nsa, provider_nsa, global_reservation_id, connection_id)
-        d = self.requester_client.invoke(provider_nsa.uri(), 'provisionConfirmed', correlation_id, conf)
-        return d
-
-    #def releaseFailed(self, 
-
-    def terminateReservation(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
-
-        correlation_id = self._createCorrelationId()
         req = self._createGenericRequestType(requester_nsa, provider_nsa, connection_id)
-        d = self.provider_client.invoke(provider_nsa.uri(), 'terminate', correlation_id, self.reply_to, req)
+        d = self.client.invoke(provider_nsa.uri(), 'terminate', correlation_id, self.reply_to, req)
         return d
 
 
-    def terminateConfirmed(self, requester_nsa, provider_nsa, global_reservation_id, connection_id):
+    def query(self, correlation_id, requester_nsa, provider_nsa, session_security_attr, operation="Summary", connection_ids=None, global_reservation_ids=None):
 
         correlation_id = self._createCorrelationId()
-        conf = self._createGenericConfirmType(requester_nsa, provider_nsa, global_reservation_id, connection_id)
-        d = self.requester_client.invoke(provider_nsa.uri(), 'terminateConfirmed', correlation_id, conf)
-        return d
-
-    #def terminateFailed(self, 
-
-
-    def query(self, requester_nsa, provider_nsa, session_security_attr, operation="Summary", connection_ids=None, global_reservation_ids=None):
-
-        correlation_id = self._createCorrelationId()
-        req = self.requester_client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}QueryType')
+        req = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}QueryType')
         #print req
 
         req.requesterNSA = requester_nsa.uri()
@@ -174,6 +103,76 @@ class NSIWebServiceClient:
         req.queryFilter.globalReservationId = global_reservation_ids or []
         #print req
 
-        d = self.provider_client.invoke(provider_nsa.uri(), 'query', correlation_id, self.reply_to, req)
+        d = self.client.invoke(provider_nsa.uri(), 'query', correlation_id, self.reply_to, req)
         return d
+
+
+
+
+class RequesterClient:
+
+    def __init__(self):
+
+        self.client = twistedsuds.TwistedSUDSClient(WSDL_REQUESTER)
+
+
+    def _createGenericConfirmType(self, requester_nsa, provider_nsa, global_reservation_id, connection_id):
+
+        conf = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}GenericConfirmedType')
+        conf.requesterNSA        = requester_nsa.uri()
+        conf.providerNSA         = provider_nsa.uri()
+        conf.globalReservationId = global_reservation_id
+        conf.connectionId        = connection_id
+        return conf
+
+
+    def reservationConfirmed(self, requester_uri, correlation_id, requester_nsa, provider_nsa, global_reservation_id, description, connection_id, service_parameters):
+
+        #correlation_id = self._createCorrelationId()
+
+        res_conf = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}ReservationConfirmedType')
+
+        res_conf.requesterNSA   = requester_nsa.uri()
+        res_conf.providerNSA    = provider_nsa.uri()
+
+        res_conf.reservation.globalReservationId    = global_reservation_id
+        res_conf.reservation.description            = description
+        res_conf.reservation.connectionId           = connection_id
+
+        d = self.client.invoke(requester_uri, 'reservationConfirmed', correlation_id, res_conf)
+        return d
+
+
+    def reservationFailed(self, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, service_exception):
+        raise NotImplementedError('NSI WS protocol under development')
+
+
+
+    def provisionConfirmed(self, requester_uri, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id):
+
+        conf = self._createGenericConfirmType(requester_nsa, provider_nsa, global_reservation_id, connection_id)
+        d = self.client.invoke(requester_uri, 'provisionConfirmed', correlation_id, conf)
+        return d
+
+    #def provisionFailed(self, 
+
+
+    def releaseConfirmed(self, requester_uri, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id):
+
+        conf = self._createGenericConfirmType(requester_nsa, provider_nsa, global_reservation_id, connection_id)
+        d = self.client.invoke(requester_uri, 'releaseConfirmed', correlation_id, conf)
+        return d
+
+    #def releaseFailed(self, 
+
+
+    def terminateConfirmed(self, requester_uri, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id):
+
+        conf = self._createGenericConfirmType(requester_nsa, provider_nsa, global_reservation_id, connection_id)
+        d = self.client.invoke(requester_uri, 'terminateConfirmed', correlation_id, conf)
+        return d
+
+    #def terminateFailed(self, 
+
+
 

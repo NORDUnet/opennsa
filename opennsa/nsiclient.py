@@ -22,20 +22,32 @@ class NSIServiceClient:
     implements(NSIServiceInterface)
 
     def __init__(self):
-        self.reservations = {} # nsa_address -> { connection_id -> deferred }
+#        self.reservations = {} # nsa_address -> { connection_id -> deferred }
+        self.calls = {} # (nsa_address, correlation_id) -> { (action, connection_id, deferred) }
 
 
-    def addReservation(self, provider_nsa, connection_id):
-        nsa_reservations = self.reservations.setdefault(provider_nsa.address, {})
-        assert connection_id not in nsa_reservations
+    def addCall(self, provider_nsa, correlation_id, action, connection_id):
+
+        # this is really ws proto specific...
+
+        key = (provider_nsa.uri(), correlation_id)
+        assert key not in self.calls, 'Cannot have multiple calls with same NSA / correlationId'
 
         d = defer.Deferred()
-        nsa_reservations[connection_id] = d
+        self.calls[key] = (action, connection_id, d)
         return d
 
 
-    def abortReservation(self, provider_nsa, connection_id):
-        self.reservations.setdefault(provider_nsa.address, {}).pop(connection_id)
+#    def addReservation(self, provider_nsa, connection_id):
+#        nsa_reservations = self.reservations.setdefault(provider_nsa.address, {})
+#        assert connection_id not in nsa_reservations
+#
+#        d = defer.Deferred()
+#        nsa_reservations[connection_id] = d
+#        return d
+#
+#    def abortReservation(self, provider_nsa, connection_id):
+#        self.reservations.setdefault(provider_nsa.address, {}).pop(connection_id)
 
 
     # command functionality
@@ -56,7 +68,8 @@ class NSIServiceClient:
         raise error.QueryError('Cannot invoke query at NSA client')
 
     def reservationConfirmed(self, requester_nsa, provider_nsa, global_reservation_id, description, connection_id, service_parameters):
-        d = self.reservations.get(provider_nsa.address, {}).pop(connection_id, None)
+        #d = self.reservations.get(provider_nsa.address, {}).pop(connection_id, None)
+
         if d is None:
             print "Got reservation confirmation for non-existing reservation. NSA: %s, Id %s" % (provider_nsa.address, connection_id)
             print self.reservations

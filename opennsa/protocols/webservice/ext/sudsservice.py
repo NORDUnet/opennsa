@@ -24,7 +24,7 @@ class WSDLMarshaller:
     def __init__(self, wsdl_url):
         self.client = Client(wsdl_url)
 
-        self.soap_actions = self._soapAction()
+        self.soap_actions = self.soapActions()
         self.method_map = {}
 
 
@@ -107,7 +107,7 @@ class WSDLMarshaller:
         raise NotImplementedError("cannot yet handle exceptions")
 
 
-    def _soapAction(self):
+    def soapActions(self):
 
         soap_actions = []
 

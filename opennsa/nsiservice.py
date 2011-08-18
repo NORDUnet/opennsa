@@ -48,7 +48,7 @@ class NSIService:
 
     # command functionality
 
-    def reserve(self, requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters, reply_to):
+    def reservation(self, requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters):
 
         def setupSubConnection(source_stp, dest_stp, conn):
 
@@ -142,21 +142,21 @@ class NSIService:
             # last hop
             setupSubConnection(prev_source_stp, dest_stp, conn)
 
-        def notifyReservationSuccess(_):
-            d = self.proxy.reservationConfirmed(reply_to, requester_nsa, global_reservation_id, description, connection_id, service_parameters)
-            return d
+#        def notifyReservationSuccess(_):
+#            d = self.proxy.reservationConfirmed(reply_to, requester_nsa, global_reservation_id, description, connection_id, service_parameters)
+#            return d
 
-        def notifyReservationFailure(error):
-            d = self.proxy.reservationFailed(requester_nsa, global_reservation_id, connection_id, None, error)
-            return d
+#        def notifyReservationFailure(error):
+#            d = self.proxy.reservationFailed(requester_nsa, global_reservation_id, connection_id, None, error)
+#            return d
 
-        def reservationCompleted((conn, d)):
-            d.addCallbacks(notifyReservationSuccess, notifyReservationFailure)
-            return conn.connection_id
+#        def reservationCompleted((conn, d)):
+#            d.addCallbacks(notifyReservationSuccess, notifyReservationFailure)
+#            return conn.connection_id
 
         # now reserve connections needed to create path
         d = conn.reserve(service_parameters, nsa_identity)
-        d.addCallback(reservationCompleted)
+        #d.addCallback(reservationCompleted)
         return d
 
 
@@ -183,27 +183,27 @@ class NSIService:
         return d
 
 
-    def provision(self, requester_nsa, provider_nsa, reply_to, session_security_attr, connection_id):
+    def provision(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
         conn = self.getConnection(requester_nsa, connection_id)
         # security check here
 
-        def notifyProvisionSuccess(_):
-            d = self.proxy.provisionConfirmed(reply_to, requester_nsa, conn.global_reservation_id, conn.connection_id)
-            return d
-
-        def notifyProvisionFailure(error):
-            raise NotImplementedError('notifyProvisionFailure')
-            #d = self.proxy.reservationFailed(requester_nsa, global_reservation_id, connection_id, None, error)
-            #return d
-
+#        def notifyProvisionSuccess(_):
+#            d = self.proxy.provisionConfirmed(reply_to, requester_nsa, conn.global_reservation_id, conn.connection_id)
+#            return d
+#
+#        def notifyProvisionFailure(error):
+#            raise NotImplementedError('notifyProvisionFailure')
+#            #d = self.proxy.reservationFailed(requester_nsa, global_reservation_id, connection_id, None, error)
+#            #return d
+#
         d = conn.provision()
-        d.addCallbacks(notifyProvisionSuccess, notifyProvisionFailure)
+#        d.addCallbacks(notifyProvisionSuccess, notifyProvisionFailure)
         d.addErrback(lambda e : log.err(e))
         return defer.succeed(conn.connection_id)
 
 
-    def releaseProvision(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
+    def release(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
         conn = self.getConnection(requester_nsa, connection_id)
         # security check here

@@ -18,34 +18,34 @@ from zope.interface import Interface
 class NSIInterface(Interface):
 
 
-    def reserve(requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters):
+    def reservation(requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters):
         """
         Make a path reservation.
         """
 
-    def reservationConfirmed(requester_nsa, provider_nsa, global_reservation_id, description, connection_id, service_parameters):
-        """
-        Confirm a reservation.
-        """
-
-    def reservationFailed(requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, service_exception):
-        """
-        Notify that a reservation has failed.
-        """
-
-    def terminateReservation(requester_nsa, provider_nsa, session_security_attr, connection_id):
-        """
-        Cancel a path reservation.
-        """
+#    def reservationConfirmed(requester_nsa, provider_nsa, global_reservation_id, description, connection_id, service_parameters):
+#        """
+#        Confirm a reservation.
+#        """
+#
+#    def reservationFailed(requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, service_exception):
+#        """
+#        Notify that a reservation has failed.
+#        """
 
     def provision(requester_nsa, provider_nsa, session_security_attr, connection_id):
         """
         Provisions a path.
         """
 
-    def releaseProvision(requester_nsa, provider_nsa, session_security_attr, connection_id):
+    def release(requester_nsa, provider_nsa, session_security_attr, connection_id):
         """
         Release the path from provisioned mode.
+        """
+
+    def terminate(requester_nsa, provider_nsa, session_security_attr, connection_id):
+        """
+        Cancels a reservation.
         """
 
     def query(requester_nsa, provider_nsa, session_security_attr, query_filter):
@@ -54,12 +54,14 @@ class NSIInterface(Interface):
         """
 
 
-class NSIClientInterface(NSIInterface):
-    pass
+#class NSIClientInterface(NSIInterface):
+#    pass
+#
 
-
+# this should go too
 class NSIServiceInterface(NSIInterface):
     pass
+
 
 
 

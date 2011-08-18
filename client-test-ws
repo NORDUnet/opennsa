@@ -38,32 +38,26 @@ def doMain():
 
     print "Connection id", connection_id
 
-#    _ = yield client.query(client_nsa, provider_net.nsa, None, None)
+    #_ = yield client.query(client_nsa, provider_net.nsa, None, None)
 
-    # We need to be aware of the reservation request before it is issued as the
-    # reservation callback might arrive before the reservation received ACK.
-    rd = service.addReservation(provider_net.nsa, connection_id)
+    r = yield client.reservation(client_nsa, provider_net.nsa, None, global_reservation_id, 'Test Connection', connection_id, service_params)
+    print "Reservation created. Connection ID:", connection_id
 
-    r = yield client.reserve(client_nsa, provider_net.nsa, None, global_reservation_id, 'Test Connection', connection_id, service_params)
-    print "Reservation request issued. Reply (correlation id):", r
-    r = yield rd
-    print "Reservation created"
-
-
-    _ = yield client.query(client_nsa, provider_net.nsa, None, connection_ids = [ connection_id ] )
-
+#    _ = yield client.query(client_nsa, provider_net.nsa, None, "Summary", connection_ids = [ connection_id ] )
+#
     _ = yield client.provision(client_nsa, provider_net.nsa, None, connection_id)
     print "Provision made"
-#
-#    _ = yield client.query(client_nsa, provider_net.nsa, None, None)
 
-    _ = yield client.releaseProvision(client_nsa, provider_net.nsa, None, connection_id)
+##
+##    _ = yield client.query(client_nsa, provider_net.nsa, None, None)
+
+    _ = yield client.release(client_nsa, provider_net.nsa, None, connection_id)
     print "Provision released"
-
-#    _ = yield client.query(client_nsa, provider_net.nsa, None, None)
-
-    _ = yield client.terminateReservation(client_nsa, provider_net.nsa, None, connection_id)
-    print "Reservation cancelled"
+#
+##    _ = yield client.query(client_nsa, provider_net.nsa, None, None)
+#
+#    _ = yield client.terminateReservation(client_nsa, provider_net.nsa, None, "Summary", connection_id)
+#    print "Reservation cancelled"
 
 
 

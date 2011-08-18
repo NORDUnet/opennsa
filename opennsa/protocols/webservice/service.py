@@ -6,7 +6,6 @@ Copyright: NORDUnet (2011)
 """
 
 from twisted.python import log
-from twisted.web import resource, server
 
 from opennsa import nsa
 from opennsa.protocols.webservice.ext import sudsservice
@@ -15,189 +14,250 @@ from opennsa.protocols.webservice.ext import sudsservice
 WSDL_PROVIDER   = 'file:///home/htj/nsi/opennsa/wsdl/ogf_nsi_connection_provider_v1_0.wsdl'
 WSDL_REQUESTER  = 'file:///home/htj/nsi/opennsa/wsdl/ogf_nsi_connection_requester_v1_0.wsdl'
 
-# URL for service is http://HOST:PORT/NSI/services/ConnectionService
 
 
-class ConnectionServiceResource(resource.Resource):
-
-    isLeaf = True
-
-    def __init__(self, nsi_service):
-        resource.Resource.__init__(self)
-        self.nsi_service = nsi_service
-
-        self.provider_decoder  = sudsservice.WSDLMarshaller(WSDL_PROVIDER)
-        self.requester_decoder = sudsservice.WSDLMarshaller(WSDL_REQUESTER)
+def _decodeNSAs(subreq):
+    requester_nsa = nsa.NetworkServiceAgent(str(subreq.requesterNSA))
+    provider_nsa  = nsa.NetworkServiceAgent(str(subreq.providerNSA))
+    return requester_nsa, provider_nsa
 
 
-    def render_POST(self, request):
 
-        def genericReply(connection_id, request, decoder, method, correlation_id):
-                reply = decoder.marshal_result(correlation_id, method)
-                request.write(reply)
-                request.finish()
+class ProviderService:
 
-        def decodeNSAs(subreq):
-            requester_nsa = nsa.NetworkServiceAgent(str(subreq.requesterNSA))
-            provider_nsa  = nsa.NetworkServiceAgent(str(subreq.providerNSA))
-            return requester_nsa, provider_nsa
+    def __init__(self, soap_resource, provider):
 
-        # --
+        self.provider = provider
+        self.soap_resource = soap_resource
+        #self.nsi_service = nsi_service
+        self.decoder = sudsservice.WSDLMarshaller(WSDL_PROVIDER)
 
-        soap_action = request.requestHeaders.getRawHeaders('soapaction',[None])[0]
-
-        if self.provider_decoder.recognizedSOAPAction(soap_action):
-            decoder = self.provider_decoder
-        elif self.requester_decoder.recognizedSOAPAction(soap_action):
-            decoder = self.requester_decoder
-        else:
-            log.msg('Got request with unknown SOAP action: %s' % soap_action, system='opennsa.ConnectionServiceResource')
-            request.setResponseCode(406) # Not acceptable
-            return 'Invalid SOAP Action for this resource'
-
-        soap_action = soap_action[1:-1] # remove front and end ""
-
-        log.msg('Got request with SOAP action: %s' % soap_action, system='opennsa.ConnectionServiceResource')
-
-        short_soap_action = soap_action.split('/')[-1]
-        method, objs = decoder.parse_request(short_soap_action, request.content.getvalue())
-
-        if short_soap_action == 'reservation':
-            #correlation_id_tuple, reply_to_tuple, reservation_requesa_tuple = objs
-            correlation_id, reply_to, req = [ a for (_,a) in objs ]
-            #log.msg("Received SOAP request. Correlation ID: %s. Connection ID: %s" % (correlation_id, req.reservation.connectionId))
-            #print req
-
-            requester_nsa, provider_nsa = decodeNSAs(req)
-            session_security_attr   = None
-            global_reservation_id   = req.reservation.globalReservationId
-            description             = req.reservation.description
-            connection_id           = req.reservation.connectionId
-
-            sp      = req.reservation.serviceParameters
-            path    = req.reservation.path
-
-            def parseSTPID(std_id):
-                tokens = path.sourceSTP.stpId.replace(nsa.STP_PREFIX, '').split(':', 2)
-                return nsa.STP(tokens[0], tokens[1])
-
-            source_stp  = parseSTPID(path.sourceSTP.stpId)
-            dest_stp    = parseSTPID(path.destSTP.stpId)
-            # how to check for existence of optional parameters easily...
-            service_parameters      = nsa.ServiceParameters(sp.schedule.startTime, None, source_stp, dest_stp, bandwidth_desired=sp.bandwidth.desired)
-
-            d = self.nsi_service.reserve(requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters, reply_to)
-            d.addErrback(lambda err : log.err(err))
-            # The deferred will fire when the reservation is made.
-
-            # The initial reservation ACK should be send when the reservation
-            # request is persistent, and a callback should then be issued once
-            # the connection has been reserved. Unfortuantely there is
-            # currently no way of telling when the request is persitent, so we
-            # just return immediately.
-            reply = decoder.marshal_result(correlation_id, method)
+        # not sure what query callbacs are doing here
+        #self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/07/connection/service/queryConfirmed"', ...)
+        #self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/07/connection/service/queryFailed"', ...)
+        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/07/connection/service/reservation"',   self.reservation)
+        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/07/connection/service/provision"',     self.provision)
+        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/07/connection/service/release"',       self.release)
+        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/07/connection/service/terminate"',     self.terminate)
+        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/07/connection/service/query"',         self.query)
 
 
-        elif short_soap_action == 'reservationConfirmed':
-
-            req = objs
-            requester_nsa, provider_nsa = decodeNSAs(req.reservationConfirmed)
-            res = req.reservationConfirmed.reservation
-
-            d = self.nsi_service.reservationConfirmed(requester_nsa, provider_nsa, str(res.globalReservationId), str(res.description), str(res.connectionId), None)
-            d.addCallback(genericReply, request, decoder, method, str(req.correlationId))
-            return server.NOT_DONE_YET
+    def genericReply(connection_id, request, decoder, method, correlation_id):
+        reply = decoder.marshal_result(correlation_id, method)
+        return reply
 
 
-        elif short_soap_action == 'provision':
+    def reservation(self, soap_action, soap_data):
 
-            req = objs
-            reply_to = str(req.replyTo)
-            print "TYPE", type(reply_to)
-            requester_nsa, provider_nsa = decodeNSAs(req.provision)
+        assert soap_action == '"http://schemas.ogf.org/nsi/2011/07/connection/service/reservation"'
+        method, objs = self.decoder.parse_request('reservation', soap_data)
 
-            d = self.nsi_service.provision(requester_nsa, provider_nsa, reply_to, None, str(req.provision.connectionId))
-            d.addCallback(genericReply, request, decoder, method, str(req.correlationId))
-            return server.NOT_DONE_YET
+        correlation_id, reply_to, req = [ a for (_,a) in objs ]
+        #log.msg("Received SOAP request. Correlation ID: %s. Connection ID: %s" % (correlation_id, req.reservation.connectionId))
+        #print req
 
-        elif short_soap_action == 'provisionConfirmed':
+        reply_to = str(reply_to)
 
-            req = objs
-            requester_nsa, provider_nsa = decodeNSAs(req.provisionConfirmed)
+        requester_nsa, provider_nsa = _decodeNSAs(req)
+        session_security_attr       = None
+        global_reservation_id       = req.reservation.globalReservationId
+        description                 = req.reservation.description
+        connection_id               = req.reservation.connectionId
+        sp                          = req.reservation.serviceParameters
+        path                        = req.reservation.path
 
-            d = self.nsi_service.provisionConfirmed(requester_nsa, provider_nsa, None, str(req.provisionConfirmed.connectionId))
+        def parseSTPID(std_id):
+            tokens = path.sourceSTP.stpId.replace(nsa.STP_PREFIX, '').split(':', 2)
+            return nsa.STP(tokens[0], tokens[1])
 
+        source_stp  = parseSTPID(path.sourceSTP.stpId)
+        dest_stp    = parseSTPID(path.destSTP.stpId)
+        # how to check for existence of optional parameters easily  - in / hasattr both works
+        service_parameters      = nsa.ServiceParameters(sp.schedule.startTime, None, source_stp, dest_stp, bandwidth_desired=sp.bandwidth.desired)
 
-        elif short_soap_action == 'release':
+        d = self.provider.reservation(correlation_id, reply_to, requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters)
+        #d = self.nsi_service.reserve(requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters, reply_to)
+        d.addErrback(lambda err : log.err(err))
+        # The deferred will fire when the reservation is made.
 
-            req = objs
-            requester_nsa, provider_nsa = decodeNSAs(req.release)
-
-            d = self.nsi_service.releaseProvision(requester_nsa, provider_nsa, None, str(req.release.connectionId))
-            d.addCallback(genericReply, request, decoder, method, str(req.correlationId))
-            return server.NOT_DONE_YET
-
-
-        elif short_soap_action == 'terminate':
-
-            req = objs
-            requester_nsa, provider_nsa = decodeNSAs(req.terminate)
-
-            d = self.nsi_service.terminateReservation(requester_nsa, provider_nsa, None, str(req.terminate.connectionId))
-            d.addCallback(genericReply, request, decoder, method, str(req.correlationId))
-            return server.NOT_DONE_YET
-
-
-        elif short_soap_action == 'query':
-
-            req = objs
-            #print "Q", req
-            requester_nsa, provider_nsa = decodeNSAs(req.query)
-
-            operation = req.query.operation
-            qf = req.query.queryFilter
-
-            connection_ids = []
-            global_reservation_ids = []
-
-            if 'connectionId' in qf:
-                connection_ids = qf.connectionId
-            if 'globalReservationId' in qf:
-                global_reservation_ids = qf.globalReservationId
-
-#            print "QQ", operation, connection_ids, global_reservation_ids
-
-            def queryReply(query_result):
-
-                res = decoder.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}QueryConfirmedType')
-                #print "QRES", res
-                reply = decoder.marshal_result(str(req.correlationId), method)
-                #print "QREP", reply
-                request.write(reply)
-                request.finish()
-
-            d = self.nsi_service.query(requester_nsa, provider_nsa, None, operation, connection_ids, global_reservation_ids)
-            d.addCallback(queryReply)
-            return server.NOT_DONE_YET
+        # The initial reservation ACK should be send when the reservation
+        # request is persistent, and a callback should then be issued once
+        # the connection has been reserved. Unfortuantely there is
+        # currently no way of telling when the request is persitent, so we
+        # just return immediately.
+        reply = self.decoder.marshal_result(correlation_id, method)
+        return reply
 
 
+    def provision(self, soap_action, soap_data):
+
+        method, req = self.decoder.parse_request('provision', soap_data)
+        requester_nsa, provider_nsa = _decodeNSAs(req.provision)
+
+        correlation_id  = str(req.correlationId)
+        reply_to        = str(req.replyTo)
+
+        connection_id   = str(req.provision.connectionId)
+
+        d = self.provider.provision(correlation_id, reply_to, requester_nsa, provider_nsa, None, connection_id)
+
+        reply = self.decoder.marshal_result(correlation_id, method)
+        return reply
+
+
+    def release(self, soap_action, soap_data):
+
+        method, req = self.decoder.parse_request('release', soap_data)
+        requester_nsa, provider_nsa = _decodeNSAs(req.release)
+
+        correlation_id  = str(req.correlationId)
+        reply_to        = str(req.replyTo)
+        connection_id   = str(req.release.connectionId)
+
+        d = self.provider.release(correlation_id, reply_to, requester_nsa, provider_nsa, None, connection_id)
+
+        reply = self.decoder.marshal_result(correlation_id, method)
         return reply
 
 
 
-def createNSIWSService(nsi_service):
+    def terminate(self, soap_action, soap_data):
 
-    # this may seem a bit much, but makes it much simpler to add or change something later
-    top_resource = resource.Resource()
-    nsi_resource = resource.Resource()
-    services_resource = resource.Resource()
+        method, req = self.decoder.parse_request('termiante', soap_data)
+        requester_nsa, provider_nsa = _decodeNSAs(req.release)
 
-    connection_service = ConnectionServiceResource(nsi_service)
+        correlation_id  = str(req.correlationId)
+        reply_to        = str(req.replyTo)
+        connection_id   = str(req.terminate.connectionId)
 
-    top_resource.putChild('NSI', nsi_resource)
-    nsi_resource.putChild('services', services_resource)
-    services_resource.putChild('ConnectionService', connection_service)
+        d = self.provider.terminate(correlation_id, reply_to, requester_nsa, provider_nsa, None, connection_id)
 
-    site = server.Site(top_resource)
-    return site
+        reply = self.decoder.marshal_result(correlation_id, method)
+        return reply
+
+
+    def query(self, soap_action, soap_data):
+        print "QUERY"
+        method, req = self.decoder.parse_request('query', soap_data)
+        raise NotImplementedError('query')
+
+        #print "Q", req
+        requester_nsa, provider_nsa = _decodeNSAs(req.query)
+
+        operation = req.query.operation
+        qf = req.query.queryFilter
+
+        connection_ids = []
+        global_reservation_ids = []
+
+        if 'connectionId' in qf:
+            connection_ids = qf.connectionId
+        if 'globalReservationId' in qf:
+            global_reservation_ids = qf.globalReservationId
+
+        #print "QQ", operation, connection_ids, global_reservation_ids
+
+        def queryReply(query_result):
+
+            res = self.decoder.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}QueryConfirmedType')
+            #print "QRES", res
+            reply = self.decoder.marshal_result(str(req.correlationId), method)
+            return reply
+
+        d = self.nsi_service.query(requester_nsa, provider_nsa, None, operation, connection_ids, global_reservation_ids)
+        d.addCallback(queryReply)
+        return d
+
+
+
+class RequesterService:
+
+    def __init__(self, soap_resource, requester):
+
+        self.soap_resource = soap_resource
+        self.requester = requester
+        self.decoder = sudsservice.WSDLMarshaller(WSDL_REQUESTER)
+
+        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/07/connection/service/reservationConfirmed"',  self.reservationConfirmed)
+        self.soap_resource.registerDecoder("http://schemas.ogf.org/nsi/2011/07/connection/service/reservationFailed",       self.reservationFailed)
+        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/07/connection/service/provisionConfirmed"',    self.provisionConfirmed)
+        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/07/connection/service/provisionFailed"',       self.provisionFailed)
+        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/07/connection/service/releaseConfirmed"',      self.releaseConfirmed)
+
+#"http://schemas.ogf.org/nsi/2011/07/connection/service/terminateFailed"
+#"http://schemas.ogf.org/nsi/2011/07/connection/service/queryConfirmed"
+#"http://schemas.ogf.org/nsi/2011/07/connection/service/forcedEnd"
+#"http://schemas.ogf.org/nsi/2011/07/connection/service/terminateConfirmed"
+#"http://schemas.ogf.org/nsi/2011/07/connection/service/releaseFailed"
+#"http://schemas.ogf.org/nsi/2011/07/connection/service/queryFailed"
+
+#"http://schemas.ogf.org/nsi/2011/07/connection/service/query"
+
+
+    def reservationConfirmed(self, soap_action, soap_data):
+
+        assert soap_action == '"http://schemas.ogf.org/nsi/2011/07/connection/service/reservationConfirmed"'
+
+        method, req = self.decoder.parse_request('reservationConfirmed', soap_data)
+        requester_nsa, provider_nsa = _decodeNSAs(req.reservationConfirmed)
+        res = req.reservationConfirmed.reservation
+
+        correlation_id          = str(req.correlationId)
+        global_reservation_id   = str(res.globalReservationId)
+        description             = str(res.description)
+        connection_id           = str(res.connectionId)
+
+        self.requester.reservationConfirmed(correlation_id, requester_nsa, provider_nsa, None, global_reservation_id, description, connection_id, None)
+
+        reply = self.decoder.marshal_result(correlation_id, method)
+        return reply
+
+
+    def reservationFailed(self, soap_action, soap_data):
+        print "RES FAILE :-("
+
+
+    def provisionConfirmed(self, soap_action, soap_data):
+
+        assert soap_action == '"http://schemas.ogf.org/nsi/2011/07/connection/service/provisionConfirmed"'
+
+        method, req = self.decoder.parse_request('provisionConfirmed', soap_data)
+        requester_nsa, provider_nsa = _decodeNSAs(req.provisionConfirmed)
+
+        correlation_id          = str(req.correlationId)
+        connection_id           = str(req.provisionConfirmed.connectionId)
+
+        d = self.requester.provisionConfirmed(correlation_id, requester_nsa, provider_nsa, None, connection_id)
+
+        reply = self.decoder.marshal_result(correlation_id, method)
+        return reply
+
+
+    def provisionFailed(self, soap_action, soap_data):
+
+        assert soap_action == '"http://schemas.ogf.org/nsi/2011/07/connection/service/provisionFailed"'
+        method, req = self.decoder.parse_request('provisionFailed', soap_data)
+
+        requester_nsa, provider_nsa = _decodeNSAs(req.provisionFailed)
+        d = self.nsi_service.provisionFailed(requester_nsa, provider_nsa, None, str(req.provisionFailed.connectionId))
+
+        return ''
+
+
+    def releaseConfirmed(self, soap_action, soap_data):
+
+        "SERVICE RELEASE CONFIRMED"
+        assert soap_action == '"http://schemas.ogf.org/nsi/2011/07/connection/service/releaseConfirmed"'
+
+        method, req = self.decoder.parse_request('releaseConfirmed', soap_data)
+        requester_nsa, provider_nsa = _decodeNSAs(req.releaseConfirmed)
+
+        correlation_id          = str(req.correlationId)
+        connection_id           = str(req.releaseConfirmed.connectionId)
+
+        d = self.requester.releaseConfirmed(correlation_id, requester_nsa, provider_nsa, None, connection_id)
+
+        reply = self.decoder.marshal_result(correlation_id, method)
+        return reply
+
 
