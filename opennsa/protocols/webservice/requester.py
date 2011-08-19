@@ -100,7 +100,27 @@ class Requester:
         self.triggerCall(provider_nsa, correlation_id, 'release', connection_id)
 
 
-    def query(self, requester_nsa, provider_nsa, session_securit_attr, operation, connection_ids=None, global_reservation_ids=None):
-        print "QUERY NOTHING"
+
+    def terminate(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
+
+        correlation_id = client.createCorrelationId()
+        rd = self.addCall(provider_nsa, correlation_id, 'terminate', connection_id)
+        cd = self.provider_client.terminate(correlation_id, requester_nsa, provider_nsa, session_security_attr, connection_id)
+        # need to chain cd.errback to rd.errback (only error path)
+        return rd
+
+
+    def terminateConfirmed(self, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id):
+
+        self.triggerCall(provider_nsa, correlation_id, 'terminate', connection_id)
+
+
+    def query(self, requester_nsa, provider_nsa, session_security_attr, operation, connection_ids=None, global_reservation_ids=None):
+
+        correlation_id = client.createCorrelationId()
+        rd = self.addCall(provider_nsa, correlation_id, 'query', '')
+        cd = self.provider_client.terminate(correlation_id, requester_nsa, provider_nsa, session_security_attr, connection_id)
+        # need to chain cd.errback to rd.errback (only error path)
+        return rd
 
 

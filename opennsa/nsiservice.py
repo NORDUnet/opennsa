@@ -173,7 +173,7 @@ class NSIService:
         sub_conn.reservationFailed(error)
 
 
-    def terminateReservation(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
+    def terminate(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
         conn = self.getConnection(requester_nsa, connection_id)
         # security check here

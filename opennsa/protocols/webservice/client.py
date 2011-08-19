@@ -83,7 +83,7 @@ class ProviderClient:
         return d
 
 
-    def terminateReservation(self, correlation_id, requester_nsa, provider_nsa, session_security_attr, connection_id):
+    def terminate(self, correlation_id, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
         req = self._createGenericRequestType(requester_nsa, provider_nsa, connection_id)
         d = self.client.invoke(provider_nsa.uri(), 'terminate', correlation_id, self.reply_to, req)
