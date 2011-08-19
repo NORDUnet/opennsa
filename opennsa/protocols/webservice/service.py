@@ -137,12 +137,12 @@ class ProviderService:
 
 
     def query(self, soap_action, soap_data):
-        print "QUERY"
-        method, req = self.decoder.parse_request('query', soap_data)
-        raise NotImplementedError('query')
 
-        #print "Q", req
+        method, req = self.decoder.parse_request('query', soap_data)
+
         requester_nsa, provider_nsa = _decodeNSAs(req.query)
+        correlation_id = str(req.correlationId)
+        reply_to       = str(req.replyTo)
 
         operation = req.query.operation
         qf = req.query.queryFilter
@@ -155,18 +155,10 @@ class ProviderService:
         if 'globalReservationId' in qf:
             global_reservation_ids = qf.globalReservationId
 
-        #print "QQ", operation, connection_ids, global_reservation_ids
+        d = self.provider.query(correlation_id, reply_to, requester_nsa, provider_nsa, None, operation, connection_ids, global_reservation_ids)
 
-        def queryReply(query_result):
-
-            res = self.decoder.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}QueryConfirmedType')
-            #print "QRES", res
-            reply = self.decoder.marshal_result(str(req.correlationId), method)
-            return reply
-
-        d = self.nsi_service.query(requester_nsa, provider_nsa, None, operation, connection_ids, global_reservation_ids)
-        d.addCallback(queryReply)
-        return d
+        reply = self.decoder.marshal_result(correlation_id, method)
+        return reply
 
 
 
@@ -179,7 +171,7 @@ class RequesterService:
         self.decoder = sudsservice.WSDLMarshaller(WSDL_REQUESTER)
 
         self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/07/connection/service/reservationConfirmed"',  self.reservationConfirmed)
-        self.soap_resource.registerDecoder("http://schemas.ogf.org/nsi/2011/07/connection/service/reservationFailed",       self.reservationFailed)
+        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/07/connection/service/reservationFailed"',     self.reservationFailed)
 
         self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/07/connection/service/provisionConfirmed"',    self.provisionConfirmed)
         self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/07/connection/service/provisionFailed"',       self.provisionFailed)
@@ -190,10 +182,10 @@ class RequesterService:
         self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/07/connection/service/terminateConfirmed"',    self.terminateConfirmed)
         self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/07/connection/service/terminateFailed"',       self.terminateFailed)
 
-#"http://schemas.ogf.org/nsi/2011/07/connection/service/queryConfirmed"
-#"http://schemas.ogf.org/nsi/2011/07/connection/service/forcedEnd"
-#"http://schemas.ogf.org/nsi/2011/07/connection/service/queryFailed"
+        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/07/connection/service/queryConfirmed"',        self.queryConfirmed)
+        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/07/connection/service/queryFailed"',           self.queryFailed)
 
+#"http://schemas.ogf.org/nsi/2011/07/connection/service/forcedEnd"
 #"http://schemas.ogf.org/nsi/2011/07/connection/service/query"
 
 
@@ -286,4 +278,26 @@ class RequesterService:
     def terminateFailed(self, soap_action, soap_data):
         print "SERVICE TERMINATE FAILED"
 
+
+    def queryConfirmed(self, soap_action, soap_data):
+
+        assert soap_action == '"http://schemas.ogf.org/nsi/2011/07/connection/service/queryConfirmed"'
+
+        method, req = self.decoder.parse_request('queryConfirmed', soap_data)
+        print "REQ", req
+        requester_nsa, provider_nsa = _decodeNSAs(req.queryConfirmed)
+
+        correlation_id          = str(req.correlationId)
+#        reservation_summary     = req.queryConfirmed
+#        connection_id           = str(req.terminateConfirmed.connectionId)
+        query_result = 1
+
+        d = self.requester.queryConfirmed(correlation_id, requester_nsa, provider_nsa, query_result)
+
+        reply = self.decoder.marshal_result(correlation_id, method)
+        return reply
+
+
+    def queryFailed(self, soap_action, soap_data):
+        print "SERVICE TERMINATE FAILED"
 

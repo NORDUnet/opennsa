@@ -215,6 +215,8 @@ class NSIService:
 
     def query(self, requester_nsa, provider_nsa, session_security_attr, operation, connection_ids=None, global_reservation_ids=None):
 
+        print "QUERY"
+
         log.msg('', system='opennsa.NSIService')
-        return defer.succeed(None)
+        return defer.succeed( (None, None) )
 

@@ -92,7 +92,6 @@ class ProviderClient:
 
     def query(self, correlation_id, requester_nsa, provider_nsa, session_security_attr, operation="Summary", connection_ids=None, global_reservation_ids=None):
 
-        correlation_id = self._createCorrelationId()
         req = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}QueryType')
         #print req
 
@@ -174,5 +173,19 @@ class RequesterClient:
 
     #def terminateFailed(self, 
 
+    def queryConfirmed(self, requester_uri, correlation_id, requester_nsa, provider_nsa, reservation_summary, reservation_details):
+
+        res = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}QueryConfirmedType')
+
+        res.requesterNSA = requester_nsa.uri()
+        res.providerNSA  = provider_nsa.uri()
+#        req.connectionId = connection_id
+
+        d = self.client.invoke(requester_uri, 'queryConfirmed', correlation_id, res)
+        return d
+
+
+    def queryFailed(self, requester_uri, correlation_id, requester_nsa, provider_nsa, *args):
+        print "CLIENT QUERY FAILED"
 
 

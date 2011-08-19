@@ -115,12 +115,16 @@ class Requester:
         self.triggerCall(provider_nsa, correlation_id, 'terminate', connection_id)
 
 
-    def query(self, requester_nsa, provider_nsa, session_security_attr, operation, connection_ids=None, global_reservation_ids=None):
+    def query(self, requester_nsa, provider_nsa, session_security_attr, operation='Summary', connection_ids=None, global_reservation_ids=None):
 
         correlation_id = client.createCorrelationId()
         rd = self.addCall(provider_nsa, correlation_id, 'query', '')
-        cd = self.provider_client.terminate(correlation_id, requester_nsa, provider_nsa, session_security_attr, connection_id)
+        cd = self.provider_client.query(correlation_id, requester_nsa, provider_nsa, session_security_attr, operation, connection_ids, global_reservation_ids)
         # need to chain cd.errback to rd.errback (only error path)
         return rd
+
+    def queryConfirmed(self, correlation_id, requester_nsa, provider_nsa, query_result):
+
+        self.triggerCall(provider_nsa, correlation_id, 'query', '')
 
 

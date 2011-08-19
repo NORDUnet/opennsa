@@ -59,8 +59,9 @@ def doMain():
     _ = yield client.terminate(client_nsa, provider_net.nsa, None, connection_id)
     print "Reservation terminated"
 
+    r = yield client.query(client_nsa, provider_net.nsa, None, "Summary", connection_ids = [ connection_id ] )
 
-#    _ = yield client.query(client_nsa, provider_net.nsa, None, "Summary", connection_ids = [ connection_id ] )
+    print "Q", r
 
 
 def main():
