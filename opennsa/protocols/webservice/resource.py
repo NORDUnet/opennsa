@@ -36,7 +36,7 @@ class SOAPResource(resource.Resource):
             request.setResponseCode(406) # Not acceptable
             return 'Invalid SOAP Action for this resource'
 
-        log.msg('Got request with SOAP action: %s' % soap_action, system='opennsa.ConnectionServiceResource')
+        #log.msg('Got request with SOAP action: %s' % soap_action, system='opennsa.ConnectionServiceResource')
 
         decoder = self.soap_actions[soap_action]
         soap_data = request.content.getvalue()
@@ -67,6 +67,6 @@ def createService():
     nsi_resource.putChild('services', services_resource)
     services_resource.putChild('ConnectionService', soap_resource)
 
-    site = server.Site(top_resource)
+    site = server.Site(top_resource, logPath='/dev/null')
     return soap_resource, site
 
