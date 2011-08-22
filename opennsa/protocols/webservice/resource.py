@@ -42,7 +42,8 @@ class SOAPResource(resource.Resource):
         soap_data = request.content.getvalue()
 
         def reply(reply_data):
-            print "REPLY", len(reply_data)
+            if reply_data is None or len(reply_data) == 0:
+                log.msg('None/empty reply data supplied for SOAPResource. This is probably wrong')
             request.write(reply_data)
             request.finish()
 
