@@ -154,8 +154,8 @@ class NSIService:
 #            return conn.connection_id
 
         # now reserve connections needed to create path
-        d = conn.reserve(service_parameters, nsa_identity)
-        #d.addCallback(reservationCompleted)
+        d = conn.reservation(service_parameters, nsa_identity)
+#        d.addCallback(reservationCompleted)
         return d
 
 

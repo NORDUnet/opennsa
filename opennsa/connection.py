@@ -76,7 +76,7 @@ class SubConnection(ConnectionState):
         self._proxy = proxy
 
 
-    def reserve(self, service_parameters):
+    def reservation(self, service_parameters):
 
         assert self._proxy is not None, 'Proxy not set for SubConnection, cannot invoke method'
 
@@ -87,7 +87,7 @@ class SubConnection(ConnectionState):
 
         sub_service_params  = nsa.ServiceParameters('', '', self.source_stp, self.dest_stp)
         self.switchState(RESERVING)
-        d = self._proxy.reserve(self.network, None, self.parent_connection.global_reservation_id, self.parent_connection.description, self.connection_id, sub_service_params)
+        d = self._proxy.reservation(self.network, None, self.parent_connection.global_reservation_id, self.parent_connection.description, self.connection_id, sub_service_params)
         d.addErrback(reservationFailed) # nothing is required for reservation creation confirmation
         return d
 
@@ -176,11 +176,11 @@ class LocalConnection(ConnectionState):
         self._backend = backend
 
 
-    def reserve(self, service_parameters):
+    def reservation(self, service_parameters):
 
         assert self._backend is not None, 'Backend not set for LocalConnection, cannot invoke method'
 
-        def reserveDone(int_res_id):
+        def reservationDone(int_res_id):
             self.internal_reservation_id = int_res_id
             self.switchState(RESERVED)
             self.parent_connection.reservationStateUpdated(False)
@@ -193,7 +193,7 @@ class LocalConnection(ConnectionState):
 
         self.switchState(RESERVING)
         d = self._backend.reserve(self.source_endpoint, self.dest_endpoint, service_parameters)
-        d.addCallbacks(reserveDone, reservationFailed)
+        d.addCallbacks(reservationDone, reservationFailed)
         return d
 
 
@@ -282,7 +282,7 @@ class Connection(ConnectionState):
             return self.sub_connections
 
 
-    def reserve(self, service_parameters, nsa_identity=None):
+    def reservation(self, service_parameters, nsa_identity=None):
 
         def reservationRequestsDone(results):
             successes = [ r[0] for r in results ]
@@ -304,7 +304,7 @@ class Connection(ConnectionState):
 
         defs = []
         for sc in self.connections():
-            d = sc.reserve(service_parameters)
+            d = sc.reservation(service_parameters)
             defs.append(d)
 
         dl = defer.DeferredList(defs)

@@ -15,10 +15,10 @@ class NSIProxy:
         self.topology   = topology  # used for network -> nsa lookups
 
 
-    def reserve(self, network, session_security_attr, global_reservation_id, description, connection_id, service_parameters):
+    def reservation(self, network, session_security_attr, global_reservation_id, description, connection_id, service_parameters):
 
         remote_nsa = self.topology.getNetwork(network).nsa
-        return self.client.reserve(self.nsa_, remote_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters)
+        return self.client.reservation(self.nsa_, remote_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters)
 
 
     def reservationConfirmed(self, reply_to, remote_nsa, global_reservation_id, description, connection_id, service_parameters):
