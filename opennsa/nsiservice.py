@@ -219,8 +219,6 @@ class NSIService:
 
         # security check here
 
-        log.msg('Query (%s)' % operation, system='opennsa.NSIService')
-
         conns = []
 
         nsa_connections = self.connections.get(requester_nsa.uri(), {})

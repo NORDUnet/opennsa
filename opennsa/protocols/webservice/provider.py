@@ -16,7 +16,6 @@ class Provider:
             d = self.requester_client.reservationConfirmed(reply_to, correlation_id, requester_nsa, provider_nsa, global_reservation_id, description, connection_id, service_parameters)
             return d
 
-        print "PROVIDER RESERVATION"
         d = self.nsi_service.reservation(requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters)
         d.addCallback(notifyReservationSuccess)
         return d
@@ -31,7 +30,6 @@ class Provider:
             d = self.requester_client.provisionConfirmed(reply_to, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id)
             return d
 
-        print "PROVIDER PROVISION"
         d = self.nsi_service.provision(requester_nsa, provider_nsa, session_security_attr, connection_id)
         d.addCallback(notifyProvisionSuccess)
         return d
@@ -45,7 +43,6 @@ class Provider:
             d = self.requester_client.releaseConfirmed(reply_to, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id)
             return d
 
-        print "PROVIDER RELEASE"
         d = self.nsi_service.release(requester_nsa, provider_nsa, session_security_attr, connection_id)
         d.addCallback(notifyReleaseSuccess)
         return d
@@ -59,7 +56,6 @@ class Provider:
             d = self.requester_client.terminateConfirmed(reply_to, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id)
             return d
 
-        print "PROVIDER TERMINATE"
         d = self.nsi_service.terminate(requester_nsa, provider_nsa, session_security_attr, connection_id)
         d.addCallback(notifyTerminateSuccess)
         return d
@@ -71,7 +67,6 @@ class Provider:
             d = self.requester_client.queryConfirmed(reply_to, correlation_id, requester_nsa, provider_nsa, operation, conns)
             return d
 
-        print "PROVIDER QUERY"
         d = self.nsi_service.query(requester_nsa, provider_nsa, session_security_attr, operation, connection_ids, global_reservation_ids)
         d.addCallback(notifyQuerySuccess)
         return d
