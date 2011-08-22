@@ -11,8 +11,10 @@ import os
 import urlparse
 import StringIO
 
+from twisted.python import log
 from twisted.internet import reactor, defer
 from twisted.web import client as twclient
+from twisted.internet.error import ConnectionDone
 
 from suds.transport import Transport, TransportError
 from suds.options import Options
@@ -83,6 +85,12 @@ class TwistedSUDSClient:
         @args method_name: Method to invoke.
         @args *args Argument for method.
         """
+        def invokeError(err):
+            if isinstance(err.value, ConnectionDone):
+                pass # these are pretty common when the remote shuts down
+            else:
+                return log.err(err)
+
         method = self._getMethod(method_name)
 
         # build envelope and get action
@@ -93,8 +101,7 @@ class TwistedSUDSClient:
         # dispatch
         d, factory = self._httpRequest(url, soap_action, soap_envelope)
         d.addCallback(self._parseResponse, factory, method)
-        from twisted.python import log
-        d.addErrback(lambda e : log.err(e))
+        d.addErrback(invokeError)
         return d
 
 
