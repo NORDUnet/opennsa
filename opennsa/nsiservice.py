@@ -50,8 +50,6 @@ class NSIService:
 
     def reservation(self, requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters):
 
-        print "RES", service_parameters
-
         def setupSubConnection(source_stp, dest_stp, conn):
 
             assert source_stp.network == dest_stp.network

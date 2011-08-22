@@ -66,8 +66,8 @@ class ProviderService:
         sp                          = req.reservation.serviceParameters
         path                        = req.reservation.path
 
-        def parseSTPID(std_id):
-            tokens = path.sourceSTP.stpId.replace(nsa.STP_PREFIX, '').split(':', 2)
+        def parseSTPID(stp_id):
+            tokens = stp_id.replace(nsa.STP_PREFIX, '').split(':', 2)
             return nsa.STP(tokens[0], tokens[1])
 
         source_stp  = parseSTPID(path.sourceSTP.stpId)
