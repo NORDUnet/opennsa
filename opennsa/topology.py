@@ -188,7 +188,7 @@ def parseGOLETopology(topology_source):
                 networks[network].addEndpoint(endpoint)
 
             else: # network (node)
-                networks[ent] = nsa.Network(ent, nsa_address[ent])
+                networks[ent] = nsa.Network(ent, nsa.NetworkServiceAgent(nsa_address[ent]))
 
         #elif e.tag == GLIF_MAX_CAPACITY:
         #    current_port.max_capacity = int(e.text)
