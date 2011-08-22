@@ -6,12 +6,11 @@ from opennsa import setup
 from opennsa.backends import dud
 
 
-#TOPOFILE = 'topology_simple.json'
-TOPOFILE = 'topology_simple_ws.json'
+TOPOFILE = 'nsi_interop_deuce.owl'
 
 PORT = 9080
 
-NETWORK_NAME = 'B'
+NETWORK_NAME = 'Aruba'
 
 
 
