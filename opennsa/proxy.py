@@ -34,7 +34,7 @@ class NSIProxy:
     def terminateReservation(self, network, session_security_attr, connection_id):
 
         remote_nsa = self.topology.getNetwork(network).nsa
-        return self.client.terminateReservation(self.nsa_, remote_nsa, session_security_attr, connection_id)
+        return self.client.terminate(self.nsa_, remote_nsa, session_security_attr, connection_id)
 
 
     def provision(self, network, session_security_attr, connection_id):
@@ -51,7 +51,7 @@ class NSIProxy:
     def releaseProvision(self, network, session_security_attr, connection_id):
 
         remote_nsa = self.topology.getNetwork(network).nsa
-        return self.client.releaseProvision(self.nsa_, remote_nsa, session_security_attr, connection_id)
+        return self.client.release(self.nsa_, remote_nsa, session_security_attr, connection_id)
 
 
     def query(self, network, session_security_attributes, query_filter):
