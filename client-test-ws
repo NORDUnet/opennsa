@@ -23,14 +23,17 @@ def doMain():
     service_url = 'http://%s:%i/NSI/services/ConnectionService' % (HOST, PORT)
     client_nsa      = nsa.NetworkServiceAgent(service_url)
 
-    provider_net    = nsa.Network('B', nsa.NetworkServiceAgent('http://localhost:9080/NSI/services/ConnectionService'))
-    #provider_net    = nsa.Network('E', nsa.NetworkServiceAgent('http://localhost:9084/NSI/services/ConnectionService')
+    provider_aruba   = nsa.Network('Aruba', nsa.NetworkServiceAgent('http://localhost:9080/NSI/services/ConnectionService'))
+    provider_bonaire = nsa.Network('Boniare', nsa.NetworkServiceAgent('http://localhost:9081/NSI/services/ConnectionService'))
 
-    source_stp      = nsa.STP('B', 'B1' )
-    #source_stp      = nsa.STP('A', 'A1' )
-    dest_stp        = nsa.STP('B', 'B2')
-    #dest_stp        = nsa.STP('E', 'E1')
-    #dest_stp        = nsa.STP('D', 'D1')
+    provider_net = provider_aruba
+    #provider_net = provider_bonaire
+
+    source_stp      = nsa.STP('Aruba', 'Ashley' )
+    #source_stp      = nsa.STP('Aruba', 'Axel' )
+    dest_stp        = nsa.STP('Aruba', 'Aidan')
+    #dest_stp        = nsa.STP('Bonaire', 'Betty')
+    #dest_stp        = nsa.STP('Bonaire', 'Brutus')
 
     service_params  = nsa.ServiceParameters('2011-09-01T08:56:00Z', '2011-10-01T08:56:00Z' , source_stp, dest_stp, bandwidth_desired = 1000)
     global_reservation_id = 'gid-' + ''.join( [ str(int(random.random() * 10)) for _ in range(4) ] )
