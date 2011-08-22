@@ -1,9 +1,6 @@
 
 
 
-
-
-
 class Provider:
 
 
@@ -70,10 +67,8 @@ class Provider:
 
     def query(self, correlation_id, reply_to, requester_nsa, provider_nsa, session_security_attr, operation, connection_ids, global_reservation_ids):
 
-        def notifyQuerySuccess( (reservation_summary, reservation_details) ):
-            # should probably use result somehow
-            global_reservation_id = None
-            d = self.requester_client.queryConfirmed(reply_to, correlation_id, requester_nsa, provider_nsa, reservation_summary, reservation_details)
+        def notifyQuerySuccess(conns):
+            d = self.requester_client.queryConfirmed(reply_to, correlation_id, requester_nsa, provider_nsa, operation, conns)
             return d
 
         print "PROVIDER QUERY"

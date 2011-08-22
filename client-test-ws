@@ -44,16 +44,17 @@ def doMain():
     print "Reservation created. Connection ID:", connection_id
 
 #    _ = yield client.query(client_nsa, provider_net.nsa, None, "Summary", connection_ids = [ connection_id ] )
-#
+
     _ = yield client.provision(client_nsa, provider_net.nsa, None, connection_id)
     print "Provision made"
 
-##
-##    _ = yield client.query(client_nsa, provider_net.nsa, None, None)
+    qr = yield client.query(client_nsa, provider_net.nsa, None, "Summary", connection_ids = [ connection_id ] )
+    assert len(qr.queryConfirmed.reservationSummary) == 1
+    print qr.queryConfirmed.reservationSummary[0].connectionState
 
     _ = yield client.release(client_nsa, provider_net.nsa, None, connection_id)
     print "Provision released"
-#
+
 ##    _ = yield client.query(client_nsa, provider_net.nsa, None, None)
 
     _ = yield client.terminate(client_nsa, provider_net.nsa, None, connection_id)
@@ -61,7 +62,10 @@ def doMain():
 
     r = yield client.query(client_nsa, provider_net.nsa, None, "Summary", connection_ids = [ connection_id ] )
 
-    print "Q", r
+#    print "Q", r
+    assert len(r.queryConfirmed.reservationSummary) == 1
+    print r.queryConfirmed.reservationSummary[0].connectionState
+
 
 
 def main():

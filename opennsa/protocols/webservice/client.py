@@ -173,13 +173,37 @@ class RequesterClient:
 
     #def terminateFailed(self, 
 
-    def queryConfirmed(self, requester_uri, correlation_id, requester_nsa, provider_nsa, reservation_summary, reservation_details):
+    def queryConfirmed(self, requester_uri, correlation_id, requester_nsa, provider_nsa, operation, connections):
 
         res = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}QueryConfirmedType')
-
         res.requesterNSA = requester_nsa.uri()
         res.providerNSA  = provider_nsa.uri()
-#        req.connectionId = connection_id
+
+        if operation == "Summary":
+            qsrs = []
+            for conn in connections:
+                qsr = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}QuerySummaryResultType')
+                #print qsr
+                qsr.globalReservationId = conn.global_reservation_id
+                qsr.description         = conn.description
+                qsr.connectionId        = conn.connection_id
+                qsr.connectionState     = conn.state()
+
+                qsr.path.sourceSTP.stpId    = conn.source_stp.uri()
+                qsr.path.destSTP.stpId      = conn.dest_stp.uri()
+
+                qsrs.append(qsr)
+
+            res.reservationSummary = qsrs
+
+        elif operation == "Details":
+            qdr = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}QueryDetailsResultType')
+            #print qdr
+            qdr.globalReservationId = '123'
+            res.reservationDetails = [ qdr ]
+
+        else:
+            raise ValueError('Invalid query operation type')
 
         d = self.client.invoke(requester_uri, 'queryConfirmed', correlation_id, res)
         return d

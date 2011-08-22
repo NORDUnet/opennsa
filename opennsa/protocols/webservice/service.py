@@ -284,13 +284,14 @@ class RequesterService:
         assert soap_action == '"http://schemas.ogf.org/nsi/2011/07/connection/service/queryConfirmed"'
 
         method, req = self.decoder.parse_request('queryConfirmed', soap_data)
-        print "REQ", req
+        #print "REQ", req
         requester_nsa, provider_nsa = _decodeNSAs(req.queryConfirmed)
 
         correlation_id          = str(req.correlationId)
-#        reservation_summary     = req.queryConfirmed
-#        connection_id           = str(req.terminateConfirmed.connectionId)
-        query_result = 1
+        #reservation_summary     = req.queryConfirmed
+        #connection_id           = str(req.terminateConfirmed.connectionId)
+
+        query_result = req # should really translate this to something generic
 
         d = self.requester.queryConfirmed(correlation_id, requester_nsa, provider_nsa, query_result)
 

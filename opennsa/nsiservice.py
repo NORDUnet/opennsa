@@ -50,6 +50,8 @@ class NSIService:
 
     def reservation(self, requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters):
 
+        print "RES", service_parameters
+
         def setupSubConnection(source_stp, dest_stp, conn):
 
             assert source_stp.network == dest_stp.network
@@ -162,6 +164,8 @@ class NSIService:
 
     def reservationConfirmed(self, requester_nsa, provider_nsa, global_reservation_id, description, connection_id, service_parameters):
 
+        print "SERVICE RES CONF"
+
         sub_conn = self.reservations.pop(connection_id)
         sub_conn.reservationConfirmed()
         return defer.success(connection_id)
@@ -169,6 +173,7 @@ class NSIService:
 
     def reservationFailed(self, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, service_exception):
 
+        print "SERVICE RES FAIL"
         sub_conn = self.reservations.pop(connection_id)
         sub_conn.reservationFailed(error)
 
@@ -215,8 +220,16 @@ class NSIService:
 
     def query(self, requester_nsa, provider_nsa, session_security_attr, operation, connection_ids=None, global_reservation_ids=None):
 
-        print "QUERY"
+        # security check here
 
-        log.msg('', system='opennsa.NSIService')
-        return defer.succeed( (None, None) )
+        log.msg('Query (%s)' % operation, system='opennsa.NSIService')
+
+        conns = []
+
+        nsa_connections = self.connections.get(requester_nsa.uri(), {})
+        for conn in nsa_connections.values():
+            if conn.connection_id in connection_ids or conn.global_reservation_id in global_reservation_ids:
+                conns.append(conn)
+
+        return defer.succeed(conns)
 
