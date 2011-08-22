@@ -141,38 +141,9 @@ class NSIService:
             # last hop
             setupSubConnection(prev_source_stp, dest_stp, conn)
 
-#        def notifyReservationSuccess(_):
-#            d = self.proxy.reservationConfirmed(reply_to, requester_nsa, global_reservation_id, description, connection_id, service_parameters)
-#            return d
-
-#        def notifyReservationFailure(error):
-#            d = self.proxy.reservationFailed(requester_nsa, global_reservation_id, connection_id, None, error)
-#            return d
-
-#        def reservationCompleted((conn, d)):
-#            d.addCallbacks(notifyReservationSuccess, notifyReservationFailure)
-#            return conn.connection_id
-
         # now reserve connections needed to create path
         d = conn.reservation(service_parameters, nsa_identity)
-#        d.addCallback(reservationCompleted)
         return d
-
-
-    def reservationConfirmed(self, requester_nsa, provider_nsa, global_reservation_id, description, connection_id, service_parameters):
-
-        print "SERVICE RES CONF"
-
-        sub_conn = self.reservations.pop(connection_id)
-        sub_conn.reservationConfirmed()
-        return defer.success(connection_id)
-
-
-    def reservationFailed(self, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, service_exception):
-
-        print "SERVICE RES FAIL"
-        sub_conn = self.reservations.pop(connection_id)
-        sub_conn.reservationFailed(error)
 
 
     def terminate(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
@@ -190,17 +161,7 @@ class NSIService:
         conn = self.getConnection(requester_nsa, connection_id)
         # security check here
 
-#        def notifyProvisionSuccess(_):
-#            d = self.proxy.provisionConfirmed(reply_to, requester_nsa, conn.global_reservation_id, conn.connection_id)
-#            return d
-#
-#        def notifyProvisionFailure(error):
-#            raise NotImplementedError('notifyProvisionFailure')
-#            #d = self.proxy.reservationFailed(requester_nsa, global_reservation_id, connection_id, None, error)
-#            #return d
-#
         d = conn.provision()
-#        d.addCallbacks(notifyProvisionSuccess, notifyProvisionFailure)
         d.addErrback(lambda e : log.err(e))
         return defer.succeed(conn.connection_id)
 

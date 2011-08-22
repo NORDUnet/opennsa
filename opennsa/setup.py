@@ -53,7 +53,7 @@ def createService(network_name, topology_file, proxy, port):
 
         provider_client     = wsclient.ProviderClient(service_url)
         requester = wsrequester.Requester(provider_client)
-#        requester_service   = wsservice.RequesterService(resource, requester)
+        requester_service   = wsservice.RequesterService(resource, requester)
 
         # now provider service
 
