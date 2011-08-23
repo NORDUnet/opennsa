@@ -149,7 +149,8 @@ def parseGOLETopology(topology_source):
         'Aruba'     : 'http://localhost:9080/NSI/services/ConnectionService',
         'Bonaire'   : 'http://localhost:9081/NSI/services/ConnectionService',
         'Curacao'   : 'http://localhost:9082/NSI/services/ConnectionService',
-        'Dominica'  : 'http://localhost:9083/NSI/services/ConnectionService'
+        'Dominica'  : 'http://localhost:9083/NSI/services/ConnectionService',
+        'Maui'      : 'http://localhost:9090/NSI/services/ConnectionService'
     }
 
     if isinstance(topology_source, file) or isinstance(topology_source, StringIO.StringIO):
