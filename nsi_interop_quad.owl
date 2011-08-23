@@ -1,0 +1,550 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns="http://www.glif.is/working-groups/tech/dtox#"
+     xml:base="http://www.glif.is/working-groups/tech/dtox"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+     xmlns:Curacao="http://www.glif.is/working-groups/tech/dtox#Curacao:"
+     xmlns:Bonaire="http://www.glif.is/working-groups/tech/dtox#Bonaire:"
+     xmlns:Aruba="http://www.glif.is/working-groups/tech/dtox#Aruba:"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:dtox="http://www.glif.is/working-groups/tech/dtox#"
+     xmlns:Dominica="http://www.glif.is/working-groups/tech/dtox#Dominica:">
+    <owl:Ontology rdf:about="http://www.glif.is/working-groups/tech/dtox"/>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Annotation properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    <owl:AnnotationProperty rdf:about="http://www.w3.org/2000/01/rdf-schema#comment"/>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Object Properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://www.glif.is/working-groups/tech/dtox#hasPort -->
+
+    <owl:ObjectProperty rdf:about="http://www.glif.is/working-groups/tech/dtox#hasPort"/>
+    
+
+
+    <!-- http://www.glif.is/working-groups/tech/dtox#hasSwitchMatrix -->
+
+    <owl:ObjectProperty rdf:about="http://www.glif.is/working-groups/tech/dtox#hasSwitchMatrix"/>
+    
+
+
+    <!-- http://www.glif.is/working-groups/tech/dtox#locatedAt -->
+
+    <owl:ObjectProperty rdf:about="http://www.glif.is/working-groups/tech/dtox#locatedAt"/>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Data properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://www.glif.is/working-groups/tech/dtox#allowedLabelSet -->
+
+    <owl:DatatypeProperty rdf:about="http://www.glif.is/working-groups/tech/dtox#allowedLabelSet"/>
+    
+
+
+    <!-- http://www.glif.is/working-groups/tech/dtox#availableCapacity -->
+
+    <owl:DatatypeProperty rdf:about="http://www.glif.is/working-groups/tech/dtox#availableCapacity"/>
+    
+
+
+    <!-- http://www.glif.is/working-groups/tech/dtox#canSwap -->
+
+    <owl:DatatypeProperty rdf:about="http://www.glif.is/working-groups/tech/dtox#canSwap"/>
+    
+
+
+    <!-- http://www.glif.is/working-groups/tech/dtox#connectedTo -->
+
+    <owl:DatatypeProperty rdf:about="http://www.glif.is/working-groups/tech/dtox#connectedTo"/>
+    
+
+
+    <!-- http://www.glif.is/working-groups/tech/dtox#currentLabelSet -->
+
+    <owl:DatatypeProperty rdf:about="http://www.glif.is/working-groups/tech/dtox#currentLabelSet"/>
+    
+
+
+    <!-- http://www.glif.is/working-groups/tech/dtox#lat -->
+
+    <owl:DatatypeProperty rdf:about="http://www.glif.is/working-groups/tech/dtox#lat"/>
+    
+
+
+    <!-- http://www.glif.is/working-groups/tech/dtox#long -->
+
+    <owl:DatatypeProperty rdf:about="http://www.glif.is/working-groups/tech/dtox#long"/>
+    
+
+
+    <!-- http://www.glif.is/working-groups/tech/dtox#maxCapacity -->
+
+    <owl:DatatypeProperty rdf:about="http://www.glif.is/working-groups/tech/dtox#maxCapacity"/>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Classes
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://www.glif.is/working-groups/tech/dtox#GOLE -->
+
+    <owl:Class rdf:about="http://www.glif.is/working-groups/tech/dtox#GOLE"/>
+    
+
+
+    <!-- http://www.glif.is/working-groups/tech/dtox#Node -->
+
+    <owl:Class rdf:about="http://www.glif.is/working-groups/tech/dtox#Node"/>
+    
+
+
+    <!-- http://www.glif.is/working-groups/tech/dtox#Port -->
+
+    <owl:Class rdf:about="http://www.glif.is/working-groups/tech/dtox#Port"/>
+    
+
+
+    <!-- http://www.glif.is/working-groups/tech/dtox#SwitchMatrix -->
+
+    <owl:Class rdf:about="http://www.glif.is/working-groups/tech/dtox#SwitchMatrix"/>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Individuals
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://www.glif.is/working-groups/tech/dtox#Aruba -->
+
+    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Aruba">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#Node"/>
+        <rdfs:comment xml:lang="en">Position : [425,5]</rdfs:comment>
+        <locatedAt rdf:resource="http://www.glif.is/working-groups/tech/dtox#Aruba.Loc"/>
+        <hasSwitchMatrix rdf:resource="http://www.glif.is/working-groups/tech/dtox#Aruba.XM"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.glif.is/working-groups/tech/dtox#Aruba.Loc -->
+
+    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Aruba.Loc">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#GOLE"/>
+        <lat rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</lat>
+        <long rdf:datatype="http://www.w3.org/2001/XMLSchema#float">45.0</long>
+        <rdfs:comment xml:lang="en">Position : [166,146]</rdfs:comment>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.glif.is/working-groups/tech/dtox#Aruba.XM -->
+
+    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Aruba.XM">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#SwitchMatrix"/>
+        <allowedLabelSet rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></allowedLabelSet>
+        <currentLabelSet rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></currentLabelSet>
+        <canSwap rdf:datatype="http://www.w3.org/2001/XMLSchema#string">yes</canSwap>
+        <rdfs:comment xml:lang="en">Position : [425,146]</rdfs:comment>
+        <hasPort rdf:resource="http://www.glif.is/working-groups/tech/dtox#Aruba:Aiden"/>
+        <hasPort rdf:resource="http://www.glif.is/working-groups/tech/dtox#Aruba:Amelia"/>
+        <hasPort rdf:resource="http://www.glif.is/working-groups/tech/dtox#Aruba:Ashley"/>
+        <hasPort rdf:resource="http://www.glif.is/working-groups/tech/dtox#Aruba:Axel"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.glif.is/working-groups/tech/dtox#Aruba:Aiden -->
+
+    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Aruba:Aiden">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#Port"/>
+        <currentLabelSet rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></currentLabelSet>
+        <allowedLabelSet rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></allowedLabelSet>
+        <maxCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</maxCapacity>
+        <availableCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</availableCapacity>
+        <connectedTo rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Bonaire:Brutus</connectedTo>
+        <rdfs:comment xml:lang="en">Position : [291,418]</rdfs:comment>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.glif.is/working-groups/tech/dtox#Aruba:Amelia -->
+
+    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Aruba:Amelia">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#Port"/>
+        <connectedTo rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></connectedTo>
+        <currentLabelSet rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></currentLabelSet>
+        <allowedLabelSet rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></allowedLabelSet>
+        <maxCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</maxCapacity>
+        <availableCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</availableCapacity>
+        <rdfs:comment xml:lang="en">Position : [804,417]</rdfs:comment>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.glif.is/working-groups/tech/dtox#Aruba:Ashley -->
+
+    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Aruba:Ashley">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#Port"/>
+        <connectedTo rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></connectedTo>
+        <currentLabelSet rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></currentLabelSet>
+        <allowedLabelSet rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></allowedLabelSet>
+        <maxCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</maxCapacity>
+        <availableCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</availableCapacity>
+        <rdfs:comment xml:lang="en">Position : [33,417]</rdfs:comment>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.glif.is/working-groups/tech/dtox#Aruba:Axel -->
+
+    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Aruba:Axel">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#Port"/>
+        <currentLabelSet rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></currentLabelSet>
+        <allowedLabelSet rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></allowedLabelSet>
+        <maxCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</maxCapacity>
+        <availableCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</availableCapacity>
+        <connectedTo rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Dominica:Dirk</connectedTo>
+        <rdfs:comment xml:lang="en">Position : [548,417]</rdfs:comment>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.glif.is/working-groups/tech/dtox#Bonaire -->
+
+    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Bonaire">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#Node"/>
+        <rdfs:comment xml:lang="en">Position : [1500,11]</rdfs:comment>
+        <locatedAt rdf:resource="http://www.glif.is/working-groups/tech/dtox#Bonaire.Loc"/>
+        <hasSwitchMatrix rdf:resource="http://www.glif.is/working-groups/tech/dtox#Bonaire.XM"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.glif.is/working-groups/tech/dtox#Bonaire.Loc -->
+
+    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Bonaire.Loc">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#GOLE"/>
+        <lat rdf:datatype="http://www.w3.org/2001/XMLSchema#float">45.0</lat>
+        <long rdf:datatype="http://www.w3.org/2001/XMLSchema#float">90.0</long>
+        <rdfs:comment xml:lang="en">Position : [1242,167]</rdfs:comment>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.glif.is/working-groups/tech/dtox#Bonaire.XM -->
+
+    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Bonaire.XM">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#SwitchMatrix"/>
+        <allowedLabelSet rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></allowedLabelSet>
+        <currentLabelSet rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></currentLabelSet>
+        <canSwap rdf:datatype="http://www.w3.org/2001/XMLSchema#string">yes</canSwap>
+        <rdfs:comment xml:lang="en">Position : [1502,166]</rdfs:comment>
+        <hasPort rdf:resource="http://www.glif.is/working-groups/tech/dtox#Bonaire:Basil"/>
+        <hasPort rdf:resource="http://www.glif.is/working-groups/tech/dtox#Bonaire:Betty"/>
+        <hasPort rdf:resource="http://www.glif.is/working-groups/tech/dtox#Bonaire:Bjorn"/>
+        <hasPort rdf:resource="http://www.glif.is/working-groups/tech/dtox#Bonaire:Brutus"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.glif.is/working-groups/tech/dtox#Bonaire:Basil -->
+
+    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Bonaire:Basil">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#Port"/>
+        <connectedTo rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></connectedTo>
+        <allowedLabelSet rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></allowedLabelSet>
+        <currentLabelSet rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></currentLabelSet>
+        <maxCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</maxCapacity>
+        <availableCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</availableCapacity>
+        <rdfs:comment xml:lang="en">Position : [1380,434]</rdfs:comment>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.glif.is/working-groups/tech/dtox#Bonaire:Betty -->
+
+    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Bonaire:Betty">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#Port"/>
+        <allowedLabelSet rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></allowedLabelSet>
+        <currentLabelSet rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></currentLabelSet>
+        <connectedTo rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></connectedTo>
+        <maxCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</maxCapacity>
+        <availableCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</availableCapacity>
+        <rdfs:comment xml:lang="en">Position : [1636,434]</rdfs:comment>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.glif.is/working-groups/tech/dtox#Bonaire:Bjorn -->
+
+    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Bonaire:Bjorn">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#Port"/>
+        <currentLabelSet rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></currentLabelSet>
+        <allowedLabelSet rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></allowedLabelSet>
+        <availableCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</availableCapacity>
+        <maxCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</maxCapacity>
+        <connectedTo rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Curacao:Cynthia</connectedTo>
+        <rdfs:comment xml:lang="en">Position : [1893,434]</rdfs:comment>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.glif.is/working-groups/tech/dtox#Bonaire:Brutus -->
+
+    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Bonaire:Brutus">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#Port"/>
+        <currentLabelSet rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></currentLabelSet>
+        <allowedLabelSet rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></allowedLabelSet>
+        <availableCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</availableCapacity>
+        <maxCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</maxCapacity>
+        <connectedTo rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Aruba:Aiden</connectedTo>
+        <rdfs:comment xml:lang="en">Position : [1124,433]</rdfs:comment>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.glif.is/working-groups/tech/dtox#Curacao -->
+
+    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Curacao">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#Node"/>
+        <rdfs:comment xml:lang="en">Position : [439,733]</rdfs:comment>
+        <locatedAt rdf:resource="http://www.glif.is/working-groups/tech/dtox#Curacao.Loc"/>
+        <hasSwitchMatrix rdf:resource="http://www.glif.is/working-groups/tech/dtox#Curacao.XM"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.glif.is/working-groups/tech/dtox#Curacao.Loc -->
+
+    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Curacao.Loc">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#GOLE"/>
+        <long rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</long>
+        <lat rdf:datatype="http://www.w3.org/2001/XMLSchema#float">90.0</lat>
+        <rdfs:comment xml:lang="en">Position : [153,881]</rdfs:comment>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.glif.is/working-groups/tech/dtox#Curacao.XM -->
+
+    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Curacao.XM">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#SwitchMatrix"/>
+        <allowedLabelSet rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></allowedLabelSet>
+        <currentLabelSet rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></currentLabelSet>
+        <canSwap rdf:datatype="http://www.w3.org/2001/XMLSchema#string">yes</canSwap>
+        <rdfs:comment xml:lang="en">Position : [440,882]</rdfs:comment>
+        <hasPort rdf:resource="http://www.glif.is/working-groups/tech/dtox#Curacao:Calista"/>
+        <hasPort rdf:resource="http://www.glif.is/working-groups/tech/dtox#Curacao:Carter"/>
+        <hasPort rdf:resource="http://www.glif.is/working-groups/tech/dtox#Curacao:Chuck"/>
+        <hasPort rdf:resource="http://www.glif.is/working-groups/tech/dtox#Curacao:Cynthia"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.glif.is/working-groups/tech/dtox#Curacao:Calista -->
+
+    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Curacao:Calista">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#Port"/>
+        <connectedTo rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></connectedTo>
+        <allowedLabelSet rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></allowedLabelSet>
+        <currentLabelSet rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></currentLabelSet>
+        <availableCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</availableCapacity>
+        <maxCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</maxCapacity>
+        <rdfs:comment xml:lang="en">Position : [38,1159]</rdfs:comment>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.glif.is/working-groups/tech/dtox#Curacao:Carter -->
+
+    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Curacao:Carter">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#Port"/>
+        <currentLabelSet rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></currentLabelSet>
+        <allowedLabelSet rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></allowedLabelSet>
+        <availableCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</availableCapacity>
+        <maxCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</maxCapacity>
+        <connectedTo rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Dominica:Drusilla</connectedTo>
+        <rdfs:comment xml:lang="en">Position : [296,1160]</rdfs:comment>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.glif.is/working-groups/tech/dtox#Curacao:Chuck -->
+
+    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Curacao:Chuck">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#Port"/>
+        <connectedTo rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></connectedTo>
+        <currentLabelSet rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></currentLabelSet>
+        <allowedLabelSet rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></allowedLabelSet>
+        <maxCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</maxCapacity>
+        <availableCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</availableCapacity>
+        <rdfs:comment xml:lang="en">Position : [556,1160]</rdfs:comment>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.glif.is/working-groups/tech/dtox#Curacao:Cynthia -->
+
+    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Curacao:Cynthia">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#Port"/>
+        <currentLabelSet rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></currentLabelSet>
+        <allowedLabelSet rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></allowedLabelSet>
+        <availableCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</availableCapacity>
+        <maxCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</maxCapacity>
+        <connectedTo rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Bonaire:Bjorn</connectedTo>
+        <rdfs:comment xml:lang="en">Position : [816,1161]</rdfs:comment>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.glif.is/working-groups/tech/dtox#Dominica -->
+
+    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Dominica">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#Node"/>
+        <rdfs:comment xml:lang="en">Position : [1503,733]</rdfs:comment>
+        <locatedAt rdf:resource="http://www.glif.is/working-groups/tech/dtox#Dominica.Loc"/>
+        <hasSwitchMatrix rdf:resource="http://www.glif.is/working-groups/tech/dtox#Dominica.XM"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.glif.is/working-groups/tech/dtox#Dominica.Loc -->
+
+    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Dominica.Loc">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#GOLE"/>
+        <long rdf:datatype="http://www.w3.org/2001/XMLSchema#float">135.0</long>
+        <lat rdf:datatype="http://www.w3.org/2001/XMLSchema#float">30.0</lat>
+        <rdfs:comment xml:lang="en">Position : [1249,883]</rdfs:comment>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.glif.is/working-groups/tech/dtox#Dominica.XM -->
+
+    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Dominica.XM">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#SwitchMatrix"/>
+        <currentLabelSet rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></currentLabelSet>
+        <allowedLabelSet rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></allowedLabelSet>
+        <canSwap rdf:datatype="http://www.w3.org/2001/XMLSchema#string">yes</canSwap>
+        <rdfs:comment xml:lang="en">Position : [1505,884]</rdfs:comment>
+        <hasPort rdf:resource="http://www.glif.is/working-groups/tech/dtox#Dominica:Daisy"/>
+        <hasPort rdf:resource="http://www.glif.is/working-groups/tech/dtox#Dominica:Dirk"/>
+        <hasPort rdf:resource="http://www.glif.is/working-groups/tech/dtox#Dominica:Dorte"/>
+        <hasPort rdf:resource="http://www.glif.is/working-groups/tech/dtox#Dominica:Drusilla"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.glif.is/working-groups/tech/dtox#Dominica:Daisy -->
+
+    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Dominica:Daisy">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#Port"/>
+        <connectedTo rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></connectedTo>
+        <currentLabelSet rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></currentLabelSet>
+        <allowedLabelSet rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></allowedLabelSet>
+        <availableCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</availableCapacity>
+        <maxCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</maxCapacity>
+        <rdfs:comment xml:lang="en">Position : [1889,1162]</rdfs:comment>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.glif.is/working-groups/tech/dtox#Dominica:Dirk -->
+
+    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Dominica:Dirk">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#Port"/>
+        <allowedLabelSet rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></allowedLabelSet>
+        <currentLabelSet rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></currentLabelSet>
+        <availableCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</availableCapacity>
+        <maxCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</maxCapacity>
+        <connectedTo rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Aruba:Axel</connectedTo>
+        <rdfs:comment xml:lang="en">Position : [1373,1160]</rdfs:comment>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.glif.is/working-groups/tech/dtox#Dominica:Dorte -->
+
+    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Dominica:Dorte">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#Port"/>
+        <currentLabelSet rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></currentLabelSet>
+        <connectedTo rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></connectedTo>
+        <allowedLabelSet rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></allowedLabelSet>
+        <availableCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</availableCapacity>
+        <maxCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</maxCapacity>
+        <rdfs:comment xml:lang="en">Position : [1115,1162]</rdfs:comment>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.glif.is/working-groups/tech/dtox#Dominica:Drusilla -->
+
+    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Dominica:Drusilla">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#Port"/>
+        <currentLabelSet rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></currentLabelSet>
+        <allowedLabelSet rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></allowedLabelSet>
+        <maxCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</maxCapacity>
+        <availableCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</availableCapacity>
+        <connectedTo rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Curacao:Carter</connectedTo>
+        <rdfs:comment xml:lang="en">Position : [1631,1162]</rdfs:comment>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.glif.is/working-groups/tech/dtox#Maui -->
+
+    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Maui">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#Node"/>
+        <rdfs:comment xml:lang="en">Position : [2350,590]</rdfs:comment>
+    </owl:NamedIndividual>
+</rdf:RDF>
+
+
+
+<!-- Generated by the OWL API (version [Not Released]) http://owlapi.sourceforge.net -->
+
