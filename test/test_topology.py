@@ -74,8 +74,7 @@ class TopologyTest(unittest.TestCase):
 
     def testParseAndFindPath(self):
 
-        t = topology.Topology()
-        t.parseTopology(TEST_TOPOLOGY_1)
+        t = topology.parseJSONTopology(TEST_TOPOLOGY_1)
 
         for ts in TEST_PATHS_1:
             source_stp = nsa.STP(ts['source_network'], ts['source_endpoint'])

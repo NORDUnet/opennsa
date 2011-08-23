@@ -140,6 +140,8 @@ def parseJSONTopology(topology_source):
 
         topo.addNetwork(nw)
 
+    return topo
+
 
 
 def parseGOLETopology(topology_source):
