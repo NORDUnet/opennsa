@@ -13,7 +13,7 @@ import uuid
 from zope.interface import implements
 
 from twisted.python import log
-from twisted.internet import reactor, protocol, endpoints, defer
+from twisted.internet import reactor, protocol, defer
 from twisted.protocols.basic import NetstringReceiver
 
 from opennsa.interface import NSIInterface
@@ -173,7 +173,9 @@ class JSONRPCNSIClient:
 
     def _getProxy(self, nsa):
         host, port = nsa.getHostPort()
-        point = endpoints.TCP4ClientEndpoint(reactor, host, port)
+        # need to convert this to non-endpoint usage,
+        # as only new twisted installations has the endpoints module.
+        #point = endpoints.TCP4ClientEndpoint(reactor, host, port)
         d = point.connect(self.factory)
         return d
 
