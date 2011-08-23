@@ -1,0 +1,650 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    The OGF takes no position regarding the validity or scope of any intellectual property or other rights that might be claimed to pertain to the implementation or use of the technology described in this document or the extent to which any license under such rights might or might not be available; neither does it represent that it has made any effort to identify any such rights.  Copies of claims of rights made available for publication and any assurances of licenses to be made available, or the result of an attempt made to obtain a general license or permission for the use of such proprietary rights by implementers or users of this specification can be obtained from the OGF Secretariat.
+
+    The OGF invites any interested party to bring to its attention any copyrights, patents or patent applications, or other proprietary rights which may cover technology that may be required to practice this recommendation.  Please address the information to the OGF Executive Director.
+
+    This document and the information contained herein is provided on an "As Is" basis and the OGF disclaims all warranties, express or implied, including but not limited to any warranty that the use of the information herein will not infringe any rights or any implied warranties of merchantability or fitness for a particular purpose.
+
+    Copyright (C) Open Grid Forum (2009-2011). All Rights Reserved.
+
+    This document and translations of it may be copied and furnished to others, and derivative works that comment on or otherwise explain it or assist in its implementation may be prepared, copied, published and distributed, in whole or in part, without restriction of any kind, provided that the above copyright notice and this paragraph are included on all such copies and derivative works. However, this document itself may not be modified in any way, such as by removing the copyright notice or references to the OGF or other organizations, except as needed for the purpose of developing Grid Recommendations in which case the procedures for copyrights defined in the OGF Document process must be followed, or as required to translate it into languages other than English.
+
+    The limited permissions granted above are perpetual and will not be revoked by the OGF or its successors or assignees.
+
+    Open Grid Forum NSI Connection Services Protocol v1.0
+
+    Description: This is a draft version of the WSDL common types and messages
+    for the reference web services implementation of the OGF NSI Connection Services
+    Protocol v1.0. This can be considered the "transport" protocol definition that
+    will carry the transport independent NSI message set.  Comments and questions
+    can be directed to the mailing list group mailing list (nsi-wg@ogf.org).
+
+    Please see the accompanying CHANGES.txt file for a detailed list of changes
+    made for the most recent updates.
+    
+    Version: 0.01 Draft, 2011/02/22, John MacAuley
+    Version: 0.02 Draft, 2011/03/15, John MacAuley
+    Version: 0.03 Draft, 2011/03/22, John MacAuley
+    Version: 0.04 Draft, 2011/04/24, John MacAuley
+    Version: 0.05 Draft, 2011/07/05, John MacAuley
+    Version: 0.06 Draft, 2011/07/06, John MacAuley
+    Version: 0.07 Draft, 2011/07/29, John MacAuley
+    Version: 0.08 Draft, 2011/08/02, John MacAuley
+    Version: 0.09 Draft, 2011/08/06, John MacAuley
+-->
+<wsdl:definitions name="ogf_nsi_connection_interface_v1_0"
+    targetNamespace="http://schemas.ogf.org/nsi/2011/07/connection/interface"
+    xmlns="http://schemas.xmlsoap.org/wsdl/"
+    xmlns:tns="http://schemas.ogf.org/nsi/2011/07/connection/interface"
+    xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    xmlns:types="http://schemas.ogf.org/nsi/2011/07/connection/types">
+
+    <!-- OGF NSI protocol 1.0 description -->
+    <wsdl:documentation>
+        This is a web services message definition of OGF NSI Connection
+        Services protocol version 1.0 based on an HTTP/SOAP binding. The
+        Connection Service is message based request-response protocol
+        that operates between a Requester Network Service Agent (NSA)
+        and a Provider NSA. The protocol includes a set of defined
+        primitives that are intended to provide the control necessary to
+        manage Connections.
+    
+        There are five primitives supported in this version of the
+        protocol:
+    
+        1. Reservation - Make a request to reserve network resources for a
+        connection between two STP’s constrained by certain service
+        parameters.
+    
+        2. Provision - Provider NSA has been given permission to setup a
+        reservation (associated with a previous reservation message) on
+        the Requester NSA's behalf but subject to the constraints of
+        the requested service.
+    
+        3. Release - Provider NSA should release the provisioned resources
+        without removing the reservation.
+        4. Terminate - Provider NSA should release the provisioned resources
+        and terminate the reservation.
+    
+        5. Query - Mechanism for either NSA to query the other NSA for a
+        set of connection service instances between the RA-PA pair.
+        This message can be used as a status polling mechanism.
+    
+        6. ForcedEnd - An autonomous message issued from a Provider NSA when
+        an existing reservation is administratively terminated before the
+        reservation's scheduled end-time.
+    
+        The Connection Service protocol is an asynchronous protocol where
+        each primitive consists of three operations:
+    
+        1. Request - A Requester NSA issues an operation request message
+        such as "reservationRequest" to the Provider NSA. The Requester
+        NSA can expect an response to the request at some point in
+        the future.
+    
+        2. Confirmed - A Provider NSA sends this positive operation
+        response message (such as "reservationConfirmed") to the Requester
+        NSA that issued the original request message ("reservationRequest").
+    
+        3. Failed - A Provider NSA sends this negative operation response
+        message (such as "reservationFailed") to the Requester NSA that
+        issued the original request message ("reservationRequest").
+    
+        To fit this asynchronous NSI protocol into a synchronous SOAP
+        over HTTP binding we require each of the Requester and Provider
+        NSA to implement SOAP end points. Request messages are sent from
+        the Requester NSA to the Provider NSA's SOAP end point, while
+        Confirmed and Failed messages are sent from the Provider NSA to
+        the Requester NSA SOAP end point. In addition, each of the
+        Request, Confirmed, and Failed operations are defined with
+        input (request), output (acknowledgment), and fault (error)
+        messages as part of their WSDL definition. The output message,
+        or response, for each operation is an empty element definition
+        providing a simple acknowledgment.
+    
+        Each NSI CS request message in this WSDL definition has the
+        following elements:
+    
+        correlationId - An identifier provided by the requesting
+        NSA used to correlate to an asynchronous response from the
+        responder. It is recommended that a Universally Unique
+        Identifier (UUID) URN as per IETF RFC 4122 be used as a
+        globally unique value.
+    
+        replyTo - The Requester NSA's SOAP end point address to which the
+        asynchronous Confirmed or Failed message associated with this
+        request will be delivered.
+    
+        parameters - Operation specific parameters as defined in the NSI CS
+        protocol independent XML schema specification.
+    </wsdl:documentation>
+
+    <wsdl:types>
+        <xsd:schema targetNamespace="http://schemas.ogf.org/nsi/2011/07/connection/interface"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+
+            <!--  Import common NSI types from protocol schema. -->
+            <xsd:import namespace="http://schemas.ogf.org/nsi/2011/07/connection/types"
+                    schemaLocation="ogf_nsi_connection_types_v1_0.xsd" />
+    
+            <!-- *************************************************************
+                 *          NSI CS protocol WSDL message elements.           *
+                 ************************************************************* -->
+    
+            <!-- ********** Reservation message elements ********** -->
+            <xsd:element name="reservationRequest"   type="tns:ReservationRequestType" />
+            <xsd:element name="reservationConfirmed" type="tns:ReservationConfirmedRequestType" />
+            <xsd:element name="reservationFailed"    type="tns:ReservationFailedRequestType" />
+            
+            <!-- ********** Provision message elements ********** -->
+            <xsd:element name="provisionRequest"    type="tns:ProvisionRequestType" />
+            <xsd:element name="provisionConfirmed"  type="tns:ProvisionConfirmedRequestType" />
+            <xsd:element name="provisionFailed"     type="tns:ProvisionFailedRequestType" />
+            
+            <!-- ********** Release message elements ********** -->
+            <xsd:element name="releaseRequest"      type="tns:ReleaseRequestType" />
+            <xsd:element name="releaseConfirmed"    type="tns:ReleaseConfirmedRequestType" />
+            <xsd:element name="releaseFailed"       type="tns:ReleaseFailedRequestType" />
+            
+            <!-- ********** Terminate message elements ********** -->
+            <xsd:element name="terminateRequest"    type="tns:TerminateRequestType" />
+            <xsd:element name="terminateConfirmed"  type="tns:TerminateConfirmedRequestType" />
+            <xsd:element name="terminateFailed"     type="tns:TerminateFailedRequestType" />
+            
+            <!-- ********** Query message elements ********** -->
+            <xsd:element name="queryRequest"    type="tns:QueryRequestType" />
+            <xsd:element name="queryConfirmed"  type="tns:QueryConfirmedRequestType" />
+            <xsd:element name="queryFailed"     type="tns:QueryFailedRequestType" />
+            
+            <!-- ********** ForcedEnd notification message elements ********** -->
+            <xsd:element name="forcedEndRequest" type="tns:ForcedEndRequestType" />
+
+            <!-- ********** Acknowledgement message elements ********** -->
+            <xsd:element name="acknowledgment"   type="tns:GenericAcknowledgmentType" />
+            
+            <!-- ********** Fault message elements ********** -->
+            <xsd:element name="serviceException" type="types:NsiExceptionType"/>
+    
+            <!-- *************************************************************
+                 *          NSI CS protocol WSDL specific types.             *
+                 ************************************************************* -->
+            
+            <xsd:complexType name="ReservationRequestType">
+                <xsd:annotation>
+                    <xsd:documentation  xml:lang="en">
+                        Provides transport envelope for the reservation request
+                        message.  Will map to a WSDL request (input) message
+                        type in support of the NSI CS protocol.
+                        
+                        Elements:
+                        correlationId - An identifier provided by the requesting
+                        NSA used to correlate to an asynchronous response from the
+                        responder. It is recommended that a Universally Unique
+                        Identifier (UUID) URN as per IETF RFC 4122 be used as a
+                        globally unique value.
+                        
+                        replyTo - The Requester NSA's SOAP end point address to
+                        which the asynchronous Confirmed or Failed message
+                        associated with this request will be delivered.
+                        
+                        reservation - reservation specific message parameters.
+                    </xsd:documentation>
+                </xsd:annotation>
+                <xsd:sequence>
+                    <xsd:element name="correlationId" type="types:uuidType" />
+                    <xsd:element name="replyTo"       type="xsd:anyURI" />
+                    <xsd:element ref="types:reservation" />
+                </xsd:sequence>
+            </xsd:complexType>
+    
+            <xsd:complexType name="ReservationConfirmedRequestType">
+                <xsd:annotation>
+                    <xsd:documentation  xml:lang="en">
+                        Provides transport envelope for the reservation confirmed
+                        message.  Will map to a WSDL request (input) message type
+                        in support of the NSI CS protocol.
+                        
+                        Elements:
+                        correlationId - The identifier provided in the original
+                        reservation request.
+                        
+                        reservationConfirmed - positive reservation result.
+                    </xsd:documentation>
+                </xsd:annotation>
+                <xsd:sequence>
+                    <xsd:element name="correlationId" type="types:uuidType" />
+                    <xsd:element ref="types:reservationConfirmed" />
+                </xsd:sequence>
+            </xsd:complexType>
+    
+            <xsd:complexType name="ReservationFailedRequestType">
+                <xsd:annotation>
+                    <xsd:documentation  xml:lang="en">
+                        Provides transport envelope for the reservation failed
+                        message.  Will map to a WSDL request (input) message type
+                        in support of the NSI CS protocol.
+                        
+                        Elements:
+                        correlationId - The identifier provided in the original
+                        reservation request.
+                        
+                        reservationFailed - negative reservation result.
+                    </xsd:documentation>
+                </xsd:annotation>
+                <xsd:sequence>
+                    <xsd:element name="correlationId" type="types:uuidType" />
+                    <xsd:element ref="types:reservationFailed" />
+                </xsd:sequence>
+            </xsd:complexType>
+    
+            <xsd:complexType name="ProvisionRequestType">
+                <xsd:annotation>
+                    <xsd:documentation  xml:lang="en">
+                        Provides transport envelope for the provision request
+                        message.  Will map to a WSDL request (input) message
+                        type in support of the NSI CS protocol.
+                        
+                        Elements:
+                        correlationId - An identifier provided by the requesting
+                        NSA used to correlate to an asynchronous response from the
+                        responder. It is recommended that a Universally Unique
+                        Identifier (UUID) URN as per IETF RFC 4122 be used as a
+                        globally unique value.
+                        
+                        replyTo - The Requester NSA's SOAP end point address to
+                        which the asynchronous Confirmed or Failed message
+                        associated with this request will be delivered.
+                        
+                        provision - provision message specific parameters.
+                    </xsd:documentation>
+                </xsd:annotation>
+                <xsd:sequence>
+                    <xsd:element name="correlationId" type="types:uuidType" />
+                    <xsd:element name="replyTo"       type="xsd:anyURI" />
+                    <xsd:element ref="types:provision" />
+                </xsd:sequence>
+            </xsd:complexType>
+    
+            <xsd:complexType name="ProvisionConfirmedRequestType">
+                <xsd:annotation>
+                    <xsd:documentation  xml:lang="en">
+                        Provides transport envelope for the provision confirmed
+                        message.  Will map to a WSDL request (input) message type
+                        in support of the NSI CS protocol.
+                        
+                        Elements:
+                        correlationId - The identifier provided in the original
+                        provision request.
+                        
+                        provisionConfirmed - positive provision result.
+                    </xsd:documentation>
+                </xsd:annotation>
+                <xsd:sequence>
+                    <xsd:element name="correlationId" type="types:uuidType" />
+                    <xsd:element ref="types:provisionConfirmed" />
+                </xsd:sequence>
+            </xsd:complexType>
+    
+            <xsd:complexType name="ProvisionFailedRequestType">
+                <xsd:annotation>
+                    <xsd:documentation  xml:lang="en">
+                        Provides transport envelope for the provision failed
+                        message.  Will map to a WSDL request (input) message type
+                        in support of the NSI CS protocol.
+                        
+                        Elements:
+                        correlationId - The identifier provided in the original
+                        provision request.
+                        
+                        provisionFailed - negative provision result.
+                    </xsd:documentation>
+                </xsd:annotation>
+                <xsd:sequence>
+                    <xsd:element name="correlationId" type="types:uuidType" />
+                    <xsd:element ref="types:provisionFailed" />
+                </xsd:sequence>
+            </xsd:complexType>
+    
+            <xsd:complexType name="ReleaseRequestType">
+                <xsd:annotation>
+                    <xsd:documentation  xml:lang="en">
+                        Provides transport envelope for the release request
+                        message.  Will map to a WSDL request (input) message
+                        type in support of the NSI CS protocol.
+                        
+                        Elements:
+                        correlationId - An identifier provided by the requesting
+                        NSA used to correlate to an asynchronous response from the
+                        responder. It is recommended that a Universally Unique
+                        Identifier (UUID) URN as per IETF RFC 4122 be used as a
+                        globally unique value.
+                        
+                        replyTo - The Requester NSA's SOAP end point address to which
+                        the asynchronous Confirmed or Failed message associated with
+                        this request will be delivered.
+                        
+                        release - release message specific parameters.
+                    </xsd:documentation>
+                </xsd:annotation>
+                <xsd:sequence>
+                    <xsd:element name="correlationId" type="types:uuidType" />
+                    <xsd:element name="replyTo"       type="xsd:anyURI" />
+                    <xsd:element ref="types:release" />
+                </xsd:sequence>
+            </xsd:complexType>
+    
+            <xsd:complexType name="ReleaseConfirmedRequestType">
+                <xsd:annotation>
+                    <xsd:documentation  xml:lang="en">
+                        Provides transport envelope for the release confirmed
+                        message.  Will map to a WSDL request (input) message type
+                        in support of the NSI CS protocol.
+                        
+                        Elements:
+                        correlationId - The identifier provided in the original
+                        release request.
+                        
+                        releaseConfirmed - positive release result.
+                    </xsd:documentation>
+                </xsd:annotation>
+                <xsd:sequence>
+                    <xsd:element name="correlationId" type="types:uuidType" />
+                    <xsd:element ref="types:releaseConfirmed" />
+                </xsd:sequence>
+            </xsd:complexType>
+    
+            <xsd:complexType name="ReleaseFailedRequestType">
+                <xsd:annotation>
+                    <xsd:documentation  xml:lang="en">
+                        Provides transport envelope for the release failed
+                        message.  Will map to a WSDL request (input) message type
+                        in support of the NSI CS protocol.
+                        
+                        Elements:
+                        correlationId - The identifier provided in the original
+                        release request.
+                        
+                        releaseFailed - negative release result.
+                    </xsd:documentation>
+                </xsd:annotation>
+                <xsd:sequence>
+                    <xsd:element name="correlationId" type="types:uuidType" />
+                    <xsd:element ref="types:releaseFailed" />
+                </xsd:sequence>
+            </xsd:complexType>
+    
+            <xsd:complexType name="TerminateRequestType">
+                <xsd:annotation>
+                    <xsd:documentation  xml:lang="en">
+                        Provides transport envelope for the terminate request
+                        message.  Will map to a WSDL request (input) message
+                        type in support of the NSI CS protocol.
+                        
+                        Elements:
+                        correlationId - An identifier provided by the requesting
+                        NSA used to correlate to an asynchronous response from the
+                        responder. It is recommended that a Universally Unique
+                        Identifier (UUID) URN as per IETF RFC 4122 be used as a
+                        globally unique value.
+                        
+                        replyTo - The Requester NSA's SOAP end point address to
+                        which the asynchronous Confirmed or Failed message
+                        associated with this request will be delivered.
+                        
+                        terminate - terminate message specific parameters.
+                    </xsd:documentation>
+                </xsd:annotation>
+                <xsd:sequence>
+                    <xsd:element name="correlationId" type="types:uuidType" />
+                    <xsd:element name="replyTo"       type="xsd:anyURI" />
+                    <xsd:element ref="types:terminate" />
+                </xsd:sequence>
+            </xsd:complexType>
+    
+            <xsd:complexType name="TerminateConfirmedRequestType">
+                <xsd:annotation>
+                    <xsd:documentation  xml:lang="en">
+                        Provides transport envelope for the terminate confirmed
+                        message.  Will map to a WSDL request (input) message type
+                        in support of the NSI CS protocol.
+                        
+                        Elements:
+                        correlationId - The identifier provided in the original
+                        terminate request.
+                        
+                        terminateConfirmed - positive terminate result.
+                    </xsd:documentation>
+                </xsd:annotation>
+                <xsd:sequence>
+                    <xsd:element name="correlationId" type="types:uuidType" />
+                    <xsd:element ref="types:terminateConfirmed" />
+                </xsd:sequence>
+            </xsd:complexType>
+    
+            <xsd:complexType name="TerminateFailedRequestType">
+                <xsd:annotation>
+                    <xsd:documentation  xml:lang="en">
+                        Provides transport envelope for the terminate failed
+                        message.  Will map to a WSDL request (input) message type
+                        in support of the NSI CS protocol.
+                        
+                        Elements:
+                        correlationId - The identifier provided in the original
+                        terminate request.
+                        
+                        terminateFailed - negative terminate result.
+                    </xsd:documentation>
+                </xsd:annotation>
+                <xsd:sequence>
+                    <xsd:element name="correlationId" type="types:uuidType" />
+                    <xsd:element ref="types:terminateFailed" />
+                </xsd:sequence>
+            </xsd:complexType>
+    
+            <xsd:complexType name="QueryRequestType">
+                <xsd:annotation>
+                    <xsd:documentation  xml:lang="en">
+                        Provides transport envelope for the query request
+                        message.  Will map to a WSDL request (input) message
+                        type in support of the NSI CS protocol.
+                        
+                        Elements:
+                        correlationId - An identifier provided by the requesting
+                        NSA used to correlate to an asynchronous response from the
+                        responder. It is recommended that a Universally Unique
+                        Identifier (UUID) URN as per IETF RFC 4122 be used as a
+                        globally unique value.
+                        
+                        replyTo - The Requester NSA's SOAP end point address to
+                        which the asynchronous Confirmed or Failed message
+                        associated with this request will be delivered.
+                        
+                        query - query message specific parameters.
+                    </xsd:documentation>
+                </xsd:annotation>
+                <xsd:sequence>
+                    <xsd:element name="correlationId" type="types:uuidType" />
+                    <xsd:element name="replyTo"       type="xsd:anyURI" />
+                    <xsd:element ref="types:query" />
+                </xsd:sequence>
+            </xsd:complexType>
+    
+            <xsd:complexType name="QueryConfirmedRequestType">
+                <xsd:annotation>
+                    <xsd:documentation  xml:lang="en">
+                        Provides transport envelope for the query confirmed
+                        message.  Will map to a WSDL request (input) message type
+                        in support of the NSI CS protocol.
+                        
+                        Elements:
+                        correlationId - The identifier provided in the original
+                        query request.
+                        
+                        queryConfirmed - query results may be empty if no
+                        matches were found.
+                    </xsd:documentation>
+                </xsd:annotation>
+                <xsd:sequence>
+                    <xsd:element name="correlationId" type="types:uuidType" />
+                    <xsd:element ref="types:queryConfirmed" />
+                </xsd:sequence>
+            </xsd:complexType>
+    
+            <xsd:complexType name="QueryFailedRequestType">
+                <xsd:annotation>
+                    <xsd:documentation  xml:lang="en">
+                        Provides transport envelope for the query failed
+                        message.  This message is generated for erro cases
+                        such at authorization failures and not for a query
+                        that would return empty results.  This will map to
+                        a WSDL request (input) message type in support of
+                        the NSI CS protocol.
+                        
+                        Elements:
+                        correlationId - The identifier provided in the original
+                        query request.
+                        
+                        terminateFailed - negative terminate result.
+                    </xsd:documentation>
+                </xsd:annotation>
+                <xsd:sequence>
+                    <xsd:element name="correlationId" type="types:uuidType" />
+                    <xsd:element ref="types:queryFailed" />
+                </xsd:sequence>
+            </xsd:complexType>
+    
+            <xsd:complexType name="ForcedEndRequestType">
+                <xsd:annotation>
+                    <xsd:documentation  xml:lang="en">
+                        Provides transport envelope for the forcedEnd request
+                        message.  Will map to a WSDL request (input) message
+                        type in support of the NSI CS protocol.
+                        
+                        Elements:
+                        correlationId - An identifier provided by the requesting
+                        NSA used to correlate an acknowledgement.  There will be
+                        no asynchronous response for this request. It is
+                        recommended that a Universally Unique Identifier (UUID)
+                        URN as per IETF RFC 4122 be used as a globally unique
+                        value.
+                        
+                        replyTo - The Requester NSA's SOAP endpoint address to
+                        which the asynchronous Confirmed or Failed message
+                        associated with this request will be delivered.
+                        
+                        forcedEnd - forcedEnd message specific parameters.
+                    </xsd:documentation>
+                </xsd:annotation>
+                <xsd:sequence>
+                  <xsd:element name="correlationId" type="types:uuidType" />
+                  <xsd:element ref="types:forcedEnd" />
+               </xsd:sequence>
+            </xsd:complexType>
+    
+            <xsd:complexType name="GenericAcknowledgmentType">
+                <xsd:annotation>
+                    <xsd:documentation  xml:lang="en">
+                        Common WSDL output message for acknowledgment of an NSI CS
+                        request (input) message.
+ 
+                        Elements:
+                        correlationId - The identifier provided in the original
+                        query request.
+                   </xsd:documentation>
+                </xsd:annotation>
+                <xsd:sequence>
+                    <xsd:element name="correlationId" type="types:uuidType" />
+                </xsd:sequence>
+            </xsd:complexType>
+        </xsd:schema>
+    </wsdl:types>
+
+   <!-- NSI protocol WSDL message definitions. -->
+
+   <!-- *************************************************************
+        *         NSI protocol WSDL message definitions.            *
+        ************************************************************* -->
+
+    <!-- ********** Reservation message set ********** -->
+    <wsdl:message name="NSI_reservationRequest">
+        <wsdl:part name="parameters" element="tns:reservationRequest" />
+    </wsdl:message>
+
+    <wsdl:message name="NSI_reservationConfirmed">
+        <wsdl:part name="parameters" element="tns:reservationConfirmed" />
+    </wsdl:message>
+
+    <wsdl:message name="NSI_reservationFailed">
+        <wsdl:part name="parameters" element="tns:reservationFailed" />
+    </wsdl:message>
+
+    <!-- ********** Provision message set ********** -->
+    <wsdl:message name="NSI_provisionRequest">
+        <wsdl:part name="parameters" element="tns:provisionRequest" />
+    </wsdl:message>
+
+    <wsdl:message name="NSI_provisionConfirmed">
+        <wsdl:part name="parameters" element="tns:provisionConfirmed" />
+    </wsdl:message>
+
+    <wsdl:message name="NSI_provisionFailed">
+        <wsdl:part name="parameters" element="tns:provisionFailed" />
+    </wsdl:message>
+
+    <!-- ********** Release message set ********** -->
+    <wsdl:message name="NSI_releaseRequest">
+        <wsdl:part name="parameters" element="tns:releaseRequest" />
+    </wsdl:message>
+
+    <wsdl:message name="NSI_releaseConfirmed">
+        <wsdl:part name="parameters" element="tns:releaseConfirmed" />
+    </wsdl:message>
+
+    <wsdl:message name="NSI_releaseFailed">
+        <wsdl:part name="parameters" element="tns:releaseFailed" />
+    </wsdl:message>
+
+    <!-- ********** Terminate message set ********** -->
+    <wsdl:message name="NSI_terminateRequest">
+        <wsdl:part name="parameters" element="tns:terminateRequest" />
+    </wsdl:message>
+
+    <wsdl:message name="NSI_terminateConfirmed">
+        <wsdl:part name="parameters" element="tns:terminateConfirmed" />
+    </wsdl:message>
+
+    <wsdl:message name="NSI_terminateFailed">
+        <wsdl:part name="parameters" element="tns:terminateFailed" />
+    </wsdl:message>
+
+    <!-- ********** Query message set ********** -->
+    <wsdl:message name="NSI_queryRequest">
+        <wsdl:part name="parameters" element="tns:queryRequest" />
+    </wsdl:message>
+    
+    <wsdl:message name="NSI_queryConfirmed">
+        <wsdl:part name="parameters" element="tns:queryConfirmed" />
+    </wsdl:message>
+
+    <wsdl:message name="NSI_queryFailed">
+        <wsdl:part name="parameters" element="tns:queryFailed" />
+    </wsdl:message>
+
+    <!-- ********** ForcedEnd notification message set ********** -->
+    <wsdl:message name="NSI_forcedEndRequest">
+        <wsdl:part name="parameters" element="tns:forcedEndRequest" />
+    </wsdl:message>
+    
+    <!-- ********** Acknowledgement message set ********** -->
+    
+    <wsdl:message name="NSI_acknowledgment">
+        <wsdl:part name="result" element="tns:acknowledgment" />
+    </wsdl:message>
+    
+    <!-- ********** Fault message set ********** -->
+    <wsdl:message name="NSI_serviceException">
+        <wsdl:part name="serviceException" element="tns:serviceException"/>
+    </wsdl:message>
+</wsdl:definitions>
