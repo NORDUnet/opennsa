@@ -163,7 +163,7 @@ def parseGOLETopology(topology_source):
 
     networks = {}
 
-    for e in doc.iter():
+    for e in doc.getiterator():
 
         if e.tag == NAMED_INDIVIDUAL:
 
@@ -178,7 +178,7 @@ def parseGOLETopology(topology_source):
             elif ':' in ent: # Port
                 network, portname = ent.split(':', 2)
                 dest_stp = None
-                for ct in e.iter(GLIF_CONNECTED_TO):
+                for ct in e.getiterator(GLIF_CONNECTED_TO):
                     dest = ct.text
                     if dest:
                         dest_network, dest_portname = dest.split(':', 2)
