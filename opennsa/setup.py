@@ -15,28 +15,14 @@ PROTOCOL    = WEBSERVICE
 
 #def _makeClient(protocol, port):
 #
-#    if protocol == WEBSERVICE:
-#        service_url = 'http://localhost:%i/NSI/services/ConnectionService' % port
-##        return wsclient.NSIWebServiceClient(service_url)
-#
-#        provider_client = wsclient.ProviderClient(service_url)
-#
-#
 #    elif protocol == JSONRPC:
 #        return jsonrpc.JSONRPCNSIClient()
-#    else:
-#        raise ValueError('Invalid protocol specified')
-#
 #
 #def _makeFactory(protocol, nsi_service):
 #
-#    if protocol == WEBSERVICE:
-#        return wsservice.createNSIWSService(nsi_service)
 #    elif protocol == JSONRPC:
 #        return jsonrpc.OpenNSAJSONRPCFactory(nsi_service)
-#    else:
-#        raise ValueError('Invalid protocol specified')
-#
+
 
 def createService(network_name, topology_file, proxy, port):
 
@@ -77,22 +63,16 @@ def createClient(port):
     protocol = WEBSERVICE
 
     if protocol == WEBSERVICE:
-#        return wsclient.NSIWebServiceClient(service_url)
-#        client      = _makeClient(PROTOCOL, port)
-#        nsi_service = nsiclient.NSIServiceClient()
 
         resource, site = wsresource.createService()
 
         service_url = 'http://localhost:%i/NSI/services/ConnectionService' % port
 
         provider_client     = wsclient.ProviderClient(service_url)
-        requester = wsrequester.Requester(provider_client)
+        requester = wsrequester.Requester(provider_client, callback_timeout=10)
         requester_service   = wsservice.RequesterService(resource, requester)
 
-#        factory     = _makeFactory(PROTOCOL, nsi_service)
-
         return requester, None, site
-#        return client, nsi_service, factory
 
 
     else:
