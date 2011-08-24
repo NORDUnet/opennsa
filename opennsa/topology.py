@@ -50,9 +50,17 @@ class Topology:
         raise error.TopologyError('No network named %s' % network_name)
 
 
-    def findPaths(self, source_stp, dest_stp, service_params=None):
+    def getEndpoint(self, network, endpoint):
+
+        nw = self.getNetwork(network)
+        for ep in nw.endpoints:
+            if ep.endpoint == endpoint:
+                return ep
+
+
+    def findPaths(self, source_stp, dest_stp, bandwidth_params=None):
         """
-        Find possible paths between two STPs.
+        Find possible paths between two endpoints.
         """
         # check that STPs exist
         snw = self.getNetwork(source_stp.network)
@@ -64,10 +72,11 @@ class Topology:
         # find endpoint pairs
         #print "FIND PATH", source_stp, dest_stp
 
-        path_sdps = self.findPathEndpoints(source_stp, dest_stp)
+        routes = self.findPathEndpoints(source_stp, dest_stp)
+        routes = self.filterBandwidth(routes, bandwidth_params)
 
         paths = []
-        for sdps in path_sdps:
+        for sdps in routes:
             paths.append( nsa.Path(source_stp, dest_stp, sdps ) )
 
         return paths
@@ -96,7 +105,8 @@ class Topology:
                 continue
 
             if ep.dest_stp.network == dest_stp.network:
-                sp = nsa.SDP(ep, ep.dest_stp)
+                dest_ep = self.getEndpoint(ep.dest_stp.network, ep.dest_stp.endpoint)
+                sp = nsa.SDP(ep, dest_ep)
                 routes.append( [ sp ] )
             else:
                 nvn = visited_networks[:] + [ ep.dest_stp.network ]
@@ -104,11 +114,26 @@ class Topology:
                 if subroutes:
                     for sr in subroutes:
                         src = sr[:]
-                        sp = nsa.SDP(ep, ep.dest_stp)
+                        dest_ep = self.getEndpoint(ep.dest_stp.network, ep.dest_stp.endpoint)
+                        sp = nsa.SDP(ep, dest_ep)
                         src.insert(0, sp)
                         routes.append(  src  )
 
         return routes
+
+
+    def filterBandwidth(self, paths_sdps, bandwidth_params):
+
+        def hasBandwidth(route, bandwidth_params):
+            for sdp in route:
+                if sdp.stp1.available_capacity is not None and sdp.stp1.available_capacity < bandwidth_params.minimum:
+                    return False
+                if sdp.stp2.available_capacity is not None and sdp.stp2.available_capacity < bandwidth_params.minimum:
+                    return False
+            return True
+
+        filtered_routes = [ route for route in paths_sdps if hasBandwidth(route, bandwidth_params) ]
+        return filtered_routes
 
 
     def __str__(self):
