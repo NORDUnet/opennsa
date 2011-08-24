@@ -25,10 +25,6 @@ class STP: # Service Termination Point
     def uri(self):
         return STP_PREFIX + self.network + ':' + self.endpoint
 
-#    def protoSTP(self):
-#        return { 'network'  : self.network,
-#                 'endpoint' : self.endpoint }
-
 
     def __eq__(self, other):
         if not isinstance(other, STP):
@@ -75,11 +71,12 @@ class Path:
 
 class NetworkEndpoint(STP):
 
-    def __init__(self, network, endpoint, config, dest_stp=None):
+    def __init__(self, network, endpoint, config, dest_stp=None, max_capacity=None, available_capacity=None):
         STP.__init__(self, network, endpoint)
         self.config = config
         self.dest_stp = dest_stp
-
+        self.max_capacity = max_capacity
+        self.available_capacity = available_capacity
 
     def __str__(self):
         return '<NetworkEndpoint %s:%s-%s#%s>' % (self.network, self.endpoint, self.dest_stp, self.config)

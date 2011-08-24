@@ -180,23 +180,27 @@ def parseGOLETopology(topology_source):
             elif ':' in ent: # Port
                 network, portname = ent.split(':', 2)
                 dest_stp = None
+                max_capacity = None
+                available_capacity = None
+
                 for ct in e.getiterator(GLIF_CONNECTED_TO):
                     dest = ct.text
                     if dest:
                         dest_network, dest_portname = dest.split(':', 2)
                         dest_stp = nsa.STP(dest_network, dest_portname)
-                # FIXME extract bandwidth stuff
-                endpoint = nsa.NetworkEndpoint(network, portname, None, dest_stp)
+
+                for mc in e.getiterator(GLIF_MAX_CAPACITY):
+                    max_capacity = float( mc.text )
+
+                for ac in e.getiterator(GLIF_AVAILABLE_CAPACITY):
+                    available_capacity = float( ac.text )
+
+                endpoint = nsa.NetworkEndpoint(network, portname, None, dest_stp=dest_stp, max_capacity=max_capacity, available_capacity=available_capacity)
 
                 networks[network].addEndpoint(endpoint)
 
             else: # network (node)
                 networks[ent] = nsa.Network(ent, nsa.NetworkServiceAgent(nsa_address[ent]))
-
-        #elif e.tag == GLIF_MAX_CAPACITY:
-        #    current_port.max_capacity = int(e.text)
-        #elif e.tag == GLIF_AVAILABLE_CAPACITY:
-        #    current_port.available_capacity = int(e.text)
 
     topo = Topology()
     for network in networks.values():
