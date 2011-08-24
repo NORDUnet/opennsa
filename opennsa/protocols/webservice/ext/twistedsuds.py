@@ -93,8 +93,8 @@ class TwistedSUDSClient:
             if isinstance(err.value, ConnectionDone):
                 pass # these are pretty common when the remote shuts down
             else:
-                action = soap_action.split('/')[-1]
-                log.msg('SOAP method invocation failed. URL: %s. Action: %s. Reason: %s' % (url, action, err.getErrorMessage()), system='opennsa.TwistedSUDSClient')
+                action = soap_action[1:-1].split('/')[-1]
+                log.msg('SOAP method invocation failed: %s. URL: %s. Action: %s.' % (err.getErrorMessage(), url, action), system='opennsa.TwistedSUDSClient')
 
         method = self._getMethod(method_name)
 
