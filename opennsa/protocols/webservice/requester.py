@@ -2,11 +2,16 @@
 
 from zope.interface import implements
 
-from twisted.python import log
-from twisted.internet import defer
+from twisted.python import log, failure
+from twisted.internet import reactor, defer
 
+from opennsa import error
 from opennsa.interface import NSIInterface
 from opennsa.protocols.webservice import client
+
+
+
+DEFAULT_CALLBACK_TIMEOUT = 600 # 10 minutes
 
 
 
@@ -14,21 +19,29 @@ class Requester:
 
     implements(NSIInterface)
 
-    def __init__(self, provider_client):
-        #self.nsi_service = nsi_service
-        self.provider_client = provider_client
+    def __init__(self, provider_client, callback_timeout=DEFAULT_CALLBACK_TIMEOUT):
 
+        self.provider_client = provider_client
+        self.callback_timeout = callback_timeout
         self.calls = {}
 
 
     def addCall(self, provider_nsa, correlation_id, action):
 
+
         key = (provider_nsa.uri(), correlation_id)
         assert key not in self.calls, 'Cannot have multiple calls with same NSA / correlationId'
 
         d = defer.Deferred()
-        self.calls[key] = (action, d)
+        call = reactor.callLater(self.callback_timeout, self.callbackTimeout, provider_nsa, correlation_id, action)
+        self.calls[key] = (action, d, call)
         return d
+
+
+    def callbackTimeout(self, provider_nsa, correlation_id, action):
+
+        err = error.CallbackTimeoutError('Callback for call %s/%s from %s timed out.' % (correlation_id, action, provider_nsa.uri()))
+        self.triggerCall(provider_nsa, correlation_id, action, err)
 
 
     def triggerCall(self, provider_nsa, correlation_id, action, result):
@@ -39,9 +52,17 @@ class Requester:
             print log.msg('Got callback for unknown call. Action: %s. NSA: %s' % (action, provider_nsa.uri()), system='opennsa.Requester')
 
         acd = self.calls.pop( (provider_nsa.uri(), correlation_id) )
-        ract, d = acd
+        ract, d, call = acd
         assert ract == action, "%s != %s" % (ract, action)
-        d.callback(result)
+
+        # cancel the timeout call if it is still scheduled
+        if call.active():
+            call.cancel()
+
+        if isinstance(result, BaseException) or isinstance(result, failure.Failure):
+            d.errback(result)
+        else:
+            d.callback(result)
 
 
     def reservation(self, requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters):
@@ -72,12 +93,6 @@ class Requester:
     def provisionConfirmed(self, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id):
 
         self.triggerCall(provider_nsa, correlation_id, 'provision', connection_id)
-#        #print "RES CONF", self.calls
-#        acd = self.calls.pop( (provider_nsa.uri(), correlation_id) )
-#        # CHECK!
-#        action, rcid, d = acd
-#        assert action == 'provision' and rcid == connection_id
-#        d.callback(connection_id)
 
 
     def release(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
