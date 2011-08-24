@@ -137,10 +137,18 @@ class Network:
 
 
 
+class BandwidthParameters:
+
+    def __init__(self, desired=None, minimum=None, maximum=None):
+        self.desired = desired
+        self.minimum = minimum
+        self.maximum = maximum
+
+
+
 class ServiceParameters:
 
-    def __init__(self, start_time, end_time, source_stp, dest_stp, stps=None, directionality='unidirectional',
-                 bandwidth_desired=None, bandwidth_minimum=None, bandwidth_maximum=None):
+    def __init__(self, start_time, end_time, source_stp, dest_stp, stps=None, directionality='unidirectional', bandwidth_params=None):
 
         # should probably make path object sometime..
 
@@ -152,10 +160,8 @@ class ServiceParameters:
         self.dest_stp   = dest_stp
         self.stps       = stps
         self.directionality = directionality
-        # bandwidth
-        self.bandwidth_desired = bandwidth_desired
-        self.bandwidth_minimum = bandwidth_minimum
-        self.bandwidth_maximum = bandwidth_maximum
+
+        self.bandwidth_params = bandwidth_params
 
 
     def protoSP(self):
