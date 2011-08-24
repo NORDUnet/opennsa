@@ -5,8 +5,9 @@ import uuid, random
 from twisted.internet import reactor, defer
 
 from opennsa import nsa, setup
-#from opennsa.protocols.webservice import client #, service
 
+
+BASE_URL = 'http://%s:%i/NSI/services/ConnectionService'
 
 
 @defer.inlineCallbacks
@@ -20,11 +21,10 @@ def doMain():
 
     reactor.listenTCP(PORT, factory)
 
-    service_url = 'http://%s:%i/NSI/services/ConnectionService' % (HOST, PORT)
-    client_nsa      = nsa.NetworkServiceAgent(service_url)
+    client_nsa      = nsa.NetworkServiceAgent(BASE_URL % (HOST, PORT))
 
-    provider_aruba   = nsa.Network('Aruba', nsa.NetworkServiceAgent('http://localhost:9080/NSI/services/ConnectionService'))
-    provider_bonaire = nsa.Network('Boniare', nsa.NetworkServiceAgent('http://localhost:9081/NSI/services/ConnectionService'))
+    provider_aruba   = nsa.Network('Aruba',   nsa.NetworkServiceAgent(BASE_URL % (HOST, 9080)) )
+    provider_bonaire = nsa.Network('Boniare', nsa.NetworkServiceAgent(BASE_URL % (HOST, 9081)) )
 
     provider_net = provider_aruba
     #provider_net = provider_bonaire
@@ -41,37 +41,33 @@ def doMain():
 
     print "Connection id", connection_id
 
-    #_ = yield client.query(client_nsa, provider_net.nsa, None, None)
+    try:
+        r = yield client.reservation(client_nsa, provider_net.nsa, None, global_reservation_id, 'Test Connection', connection_id, service_params)
+        print "Reservation created. Connection ID:", connection_id
 
-    r = yield client.reservation(client_nsa, provider_net.nsa, None, global_reservation_id, 'Test Connection', connection_id, service_params)
-    print "Reservation created. Connection ID:", connection_id
+        qr = yield client.query(client_nsa, provider_net.nsa, None, "Summary", connection_ids = [ connection_id ] )
+        print "State", qr.queryConfirmed.reservationSummary[0].connectionState
 
-    qr = yield client.query(client_nsa, provider_net.nsa, None, "Summary", connection_ids = [ connection_id ] )
-    assert len(qr.queryConfirmed.reservationSummary) == 1
-    print "State", qr.queryConfirmed.reservationSummary[0].connectionState
+        _ = yield client.provision(client_nsa, provider_net.nsa, None, connection_id)
+        print "Provision made"
 
-    _ = yield client.provision(client_nsa, provider_net.nsa, None, connection_id)
-    print "Provision made"
+        qr = yield client.query(client_nsa, provider_net.nsa, None, "Summary", connection_ids = [ connection_id ] )
+        print "State", qr.queryConfirmed.reservationSummary[0].connectionState
 
-    qr = yield client.query(client_nsa, provider_net.nsa, None, "Summary", connection_ids = [ connection_id ] )
-    assert len(qr.queryConfirmed.reservationSummary) == 1
-    print "State", qr.queryConfirmed.reservationSummary[0].connectionState
+        _ = yield client.release(client_nsa, provider_net.nsa, None, connection_id)
+        print "Provision released"
 
-    _ = yield client.release(client_nsa, provider_net.nsa, None, connection_id)
-    print "Provision released"
+        qr = yield client.query(client_nsa, provider_net.nsa, None, "Summary", connection_ids = [ connection_id ] )
+        print "State", qr.queryConfirmed.reservationSummary[0].connectionState
 
-    qr = yield client.query(client_nsa, provider_net.nsa, None, "Summary", connection_ids = [ connection_id ] )
-    assert len(qr.queryConfirmed.reservationSummary) == 1
-    print "State", qr.queryConfirmed.reservationSummary[0].connectionState
+        _ = yield client.terminate(client_nsa, provider_net.nsa, None, connection_id)
+        print "Reservation terminated"
 
-    _ = yield client.terminate(client_nsa, provider_net.nsa, None, connection_id)
-    print "Reservation terminated"
+        r = yield client.query(client_nsa, provider_net.nsa, None, "Summary", connection_ids = [ connection_id ] )
+        print "State", r.queryConfirmed.reservationSummary[0].connectionState
 
-    r = yield client.query(client_nsa, provider_net.nsa, None, "Summary", connection_ids = [ connection_id ] )
-    assert len(r.queryConfirmed.reservationSummary) == 1
-    print "State", r.queryConfirmed.reservationSummary[0].connectionState
-
-
+    except Exception, e:
+        print "Error:", e
 
 def main():
 
