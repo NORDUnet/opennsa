@@ -24,6 +24,10 @@ from suds.client import Factory
 
 
 
+DEFAULT_TIMEOUT = 20 # seconds
+
+
+
 class FileTransport(Transport):
     """
     File-only transport to plug into SUDS.
@@ -57,7 +61,7 @@ class FileTransport(Transport):
 
 class TwistedSUDSClient:
 
-    def __init__(self, wsdl): #, service_url):
+    def __init__(self, wsdl, timeout=DEFAULT_TIMEOUT):
 
         self.options = Options()
         self.options.transport = FileTransport()
@@ -67,7 +71,7 @@ class TwistedSUDSClient:
         self.wsdl = reader.open(wsdl)
         self.type_factory = Factory(self.wsdl)
 
-#        self.service_url = service_url
+        self.timeout = timeout
 
 
     def createType(self, type_name):
@@ -85,11 +89,12 @@ class TwistedSUDSClient:
         @args method_name: Method to invoke.
         @args *args Argument for method.
         """
-        def invokeError(err):
+        def invokeError(err, url, soap_action):
             if isinstance(err.value, ConnectionDone):
                 pass # these are pretty common when the remote shuts down
             else:
-                return log.err(err)
+                action = soap_action.split('/')[-1]
+                log.msg('SOAP method invocation failed. URL: %s. Action: %s. Reason: %s' % (url, action, err.getErrorMessage()), system='opennsa.TwistedSUDSClient')
 
         method = self._getMethod(method_name)
 
@@ -101,7 +106,7 @@ class TwistedSUDSClient:
         # dispatch
         d, factory = self._httpRequest(url, soap_action, soap_envelope)
         d.addCallback(self._parseResponse, factory, method)
-        d.addErrback(invokeError)
+        d.addErrback(invokeError, url, soap_action)
         return d
 
 
@@ -128,7 +133,7 @@ class TwistedSUDSClient:
 
         scheme, host, port, _ = twclient._parse(url)
 
-        factory = twclient.HTTPClientFactory(url, method='POST', postdata=soap_envelope)
+        factory = twclient.HTTPClientFactory(url, method='POST', postdata=soap_envelope, timeout=self.timeout)
         factory.noisy = False # stop spewing about factory start/stop
 
         # fix missing port in header (bug in twisted.web.client)
