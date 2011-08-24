@@ -18,28 +18,28 @@ INITIAL             = 'INITIAL'
 
 RESERVING           = 'RESERVING'
 RESERVED            = 'RESERVED'
-RESERVE_FAILED      = 'RESERVE_FAILED'
+#RESERVE_FAILED      = 'RESERVE_FAILED'
 
 PROVISIONING        = 'PROVISIONING'
 PROVISIONED         = 'PROVISIONED'
-PROVISION_FAILED    = 'PROVISION_FAILED'
+#PROVISION_FAILED    = 'PROVISION_FAILED'
 
 RELEASING           = 'RELEASING'
-RELEASE_FAILED      = 'RELEASE_FAILED'
+#RELEASE_FAILED      = 'RELEASE_FAILED'
 
-CANCELLING          = 'CANCELLING'
-CANCELLED           = 'CANCELLED'
-CANCEL_FAILED       = 'CANCEL_FAILED'
+TERMINATING         = 'TERMINATING'
+TERMINATED          = 'TERMINATED'
+#CANCEL_FAILED       = 'CANCEL_FAILED'
 
 # allowed state transitions
 TRANSITIONS = {
     INITIAL         : [ RESERVING                       ],
-    RESERVING       : [ RESERVED,     RESERVE_FAILED    ],
-    RESERVED        : [ PROVISIONING, CANCELLING        ],
-    PROVISIONING    : [ PROVISIONED,  PROVISION_FAILED  ],
+    RESERVING       : [ RESERVED,     TERMINATED        ],
+    RESERVED        : [ PROVISIONING, TERMINATING       ],
+    PROVISIONING    : [ PROVISIONED,  TERMINATED        ],
     PROVISIONED     : [ RELEASING                       ],
-    RELEASING       : [ RESERVED,     RELEASE_FAILED    ],
-    CANCELLING      : [ CANCELLED,    CANCEL_FAILED     ]
+    RELEASING       : [ RESERVED,     TERMINATED        ],
+    TERMINATING     : [ TERMINATED,                     ]
 }
 
 
@@ -101,14 +101,14 @@ class SubConnection(ConnectionState):
         assert self._proxy is not None, 'Proxy not set for SubConnection, cannot invoke method'
 
         def cancelDone(_):
-            self.switchState(CANCELLED)
+            self.switchState(TERMINATED)
             return self
 
         def cancelFailed(err):
-            self.switchState(CANCEL_FAILED)
+            self.switchState(TERMINATED)
             return err
 
-        self.switchState(CANCELLING)
+        self.switchState(TERMINATING)
         d = self._proxy.terminateReservation(self.network, None, self.connection_id)
         d.addCallbacks(cancelDone, cancelFailed)
         return d
@@ -192,14 +192,14 @@ class LocalConnection(ConnectionState):
         assert self._backend is not None, 'Backend not set for LocalConnection, cannot invoke method'
 
         def cancelDone(_):
-            self.switchState(CANCELLED)
+            self.switchState(TERMINATED)
             return self
 
         def cancelFailed(err):
-            self.switchState(CANCEL_FAILED)
+            self.switchState(TERMINATED)
             return err
 
-        self.switchState(CANCELLING)
+        self.switchState(TERMINATING)
         d = self._backend.cancelReservation(self.internal_reservation_id)
         d.addCallbacks(cancelDone, cancelFailed)
         return d
@@ -320,18 +320,18 @@ class Connection(ConnectionState):
         def connectionCancelled(results):
             successes = [ r[0] for r in results ]
             if all(successes):
-                self.switchState(CANCELLED)
+                self.switchState(TERMINATED)
                 if len(successes) > 1:
                     log.msg('Connection %s and all sub connections(%i) cancelled' % (self.connection_id, len(results)-1), system='opennsa.NSIService')
                 return self
             if any(successes):
-                self.switchState(CANCEL_FAILED)
+                self.switchState(TERMINATED)
                 raise error.CancelReservationError('Cancel partially failed (may require manual cleanup)')
             else:
-                self.switchState(CANCEL_FAILED)
+                self.switchState(TERMINATED)
                 raise error.CancelReservationError('Cancel failed for all local/sub connections')
 
-        self.switchState(CANCELLING)
+        self.switchState(TERMINATING)
 
         defs = []
         for sc in self.connections():
