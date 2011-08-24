@@ -6,7 +6,7 @@ Copyright: NORDUnet (2011)
 """
 
 
-class TimeoutError(Exception):
+class CallbackTimeoutError(Exception):
     pass
 
 
