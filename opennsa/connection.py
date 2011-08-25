@@ -86,7 +86,7 @@ class SubConnection(ConnectionState):
 
         def reservationFailed(err):
             log.err(err)
-            self.switchState(RESERVE_FAILED)
+            self.switchState(TERMINATED)
             return err
 
         sub_service_params  = nsa.ServiceParameters('', '', self.source_stp, self.dest_stp)
@@ -124,7 +124,7 @@ class SubConnection(ConnectionState):
             return self
 
         def provisionFailed(err):
-            self.switchState(PROVISION_FAILED)
+            self.switchState(TERMINATED)
             return err
 
         self.switchState(PROVISIONING)
@@ -143,7 +143,7 @@ class SubConnection(ConnectionState):
             return self
 
         def releaseFailed(err):
-            self.switchState(RELEASE_FAILED)
+            self.switchState(TERMINATED)
             return err
 
         self.switchState(RELEASING)
@@ -178,7 +178,7 @@ class LocalConnection(ConnectionState):
             return self
 
         def reservationFailed(err):
-            self.switchState(RESERVE_FAILED)
+            self.switchState(TERMINATED)
             return err
 
         self.switchState(RESERVING)
@@ -215,7 +215,7 @@ class LocalConnection(ConnectionState):
             return self
 
         def provisionFailed(err):
-            self.switchState(PROVISION_FAILED)
+            self.switchState(TERMINATED)
             return err
 
         self.switchState(PROVISIONING)
@@ -235,7 +235,7 @@ class LocalConnection(ConnectionState):
             return self
 
         def releaseFailed(err):
-            self.switchState(RELEASE_FAILED)
+            self.switchState(TERMINATED)
             return err
 
         self.switchState(RELEASING)
@@ -280,11 +280,11 @@ class Connection(ConnectionState):
                 self.switchState(RESERVED)
                 return self
             elif any(successes):
-                self.switchState(RESERVE_FAILED)
+                self.switchState(TERMINATED)
                 self._reservation_deferred = None
                 raise error.ReserveError('Partial failure in reservation (may require manual cleanup)')
             else:
-                self.switchState(RESERVE_FAILED)
+                self.switchState(TERMINATED)
                 self._reservation_deferred = None
                 raise error.ReserveError('Reservation failed for all local/sub connections')
 
@@ -353,10 +353,10 @@ class Connection(ConnectionState):
                     log.msg('Connection %s and all sub connections(%i) provisioned' % (self.connection_id, len(results)-1), system='opennsa.NSIService')
                 return self
             if any(successes):
-                self.switchState(PROVISION_FAILED)
+                self.switchState(TERMINATED)
                 raise error.ProvisionError('Provision partially failed (may require manual cleanup)')
             else:
-                self.switchState(PROVISION_FAILED)
+                self.switchState(TERMINATED)
                 raise error.ProvisionError('Provision failed for all local/sub connections')
 
         self.switchState(PROVISIONING)
@@ -381,10 +381,10 @@ class Connection(ConnectionState):
                     log.msg('Connection %s and all sub connections(%i) released' % (self.connection_id, len(results)-1), system='opennsa.NSIService')
                 return self
             if any(successes):
-                self.switchState(RELEASE_FAILED)
+                self.switchState(TERMINATED)
                 raise error.ReleaseError('Release partially failed (may require manual cleanup)')
             else:
-                self.switchState(RELEASE_FAILED)
+                self.switchState(TERMINATED)
                 raise error.ReleaseError('Release failed for all local/sub connection')
 
         self.switchState(RELEASING)
