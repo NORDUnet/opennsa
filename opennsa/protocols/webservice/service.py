@@ -211,7 +211,24 @@ class RequesterService:
 
 
     def reservationFailed(self, soap_action, soap_data):
-        print "RES FAILE :-("
+
+        assert soap_action == '"http://schemas.ogf.org/nsi/2011/07/connection/service/reservationFailed"'
+
+        method, req = self.decoder.parse_request('reservationFailed', soap_data)
+
+        correlation_id          = str(req.correlationId)
+        res = req.reservationFailed
+
+        requester_nsa, provider_nsa = _decodeNSAs(res)
+        global_reservation_id       = str(res.globalReservationId)
+        connection_id               = str(res.connectionId)
+        connection_state            = str(res.connectionState)
+        error_message               = str(res.ServiceException.text)
+
+        self.requester.reservationFailed(correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_message)
+
+        reply = self.decoder.marshal_result(correlation_id, method)
+        return reply
 
 
     def provisionConfirmed(self, soap_action, soap_data):

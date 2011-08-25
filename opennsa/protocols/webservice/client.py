@@ -142,9 +142,26 @@ class RequesterClient:
         return d
 
 
-    def reservationFailed(self, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, service_exception):
-        raise NotImplementedError('NSI WS protocol under development')
+    def reservationFailed(self, requester_uri, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, err):
 
+        res_fail = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}GenericFailedType')
+        nsi_ex   = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}NsiExceptionType')
+
+        res_fail.requesterNSA   = requester_nsa.uri()
+        res_fail.providerNSA    = provider_nsa.uri()
+
+        res_fail.globalReservationId    = global_reservation_id
+        res_fail.connectionId           = connection_id
+        res_fail.connectionState        = connection_state
+
+        nsi_ex.messageId = 1
+        nsi_ex.text = err.getErrorMessage()
+        res_fail.ServiceException = nsi_ex
+
+        print "INVOKE RES FAIL", res_fail
+
+        d = self.client.invoke(requester_uri, 'reservationFailed', correlation_id, res_fail)
+        return d
 
 
     def provisionConfirmed(self, requester_uri, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id):

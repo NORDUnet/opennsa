@@ -16,10 +16,13 @@ class Provider:
             d = self.requester_client.reservationConfirmed(reply_to, correlation_id, requester_nsa, provider_nsa, global_reservation_id, description, connection_id, service_parameters)
             return d
 
-        d = self.nsi_service.reservation(requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters)
-        d.addCallback(notifyReservationSuccess)
-        return d
+        def notifyReservationFailure(err):
+            d = self.requester_client.reservationFailed(reply_to, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, 'TERMINATED', err)
+            return d
 
+        d = self.nsi_service.reservation(requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters)
+        d.addCallbacks(notifyReservationSuccess, notifyReservationFailure)
+        return d
 
 
     def provision(self, correlation_id, reply_to, requester_nsa, provider_nsa, session_security_attr, connection_id):
