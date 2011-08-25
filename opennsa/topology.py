@@ -73,7 +73,8 @@ class Topology:
         #print "FIND PATH", source_stp, dest_stp
 
         routes = self.findPathEndpoints(source_stp, dest_stp)
-        routes = self.filterBandwidth(routes, bandwidth_params)
+        if bandwidth_params is not None:
+            routes = self.filterBandwidth(routes, bandwidth_params)
 
         paths = []
         for sdps in routes:
@@ -126,9 +127,9 @@ class Topology:
 
         def hasBandwidth(route, bandwidth_params):
             for sdp in route:
-                if sdp.stp1.available_capacity is not None and sdp.stp1.available_capacity < bandwidth_params.minimum:
+                if sdp.stp1.available_capacity is not None and bandwidth_params.minimum is not None and sdp.stp1.available_capacity < bandwidth_params.minimum:
                     return False
-                if sdp.stp2.available_capacity is not None and sdp.stp2.available_capacity < bandwidth_params.minimum:
+                if sdp.stp2.available_capacity is not None and bandwidth_params.minimum is not None and sdp.stp2.available_capacity < bandwidth_params.minimum:
                     return False
             return True
 
@@ -160,7 +161,7 @@ def parseJSONTopology(topology_source):
             dest_stp = None
             if 'dest-network' in epd and 'dest-ep' in epd:
                 dest_stp = nsa.STP( epd['dest-network'], epd['dest-ep'] )
-            ep = nsa.NetworkEndpoint(network_name, epd['name'], epd['config'], dest_stp)
+            ep = nsa.NetworkEndpoint(network_name, epd['name'], epd['config'], dest_stp, epd.get('max-capacity'), epd.get('available-capacity'))
             nw.addEndpoint(ep)
 
         topo.addNetwork(nw)
@@ -184,7 +185,7 @@ def parseGOLETopology(topology_source):
         doc = ET.parse(topology_source)
     elif isinstance(topology_source, str):
         doc = ET.fromstring(topology_source)
-        topology_data = json.loads(topology_source)
+        #topology_data = json.loads(topology_source)
     else:
         raise error.TopologyError('Invalid topology source')
 
