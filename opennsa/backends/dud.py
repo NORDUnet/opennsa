@@ -42,25 +42,19 @@ class DUDNSIBackend:
         self.connections = {}
 
 
-    def checkReservationFeasibility(self, source_port, dest_port, service_parameters):
+    def checkReservationFeasibility(self, source_port, dest_port, res_start, res_end):
         # check that ports are available in the specified schedule
-        if service_parameters.start_time is None or service_parameters.end_time is None:
-            raise nsaerror.ReserveError('Reservation must specify start and end time')
-
-        try:
-            t_start = datetime.datetime.strptime(service_parameters.start_time, ISO_DATETIME_FORMAT)
-            t_end   = datetime.datetime.strptime(service_parameters.end_time,   ISO_DATETIME_FORMAT)
-        except ValueError, e:
-            raise nsaerror.ReserveError('Error parsing datetime: %s' % str(e))
+        if res_start in [ None, '' ] or res_end in [ None, '' ]:
+            raise nsaerror.ReserveError('Reservation must specify start and end time (was either None or '')')
 
         # sanity checks
-        if t_start > t_end:
+        if res_start > res_end:
             raise nsaerror.ReserveError('Refusing to make reservation with reverse duration')
 
-        if t_start < datetime.datetime.utcnow():
+        if res_start < datetime.datetime.utcnow():
             raise nsaerror.ReserveError('Refusing to make reservation with start time in the past')
 
-        if t_start > datetime.datetime(2020, 1, 1):
+        if res_start > datetime.datetime(2020, 1, 1):
             raise nsaerror.ReserveError('Refusing to make reservation with start time after 2020')
 
         # port temporal availability
@@ -70,13 +64,13 @@ class DUDNSIBackend:
             if res1_start_time <= res2_start_time and res1_start_time <= res2_end_time:
                 return True
 
-        for res in self.reservation.values():
+        for res in self.reservations.values():
             if source_port in [ res.source_port, res.dest_port ]:
-                if portOverlap(res.start_time, res.end_time, t_start, t_end):
+                if portOverlap(res.start_time, res.end_time, res_start, res_end):
                     raise nsaerror.ReserveError('Port %s not available in specified time span' % source_port)
 
             if dest_port == [ res.source_port, res.dest_port ]:
-                if portOverlap(res.start_time, res.end_time, t_start, t_end):
+                if portOverlap(res.start_time, res.end_time, res_start, res_end):
                     raise nsaerror.ReserveError('Port %s not available in specified time span' % dest_port)
 
         # all good
@@ -86,7 +80,7 @@ class DUDNSIBackend:
         reservation_id = uuid.uuid1().hex[0:8]
         log.msg('RESERVE. IR ID: %s, Path: %s -> %s' % (reservation_id, source_port, dest_port), system='DUDBackend Network %s' % self.name)
         try:
-            self.checkReservationFeasibility(source_port, dest_port, service_parameters)
+            self.checkReservationFeasibility(source_port, dest_port, service_parameters.start_time, service_parameters.end_time)
         except nsaerror.ReserveError, e:
             return defer.fail(e)
 
