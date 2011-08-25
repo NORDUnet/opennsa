@@ -286,7 +286,8 @@ class Connection(ConnectionState):
             else:
                 self.switchState(TERMINATED)
                 self._reservation_deferred = None
-                raise error.ReserveError('Reservation failed for all local/sub connections')
+                error_msgs = ' # '.join( [ f.getErrorMessage() for _,f in results ] )
+                return defer.fail( error.ReserveError('Reservation failed for all local/sub connections (%s)' % error_msgs ) )
 
         self.switchState(RESERVING)
 
