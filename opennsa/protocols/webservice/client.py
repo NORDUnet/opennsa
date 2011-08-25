@@ -40,8 +40,6 @@ class ProviderClient:
 
     def reservation(self, correlation_id, requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters):
 
-        #correlation_id = self._createCorrelationId()
-
         res_req = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}ReservationType')
 
         res_req.requesterNSA                = requester_nsa.uri()
