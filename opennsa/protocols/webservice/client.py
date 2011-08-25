@@ -158,8 +158,6 @@ class RequesterClient:
         nsi_ex.text = err.getErrorMessage()
         res_fail.ServiceException = nsi_ex
 
-        print "INVOKE RES FAIL", res_fail
-
         d = self.client.invoke(requester_uri, 'reservationFailed', correlation_id, res_fail)
         return d
 
