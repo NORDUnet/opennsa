@@ -161,7 +161,7 @@ class ServiceParameters:
         self.stps       = stps
         self.directionality = directionality
 
-        self.bandwidth_params = bandwidth_params
+        self.bandwidth_params = bandwidth_params or BandwidthParameters()
 
 
     def protoSP(self):

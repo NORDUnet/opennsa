@@ -59,9 +59,9 @@ class ProviderClient:
 
         res_req.reservation.serviceParameters.schedule.startTime    = service_parameters.start_time
         res_req.reservation.serviceParameters.schedule.endTime      = service_parameters.end_time
-        res_req.reservation.serviceParameters.bandwidth.desired     = service_parameters.bandwidth_desired
-        res_req.reservation.serviceParameters.bandwidth.minimum     = service_parameters.bandwidth_minimum
-        res_req.reservation.serviceParameters.bandwidth.maximum     = service_parameters.bandwidth_maximum
+        res_req.reservation.serviceParameters.bandwidth.desired     = service_parameters.bandwidth_params.desired
+        res_req.reservation.serviceParameters.bandwidth.minimum     = service_parameters.bandwidth_params.minimum
+        res_req.reservation.serviceParameters.bandwidth.maximum     = service_parameters.bandwidth_params.maximum
         #res_req.reservation.serviceParameters.serviceAttributes.guaranteed = [ '1a' ]
         #res_req.reservation.serviceParameters.serviceAttributes.preferred  = [ '2c', '3d' ]
 
