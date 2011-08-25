@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 
-import uuid, random
+import uuid
+import random
+import time
+import datetime
 
 from twisted.internet import reactor, defer
 
@@ -35,7 +38,12 @@ def doMain():
     #dest_stp        = nsa.STP('Bonaire', 'Betty')
     dest_stp        = nsa.STP('Bonaire', 'Brutus')
 
-    service_params  = nsa.ServiceParameters('2011-09-01T08:56:00Z', '2011-10-01T08:56:00Z' , source_stp, dest_stp, bandwidth_desired = 1000)
+    start_time = datetime.datetime.utcfromtimestamp(time.time() + 120 ).isoformat().rsplit('.',1)[0] + 'Z' # two minutes from now
+    end_time   = datetime.datetime.utcfromtimestamp(time.time() + 240 ).isoformat().rsplit('.',1)[0] + 'Z' # four minutes from now
+
+    bwp = nsa.BandwidthParameters(1000)
+    #service_params  = nsa.ServiceParameters('2011-09-01T08:56:00Z', '2011-10-01T08:56:00Z' , source_stp, dest_stp, bwp)
+    service_params  = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, bandwidth_params=bwp)
     global_reservation_id = 'gid-' + ''.join( [ str(int(random.random() * 10)) for _ in range(4) ] )
     connection_id = 'conn-' + ''.join( [ str(int(random.random() * 10)) for _ in range(3) ] )
 
