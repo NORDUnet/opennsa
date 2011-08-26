@@ -282,7 +282,8 @@ class Connection(ConnectionState):
             elif any(successes):
                 self.switchState(TERMINATED)
                 self._reservation_deferred = None
-                raise error.ReserveError('Partial failure in reservation (may require manual cleanup)')
+                error_msgs = ' # '.join( [ f.getErrorMessage() for success,f in results if success is False ] )
+                return defer.fail( error.ReserveError('Partial failure in reservation, may require manual cleanup (%s)' % error_msgs) )
             else:
                 self.switchState(TERMINATED)
                 self._reservation_deferred = None
@@ -296,7 +297,7 @@ class Connection(ConnectionState):
             d = sc.reservation(service_parameters)
             defs.append(d)
 
-        dl = defer.DeferredList(defs)
+        dl = defer.DeferredList(defs, consumeErrors=True)
         dl.addCallbacks(reservationRequestsDone)
         return dl
 
