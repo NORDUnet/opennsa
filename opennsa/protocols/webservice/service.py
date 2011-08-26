@@ -60,9 +60,9 @@ class ProviderService:
 
         requester_nsa, provider_nsa = _decodeNSAs(req)
         session_security_attr       = None
-        global_reservation_id       = req.reservation.globalReservationId
-        description                 = req.reservation.description
         connection_id               = req.reservation.connectionId
+        global_reservation_id       = req.reservation.globalReservationId if 'globalReservationId' in req.reservation else None
+        description                 = req.reservation.description         if 'description'         in req.reservation else None
         sp                          = req.reservation.serviceParameters
         path                        = req.reservation.path
 
