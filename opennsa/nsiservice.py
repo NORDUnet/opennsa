@@ -141,8 +141,17 @@ class NSIService:
             # last hop
             setupSubConnection(prev_source_stp, dest_stp, conn)
 
+        def logReservation(conn):
+            log.msg('Reservation succeeded for connection %s' % conn.connection_id)
+            return conn
+
+        def logError(err):
+            log.msg(err.getErrorMessage())
+            return err
+
         # now reserve connections needed to create path
         d = conn.reservation(service_parameters, nsa_identity)
+        d.addCallbacks(logReservation, logError)
         return d
 
 
