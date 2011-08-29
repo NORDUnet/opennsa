@@ -86,7 +86,6 @@ class SubConnection(ConnectionState):
             return self
 
         def reservationFailed(err):
-            log.err(err)
             self.switchState(TERMINATED)
             return err
 
