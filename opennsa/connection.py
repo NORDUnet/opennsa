@@ -259,8 +259,6 @@ class Connection(ConnectionState):
         self.local_connection           = local_connection
         self.sub_connections            = sub_connections or []
 
-        self._reservation_deferred      = None
-
 
     def hasLocalConnection(self):
         return self.local_connection is not None
@@ -280,16 +278,15 @@ class Connection(ConnectionState):
             if all(successes):
                 self.switchState(RESERVED)
                 return self
-            elif any(successes):
-                self.switchState(TERMINATED)
-                self._reservation_deferred = None
-                error_msgs = ' # '.join( [ f.getErrorMessage() for success,f in results if success is False ] )
-                return defer.fail( error.ReserveError('Partial failure in reservation, may require manual cleanup (%s)' % error_msgs) )
             else:
                 self.switchState(TERMINATED)
-                self._reservation_deferred = None
-                error_msgs = ' # '.join( [ f.getErrorMessage() for _,f in results ] )
-                return defer.fail( error.ReserveError('Reservation failed for all local/sub connections (%s)' % error_msgs ) )
+                if any(successes):
+                    failure_msg = ' # '.join( [ f.getErrorMessage() for success,f in results if success is False ] )
+                    error_msg = 'Partial failure in reservation, may require manual cleanup (%s)' % failure_msg
+                else:
+                    failure_msg = ' # '.join( [ f.getErrorMessage() for _,f in results ] )
+                    error_msg = 'Reservation failed for all local/sub connections (%s)' % failure_msg
+                return defer.fail( error.ReserveError(error_msg) )
 
         self.switchState(RESERVING)
 
@@ -299,23 +296,8 @@ class Connection(ConnectionState):
             defs.append(d)
 
         dl = defer.DeferredList(defs, consumeErrors=True)
-        dl.addCallbacks(reservationRequestsDone)
+        dl.addCallbacks(reservationRequestsDone) # never errbacks
         return dl
-
-
-    def reservationStateUpdated(self, reservation_failed, error=None):
-
-        if self._reservation_deferred is None:
-            return # nothing to do
-
-        if reservation_failed:
-            self._reservation_deferred.errback(error)
-        else:
-            if all( [ conn.state() == RESERVED for conn in self.connections() ] ):
-                self.switchState(RESERVED)
-                self._reservation_deferred.callback(self)
-            else:
-                pass # awaiting more responses
 
 
     def cancelReservation(self):
