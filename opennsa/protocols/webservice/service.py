@@ -78,8 +78,8 @@ class ProviderService:
         service_parameters      = nsa.ServiceParameters(sp.schedule.startTime, sp.schedule.endTime, source_stp, dest_stp, bandwidth_params=bwp)
 
         d = self.provider.reservation(correlation_id, reply_to, requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters)
-        #d = self.nsi_service.reserve(requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters, reply_to)
-        d.addErrback(lambda err : log.err(err))
+        d.addErrback(log.err)
+
         # The deferred will fire when the reservation is made.
 
         # The initial reservation ACK should be send when the reservation
