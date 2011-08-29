@@ -140,7 +140,7 @@ class RequesterClient:
         return d
 
 
-    def reservationFailed(self, requester_uri, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, err):
+    def reservationFailed(self, requester_uri, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_msg):
 
         res_fail = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}GenericFailedType')
         nsi_ex   = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}NsiExceptionType')
@@ -153,7 +153,8 @@ class RequesterClient:
         res_fail.connectionState        = connection_state
 
         nsi_ex.messageId = 1
-        nsi_ex.text = err.getErrorMessage()
+        #nsi_ex.text = err.getErrorMessage()
+        nsi_ex.text = error_msg
         res_fail.ServiceException = nsi_ex
 
         d = self.client.invoke(requester_uri, 'reservationFailed', correlation_id, res_fail)
