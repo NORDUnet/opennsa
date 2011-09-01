@@ -115,7 +115,7 @@ class DUDNSIBackend:
         except KeyError:
             raise nsaerror.ReleaseProvisionError('No such connection (%s)' % conn_id)
 
-        if conn.state != RESERVED:
+        if conn.state != PROVISIONED:
             raise nsaerror.ProvisionError('Cannot provision connection in state %s' % conn.state)
 
         conn.state = RESERVED
