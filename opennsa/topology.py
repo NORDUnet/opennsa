@@ -21,10 +21,15 @@ GLIF_PREFIX = 'http://www.glif.is/working-groups/tech/dtox#'
 
 NAMED_INDIVIDUAL        = ET.QName('{%s}NamedIndividual' % OWL_NS)
 RDF_ABOUT               = ET.QName('{%s}about' % RDF_NS)
+RDF_TYPE                = ET.QName('{%s}type' % RDF_NS)
+RDF_RESOURCE            = ET.QName('{%s}resource' % RDF_NS)
 
+GLIF_HAS_STP            = ET.QName('{%s}hasSTP' % GLIF_PREFIX)
 GLIF_CONNECTED_TO       = ET.QName('{%s}connectedTo' % GLIF_PREFIX)
 GLIF_MAX_CAPACITY       = ET.QName('{%s}maxCapacity' % GLIF_PREFIX)
 GLIF_AVAILABLE_CAPACITY = ET.QName('{%s}availableCapacity' % GLIF_PREFIX)
+GLIF_MANAGED_BY         = ET.QName('{%s}managedBy' % GLIF_PREFIX)
+GLIF_PROVIDER_ENDPOINT  = ET.QName('{%s}csProviderEndpoint' % GLIF_PREFIX)
 
 
 
@@ -172,64 +177,77 @@ def parseJSONTopology(topology_source):
 
 def parseGOLETopology(topology_source):
 
-    # hack until we get nsa address into gole topology
-    nsa_address = {
-        'Aruba'     : 'http://localhost:9080/NSI/services/ConnectionService',
-        'Bonaire'   : 'http://localhost:9081/NSI/services/ConnectionService',
-        'Curacao'   : 'http://localhost:9082/NSI/services/ConnectionService',
-        'Dominica'  : 'http://localhost:9083/NSI/services/ConnectionService',
-        'Maui'      : 'http://localhost:9090/NSI/services/ConnectionService'
-    }
-
     if isinstance(topology_source, file) or isinstance(topology_source, StringIO.StringIO):
         doc = ET.parse(topology_source)
     elif isinstance(topology_source, str):
         doc = ET.fromstring(topology_source)
-        #topology_data = json.loads(topology_source)
     else:
         raise error.TopologyError('Invalid topology source')
 
+
+    def stripGLIFPrefix(ele):
+        assert ele.startswith(GLIF_PREFIX)
+        return ele.split(GLIF_PREFIX)[1]
+
+    stps = {}
+    nsas = {}
     networks = {}
 
     for e in doc.getiterator():
 
         if e.tag == NAMED_INDIVIDUAL:
 
-            # determine individual type
-            ent = e.attrib[RDF_ABOUT]
-            assert ent.startswith(GLIF_PREFIX)
-            ent = ent.split(GLIF_PREFIX)[1]
+            # determine indivdual (resource) type
+            se = e.getiterator(RDF_TYPE)[0]
+            rt = stripGLIFPrefix(se.attrib[RDF_RESOURCE])
+            rt_name = stripGLIFPrefix(e.attrib[RDF_ABOUT])
 
-            if '.' in ent: # Location, X-Matrix
-                continue
-
-            elif ':' in ent: # Port
-                network, portname = ent.split(':', 2)
-                dest_stp = None
-                max_capacity = None
-                available_capacity = None
-
+            if rt == 'STP':
+                connected_to = None
                 for ct in e.getiterator(GLIF_CONNECTED_TO):
-                    dest = ct.text
-                    if dest:
-                        dest_network, dest_portname = dest.split(':', 2)
-                        dest_stp = nsa.STP(dest_network, dest_portname)
+                    connected_to = stripGLIFPrefix(ct.attrib[RDF_RESOURCE])
+                stps[rt_name] = { 'connected_to' : connected_to }
 
-                for mc in e.getiterator(GLIF_MAX_CAPACITY):
-                    max_capacity = float( mc.text )
+            elif rt == 'NSNetwork':
+                ns_stps = []
+                for sse in e.getiterator(GLIF_HAS_STP):
+                    ns_stps.append( stripGLIFPrefix(sse.attrib[RDF_RESOURCE]) )
+                ns_nsa = None
+                for mb in e.getiterator(GLIF_MANAGED_BY):
+                    ns_nsa = stripGLIFPrefix( mb.attrib[RDF_RESOURCE] )
+                networks[rt_name] = { 'stps': ns_stps, 'nsa' : ns_nsa }
 
-                for ac in e.getiterator(GLIF_AVAILABLE_CAPACITY):
-                    available_capacity = float( ac.text )
+            elif rt == 'NSA':
+                endpoint = None
+                for cpe in e.getiterator(GLIF_PROVIDER_ENDPOINT):
+                    endpoint = cpe.text or None
+                nsas[rt_name] = { 'endpoint' : endpoint }
 
-                endpoint = nsa.NetworkEndpoint(network, portname, None, dest_stp=dest_stp, max_capacity=max_capacity, available_capacity=available_capacity)
+            else:
+                print "Unknown Topology Resource", rt
 
-                networks[network].addEndpoint(endpoint)
+    stp_rmap = {}
 
-            else: # network (node)
-                networks[ent] = nsa.Network(ent, nsa.NetworkServiceAgent(nsa_address[ent]))
+    for network_name, network_params in networks.items():
+        for stp_name in network_params['stps']:
+            stp_rmap[stp_name] = nsa.STP(network_name, stp_name)
 
     topo = Topology()
-    for network in networks.values():
+
+    for network_name, network_params in networks.items():
+
+        nsa_name = network_params['nsa']
+        nsa_info = nsas[nsa_name]
+        nsa_endpoint = nsa_info.get('endpoint') or 'NOT_AVAILABLE'
+
+        network_nsa = nsa.NetworkServiceAgent( nsa_endpoint)
+        network = nsa.Network(network_name, network_nsa)
+
+        for stp_name in network_params['stps']:
+            dest_stp = stp_rmap.get(stps[stp_name]['connected_to'])
+            ep = nsa.NetworkEndpoint(network_name, stp_name, None, dest_stp, None, None)
+            network.addEndpoint(ep)
+
         topo.addNetwork(network)
 
     return topo
