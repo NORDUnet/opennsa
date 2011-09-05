@@ -10,7 +10,15 @@ from twisted.internet import reactor, defer
 from opennsa import nsa, setup
 
 
-BASE_URL = 'http://%s:%i/NSI/services/ConnectionService'
+
+DYNAMICKL_SERVICE   = 'http://220.69.219.228:8010/nsi/ConnectionServiceProvider'
+OPENNSA_SERVICE     = 'http://orval.grid.aau.dk:9080/NSI/services/ConnectionService'
+LOCALHOST_SERVICE   = 'http://localhost:9080/NSI/services/ConnectionService'
+
+ORVAL_REQUESTER     = 'http://orval.grid.aau.dk:7080/NSI/services/ConnectionService'
+LOCAL_REQUESTER     = 'http://localhost:7080/NSI/services/ConnectionService'
+
+PORT = 7080
 
 
 @defer.inlineCallbacks
@@ -18,26 +26,26 @@ def doMain():
 
     print 'OpenNSA WS test client'
 
-    HOST, PORT = 'localhost', 7080
-
     client, service, factory = setup.createClient(PORT)
 
     reactor.listenTCP(PORT, factory)
 
-    client_nsa      = nsa.NetworkServiceAgent('OpenNSA-testclient', BASE_URL % (HOST, PORT))
+    client_nsa      = nsa.NetworkServiceAgent('OpenNSA-testclient', LOCAL_REQUESTER)
 
-    provider_aruba   = nsa.Network('Aruba',   nsa.NetworkServiceAgent('Aruba-OpenNSA', BASE_URL % (HOST, 9080)) )
-    provider_bonaire = nsa.Network('Bonaire', nsa.NetworkServiceAgent('Bonaire-OpenDRAC', BASE_URL % (HOST, 9081)) )
+    provider_local_aruba    = nsa.Network('Aruba',   nsa.NetworkServiceAgent('Aruba-OpenNSA', LOCALHOST_SERVICE))
+    provider_orval_aruba    = nsa.Network('Aruba',   nsa.NetworkServiceAgent('Aruba-OpenNSA', OPENNSA_SERVICE))
+    provider_martinique     = nsa.Network('Martinique', nsa.NetworkServiceAgent('Martinique-DynamicKL', DYNAMICKL_SERVICE))
 
-    provider = provider_aruba
+    provider = provider_local_aruba
+    #provider = provider_orval_aruba
     #provider = provider_bonaire
 
     #source_stp      = nsa.STP('Aruba', 'Ashley' )
     source_stp      = nsa.STP('Aruba', 'A1' )
     #source_stp      = nsa.STP('Aruba', 'Axel' )
     dest_stp        = nsa.STP('Aruba', 'A2')
-    #dest_stp        = nsa.STP('Bonaire', 'Betty')
-    #dest_stp        = nsa.STP('Bonaire', 'Brutus')
+    #source_stp      = nsa.STP('Martinique', 'M1')
+    #dest_stp        = nsa.STP('Martinique', 'M3')
 
     start_time = datetime.datetime.utcfromtimestamp(time.time() + 120 ).isoformat().rsplit('.',1)[0] + 'Z' # two minutes from now
     end_time   = datetime.datetime.utcfromtimestamp(time.time() + 240 ).isoformat().rsplit('.',1)[0] + 'Z' # four minutes from now
