@@ -33,14 +33,14 @@ class Requester:
         assert key not in self.calls, 'Cannot have multiple calls with same NSA / correlationId'
 
         d = defer.Deferred()
-        call = reactor.callLater(self.callback_timeout, self.callbackTimeout, provider_nsa, correlation_id, action)
+        call = reactor.callLater(self.callback_timeout, self.callbackTimeout, provider_nsa.urn(), correlation_id, action)
         self.calls[key] = (action, d, call)
         return d
 
 
     def callbackTimeout(self, provider_nsa, correlation_id, action):
 
-        err = error.CallbackTimeoutError('Callback for call %s/%s from %s timed out.' % (correlation_id, action, provider_nsa.urn()))
+        err = error.CallbackTimeoutError('Callback for call %s/%s from %s timed out.' % (correlation_id, action, provider_nsa))
         self.triggerCall(provider_nsa, correlation_id, action, err)
 
 
