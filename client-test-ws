@@ -24,22 +24,24 @@ def doMain():
 
     reactor.listenTCP(PORT, factory)
 
-    client_nsa      = nsa.NetworkServiceAgent(BASE_URL % (HOST, PORT))
+    client_nsa      = nsa.NetworkServiceAgent('OpenNSA-testclient', BASE_URL % (HOST, PORT))
 
-    provider_aruba   = nsa.Network('Aruba',   nsa.NetworkServiceAgent(BASE_URL % (HOST, 9080)) )
-    provider_bonaire = nsa.Network('Boniare', nsa.NetworkServiceAgent(BASE_URL % (HOST, 9081)) )
+    provider_aruba   = nsa.Network('Aruba',   nsa.NetworkServiceAgent('Aruba-OpenNSA', BASE_URL % (HOST, 9080)) )
+    provider_bonaire = nsa.Network('Bonaire', nsa.NetworkServiceAgent('Bonaire-OpenDRAC', BASE_URL % (HOST, 9081)) )
 
-    provider_net = provider_aruba
-    #provider_net = provider_bonaire
+    provider = provider_aruba
+    #provider = provider_bonaire
 
-    source_stp      = nsa.STP('Aruba', 'Ashley' )
+    #source_stp      = nsa.STP('Aruba', 'Ashley' )
+    source_stp      = nsa.STP('Aruba', 'A1' )
     #source_stp      = nsa.STP('Aruba', 'Axel' )
-    #dest_stp        = nsa.STP('Aruba', 'Aidan')
+    dest_stp        = nsa.STP('Aruba', 'A2')
     #dest_stp        = nsa.STP('Bonaire', 'Betty')
-    dest_stp        = nsa.STP('Bonaire', 'Brutus')
+    #dest_stp        = nsa.STP('Bonaire', 'Brutus')
 
     start_time = datetime.datetime.utcfromtimestamp(time.time() + 120 ).isoformat().rsplit('.',1)[0] + 'Z' # two minutes from now
     end_time   = datetime.datetime.utcfromtimestamp(time.time() + 240 ).isoformat().rsplit('.',1)[0] + 'Z' # four minutes from now
+    #start_time, end_time = end_time, start_time
 
     bwp = nsa.BandwidthParameters(1000)
     #service_params  = nsa.ServiceParameters('2011-09-01T08:56:00Z', '2011-10-01T08:56:00Z' , source_stp, dest_stp, bwp)
@@ -49,40 +51,38 @@ def doMain():
 
     print "Connection id", connection_id
 
-    try:
-        r = yield client.reservation(client_nsa, provider_net.nsa, None, global_reservation_id, 'Test Connection', connection_id, service_params)
-        print "Reservation created. Connection ID:", connection_id
+    r = yield client.reservation(client_nsa, provider.nsa, None, global_reservation_id, 'Test Connection', connection_id, service_params)
+    print "Reservation created. Connection ID:", connection_id
 
-        qr = yield client.query(client_nsa, provider_net.nsa, None, "Summary", connection_ids = [ connection_id ] )
-        print "State", qr.queryConfirmed.reservationSummary[0].connectionState
+    qr = yield client.query(client_nsa, provider.nsa, None, "Summary", connection_ids = [ connection_id ] )
+    print "State", qr.queryConfirmed.reservationSummary[0].connectionState
 
-        _ = yield client.provision(client_nsa, provider_net.nsa, None, connection_id)
-        print "Provision made"
+    _ = yield client.provision(client_nsa, provider.nsa, None, connection_id)
+    print "Provision made"
 
-        qr = yield client.query(client_nsa, provider_net.nsa, None, "Summary", connection_ids = [ connection_id ] )
-        print "State", qr.queryConfirmed.reservationSummary[0].connectionState
+    qr = yield client.query(client_nsa, provider.nsa, None, "Summary", connection_ids = [ connection_id ] )
+    print "State", qr.queryConfirmed.reservationSummary[0].connectionState
 
-        _ = yield client.release(client_nsa, provider_net.nsa, None, connection_id)
-        print "Provision released"
+    _ = yield client.release(client_nsa, provider.nsa, None, connection_id)
+    print "Provision released"
 
-        qr = yield client.query(client_nsa, provider_net.nsa, None, "Summary", connection_ids = [ connection_id ] )
-        print "State", qr.queryConfirmed.reservationSummary[0].connectionState
+    qr = yield client.query(client_nsa, provider.nsa, None, "Summary", connection_ids = [ connection_id ] )
+    print "State", qr.queryConfirmed.reservationSummary[0].connectionState
 
-        _ = yield client.terminate(client_nsa, provider_net.nsa, None, connection_id)
-        print "Reservation terminated"
+    _ = yield client.terminate(client_nsa, provider.nsa, None, connection_id)
+    print "Reservation terminated"
 
-        r = yield client.query(client_nsa, provider_net.nsa, None, "Summary", connection_ids = [ connection_id ] )
-        print "State", r.queryConfirmed.reservationSummary[0].connectionState
+    r = yield client.query(client_nsa, provider.nsa, None, "Summary", connection_ids = [ connection_id ] )
+    print "State", r.queryConfirmed.reservationSummary[0].connectionState
 
-    except Exception, e:
-        print "Error:", e
+
 
 def main():
 
     d = defer.maybeDeferred(doMain)
 
     def p(failure):
-        print failure
+        failure.printTraceback()
 
     d.addErrback(p)
     d.addBoth(lambda _ : reactor.stop() )
