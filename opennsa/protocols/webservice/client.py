@@ -16,9 +16,10 @@ WSDL_PROVIDER   = 'file:///home/htj/nsi/opennsa/wsdl/ogf_nsi_connection_provider
 WSDL_REQUESTER  = 'file:///home/htj/nsi/opennsa/wsdl/ogf_nsi_connection_requester_v1_0.wsdl'
 
 
+URN_UUID_PREFIX = 'urn:uuid:'
 
 def createCorrelationId():
-    return str(uuid.uuid1().int)
+    return URN_UUID_PREFIX + str(uuid.uuid1())
 
 
 class ProviderClient:
