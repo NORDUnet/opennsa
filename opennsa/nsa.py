@@ -12,6 +12,7 @@ from opennsa import error
 
 
 STP_PREFIX = 'urn:ogf:network:stp:'
+NSA_PREFIX = 'urn:ogf:network:nsa:'
 
 
 
@@ -22,7 +23,7 @@ class STP: # Service Termination Point
         self.endpoint = endpoint
 
 
-    def uri(self):
+    def urn(self):
         return STP_PREFIX + self.network + ':' + self.endpoint
 
 
@@ -85,10 +86,11 @@ class NetworkEndpoint(STP):
 
 class NetworkServiceAgent:
 
-    def __init__(self, address): #, service_attributes=None):
-        assert type(address) is str, 'NSA Address type must be string'
-        self.address = address
-#        self.service_attributes = service_attributes
+    def __init__(self, identity, endpoint): #, service_attributes=None):
+        assert type(identity) is str, 'NSA identity type must be string'
+        assert type(endpoint) is str, 'NSA endpoint type must be string'
+        self.identity = identity
+        self.endpoint = endpoint
 
 
     def getHostPort(self):
@@ -98,17 +100,16 @@ class NetworkServiceAgent:
         return host, port
 
 
-    def uri(self):
-        return self.address
+    def url(self):
+        return self.endpoint
 
 
-#    def protoNSA(self):
-#        return { 'address' : self.address,
-#                 'service_attributes' : self.service_attributes }
+    def urn(self):
+        return NSA_PREFIX + self.identity
 
 
     def __str__(self):
-        return '<NetworkServiceAgent %s>' % self.address #, self.protocol)
+        return '<NetworkServiceAgent %s>' % self.identity
 
 
 
@@ -167,8 +168,8 @@ class ServiceParameters:
     def protoSP(self):
         return { 'start_time' : self.start_time,
                  'end_time'   : self.end_time,
-                 'source_stp' : self.source_stp.uri(),
-                 'dest_stp'   : self.dest_stp.uri(),
+                 'source_stp' : self.source_stp.urn(),
+                 'dest_stp'   : self.dest_stp.urn(),
                  'stps'       : self.stps        }
 
 

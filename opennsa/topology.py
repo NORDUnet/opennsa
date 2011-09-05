@@ -240,7 +240,7 @@ def parseGOLETopology(topology_source):
         nsa_info = nsas[nsa_name]
         nsa_endpoint = nsa_info.get('endpoint') or 'NOT_AVAILABLE'
 
-        network_nsa = nsa.NetworkServiceAgent( nsa_endpoint)
+        network_nsa = nsa.NetworkServiceAgent(nsa_name, nsa_endpoint)
         network = nsa.Network(network_name, network_nsa)
 
         for stp_name in network_params['stps']:
