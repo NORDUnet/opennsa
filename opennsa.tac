@@ -6,21 +6,15 @@ from opennsa import setup
 from opennsa.backends import dud
 
 
-TOPOFILE = 'nsi_interop_deuce.owl'
-
-PORT = 9080
+TOPOFILE = 'Rio-Inter-Domain-Topo-Ring-v1.1b.owl'
 
 NETWORK_NAME = 'Aruba'
-
+PORT = 9080
 
 
 proxy = dud.DUDNSIBackend(NETWORK_NAME)
-
 factory = setup.createService(NETWORK_NAME, open(TOPOFILE), proxy, PORT)
 
-
-
 application = service.Application("OpenNSA")
-
 internet.TCPServer(PORT, factory, interface='localhost').setServiceParent(application)
 
