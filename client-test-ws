@@ -38,7 +38,7 @@ def doMain():
 
     provider = provider_local_aruba
     #provider = provider_orval_aruba
-    #provider = provider_bonaire
+    #provider = provider_martinique
 
     #source_stp      = nsa.STP('Aruba', 'Ashley' )
     source_stp      = nsa.STP('Aruba', 'A1' )
