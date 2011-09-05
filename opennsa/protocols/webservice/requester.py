@@ -29,7 +29,7 @@ class Requester:
     def addCall(self, provider_nsa, correlation_id, action):
 
 
-        key = (provider_nsa.uri(), correlation_id)
+        key = (provider_nsa.urn(), correlation_id)
         assert key not in self.calls, 'Cannot have multiple calls with same NSA / correlationId'
 
         d = defer.Deferred()
@@ -40,18 +40,19 @@ class Requester:
 
     def callbackTimeout(self, provider_nsa, correlation_id, action):
 
-        err = error.CallbackTimeoutError('Callback for call %s/%s from %s timed out.' % (correlation_id, action, provider_nsa.uri()))
+        err = error.CallbackTimeoutError('Callback for call %s/%s from %s timed out.' % (correlation_id, action, provider_nsa.urn()))
         self.triggerCall(provider_nsa, correlation_id, action, err)
 
 
     def triggerCall(self, provider_nsa, correlation_id, action, result):
 
+        assert provider_nsa.startswith('urn:'), 'Invalid provider nsa specified'
         #print "TRIGGER CALL", self.calls
-        key = (provider_nsa.uri(), correlation_id)
+        key = (provider_nsa, correlation_id)
         if not key in self.calls:
-            print log.msg('Got callback for unknown call. Action: %s. NSA: %s' % (action, provider_nsa.uri()), system='opennsa.Requester')
+            print log.msg('Got callback for unknown call. Action: %s. NSA: %s' % (action, provider_nsa), system='opennsa.Requester')
 
-        acd = self.calls.pop( (provider_nsa.uri(), correlation_id) )
+        acd = self.calls.pop( (provider_nsa, correlation_id) )
         ract, d, call = acd
         assert ract == action, "%s != %s" % (ract, action)
 

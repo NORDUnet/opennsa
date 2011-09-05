@@ -17,8 +17,8 @@ WSDL_REQUESTER  = 'file:///home/htj/nsi/opennsa/wsdl/ogf_nsi_connection_requeste
 
 
 def _decodeNSAs(subreq):
-    requester_nsa = nsa.NetworkServiceAgent(str(subreq.requesterNSA))
-    provider_nsa  = nsa.NetworkServiceAgent(str(subreq.providerNSA))
+    requester_nsa = str(subreq.requesterNSA)
+    provider_nsa  = str(subreq.providerNSA)
     return requester_nsa, provider_nsa
 
 

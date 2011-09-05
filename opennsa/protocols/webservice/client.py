@@ -32,8 +32,8 @@ class ProviderClient:
     def _createGenericRequestType(self, requester_nsa, provider_nsa, connection_id):
 
         req = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}GenericRequestType')
-        req.requesterNSA = requester_nsa.uri()
-        req.providerNSA  = provider_nsa.uri()
+        req.requesterNSA = requester_nsa.urn()
+        req.providerNSA  = provider_nsa.urn()
         req.connectionId = connection_id
         return req
 
@@ -42,18 +42,18 @@ class ProviderClient:
 
         res_req = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}ReservationType')
 
-        res_req.requesterNSA                = requester_nsa.uri()
-        res_req.providerNSA                 = provider_nsa.uri()
+        res_req.requesterNSA                = requester_nsa.urn()
+        res_req.providerNSA                 = provider_nsa.urn()
 
         res_req.reservation.globalReservationId     = global_reservation_id
         res_req.reservation.description             = description
         res_req.reservation.connectionId            = connection_id
 
         res_req.reservation.path.directionality     = service_parameters.directionality
-        res_req.reservation.path.sourceSTP.stpId    = service_parameters.source_stp.uri()
+        res_req.reservation.path.sourceSTP.stpId    = service_parameters.source_stp.urn()
         #res_req.reservation.path.sourceSTP.stpSpecAttrs.guaranteed = ['123' ]
         #res_req.reservation.path.sourceSTP.stpSpecAttrs.preferred =  ['abc', 'def']
-        res_req.reservation.path.destSTP.stpId      = service_parameters.dest_stp.uri()
+        res_req.reservation.path.destSTP.stpId      = service_parameters.dest_stp.urn()
 
         res_req.reservation.serviceParameters.schedule.startTime    = service_parameters.start_time
         res_req.reservation.serviceParameters.schedule.endTime      = service_parameters.end_time
@@ -63,28 +63,28 @@ class ProviderClient:
         #res_req.reservation.serviceParameters.serviceAttributes.guaranteed = [ '1a' ]
         #res_req.reservation.serviceParameters.serviceAttributes.preferred  = [ '2c', '3d' ]
 
-        d = self.client.invoke(provider_nsa.uri(), 'reservation', correlation_id, self.reply_to, res_req)
+        d = self.client.invoke(provider_nsa.url(), 'reservation', correlation_id, self.reply_to, res_req)
         return d
 
 
     def provision(self, correlation_id, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
         req = self._createGenericRequestType(requester_nsa, provider_nsa, connection_id)
-        d = self.client.invoke(provider_nsa.uri(), 'provision', correlation_id, self.reply_to, req)
+        d = self.client.invoke(provider_nsa.url(), 'provision', correlation_id, self.reply_to, req)
         return d
 
 
     def release(self, correlation_id, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
         req = self._createGenericRequestType(requester_nsa, provider_nsa, connection_id)
-        d = self.client.invoke(provider_nsa.uri(), 'release', correlation_id, self.reply_to, req)
+        d = self.client.invoke(provider_nsa.url(), 'release', correlation_id, self.reply_to, req)
         return d
 
 
     def terminate(self, correlation_id, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
         req = self._createGenericRequestType(requester_nsa, provider_nsa, connection_id)
-        d = self.client.invoke(provider_nsa.uri(), 'terminate', correlation_id, self.reply_to, req)
+        d = self.client.invoke(provider_nsa.url(), 'terminate', correlation_id, self.reply_to, req)
         return d
 
 
@@ -93,14 +93,14 @@ class ProviderClient:
         req = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}QueryType')
         #print req
 
-        req.requesterNSA = requester_nsa.uri()
-        req.providerNSA  = provider_nsa.uri()
+        req.requesterNSA = requester_nsa.urn()
+        req.providerNSA  = provider_nsa.urn()
         req.operation = operation
         req.queryFilter.connectionId = connection_ids or []
         req.queryFilter.globalReservationId = global_reservation_ids or []
         #print req
 
-        d = self.client.invoke(provider_nsa.uri(), 'query', correlation_id, self.reply_to, req)
+        d = self.client.invoke(provider_nsa.url(), 'query', correlation_id, self.reply_to, req)
         return d
 
 
@@ -116,8 +116,8 @@ class RequesterClient:
     def _createGenericConfirmType(self, requester_nsa, provider_nsa, global_reservation_id, connection_id):
 
         conf = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}GenericConfirmedType')
-        conf.requesterNSA        = requester_nsa.uri()
-        conf.providerNSA         = provider_nsa.uri()
+        conf.requesterNSA        = requester_nsa
+        conf.providerNSA         = provider_nsa
         conf.globalReservationId = global_reservation_id
         conf.connectionId        = connection_id
         return conf
@@ -129,8 +129,8 @@ class RequesterClient:
 
         res_conf = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}ReservationConfirmedType')
 
-        res_conf.requesterNSA   = requester_nsa.uri()
-        res_conf.providerNSA    = provider_nsa.uri()
+        res_conf.requesterNSA   = requester_nsa
+        res_conf.providerNSA    = provider_nsa
 
         res_conf.reservation.globalReservationId    = global_reservation_id
         res_conf.reservation.description            = description
@@ -145,8 +145,8 @@ class RequesterClient:
         res_fail = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}GenericFailedType')
         nsi_ex   = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}NsiExceptionType')
 
-        res_fail.requesterNSA   = requester_nsa.uri()
-        res_fail.providerNSA    = provider_nsa.uri()
+        res_fail.requesterNSA   = requester_nsa
+        res_fail.providerNSA    = provider_nsa
 
         res_fail.globalReservationId    = global_reservation_id
         res_fail.connectionId           = connection_id
@@ -190,8 +190,8 @@ class RequesterClient:
     def queryConfirmed(self, requester_uri, correlation_id, requester_nsa, provider_nsa, operation, connections):
 
         res = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}QueryConfirmedType')
-        res.requesterNSA = requester_nsa.uri()
-        res.providerNSA  = provider_nsa.uri()
+        res.requesterNSA = requester_nsa
+        res.providerNSA  = provider_nsa
 
         if operation == "Summary":
             qsrs = []
@@ -203,8 +203,8 @@ class RequesterClient:
                 qsr.connectionId        = conn.connection_id
                 qsr.connectionState     = conn.state()
 
-                qsr.path.sourceSTP.stpId    = conn.source_stp.uri()
-                qsr.path.destSTP.stpId      = conn.dest_stp.uri()
+                qsr.path.sourceSTP.stpId    = conn.source_stp.urn()
+                qsr.path.destSTP.stpId      = conn.dest_stp.urn()
 
                 qsrs.append(qsr)
 

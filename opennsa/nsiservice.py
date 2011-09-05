@@ -38,7 +38,7 @@ class NSIService:
 
     def getConnection(self, requester_nsa, connection_id):
 
-        conn = self.connections.get(requester_nsa.address, {}).get(connection_id, None)
+        conn = self.connections.get(requester_nsa, {}).get(connection_id, None)
         if conn is None:
             raise error.NoSuchConnectionError('No connection with id %s for NSA with address %s' % (connection_id, requester_nsa.address))
         else:
@@ -69,9 +69,7 @@ class NSIService:
 
         # --
 
-        nsa_identity = requester_nsa.address
-
-        if connection_id in self.connections.get(nsa_identity, {}):
+        if connection_id in self.connections.get(requester_nsa, {}):
             raise error.ReserveError('Reservation with connection id %s already exists' % connection_id)
 
         source_stp = service_parameters.source_stp
@@ -79,7 +77,7 @@ class NSIService:
 
         conn = connection.Connection(requester_nsa, connection_id, source_stp, dest_stp, global_reservation_id, description)
 
-        self.connections.setdefault(nsa_identity, {})[conn.connection_id] = conn
+        self.connections.setdefault(requester_nsa, {})[conn.connection_id] = conn
 
         # figure out nature of request
 
@@ -150,7 +148,7 @@ class NSIService:
             return err
 
         # now reserve connections needed to create path
-        d = conn.reservation(service_parameters, nsa_identity)
+        d = conn.reservation(service_parameters, requester_nsa)
         d.addCallbacks(logReservation, logError)
         return d
 
@@ -191,7 +189,7 @@ class NSIService:
 
         conns = []
 
-        nsa_connections = self.connections.get(requester_nsa.uri(), {})
+        nsa_connections = self.connections.get(requester_nsa, {})
         for conn in nsa_connections.values():
             if conn.connection_id in connection_ids or conn.global_reservation_id in global_reservation_ids:
                 conns.append(conn)
