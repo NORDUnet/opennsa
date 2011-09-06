@@ -34,7 +34,7 @@ class _Connection:
         self.source_port = source_port
         self.dest_port  = dest_port
         self.start_time = start_time
-        self.end_time   = start_time
+        self.end_time   = end_time
         self.state      = RESERVED
         self.auto_provision_deferred = None
 
