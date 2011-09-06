@@ -148,11 +148,16 @@ class DUDNSIBackend:
             raise nsaerror.ReleaseProvisionError('No such connection (%s)' % conn_id)
 
         if conn.state not in (AUTO_PROVISION, PROVISIONED):
-            raise nsaerror.ProvisionError('Cannot provision connection in state %s' % conn.state)
+            raise nsaerror.ProvisionError('Cannot release connection in state %s' % conn.state)
+
         if conn.state == AUTO_PROVISION:
             log.msg('Cancelling auto-provision for connection %s' % conn_id, system='DUDBackend Network %s' % self.name)
             conn.auto_provision_deferred.cancel()
             conn.auto_provision_deferred = None
+        elif conn.state == PROVISIONED:
+            log.msg('Cancelling auto-release for connection %s' % conn_id, system='DUDBackend Network %s' % self.name)
+            conn.auto_release_deferred.cancel()
+            conn.auto_release_deferred = None
 
         conn.state = RESERVED
         log.msg('RELEASE. ICID: %s' % conn_id, system='DUDBackend Network %s' % self.name)
