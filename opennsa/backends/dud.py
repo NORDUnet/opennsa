@@ -9,7 +9,7 @@ import uuid
 import datetime
 
 from twisted.python import log
-from twisted.internet import defer
+from twisted.internet import reactor, defer, task
 
 from zope.interface import implements
 
@@ -22,8 +22,9 @@ ISO_DATETIME_FORMAT   = "%Y-%m-%dT%H:%M:%S:Z" # milliseconds are lacking
 
 
 # These state are internal to the NRM and cannot be shared with the NSI service layer
-RESERVED    = 'RESERVED'
-PROVISIONED = 'PROVISIONED'
+RESERVED        = 'RESERVED'
+AUTO_PROVISION  = 'AUTO_PROVISION'
+PROVISIONED     = 'PROVISIONED'
 
 
 
@@ -35,6 +36,7 @@ class _Connection:
         self.start_time = start_time
         self.end_time   = start_time
         self.state      = RESERVED
+        self.auto_provision_deferred = None
 
 
 class DUDNSIBackend:
@@ -55,7 +57,7 @@ class DUDNSIBackend:
         if res_start > res_end:
             raise nsaerror.ReserveError('Refusing to make reservation with reverse duration')
 
-        if res_start < datetime.datetime.utcnow():
+        if res_start < datetime.datetime.now():
             raise nsaerror.ReserveError('Refusing to make reservation with start time in the past')
 
         if res_start > datetime.datetime(2020, 1, 1):
@@ -89,23 +91,49 @@ class DUDNSIBackend:
         except nsaerror.ReserveError, e:
             return defer.fail(e)
 
+        print "CONN TIMES", service_parameters.start_time, service_parameters.end_time
+
         res = _Connection(source_port, dest_port, service_parameters.start_time, service_parameters.end_time)
         self.connections[conn_id] = res
         return defer.succeed(conn_id)
 
 
     def provision(self, conn_id):
-        # should do some time stuff sometime
+
+        def doProvision(conn):
+            if conn.state not in (RESERVED, AUTO_PROVISION):
+                raise nsaerror.ProvisionError('Cannot provision connection in state %s' % conn.state)
+            conn.state = PROVISIONED
+            log.msg('PROVISION. ICID: %s' % conn_id, system='DUDBackend Network %s' % self.name)
+
+        def autoProvisionFailed(err):
+            if err.check(defer.CancelledError):
+                pass # this just means that the provision was cancelled
+            else:
+                log.err(err)
+
         try:
             conn = self.connections[conn_id]
         except KeyError:
             raise nsaerror.ProvisionError('No such connection (%s)' % conn_id)
 
-        if conn.state != RESERVED:
-            raise nsaerror.ProvisionError('Cannot provision connection in state %s' % conn.state)
+        dt_now = datetime.datetime.now()
 
-        conn.state = PROVISIONED
-        log.msg('PROVISION. ICID: %s' % conn_id, system='DUDBackend Network %s' % self.name)
+        if conn.end_time <= dt_now:
+            raise nsaerror.ProvisionError('Cannot provision connection after end time (end time: %s, current time: %s).' % (conn.end_time, dt_now) )
+        elif conn.start_time > dt_now:
+            start_delta = conn.start_time - dt_now
+            start_delta_seconds = start_delta.total_seconds()
+            #call = reactor.callLater(start_delta_seconds, doProvision, conn)
+            d = task.deferLater(reactor, start_delta_seconds, doProvision, conn)
+            d.addErrback(autoProvisionFailed)
+            conn.state = AUTO_PROVISION
+            conn.auto_provision_deferred = d
+            log.msg('Connection %s scheduled for auto-provision in %i seconds ' % (conn_id, start_delta.total_seconds()), system='DUDBackend Network %s' % self.name)
+        else:
+            log.msg('Provisioning connection. Start time: %s, Current time: %s).' % (conn.start_time, dt_now), system='DUDBackend Network %s' % self.name)
+            doProvision(conn)
+
         return defer.succeed(conn_id)
 
 
@@ -115,8 +143,12 @@ class DUDNSIBackend:
         except KeyError:
             raise nsaerror.ReleaseProvisionError('No such connection (%s)' % conn_id)
 
-        if conn.state != PROVISIONED:
+        if conn.state not in (AUTO_PROVISION, PROVISIONED):
             raise nsaerror.ProvisionError('Cannot provision connection in state %s' % conn.state)
+        if conn.state == AUTO_PROVISION:
+            log.msg('Cancelling auto-provision for connection %s' % conn_id, system='DUDBackend Network %s' % self.name)
+            conn.auto_provision_deferred.cancel()
+            conn.auto_provision_deferred = None
 
         conn.state = RESERVED
         log.msg('RELEASE. ICID: %s' % conn_id, system='DUDBackend Network %s' % self.name)
