@@ -28,6 +28,13 @@ PROVISIONED     = 'PROVISIONED'
 
 
 
+def deferTaskFailed(err):
+    if err.check(defer.CancelledError):
+        pass # this just means that the task was cancelled
+    else:
+        log.err(err)
+
+
 class _Connection:
 
     def __init__(self, source_port, dest_port, start_time, end_time):
@@ -37,6 +44,8 @@ class _Connection:
         self.end_time   = end_time
         self.state      = RESERVED
         self.auto_provision_deferred = None
+        self.auto_release_deferred   = None
+
 
 
 class DUDNSIBackend:
@@ -91,8 +100,6 @@ class DUDNSIBackend:
         except nsaerror.ReserveError, e:
             return defer.fail(e)
 
-        print "CONN TIMES", service_parameters.start_time, service_parameters.end_time
-
         res = _Connection(source_port, dest_port, service_parameters.start_time, service_parameters.end_time)
         self.connections[conn_id] = res
         return defer.succeed(conn_id)
@@ -104,14 +111,12 @@ class DUDNSIBackend:
             if conn.state not in (RESERVED, AUTO_PROVISION):
                 raise nsaerror.ProvisionError('Cannot provision connection in state %s' % conn.state)
             conn.state = PROVISIONED
+            # schedule release
+            stop_delta = conn.end_time -  datetime.datetime.now()
+            stop_delta_seconds = stop_delta.total_seconds()
+            conn.auto_release_deferred = task.deferLater(reactor, stop_delta_seconds, self.releaseProvision, conn_id)
+            conn.auto_release_deferred.addErrback(deferTaskFailed)
             log.msg('PROVISION. ICID: %s' % conn_id, system='DUDBackend Network %s' % self.name)
-
-        def autoProvisionFailed(err):
-            if err.check(defer.CancelledError):
-                pass # this just means that the provision was cancelled
-            else:
-                log.err(err)
-
         try:
             conn = self.connections[conn_id]
         except KeyError:
@@ -124,11 +129,10 @@ class DUDNSIBackend:
         elif conn.start_time > dt_now:
             start_delta = conn.start_time - dt_now
             start_delta_seconds = start_delta.total_seconds()
-            #call = reactor.callLater(start_delta_seconds, doProvision, conn)
-            d = task.deferLater(reactor, start_delta_seconds, doProvision, conn)
-            d.addErrback(autoProvisionFailed)
+
+            conn.auto_provision_deferred = task.deferLater(reactor, start_delta_seconds, doProvision, conn)
+            conn.auto_provision_deferred.addErrback(deferTaskFailed)
             conn.state = AUTO_PROVISION
-            conn.auto_provision_deferred = d
             log.msg('Connection %s scheduled for auto-provision in %i seconds ' % (conn_id, start_delta.total_seconds()), system='DUDBackend Network %s' % self.name)
         else:
             log.msg('Provisioning connection. Start time: %s, Current time: %s).' % (conn.start_time, dt_now), system='DUDBackend Network %s' % self.name)
