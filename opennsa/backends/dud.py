@@ -112,8 +112,10 @@ class DUDNSIBackend:
                 raise nsaerror.ProvisionError('Cannot provision connection in state %s' % conn.state)
             conn.state = PROVISIONED
             # schedule release
-            stop_delta = conn.end_time -  datetime.datetime.now()
-            stop_delta_seconds = stop_delta.total_seconds()
+            td = conn.end_time -  datetime.datetime.now()
+            # total_seconds() is only available from python 2.7 so we use this
+            stop_delta_seconds = (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6.0
+
             conn.auto_release_deferred = task.deferLater(reactor, stop_delta_seconds, self.releaseProvision, conn_id)
             conn.auto_release_deferred.addErrback(deferTaskFailed)
             log.msg('PROVISION. ICID: %s' % conn_id, system='DUDBackend Network %s' % self.name)
@@ -127,13 +129,14 @@ class DUDNSIBackend:
         if conn.end_time <= dt_now:
             raise nsaerror.ProvisionError('Cannot provision connection after end time (end time: %s, current time: %s).' % (conn.end_time, dt_now) )
         elif conn.start_time > dt_now:
-            start_delta = conn.start_time - dt_now
-            start_delta_seconds = start_delta.total_seconds()
+            td = conn.start_time - dt_now
+            # total_seconds() is only available from python 2.7 so we use this
+            start_delta_seconds = (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6.0
 
             conn.auto_provision_deferred = task.deferLater(reactor, start_delta_seconds, doProvision, conn)
             conn.auto_provision_deferred.addErrback(deferTaskFailed)
             conn.state = AUTO_PROVISION
-            log.msg('Connection %s scheduled for auto-provision in %i seconds ' % (conn_id, start_delta.total_seconds()), system='DUDBackend Network %s' % self.name)
+            log.msg('Connection %s scheduled for auto-provision in %i seconds ' % (conn_id, start_delta_seconds), system='DUDBackend Network %s' % self.name)
         else:
             log.msg('Provisioning connection. Start time: %s, Current time: %s).' % (conn.start_time, dt_now), system='DUDBackend Network %s' % self.name)
             doProvision(conn)
