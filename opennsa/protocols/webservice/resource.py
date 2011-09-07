@@ -36,14 +36,14 @@ class SOAPResource(resource.Resource):
             request.setResponseCode(406) # Not acceptable
             return 'Invalid SOAP Action for this resource'
 
-        #log.msg('Got request with SOAP action: %s' % soap_action, system='opennsa.ConnectionServiceResource')
-
         decoder = self.soap_actions[soap_action]
         soap_data = request.content.getvalue()
 
+        log.msg('Received SOAP request. Action: %s. Length: %i' % (soap_action, len(soap_data)), system='opennsa.ConnectionServiceResource')
+
         def reply(reply_data):
             if reply_data is None or len(reply_data) == 0:
-                log.msg('None/empty reply data supplied for SOAPResource. This is probably wrong')
+                log.msg('None/empty reply data supplied for SOAPResource. This is probably wrong', system='opennsa.SOAPResource')
             request.write(reply_data)
             request.finish()
 
