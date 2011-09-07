@@ -140,7 +140,7 @@ class NSIService:
             setupSubConnection(prev_source_stp, dest_stp, conn)
 
         def logReservation(conn):
-            log.msg('Reservation succeeded for connection %s' % conn.connection_id)
+            log.msg('Reservation succeeded for connection %s' % conn.connection_id, system='opennsa.NSIService')
             return conn
 
         def logError(err):
