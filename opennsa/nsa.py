@@ -149,7 +149,7 @@ class BandwidthParameters:
 
 class ServiceParameters:
 
-    def __init__(self, start_time, end_time, source_stp, dest_stp, stps=None, directionality='unidirectional', bandwidth_params=None):
+    def __init__(self, start_time, end_time, source_stp, dest_stp, stps=None, directionality='Bidirectional', bandwidth_params=None):
 
         # should probably make path object sometime..
 
@@ -160,6 +160,7 @@ class ServiceParameters:
         self.source_stp = source_stp
         self.dest_stp   = dest_stp
         self.stps       = stps
+        assert directionality in ('Unidirectional', 'Bidirectional')
         self.directionality = directionality
 
         self.bandwidth_params = bandwidth_params or BandwidthParameters()
