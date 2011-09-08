@@ -184,10 +184,14 @@ def parseGOLETopology(topology_source):
     else:
         raise error.TopologyError('Invalid topology source')
 
+    def stripGLIFPrefix(text):
+        assert text.startswith(GLIF_PREFIX)
+        return text.split(GLIF_PREFIX)[1]
 
-    def stripGLIFPrefix(ele):
-        assert ele.startswith(GLIF_PREFIX)
-        return ele.split(GLIF_PREFIX)[1]
+    def stripURNPrefix(text):
+        URN_PREFIX = 'urn:ogf:network:'
+        assert text.startswith(URN_PREFIX)
+        return text.split(':')[-1]
 
     stps = {}
     nsas = {}
@@ -200,21 +204,21 @@ def parseGOLETopology(topology_source):
             # determine indivdual (resource) type
             se = e.getiterator(RDF_TYPE)[0]
             rt = stripGLIFPrefix(se.attrib[RDF_RESOURCE])
-            rt_name = e.attrib[RDF_ABOUT]
+            rt_name = stripURNPrefix( e.attrib[RDF_ABOUT] )
 
             if rt == 'STP':
                 connected_to = None
                 for ct in e.getiterator(GLIF_CONNECTED_TO):
-                    connected_to = ct.attrib[RDF_RESOURCE]
+                    connected_to = stripURNPrefix( ct.attrib[RDF_RESOURCE] )
                 stps[rt_name] = { 'connected_to' : connected_to }
 
             elif rt == 'NSNetwork':
                 ns_stps = []
                 for sse in e.getiterator(GLIF_HAS_STP):
-                    ns_stps.append( sse.attrib[RDF_RESOURCE] )
+                    ns_stps.append( stripURNPrefix( sse.attrib[RDF_RESOURCE] ) )
                 ns_nsa = None
                 for mb in e.getiterator(GLIF_MANAGED_BY):
-                    ns_nsa = mb.attrib[RDF_RESOURCE]
+                    ns_nsa = stripURNPrefix( mb.attrib[RDF_RESOURCE] )
                 networks[rt_name] = { 'stps': ns_stps, 'nsa' : ns_nsa }
 
             elif rt == 'NSA':
