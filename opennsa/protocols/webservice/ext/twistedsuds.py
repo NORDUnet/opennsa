@@ -142,7 +142,9 @@ class TwistedSUDSClient:
         if port:
             factory.headers['host'] = host + ':' + str(port)
 
+        factory.headers['Content-Type'] = 'text/xml' # CXF will complain if this is not set
         factory.headers['soapaction'] = soap_action
+        factory.headers['Authorization'] = 'bnNpZGVtbzpSaW9QbHVnLUZlc3QyMDExIQ==' # base64.b64encode('nsidemo:RioPlug-Fest2011!')
 
         if scheme == 'https':
             raise NotImplementedError('https currently not supported')
