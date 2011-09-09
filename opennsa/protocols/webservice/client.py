@@ -136,7 +136,7 @@ class RequesterClient:
         res_conf.reservation.globalReservationId    = global_reservation_id
         res_conf.reservation.description            = description
         res_conf.reservation.connectionId           = connection_id
-        res_conf.reservation.connectionState        = 'Reserved' # this is always the case here, not sure why it needs to be in proto
+        #res_conf.reservation.connectionState        = 'Reserved' # not sure why this doesn't work
 
         d = self.client.invoke(requester_uri, 'reservationConfirmed', correlation_id, res_conf)
         return d
