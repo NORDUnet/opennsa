@@ -146,7 +146,7 @@ class DUDNSIBackend:
 
     def releaseProvision(self, conn_id):
         try:
-            conn = self.connections.pop(conn_id)
+            conn = self.connections[conn_id]
         except KeyError:
             raise nsaerror.ReleaseProvisionError('No such connection (%s)' % conn_id)
 
