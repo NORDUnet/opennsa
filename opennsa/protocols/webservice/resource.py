@@ -44,6 +44,7 @@ class SOAPResource(resource.Resource):
         def reply(reply_data):
             if reply_data is None or len(reply_data) == 0:
                 log.msg('None/empty reply data supplied for SOAPResource. This is probably wrong', system='opennsa.SOAPResource')
+            request.setHeader('Content-Type', 'text/xml') # Keeps some SOAP implementations happy
             request.write(reply_data)
             request.finish()
 
