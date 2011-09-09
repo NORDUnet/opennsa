@@ -138,6 +138,13 @@ class RequesterClient:
         res_conf.reservation.connectionId           = connection_id
         #res_conf.reservation.connectionState        = 'Reserved' # not sure why this doesn't work
 
+        res_conf.reservation.serviceParameters.schedule.startTime     = service_parameters.start_time.isoformat()
+        res_conf.reservation.serviceParameters.schedule.endTime       = service_parameters.end_time.isoformat()
+
+        res_conf.reservation.path.directionality  = service_parameters.directionality
+        res_conf.reservation.path.sourceSTP.stpId = service_parameters.source_stp.urn()
+        res_conf.reservation.path.destSTP.stpId   = service_parameters.dest_stp.urn()
+
         d = self.client.invoke(requester_uri, 'reservationConfirmed', correlation_id, res_conf)
         return d
 
