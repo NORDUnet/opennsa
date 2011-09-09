@@ -50,7 +50,7 @@ class Requester:
         #print "TRIGGER CALL", self.calls
         key = (provider_nsa, correlation_id)
         if not key in self.calls:
-            print log.msg('Got callback for unknown call. Action: %s. NSA: %s' % (action, provider_nsa), system='opennsa.Requester')
+            log.msg('Got callback for unknown call. Action: %s. NSA: %s' % (action, provider_nsa), system='opennsa.Requester')
 
         acd = self.calls.pop( (provider_nsa, correlation_id) )
         ract, d, call = acd
