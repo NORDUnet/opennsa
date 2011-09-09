@@ -46,6 +46,26 @@ class ProviderClient:
         res_req.requesterNSA                = requester_nsa.urn()
         res_req.providerNSA                 = provider_nsa.urn()
 
+        #<sessionSecurityAttr>
+        #    <ns5:Attribute NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:basic" Name="globalUserName">
+        #        <ns5:AttributeValue xsi:type="xs:string" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">jrv@internet2.edu</ns5:AttributeValue>
+        #    </ns5:Attribute>
+        #    <ns5:Attribute NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:basic" Name="role">
+        #        <ns5:AttributeValue xsi:type="xs:string" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">AuthorizedUser</ns5:AttributeValue>
+        #    </ns5:Attribute>
+        #</sessionSecurityAttr>
+
+        # OK, giving up for now, SUDS refuses to put the right namespace on this
+        #user_attr = self.client.createType('{urn:oasis:names:tc:SAML:2.0:assertion}Attribute')
+        #user_attr._Name = 'globalUserName'
+        #user_attr._NameFormat = 'urn:oasis:names:tc:SAML:2.0:attrname-format:basic'
+        #user_attr.AttributeValue = ['jrv@internet2.edu']
+        #role_attr = self.client.createType('{urn:oasis:names:tc:SAML:2.0:assertion}Attribute')
+        #role_attr._Name = 'role'
+        #role_attr._NameFormat = 'urn:oasis:names:tc:SAML:2.0:attrname-format:basic'
+        #role_attr.AttributeValue = ['AuthorizedUser']
+        #res_req.sessionSecurityAttr['Attribute'] = [ user_attr, role_attr ]
+
         res_req.reservation.globalReservationId     = global_reservation_id
         res_req.reservation.description             = description
         res_req.reservation.connectionId            = connection_id
