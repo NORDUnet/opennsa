@@ -14,19 +14,19 @@ from opennsa import error, nsa
 
 
 # connection states
-INITIAL             = 'INITIAL'
+INITIAL             = 'Initial'
 
-RESERVING           = 'RESERVING'
-RESERVED            = 'RESERVED'
+RESERVING           = 'Reserving'
+RESERVED            = 'Reserved'
 
-AUTO_PROVISION      = 'AUTO_PROVISION'
-PROVISIONING        = 'PROVISIONING'
-PROVISIONED         = 'PROVISIONED'
+AUTO_PROVISION      = 'Auto-Provision'
+PROVISIONING        = 'Provisioning'
+PROVISIONED         = 'Provisioned'
 
-RELEASING           = 'RELEASING'
+RELEASING           = 'Releasing'
 
-TERMINATING         = 'TERMINATING'
-TERMINATED          = 'TERMINATED'
+TERMINATING         = 'Terminateing' # John can't spell
+TERMINATED          = 'Terminated'
 
 # allowed state transitions
 TRANSITIONS = {
