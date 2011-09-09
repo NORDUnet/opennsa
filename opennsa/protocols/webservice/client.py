@@ -141,6 +141,10 @@ class RequesterClient:
         res_conf.reservation.serviceParameters.schedule.startTime     = service_parameters.start_time.isoformat()
         res_conf.reservation.serviceParameters.schedule.endTime       = service_parameters.end_time.isoformat()
 
+        res_conf.reservation.serviceParameters.bandwidth.desired      = service_parameters.bandwidth_params.desired
+        res_conf.reservation.serviceParameters.bandwidth.minimum      = service_parameters.bandwidth_params.minimum
+        res_conf.reservation.serviceParameters.bandwidth.maximum      = service_parameters.bandwidth_params.maximum
+
         res_conf.reservation.path.directionality  = service_parameters.directionality
         res_conf.reservation.path.sourceSTP.stpId = service_parameters.source_stp.urn()
         res_conf.reservation.path.destSTP.stpId   = service_parameters.dest_stp.urn()
