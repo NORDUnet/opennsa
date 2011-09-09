@@ -165,8 +165,7 @@ class RequesterClient:
         res_fail.connectionId           = connection_id
         res_fail.connectionState        = connection_state
 
-        nsi_ex.messageId = 1
-        #nsi_ex.text = err.getErrorMessage()
+        nsi_ex.messageId = 'OPENNSA_FAILURE'
         nsi_ex.text = error_msg
         res_fail.ServiceException = nsi_ex
 
