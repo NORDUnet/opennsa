@@ -69,7 +69,7 @@ def createClient(port):
         service_url = 'http://localhost:%i/NSI/services/ConnectionService' % port
 
         provider_client     = wsclient.ProviderClient(service_url)
-        requester = wsrequester.Requester(provider_client, callback_timeout=10)
+        requester = wsrequester.Requester(provider_client, callback_timeout=20)
         requester_service   = wsservice.RequesterService(resource, requester)
 
         return requester, None, site
