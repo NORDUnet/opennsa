@@ -164,7 +164,6 @@ class DUDNSIBackend:
 
         conn.state = RESERVED
         log.msg('RELEASE. ICID: %s' % conn_id, system='DUDBackend Network %s' % self.name)
-        self.connections[conn_id] = {} # service params can go in dict when needed
         return defer.succeed(conn_id)
 
 
