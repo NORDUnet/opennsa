@@ -223,7 +223,10 @@ class RequesterService:
         global_reservation_id       = str(res.globalReservationId)
         connection_id               = str(res.connectionId)
         connection_state            = str(res.connectionState)
-        error_message               = str(res.ServiceException.text)
+        if 'ServiceException' in res:
+            error_message           = str(res.ServiceException.text)
+        else:
+            error_message           = 'No ServiceException returned'
 
         self.requester.reservationFailed(correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_message)
 
