@@ -18,28 +18,26 @@ INITIAL             = 'INITIAL'
 
 RESERVING           = 'RESERVING'
 RESERVED            = 'RESERVED'
-#RESERVE_FAILED      = 'RESERVE_FAILED'
 
+AUTO_PROVISION      = 'AUTO_PROVISION'
 PROVISIONING        = 'PROVISIONING'
 PROVISIONED         = 'PROVISIONED'
-#PROVISION_FAILED    = 'PROVISION_FAILED'
 
 RELEASING           = 'RELEASING'
-#RELEASE_FAILED      = 'RELEASE_FAILED'
 
 TERMINATING         = 'TERMINATING'
 TERMINATED          = 'TERMINATED'
-#CANCEL_FAILED       = 'CANCEL_FAILED'
 
 # allowed state transitions
 TRANSITIONS = {
-    INITIAL         : [ RESERVING                       ],
-    RESERVING       : [ RESERVED,     TERMINATED        ],
-    RESERVED        : [ PROVISIONING, TERMINATING       ],
-    PROVISIONING    : [ PROVISIONED,  TERMINATED        ],
-    PROVISIONED     : [ RELEASING                       ],
-    RELEASING       : [ RESERVED,     TERMINATED        ],
-    TERMINATING     : [ TERMINATED,                     ],
+    INITIAL         : [ RESERVING                                   ],
+    RESERVING       : [ RESERVED,       TERMINATED                  ],
+    RESERVED        : [ AUTO_PROVISION, PROVISIONING, TERMINATING   ],
+    AUTO_PROVISION  : [ PROVISIONING,   TERMINATED                  ],
+    PROVISIONING    : [ PROVISIONED,    TERMINATED                  ],
+    PROVISIONED     : [ RELEASING                                   ],
+    RELEASING       : [ RESERVED,       TERMINATED                  ],
+    TERMINATING     : [ TERMINATED,                                 ],
     TERMINATED      : [ ]
 }
 
