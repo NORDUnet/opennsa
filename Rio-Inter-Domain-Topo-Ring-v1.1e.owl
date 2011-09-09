@@ -320,7 +320,7 @@
     <owl:NamedIndividual rdf:about="urn:ogf:network:nsa:Curacao-AutoBAHN">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#NSA"/>
         <managing rdf:resource="urn:ogf:network:NSnetwork:Curacao" />
-        <adminContact rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1.	AutoBAHN  (GEANT) 1.1.	Implementation Name: AutoBAHN  1.2.	Project manager for the development effort:  name: Radek Krztwania  email: radek.krzywania@man.poznan.pl  skype: Radoslaw.krzywania 1.3.	Key software engineer:  name: Michal Balcerkiewicz  email: michalb@man.poznan.pl  skype= michalb.psnc</adminContact>
+        <adminContact rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1.	AutoBAHN  (GEANT) 1.1.	Implementation Name: AutoBAHN  1.2.	Project manager for the development effort:  name: Radek Krzywania  email: radek.krzywania@man.poznan.pl  skype: Radoslaw.krzywania 1.3.	Key software engineer:  name: Michal Balcerkiewicz  email: michalb@man.poznan.pl  skype= michalb.psnc</adminContact>
         <csProviderEndpoint rdf:datatype="http://www.w3.org/2001/XMLSchema#string">http://194.132.53.174:9080/nsi/ConnectionProviderPort</csProviderEndpoint>
         <rdfs:comment xml:lang="en">Position : [3138,173]</rdfs:comment>
     </owl:NamedIndividual>
@@ -425,7 +425,7 @@
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:Grenada:G4">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [3145,2045]</rdfs:comment>
-        <connectedTo rdf:resource="J1"/>
+        <connectedTo rdf:resource="urn:ogf:network:stp:Jamaica:J1"/>
     </owl:NamedIndividual>
 
 
@@ -462,7 +462,7 @@
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:Jamaica:J1">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [2401,2153]</rdfs:comment>
-        <connectedTo rdf:resource="G4"/>
+        <connectedTo rdf:resource="urn:ogf:network:stp:Grenada:G4"/>
     </owl:NamedIndividual>
 
 

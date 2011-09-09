@@ -6,7 +6,7 @@ from opennsa import setup
 from opennsa.backends import dud
 
 
-TOPOFILE = 'Rio-Inter-Domain-Topo-Ring-v1.1d-fixed.owl'
+TOPOFILE = 'Rio-Inter-Domain-Topo-Ring-v1.1e.owl'
 
 NETWORK_NAME = 'Aruba'
 PORT = 9080
