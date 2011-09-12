@@ -87,7 +87,8 @@ class SubConnection(ConnectionState):
             self.switchState(TERMINATED)
             return err
 
-        sub_service_params  = nsa.ServiceParameters(service_parameters.start_time, service_parameters.end_time, self.source_stp, self.dest_stp)
+        sub_service_params  = nsa.ServiceParameters(service_parameters.start_time, service_parameters.end_time, self.source_stp, self.dest_stp,
+                                                    directionality=service_parameters.directionality, bandwidth_params=service_parameters.bandwidth_params)
         self.switchState(RESERVING)
         d = self._proxy.reservation(self.network, None, self.parent_connection.global_reservation_id, self.parent_connection.description, self.connection_id, sub_service_params)
         d.addCallbacks(reservationDone, reservationFailed)
