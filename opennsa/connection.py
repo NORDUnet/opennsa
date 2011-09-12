@@ -80,7 +80,7 @@ class SubConnection(ConnectionState):
         assert self._proxy is not None, 'Proxy not set for SubConnection, cannot invoke method'
 
         def reservationDone(int_res_id):
-            log.msg('Sub-connection for network %s (%s -> %s) reserved' % (self.network, self.source_stp.endpoint, self.dest_stp.endpoint))
+            log.msg('Sub-connection for network %s (%s -> %s) reserved' % (self.network, self.source_stp.endpoint, self.dest_stp.endpoint), system='opennsa.Connection')
             self.switchState(RESERVED)
             return self
 
