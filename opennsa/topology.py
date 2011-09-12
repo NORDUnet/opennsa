@@ -82,8 +82,11 @@ class Topology:
             routes = self.filterBandwidth(routes, bandwidth_params)
 
         paths = []
-        for sdps in routes:
-            paths.append( nsa.Path(source_stp, dest_stp, sdps ) )
+        if routes == []:
+            paths.append( nsa.Path(source_stp, dest_stp, []) )
+        else:
+            for sdps in routes:
+                paths.append( nsa.Path(source_stp, dest_stp, sdps ) )
 
         return paths
 
