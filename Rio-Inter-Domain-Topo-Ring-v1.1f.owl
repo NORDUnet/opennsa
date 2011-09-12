@@ -602,7 +602,7 @@
     <owl:NamedIndividual rdf:about="urn:ogf:network:nsa:Martinique-DynamicKL">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#NSA"/>
         <managing rdf:resource="urn:ogf:network:NSnetwork:Martinique" />
-        <csProviderEndpoint rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></csProviderEndpoint>
+        <csProviderEndpoint rdf:datatype="http://www.w3.org/2001/XMLSchema#string">http://220.69.219.228:8010/nsi/ConnectionServiceProvider</csProviderEndpoint>
         <adminContact rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2.	DynamicKL  (KISTI) 2.1.	Implementation Name: dynamicKL 2.2.	Project manager for the development effort.  name: Jonguk Kong  email: kju@kisti.re.kr phone:  82-10-3444-7418 skype: jonguk 2.3.	Key software engineer name/email/mobile/skype. name: Youngwook Cha email: ywcha@andong.ac.kr phone:  82-10-2456-3237 skype: ngnlab414  name: Jeonghoon Moon email: otello90@gmail.com phone:  82-10-2534-67564 skype: otello90</adminContact>
         <rdfs:comment xml:lang="en">Position : [1063,1394]</rdfs:comment>
     </owl:NamedIndividual>
