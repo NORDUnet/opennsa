@@ -5,7 +5,7 @@ Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2011)
 """
 
-import random
+import uuid
 
 from zope.interface import implements
 
@@ -59,7 +59,7 @@ class NSIService:
                 assert conn.local_connection is None
                 conn.local_connection = local_conn
             else:
-                sub_conn_id = 'int-ccid' + ''.join( [ str(int(random.random() * 10)) for _ in range(4) ] )
+                sub_conn_id = 'urn:uuid:' + str(uuid.uuid1())
                 # FIXME should be setup with NSA context, not network
                 sub_conn = connection.SubConnection(conn, sub_conn_id, source_stp.network, source_stp, dest_stp, proxy=self.proxy)
                 conn.sub_connections.append(sub_conn)
