@@ -396,7 +396,7 @@
     <owl:NamedIndividual rdf:about="urn:ogf:network:nsa:Dominica-OSCARS">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#NSA"/>
         <managing rdf:resource="urn:ogf:network:NSnetwork:Dominica" />
-        <csProviderEndpoint rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></csProviderEndpoint>
+        <csProviderEndpoint rdf:datatype="http://www.w3.org/2001/XMLSchema#string">http://jupiter.es.net:8088/ConnectionProvider</csProviderEndpoint>
         <adminContact rdf:datatype="http://www.w3.org/2001/XMLSchema#string">7.	OSCARS (ESnet) 7.1.	Implementation name: OSCARS 7.2.	Project Manager: Name:  Inder Monga Email: imonga@es.net 7.3.	Software development engineer: Name: Evangelos Chaniotakis Email:  haniotak@es.net</adminContact>
         <rdfs:comment xml:lang="en">Position : [3099,915]</rdfs:comment>
     </owl:NamedIndividual>
