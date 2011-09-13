@@ -157,6 +157,7 @@ class TwistedSUDSClient:
 
     def _parseResponse(self, response, factory, method):
 
+        log.msg('Received SOAP response')
         if factory.status == '200':
             _, result = method.binding.input.get_reply(method, response)
             return result
