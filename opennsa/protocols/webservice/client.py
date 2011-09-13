@@ -238,6 +238,13 @@ class RequesterClient:
                 qsr.path.sourceSTP.stpId    = conn.source_stp.urn()
                 qsr.path.destSTP.stpId      = conn.dest_stp.urn()
 
+                qsr.serviceParameters.schedule.startTime = conn.service_parameters.start_time
+                qsr.serviceParameters.schedule.endTime   = conn.service_parameters.end_time
+
+                qsr.serviceParameters.bandwidth.desired  = conn.service_parameters.bandwidth_params.desired
+                qsr.serviceParameters.bandwidth.minimum  = conn.service_parameters.bandwidth_params.minimum
+                qsr.serviceParameters.bandwidth.maximum  = conn.service_parameters.bandwidth_params.maximum
+
                 qsrs.append(qsr)
 
             res.reservationSummary = qsrs

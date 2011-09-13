@@ -257,6 +257,7 @@ class Connection(ConnectionState):
         self.description                = description
         self.local_connection           = local_connection
         self.sub_connections            = sub_connections or []
+        self.service_parameters         = None
 
 
     def hasLocalConnection(self):
@@ -287,6 +288,7 @@ class Connection(ConnectionState):
                     error_msg = 'Reservation failed for all local/sub connections (%s)' % failure_msg
                 return defer.fail( error.ReserveError(error_msg) )
 
+        self.service_parameters = service_parameters
         self.switchState(RESERVING)
 
         defs = []
