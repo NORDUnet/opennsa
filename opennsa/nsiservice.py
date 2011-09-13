@@ -69,8 +69,10 @@ class NSIService:
 
         # --
 
+        log.msg('Connection %s. Reservation request from %s.' % (connection_id, requester_nsa), system='opennsa.NSIService')
+
         if connection_id in self.connections.get(requester_nsa, {}):
-            raise error.ReserveError('Reservation with connection id %s already exists' % connection_id)
+            raise error.ReserveError('Connection with id %s already exists' % connection_id)
 
         source_stp = service_parameters.source_stp
         dest_stp   = service_parameters.dest_stp
@@ -84,7 +86,7 @@ class NSIService:
         path_info = ( connection_id, source_stp.network, source_stp.endpoint, dest_stp.network, dest_stp.endpoint, self.network)
 
         if source_stp.network == self.network and dest_stp.network == self.network:
-            log.msg('Reservation %s: Simple path creation: %s:%s -> %s:%s (%s)' % path_info, system='opennsa.NSIService')
+            log.msg('Connection %s: Simple path creation: %s:%s -> %s:%s (%s)' % path_info, system='opennsa.NSIService')
 
             setupSubConnection(source_stp, dest_stp, conn)
 
@@ -121,7 +123,7 @@ class NSIService:
         # create the connection in tree/fanout style
         else:
             # log about creation and the connection type
-            log.msg('Reservation %s: Aggregate path creation: %s:%s -> %s:%s (%s)' % path_info, system='opennsa.NSIService')
+            log.msg('Connection %s: Aggregate path creation: %s:%s -> %s:%s (%s)' % path_info, system='opennsa.NSIService')
 
             # making the connection is the same for all though :-)
 
@@ -140,7 +142,7 @@ class NSIService:
             setupSubConnection(prev_source_stp, dest_stp, conn)
 
         def logReservation(conn):
-            log.msg('Reservation succeeded for connection %s' % conn.connection_id, system='opennsa.NSIService')
+            log.msg('Connection %s: Reservation succeeded' % conn.connection_id, system='opennsa.NSIService')
             return conn
 
         def logError(err):

@@ -103,11 +103,12 @@ class TwistedSUDSClient:
         soap_envelope = soap_envelope.str().encode('utf-8')
         soap_action = str(method.soap.action)
 
-        log.msg('SOAP Dispatch: URL: %s. Action: %s. Length %s' % (url, soap_action.split('/')[-1], len(soap_envelope)), system='TwistedSUDS')
+        short_action = soap_action[1:-1].split('/')[-1]
+        log.msg('SOAP Dispatch: URL: %s. Action: %s. Length %s' % (url, short_action, len(soap_envelope)), system='TwistedSUDS')
 
         # dispatch
         d, factory = self._httpRequest(url, soap_action, soap_envelope)
-        d.addCallback(self._parseResponse, factory, method)
+        d.addCallback(self._parseResponse, factory, method, short_action)
         d.addErrback(invokeError, url, soap_action)
         return d
 
@@ -155,9 +156,9 @@ class TwistedSUDSClient:
         return factory.deferred, factory
 
 
-    def _parseResponse(self, response, factory, method):
+    def _parseResponse(self, response, factory, method, short_action):
 
-        log.msg('Received SOAP response')
+        log.msg('Received SOAP response for %s' % short_action)
         if factory.status == '200':
             _, result = method.binding.input.get_reply(method, response)
             return result
