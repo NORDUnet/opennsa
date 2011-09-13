@@ -69,6 +69,7 @@ class NSIService:
 
         # --
 
+        log.msg('', system='opennsa')
         log.msg('Connection %s. Reservation request from %s.' % (connection_id, requester_nsa), system='opennsa.NSIService')
 
         if connection_id in self.connections.get(requester_nsa, {}):
