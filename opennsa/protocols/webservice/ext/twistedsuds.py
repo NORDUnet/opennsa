@@ -103,7 +103,7 @@ class TwistedSUDSClient:
         soap_envelope = soap_envelope.str().encode('utf-8')
         soap_action = str(method.soap.action)
 
-        log.msg('SOAP Method dispatch: URL: %s. Action: %s. Length %s' % (url, soap_action.split('/')[-1], len(soap_envelope)), system='TwistedSUDS')
+        log.msg('SOAP Dispatch: URL: %s. Action: %s. Length %s' % (url, soap_action.split('/')[-1], len(soap_envelope)), system='TwistedSUDS')
 
         # dispatch
         d, factory = self._httpRequest(url, soap_action, soap_envelope)
