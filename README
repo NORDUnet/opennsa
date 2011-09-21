@@ -17,6 +17,12 @@ final.
 Requirements:
  SUDS
   - Important, needs the patch here: https://fedorahosted.org/suds/ticket/292
+    - Actually that patch is broken...
+
+  - SUDS has issues with namespaces and a DST bug as well. See the following bugs:
+    https://fedorahosted.org/suds/ticket/219
+    https://fedorahosted.org/suds/ticket/292
+    https://fedorahosted.org/suds/ticket/401
 
 
 License: 3-clause BSD. See LICENSE for more details.
