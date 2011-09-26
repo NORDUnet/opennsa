@@ -19,7 +19,7 @@ proxy = dud.DUDNSIBackend(NETWORK_NAME)
 factory = setup.createService(NETWORK_NAME, open(TOPOFILE), proxy, PORT)
 
 application = service.Application("OpenNSA")
-application.setComponent(ILogObserver, logging.DebugLogObserver(sys.stdout, False).emit)
+application.setComponent(ILogObserver, logging.DebugLogObserver(sys.stdout, True).emit)
 
 internet.TCPServer(PORT, factory, interface='localhost').setServiceParent(application)
 

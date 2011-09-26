@@ -1,8 +1,9 @@
 #!/usr/bin/env python # syntax highlightning
 
+from twisted.python.log import ILogObserver
 from twisted.application import internet, service
 
-from opennsa import setup
+from opennsa import setup, logging
 from opennsa.backends import dud
 
 
@@ -16,5 +17,7 @@ proxy = dud.DUDNSIBackend(NETWORK_NAME)
 factory = setup.createService(NETWORK_NAME, open(TOPOFILE), proxy, PORT)
 
 application = service.Application("OpenNSA")
+application.setComponent(ILogObserver, logging.DebugLogObserver(sys.stdout, True).emit)
+
 internet.TCPServer(PORT, factory).setServiceParent(application)
 
