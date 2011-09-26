@@ -35,7 +35,7 @@ TRANSITIONS = {
     RESERVED        : [ AUTO_PROVISION, PROVISIONING, TERMINATING   ],
     AUTO_PROVISION  : [ PROVISIONING,   TERMINATED                  ],
     PROVISIONING    : [ PROVISIONED,    TERMINATED                  ],
-    PROVISIONED     : [ RELEASING                                   ],
+    PROVISIONED     : [ RELEASING,      TERMINATING                 ],
     RELEASING       : [ RESERVED,       TERMINATED                  ],
     TERMINATING     : [ TERMINATED,                                 ],
     TERMINATED      : [ ]

@@ -47,6 +47,18 @@ class _Connection:
         self.auto_release_deferred   = None
 
 
+    def deSchedule(self, conn_id, network_name=''):
+
+        if self.state == AUTO_PROVISION:
+            log.msg('Cancelling auto-provision for connection %s' % conn_id, system='DUDBackend Network %s' % network_name)
+            self.auto_provision_deferred.cancel()
+            self.auto_provision_deferred = None
+        elif self.state == PROVISIONED:
+            log.msg('Cancelling auto-release for connection %s' % conn_id, system='DUDBackend Network %s' % network_name)
+            self.auto_release_deferred.cancel()
+            self.auto_release_deferred = None
+
+
 
 class DUDNSIBackend:
 
@@ -153,15 +165,7 @@ class DUDNSIBackend:
         if conn.state not in (AUTO_PROVISION, PROVISIONED):
             raise nsaerror.ProvisionError('Cannot release connection in state %s' % conn.state)
 
-        if conn.state == AUTO_PROVISION:
-            log.msg('Cancelling auto-provision for connection %s' % conn_id, system='DUDBackend Network %s' % self.name)
-            conn.auto_provision_deferred.cancel()
-            conn.auto_provision_deferred = None
-        elif conn.state == PROVISIONED:
-            log.msg('Cancelling auto-release for connection %s' % conn_id, system='DUDBackend Network %s' % self.name)
-            conn.auto_release_deferred.cancel()
-            conn.auto_release_deferred = None
-
+        conn.deSchedule(conn_id, self.name)
         conn.state = RESERVED
         log.msg('RELEASE. ICID: %s' % conn_id, system='DUDBackend Network %s' % self.name)
         return defer.succeed(conn_id)
@@ -169,11 +173,13 @@ class DUDNSIBackend:
 
     def cancelReservation(self, conn_id):
         try:
-            self.connections.pop(conn_id)
-            log.msg('CANCEL. ICID : %s' % (conn_id), system='DUDBackend Network %s' % self.name)
-            return defer.succeed(None)
+            conn = self.connections.pop(conn_id)
         except KeyError:
             raise nsaerror.CancelReservationError('No such reservation (%s)' % conn_id)
+
+        conn.deSchedule(conn_id, self.name)
+        log.msg('CANCEL. ICID : %s' % (conn_id), system='DUDBackend Network %s' % self.name)
+        return defer.succeed(None)
 
 
     def query(self, query_filter):
