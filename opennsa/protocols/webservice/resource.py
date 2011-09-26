@@ -39,7 +39,7 @@ class SOAPResource(resource.Resource):
         decoder = self.soap_actions[soap_action]
         soap_data = request.content.getvalue()
 
-        log.msg('Received SOAP request. Action: %s. Length: %i' % (soap_action, len(soap_data)), system='opennsa.ConnectionServiceResource')
+        log.msg('Received SOAP request. Action: %s. Length: %i' % (soap_action, len(soap_data)), system='opennsa.ConnectionServiceResource', debug=True)
 
         def reply(reply_data):
             if reply_data is None or len(reply_data) == 0:
