@@ -1,5 +1,7 @@
 #!/usr/bin/env python # syntax highlightning
 
+import sys
+
 from twisted.python.log import ILogObserver
 from twisted.application import internet, service
 
