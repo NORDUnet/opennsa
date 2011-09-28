@@ -5,6 +5,8 @@ Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2011)
 """
 
+import datetime
+
 from twisted.python import log
 
 from opennsa import nsa
@@ -75,7 +77,20 @@ class ProviderService:
         # how to check for existence of optional parameters easily  - in / hasattr both works
         bw = sp.bandwidth
         bwp = nsa.BandwidthParameters(bw.desired if 'desired' in bw else None, bw.minimum if 'minimum' in bw else None, bw.maximum if 'maximum' in bw else None)
-        service_parameters      = nsa.ServiceParameters(sp.schedule.startTime, sp.schedule.endTime, source_stp, dest_stp, bandwidth_params=bwp)
+        start_time = sp.schedule.startTime
+        end_time   = sp.schedule.endTime
+
+        if start_time.tzinfo is None:
+            log.msg('No timezone info specified in schedule start time in reservation request, assuming UTC time.')
+        st = start_time.utctimetuple()
+        start_time = datetime.datetime(st.tm_year, st.tm_mon, st.tm_mday, st.tm_hour, st.tm_min, st.tm_sec)
+
+        if end_time.tzinfo is None:
+            log.msg('No timezone info specified in schedule start time in reservation request, assuming UTC time.')
+        et = end_time.utctimetuple()
+        end_time = datetime.datetime(et.tm_year, et.tm_mon, et.tm_mday, et.tm_hour, et.tm_min, et.tm_sec)
+
+        service_parameters      = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, bandwidth_params=bwp)
 
         d = self.provider.reservation(correlation_id, reply_to, requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters)
         d.addErrback(log.err)

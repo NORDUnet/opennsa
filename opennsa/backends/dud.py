@@ -78,11 +78,11 @@ class DUDNSIBackend:
         if res_start > res_end:
             raise nsaerror.ReserveError('Refusing to make reservation with reverse duration')
 
-        if res_start < datetime.datetime.now():
+        if res_start < datetime.datetime.utcnow():
             raise nsaerror.ReserveError('Refusing to make reservation with start time in the past')
 
-        if res_start > datetime.datetime(2020, 1, 1):
-            raise nsaerror.ReserveError('Refusing to make reservation with start time after 2020')
+        if res_start > datetime.datetime(2025, 1, 1):
+            raise nsaerror.ReserveError('Refusing to make reservation with start time after 2025')
 
         # port temporal availability
         def portOverlap(res1_start_time, res1_end_time, res2_start_time, res2_end_time):
@@ -124,7 +124,7 @@ class DUDNSIBackend:
                 raise nsaerror.ProvisionError('Cannot provision connection in state %s' % conn.state)
             conn.state = PROVISIONED
             # schedule release
-            td = conn.end_time -  datetime.datetime.now()
+            td = conn.end_time -  datetime.datetime.utcnow()
             # total_seconds() is only available from python 2.7 so we use this
             stop_delta_seconds = (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6.0
 
@@ -136,7 +136,7 @@ class DUDNSIBackend:
         except KeyError:
             raise nsaerror.ProvisionError('No such connection (%s)' % conn_id)
 
-        dt_now = datetime.datetime.now()
+        dt_now = datetime.datetime.utcnow()
 
         if conn.end_time <= dt_now:
             raise nsaerror.ProvisionError('Cannot provision connection after end time (end time: %s, current time: %s).' % (conn.end_time, dt_now) )
