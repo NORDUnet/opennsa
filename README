@@ -15,17 +15,23 @@ stone, and there are probably more temporary constructions in the code than
 final.
 
 Requirements:
- SUDS
-  - Important, needs the patch here: https://fedorahosted.org/suds/ticket/292
-    - Actually that patch is broken...
 
-  - SUDS has issues with namespaces and a DST bug as well. See the following bugs:
-    https://fedorahosted.org/suds/ticket/219
-    https://fedorahosted.org/suds/ticket/292
-    https://fedorahosted.org/suds/ticket/401
+* Python 2.6 or newer (Python 3 will not work)
+
+* Twisted, http://twistedmatrix.com/trac/
+
+* SUDS,https://fedorahosted.org/suds/
+  Important: SUDS 0.4 has issues with namespaces and a DST/Timezone issues.
+  See the following bugs:
+  - https://fedorahosted.org/suds/ticket/292
+  - https://fedorahosted.org/suds/ticket/353
+  There are patches for these in the patches directory.
+
+These should be included in the package system in most recent Linux distributions.
 
 
 License: 3-clause BSD. See LICENSE for more details.
 
 Developer contact: htj <at> nordu.net
+Copyright: NORDUnet (2011)
 
