@@ -1,0 +1,13 @@
+Index: suds/xsd/sxbase.py
+===================================================================
+--- suds/xsd/sxbase.py	(revision 665)
++++ suds/xsd/sxbase.py	(working copy)
+@@ -166,6 +166,8 @@
+         @return: The schema's target namespace
+         @rtype: (I{prefix},I{URI})
+         """
++        if self.ref is not None:
++            return (prefix, self.ref[1])
+         ns = self.schema.tns
+         if ns[0] is None:
+             ns = (prefix, ns[1])
