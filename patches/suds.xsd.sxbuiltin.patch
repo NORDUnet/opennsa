@@ -1,0 +1,41 @@
+Index: suds/xsd/sxbuiltin.py
+===================================================================
+--- suds/xsd/sxbuiltin.py	(revision 694)
++++ suds/xsd/sxbuiltin.py	(working copy)
+@@ -138,7 +138,7 @@
+     def translate(self, value, topython=True):
+         if topython:
+             if isinstance(value, basestring) and len(value):
+-                return Date(value).date
++                return Date(value).value
+             else:
+                 return None
+         else:
+@@ -156,11 +156,11 @@
+     def translate(self, value, topython=True):
+         if topython:
+             if isinstance(value, basestring) and len(value):
+-                return Time(value).time
++                return Time(value).value
+             else:
+                 return None
+         else:
+-            if isinstance(value, dt.date):
++            if isinstance(value, dt.time):
+                 return str(Time(value))
+             else:
+                 return value
+@@ -174,11 +174,11 @@
+     def translate(self, value, topython=True):
+         if topython:
+             if isinstance(value, basestring) and len(value):
+-                return DateTime(value).datetime
++                return DateTime(value).value
+             else:
+                 return None
+         else:
+-            if isinstance(value, dt.date):
++            if isinstance(value, dt.datetime):
+                 return str(DateTime(value))
+             else:
+                 return value
