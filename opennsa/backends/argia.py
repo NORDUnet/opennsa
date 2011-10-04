@@ -18,10 +18,7 @@ from xml.etree import ElementTree as ET
 from zope.interface import implements
 
 from twisted.python import log
-#from twisted.internet import reactor, defer, task
-from twisted.internet import reactor, protocol, defer
-
-
+from twisted.internet import reactor, protocol, defer #, task
 
 from opennsa import interface as nsainterface
 from opennsa import error as nsaerror
@@ -284,7 +281,6 @@ class ArgiaBackend:
 #            conn.auto_release_deferred = task.deferLater(reactor, stop_delta_seconds, self.releaseProvision, conn_id)
 #            conn.auto_release_deferred.addErrback(deferTaskFailed)
             log.msg('PROVISION. ICID: %s' % conn_id, system='Argia')
-            print "PROVISION CALLBACK"
             d.callback(conn_id)
 
         def provisionFailed(fdata):
@@ -303,6 +299,7 @@ class ArgiaBackend:
 
 
     def releaseProvision(self, conn_id):
+
         try:
             conn = self.connections[conn_id]
         except KeyError:
