@@ -168,12 +168,13 @@ class NSIService:
 
     def provision(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
+        log.msg('', system='opennsa')
         conn = self.getConnection(requester_nsa, connection_id)
         # security check here
 
         d = conn.provision()
-        d.addErrback(lambda e : log.err(e))
-        return defer.succeed(conn.connection_id)
+        d.addCallbacks(lambda conn : conn.connection_id, lambda e : log.err(e))
+        return d
 
 
     def release(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
