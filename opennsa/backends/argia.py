@@ -42,7 +42,9 @@ QUERY_COMMAND     = os.path.join(COMMAND_DIR, 'query')
 
 # These state are internal to the NRM and cannot be shared with the NSI service layer
 RESERVED        = 'RESERVED'
+SCHEDULED       = 'SCHEDULED'
 AUTO_PROVISION  = 'AUTO_PROVISION'
+PROVISIONING    = 'PROVISIONING'
 PROVISIONED     = 'PROVISIONED'
 
 
@@ -85,7 +87,7 @@ class _Circuit:
 
 class ArgiaProcessProtocol(protocol.ProcessProtocol):
 
-    def __init__(self, initial_payload):
+    def __init__(self, initial_payload=None):
         self.initial_payload = initial_payload
         self.d = defer.Deferred()
 
@@ -93,7 +95,8 @@ class ArgiaProcessProtocol(protocol.ProcessProtocol):
         self.stderr = StringIO.StringIO()
 
     def connectionMade(self):
-        self.transport.write(self.initial_payload)
+        if self.initial_payload is not None:
+            self.transport.write(self.initial_payload)
         self.transport.closeStdin()
 
     def outReceived(self, data):
@@ -104,7 +107,7 @@ class ArgiaProcessProtocol(protocol.ProcessProtocol):
         #print "ERR RECV:", data
         self.stderr.write(data)
 
-    def processExited(self, status):
+    def processEnded(self, status):
         exit_code = status.value.exitCode
         #print "PROCESS EXITED:", exit_code
         self.stdout.seek(0)
@@ -206,6 +209,7 @@ class ArgiaBackend:
 
         def reservationConfirmed(fdata):
             log.msg('Received reservation reply from Argia. ICID: %s, Ports: %s -> %s' % (conn_id, source_port, dest_port), system='ArgiaBackend')
+            #print "FDATA", fdata, fdata.getvalue()
             tree = ET.parse(fdata)
             state = list(tree.iterfind('state'))[0].text
             reservation_id = list(tree.iterfind('reservationId'))[0].text
@@ -220,24 +224,18 @@ class ArgiaBackend:
             self.connections[conn_id] = res
             d.callback(conn_id)
 
-        process_proto.d.addCallback(reservationConfirmed)
+        def reservationFailed(fdata):
+            log.msg('Received reservation failure from Argia. ICID: %s, Ports: %s -> %s' % (conn_id, source_port, dest_port), system='ArgiaBackend')
+            tree = ET.parse(fdata)
+            ET.dump(tree)
+            d.errback(tree)
+
+        process_proto.d.addCallbacks(reservationConfirmed, reservationFailed)
         return d
 
 
     def provision(self, conn_id):
 
-        def doProvision(conn):
-            if conn.state not in (RESERVED, AUTO_PROVISION):
-                raise nsaerror.ProvisionError('Cannot provision connection in state %s' % conn.state)
-            conn.state = PROVISIONED
-            # schedule release
-            td = conn.end_time -  datetime.datetime.utcnow()
-            # total_seconds() is only available from python 2.7 so we use this
-            stop_delta_seconds = (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6.0
-
-            conn.auto_release_deferred = task.deferLater(reactor, stop_delta_seconds, self.releaseProvision, conn_id)
-            conn.auto_release_deferred.addErrback(deferTaskFailed)
-            log.msg('PROVISION. ICID: %s' % conn_id, system='Ariga' % self.name)
         try:
             conn = self.connections[conn_id]
         except KeyError:
@@ -247,20 +245,61 @@ class ArgiaBackend:
 
         if conn.end_time <= dt_now:
             raise nsaerror.ProvisionError('Cannot provision connection after end time (end time: %s, current time: %s).' % (conn.end_time, dt_now) )
-        elif conn.start_time > dt_now:
-            td = conn.start_time - dt_now
-            # total_seconds() is only available from python 2.7 so we use this
-            start_delta_seconds = (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6.0
 
-            conn.auto_provision_deferred = task.deferLater(reactor, start_delta_seconds, doProvision, conn)
-            conn.auto_provision_deferred.addErrback(deferTaskFailed)
-            conn.state = AUTO_PROVISION
-            log.msg('Connection %s scheduled for auto-provision in %i seconds ' % (conn_id, start_delta_seconds), system='ArgiaBackend' % self.name)
-        else:
-            log.msg('Provisioning connection. Start time: %s, Current time: %s).' % (conn.start_time, dt_now), system='ArgiaBackend' % self.name)
-            doProvision(conn)
+        if conn.state not in (RESERVED, SCHEDULED):
+            raise nsaerror.ProvisionError('Cannot provision connection in state %s' % conn.state)
 
-        return defer.succeed(conn_id)
+        # Argia can schedule, so we don't have to
+
+#        elif conn.start_time > dt_now:
+#            td = conn.start_time - dt_now
+#            # total_seconds() is only available from python 2.7 so we use this
+#            start_delta_seconds = (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6.0
+#
+#            conn.auto_provision_deferred = task.deferLater(reactor, start_delta_seconds, doProvision, conn)
+#            conn.auto_provision_deferred.addErrback(deferTaskFailed)
+#            conn.state = AUTO_PROVISION
+#            log.msg('Connection %s scheduled for auto-provision in %i seconds ' % (conn_id, start_delta_seconds), system='ArgiaBackend' % self.name)
+
+        log.msg('Provisioning connection. Start time: %s, Current time: %s).' % (conn.start_time, dt_now), system='ArgiaBackend')
+
+        d = defer.Deferred()
+
+        def provisionConfirmed(fdata):
+            conn.state = PROVISIONED
+            tree = ET.parse(fdata)
+            state = list(tree.iterfind('state'))[0].text
+            reservation_id = list(tree.iterfind('connectionId'))[0].text
+
+            if state not in (PROVISIONED, AUTO_PROVISION):
+                e = nsaerror.ReserveError('Got unexpected state from Argia (%s)' % state)
+                d.errback(failure.Failure(e))
+                return
+
+            # schedule release
+#            td = conn.end_time -  datetime.datetime.utcnow()
+#            # total_seconds() is only available from python 2.7 so we use this
+#            stop_delta_seconds = (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6.0
+
+#            conn.auto_release_deferred = task.deferLater(reactor, stop_delta_seconds, self.releaseProvision, conn_id)
+#            conn.auto_release_deferred.addErrback(deferTaskFailed)
+            log.msg('PROVISION. ICID: %s' % conn_id, system='Argia')
+            print "PROVISION CALLBACK"
+            d.callback(conn_id)
+
+        def provisionFailed(fdata):
+            raise NotImplementedError('cannot handle failed provision yet')
+
+        conn.state = PROVISIONING
+
+        process_proto = ArgiaProcessProtocol()
+        try:
+            pt = reactor.spawnProcess(process_proto, PROVISION_COMMAND, args=[PROVISION_COMMAND, conn.reservation_id])
+        except OSError, e:
+            return defer.fail(nsaerror.ReserverError('Failed to invoke argia control command (%s)' % str(e)))
+        process_proto.d.addCallbacks(provisionConfirmed, provisionFailed)
+
+        return d
 
 
     def releaseProvision(self, conn_id):
@@ -272,9 +311,9 @@ class ArgiaBackend:
         if conn.state not in (AUTO_PROVISION, PROVISIONED):
             raise nsaerror.ProvisionError('Cannot release connection in state %s' % conn.state)
 
-        conn.deSchedule(conn_id, self.name)
+        conn.deSchedule(conn_id, 'Argia')
         conn.state = RESERVED
-        log.msg('RELEASE. ICID: %s' % conn_id, system='ArgiaBackend' % self.name)
+        log.msg('RELEASE. ICID: %s' % conn_id, system='ArgiaBackend')
         return defer.succeed(conn_id)
 
 
@@ -284,8 +323,8 @@ class ArgiaBackend:
         except KeyError:
             raise nsaerror.CancelReservationError('No such reservation (%s)' % conn_id)
 
-        conn.deSchedule(conn_id, self.name)
-        log.msg('CANCEL. ICID : %s' % (conn_id), system='ArgiaBackend' % self.name)
+        conn.deSchedule(conn_id, 'Argia')
+        log.msg('CANCEL. ICID : %s' % (conn_id), system='ArgiaBackend')
         return defer.succeed(None)
 
 
