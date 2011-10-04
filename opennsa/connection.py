@@ -19,25 +19,29 @@ INITIAL             = 'Initial'
 RESERVING           = 'Reserving'
 RESERVED            = 'Reserved'
 
+SCHEDULED           = 'Scheduled'
 AUTO_PROVISION      = 'Auto-Provision'
 PROVISIONING        = 'Provisioning'
 PROVISIONED         = 'Provisioned'
 
 RELEASING           = 'Releasing'
+CLEANING            = 'Cleaning'
 
 TERMINATING         = 'Terminateing' # John can't spell
 TERMINATED          = 'Terminated'
 
 # allowed state transitions
 TRANSITIONS = {
-    INITIAL         : [ RESERVING                                   ],
-    RESERVING       : [ RESERVED,       TERMINATED                  ],
-    RESERVED        : [ AUTO_PROVISION, PROVISIONING, TERMINATING   ],
-    AUTO_PROVISION  : [ PROVISIONING,   TERMINATED                  ],
-    PROVISIONING    : [ PROVISIONED,    TERMINATED                  ],
-    PROVISIONED     : [ RELEASING,      TERMINATING                 ],
-    RELEASING       : [ RESERVED,       TERMINATED                  ],
-    TERMINATING     : [ TERMINATED,                                 ],
+    INITIAL         : [ RESERVING                                                               ],
+    RESERVING       : [ RESERVED,       TERMINATING,    CLEANING,     TERMINATED                ],
+    RESERVED        : [ SCHEDULED,      AUTO_PROVISION, PROVISIONING, TERMINATING, TERMINATED   ],
+    SCHEDULED       : [ PROVISIONING,   RELEASING,      TERMINATING,  TERMINATED                ],
+    AUTO_PROVISION  : [ PROVISIONING,   TERMINATING,    TERMINATED                              ],
+    PROVISIONING    : [ PROVISIONED,    TERMINATING,    TERMINATED                              ],
+    PROVISIONED     : [ RELEASING,      TERMINATING,    TERMINATING,                            ],
+    RELEASING       : [ RESERVED,       SCHEDULED,      TERMINATING,    TERMINATED              ],
+    CLEANING        : [ TERMINATED                                                              ],
+    TERMINATING     : [ TERMINATED,                                                             ],
     TERMINATED      : [ ]
 }
 
