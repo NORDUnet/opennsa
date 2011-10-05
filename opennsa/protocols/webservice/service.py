@@ -90,7 +90,7 @@ class ProviderService:
         et = end_time.utctimetuple()
         end_time = datetime.datetime(et.tm_year, et.tm_mon, et.tm_mday, et.tm_hour, et.tm_min, et.tm_sec)
 
-        service_parameters      = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, bandwidth_params=bwp)
+        service_parameters      = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, bandwidth=bwp)
 
         d = self.provider.reservation(correlation_id, reply_to, requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters)
         d.addErrback(log.err)

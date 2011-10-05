@@ -63,7 +63,7 @@ class Topology:
                 return ep
 
 
-    def findPaths(self, source_stp, dest_stp, bandwidth_params=None):
+    def findPaths(self, source_stp, dest_stp, bandwidth=None):
         """
         Find possible paths between two endpoints.
         """
@@ -78,8 +78,8 @@ class Topology:
         #print "FIND PATH", source_stp, dest_stp
 
         routes = self.findPathEndpoints(source_stp, dest_stp)
-        if bandwidth_params is not None:
-            routes = self.filterBandwidth(routes, bandwidth_params)
+        if bandwidths is not None:
+            routes = self.filterBandwidth(routes, bandwidths)
 
         paths = []
         if routes == []:
@@ -131,17 +131,17 @@ class Topology:
         return routes
 
 
-    def filterBandwidth(self, paths_sdps, bandwidth_params):
+    def filterBandwidth(self, paths_sdps, bandwidths):
 
-        def hasBandwidth(route, bandwidth_params):
+        def hasBandwidth(route, bandwidths):
             for sdp in route:
-                if sdp.stp1.available_capacity is not None and bandwidth_params.minimum is not None and sdp.stp1.available_capacity < bandwidth_params.minimum:
+                if sdp.stp1.available_capacity is not None and bandwidths.minimum is not None and sdp.stp1.available_capacity < bandwidths.minimum:
                     return False
-                if sdp.stp2.available_capacity is not None and bandwidth_params.minimum is not None and sdp.stp2.available_capacity < bandwidth_params.minimum:
+                if sdp.stp2.available_capacity is not None and bandwidths.minimum is not None and sdp.stp2.available_capacity < bandwidths.minimum:
                     return False
             return True
 
-        filtered_routes = [ route for route in paths_sdps if hasBandwidth(route, bandwidth_params) ]
+        filtered_routes = [ route for route in paths_sdps if hasBandwidth(route, bandwidths) ]
         return filtered_routes
 
 

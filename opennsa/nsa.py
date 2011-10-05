@@ -149,7 +149,7 @@ class BandwidthParameters:
 
 class ServiceParameters:
 
-    def __init__(self, start_time, end_time, source_stp, dest_stp, stps=None, directionality='Bidirectional', bandwidth_params=None):
+    def __init__(self, start_time, end_time, source_stp, dest_stp, stps=None, directionality='Bidirectional', bandwidth=None):
 
         # should probably make path object sometime..
 
@@ -163,7 +163,7 @@ class ServiceParameters:
         assert directionality in ('Unidirectional', 'Bidirectional')
         self.directionality = directionality
 
-        self.bandwidth_params = bandwidth_params or BandwidthParameters()
+        self.bandwidth = bandwidth or BandwidthParameters()
 
 
     def protoSP(self):

@@ -173,7 +173,7 @@ class ArgiaConnection:
     def _constructReservationPayload(self):
 
         sp = self.service_parameters
-        bw = sp.bandwidth_params
+        bw = sp.bandwidth
 
         root = ET.Element('reservationParameters')
 
