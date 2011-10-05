@@ -183,7 +183,7 @@ class NSIService:
         # security check here
 
         d = conn.releaseProvision()
-        d.addCallback(lambda conn : conn.connection_id)
+        d.addCallbacks(lambda conn : conn.connection_id, lambda e : log.err(e))
         return d
 
 
