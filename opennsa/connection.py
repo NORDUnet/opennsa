@@ -105,10 +105,9 @@ class SubConnection:
 
 
 
-class Connection: #(ConnectionState):
+class Connection:
 
     def __init__(self, requester_nsa, connection_id, source_stp, dest_stp, global_reservation_id=None, description=None, local_connection=None, sub_connections=None):
-#        ConnectionState.__init__(self)
         self.state = state.ConnectionState()
         self.requester_nsa              = requester_nsa
         self.connection_id              = connection_id
