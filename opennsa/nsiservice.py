@@ -49,15 +49,15 @@ class NSIService:
 
     def reservation(self, requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters):
 
-        def setupSubConnection(source_stp, dest_stp, conn):
+        def setupSubConnection(source_stp, dest_stp, conn, service_parameters):
 
             assert source_stp.network == dest_stp.network
 
             # should check for local network
             if source_stp.network == self.network:
-                local_conn = connection.LocalConnection(conn, source_stp.endpoint, dest_stp.endpoint, backend=self.backend)
                 assert conn.local_connection is None
-                conn.local_connection = local_conn
+                conn.local_connection = self.backend.createConnection(source_stp.endpoint, dest_stp.endpoint, service_parameters)
+
             else:
                 sub_conn_id = 'urn:uuid:' + str(uuid.uuid1())
                 # FIXME should be setup with NSA context, not network
@@ -89,7 +89,7 @@ class NSIService:
         if source_stp.network == self.network and dest_stp.network == self.network:
             log.msg('Connection %s: Simple path creation: %s:%s -> %s:%s (%s)' % path_info, system='opennsa.NSIService')
 
-            setupSubConnection(source_stp, dest_stp, conn)
+            setupSubConnection(source_stp, dest_stp, conn, service_parameters)
 
         # This code is for chaining requests and is currently not used, but might be needed sometime in the future
         # Once we get proper a topology service, some chaining will be necessary.
