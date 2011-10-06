@@ -129,6 +129,7 @@ class NSIService:
             try:
                 paths = self.topology.findPaths(source_stp, dest_stp)
             except error.TopologyError, e:
+                log.msg('Error creating path during reservation: %s' % str(e), system='opennsa.NSIService')
                 return defer.fail(e)
 
             # check for no paths
