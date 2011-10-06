@@ -297,7 +297,6 @@ class ArgiaConnection:
         d = defer.Deferred()
 
         def releaseConfirmed(fdata):
-            print "RC", fdata.getvalue()
             tree = ET.parse(fdata)
             argia_state = list(tree.iterfind('state'))[0].text
             reservation_id = list(tree.iterfind('reservationId'))[0].text
