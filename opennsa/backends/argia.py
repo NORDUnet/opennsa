@@ -324,7 +324,7 @@ class ArgiaConnection:
         return d
 
 
-    def cancelReservation(self):
+    def terminate(self):
 
         log.msg('Terminating reservation. CID %s' % id(self), system='ArgiaBackend')
 

@@ -62,7 +62,7 @@ class NSIServiceClient:
         raise error.ReleaseProvisionError('Cannot invoke release at NSA client')
 
     def terminateReservation(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
-        raise error.CancelReservationError('Cannot invoke cancel at NSA client')
+        raise error.CancelReservationError('Cannot invoke terminate at NSA client')
 
     def query(self, requester_nsa, provider_nsa, session_security_attr, query_filter):
         raise error.QueryError('Cannot invoke query at NSA client')

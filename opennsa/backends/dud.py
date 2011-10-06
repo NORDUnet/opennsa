@@ -163,9 +163,9 @@ class DUDConnection:
         return defer.succeed(self)
 
 
-    def cancelReservation(self):
+    def terminate(self):
 
-        log.msg('CANCEL. CID : %s' % id(self), system='DUDBackend Network %s' % self.network_name)
+        log.msg('TERMINATE. CID : %s' % id(self), system='DUDBackend Network %s' % self.network_name)
         self.deSchedule()
         return defer.succeed(self)
 

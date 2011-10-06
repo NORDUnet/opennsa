@@ -161,7 +161,7 @@ class NSIService:
         conn = self.getConnection(requester_nsa, connection_id)
         # security check here
 
-        d = conn.cancelReservation()
+        d = conn.terminate()
         d.addCallback(lambda conn : conn.connection_id)
         return d
 

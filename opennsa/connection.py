@@ -48,21 +48,21 @@ class SubConnection:
         return d
 
 
-    def cancelReservation(self):
+    def termiante(self):
 
         assert self._proxy is not None, 'Proxy not set for SubConnection, cannot invoke method'
 
-        def cancelDone(_):
+        def terminateDone(_):
             self.state.switchState(state.TERMINATED)
             return self
 
-        def cancelFailed(err):
+        def terminateFailed(err):
             self.state.switchState(state.TERMINATED)
             return err
 
         self.state.switchState(state.TERMINATING)
         d = self._proxy.terminateReservation(self.network, None, self.connection_id)
-        d.addCallbacks(cancelDone, cancelFailed)
+        d.addCallbacks(terminateDone, terminateFailed)
         return d
 
 
@@ -161,14 +161,14 @@ class Connection:
         return dl
 
 
-    def cancelReservation(self):
+    def terminate(self):
 
-        def connectionCancelled(results):
+        def connectionTerminated(results):
             successes = [ r[0] for r in results ]
             if all(successes):
                 self.state.switchState(state.TERMINATED)
                 if len(successes) > 1:
-                    log.msg('Connection %s and all sub connections(%i) cancelled' % (self.connection_id, len(results)-1), system='opennsa.NSIService')
+                    log.msg('Connection %s and all sub connections(%i) terminated' % (self.connection_id, len(results)-1), system='opennsa.NSIService')
                 return self
             if any(successes):
                 self.state.switchState(state.TERMINATED)
@@ -181,11 +181,11 @@ class Connection:
 
         defs = []
         for sc in self.connections():
-            d = sc.cancelReservation()
+            d = sc.terminate()
             defs.append(d)
 
         dl = defer.DeferredList(defs)
-        dl.addCallback(connectionCancelled)
+        dl.addCallback(connectionTerminated)
         return dl
 
 

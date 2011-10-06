@@ -77,7 +77,7 @@ class NSIBackendInterface(Interface):
         C{string} with an internal reservation id.
         """
 
-    def cancelReservation(reservation_id):
+    def terminate(reservation_id):
         """
         Cancal a reservation at the network backend.
         """
