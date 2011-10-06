@@ -182,7 +182,7 @@ class NSIService:
         conn = self.getConnection(requester_nsa, connection_id)
         # security check here
 
-        d = conn.releaseProvision()
+        d = conn.release()
         d.addCallbacks(lambda conn : conn.connection_id, lambda e : log.err(e))
         return d
 

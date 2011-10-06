@@ -237,7 +237,7 @@ class JSONRPCNSIClient:
         return self._issueProxyCall(provider_nsa, gotProxy)
 
 
-    def releaseProvision(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
+    def release(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
         def gotProxy(proxy):
             d = proxy.call('ReleaseProvision', requester_nsa.protoNSA(), provider_nsa.protoNSA(), session_security_attr, connection_id)
@@ -328,7 +328,7 @@ class JSONRPCNSIServiceDecoder:
 
         requester_nsa = self._parseNSA(req_nsa)
         provider_nsa  = self._parseNSA(prov_nsa)
-        return self.nsi_service.releaseProvision(requester_nsa, provider_nsa, session_security_attr, connection_id)
+        return self.nsi_service.release(requester_nsa, provider_nsa, session_security_attr, connection_id)
 
 
     def decodeQuery(self, req_nsa, prov_nsa, session_security_attr, query_filter):

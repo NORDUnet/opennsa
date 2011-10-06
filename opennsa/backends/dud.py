@@ -128,7 +128,7 @@ class DUDConnection:
             # total_seconds() is only available from python 2.7 so we use this
             stop_delta_seconds = (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6.0
 
-            self.auto_release_deferred = task.deferLater(reactor, stop_delta_seconds, self.releaseProvision)
+            self.auto_release_deferred = task.deferLater(reactor, stop_delta_seconds, self.release)
             self.auto_release_deferred.addErrback(deferTaskFailed)
             self.state.switchState(state.PROVISIONED)
 
@@ -150,7 +150,7 @@ class DUDConnection:
         return defer.succeed(self)
 
 
-    def releaseProvision(self):
+    def release(self):
 
         log.msg('RELEASE. CID: %s' % id(self), system='DUDBackend Network %s' % self.network_name)
         try:

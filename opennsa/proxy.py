@@ -48,7 +48,7 @@ class NSIProxy:
         return self.client.provisionConfirmed(reply_to, remote_nsa, self.nsa_, global_reservation_id, connection_id)
 
 
-    def releaseProvision(self, network, session_security_attr, connection_id):
+    def release(self, network, session_security_attr, connection_id):
 
         remote_nsa = self.topology.getNetwork(network).nsa
         return self.client.release(self.nsa_, remote_nsa, session_security_attr, connection_id)

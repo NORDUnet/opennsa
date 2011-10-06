@@ -266,7 +266,7 @@ class ArgiaConnection:
 #            # total_seconds() is only available from python 2.7 so we use this
 #            stop_delta_seconds = (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6.0
 
-#            conn.auto_release_deferred = task.deferLater(reactor, stop_delta_seconds, self.releaseProvision, conn_id)
+#            conn.auto_release_deferred = task.deferLater(reactor, stop_delta_seconds, self.release, conn_id)
 #            conn.auto_release_deferred.addErrback(deferTaskFailed)
             log.msg('PROVISION. CID: %s' % id(self), system='Argia')
             d.callback(self)
@@ -285,7 +285,7 @@ class ArgiaConnection:
         return d
 
 
-    def releaseProvision(self):
+    def release(self):
 
         log.msg('Releasing connection. CID %s' % id(self), system='ArgiaBackend')
 

@@ -85,7 +85,7 @@ class SubConnection:
         return d
 
 
-    def releaseProvision(self):
+    def release(self):
 
         assert self._proxy is not None, 'Proxy not set for SubConnection, cannot invoke method'
 
@@ -99,7 +99,7 @@ class SubConnection:
             return err
 
         self.state.switchState(state.RELEASING)
-        d = self._proxy.releaseProvision(self.network, None, self.connection_id)
+        d = self._proxy.release(self.network, None, self.connection_id)
         d.addCallbacks(releaseDone, releaseFailed)
         return d
 
@@ -217,7 +217,7 @@ class Connection:
         return dl
 
 
-    def releaseProvision(self):
+    def release(self):
 
         def connectionReleased(results):
             successes = [ r[0] for r in results ]
@@ -237,7 +237,7 @@ class Connection:
 
         defs = []
         for sc in self.connections():
-            d = sc.releaseProvision()
+            d = sc.release()
             defs.append(d)
 
         dl = defer.DeferredList(defs)

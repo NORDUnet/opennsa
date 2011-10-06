@@ -58,7 +58,7 @@ class NSIServiceClient:
     def provision(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
         raise error.ProvisionError('Cannot invoke provision at NSA client')
 
-    def releaseProvision(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
+    def release(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
         raise error.ReleaseProvisionError('Cannot invoke release at NSA client')
 
     def terminateReservation(self, requester_nsa, provider_nsa, session_security_attr, connection_id):

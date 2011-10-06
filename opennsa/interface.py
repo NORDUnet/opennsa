@@ -90,7 +90,7 @@ class NSIBackendInterface(Interface):
         C{string} with an internal connection id.
         """
 
-    def releaseProvision(connection_id):
+    def release(connection_id):
         """
         Release the path from provisioned mode.
 
