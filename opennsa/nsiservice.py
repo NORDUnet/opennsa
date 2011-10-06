@@ -126,7 +126,11 @@ class NSIService:
 
             # making the connection is the same for all though :-)
 
-            paths = self.topology.findPaths(source_stp, dest_stp)
+            try:
+                paths = self.topology.findPaths(source_stp, dest_stp)
+            except error.TopologyError, e:
+                return defer.fail(e)
+
             # check for no paths
             paths.sort(key=lambda e : len(e.endpoint_pairs))
             selected_path = paths[0] # shortest path
