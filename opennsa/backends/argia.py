@@ -30,7 +30,7 @@ COMMAND_DIR = '/home/htj/nsi/opennsa/sandbox/argia' # temporary
 RESERVE_COMMAND   = os.path.join(COMMAND_DIR, 'reserve')
 PROVISION_COMMAND = os.path.join(COMMAND_DIR, 'provision')
 RELEASE_COMMAND   = os.path.join(COMMAND_DIR, 'release')
-CANCEL_COMMAND    = os.path.join(COMMAND_DIR, 'cancel')
+TERMINATE_COMMAND = os.path.join(COMMAND_DIR, 'cancel')
 QUERY_COMMAND     = os.path.join(COMMAND_DIR, 'query')
 
 
@@ -41,6 +41,7 @@ ARGIA_SCHEDULED       = 'SCHEDULED'
 ARGIA_AUTO_PROVISION  = 'AUTO_PROVISION'
 ARGIA_PROVISIONING    = 'PROVISIONING'
 ARGIA_PROVISIONED     = 'PROVISIONED'
+ARGIA_TERMINATED      = 'TERMINATED'
 
 
 
@@ -99,24 +100,6 @@ def deferTaskFailed(err):
         pass # this just means that the task was cancelled
     else:
         log.err(err)
-
-
-#class _Circuit:
-#
-#        self.auto_provision_deferred = None
-#        self.auto_release_deferred   = None
-#
-#
-#    def deSchedule(self, conn_id, network_name=''):
-#
-#        if self.state == AUTO_PROVISION:
-#            log.msg('Cancelling auto-provision for connection %s' % conn_id, system='Argia' % network_name)
-#            self.auto_provision_deferred.cancel()
-#            self.auto_provision_deferred = None
-#        elif self.state == PROVISIONED:
-#            log.msg('Cancelling auto-release for connection %s' % conn_id, system='Argia' % network_name)
-#            self.auto_release_deferred.cancel()
-#            self.auto_release_deferred = None
 
 
 
@@ -195,21 +178,14 @@ class ArgiaConnection:
         return payload
 
 
-    def reservation(self, _sp): #, source_port, dest_port, service_parameters):
-
-#        conn_id = uuid.uuid1().hex[0:8]
+    def reservation(self, _sp):
 
         log.msg('RESERVE. CID: %s, Ports: %s -> %s' % (id(self), self.source_port, self.dest_port), system='ArgiaBackend')
-#        try:
-#            self._checkReservationFeasibility(self.source_port, self.dest_port, self.service_parameters.start_time, self.service_parameters.end_time)
-#        except nsaerror.ReserveError, e:
-#            return defer.fail(e)
 
         try:
             self.state.switchState(state.RESERVING)
         except nsaerror.ConnectionStateTransitionError:
             raise nsaerror.ReserveError('Cannot reserve connection in state %s' % self.state())
-#        self.state.switchState(state.RESERVING)
 
         payload =  self._constructReservationPayload() #self.source_port, self.dest_port, self.service_parameters)
         process_proto = ArgiaProcessProtocol(payload)
@@ -223,11 +199,9 @@ class ArgiaConnection:
 
         def reservationConfirmed(fdata):
             log.msg('Received reservation reply from Argia. CID: %s, Ports: %s -> %s' % (id(self), self.source_port, self.dest_port), system='ArgiaBackend')
-            #print "FDATA", fdata, fdata.getvalue()
             tree = ET.parse(fdata)
             argia_state = list(tree.iterfind('state'))[0].text
             reservation_id = list(tree.iterfind('reservationId'))[0].text
-            #print "SR", state, reservation_id
 
             if argia_state != ARGIA_RESERVED:
                 e = nsaerror.ReserveError('Got unexpected state from Argia (%s)' % argia_state)
@@ -235,8 +209,6 @@ class ArgiaConnection:
                 return
 
             self.argia_id = reservation_id
-            #res = _Circuit(source_port, dest_port, service_parameters.start_time, service_parameters.end_time, reservation_id=reservation_id)
-            #self.connections[conn_id] = res
             self.state.switchState(state.RESERVED)
             d.callback(self)
 
@@ -325,6 +297,7 @@ class ArgiaConnection:
         d = defer.Deferred()
 
         def releaseConfirmed(fdata):
+            print "RC", fdata.getvalue()
             tree = ET.parse(fdata)
             argia_state = list(tree.iterfind('state'))[0].text
             reservation_id = list(tree.iterfind('reservationId'))[0].text
@@ -336,6 +309,7 @@ class ArgiaConnection:
 
             self.state.switchState(state.SCHEDULED)
             self.argia_id = reservation_id
+            d.callback(self)
 
         def releaseFailed(fdata):
             self.state.switchState(state.TERMINATED)
@@ -351,15 +325,43 @@ class ArgiaConnection:
         return d
 
 
-    def cancelReservation(self, conn_id):
-        try:
-            conn = self.connections.pop(conn_id)
-        except KeyError:
-            raise nsaerror.CancelReservationError('No such reservation (%s)' % conn_id)
+    def cancelReservation(self):
 
-        conn.deSchedule(conn_id, 'Argia')
-        log.msg('CANCEL. ICID : %s' % (conn_id), system='ArgiaBackend')
-        return defer.succeed(None)
+        log.msg('Terminating reservation. CID %s' % id(self), system='ArgiaBackend')
+
+        try:
+            self.state.switchState(state.TERMINATING)
+        except nsaerror.ConnectionStateTransitionError:
+            raise nsaerror.CancelReservationError('Cannot terminate connection in state %s' % self.state())
+
+        d = defer.Deferred()
+
+        def terminateConfirmed(fdata):
+            tree = ET.parse(fdata)
+            argia_state = list(tree.iterfind('state'))[0].text
+
+            if argia_state not in (ARGIA_TERMINATED):
+                e = nsaerror.ReserveError('Got unexpected state from Argia (%s)' % argia_state)
+                d.errback(failure.Failure(e))
+                return
+
+            self.state.switchState(state.TERMINATED)
+            self.argia_id = None
+            #log.msg('CANCEL. ICID : %s' % (conn_id), system='ArgiaBackend')
+            d.callback(self)
+
+        def terminateFailed(fdata):
+            self.state.switchState(state.TERMINATED)
+            raise NotImplementedError('Argia release failure not implemented')
+
+        process_proto = ArgiaProcessProtocol()
+        try:
+            reactor.spawnProcess(process_proto, TERMINATE_COMMAND, args=[TERMINATE_COMMAND, self.argia_id])
+        except OSError, e:
+            return defer.fail(nsaerror.CancelReservationError('Failed to invoke argia control command (%s)' % str(e)))
+        process_proto.d.addCallbacks(terminateConfirmed, terminateFailed)
+
+        return d
 
 
     def query(self, query_filter):
