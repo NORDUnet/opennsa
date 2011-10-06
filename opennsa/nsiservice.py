@@ -32,7 +32,6 @@ class NSIService:
         self.proxy = proxy.NSIProxy(client, self.nsa, self.topology)
 
         self.connections = {} # persistence, ha!
-        self.reservations = {} # outstanding reservations
 
     # utility functionality
 
@@ -63,7 +62,6 @@ class NSIService:
                 # FIXME should be setup with NSA context, not network
                 sub_conn = connection.SubConnection(conn, sub_conn_id, source_stp.network, source_stp, dest_stp, proxy=self.proxy)
                 conn.sub_connections.append(sub_conn)
-                self.reservations[sub_conn_id] = sub_conn
 
             return conn
 
