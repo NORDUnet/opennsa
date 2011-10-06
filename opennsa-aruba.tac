@@ -9,6 +9,7 @@ from opennsa import setup, logging
 from opennsa.backends import dud
 
 
+DEBUG = True
 TOPOFILE = 'Rio-Inter-Domain-Topo-Ring-v1.1h.owl'
 
 NETWORK_NAME = 'Aruba'
@@ -19,7 +20,7 @@ proxy = dud.DUDNSIBackend(NETWORK_NAME)
 factory = setup.createService(NETWORK_NAME, open(TOPOFILE), proxy, PORT)
 
 application = service.Application("OpenNSA")
-application.setComponent(ILogObserver, logging.DebugLogObserver(sys.stdout, True).emit)
+application.setComponent(ILogObserver, logging.DebugLogObserver(sys.stdout, DEBUG).emit)
 
 internet.TCPServer(PORT, factory).setServiceParent(application)
 
