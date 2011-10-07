@@ -12,7 +12,7 @@ from twisted.internet import reactor, defer, task
 
 from zope.interface import implements
 
-from opennsa import interface as nsainterface, error as nsaerror, state
+from opennsa import error, state, interface as nsainterface
 
 
 
@@ -36,17 +36,17 @@ class DUDNSIBackend:
     def _checkReservation(self, source_port, dest_port, res_start, res_end):
         # check that ports are available in the specified schedule
         if res_start in [ None, '' ] or res_end in [ None, '' ]:
-            raise nsaerror.ReserveError('Reservation must specify start and end time (was either None or '')')
+            raise error.ReserveError('Reservation must specify start and end time (was either None or '')')
 
         # sanity checks
         if res_start > res_end:
-            raise nsaerror.ReserveError('Refusing to make reservation with reverse duration')
+            raise error.ReserveError('Refusing to make reservation with reverse duration')
 
         if res_start < datetime.datetime.utcnow():
-            raise nsaerror.ReserveError('Refusing to make reservation with start time in the past')
+            raise error.ReserveError('Refusing to make reservation with start time in the past')
 
         if res_start > datetime.datetime(2025, 1, 1):
-            raise nsaerror.ReserveError('Refusing to make reservation with start time after 2025')
+            raise error.ReserveError('Refusing to make reservation with start time after 2025')
 
         # port temporal availability
         def portOverlap(res1_start_time, res1_end_time, res2_start_time, res2_end_time):
@@ -60,11 +60,11 @@ class DUDNSIBackend:
             csp = cn.service_parameters
             if source_port in [ cn.source_port, cn.dest_port ]:
                 if portOverlap(csp.start_time, csp.end_time, res_start, res_end):
-                    raise nsaerror.ReserveError('Port %s not available in specified time span' % source_port)
+                    raise error.ReserveError('Port %s not available in specified time span' % source_port)
 
             if dest_port == [ cn.source_port, cn.dest_port ]:
                 if portOverlap(csp.start_time, csp.end_time, res_start, res_end):
-                    raise nsaerror.ReserveError('Port %s not available in specified time span' % dest_port)
+                    raise error.ReserveError('Port %s not available in specified time span' % dest_port)
 
         # all good
 
@@ -109,8 +109,8 @@ class DUDConnection:
         try:
             self.state.switchState(state.RESERVING)
             self.state.switchState(state.RESERVED)
-        except nsaerror.ConnectionStateTransitionError:
-            raise nsaerror.ReservationError('Cannot reserve connection in state %s' % self.state())
+        except error.ConnectionStateTransitionError:
+            raise error.ReservationError('Cannot reserve connection in state %s' % self.state())
         # need to schedule transition to SCHEDULED
         return defer.succeed(self)
 
@@ -121,8 +121,8 @@ class DUDConnection:
             log.msg('PROVISION. CID: %s' % id(self), system='DUDBackend Network %s' % self.network_name)
             try:
                 self.state.switchState(state.PROVISIONING)
-            except nsaerror.ConnectionStateTransitionError:
-                raise nsaerror.ProvisionError('Cannot provision connection in state %s' % self.state())
+            except error.ConnectionStateTransitionError:
+                raise error.ProvisionError('Cannot provision connection in state %s' % self.state())
             # schedule release
             td = self.service_parameters.end_time -  datetime.datetime.utcnow()
             # total_seconds() is only available from python 2.7 so we use this
@@ -135,7 +135,7 @@ class DUDConnection:
         dt_now = datetime.datetime.utcnow()
 
         if self.service_parameters.end_time <= dt_now:
-            raise nsaerror.ProvisionError('Cannot provision connection after end time (end time: %s, current time: %s).' % (self.service_parameters.end_time, dt_now) )
+            raise error.ProvisionError('Cannot provision connection after end time (end time: %s, current time: %s).' % (self.service_parameters.end_time, dt_now) )
         else:
             td = self.service_parameters.start_time - dt_now
             # total_seconds() is only available from python 2.7 so we use this
@@ -155,8 +155,8 @@ class DUDConnection:
         log.msg('RELEASE. CID: %s' % id(self), system='DUDBackend Network %s' % self.network_name)
         try:
             self.state.switchState(state.RELEASING)
-        except nsaerror.ConnectionStateTransitionError:
-            raise nsaerror.ProvisionError('Cannot release connection in state %s' % self.state())
+        except error.ConnectionStateTransitionError:
+            raise error.ProvisionError('Cannot release connection in state %s' % self.state())
 
         self.deSchedule()
         self.state.switchState(state.SCHEDULED)
