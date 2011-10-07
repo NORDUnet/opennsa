@@ -59,26 +59,31 @@ class ArgiaBackend:
 
     def createConnection(self, source_port, dest_port, service_parameters):
 
-        self._checkReservation(source_port, dest_port, service_parameters.start_time, service_parameters.end_time)
+        self._checkTiming(service_parameters.start_time, service_parameters.end_time)
+        self._checkResourceAvailability(source_port, dest_port, service_parameters.start_time, service_parameters.end_time)
         ac = ArgiaConnection(source_port, dest_port, service_parameters)
         self.connections.append(ac)
         return ac
 
 
-    def _checkReservation(self, source_port, dest_port, res_start, res_end):
+    # this could be generic
+    def _checkTiming(self, res_start, res_end):
         # check that ports are available in the specified schedule
         if res_start in [ None, '' ] or res_end in [ None, '' ]:
-            raise nsaerror.ReserveError('Reservation must specify start and end time (was either None or '')')
+            raise nsaerror.InvalidRequestError('Reservation must specify start and end time (was either None or '')')
 
         # sanity checks
         if res_start > res_end:
-            raise nsaerror.ReserveError('Refusing to make reservation with reverse duration')
+            raise nsaerror.InvalidRequestError('Refusing to make reservation with reverse duration')
 
         if res_start < datetime.datetime.utcnow():
-            raise nsaerror.ReserveError('Refusing to make reservation with start time in the past')
+            raise nsaerror.InvalidRequestError('Refusing to make reservation with start time in the past')
 
         if res_start > datetime.datetime(2025, 1, 1):
-            raise nsaerror.ReserveError('Refusing to make reservation with start time after 2025')
+            raise nsaerror.InvalidRequestError('Refusing to make reservation with start time after 2025')
+
+
+    def _checkResourceAvailability(self, source_port, dest_port, res_start, res_end):
 
         # port temporal availability
         def portOverlap(res1_start_time, res1_end_time, res2_start_time, res2_end_time):
@@ -92,11 +97,11 @@ class ArgiaBackend:
             csp = cn.service_parameters
             if source_port in [ cn.source_port, cn.dest_port ]:
                 if portOverlap(csp.start_time, csp.end_time, res_start, res_end):
-                    raise nsaerror.ReserveError('Port %s not available in specified time span' % source_port)
+                    raise nsaerror.ResourceNotAvailableError('Port %s not available in specified time span' % source_port)
 
             if dest_port == [ cn.source_port, cn.dest_port ]:
                 if portOverlap(csp.start_time, csp.end_time, res_start, res_end):
-                    raise nsaerror.ReserveError('Port %s not available in specified time span' % dest_port)
+                    raise nsaerror.ResourceNotAvailableError('Port %s not available in specified time span' % dest_port)
 
         # all good
 
@@ -223,8 +228,9 @@ class ArgiaConnection:
             self.state.switchState(state.TERMINATED)
             log.msg('Received reservation failure from Argia. CID: %s, Ports: %s -> %s' % (id(self), self.source_port, self.dest_port), system='ArgiaBackend')
             tree = ET.parse(pp.stderr)
-            ET.dump(tree)
-            d.errback(tree)
+            message = list(tree.iterfind('message'))[0].text
+            err = nsaerror.ReserveError('Reservation failed in Argia backend: %s' % message)
+            d.errback(failure.Failure(err))
 
         process_proto.d.addCallbacks(reservationConfirmed, reservationFailed, callbackArgs=[process_proto], errbackArgs=[process_proto])
         return d

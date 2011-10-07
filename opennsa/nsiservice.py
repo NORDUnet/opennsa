@@ -84,10 +84,11 @@ class NSIService:
 
         path_info = ( connection_id, source_stp.network, source_stp.endpoint, dest_stp.network, dest_stp.endpoint, self.network)
 
-        if source_stp.network == self.network and dest_stp.network == self.network:
-            log.msg('Connection %s: Simple path creation: %s:%s -> %s:%s (%s)' % path_info, system='opennsa.NSIService')
+        try:
+            if source_stp.network == self.network and dest_stp.network == self.network:
+                log.msg('Connection %s: Simple path creation: %s:%s -> %s:%s (%s)' % path_info, system='opennsa.NSIService')
 
-            setupSubConnection(source_stp, dest_stp, conn, service_parameters)
+                setupSubConnection(source_stp, dest_stp, conn, service_parameters)
 
         # This code is for chaining requests and is currently not used, but might be needed sometime in the future
         # Once we get proper a topology service, some chaining will be necessary.
@@ -119,31 +120,30 @@ class NSIService:
         #else:
         #    log.msg('Tree creation %s:  %s:%s -> %s:%s (%s)' % path_info, system='opennsa.NSIService')
 
-        # create the connection in tree/fanout style
-        else:
-            # log about creation and the connection type
-            log.msg('Connection %s: Aggregate path creation: %s:%s -> %s:%s (%s)' % path_info, system='opennsa.NSIService')
 
-            # making the connection is the same for all though :-)
-
-            try:
+            # create the connection in tree/fanout style
+            else:
+                # log about creation and the connection type
+                log.msg('Connection %s: Aggregate path creation: %s:%s -> %s:%s (%s)' % path_info, system='opennsa.NSIService')
+                # making the connection is the same for all though :-)
                 paths = self.topology.findPaths(source_stp, dest_stp)
-            except error.TopologyError, e:
-                log.msg('Error creating path during reservation: %s' % str(e), system='opennsa.NSIService')
-                return defer.fail(e)
 
-            # check for no paths
-            paths.sort(key=lambda e : len(e.endpoint_pairs))
-            selected_path = paths[0] # shortest path
-            log.msg('Attempting to create path %s' % selected_path, system='opennsa.NSIService')
+                # check for no paths
+                paths.sort(key=lambda e : len(e.endpoint_pairs))
+                selected_path = paths[0] # shortest path
+                log.msg('Attempting to create path %s' % selected_path, system='opennsa.NSIService')
 
-            prev_source_stp = source_stp
+                prev_source_stp = source_stp
 
-            for stp_pair in selected_path.endpoint_pairs:
-                setupSubConnection(prev_source_stp, stp_pair.stp1, conn)
-                prev_source_stp = stp_pair.stp2
-            # last hop
-            setupSubConnection(prev_source_stp, dest_stp, conn)
+                for stp_pair in selected_path.endpoint_pairs:
+                    setupSubConnection(prev_source_stp, stp_pair.stp1, conn)
+                    prev_source_stp = stp_pair.stp2
+                # last hop
+                setupSubConnection(prev_source_stp, dest_stp, conn)
+
+        except Exception, e:
+            log.msg('Error setting up connection: %s' % str(e), system='opennsa.NSIService')
+            return defer.fail(e)
 
         def logReservation(conn):
             log.msg('Connection %s: Reservation succeeded' % conn.connection_id, system='opennsa.NSIService')

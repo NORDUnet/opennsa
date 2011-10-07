@@ -10,6 +10,14 @@ class CallbackTimeoutError(Exception):
     pass
 
 
+class InvalidRequestError(Exception):
+    pass
+
+
+class ResourceNotAvailableError(Exception):
+    pass
+
+
 class TopologyError(Exception):
     pass
 
