@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import os
 import uuid
 import random
 import time
@@ -18,6 +19,7 @@ LOCALHOST_SERVICE   = 'http://localhost:9080/NSI/services/ConnectionService'
 ORVAL_REQUESTER     = 'http://orval.grid.aau.dk:7080/NSI/services/ConnectionService'
 LOCAL_REQUESTER     = 'http://localhost:7080/NSI/services/ConnectionService'
 
+HOST = 'localhost'
 PORT = 7080
 
 
@@ -26,7 +28,9 @@ def doMain():
 
     print 'OpenNSA WS test client'
 
-    client, service, factory = setup.createClient(PORT)
+    wsdl_dir =  os.path.join(os.path.dirname(os.path.abspath(__file__)), 'wsdl')
+
+    client, service, factory = setup.createClient(HOST, PORT, wsdl_dir)
 
     reactor.listenTCP(PORT, factory)
 
@@ -47,8 +51,8 @@ def doMain():
     #source_stp      = nsa.STP('Martinique', 'M1')
     #dest_stp        = nsa.STP('Martinique', 'M3')
 
-    start_time = datetime.datetime.utcfromtimestamp(time.time() + 120 ).isoformat().rsplit('.',1)[0] + 'Z' # two minutes from now
-    end_time   = datetime.datetime.utcfromtimestamp(time.time() + 240 ).isoformat().rsplit('.',1)[0] + 'Z' # four minutes from now
+    start_time = datetime.datetime.utcfromtimestamp(time.time() + 20 ).isoformat().rsplit('.',1)[0] + 'Z'
+    end_time   = datetime.datetime.utcfromtimestamp(time.time() + 120 ).isoformat().rsplit('.',1)[0] + 'Z'
     #start_time, end_time = end_time, start_time
 
     bwp = nsa.BandwidthParameters(1000)

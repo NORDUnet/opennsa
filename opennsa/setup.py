@@ -24,7 +24,7 @@ PROTOCOL    = WEBSERVICE
 #        return jsonrpc.OpenNSAJSONRPCFactory(nsi_service)
 
 
-def createService(network_name, topology_file, proxy, port):
+def createService(network_name, topology_file, proxy, host, port, wsdl_dir):
 
     protocol = WEBSERVICE
 
@@ -33,11 +33,11 @@ def createService(network_name, topology_file, proxy, port):
 
         # reminds an awful lot about client setup
 
-        service_url = 'http://localhost:%i/NSI/services/ConnectionService' % port
+        service_url = 'http://%s:%i/NSI/services/ConnectionService' % (host,port)
 
         resource, site = wsresource.createService()
 
-        provider_client     = wsclient.ProviderClient(service_url)
+        provider_client     = wsclient.ProviderClient(service_url, wsdl_dir)
         requester = wsrequester.Requester(provider_client)
         requester_service   = wsservice.RequesterService(resource, requester)
 
@@ -45,7 +45,7 @@ def createService(network_name, topology_file, proxy, port):
 
         nsi_service  = nsiservice.NSIService(network_name, proxy, topology_file, requester)
 
-        requester_client = wsclient.RequesterClient()
+        requester_client = wsclient.RequesterClient(wsdl_dir)
         provider = wsprovider.Provider(nsi_service, requester_client)
         provider_service = wsservice.ProviderService(resource, provider)
 
@@ -58,7 +58,7 @@ def createService(network_name, topology_file, proxy, port):
         return factory
 
 
-def createClient(port):
+def createClient(host, port, wsdl_dir):
 
     protocol = WEBSERVICE
 
@@ -66,9 +66,9 @@ def createClient(port):
 
         resource, site = wsresource.createService()
 
-        service_url = 'http://localhost:%i/NSI/services/ConnectionService' % port
+        service_url = 'http://%s:%i/NSI/services/ConnectionService' % (host,port)
 
-        provider_client     = wsclient.ProviderClient(service_url)
+        provider_client     = wsclient.ProviderClient(service_url, wsdl_dir)
         requester = wsrequester.Requester(provider_client, callback_timeout=20)
         requester_service   = wsservice.RequesterService(resource, requester)
 

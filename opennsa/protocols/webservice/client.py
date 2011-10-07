@@ -12,8 +12,10 @@ from twisted.python import log
 from opennsa.protocols.webservice.ext import twistedsuds
 
 
-WSDL_PROVIDER   = 'file:///home/htj/nsi/opennsa/wsdl/ogf_nsi_connection_provider_v1_0.wsdl'
-WSDL_REQUESTER  = 'file:///home/htj/nsi/opennsa/wsdl/ogf_nsi_connection_requester_v1_0.wsdl'
+#import os
+#WSDL_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__),"../../../wsdl/"))
+WSDL_PROVIDER   = 'file://%s/ogf_nsi_connection_provider_v1_0.wsdl'
+WSDL_REQUESTER  = 'file://%s/ogf_nsi_connection_requester_v1_0.wsdl'
 
 
 URN_UUID_PREFIX = 'urn:uuid:'
@@ -24,10 +26,10 @@ def createCorrelationId():
 
 class ProviderClient:
 
-    def __init__(self, reply_to):
+    def __init__(self, reply_to, wsdl_dir):
 
         self.reply_to = reply_to
-        self.client = twistedsuds.TwistedSUDSClient(WSDL_PROVIDER)
+        self.client = twistedsuds.TwistedSUDSClient(WSDL_PROVIDER % wsdl_dir)
 
 
     def _createGenericRequestType(self, requester_nsa, provider_nsa, connection_id):
@@ -129,9 +131,9 @@ class ProviderClient:
 
 class RequesterClient:
 
-    def __init__(self):
+    def __init__(self, wsdl_dir):
 
-        self.client = twistedsuds.TwistedSUDSClient(WSDL_REQUESTER)
+        self.client = twistedsuds.TwistedSUDSClient(WSDL_REQUESTER % wsdl_dir)
 
 
     def _createGenericConfirmType(self, requester_nsa, provider_nsa, global_reservation_id, connection_id):

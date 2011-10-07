@@ -6,15 +6,15 @@ Copyright: NORDUnet (2011)
 """
 
 import datetime
-
+import os
 from twisted.python import log
 
 from opennsa import nsa
 from opennsa.protocols.webservice.ext import sudsservice
 
-
-WSDL_PROVIDER   = 'file:///home/htj/nsi/opennsa/wsdl/ogf_nsi_connection_provider_v1_0.wsdl'
-WSDL_REQUESTER  = 'file:///home/htj/nsi/opennsa/wsdl/ogf_nsi_connection_requester_v1_0.wsdl'
+WSDL_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__),"../../../wsdl/"))
+WSDL_PROVIDER   = 'file://%s/ogf_nsi_connection_provider_v1_0.wsdl' % WSDL_PATH
+WSDL_REQUESTER  = 'file://%s/ogf_nsi_connection_requester_v1_0.wsdl' % WSDL_PATH
 
 
 
