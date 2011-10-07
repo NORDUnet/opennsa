@@ -45,6 +45,13 @@ ARGIA_TERMINATED      = 'TERMINATED'
 
 
 
+class ArgiaBackendError(Exception):
+    """
+    Raised when the Argia backend returns an error.
+    """
+
+
+
 class ArgiaBackend:
 
     def __init__(self):
@@ -133,8 +140,8 @@ class ArgiaProcessProtocol(protocol.ProcessProtocol):
         if exit_code == 0:
             self.d.callback(self.stdout)
         else:
-            self.d.errback(self.stderr)
-
+            err = ArgiaBackendError('Argia command returned exit code %i' % exit_code)
+            self.d.errback(err)
 
 
 
@@ -197,9 +204,9 @@ class ArgiaConnection:
 
         d = defer.Deferred()
 
-        def reservationConfirmed(fdata):
+        def reservationConfirmed(_, pp):
             log.msg('Received reservation reply from Argia. CID: %s, Ports: %s -> %s' % (id(self), self.source_port, self.dest_port), system='ArgiaBackend')
-            tree = ET.parse(fdata)
+            tree = ET.parse(pp.stdout)
             argia_state = list(tree.iterfind('state'))[0].text
             reservation_id = list(tree.iterfind('reservationId'))[0].text
 
@@ -212,14 +219,14 @@ class ArgiaConnection:
             self.state.switchState(state.RESERVED)
             d.callback(self)
 
-        def reservationFailed(fdata):
+        def reservationFailed(err, pp):
             self.state.switchState(state.TERMINATED)
             log.msg('Received reservation failure from Argia. CID: %s, Ports: %s -> %s' % (id(self), self.source_port, self.dest_port), system='ArgiaBackend')
-            tree = ET.parse(fdata)
+            tree = ET.parse(pp.stderr)
             ET.dump(tree)
             d.errback(tree)
 
-        process_proto.d.addCallbacks(reservationConfirmed, reservationFailed)
+        process_proto.d.addCallbacks(reservationConfirmed, reservationFailed, callbackArgs=[process_proto], errbackArgs=[process_proto])
         return d
 
 
@@ -272,8 +279,11 @@ class ArgiaConnection:
             d.callback(self)
 
         def provisionFailed(fdata):
+            tree = ET.parse(fdata)
+            err_msg = list(tree.iterfind('message'))[0].text
             self.state.switchState(state.TERMINATED)
-            raise NotImplementedError('cannot handle failed provision yet')
+            err = nsa.ReserveError(err_msg)
+            d.errback(failure.Failure(err))
 
         process_proto = ArgiaProcessProtocol()
         try:
