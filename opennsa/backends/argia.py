@@ -19,7 +19,7 @@ from zope.interface import implements
 from twisted.python import log, failure
 from twisted.internet import reactor, protocol, defer #, task
 
-from opennsa import state, interface as nsainterface, error as nsaerror
+from opennsa import error, state, interface as nsainterface
 
 
 
@@ -70,17 +70,17 @@ class ArgiaBackend:
     def _checkTiming(self, res_start, res_end):
         # check that ports are available in the specified schedule
         if res_start in [ None, '' ] or res_end in [ None, '' ]:
-            raise nsaerror.InvalidRequestError('Reservation must specify start and end time (was either None or '')')
+            raise error.InvalidRequestError('Reservation must specify start and end time (was either None or '')')
 
         # sanity checks
         if res_start > res_end:
-            raise nsaerror.InvalidRequestError('Refusing to make reservation with reverse duration')
+            raise error.InvalidRequestError('Refusing to make reservation with reverse duration')
 
         if res_start < datetime.datetime.utcnow():
-            raise nsaerror.InvalidRequestError('Refusing to make reservation with start time in the past')
+            raise error.InvalidRequestError('Refusing to make reservation with start time in the past')
 
         if res_start > datetime.datetime(2025, 1, 1):
-            raise nsaerror.InvalidRequestError('Refusing to make reservation with start time after 2025')
+            raise error.InvalidRequestError('Refusing to make reservation with start time after 2025')
 
 
     def _checkResourceAvailability(self, source_port, dest_port, res_start, res_end):
@@ -97,11 +97,11 @@ class ArgiaBackend:
             csp = cn.service_parameters
             if source_port in [ cn.source_port, cn.dest_port ]:
                 if portOverlap(csp.start_time, csp.end_time, res_start, res_end):
-                    raise nsaerror.ResourceNotAvailableError('Port %s not available in specified time span' % source_port)
+                    raise error.ResourceNotAvailableError('Port %s not available in specified time span' % source_port)
 
             if dest_port == [ cn.source_port, cn.dest_port ]:
                 if portOverlap(csp.start_time, csp.end_time, res_start, res_end):
-                    raise nsaerror.ResourceNotAvailableError('Port %s not available in specified time span' % dest_port)
+                    raise error.ResourceNotAvailableError('Port %s not available in specified time span' % dest_port)
 
         # all good
 
@@ -196,8 +196,8 @@ class ArgiaConnection:
 
         try:
             self.state.switchState(state.RESERVING)
-        except nsaerror.ConnectionStateTransitionError:
-            raise nsaerror.ReserveError('Cannot reserve connection in state %s' % self.state())
+        except error.ConnectionStateTransitionError:
+            raise error.ReserveError('Cannot reserve connection in state %s' % self.state())
 
         payload =  self._constructReservationPayload() #self.source_port, self.dest_port, self.service_parameters)
         process_proto = ArgiaProcessProtocol(payload)
@@ -205,7 +205,7 @@ class ArgiaConnection:
         try:
             reactor.spawnProcess(process_proto, RESERVE_COMMAND, args=[RESERVE_COMMAND])
         except OSError, e:
-            return defer.fail(nsaerror.ReserverError('Failed to invoke argia control command (%s)' % str(e)))
+            return defer.fail(error.ReserverError('Failed to invoke argia control command (%s)' % str(e)))
 
         d = defer.Deferred()
 
@@ -216,7 +216,7 @@ class ArgiaConnection:
             reservation_id = list(tree.iterfind('reservationId'))[0].text
 
             if argia_state != ARGIA_RESERVED:
-                e = nsaerror.ReserveError('Got unexpected state from Argia (%s)' % argia_state)
+                e = error.ReserveError('Got unexpected state from Argia (%s)' % argia_state)
                 d.errback(failure.Failure(e))
                 return
 
@@ -229,7 +229,7 @@ class ArgiaConnection:
             log.msg('Received reservation failure from Argia. CID: %s, Ports: %s -> %s' % (id(self), self.source_port, self.dest_port), system='ArgiaBackend')
             tree = ET.parse(pp.stderr)
             message = list(tree.iterfind('message'))[0].text
-            err = nsaerror.ReserveError('Reservation failed in Argia backend: %s' % message)
+            err = error.ReserveError('Reservation failed in Argia backend: %s' % message)
             d.errback(failure.Failure(err))
 
         process_proto.d.addCallbacks(reservationConfirmed, reservationFailed, callbackArgs=[process_proto], errbackArgs=[process_proto])
@@ -241,7 +241,7 @@ class ArgiaConnection:
         dt_now = datetime.datetime.utcnow()
 
         if self.service_parameters.end_time <= dt_now:
-            raise nsaerror.ProvisionError('Cannot provision connection after end time (end time: %s, current time: %s).' % (self.service_parameters.end_time, dt_now) )
+            raise error.ProvisionError('Cannot provision connection after end time (end time: %s, current time: %s).' % (self.service_parameters.end_time, dt_now) )
 
 
         # Argia can schedule, so we don't have to
@@ -267,7 +267,7 @@ class ArgiaConnection:
             connection_id = list(tree.iterfind('connectionId'))[0].text
 
             if argia_state not in (ARGIA_PROVISIONED, ARGIA_AUTO_PROVISION):
-                e = nsaerror.ReserveError('Got unexpected state from Argia (%s)' % argia_state)
+                e = error.ReserveError('Got unexpected state from Argia (%s)' % argia_state)
                 d.errback(failure.Failure(e))
                 return
 
@@ -295,7 +295,7 @@ class ArgiaConnection:
         try:
             reactor.spawnProcess(process_proto, PROVISION_COMMAND, args=[PROVISION_COMMAND, self.argia_id])
         except OSError, e:
-            return defer.fail(nsaerror.ReserverError('Failed to invoke argia control command (%s)' % str(e)))
+            return defer.fail(error.ReserverError('Failed to invoke argia control command (%s)' % str(e)))
         process_proto.d.addCallbacks(provisionConfirmed, provisionFailed)
 
         return d
@@ -307,8 +307,8 @@ class ArgiaConnection:
 
         try:
             self.state.switchState(state.RELEASING)
-        except nsaerror.ConnectionStateTransitionError:
-            raise nsaerror.ProvisionError('Cannot release connection in state %s' % self.state())
+        except error.ConnectionStateTransitionError:
+            raise error.ProvisionError('Cannot release connection in state %s' % self.state())
 
         d = defer.Deferred()
 
@@ -318,7 +318,7 @@ class ArgiaConnection:
             reservation_id = list(tree.iterfind('reservationId'))[0].text
 
             if argia_state not in (ARGIA_SCHEDULED):
-                e = nsaerror.ReserveError('Got unexpected state from Argia (%s)' % argia_state)
+                e = error.ReserveError('Got unexpected state from Argia (%s)' % argia_state)
                 d.errback(failure.Failure(e))
                 return
 
@@ -334,7 +334,7 @@ class ArgiaConnection:
         try:
             reactor.spawnProcess(process_proto, RELEASE_COMMAND, args=[RELEASE_COMMAND, self.argia_id])
         except OSError, e:
-            return defer.fail(nsaerror.ReleaseError('Failed to invoke argia control command (%s)' % str(e)))
+            return defer.fail(error.ReleaseError('Failed to invoke argia control command (%s)' % str(e)))
         process_proto.d.addCallbacks(releaseConfirmed, releaseFailed)
 
         return d
@@ -346,8 +346,8 @@ class ArgiaConnection:
 
         try:
             self.state.switchState(state.TERMINATING)
-        except nsaerror.ConnectionStateTransitionError:
-            raise nsaerror.CancelReservationError('Cannot terminate connection in state %s' % self.state())
+        except error.ConnectionStateTransitionError:
+            raise error.CancelReservationError('Cannot terminate connection in state %s' % self.state())
 
         d = defer.Deferred()
 
@@ -356,7 +356,7 @@ class ArgiaConnection:
             argia_state = list(tree.iterfind('state'))[0].text
 
             if argia_state not in (ARGIA_TERMINATED):
-                e = nsaerror.ReserveError('Got unexpected state from Argia (%s)' % argia_state)
+                e = error.ReserveError('Got unexpected state from Argia (%s)' % argia_state)
                 d.errback(failure.Failure(e))
                 return
 
@@ -373,7 +373,7 @@ class ArgiaConnection:
         try:
             reactor.spawnProcess(process_proto, TERMINATE_COMMAND, args=[TERMINATE_COMMAND, self.argia_id])
         except OSError, e:
-            return defer.fail(nsaerror.CancelReservationError('Failed to invoke argia control command (%s)' % str(e)))
+            return defer.fail(error.CancelReservationError('Failed to invoke argia control command (%s)' % str(e)))
         process_proto.d.addCallbacks(terminateConfirmed, terminateFailed)
 
         return d
