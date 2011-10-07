@@ -24,7 +24,7 @@ PROTOCOL    = WEBSERVICE
 #        return jsonrpc.OpenNSAJSONRPCFactory(nsi_service)
 
 
-def createService(network_name, topology_file, proxy, host, port, wsdl_dir):
+def createService(network_name, topology_file, backend, host, port, wsdl_dir):
 
     protocol = WEBSERVICE
 
@@ -43,7 +43,7 @@ def createService(network_name, topology_file, proxy, host, port, wsdl_dir):
 
         # now provider service
 
-        nsi_service  = nsiservice.NSIService(network_name, proxy, topology_file, requester)
+        nsi_service  = nsiservice.NSIService(network_name, backend, topology_file, requester)
 
         requester_client = wsclient.RequesterClient(wsdl_dir)
         provider = wsprovider.Provider(nsi_service, requester_client)
