@@ -34,8 +34,14 @@ class Provider:
             d = self.requester_client.provisionConfirmed(reply_to, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id)
             return d
 
+        def notifyProvisionFailure(err):
+            error_msg = err.getErrorMessage()
+            global_reservation_id = None
+            d = self.requester_client.provisionFailed(reply_to, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, 'TERMINATED', error_msg)
+            return d
+
         d = self.nsi_service.provision(requester_nsa, provider_nsa, session_security_attr, connection_id)
-        d.addCallback(notifyProvisionSuccess)
+        d.addCallbacks(notifyProvisionSuccess, notifyProvisionFailure)
         return d
 
 
@@ -66,8 +72,14 @@ class Provider:
             d = self.requester_client.terminateConfirmed(reply_to, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id)
             return d
 
+        def notifyTerminateFailure(err):
+            error_msg = err.getErrorMessage()
+            global_reservation_id = None
+            d = self.requester_client.terminateFailed(reply_to, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, 'TERMINATED', error_msg)
+            return d
+
         d = self.nsi_service.terminate(requester_nsa, provider_nsa, session_security_attr, connection_id)
-        d.addCallback(notifyTerminateSuccess)
+        d.addCallbacks(notifyTerminateSuccess, notifyTerminateFailure)
         return d
 
 

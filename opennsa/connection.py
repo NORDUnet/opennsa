@@ -172,10 +172,12 @@ class Connection:
                 return self
             if any(successes):
                 self.state.switchState(state.TERMINATED)
-                raise error.CancelReservationError('Cancel partially failed (may require manual cleanup)')
+                err = error.CancelReservationError('Cancel partially failed (may require manual cleanup)')
+                return failure.Failure(err)
             else:
                 self.state.switchState(state.TERMINATED)
-                raise error.CancelReservationError('Cancel failed for all local/sub connections')
+                err = error.CancelReservationError('Cancel failed for all local/sub connections')
+                return failure.Failure(err)
 
         self.state.switchState(state.TERMINATING)
 
@@ -184,7 +186,7 @@ class Connection:
             d = sc.terminate()
             defs.append(d)
 
-        dl = defer.DeferredList(defs)
+        dl = defer.DeferredList(defs, consumeErrors=True)
         dl.addCallback(connectionTerminated)
         return dl
 
@@ -200,10 +202,12 @@ class Connection:
                 return self
             if any(successes):
                 self.state.switchState(state.TERMINATED)
-                raise error.ProvisionError('Provision partially failed (may require manual cleanup)')
+                err = error.ProvisionError('Provision partially failed (may require manual cleanup)')
+                return failure.Failure(err)
             else:
                 self.state.switchState(state.TERMINATED)
-                raise error.ProvisionError('Provision failed for all local/sub connections')
+                err = error.ProvisionError('Provision failed for all local/sub connections')
+                return failure.Failure(err)
 
         self.state.switchState(state.PROVISIONING)
 
@@ -212,7 +216,7 @@ class Connection:
             d = sc.provision()
             defs.append(d)
 
-        dl = defer.DeferredList(defs)
+        dl = defer.DeferredList(defs, consumeErrors=True)
         dl.addCallback(provisionComplete)
         return dl
 

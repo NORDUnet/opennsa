@@ -34,7 +34,6 @@ TERMINATE_COMMAND = os.path.join(COMMAND_DIR, 'cancel')
 QUERY_COMMAND     = os.path.join(COMMAND_DIR, 'query')
 
 
-
 # These state are internal to the Argia NRM and cannot be shared with the NSI service layer
 ARGIA_RESERVED        = 'RESERVED'
 ARGIA_SCHEDULED       = 'SCHEDULED'
@@ -43,6 +42,7 @@ ARGIA_PROVISIONING    = 'PROVISIONING'
 ARGIA_PROVISIONED     = 'PROVISIONED'
 ARGIA_TERMINATED      = 'TERMINATED'
 
+LOG_SYSTEM = 'opennsa.Argia'
 
 
 class ArgiaBackendError(Exception):
@@ -192,12 +192,12 @@ class ArgiaConnection:
 
     def reservation(self, _sp):
 
-        log.msg('RESERVE. CID: %s, Ports: %s -> %s' % (id(self), self.source_port, self.dest_port), system='ArgiaBackend')
+        log.msg('RESERVE. CID: %s, Ports: %s -> %s' % (id(self), self.source_port, self.dest_port), system=LOG_SYSTEM)
 
         try:
             self.state.switchState(state.RESERVING)
         except error.ConnectionStateTransitionError:
-            raise error.ReserveError('Cannot reserve connection in state %s' % self.state())
+            return defer.fail(error.ReserveError('Cannot reserve connection in state %s' % self.state()))
 
         payload =  self._constructReservationPayload() #self.source_port, self.dest_port, self.service_parameters)
         process_proto = ArgiaProcessProtocol(payload)
@@ -210,7 +210,7 @@ class ArgiaConnection:
         d = defer.Deferred()
 
         def reservationConfirmed(_, pp):
-            log.msg('Received reservation reply from Argia. CID: %s, Ports: %s -> %s' % (id(self), self.source_port, self.dest_port), system='ArgiaBackend')
+            log.msg('Received reservation reply from Argia. CID: %s, Ports: %s -> %s' % (id(self), self.source_port, self.dest_port), system=LOG_SYSTEM)
             tree = ET.parse(pp.stdout)
             argia_state = list(tree.iterfind('state'))[0].text
             reservation_id = list(tree.iterfind('reservationId'))[0].text
@@ -226,7 +226,7 @@ class ArgiaConnection:
 
         def reservationFailed(err, pp):
             self.state.switchState(state.TERMINATED)
-            log.msg('Received reservation failure from Argia. CID: %s, Ports: %s -> %s' % (id(self), self.source_port, self.dest_port), system='ArgiaBackend')
+            log.msg('Received reservation failure from Argia. CID: %s, Ports: %s -> %s' % (id(self), self.source_port, self.dest_port), system=LOG_SYSTEM)
             tree = ET.parse(pp.stderr)
             message = list(tree.iterfind('message'))[0].text
             err = error.ReserveError('Reservation failed in Argia backend: %s' % message)
@@ -254,9 +254,9 @@ class ArgiaConnection:
 #            conn.auto_provision_deferred = task.deferLater(reactor, start_delta_seconds, doProvision, conn)
 #            conn.auto_provision_deferred.addErrback(deferTaskFailed)
 #            conn.state = AUTO_PROVISION
-#            log.msg('Connection %s scheduled for auto-provision in %i seconds ' % (conn_id, start_delta_seconds), system='ArgiaBackend' % self.name)
+#            log.msg('Connection %s scheduled for auto-provision in %i seconds ' % (conn_id, start_delta_seconds), system=LOG_SYSTEM)
 
-        log.msg('Provisioning connection. Start time: %s, Current time: %s).' % (self.service_parameters.start_time, dt_now), system='ArgiaBackend')
+        log.msg('Provisioning connection. Start time: %s, Current time: %s).' % (self.service_parameters.start_time, dt_now), system=LOG_SYSTEM)
 
         self.state.switchState(state.PROVISIONING)
         d = defer.Deferred()
@@ -281,14 +281,22 @@ class ArgiaConnection:
 
 #            conn.auto_release_deferred = task.deferLater(reactor, stop_delta_seconds, self.release, conn_id)
 #            conn.auto_release_deferred.addErrback(deferTaskFailed)
-            log.msg('PROVISION. CID: %s' % id(self), system='Argia')
+            log.msg('PROVISION. CID: %s' % id(self), system=LOG_SYSTEM)
             d.callback(self)
 
         def provisionFailed(err, pp):
             tree = ET.parse(pp.stderr)
-            err_msg = list(tree.iterfind('message'))[0].text
-            self.state.switchState(state.TERMINATED)
-            err = error.ReserveError(err_msg)
+            state = list(tree.iterfind('message'))[0].text
+            message = list(tree.iterfind('message'))[0].text
+
+            if state == ARGIA_TERMINATED:
+                self.state.switchState(state.TERMINATED)
+            elif state == ARGIA_RESERVED:
+                self.state.switchState(state.RESERVED)
+            else:
+                log.msg('Unexpected state from argia provision failure: %s' % state, system=LOG_SYSTEM)
+
+            err = error.ReserveError(message)
             d.errback(failure.Failure(err))
 
         process_proto = ArgiaProcessProtocol()
@@ -303,12 +311,12 @@ class ArgiaConnection:
 
     def release(self):
 
-        log.msg('Releasing connection. CID %s' % id(self), system='ArgiaBackend')
+        log.msg('Releasing connection. CID %s' % id(self), system=LOG_SYSTEM)
 
         try:
             self.state.switchState(state.RELEASING)
         except error.ConnectionStateTransitionError:
-            raise error.ProvisionError('Cannot release connection in state %s' % self.state())
+            return defer.fail(error.ProvisionError('Cannot release connection in state %s' % self.state()))
 
         d = defer.Deferred()
 
@@ -327,18 +335,18 @@ class ArgiaConnection:
             d.callback(self)
 
         def releaseFailed(err, process_proto):
-            tree = ET.parse(process_proto.stdout)
+            tree = ET.parse(process_proto.stderr)
             message = list(tree.iterfind('message'))[0].text
             argia_state = list(tree.iterfind('state'))[0].text
 
-            log.msg('Error releasing conection in Argia: %s' % message, system='opennsa.ArgiaBackend')
+            log.msg('Error releasing connection in Argia: %s' % message, system=LOG_SYSTEM)
 
             if argia_state == ARGIA_PROVISIONED:
                 self.state.switchState(state.PROVISIONED)
             elif argia_state == ARGIA_TERMINATED:
                 self.state.switchState(state.TERMINATED)
             else:
-                log.msg('Unknown state returned from Argia in release faliure', system='opennsa.ArgiaBackend')
+                log.msg('Unknown state returned from Argia in release faliure', system=LOG_SYSTEM)
 
             e = error.ReleaseError('Error releasing connection: %s' % str(err))
             d.errback(e)
@@ -355,7 +363,7 @@ class ArgiaConnection:
 
     def terminate(self):
 
-        log.msg('Terminating reservation. CID %s' % id(self), system='ArgiaBackend')
+        log.msg('Terminating reservation. CID %s' % id(self), system=LOG_SYSTEM)
 
         try:
             self.state.switchState(state.TERMINATING)
@@ -375,12 +383,25 @@ class ArgiaConnection:
 
             self.state.switchState(state.TERMINATED)
             self.argia_id = None
-            #log.msg('CANCEL. ICID : %s' % (conn_id), system='ArgiaBackend')
+            #log.msg('CANCEL. ICID : %s' % (conn_id), system=LOG_SYSTEM)
             d.callback(self)
 
         def terminateFailed(err, pp):
-            self.state.switchState(state.TERMINATED)
-            raise NotImplementedError('Argia release failure not implemented')
+            tree = ET.parse(process_proto.stderr)
+            message = list(tree.iterfind('message'))[0].text
+            argia_state = list(tree.iterfind('state'))[0].text
+
+            log.msg('Error terminating connection in Argia: %s' % message, system=LOG_SYSTEM)
+
+            if argia_state == ARGIA_PROVISIONED:
+                self.state.switchState(state.PROVISIONED)
+            elif argia_state == ARGIA_TERMINATED:
+                self.state.switchState(state.TERMINATED)
+            else:
+                log.msg('Unknown state returned from Argia in terminate faliure', system=LOG_SYSTEM)
+
+            e = error.ReleaseError('Error releasing connection: %s' % str(message))
+            d.errback(e)
 
         process_proto = ArgiaProcessProtocol()
         try:

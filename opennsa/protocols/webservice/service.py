@@ -270,10 +270,22 @@ class RequesterService:
         assert soap_action == '"http://schemas.ogf.org/nsi/2011/07/connection/service/provisionFailed"'
         method, req = self.decoder.parse_request('provisionFailed', soap_data)
 
-        requester_nsa, provider_nsa = _decodeNSAs(req.provisionFailed)
-        d = self.requester.provisionFailed(requester_nsa, provider_nsa, None, str(req.provisionFailed.connectionId))
+        correlation_id          = str(req.correlationId)
 
-        return ''
+        rf = req.provisionFailed
+        connection_id           = str(rf.connectionId)
+        global_reservation_id   = str(rf.globalReservationId) if 'globalReservationId' in rf else None
+        connection_state        = str(rf.connectionState)
+        if 'ServiceException' in rf:
+            error_message       = str(rf.ServiceException.text)
+        else:
+            error_message       = 'No ServiceException returned'
+
+        requester_nsa, provider_nsa = _decodeNSAs(req.provisionFailed)
+        d = self.requester.provisionFailed(correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_message)
+
+        reply = self.decoder.marshal_result(correlation_id, method)
+        return reply
 
 
     def releaseConfirmed(self, soap_action, soap_data):
@@ -332,7 +344,26 @@ class RequesterService:
 
 
     def terminateFailed(self, soap_action, soap_data):
-        print "SERVICE TERMINATE FAILED"
+
+        assert soap_action == '"http://schemas.ogf.org/nsi/2011/07/connection/service/terminateFailed"'
+        method, req = self.decoder.parse_request('terminateFailed', soap_data)
+
+        correlation_id          = str(req.correlationId)
+
+        tf = req.terminateFailed
+        connection_id           = str(tf.connectionId)
+        global_reservation_id   = str(tf.globalReservationId) if 'globalReservationId' in tf else None
+        connection_state        = str(tf.connectionState)
+        if 'ServiceException' in tf:
+            error_message       = str(tf.ServiceException.text)
+        else:
+            error_message       = 'No ServiceException returned'
+
+        requester_nsa, provider_nsa = _decodeNSAs(tf)
+        d = self.requester.terminateFailed(correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_message)
+
+        reply = self.decoder.marshal_result(correlation_id, method)
+        return reply
 
 
     def queryConfirmed(self, soap_action, soap_data):
@@ -356,5 +387,5 @@ class RequesterService:
 
 
     def queryFailed(self, soap_action, soap_data):
-        print "SERVICE TERMINATE FAILED"
+        print "SERVICE QUERY FAILED"
 

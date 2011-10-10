@@ -101,6 +101,11 @@ class Requester:
         self.triggerCall(provider_nsa, correlation_id, 'provision', connection_id)
 
 
+    def provisionFailed(self, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_message):
+
+        self.triggerCall(provider_nsa, correlation_id, 'provision', error.ReleaseError(error_message))
+
+
     def release(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
         correlation_id = client.createCorrelationId()
@@ -131,6 +136,11 @@ class Requester:
     def terminateConfirmed(self, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id):
 
         self.triggerCall(provider_nsa, correlation_id, 'terminate', connection_id)
+
+
+    def terminateFailed(self, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_message):
+
+        self.triggerCall(provider_nsa, correlation_id, 'terminate', error.ReleaseError(error_message))
 
 
     def query(self, requester_nsa, provider_nsa, session_security_attr, operation='Summary', connection_ids=None, global_reservation_ids=None):

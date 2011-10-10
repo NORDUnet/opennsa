@@ -201,7 +201,25 @@ class RequesterClient:
         d = self.client.invoke(requester_uri, 'provisionConfirmed', correlation_id, conf)
         return d
 
-    #def provisionFailed(self, 
+
+    def provisionFailed(self, requester_uri, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_msg):
+
+        gft = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}GenericFailedType')
+        net = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}NsiExceptionType')
+
+        gft.requesterNSA   = requester_nsa
+        gft.providerNSA    = provider_nsa
+
+        gft.globalReservationId    = global_reservation_id
+        gft.connectionId           = connection_id
+        gft.connectionState        = connection_state
+
+        net.messageId = 'OPENNSA_PROVISION_FAILURE'
+        net.text = error_msg
+        gft.ServiceException = net
+
+        d = self.client.invoke(requester_uri, 'provisionFailed', correlation_id, gft)
+        return d
 
 
     def releaseConfirmed(self, requester_uri, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id):
@@ -237,7 +255,26 @@ class RequesterClient:
         d = self.client.invoke(requester_uri, 'terminateConfirmed', correlation_id, conf)
         return d
 
-    #def terminateFailed(self, 
+
+    def terminateFailed(self, requester_uri, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_msg):
+
+        gft = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}GenericFailedType')
+        net = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}NsiExceptionType')
+
+        gft.requesterNSA   = requester_nsa
+        gft.providerNSA    = provider_nsa
+
+        gft.globalReservationId    = global_reservation_id
+        gft.connectionId           = connection_id
+        gft.connectionState        = connection_state
+
+        net.messageId = 'OPENNSA_TERMINATE_FAILURE'
+        net.text = error_msg
+        gft.ServiceException = net
+
+        d = self.client.invoke(requester_uri, 'terminateFailed', correlation_id, gft)
+        return d
+
 
     def queryConfirmed(self, requester_uri, correlation_id, requester_nsa, provider_nsa, operation, connections):
 
