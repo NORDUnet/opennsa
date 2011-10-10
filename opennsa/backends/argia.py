@@ -241,7 +241,7 @@ class ArgiaConnection:
         dt_now = datetime.datetime.utcnow()
 
         if self.service_parameters.end_time <= dt_now:
-            raise error.ProvisionError('Cannot provision connection after end time (end time: %s, current time: %s).' % (self.service_parameters.end_time, dt_now) )
+            return defer.fail(error.ProvisionError('Cannot provision connection after end time (end time: %s, current time: %s).' % (self.service_parameters.end_time, dt_now)))
 
 
         # Argia can schedule, so we don't have to
@@ -368,7 +368,7 @@ class ArgiaConnection:
         try:
             self.state.switchState(state.TERMINATING)
         except error.ConnectionStateTransitionError:
-            raise error.CancelReservationError('Cannot terminate connection in state %s' % self.state())
+            return defer.fail(error.CancelReservationError('Cannot terminate connection in state %s' % self.state()))
 
         d = defer.Deferred()
 

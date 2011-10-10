@@ -110,7 +110,7 @@ class DUDConnection:
             self.state.switchState(state.RESERVING)
             self.state.switchState(state.RESERVED)
         except error.ConnectionStateTransitionError:
-            raise error.ReservationError('Cannot reserve connection in state %s' % self.state())
+            return defer.fail(error.ReservationError('Cannot reserve connection in state %s' % self.state()))
         # need to schedule transition to SCHEDULED
         return defer.succeed(self)
 
@@ -122,7 +122,7 @@ class DUDConnection:
             try:
                 self.state.switchState(state.PROVISIONING)
             except error.ConnectionStateTransitionError:
-                raise error.ProvisionError('Cannot provision connection in state %s' % self.state())
+                return defer.fail(error.ProvisionError('Cannot provision connection in state %s' % self.state()))
             # schedule release
             td = self.service_parameters.end_time -  datetime.datetime.utcnow()
             # total_seconds() is only available from python 2.7 so we use this
@@ -135,7 +135,7 @@ class DUDConnection:
         dt_now = datetime.datetime.utcnow()
 
         if self.service_parameters.end_time <= dt_now:
-            raise error.ProvisionError('Cannot provision connection after end time (end time: %s, current time: %s).' % (self.service_parameters.end_time, dt_now) )
+            return defer.fail(error.ProvisionError('Cannot provision connection after end time (end time: %s, current time: %s).' % (self.service_parameters.end_time, dt_now)))
         else:
             td = self.service_parameters.start_time - dt_now
             # total_seconds() is only available from python 2.7 so we use this
