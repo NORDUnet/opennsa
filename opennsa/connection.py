@@ -153,7 +153,7 @@ class Connection:
 
         defs = []
         for sc in self.connections():
-            d = sc.reservation(service_parameters)
+            d = sc.reservation()
             defs.append(d)
 
         dl = defer.DeferredList(defs, consumeErrors=True)
