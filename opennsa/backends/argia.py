@@ -288,7 +288,7 @@ class ArgiaConnection:
             tree = ET.parse(pp.stderr)
             err_msg = list(tree.iterfind('message'))[0].text
             self.state.switchState(state.TERMINATED)
-            err = nsa.ReserveError(err_msg)
+            err = error.ReserveError(err_msg)
             d.errback(failure.Failure(err))
 
         process_proto = ArgiaProcessProtocol()
