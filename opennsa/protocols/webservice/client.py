@@ -187,7 +187,7 @@ class RequesterClient:
         res_fail.connectionId           = connection_id
         res_fail.connectionState        = connection_state
 
-        nsi_ex.messageId = 'OPENNSA_FAILURE'
+        nsi_ex.messageId = 'RESERVATION_FAILURE'
         nsi_ex.text = error_msg
         res_fail.ServiceException = nsi_ex
 
@@ -214,7 +214,7 @@ class RequesterClient:
         gft.connectionId           = connection_id
         gft.connectionState        = connection_state
 
-        net.messageId = 'OPENNSA_PROVISION_FAILURE'
+        net.messageId = 'PROVISION_FAILURE'
         net.text = error_msg
         gft.ServiceException = net
 
@@ -241,7 +241,7 @@ class RequesterClient:
         gft.connectionId           = connection_id
         gft.connectionState        = connection_state
 
-        net.messageId = 'OPENNSA_RELEASE_FAILURE'
+        net.messageId = 'RELEASE_FAILURE'
         net.text = error_msg
         gft.ServiceException = net
 
@@ -268,7 +268,7 @@ class RequesterClient:
         gft.connectionId           = connection_id
         gft.connectionState        = connection_state
 
-        net.messageId = 'OPENNSA_TERMINATE_FAILURE'
+        net.messageId = 'TERMINATE_FAILURE'
         net.text = error_msg
         gft.ServiceException = net
 
