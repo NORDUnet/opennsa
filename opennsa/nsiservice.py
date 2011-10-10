@@ -171,7 +171,7 @@ class NSIService:
         # security check here
 
         d = conn.terminate()
-        d.addCallbacks(lambda conn : conn.connection_id, _logError)
+        d.addErrback(_logError)
         return d
 
 
@@ -182,7 +182,7 @@ class NSIService:
         # security check here
 
         d = conn.provision()
-        d.addCallbacks(lambda conn : conn.connection_id, _logError)
+        d.addErrback(_logError)
         return d
 
 
@@ -192,7 +192,7 @@ class NSIService:
         # security check here
 
         d = conn.release()
-        d.addCallbacks(lambda conn : conn.connection_id, _logError)
+        d.addErrback(_logError)
         return d
 
 
