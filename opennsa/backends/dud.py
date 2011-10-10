@@ -36,17 +36,17 @@ class DUDNSIBackend:
     def _checkReservation(self, source_port, dest_port, res_start, res_end):
         # check that ports are available in the specified schedule
         if res_start in [ None, '' ] or res_end in [ None, '' ]:
-            raise error.ReserveError('Reservation must specify start and end time (was either None or '')')
+            raise error.InvalidRequestError('Reservation must specify start and end time (was either None or '')')
 
         # sanity checks
         if res_start > res_end:
-            raise error.ReserveError('Refusing to make reservation with reverse duration')
+            raise error.InvalidRequestError('Refusing to make reservation with reverse duration')
 
         if res_start < datetime.datetime.utcnow():
-            raise error.ReserveError('Refusing to make reservation with start time in the past')
+            raise error.InvalidRequestError('Refusing to make reservation with start time in the past')
 
         if res_start > datetime.datetime(2025, 1, 1):
-            raise error.ReserveError('Refusing to make reservation with start time after 2025')
+            raise error.InvalidRequestError('Refusing to make reservation with start time after 2025')
 
         # port temporal availability
         def portOverlap(res1_start_time, res1_end_time, res2_start_time, res2_end_time):
@@ -60,11 +60,11 @@ class DUDNSIBackend:
             csp = cn.service_parameters
             if source_port in [ cn.source_port, cn.dest_port ]:
                 if portOverlap(csp.start_time, csp.end_time, res_start, res_end):
-                    raise error.ReserveError('Port %s not available in specified time span' % source_port)
+                    raise error.InvalidRequestError('Port %s not available in specified time span' % source_port)
 
             if dest_port == [ cn.source_port, cn.dest_port ]:
                 if portOverlap(csp.start_time, csp.end_time, res_start, res_end):
-                    raise error.ReserveError('Port %s not available in specified time span' % dest_port)
+                    raise error.InvalidRequestError('Port %s not available in specified time span' % dest_port)
 
         # all good
 
