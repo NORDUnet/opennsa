@@ -3,7 +3,6 @@ High-level functionality for creating clients and services in OpenNSA.
 """
 
 from opennsa import nsiservice
-from opennsa.protocols.jsonrpc import jsonrpc
 from opennsa.protocols.webservice import client as wsclient, service as wsservice, provider as wsprovider, requester as wsrequester, resource as wsresource
 
 
@@ -13,21 +12,9 @@ PROTOCOL    = WEBSERVICE
 
 
 
-#def _makeClient(protocol, port):
-#
-#    elif protocol == JSONRPC:
-#        return jsonrpc.JSONRPCNSIClient()
-#
-#def _makeFactory(protocol, nsi_service):
-#
-#    elif protocol == JSONRPC:
-#        return jsonrpc.OpenNSAJSONRPCFactory(nsi_service)
-
-
 def createService(network_name, topology_file, backend, host, port, wsdl_dir):
 
     protocol = WEBSERVICE
-
 
     if protocol == WEBSERVICE:
 
@@ -52,10 +39,8 @@ def createService(network_name, topology_file, backend, host, port, wsdl_dir):
         return site
 
     else:
-        raise NotImplementedError('ARG createService')
-        client = _makeClient(PROTOCOL, port)
-        factory = _makeFactory(PROTOCOL, nsi_service)
-        return factory
+        raise NotImplementedError('Unsupport protocol: %s' % protocol)
+
 
 
 def createClient(host, port, wsdl_dir):
@@ -74,7 +59,6 @@ def createClient(host, port, wsdl_dir):
 
         return requester, None, site
 
-
     else:
-        raise NotImplementedError('ARG')
+        raise NotImplementedError('Unsupport protocol: %s' % protocol)
 
