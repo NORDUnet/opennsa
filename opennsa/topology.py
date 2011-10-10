@@ -78,8 +78,8 @@ class Topology:
         #print "FIND PATH", source_stp, dest_stp
 
         routes = self.findPathEndpoints(source_stp, dest_stp)
-        if bandwidths is not None:
-            routes = self.filterBandwidth(routes, bandwidths)
+        if bandwidth is not None:
+            routes = self.filterBandwidth(routes, bandwidth)
 
         paths = []
         if routes == []:
