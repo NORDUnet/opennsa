@@ -47,8 +47,14 @@ class Provider:
             d = self.requester_client.releaseConfirmed(reply_to, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id)
             return d
 
+        def notifyReleaseFailure(err):
+            error_msg = err.getErrorMessage()
+            global_reservation_id = None
+            d = self.requester_client.releaseFailed(reply_to, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, 'TERMINATED', error_msg)
+            return d
+
         d = self.nsi_service.release(requester_nsa, provider_nsa, session_security_attr, connection_id)
-        d.addCallback(notifyReleaseSuccess)
+        d.addCallbacks(notifyReleaseSuccess, notifyReleaseFailure)
         return d
 
 

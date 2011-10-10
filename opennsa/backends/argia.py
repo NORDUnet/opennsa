@@ -312,13 +312,13 @@ class ArgiaConnection:
 
         d = defer.Deferred()
 
-        def releaseConfirmed(fdata):
-            tree = ET.parse(fdata)
+        def releaseConfirmed(_, process_proto):
+            tree = ET.parse(process_proto.stdout)
             argia_state = list(tree.iterfind('state'))[0].text
             reservation_id = list(tree.iterfind('reservationId'))[0].text
 
             if argia_state not in (ARGIA_SCHEDULED):
-                e = error.ReserveError('Got unexpected state from Argia (%s)' % argia_state)
+                e = error.ReleaseError('Got unexpected state from Argia (%s)' % argia_state)
                 d.errback(failure.Failure(e))
                 return
 
@@ -326,16 +326,29 @@ class ArgiaConnection:
             self.argia_id = reservation_id
             d.callback(self)
 
-        def releaseFailed(fdata):
-            self.state.switchState(state.TERMINATED)
-            raise NotImplementedError('Argia release failure not implemented')
+        def releaseFailed(err, process_proto):
+            tree = ET.parse(process_proto.stdout)
+            message = list(tree.iterfind('message'))[0].text
+            argia_state = list(tree.iterfind('state'))[0].text
+
+            log.msg('Error releasing conection in Argia: %s' % message, system='opennsa.ArgiaBackend')
+
+            if argia_state == ARGIA_PROVISIONED:
+                self.state.switchState(state.PROVISIONED)
+            elif argia_state == ARGIA_TERMINATED:
+                self.state.switchState(state.TERMINATED)
+            else:
+                log.msg('Unknown state returned from Argia in release faliure', system='opennsa.ArgiaBackend')
+
+            e = error.ReleaseError('Error releasing connection: %s' % str(err))
+            d.errback(e)
 
         process_proto = ArgiaProcessProtocol()
         try:
             reactor.spawnProcess(process_proto, RELEASE_COMMAND, args=[RELEASE_COMMAND, self.argia_id])
         except OSError, e:
             return defer.fail(error.ReleaseError('Failed to invoke argia control command (%s)' % str(e)))
-        process_proto.d.addCallbacks(releaseConfirmed, releaseFailed)
+        process_proto.d.addCallbacks(releaseConfirmed, releaseFailed, callbackArgs=[process_proto], errbackArgs=[process_proto])
 
         return d
 

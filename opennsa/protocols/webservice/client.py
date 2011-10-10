@@ -210,7 +210,25 @@ class RequesterClient:
         d = self.client.invoke(requester_uri, 'releaseConfirmed', correlation_id, conf)
         return d
 
-    #def releaseFailed(self, 
+
+    def releaseFailed(self, requester_uri, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_msg):
+
+        gft = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}GenericFailedType')
+        net = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}NsiExceptionType')
+
+        gft.requesterNSA   = requester_nsa
+        gft.providerNSA    = provider_nsa
+
+        gft.globalReservationId    = global_reservation_id
+        gft.connectionId           = connection_id
+        gft.connectionState        = connection_state
+
+        net.messageId = 'OPENNSA_RELEASE_FAILURE'
+        net.text = error_msg
+        gft.ServiceException = net
+
+        d = self.client.invoke(requester_uri, 'releaseFailed', correlation_id, gft)
+        return d
 
 
     def terminateConfirmed(self, requester_uri, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id):

@@ -271,7 +271,7 @@ class RequesterService:
         method, req = self.decoder.parse_request('provisionFailed', soap_data)
 
         requester_nsa, provider_nsa = _decodeNSAs(req.provisionFailed)
-        d = self.nsi_service.provisionFailed(requester_nsa, provider_nsa, None, str(req.provisionFailed.connectionId))
+        d = self.requester.provisionFailed(requester_nsa, provider_nsa, None, str(req.provisionFailed.connectionId))
 
         return ''
 
@@ -293,7 +293,26 @@ class RequesterService:
 
 
     def releaseFailed(self, soap_action, soap_data):
-        print "SERVICE RELEASE FAILED"
+
+        assert soap_action == '"http://schemas.ogf.org/nsi/2011/07/connection/service/releaseFailed"'
+        method, req = self.decoder.parse_request('releaseFailed', soap_data)
+
+        correlation_id          = str(req.correlationId)
+
+        rf = req.releaseFailed
+        connection_id           = str(rf.connectionId)
+        global_reservation_id   = str(rf.globalReservationId) if 'globalReservationId' in rf else None
+        connection_state        = str(rf.connectionState)
+        if 'ServiceException' in rf:
+            error_message       = str(rf.ServiceException.text)
+        else:
+            error_message       = 'No ServiceException returned'
+
+        requester_nsa, provider_nsa = _decodeNSAs(req.releaseFailed)
+        d = self.requester.releaseFailed(correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_message)
+
+        reply = self.decoder.marshal_result(correlation_id, method)
+        return reply
 
 
     def terminateConfirmed(self, soap_action, soap_data):

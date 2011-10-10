@@ -155,8 +155,9 @@ class DUDConnection:
         log.msg('RELEASE. CID: %s' % id(self), system='DUDBackend Network %s' % self.network_name)
         try:
             self.state.switchState(state.RELEASING)
-        except error.ConnectionStateTransitionError:
-            raise error.ProvisionError('Cannot release connection in state %s' % self.state())
+        except error.ConnectionStateTransitionError, e:
+            log.msg('Release error: ' + str(e), system='DUDBackend Network %s' % self.network_name)
+            return defer.fail(e)
 
         self.deSchedule()
         self.state.switchState(state.SCHEDULED)

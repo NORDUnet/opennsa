@@ -17,6 +17,12 @@ from opennsa import nsa, error, topology, proxy, connection
 
 
 
+def _logError(err):
+    log.msg(err.getErrorMessage(), system='opennsa.NSIService')
+    return err
+
+
+
 class NSIService:
 
     implements(NSIServiceInterface)
@@ -165,7 +171,7 @@ class NSIService:
         # security check here
 
         d = conn.terminate()
-        d.addCallback(lambda conn : conn.connection_id)
+        d.addCallbacks(lambda conn : conn.connection_id, _logError)
         return d
 
 
@@ -176,7 +182,7 @@ class NSIService:
         # security check here
 
         d = conn.provision()
-        d.addCallbacks(lambda conn : conn.connection_id, lambda e : log.err(e))
+        d.addCallbacks(lambda conn : conn.connection_id, _logError)
         return d
 
 
@@ -186,7 +192,7 @@ class NSIService:
         # security check here
 
         d = conn.release()
-        d.addCallbacks(lambda conn : conn.connection_id, lambda e : log.err(e))
+        d.addCallbacks(lambda conn : conn.connection_id, _logError)
         return d
 
 

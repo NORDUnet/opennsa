@@ -6,7 +6,7 @@ Copyright: NORDUnet (2011)
 """
 
 
-from twisted.python import log
+from twisted.python import log, failure
 from twisted.internet import defer
 
 from opennsa import error, nsa, state
@@ -231,7 +231,8 @@ class Connection:
                 raise error.ReleaseError('Release partially failed (may require manual cleanup)')
             else:
                 self.state.switchState(state.TERMINATED)
-                raise error.ReleaseError('Release failed for all local/sub connection')
+                err = error.ReleaseError('Release failed for all local/sub connection')
+                return failure.Failure(err)
 
         self.state.switchState(state.RELEASING)
 
@@ -240,7 +241,7 @@ class Connection:
             d = sc.release()
             defs.append(d)
 
-        dl = defer.DeferredList(defs)
+        dl = defer.DeferredList(defs, consumeErrors=True)
         dl.addCallback(connectionReleased)
         return dl
 

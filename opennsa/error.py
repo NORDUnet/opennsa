@@ -42,7 +42,7 @@ class ProvisionError(Exception):
     pass
 
 
-class ReleaseProvisionError(Exception):
+class ReleaseError(Exception):
     pass
 
 

@@ -50,7 +50,7 @@ class DUDBackendTest(unittest.TestCase):
         try:
             _ = yield self.backend.releaseProvision(fake_id)
             self.fail('Releasing non-existing connection did not raise exception')
-        except nsaerror.ReleaseProvisionError:
+        except nsaerror.ReleaseError:
             pass # expected
         except Exception, e:
             self.fail('Releasing non-existing connection raised unexpected exception (%s)' % str(e))

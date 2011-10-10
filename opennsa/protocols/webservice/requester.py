@@ -114,6 +114,10 @@ class Requester:
         self.triggerCall(provider_nsa, correlation_id, 'release', connection_id)
 
 
+    def releaseFailed(self, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_message):
+
+        self.triggerCall(provider_nsa, correlation_id, 'release', error.ReleaseError(error_message))
+
 
     def terminate(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
