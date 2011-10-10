@@ -2,7 +2,7 @@
 High-level functionality for creating clients and services in OpenNSA.
 """
 
-from opennsa import nsiservice, nsiclient
+from opennsa import nsiservice
 from opennsa.protocols.jsonrpc import jsonrpc
 from opennsa.protocols.webservice import client as wsclient, service as wsservice, provider as wsprovider, requester as wsrequester, resource as wsresource
 
