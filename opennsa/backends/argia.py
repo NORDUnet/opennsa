@@ -261,8 +261,8 @@ class ArgiaConnection:
         self.state.switchState(state.PROVISIONING)
         d = defer.Deferred()
 
-        def provisionConfirmed(fdata):
-            tree = ET.parse(fdata)
+        def provisionConfirmed(_, pp):
+            tree = ET.parse(pp.stdout)
             argia_state = list(tree.iterfind('state'))[0].text
             connection_id = list(tree.iterfind('connectionId'))[0].text
 
@@ -284,8 +284,8 @@ class ArgiaConnection:
             log.msg('PROVISION. CID: %s' % id(self), system='Argia')
             d.callback(self)
 
-        def provisionFailed(fdata):
-            tree = ET.parse(fdata)
+        def provisionFailed(err, pp):
+            tree = ET.parse(pp.stderr)
             err_msg = list(tree.iterfind('message'))[0].text
             self.state.switchState(state.TERMINATED)
             err = nsa.ReserveError(err_msg)
@@ -296,7 +296,7 @@ class ArgiaConnection:
             reactor.spawnProcess(process_proto, PROVISION_COMMAND, args=[PROVISION_COMMAND, self.argia_id])
         except OSError, e:
             return defer.fail(error.ReserverError('Failed to invoke argia control command (%s)' % str(e)))
-        process_proto.d.addCallbacks(provisionConfirmed, provisionFailed)
+        process_proto.d.addCallbacks(provisionConfirmed, provisionFailed, callbackArgs=[process_proto], errbackArgs=[process_proto])
 
         return d
 
@@ -364,8 +364,8 @@ class ArgiaConnection:
 
         d = defer.Deferred()
 
-        def terminateConfirmed(fdata):
-            tree = ET.parse(fdata)
+        def terminateConfirmed(_, pp):
+            tree = ET.parse(pp.stdout)
             argia_state = list(tree.iterfind('state'))[0].text
 
             if argia_state not in (ARGIA_TERMINATED):
@@ -378,7 +378,7 @@ class ArgiaConnection:
             #log.msg('CANCEL. ICID : %s' % (conn_id), system='ArgiaBackend')
             d.callback(self)
 
-        def terminateFailed(fdata):
+        def terminateFailed(err, pp):
             self.state.switchState(state.TERMINATED)
             raise NotImplementedError('Argia release failure not implemented')
 
@@ -387,7 +387,7 @@ class ArgiaConnection:
             reactor.spawnProcess(process_proto, TERMINATE_COMMAND, args=[TERMINATE_COMMAND, self.argia_id])
         except OSError, e:
             return defer.fail(error.CancelReservationError('Failed to invoke argia control command (%s)' % str(e)))
-        process_proto.d.addCallbacks(terminateConfirmed, terminateFailed)
+        process_proto.d.addCallbacks(terminateConfirmed, terminateFailed, callbackArgs=[process_proto], errbackArgs=[process_proto])
 
         return d
 
