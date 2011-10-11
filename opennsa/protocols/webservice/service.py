@@ -205,6 +205,20 @@ class RequesterService:
 #"http://schemas.ogf.org/nsi/2011/07/connection/service/forcedEnd"
 #"http://schemas.ogf.org/nsi/2011/07/connection/service/query"
 
+    def _getGFTParameters(self, gft):
+        # GFT = GenericFailedType
+
+        requester_nsa, provider_nsa = _decodeNSAs(gft)
+        global_reservation_id       = str(gft.globalReservationId) if 'globalReservationId' in gft else None
+        connection_id               = str(gft.connectionId)
+        connection_state            = str(gft.connectionState)
+        error_message               = None
+        if 'ServiceException' in gft:
+            error_message           = str(gft.ServiceException.text)
+
+        return requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_message
+
+
 
     def reservationConfirmed(self, soap_action, soap_data):
 
@@ -232,16 +246,8 @@ class RequesterService:
         method, req = self.decoder.parse_request('reservationFailed', soap_data)
 
         correlation_id          = str(req.correlationId)
-        res = req.reservationFailed
 
-        requester_nsa, provider_nsa = _decodeNSAs(res)
-        global_reservation_id       = str(res.globalReservationId)
-        connection_id               = str(res.connectionId)
-        connection_state            = str(res.connectionState)
-        if 'ServiceException' in res:
-            error_message           = str(res.ServiceException.text)
-        else:
-            error_message           = 'No ServiceException returned'
+        requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_message = self._getGFTParameters(req.reservationFailed)
 
         self.requester.reservationFailed(correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_message)
 
@@ -272,16 +278,8 @@ class RequesterService:
 
         correlation_id          = str(req.correlationId)
 
-        rf = req.provisionFailed
-        connection_id           = str(rf.connectionId)
-        global_reservation_id   = str(rf.globalReservationId) if 'globalReservationId' in rf else None
-        connection_state        = str(rf.connectionState)
-        if 'ServiceException' in rf:
-            error_message       = str(rf.ServiceException.text)
-        else:
-            error_message       = 'No ServiceException returned'
+        requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_message = self._getGFTParameters(req.provisionFailed)
 
-        requester_nsa, provider_nsa = _decodeNSAs(req.provisionFailed)
         d = self.requester.provisionFailed(correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_message)
 
         reply = self.decoder.marshal_result(correlation_id, method)
@@ -311,16 +309,8 @@ class RequesterService:
 
         correlation_id          = str(req.correlationId)
 
-        rf = req.releaseFailed
-        connection_id           = str(rf.connectionId)
-        global_reservation_id   = str(rf.globalReservationId) if 'globalReservationId' in rf else None
-        connection_state        = str(rf.connectionState)
-        if 'ServiceException' in rf:
-            error_message       = str(rf.ServiceException.text)
-        else:
-            error_message       = 'No ServiceException returned'
+        requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_message = self._getGFTParameters(req.releaseFailed)
 
-        requester_nsa, provider_nsa = _decodeNSAs(req.releaseFailed)
         d = self.requester.releaseFailed(correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_message)
 
         reply = self.decoder.marshal_result(correlation_id, method)
@@ -350,16 +340,8 @@ class RequesterService:
 
         correlation_id          = str(req.correlationId)
 
-        tf = req.terminateFailed
-        connection_id           = str(tf.connectionId)
-        global_reservation_id   = str(tf.globalReservationId) if 'globalReservationId' in tf else None
-        connection_state        = str(tf.connectionState)
-        if 'ServiceException' in tf:
-            error_message       = str(tf.ServiceException.text)
-        else:
-            error_message       = 'No ServiceException returned'
+        requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_message = self._getGFTParameters(req.terminateFailed)
 
-        requester_nsa, provider_nsa = _decodeNSAs(tf)
         d = self.requester.terminateFailed(correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_message)
 
         reply = self.decoder.marshal_result(correlation_id, method)
