@@ -44,6 +44,19 @@ class ProviderService:
         self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/07/connection/service/query"',         self.query)
 
 
+    def _getGRTParameters(self, grt):
+        # GRT = Generic Request Type
+        requester_nsa, provider_nsa = _decodeNSAs(grt)
+        connection_id               = str(grt.connectionId)
+        return requester_nsa, provider_nsa, connection_id
+
+
+    def _getRequestParameters(self, grt):
+        correlation_id  = str(grt.correlationId)
+        reply_to        = str(grt.replyTo)
+        return correlation_id, reply_to
+
+
     def genericReply(connection_id, request, decoder, method, correlation_id):
         reply = decoder.marshal_result(correlation_id, method)
         return reply
@@ -52,21 +65,18 @@ class ProviderService:
     def reservation(self, soap_action, soap_data):
 
         assert soap_action == '"http://schemas.ogf.org/nsi/2011/07/connection/service/reservation"'
-        method, objs = self.decoder.parse_request('reservation', soap_data)
+        method, req = self.decoder.parse_request('reservation', soap_data)
 
-        correlation_id, reply_to, req = [ a for (_,a) in objs ]
-        #log.msg("Received SOAP request. Correlation ID: %s. Connection ID: %s" % (correlation_id, req.reservation.connectionId))
-        #print req
+        correlation_id, reply_to, = self._getRequestParameters(req)
+        res = req.reservation.reservation
 
-        reply_to = str(reply_to)
-
-        requester_nsa, provider_nsa = _decodeNSAs(req)
+        requester_nsa, provider_nsa = _decodeNSAs(req.reservation)
         session_security_attr       = None
-        connection_id               = req.reservation.connectionId
-        global_reservation_id       = req.reservation.globalReservationId if 'globalReservationId' in req.reservation else None
-        description                 = req.reservation.description         if 'description'         in req.reservation else None
-        sp                          = req.reservation.serviceParameters
-        path                        = req.reservation.path
+        connection_id               = res.connectionId
+        global_reservation_id       = res.globalReservationId if 'globalReservationId' in res else None
+        description                 = res.description         if 'description'         in res else None
+        sp                          = res.serviceParameters
+        path                        = res.path
 
         def parseSTPID(stp_id):
             tokens = stp_id.replace(nsa.STP_PREFIX, '').split(':', 2)
@@ -109,12 +119,9 @@ class ProviderService:
     def provision(self, soap_action, soap_data):
 
         method, req = self.decoder.parse_request('provision', soap_data)
-        requester_nsa, provider_nsa = _decodeNSAs(req.provision)
 
-        correlation_id  = str(req.correlationId)
-        reply_to        = str(req.replyTo)
-
-        connection_id   = str(req.provision.connectionId)
+        correlation_id, reply_to, = self._getRequestParameters(req)
+        requester_nsa, provider_nsa, connection_id = self._getGRTParameters(req.provision)
 
         d = self.provider.provision(correlation_id, reply_to, requester_nsa, provider_nsa, None, connection_id)
 
@@ -125,11 +132,9 @@ class ProviderService:
     def release(self, soap_action, soap_data):
 
         method, req = self.decoder.parse_request('release', soap_data)
-        requester_nsa, provider_nsa = _decodeNSAs(req.release)
 
-        correlation_id  = str(req.correlationId)
-        reply_to        = str(req.replyTo)
-        connection_id   = str(req.release.connectionId)
+        correlation_id, reply_to, = self._getRequestParameters(req)
+        requester_nsa, provider_nsa, connection_id = self._getGRTParameters(req.release)
 
         d = self.provider.release(correlation_id, reply_to, requester_nsa, provider_nsa, None, connection_id)
 
@@ -141,11 +146,9 @@ class ProviderService:
     def terminate(self, soap_action, soap_data):
 
         method, req = self.decoder.parse_request('terminate', soap_data)
-        requester_nsa, provider_nsa = _decodeNSAs(req.terminate)
 
-        correlation_id  = str(req.correlationId)
-        reply_to        = str(req.replyTo)
-        connection_id   = str(req.terminate.connectionId)
+        correlation_id, reply_to, = self._getRequestParameters(req)
+        requester_nsa, provider_nsa, connection_id = self._getGRTParameters(req.terminate)
 
         d = self.provider.terminate(correlation_id, reply_to, requester_nsa, provider_nsa, None, connection_id)
 
@@ -202,8 +205,9 @@ class RequesterService:
         self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/07/connection/service/queryConfirmed"',        self.queryConfirmed)
         self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/07/connection/service/queryFailed"',           self.queryFailed)
 
-#"http://schemas.ogf.org/nsi/2011/07/connection/service/forcedEnd"
-#"http://schemas.ogf.org/nsi/2011/07/connection/service/query"
+        #"http://schemas.ogf.org/nsi/2011/07/connection/service/forcedEnd"
+        #"http://schemas.ogf.org/nsi/2011/07/connection/service/query"
+
 
     def _getGFTParameters(self, gft):
         # GFT = GenericFailedType
@@ -219,12 +223,11 @@ class RequesterService:
         return requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_message
 
 
-
     def reservationConfirmed(self, soap_action, soap_data):
 
         assert soap_action == '"http://schemas.ogf.org/nsi/2011/07/connection/service/reservationConfirmed"'
-
         method, req = self.decoder.parse_request('reservationConfirmed', soap_data)
+
         requester_nsa, provider_nsa = _decodeNSAs(req.reservationConfirmed)
         res = req.reservationConfirmed.reservation
 
@@ -242,11 +245,9 @@ class RequesterService:
     def reservationFailed(self, soap_action, soap_data):
 
         assert soap_action == '"http://schemas.ogf.org/nsi/2011/07/connection/service/reservationFailed"'
-
         method, req = self.decoder.parse_request('reservationFailed', soap_data)
 
-        correlation_id          = str(req.correlationId)
-
+        correlation_id = str(req.correlationId)
         requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_message = self._getGFTParameters(req.reservationFailed)
 
         self.requester.reservationFailed(correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_message)
@@ -258,12 +259,11 @@ class RequesterService:
     def provisionConfirmed(self, soap_action, soap_data):
 
         assert soap_action == '"http://schemas.ogf.org/nsi/2011/07/connection/service/provisionConfirmed"'
-
         method, req = self.decoder.parse_request('provisionConfirmed', soap_data)
-        requester_nsa, provider_nsa = _decodeNSAs(req.provisionConfirmed)
 
-        correlation_id          = str(req.correlationId)
-        connection_id           = str(req.provisionConfirmed.connectionId)
+        requester_nsa, provider_nsa = _decodeNSAs(req.provisionConfirmed)
+        correlation_id  = str(req.correlationId)
+        connection_id   = str(req.provisionConfirmed.connectionId)
 
         d = self.requester.provisionConfirmed(correlation_id, requester_nsa, provider_nsa, None, connection_id)
 
@@ -276,8 +276,7 @@ class RequesterService:
         assert soap_action == '"http://schemas.ogf.org/nsi/2011/07/connection/service/provisionFailed"'
         method, req = self.decoder.parse_request('provisionFailed', soap_data)
 
-        correlation_id          = str(req.correlationId)
-
+        correlation_id = str(req.correlationId)
         requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_message = self._getGFTParameters(req.provisionFailed)
 
         d = self.requester.provisionFailed(correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_message)
@@ -289,12 +288,11 @@ class RequesterService:
     def releaseConfirmed(self, soap_action, soap_data):
 
         assert soap_action == '"http://schemas.ogf.org/nsi/2011/07/connection/service/releaseConfirmed"'
-
         method, req = self.decoder.parse_request('releaseConfirmed', soap_data)
-        requester_nsa, provider_nsa = _decodeNSAs(req.releaseConfirmed)
 
-        correlation_id          = str(req.correlationId)
-        connection_id           = str(req.releaseConfirmed.connectionId)
+        requester_nsa, provider_nsa = _decodeNSAs(req.releaseConfirmed)
+        correlation_id  = str(req.correlationId)
+        connection_id   = str(req.releaseConfirmed.connectionId)
 
         d = self.requester.releaseConfirmed(correlation_id, requester_nsa, provider_nsa, None, connection_id)
 
@@ -307,8 +305,7 @@ class RequesterService:
         assert soap_action == '"http://schemas.ogf.org/nsi/2011/07/connection/service/releaseFailed"'
         method, req = self.decoder.parse_request('releaseFailed', soap_data)
 
-        correlation_id          = str(req.correlationId)
-
+        correlation_id = str(req.correlationId)
         requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_message = self._getGFTParameters(req.releaseFailed)
 
         d = self.requester.releaseFailed(correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_message)
@@ -320,12 +317,11 @@ class RequesterService:
     def terminateConfirmed(self, soap_action, soap_data):
 
         assert soap_action == '"http://schemas.ogf.org/nsi/2011/07/connection/service/terminateConfirmed"'
-
         method, req = self.decoder.parse_request('terminateConfirmed', soap_data)
-        requester_nsa, provider_nsa = _decodeNSAs(req.terminateConfirmed)
 
-        correlation_id          = str(req.correlationId)
-        connection_id           = str(req.terminateConfirmed.connectionId)
+        requester_nsa, provider_nsa = _decodeNSAs(req.terminateConfirmed)
+        correlation_id  = str(req.correlationId)
+        connection_id   = str(req.terminateConfirmed.connectionId)
 
         d = self.requester.terminateConfirmed(correlation_id, requester_nsa, provider_nsa, None, connection_id)
 
@@ -338,8 +334,7 @@ class RequesterService:
         assert soap_action == '"http://schemas.ogf.org/nsi/2011/07/connection/service/terminateFailed"'
         method, req = self.decoder.parse_request('terminateFailed', soap_data)
 
-        correlation_id          = str(req.correlationId)
-
+        correlation_id = str(req.correlationId)
         requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_message = self._getGFTParameters(req.terminateFailed)
 
         d = self.requester.terminateFailed(correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_message)
@@ -351,9 +346,8 @@ class RequesterService:
     def queryConfirmed(self, soap_action, soap_data):
 
         assert soap_action == '"http://schemas.ogf.org/nsi/2011/07/connection/service/queryConfirmed"'
-
         method, req = self.decoder.parse_request('queryConfirmed', soap_data)
-        #print "REQ", req
+
         requester_nsa, provider_nsa = _decodeNSAs(req.queryConfirmed)
 
         correlation_id          = str(req.correlationId)
@@ -369,5 +363,5 @@ class RequesterService:
 
 
     def queryFailed(self, soap_action, soap_data):
-        print "SERVICE QUERY FAILED"
+        raise NotImplementedError('Service query failure handling not implemented in Requestor.')
 
