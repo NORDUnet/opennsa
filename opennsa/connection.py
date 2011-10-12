@@ -238,7 +238,11 @@ class Connection:
                 err = error.ReleaseError('Release failed for all local/sub connection')
                 return failure.Failure(err)
 
-        self.state.switchState(state.RELEASING)
+        try:
+            self.state.switchState(state.RELEASING)
+        except error.ConnectionStateTransitionError, e:
+            log.msg('Invalid state transition: %s' % str(e))
+            return defer.fail(e)
 
         defs = []
         for sc in self.connections():
