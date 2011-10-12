@@ -172,7 +172,7 @@ class ArgiaConnection:
 
         def _switchState(conn, state):
             conn.state.switchState(state)
-            log.msg('State transtion (scheduled). CID: %s, State: %s' % (id(self), self.state), system=LOG_SYSTEM)
+            log.msg('State transtion. CID: %s, State: %s' % (id(self), self.state()), system=LOG_SYSTEM)
 
         dt_now = datetime.datetime.utcnow()
 
@@ -184,7 +184,7 @@ class ArgiaConnection:
         d = task.deferLater(reactor, transition_delta_seconds, _switchState, self, state)
         d.addErrback(lambda err : log.err(err))
         self.scheduled_transition_call = d
-        log.msg('State transition scheduled. Seconds %i, state: %s' % (transition_delta_seconds, state), system=LOG_SYSTEM)
+        log.msg('State transition scheduled: In %i seconds to state %s' % (transition_delta_seconds, state), system=LOG_SYSTEM)
 
 
     def _cancelTransition(self):
