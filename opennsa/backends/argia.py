@@ -17,7 +17,7 @@ from xml.etree import ElementTree as ET
 from zope.interface import implements
 
 from twisted.python import log, failure
-from twisted.internet import reactor, protocol, defer #, task
+from twisted.internet import reactor, protocol, defer, task
 
 from opennsa import error, state, interface as nsainterface
 
@@ -163,6 +163,34 @@ class ArgiaConnection:
 
         # this can be reservation id or connection id depending on the state, but it doesn't really matter
         self.argia_id = None
+        self.scheduled_transition_call = None
+
+
+    def _scheduleStateTransition(self, transition_time, state):
+
+        assert self.scheduled_transition_call is None
+
+        def _switchState(conn, state):
+            conn.state.switchState(state)
+            log.msg('State transtion (scheduled). CID: %s, State: %s' % (id(self), self.state), system=LOG_SYSTEM)
+
+        dt_now = datetime.datetime.utcnow()
+
+        assert transition_time > dt_now
+
+        td = (transition_time - dt_now)
+        transition_delta_seconds = (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6.0
+
+        d = task.deferLater(reactor, transition_delta_seconds, _switchState, self, state)
+        d.addErrback(lambda err : log.err(err))
+        self.scheduled_transition_call = d
+        log.msg('State transition scheduled. Seconds %i, state: %s' % (transition_delta_seconds, state), system=LOG_SYSTEM)
+
+
+    def _cancelTransition(self):
+
+        self.scheduled_transition_call.cancel()
+        self.scheduled_transition_call = None
 
 
     def _constructReservationPayload(self):
@@ -185,7 +213,6 @@ class ArgiaConnection:
         schedule = ET.SubElement(root, 'schedule')
         ET.SubElement(schedule, 'startTime').text = sp.start_time.isoformat() + 'Z'
         ET.SubElement(schedule, 'endTime').text = sp.end_time.isoformat() + 'Z'
-        #ET.dump(root
         payload = ET.tostring(root)
         return payload
 
@@ -222,6 +249,7 @@ class ArgiaConnection:
 
             self.argia_id = reservation_id
             self.state.switchState(state.RESERVED)
+            self._scheduleStateTransition(self.service_parameters.start_time, state.SCHEDULED)
             d.callback(self)
 
         def reservationFailed(err, pp):
