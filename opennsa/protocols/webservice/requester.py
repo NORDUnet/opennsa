@@ -155,6 +155,7 @@ class Requester:
 
         self.triggerCall(provider_nsa, correlation_id, 'query', query_result)
 
+
     def queryFailed(self, correlation_id, requester_nsa, provider_nsa, query_result):
         print "REQUESTER QUERY FAILED"
 

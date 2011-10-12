@@ -354,7 +354,9 @@ class RequesterService:
         #reservation_summary     = req.queryConfirmed
         #connection_id           = str(req.terminateConfirmed.connectionId)
 
-        query_result = req # should really translate this to something generic
+        # should really translate this to something generic
+        # need to know if summary or details parameters was given though :-/
+        query_result = req.queryConfirmed
 
         d = self.requester.queryConfirmed(correlation_id, requester_nsa, provider_nsa, query_result)
 
