@@ -45,7 +45,7 @@ class NSIService:
 
         conn = self.connections.get(requester_nsa, {}).get(connection_id, None)
         if conn is None:
-            raise error.NoSuchConnectionError('No connection with id %s for NSA with address %s' % (connection_id, requester_nsa.address))
+            raise error.NoSuchConnectionError('No connection with id %s for NSA with address %s' % (connection_id, requester_nsa))
         else:
             return conn
 
