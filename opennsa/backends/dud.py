@@ -57,6 +57,8 @@ class DUDNSIBackend:
             return False
 
         for cn in self.connections:
+            if cn.state() == state.TERMINATED:
+                continue # skip connection if terminated - is not taking resources (need some periodic cleanup)
             csp = cn.service_parameters
             if source_port in [ cn.source_port, cn.dest_port ]:
                 if portOverlap(csp.start_time, csp.end_time, res_start, res_end):
@@ -168,6 +170,7 @@ class DUDConnection:
 
         log.msg('TERMINATE. CID : %s' % id(self), system='DUDBackend Network %s' % self.network_name)
         self.deSchedule()
+        self.state.switchState(state.TERMINATED)
         return defer.succeed(self)
 
 
