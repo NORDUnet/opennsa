@@ -167,45 +167,64 @@ class NSIService:
 
     def terminate(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
+        log.msg('', system='opennsa.NSIService')
         conn = self.getConnection(requester_nsa, connection_id)
         # security check here
 
-        d = conn.terminate()
-        d.addErrback(_logError)
-        return d
+        try:
+            d = conn.terminate()
+            d.addErrback(_logError)
+            return d
+        except Exception, e:
+            log.msg('Unexpected error during terminate: %s' % str(e))
+            return defer.fail(e)
 
 
     def provision(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
-        log.msg('', system='opennsa')
+        log.msg('', system='opennsa.NSIService')
         conn = self.getConnection(requester_nsa, connection_id)
         # security check here
 
-        d = conn.provision()
-        d.addErrback(_logError)
-        return d
+        try:
+            d = conn.provision()
+            d.addErrback(_logError)
+            return d
+        except Exception, e:
+            log.msg('Unexpected error during provision: %s' % str(e))
+            return defer.fail(e)
 
 
     def release(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
+        log.msg('', system='opennsa.NSIService')
         conn = self.getConnection(requester_nsa, connection_id)
         # security check here
 
-        d = conn.release()
-        d.addErrback(_logError)
-        return d
+        try:
+            d = conn.release()
+            d.addErrback(_logError)
+            return d
+        except Exception, e:
+            log.msg('Unexpected error during release: %s' % str(e))
+            return defer.fail(e)
 
 
     def query(self, requester_nsa, provider_nsa, session_security_attr, operation, connection_ids=None, global_reservation_ids=None):
 
+        log.msg('', system='opennsa.NSIService')
         # security check here
 
-        conns = []
+        try:
+            conns = []
+            nsa_connections = self.connections.get(requester_nsa, {})
+            for conn in nsa_connections.values():
+                if conn.connection_id in connection_ids or conn.global_reservation_id in global_reservation_ids:
+                    conns.append(conn)
 
-        nsa_connections = self.connections.get(requester_nsa, {})
-        for conn in nsa_connections.values():
-            if conn.connection_id in connection_ids or conn.global_reservation_id in global_reservation_ids:
-                conns.append(conn)
+            return defer.succeed(conns)
 
-        return defer.succeed(conns)
+        except Exception, e:
+            log.msg('Unexpected error during query: %s' % str(e))
+            return defer.fail(e)
 
