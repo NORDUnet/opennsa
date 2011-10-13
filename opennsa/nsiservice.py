@@ -212,14 +212,17 @@ class NSIService:
 
     def query(self, requester_nsa, provider_nsa, session_security_attr, operation, connection_ids=None, global_reservation_ids=None):
 
-        log.msg('', system='opennsa.NSIService')
         # security check here
 
         try:
             conns = []
-            nsa_connections = self.connections.get(requester_nsa, {})
-            for conn in nsa_connections.values():
-                if conn.connection_id in connection_ids or conn.global_reservation_id in global_reservation_ids:
+            if connection_ids is None and global_reservation_ids is None:
+                match = lambda conn : True
+            else:
+                match = lambda conn : conn.connection_id in connection_ids or conn.global_reservation_id in global_reservation_ids
+
+            for conn in self.connections.get(requester_nsa).values():
+                if match(conn):
                     conns.append(conn)
 
             return defer.succeed(conns)

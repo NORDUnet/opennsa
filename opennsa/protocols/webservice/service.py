@@ -167,8 +167,8 @@ class ProviderService:
         operation = req.query.operation
         qf = req.query.queryFilter
 
-        connection_ids = []
-        global_reservation_ids = []
+        connection_ids = None
+        global_reservation_ids = None
 
         if 'connectionId' in qf:
             connection_ids = qf.connectionId
