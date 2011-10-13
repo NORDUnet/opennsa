@@ -182,7 +182,7 @@ class ArgiaConnection:
         transition_delta_seconds = (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6.0
 
         d = task.deferLater(reactor, transition_delta_seconds, _switchState, self, state)
-        d.addErrback(lambda err : log.err(err))
+        d.addErrback(deferTaskFailed)
         self.scheduled_transition_call = d
         log.msg('State transition scheduled: In %i seconds to state %s' % (transition_delta_seconds, state), system=LOG_SYSTEM)
 
@@ -299,6 +299,7 @@ class ArgiaConnection:
                 d.errback(failure.Failure(e))
                 return
 
+            self._cancelTransition()
             self.state.switchState(state.PROVISIONED)
             self.argia_id = connection_id
 
