@@ -221,7 +221,7 @@ class NSIService:
             else:
                 match = lambda conn : conn.connection_id in connection_ids or conn.global_reservation_id in global_reservation_ids
 
-            for conn in self.connections.get(requester_nsa).values():
+            for conn in self.connections.get(requester_nsa, {}).values():
                 if match(conn):
                     conns.append(conn)
 
