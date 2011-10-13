@@ -94,6 +94,8 @@ class ArgiaBackend:
             return False
 
         for cn in self.connections:
+            if cn.state() == state.TERMINATED:
+                continue # don't check terminated state (we need a cleanup thingie)
             csp = cn.service_parameters
             if source_port in [ cn.source_port, cn.dest_port ]:
                 if portOverlap(csp.start_time, csp.end_time, res_start, res_end):
@@ -359,6 +361,7 @@ class ArgiaConnection:
                 d.errback(failure.Failure(e))
                 return
 
+            self._cancelTransition()
             self.state.switchState(state.SCHEDULED)
             self.argia_id = reservation_id
             d.callback(self)
@@ -410,6 +413,7 @@ class ArgiaConnection:
                 d.errback(failure.Failure(e))
                 return
 
+            self._cancelTransition()
             self.state.switchState(state.TERMINATED)
             self.argia_id = None
             #log.msg('CANCEL. ICID : %s' % (conn_id), system=LOG_SYSTEM)
