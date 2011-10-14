@@ -219,7 +219,8 @@ class NSIService:
             if connection_ids is None and global_reservation_ids is None:
                 match = lambda conn : True
             else:
-                match = lambda conn : conn.connection_id in connection_ids or conn.global_reservation_id in global_reservation_ids
+                match = lambda conn : conn.connection_id in connection_ids if connection_ids is not None else False or \
+                                      conn.global_reservation_id in global_reservation_ids if connection_ids is not None else False
 
             for conn in self.connections.get(requester_nsa, {}).values():
                 if match(conn):

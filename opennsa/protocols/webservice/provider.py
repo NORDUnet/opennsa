@@ -89,8 +89,12 @@ class Provider:
             d = self.requester_client.queryConfirmed(reply_to, correlation_id, requester_nsa, provider_nsa, operation, conns)
             return d
 
-        d = self.nsi_service.query(requester_nsa, provider_nsa, session_security_attr, operation, connection_ids, global_reservation_ids)
-        d.addCallback(notifyQuerySuccess)
-        return d
+        def notifyQueryFailure(err):
+            error_msg = err.getErrorMessage()
+            d = self.requester_client.queryFailed(reply_to, correlation_id, requester_nsa, provider_nsa, error_msg)
+            return d
 
+        d = self.nsi_service.query(requester_nsa, provider_nsa, session_security_attr, operation, connection_ids, global_reservation_ids)
+        d.addCallbacks(notifyQuerySuccess, notifyQueryFailure)
+        return d
 

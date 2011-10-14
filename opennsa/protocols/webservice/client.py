@@ -319,7 +319,19 @@ class RequesterClient:
         return d
 
 
-    def queryFailed(self, requester_uri, correlation_id, requester_nsa, provider_nsa, *args):
-        print "CLIENT QUERY FAILED"
+    def queryFailed(self, requester_uri, correlation_id, requester_nsa, provider_nsa, error_msg):
 
+        print "CLIENT QUERY FAILED"
+        qft = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}QueryFailedType')
+        net = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}NsiExceptionType')
+
+        qft.requesterNSA = requester_nsa
+        qft.providerNSA  = provider_nsa
+
+        net.messageId = 'QUERY_FAILURE'
+        net.text = error_msg
+        qft.ServiceException = net
+
+        d = self.client.invoke(requester_uri, 'queryFailed', correlation_id, qft)
+        return d
 
