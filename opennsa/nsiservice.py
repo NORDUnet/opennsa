@@ -168,13 +168,16 @@ class NSIService:
     def terminate(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
         log.msg('', system='opennsa.NSIService')
-        conn = self.getConnection(requester_nsa, connection_id)
         # security check here
 
         try:
+            conn = self.getConnection(requester_nsa, connection_id)
             d = conn.terminate()
             d.addErrback(_logError)
             return d
+        except error.NoSuchConnectionError, e:
+            log.msg('NSA %s requested non-existing connection %s' % (requester_nsa, connection_id), system='opennsa.NSIService')
+            return defer.fail(e)
         except Exception, e:
             log.msg('Unexpected error during terminate: %s' % str(e))
             return defer.fail(e)
@@ -183,13 +186,16 @@ class NSIService:
     def provision(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
         log.msg('', system='opennsa.NSIService')
-        conn = self.getConnection(requester_nsa, connection_id)
         # security check here
 
         try:
+            conn = self.getConnection(requester_nsa, connection_id)
             d = conn.provision()
             d.addErrback(_logError)
             return d
+        except error.NoSuchConnectionError, e:
+            log.msg('NSA %s requested non-existing connection %s' % (requester_nsa, connection_id), system='opennsa.NSIService')
+            return defer.fail(e)
         except Exception, e:
             log.msg('Unexpected error during provision: %s' % str(e))
             return defer.fail(e)
@@ -198,13 +204,16 @@ class NSIService:
     def release(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
         log.msg('', system='opennsa.NSIService')
-        conn = self.getConnection(requester_nsa, connection_id)
         # security check here
 
         try:
+            conn = self.getConnection(requester_nsa, connection_id)
             d = conn.release()
             d.addErrback(_logError)
             return d
+        except error.NoSuchConnectionError, e:
+            log.msg('NSA %s requested non-existing connection %s' % (requester_nsa, connection_id), system='opennsa.NSIService')
+            return defer.fail(e)
         except Exception, e:
             log.msg('Unexpected error during release: %s' % str(e))
             return defer.fail(e)
