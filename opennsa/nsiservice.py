@@ -66,7 +66,7 @@ class NSIService:
             else:
                 sub_conn_id = 'urn:uuid:' + str(uuid.uuid1())
                 # FIXME should be setup with NSA context, not network
-                sub_conn = connection.SubConnection(conn, sub_conn_id, source_stp.network, source_stp, dest_stp, proxy=self.proxy)
+                sub_conn = connection.SubConnection(conn, sub_conn_id, source_stp.network, source_stp, dest_stp, service_parameters, proxy=self.proxy)
                 conn.sub_connections.append(sub_conn)
 
             return conn
@@ -142,10 +142,10 @@ class NSIService:
                 prev_source_stp = source_stp
 
                 for stp_pair in selected_path.endpoint_pairs:
-                    setupSubConnection(prev_source_stp, stp_pair.stp1, conn)
+                    setupSubConnection(prev_source_stp, stp_pair.stp1, conn, service_parameters)
                     prev_source_stp = stp_pair.stp2
                 # last hop
-                setupSubConnection(prev_source_stp, dest_stp, conn)
+                setupSubConnection(prev_source_stp, dest_stp, conn, service_parameters)
 
         except Exception, e:
             log.msg('Error setting up connection: %s' % str(e), system='opennsa.NSIService')

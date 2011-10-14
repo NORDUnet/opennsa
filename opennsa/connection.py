@@ -15,19 +15,20 @@ from opennsa import error, nsa, state
 
 class SubConnection:
 
-    def __init__(self, parent_connection, connection_id, network, source_stp, dest_stp, proxy=None):
+    def __init__(self, parent_connection, connection_id, network, source_stp, dest_stp, service_parameters, proxy=None):
         self.state = state.ConnectionState()
         self.parent_connection  = parent_connection
         self.connection_id      = connection_id
         self.network            = network
         self.source_stp         = source_stp
         self.dest_stp           = dest_stp
+        self.service_parameters = service_parameters
 
         # the one should not be persistent, but should be set when re-created at startup
         self._proxy = proxy
 
 
-    def reservation(self, service_parameters):
+    def reservation(self):
 
         assert self._proxy is not None, 'Proxy not set for SubConnection, cannot invoke method'
 
@@ -40,8 +41,13 @@ class SubConnection:
             self.state.switchState(state.TERMINATED)
             return err
 
-        sub_service_params  = nsa.ServiceParameters(service_parameters.start_time, service_parameters.end_time, self.source_stp, self.dest_stp,
-                                                    directionality=service_parameters.directionality, bandwidth=service_parameters.bandwidth)
+        sub_service_params  = nsa.ServiceParameters(self.service_parameters.start_time,
+                                                    self.service_parameters.end_time,
+                                                    self.source_stp,
+                                                    self.dest_stp,
+                                                    directionality=self.service_parameters.directionality,
+                                                    bandwidth=self.service_parameters.bandwidth)
+
         self.state.switchState(state.RESERVING)
         d = self._proxy.reservation(self.network, None, self.parent_connection.global_reservation_id, self.parent_connection.description, self.connection_id, sub_service_params)
         d.addCallbacks(reservationDone, reservationFailed)
