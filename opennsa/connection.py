@@ -54,7 +54,7 @@ class SubConnection:
         return d
 
 
-    def termiante(self):
+    def terminate(self):
 
         assert self._proxy is not None, 'Proxy not set for SubConnection, cannot invoke method'
 
