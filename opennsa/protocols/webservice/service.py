@@ -219,8 +219,8 @@ class RequesterService:
         error_id                    = None
         error_message               = None
         if 'ServiceException' in gft:
-            error_id                = str(gft.ServiceException.messageId) if 'messageId' in gft.ServiceException
-            error_message           = str(gft.ServiceException.text)      if 'text' in gft.ServiceException
+            error_id                = str(gft.ServiceException.messageId) if 'messageId' in gft.ServiceException else None
+            error_message           = str(gft.ServiceException.text)      if 'text' in gft.ServiceException else None
 
         return requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_id, error_message
 
