@@ -216,11 +216,13 @@ class RequesterService:
         global_reservation_id       = str(gft.globalReservationId) if 'globalReservationId' in gft else None
         connection_id               = str(gft.connectionId)
         connection_state            = str(gft.connectionState)
+        error_id                    = None
         error_message               = None
         if 'ServiceException' in gft:
-            error_message           = str(gft.ServiceException.text)
+            error_id                = str(gft.ServiceException.messageId) if 'messageId' in gft.ServiceException
+            error_message           = str(gft.ServiceException.text)      if 'text' in gft.ServiceException
 
-        return requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_message
+        return requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_id, error_message
 
 
     def reservationConfirmed(self, soap_action, soap_data):
@@ -248,7 +250,7 @@ class RequesterService:
         method, req = self.decoder.parse_request('reservationFailed', soap_data)
 
         correlation_id = str(req.correlationId)
-        requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_message = self._getGFTParameters(req.reservationFailed)
+        requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_id, error_message = self._getGFTParameters(req.reservationFailed)
 
         self.requester.reservationFailed(correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_message)
 
@@ -277,7 +279,7 @@ class RequesterService:
         method, req = self.decoder.parse_request('provisionFailed', soap_data)
 
         correlation_id = str(req.correlationId)
-        requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_message = self._getGFTParameters(req.provisionFailed)
+        requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_id, error_message = self._getGFTParameters(req.provisionFailed)
 
         d = self.requester.provisionFailed(correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_message)
 
@@ -306,7 +308,7 @@ class RequesterService:
         method, req = self.decoder.parse_request('releaseFailed', soap_data)
 
         correlation_id = str(req.correlationId)
-        requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_message = self._getGFTParameters(req.releaseFailed)
+        requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_id, error_message = self._getGFTParameters(req.releaseFailed)
 
         d = self.requester.releaseFailed(correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_message)
 
@@ -335,7 +337,7 @@ class RequesterService:
         method, req = self.decoder.parse_request('terminateFailed', soap_data)
 
         correlation_id = str(req.correlationId)
-        requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_message = self._getGFTParameters(req.terminateFailed)
+        requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_id, error_message = self._getGFTParameters(req.terminateFailed)
 
         d = self.requester.terminateFailed(correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_message)
 
