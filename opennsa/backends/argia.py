@@ -23,15 +23,20 @@ from opennsa import error, state, interface as nsainterface
 
 
 
-FILE_DIR = '/srv/nsi/reservations/'
+COMMAND_DIR = '/home/nsi/nsiArgia'
 
-COMMAND_DIR = '/home/htj/nsi/opennsa/sandbox/argia' # temporary
+ARGIA_CLIENT   = os.path.join(COMMAND_DIR, 'nsaResClient.sh')
 
-RESERVE_COMMAND   = os.path.join(COMMAND_DIR, 'reserve')
-PROVISION_COMMAND = os.path.join(COMMAND_DIR, 'provision')
-RELEASE_COMMAND   = os.path.join(COMMAND_DIR, 'release')
-TERMINATE_COMMAND = os.path.join(COMMAND_DIR, 'cancel')
-QUERY_COMMAND     = os.path.join(COMMAND_DIR, 'query')
+ARGIA_CMD_RESERVE   = 'reserve'
+ARGIA_CMD_PROVISION = 'provision'
+ARGIA_CMD_RELEASE   = 'release'
+ARGIA_CMD_TERMINATE = 'cancel'
+
+#RESERVE_COMMAND   = os.path.join(COMMAND_DIR, 'reserve')
+#PROVISION_COMMAND = os.path.join(COMMAND_DIR, 'provision')
+#RELEASE_COMMAND   = os.path.join(COMMAND_DIR, 'release')
+#TERMINATE_COMMAND = os.path.join(COMMAND_DIR, 'cancel')
+#QUERY_COMMAND     = os.path.join(COMMAND_DIR, 'query')
 
 
 # These state are internal to the Argia NRM and cannot be shared with the NSI service layer
@@ -232,7 +237,7 @@ class ArgiaConnection:
         process_proto = ArgiaProcessProtocol(payload)
 
         try:
-            reactor.spawnProcess(process_proto, RESERVE_COMMAND, args=[RESERVE_COMMAND])
+            reactor.spawnProcess(process_proto, ARGIA_CLIENT, args=[ARGIA_CMD_RESERVE])
         except OSError, e:
             return defer.fail(error.ReserverError('Failed to invoke argia control command (%s)' % str(e)))
 
@@ -332,7 +337,7 @@ class ArgiaConnection:
 
         process_proto = ArgiaProcessProtocol()
         try:
-            reactor.spawnProcess(process_proto, PROVISION_COMMAND, args=[PROVISION_COMMAND, self.argia_id])
+            reactor.spawnProcess(process_proto, ARGIA_CLIENT, args=[ARGIA_CMD_PROVISION, self.argia_id])
         except OSError, e:
             return defer.fail(error.ReserverError('Failed to invoke argia control command (%s)' % str(e)))
         process_proto.d.addCallbacks(provisionConfirmed, provisionFailed, callbackArgs=[process_proto], errbackArgs=[process_proto])
@@ -385,7 +390,7 @@ class ArgiaConnection:
 
         process_proto = ArgiaProcessProtocol()
         try:
-            reactor.spawnProcess(process_proto, RELEASE_COMMAND, args=[RELEASE_COMMAND, self.argia_id])
+            reactor.spawnProcess(process_proto, ARGIA_CLIENT, args=[ARGIA_CMD_RELEASE, self.argia_id])
         except OSError, e:
             return defer.fail(error.ReleaseError('Failed to invoke argia control command (%s)' % str(e)))
         process_proto.d.addCallbacks(releaseConfirmed, releaseFailed, callbackArgs=[process_proto], errbackArgs=[process_proto])
@@ -438,7 +443,7 @@ class ArgiaConnection:
 
         process_proto = ArgiaProcessProtocol()
         try:
-            reactor.spawnProcess(process_proto, TERMINATE_COMMAND, args=[TERMINATE_COMMAND, self.argia_id])
+            reactor.spawnProcess(process_proto, ARGIA_CLIENT, args=[ARGIA_CMD_TERMINATE, self.argia_id])
         except OSError, e:
             return defer.fail(error.CancelReservationError('Failed to invoke argia control command (%s)' % str(e)))
         process_proto.d.addCallbacks(terminateConfirmed, terminateFailed, callbackArgs=[process_proto], errbackArgs=[process_proto])
