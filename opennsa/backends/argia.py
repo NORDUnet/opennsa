@@ -24,8 +24,9 @@ from opennsa import error, state, interface as nsainterface
 
 
 COMMAND_DIR = '/home/nsi/nsiArgia'
+COMMAND_BIN = 'nsaResClient.sh'
 
-ARGIA_CLIENT   = os.path.join(COMMAND_DIR, 'nsaResClient.sh')
+ARGIA_CLIENT   = os.path.join(COMMAND_DIR, COMMAND_BIN)
 
 ARGIA_CMD_RESERVE   = 'reserve'
 ARGIA_CMD_PROVISION = 'provision'
@@ -220,7 +221,7 @@ class ArgiaConnection:
         schedule = ET.SubElement(root, 'schedule')
         ET.SubElement(schedule, 'startTime').text = sp.start_time.isoformat() + 'Z'
         ET.SubElement(schedule, 'endTime').text = sp.end_time.isoformat() + 'Z'
-        payload = ET.tostring(root)
+        payload = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + ET.tostring(root)
         return payload
 
 
@@ -237,7 +238,7 @@ class ArgiaConnection:
         process_proto = ArgiaProcessProtocol(payload)
 
         try:
-            reactor.spawnProcess(process_proto, ARGIA_CLIENT, args=[ARGIA_CMD_RESERVE])
+            reactor.spawnProcess(process_proto, ARGIA_CLIENT, [COMMAND_BIN, ARGIA_CMD_RESERVE], path=COMMAND_DIR)
         except OSError, e:
             return defer.fail(error.ReserverError('Failed to invoke argia control command (%s)' % str(e)))
 
@@ -246,8 +247,8 @@ class ArgiaConnection:
         def reservationConfirmed(_, pp):
             log.msg('Received reservation reply from Argia. CID: %s, Ports: %s -> %s' % (id(self), self.source_port, self.dest_port), system=LOG_SYSTEM)
             tree = ET.parse(pp.stdout)
-            argia_state = list(tree.iterfind('state'))[0].text
-            reservation_id = list(tree.iterfind('reservationId'))[0].text
+            argia_state = list(tree.getiterator('state'))[0].text
+            reservation_id = list(tree.getiterator('reservationId'))[0].text
 
             if argia_state != ARGIA_RESERVED:
                 e = error.ReserveError('Got unexpected state from Argia (%s)' % argia_state)
@@ -263,7 +264,7 @@ class ArgiaConnection:
             self.state.switchState(state.TERMINATED)
             log.msg('Received reservation failure from Argia. CID: %s, Ports: %s -> %s' % (id(self), self.source_port, self.dest_port), system=LOG_SYSTEM)
             tree = ET.parse(pp.stderr)
-            message = list(tree.iterfind('message'))[0].text
+            message = list(tree.getiterator('message'))[0].text
             err = error.ReserveError('Reservation failed in Argia backend: %s' % message)
             d.errback(failure.Failure(err))
 
