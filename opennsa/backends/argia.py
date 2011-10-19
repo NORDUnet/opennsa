@@ -207,8 +207,8 @@ class ArgiaConnection:
 
         root = ET.Element('reservationParameters')
 
-        ET.SubElement(root, 'sourceEP').text = self.source_port)
-        ET.SubElement(root, 'destEP').text = self.dest_port)
+        ET.SubElement(root, 'sourceEP').text = self.source_port
+        ET.SubElement(root, 'destEP').text = self.dest_port
 
         bandwidth = ET.SubElement(root, 'bandwidth')
         ET.SubElement(bandwidth, 'desired').text = str(bw.desired)
