@@ -20,6 +20,11 @@ WSDL_REQUESTER  = 'file://%s/ogf_nsi_connection_requester_v1_0.wsdl'
 
 URN_UUID_PREFIX = 'urn:uuid:'
 
+
+def utcTime(dt):
+    return dt.isoformat().rsplit('.',1)[0] + 'Z'
+
+
 def createCorrelationId():
     return URN_UUID_PREFIX + str(uuid.uuid1())
 
@@ -78,8 +83,8 @@ class ProviderClient:
         #res_req.reservation.path.sourceSTP.stpSpecAttrs.preferred =  ['abc', 'def']
         res_req.reservation.path.destSTP.stpId      = service_parameters.dest_stp.urn()
 
-        res_req.reservation.serviceParameters.schedule.startTime    = service_parameters.start_time
-        res_req.reservation.serviceParameters.schedule.endTime      = service_parameters.end_time
+        res_req.reservation.serviceParameters.schedule.startTime    = utcTime(service_parameters.start_time)
+        res_req.reservation.serviceParameters.schedule.endTime      = utcTime(service_parameters.end_time)
         res_req.reservation.serviceParameters.bandwidth.desired     = service_parameters.bandwidth.desired
         res_req.reservation.serviceParameters.bandwidth.minimum     = service_parameters.bandwidth.minimum
         res_req.reservation.serviceParameters.bandwidth.maximum     = service_parameters.bandwidth.maximum
@@ -160,8 +165,8 @@ class RequesterClient:
         res_conf.reservation.connectionId           = connection_id
         #res_conf.reservation.connectionState        = 'Reserved' # not sure why this doesn't work
 
-        res_conf.reservation.serviceParameters.schedule.startTime     = service_parameters.start_time.isoformat()
-        res_conf.reservation.serviceParameters.schedule.endTime       = service_parameters.end_time.isoformat()
+        res_conf.reservation.serviceParameters.schedule.startTime     = utcTime(service_parameters.start_time)
+        res_conf.reservation.serviceParameters.schedule.endTime       = utcTime(service_parameters.end_time)
 
         res_conf.reservation.serviceParameters.bandwidth.desired      = service_parameters.bandwidth.desired
         res_conf.reservation.serviceParameters.bandwidth.minimum      = service_parameters.bandwidth.minimum
@@ -295,8 +300,8 @@ class RequesterClient:
                 qsr.path.sourceSTP.stpId    = conn.source_stp.urn()
                 qsr.path.destSTP.stpId      = conn.dest_stp.urn()
 
-                qsr.serviceParameters.schedule.startTime = conn.service_parameters.start_time
-                qsr.serviceParameters.schedule.endTime   = conn.service_parameters.end_time
+                qsr.serviceParameters.schedule.startTime = utcTime(conn.service_parameters.start_time)
+                qsr.serviceParameters.schedule.endTime   = utcTime(conn.service_parameters.end_time)
 
                 qsr.serviceParameters.bandwidth.desired  = conn.service_parameters.bandwidth.desired
                 qsr.serviceParameters.bandwidth.minimum  = conn.service_parameters.bandwidth.minimum
