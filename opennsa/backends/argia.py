@@ -207,15 +207,15 @@ class ArgiaConnection:
 
         root = ET.Element('reservationParameters')
 
-        ET.SubElement(root, 'sourceEP', text=self.source_port)
-        ET.SubElement(root, 'destEP', text=self.dest_port)
+        ET.SubElement(root, 'sourceEP').text = self.source_port)
+        ET.SubElement(root, 'destEP').text = self.dest_port)
 
         bandwidth = ET.SubElement(root, 'bandwidth')
-        ET.SubElement(bandwidth, 'desired').text = '1'
+        ET.SubElement(bandwidth, 'desired').text = str(bw.desired)
         if bw.minimum:
-            ET.SubElement(bandwidth, 'minimum').text(str(bw.minimum))
+            ET.SubElement(bandwidth, 'minimum').text = str(bw.minimum)
         if bw.maximum:
-            ET.SubElement(bandwidth, 'maximum').text(str(bw.maximum))
+            ET.SubElement(bandwidth, 'maximum').text = str(bw.maximum)
 
         schedule = ET.SubElement(root, 'schedule')
         ET.SubElement(schedule, 'startTime').text = sp.start_time.isoformat() + 'Z'
