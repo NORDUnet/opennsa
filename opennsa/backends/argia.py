@@ -299,8 +299,8 @@ class ArgiaConnection:
 
         def provisionConfirmed(_, pp):
             tree = ET.parse(pp.stdout)
-            argia_state = list(tree.iterfind('state'))[0].text
-            connection_id = list(tree.iterfind('connectionId'))[0].text
+            argia_state = list(tree.getiterator('state'))[0].text
+            connection_id = list(tree.getiterator('connectionId'))[0].text
 
             if argia_state not in (ARGIA_PROVISIONED, ARGIA_AUTO_PROVISION):
                 e = error.ReserveError('Got unexpected state from Argia (%s)' % argia_state)
@@ -323,8 +323,8 @@ class ArgiaConnection:
 
         def provisionFailed(err, pp):
             tree = ET.parse(pp.stderr)
-            state = list(tree.iterfind('message'))[0].text
-            message = list(tree.iterfind('message'))[0].text
+            state = list(tree.getiterator('message'))[0].text
+            message = list(tree.getiterator('message'))[0].text
 
             if state == ARGIA_TERMINATED:
                 self.state.switchState(state.TERMINATED)
@@ -338,7 +338,7 @@ class ArgiaConnection:
 
         process_proto = ArgiaProcessProtocol()
         try:
-            reactor.spawnProcess(process_proto, ARGIA_CLIENT, args=[ARGIA_CMD_PROVISION, self.argia_id])
+            reactor.spawnProcess(process_proto, ARGIA_CLIENT, args=[COMMAND_BIN, ARGIA_CMD_PROVISION, self.argia_id], path=COMMAND_DIR)
         except OSError, e:
             return defer.fail(error.ReserverError('Failed to invoke argia control command (%s)' % str(e)))
         process_proto.d.addCallbacks(provisionConfirmed, provisionFailed, callbackArgs=[process_proto], errbackArgs=[process_proto])
@@ -359,8 +359,8 @@ class ArgiaConnection:
 
         def releaseConfirmed(_, process_proto):
             tree = ET.parse(process_proto.stdout)
-            argia_state = list(tree.iterfind('state'))[0].text
-            reservation_id = list(tree.iterfind('reservationId'))[0].text
+            argia_state = list(tree.getiterator('state'))[0].text
+            reservation_id = list(tree.getiterator('reservationId'))[0].text
 
             if argia_state not in (ARGIA_SCHEDULED):
                 e = error.ReleaseError('Got unexpected state from Argia (%s)' % argia_state)
@@ -374,8 +374,8 @@ class ArgiaConnection:
 
         def releaseFailed(err, process_proto):
             tree = ET.parse(process_proto.stderr)
-            message = list(tree.iterfind('message'))[0].text
-            argia_state = list(tree.iterfind('state'))[0].text
+            message = list(tree.getiterator('message'))[0].text
+            argia_state = list(tree.getiterator('state'))[0].text
 
             log.msg('Error releasing connection in Argia: %s' % message, system=LOG_SYSTEM)
 
@@ -391,7 +391,7 @@ class ArgiaConnection:
 
         process_proto = ArgiaProcessProtocol()
         try:
-            reactor.spawnProcess(process_proto, ARGIA_CLIENT, args=[ARGIA_CMD_RELEASE, self.argia_id])
+            reactor.spawnProcess(process_proto, ARGIA_CLIENT, args=[COMMAND_BIN, ARGIA_CMD_RELEASE, self.argia_id], path=COMMAND_DIR)
         except OSError, e:
             return defer.fail(error.ReleaseError('Failed to invoke argia control command (%s)' % str(e)))
         process_proto.d.addCallbacks(releaseConfirmed, releaseFailed, callbackArgs=[process_proto], errbackArgs=[process_proto])
@@ -412,7 +412,7 @@ class ArgiaConnection:
 
         def terminateConfirmed(_, pp):
             tree = ET.parse(pp.stdout)
-            argia_state = list(tree.iterfind('state'))[0].text
+            argia_state = list(tree.getiterator('state'))[0].text
 
             if argia_state not in (ARGIA_TERMINATED):
                 e = error.ReserveError('Got unexpected state from Argia (%s)' % argia_state)
@@ -426,9 +426,9 @@ class ArgiaConnection:
             d.callback(self)
 
         def terminateFailed(err, pp):
-            tree = ET.parse(process_proto.stderr)
-            message = list(tree.iterfind('message'))[0].text
-            argia_state = list(tree.iterfind('state'))[0].text
+            tree = ET.parse(pp.stderr)
+            message = list(tree.getiterator('message'))[0].text
+            argia_state = list(tree.getiterator('state'))[0].text
 
             log.msg('Error terminating connection in Argia: %s' % message, system=LOG_SYSTEM)
 
@@ -444,7 +444,7 @@ class ArgiaConnection:
 
         process_proto = ArgiaProcessProtocol()
         try:
-            reactor.spawnProcess(process_proto, ARGIA_CLIENT, args=[ARGIA_CMD_TERMINATE, self.argia_id])
+            reactor.spawnProcess(process_proto, ARGIA_CLIENT, args=[COMMAND_BIN, ARGIA_CMD_TERMINATE, self.argia_id], path=COMMAND_DIR)
         except OSError, e:
             return defer.fail(error.CancelReservationError('Failed to invoke argia control command (%s)' % str(e)))
         process_proto.d.addCallbacks(terminateConfirmed, terminateFailed, callbackArgs=[process_proto], errbackArgs=[process_proto])
