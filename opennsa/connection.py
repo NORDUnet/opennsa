@@ -117,17 +117,15 @@ class SubConnection:
 
 class Connection:
 
-    def __init__(self, requester_nsa, connection_id, source_stp, dest_stp, global_reservation_id=None, description=None, local_connection=None, sub_connections=None):
+    def __init__(self, requester_nsa, connection_id, source_stp, dest_stp, service_parameters=None, global_reservation_id=None, description=None):
         self.state = state.ConnectionState()
         self.requester_nsa              = requester_nsa
         self.connection_id              = connection_id
         self.source_stp                 = source_stp
         self.dest_stp                   = dest_stp
+        self.service_parameters         = service_parameters
         self.global_reservation_id      = global_reservation_id
         self.description                = description
-        self.local_connection           = local_connection
-        self.sub_connections            = sub_connections or []
-        self.service_parameters         = None
 
 
     def hasLocalConnection(self):
@@ -141,7 +139,7 @@ class Connection:
             return self.sub_connections
 
 
-    def reservation(self, service_parameters, nsa_identity=None):
+    def reservation(self):
 
         def reservationRequestsDone(results):
             successes = [ r[0] for r in results ]
@@ -158,7 +156,6 @@ class Connection:
                     error_msg = 'Reservation failed for all local/sub connections (%s)' % failure_msg
                 return defer.fail( error.ReserveError(error_msg) )
 
-        self.service_parameters = service_parameters
         self.state.switchState(state.RESERVING)
 
         defs = []

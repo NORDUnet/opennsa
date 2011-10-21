@@ -82,7 +82,7 @@ class NSIService:
         source_stp = service_parameters.source_stp
         dest_stp   = service_parameters.dest_stp
 
-        conn = connection.Connection(requester_nsa, connection_id, source_stp, dest_stp, global_reservation_id, description)
+        conn = connection.Connection(requester_nsa, connection_id, source_stp, dest_stp, global_reservation_id, description, service_parameters)
 
         self.connections.setdefault(requester_nsa, {})[conn.connection_id] = conn
 
@@ -160,7 +160,7 @@ class NSIService:
             return err
 
         # now reserve connections needed to create path
-        d = conn.reservation(service_parameters, requester_nsa)
+        d = conn.reservation()
         d.addCallbacks(logReservation, logError)
         return d
 
