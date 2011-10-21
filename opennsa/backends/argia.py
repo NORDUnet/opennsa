@@ -246,21 +246,25 @@ class ArgiaConnection:
 
         def reservationConfirmed(_, pp):
             log.msg('Received reservation reply from Argia. CID: %s, Ports: %s -> %s' % (id(self), self.source_port, self.dest_port), system=LOG_SYSTEM)
-            log.msg('STDOUT:\n%s' % pp.stdout.getvalue(), debug=True)
-            log.msg('STDERR:\n%s' % pp.stderr.getvalue(), debug=True)
-            tree = ET.parse(pp.stdout)
-            argia_state = list(tree.getiterator('state'))[0].text
-            reservation_id = list(tree.getiterator('reservationId'))[0].text
+            try:
+                tree = ET.parse(pp.stdout)
+                argia_state = list(tree.getiterator('state'))[0].text
+                reservation_id = list(tree.getiterator('reservationId'))[0].text
 
-            if argia_state != ARGIA_RESERVED:
-                e = error.ReserveError('Got unexpected state from Argia (%s)' % argia_state)
-                d.errback(failure.Failure(e))
-                return
+                if argia_state != ARGIA_RESERVED:
+                    d.errback( error.ReserveError('Got unexpected state from Argia (%s)' % argia_state) )
+                else:
+                    self.argia_id = reservation_id
+                    self.state.switchState(state.RESERVED)
+                    self._scheduleStateTransition(self.service_parameters.start_time, state.SCHEDULED)
+                    d.callback(self)
 
-            self.argia_id = reservation_id
-            self.state.switchState(state.RESERVED)
-            self._scheduleStateTransition(self.service_parameters.start_time, state.SCHEDULED)
-            d.callback(self)
+            except Exception, e:
+                log.msg('Error handling reservation reply: %s' % str(e), system=LOG_SYSTEM)
+                log.msg('STDOUT:\n%s' % pp.stdout.getvalue(), debug=True)
+                log.msg('STDERR:\n%s' % pp.stderr.getvalue(), debug=True)
+                d.errback( error.ReserveError('Error handling reservation reply: %s' % str(e)) )
+
 
         def reservationFailed(err, pp):
             log.msg('Received reservation failure from Argia. CID: %s, Ports: %s -> %s' % (id(self), self.source_port, self.dest_port), system=LOG_SYSTEM)
