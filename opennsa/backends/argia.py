@@ -33,13 +33,6 @@ ARGIA_CMD_PROVISION = 'provision'
 ARGIA_CMD_RELEASE   = 'release'
 ARGIA_CMD_TERMINATE = 'cancel'
 
-#RESERVE_COMMAND   = os.path.join(COMMAND_DIR, 'reserve')
-#PROVISION_COMMAND = os.path.join(COMMAND_DIR, 'provision')
-#RELEASE_COMMAND   = os.path.join(COMMAND_DIR, 'release')
-#TERMINATE_COMMAND = os.path.join(COMMAND_DIR, 'cancel')
-#QUERY_COMMAND     = os.path.join(COMMAND_DIR, 'query')
-
-
 # These state are internal to the Argia NRM and cannot be shared with the NSI service layer
 ARGIA_RESERVED        = 'RESERVED'
 ARGIA_SCHEDULED       = 'SCHEDULED'
@@ -251,13 +244,13 @@ class ArgiaConnection:
                 argia_state = list(tree.getiterator('state'))[0].text
                 reservation_id = list(tree.getiterator('reservationId'))[0].text
 
-                if argia_state != ARGIA_RESERVED:
-                    d.errback( error.ReserveError('Got unexpected state from Argia (%s)' % argia_state) )
-                else:
+                if argia_state == ARGIA_RESERVED:
                     self.argia_id = reservation_id
                     self.state.switchState(state.RESERVED)
                     self._scheduleStateTransition(self.service_parameters.start_time, state.SCHEDULED)
                     d.callback(self)
+                else:
+                    d.errback( error.ReserveError('Got unexpected state from Argia (%s)' % argia_state) )
 
             except Exception, e:
                 log.msg('Error handling reservation reply: %s' % str(e), system=LOG_SYSTEM)
@@ -268,13 +261,16 @@ class ArgiaConnection:
 
         def reservationFailed(err, pp):
             log.msg('Received reservation failure from Argia. CID: %s, Ports: %s -> %s' % (id(self), self.source_port, self.dest_port), system=LOG_SYSTEM)
-            log.msg('STDOUT:\n%s' % pp.stdout.getvalue(), debug=True)
-            log.msg('STDERR:\n%s' % pp.stderr.getvalue(), debug=True)
-            self.state.switchState(state.TERMINATED)
-            tree = ET.parse(pp.stderr)
-            message = list(tree.getiterator('message'))[0].text
-            err = error.ReserveError('Reservation failed in Argia backend: %s' % message)
-            d.errback(failure.Failure(err))
+            try:
+                self.state.switchState(state.TERMINATED)
+                tree = ET.parse(pp.stderr)
+                message = list(tree.getiterator('message'))[0].text
+                d.errback( error.ReserveError('Reservation failed in Argia backend: %s' % message) )
+            except Exception, e:
+                log.msg('Error handling reservation failure: %s' % str(e), system=LOG_SYSTEM)
+                log.msg('STDOUT:\n%s' % pp.stdout.getvalue(), debug=True)
+                log.msg('STDERR:\n%s' % pp.stderr.getvalue(), debug=True)
+                d.errback( error.ReserveError('Error handling reservation failure: %s' % str(e)) )
 
         process_proto.d.addCallbacks(reservationConfirmed, reservationFailed, callbackArgs=[process_proto], errbackArgs=[process_proto])
         return d
@@ -286,7 +282,6 @@ class ArgiaConnection:
 
         if self.service_parameters.end_time <= dt_now:
             return defer.fail(error.ProvisionError('Cannot provision connection after end time (end time: %s, current time: %s).' % (self.service_parameters.end_time, dt_now)))
-
 
         # Argia can schedule, so we don't have to
 
@@ -424,41 +419,40 @@ class ArgiaConnection:
 
         def terminateConfirmed(_, pp):
             log.msg('Received terminate reply from Argia. CID: %s, Ports: %s -> %s' % (id(self), self.source_port, self.dest_port), system=LOG_SYSTEM)
-            log.msg('STDOUT:\n%s' % pp.stdout.getvalue(), debug=True)
-            log.msg('STDERR:\n%s' % pp.stderr.getvalue(), debug=True)
-            tree = ET.parse(pp.stdout)
-            argia_state = list(tree.getiterator('state'))[0].text
-
-            if argia_state not in (ARGIA_TERMINATED):
-                e = error.ReserveError('Got unexpected state from Argia (%s)' % argia_state)
-                d.errback(failure.Failure(e))
-                return
-
-            self._cancelTransition()
-            self.state.switchState(state.TERMINATED)
-            self.argia_id = None
-            #log.msg('CANCEL. ICID : %s' % (conn_id), system=LOG_SYSTEM)
-            d.callback(self)
+            try:
+                tree = ET.parse(pp.stdout)
+                argia_state = list(tree.getiterator('state'))[0].text
+                if argia_state == ARGIA_TERMINATED:
+                    self._cancelTransition()
+                    self.state.switchState(state.TERMINATED)
+                    self.argia_id = None
+                    d.callback(self)
+                else:
+                    d.errback( error.CancelReservationError('Got unexpected state from Argia (%s)' % argia_state) )
+            except Exception, e:
+                log.msg('Error handling termination reply: %s' % str(e), system=LOG_SYSTEM)
+                log.msg('STDOUT:\n%s' % pp.stdout.getvalue(), debug=True)
+                log.msg('STDERR:\n%s' % pp.stderr.getvalue(), debug=True)
+                d.errback( error.CancelReservationError('Error handling termination reply: %s' % str(e)) )
 
         def terminateFailed(err, pp):
             log.msg('Received terminate failure from Argia. CID: %s, Ports: %s -> %s' % (id(self), self.source_port, self.dest_port), system=LOG_SYSTEM)
-            log.msg('STDOUT:\n%s' % pp.stdout.getvalue(), debug=True)
-            log.msg('STDERR:\n%s' % pp.stderr.getvalue(), debug=True)
-            tree = ET.parse(pp.stderr)
-            message = list(tree.getiterator('message'))[0].text
-            argia_state = list(tree.getiterator('state'))[0].text
-
-            log.msg('Error terminating connection in Argia: %s' % message, system=LOG_SYSTEM)
-
-            if argia_state == ARGIA_PROVISIONED:
-                self.state.switchState(state.PROVISIONED)
-            elif argia_state == ARGIA_TERMINATED:
-                self.state.switchState(state.TERMINATED)
-            else:
-                log.msg('Unknown state returned from Argia in terminate faliure', system=LOG_SYSTEM)
-
-            e = error.ReleaseError('Error releasing connection: %s' % str(message))
-            d.errback(e)
+            try:
+                tree = ET.parse(pp.stderr)
+                message = list(tree.getiterator('message'))[0].text
+                argia_state = list(tree.getiterator('state'))[0].text
+                if argia_state == ARGIA_PROVISIONED:
+                    self.state.switchState(state.PROVISIONED)
+                elif argia_state == ARGIA_TERMINATED:
+                    self.state.switchState(state.TERMINATED)
+                else:
+                    log.msg('Unknown state returned from Argia in terminate faliure', system=LOG_SYSTEM)
+                d.errback( error.CancelReservationError('Error terminating connection: %s' % str(message)) )
+            except Exception, e:
+                log.msg('Error terminating connection in Argia: %s' % message, system=LOG_SYSTEM)
+                log.msg('STDOUT:\n%s' % pp.stdout.getvalue(), debug=True)
+                log.msg('STDERR:\n%s' % pp.stderr.getvalue(), debug=True)
+                d.errback( error.CancelReservationError('Error handling termination failure: %s' % str(e)) )
 
         process_proto = ArgiaProcessProtocol()
         try:
