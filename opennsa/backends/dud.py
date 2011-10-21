@@ -12,7 +12,7 @@ from twisted.internet import reactor, defer, task
 
 from zope.interface import implements
 
-from opennsa import error, state, interface as nsainterface
+from opennsa import nsa, error, state, interface as nsainterface
 
 
 
@@ -28,7 +28,7 @@ class DUDNSIBackend:
     def createConnection(self, source_port, dest_port, service_parameters):
 
         self._checkReservation(source_port, dest_port, service_parameters.start_time, service_parameters.end_time)
-        ac = DUDConnection(source_port, dest_port, service_parameters)
+        ac = DUDConnection(source_port, dest_port, service_parameters, self.network_name)
         self.connections.append(ac)
         return ac
 
@@ -91,6 +91,10 @@ class DUDConnection:
         self.state      = state.ConnectionState()
         self.auto_provision_deferred = None
         self.auto_release_deferred   = None
+
+
+    def stps(self):
+        return nsa.STP(self.network_name, self.source_port), nsa.STP(self.network_name, self.dest_port)
 
 
     def deSchedule(self):

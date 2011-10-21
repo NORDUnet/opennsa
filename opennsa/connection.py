@@ -28,6 +28,10 @@ class SubConnection:
         self._proxy = proxy
 
 
+    def stps(self):
+        return self.source_stp, self.dest_stp
+
+
     def reservation(self):
 
         assert self._proxy is not None, 'Proxy not set for SubConnection, cannot invoke method'
