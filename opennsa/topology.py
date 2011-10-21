@@ -251,7 +251,7 @@ def parseGOLETopology(topology_source):
         network = nsa.Network(network_name, network_nsa)
 
         for stp_name in network_params['stps']:
-            dest_stp = stp_rmap.get(stps[stp_name]['connected_to'])
+            dest_stp = stp_rmap.get(stps.get(stp_name,{}).get('connected_to'))
             ep = nsa.NetworkEndpoint(network_name, stp_name, None, dest_stp, None, None)
             network.addEndpoint(ep)
 
