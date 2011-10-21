@@ -165,6 +165,10 @@ class ArgiaConnection:
         self.scheduled_transition_call = None
 
 
+    def stps(self):
+        return self.service_parameters.source_stp, self.service_parameters.dest_stp
+
+
     def _scheduleStateTransition(self, transition_time, state):
 
         assert self.scheduled_transition_call is None
