@@ -126,6 +126,8 @@ class Connection:
         self.service_parameters         = service_parameters
         self.global_reservation_id      = global_reservation_id
         self.description                = description
+        self.local_connection           = None
+        self.sub_connections            = []
 
 
     def hasLocalConnection(self):
