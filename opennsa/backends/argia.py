@@ -246,6 +246,8 @@ class ArgiaConnection:
 
         def reservationConfirmed(_, pp):
             log.msg('Received reservation reply from Argia. CID: %s, Ports: %s -> %s' % (id(self), self.source_port, self.dest_port), system=LOG_SYSTEM)
+            log.msg('STDOUT:\n%s' % pp.stdout.getvalue(), debug=True)
+            log.msg('STDERR:\n%s' % pp.stderr.getvalue(), debug=True)
             tree = ET.parse(pp.stdout)
             argia_state = list(tree.getiterator('state'))[0].text
             reservation_id = list(tree.getiterator('reservationId'))[0].text
@@ -261,8 +263,10 @@ class ArgiaConnection:
             d.callback(self)
 
         def reservationFailed(err, pp):
-            self.state.switchState(state.TERMINATED)
             log.msg('Received reservation failure from Argia. CID: %s, Ports: %s -> %s' % (id(self), self.source_port, self.dest_port), system=LOG_SYSTEM)
+            log.msg('STDOUT:\n%s' % pp.stdout.getvalue(), debug=True)
+            log.msg('STDERR:\n%s' % pp.stderr.getvalue(), debug=True)
+            self.state.switchState(state.TERMINATED)
             tree = ET.parse(pp.stderr)
             message = list(tree.getiterator('message'))[0].text
             err = error.ReserveError('Reservation failed in Argia backend: %s' % message)
@@ -298,6 +302,7 @@ class ArgiaConnection:
         d = defer.Deferred()
 
         def provisionConfirmed(_, pp):
+            log.msg('Received provision reply from Argia. CID: %s, Ports: %s -> %s' % (id(self), self.source_port, self.dest_port), system=LOG_SYSTEM)
             tree = ET.parse(pp.stdout)
             argia_state = list(tree.getiterator('state'))[0].text
             connection_id = list(tree.getiterator('connectionId'))[0].text
@@ -322,6 +327,9 @@ class ArgiaConnection:
             d.callback(self)
 
         def provisionFailed(err, pp):
+            log.msg('Received provision failure from Argia. CID: %s, Ports: %s -> %s' % (id(self), self.source_port, self.dest_port), system=LOG_SYSTEM)
+            log.msg('STDOUT:\n%s' % pp.stdout.getvalue(), debug=True)
+            log.msg('STDERR:\n%s' % pp.stderr.getvalue(), debug=True)
             tree = ET.parse(pp.stderr)
             state = list(tree.getiterator('message'))[0].text
             message = list(tree.getiterator('message'))[0].text
@@ -411,6 +419,9 @@ class ArgiaConnection:
         d = defer.Deferred()
 
         def terminateConfirmed(_, pp):
+            log.msg('Received terminate reply from Argia. CID: %s, Ports: %s -> %s' % (id(self), self.source_port, self.dest_port), system=LOG_SYSTEM)
+            log.msg('STDOUT:\n%s' % pp.stdout.getvalue(), debug=True)
+            log.msg('STDERR:\n%s' % pp.stderr.getvalue(), debug=True)
             tree = ET.parse(pp.stdout)
             argia_state = list(tree.getiterator('state'))[0].text
 
@@ -426,6 +437,9 @@ class ArgiaConnection:
             d.callback(self)
 
         def terminateFailed(err, pp):
+            log.msg('Received terminate failure from Argia. CID: %s, Ports: %s -> %s' % (id(self), self.source_port, self.dest_port), system=LOG_SYSTEM)
+            log.msg('STDOUT:\n%s' % pp.stdout.getvalue(), debug=True)
+            log.msg('STDERR:\n%s' % pp.stderr.getvalue(), debug=True)
             tree = ET.parse(pp.stderr)
             message = list(tree.getiterator('message'))[0].text
             argia_state = list(tree.getiterator('state'))[0].text
