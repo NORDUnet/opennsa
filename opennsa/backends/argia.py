@@ -14,12 +14,10 @@ import StringIO
 
 from xml.etree import ElementTree as ET
 
-from zope.interface import implements
-
 from twisted.python import log, failure
 from twisted.internet import reactor, protocol, defer, task
 
-from opennsa import error, state, interface as nsainterface
+from opennsa import error, state
 
 
 
