@@ -115,7 +115,7 @@ class DUDConnection:
         try:
             self.state.switchState(state.RESERVING)
             self.state.switchState(state.RESERVED)
-        except error.ConnectionStateTransitionError:
+        except error.StateTransitionError:
             return defer.fail(error.ReservationError('Cannot reserve connection in state %s' % self.state()))
         # need to schedule transition to SCHEDULED
         return defer.succeed(self)
@@ -127,7 +127,7 @@ class DUDConnection:
             log.msg('PROVISION. CID: %s' % id(self), system='DUDBackend Network %s' % self.network_name)
             try:
                 self.state.switchState(state.PROVISIONING)
-            except error.ConnectionStateTransitionError:
+            except error.StateTransitionError:
                 return defer.fail(error.ProvisionError('Cannot provision connection in state %s' % self.state()))
             # schedule release
             td = self.service_parameters.end_time -  datetime.datetime.utcnow()
@@ -161,7 +161,7 @@ class DUDConnection:
         log.msg('RELEASE. CID: %s' % id(self), system='DUDBackend Network %s' % self.network_name)
         try:
             self.state.switchState(state.RELEASING)
-        except error.ConnectionStateTransitionError, e:
+        except error.StateTransitionError, e:
             log.msg('Release error: ' + str(e), system='DUDBackend Network %s' % self.network_name)
             return defer.fail(e)
 

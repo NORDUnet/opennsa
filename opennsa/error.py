@@ -26,7 +26,7 @@ class NoSuchConnectionError(Exception):
     pass
 
 
-class ConnectionStateTransitionError(Exception):
+class StateTransitionError(Exception):
     pass
 
 

@@ -224,7 +224,7 @@ class ArgiaConnection:
 
         try:
             self.state.switchState(state.RESERVING)
-        except error.ConnectionStateTransitionError:
+        except error.StateTransitionError:
             return defer.fail(error.ReserveError('Cannot reserve connection in state %s' % self.state()))
 
         payload =  self._constructReservationPayload() #self.source_port, self.dest_port, self.service_parameters)
@@ -359,7 +359,7 @@ class ArgiaConnection:
 
         try:
             self.state.switchState(state.RELEASING)
-        except error.ConnectionStateTransitionError:
+        except error.StateTransitionError:
             return defer.fail(error.ProvisionError('Cannot release connection in state %s' % self.state()))
 
         d = defer.Deferred()
@@ -412,7 +412,7 @@ class ArgiaConnection:
 
         try:
             self.state.switchState(state.TERMINATING)
-        except error.ConnectionStateTransitionError:
+        except error.StateTransitionError:
             return defer.fail(error.TerminateError('Cannot terminate connection in state %s' % self.state()))
 
         d = defer.Deferred()

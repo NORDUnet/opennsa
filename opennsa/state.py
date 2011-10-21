@@ -61,5 +61,5 @@ class ConnectionState:
         if new_state in TRANSITIONS[self._state]:
             self._state = new_state
         else:
-            raise error.ConnectionStateTransitionError('Transition from state %s to %s not allowed' % (self._state, new_state))
+            raise error.StateTransitionError('Transition from state %s to %s not allowed' % (self._state, new_state))
 
