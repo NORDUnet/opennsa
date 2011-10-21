@@ -307,6 +307,19 @@ class RequesterClient:
                 qsr.serviceParameters.bandwidth.minimum  = conn.service_parameters.bandwidth.minimum
                 qsr.serviceParameters.bandwidth.maximum  = conn.service_parameters.bandwidth.maximum
 
+                def createOrderedSTP(stp, rank):
+                    ostp = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}OrderedServiceTerminationPointType')
+                    ostp.stpId = stp.urn()
+                    ostp._order = rank
+                    return ostp
+
+                i = 0
+                for sc in conn.connections():
+                    p1, p2 = sc.stps()
+                    qsr.path.stpList.stp.append( createOrderedSTP(p1, i) )
+                    qsr.path.stpList.stp.append( createOrderedSTP(p2, i+1) )
+                    i += 2
+
                 qsrs.append(qsr)
 
             res.reservationSummary = qsrs
