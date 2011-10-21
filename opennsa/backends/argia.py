@@ -413,7 +413,7 @@ class ArgiaConnection:
         try:
             self.state.switchState(state.TERMINATING)
         except error.ConnectionStateTransitionError:
-            return defer.fail(error.CancelReservationError('Cannot terminate connection in state %s' % self.state()))
+            return defer.fail(error.TerminateError('Cannot terminate connection in state %s' % self.state()))
 
         d = defer.Deferred()
 
@@ -428,12 +428,12 @@ class ArgiaConnection:
                     self.argia_id = None
                     d.callback(self)
                 else:
-                    d.errback( error.CancelReservationError('Got unexpected state from Argia (%s)' % argia_state) )
+                    d.errback( error.TerminateError('Got unexpected state from Argia (%s)' % argia_state) )
             except Exception, e:
                 log.msg('Error handling termination reply: %s' % str(e), system=LOG_SYSTEM)
                 log.msg('STDOUT:\n%s' % pp.stdout.getvalue(), debug=True)
                 log.msg('STDERR:\n%s' % pp.stderr.getvalue(), debug=True)
-                d.errback( error.CancelReservationError('Error handling termination reply: %s' % str(e)) )
+                d.errback( error.TerminateError('Error handling termination reply: %s' % str(e)) )
 
         def terminateFailed(err, pp):
             log.msg('Received terminate failure from Argia. CID: %s, Ports: %s -> %s' % (id(self), self.source_port, self.dest_port), system=LOG_SYSTEM)
@@ -447,18 +447,18 @@ class ArgiaConnection:
                     self.state.switchState(state.TERMINATED)
                 else:
                     log.msg('Unknown state returned from Argia in terminate faliure', system=LOG_SYSTEM)
-                d.errback( error.CancelReservationError('Error terminating connection: %s' % str(message)) )
+                d.errback( error.TerminateError('Error terminating connection: %s' % str(message)) )
             except Exception, e:
                 log.msg('Error terminating connection in Argia: %s' % message, system=LOG_SYSTEM)
                 log.msg('STDOUT:\n%s' % pp.stdout.getvalue(), debug=True)
                 log.msg('STDERR:\n%s' % pp.stderr.getvalue(), debug=True)
-                d.errback( error.CancelReservationError('Error handling termination failure: %s' % str(e)) )
+                d.errback( error.TerminateError('Error handling termination failure: %s' % str(e)) )
 
         process_proto = ArgiaProcessProtocol()
         try:
             reactor.spawnProcess(process_proto, ARGIA_CLIENT, args=[COMMAND_BIN, ARGIA_CMD_TERMINATE, self.argia_id], path=COMMAND_DIR)
         except OSError, e:
-            return defer.fail(error.CancelReservationError('Failed to invoke argia control command (%s)' % str(e)))
+            return defer.fail(error.TerminateError('Failed to invoke argia control command (%s)' % str(e)))
         process_proto.d.addCallbacks(terminateConfirmed, terminateFailed, callbackArgs=[process_proto], errbackArgs=[process_proto])
 
         return d

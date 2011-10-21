@@ -182,11 +182,11 @@ class Connection:
                 return self
             if any(successes):
                 self.state.switchState(state.TERMINATED)
-                err = error.CancelReservationError('Cancel partially failed (may require manual cleanup)')
+                err = error.TerminateError('Cancel partially failed (may require manual cleanup)')
                 return failure.Failure(err)
             else:
                 self.state.switchState(state.TERMINATED)
-                err = error.CancelReservationError('Cancel failed for all local/sub connections')
+                err = error.TerminateError('Cancel failed for all local/sub connections')
                 return failure.Failure(err)
 
         self.state.switchState(state.TERMINATING)

@@ -34,15 +34,15 @@ class ReserveError(Exception):
     pass
 
 
-class CancelReservationError(Exception):
-    pass
-
-
 class ProvisionError(Exception):
     pass
 
 
 class ReleaseError(Exception):
+    pass
+
+
+class TerminateError(Exception):
     pass
 
 

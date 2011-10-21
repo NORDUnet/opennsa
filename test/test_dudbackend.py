@@ -34,7 +34,7 @@ class DUDBackendTest(unittest.TestCase):
         try:
             _ = yield self.backend.cancelReservation(fake_id)
             self.fail('Cancelling non-existing reservation did not raise exception')
-        except nsaerror.CancelReservationError:
+        except nsaerror.TerminateError:
             pass # expected
         except Exception, e:
             self.fail('Cancelling non-existing reservation raised unexpected exception (%s)' % str(e))
