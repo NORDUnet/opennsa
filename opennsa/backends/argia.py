@@ -304,46 +304,47 @@ class ArgiaConnection:
 
         def provisionConfirmed(_, pp):
             log.msg('Received provision reply from Argia. CID: %s, Ports: %s -> %s' % (id(self), self.source_port, self.dest_port), system=LOG_SYSTEM)
-            tree = ET.parse(pp.stdout)
-            argia_state = list(tree.getiterator('state'))[0].text
-            connection_id = list(tree.getiterator('connectionId'))[0].text
+            try:
+                tree = ET.parse(pp.stdout)
+                argia_state = list(tree.getiterator('state'))[0].text
+                connection_id = list(tree.getiterator('connectionId'))[0].text
 
-            if argia_state not in (ARGIA_PROVISIONED, ARGIA_AUTO_PROVISION):
-                e = error.ReserveError('Got unexpected state from Argia (%s)' % argia_state)
-                d.errback(failure.Failure(e))
-                return
+                if argia_state not in (ARGIA_PROVISIONED, ARGIA_AUTO_PROVISION):
+                    d.errback( error.ReserveError('Got unexpected state from Argia (%s)' % argia_state) )
+                else:
+                    self._cancelTransition()
+                    self.state.switchState(state.PROVISIONED)
+                    self.argia_id = connection_id
+                    log.msg('Connection provisioned. CID: %s' % id(self), system=LOG_SYSTEM)
+                    self._scheduleStateTransition(self.service_parameters.start_time, state.TERMINATED)
+                    d.callback(self)
 
-            self._cancelTransition()
-            self.state.switchState(state.PROVISIONED)
-            self.argia_id = connection_id
-
-            # schedule release
-#            td = conn.end_time -  datetime.datetime.utcnow()
-#            # total_seconds() is only available from python 2.7 so we use this
-#            stop_delta_seconds = (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6.0
-
-#            conn.auto_release_deferred = task.deferLater(reactor, stop_delta_seconds, self.release, conn_id)
-#            conn.auto_release_deferred.addErrback(deferTaskFailed)
-            log.msg('PROVISION. CID: %s' % id(self), system=LOG_SYSTEM)
-            d.callback(self)
+            except Exception, e:
+                log.msg('Error handling provision reply: %s' % str(e), system=LOG_SYSTEM)
+                log.msg('STDOUT:\n%s' % pp.stdout.getvalue(), debug=True, system=LOG_SYSTEM)
+                log.msg('STDERR:\n%s' % pp.stderr.getvalue(), debug=True, system=LOG_SYSTEM)
+                d.errback( error.ReserveError('Error handling reservation reply: %s' % str(e)) )
 
         def provisionFailed(err, pp):
             log.msg('Received provision failure from Argia. CID: %s, Ports: %s -> %s' % (id(self), self.source_port, self.dest_port), system=LOG_SYSTEM)
-            log.msg('STDOUT:\n%s' % pp.stdout.getvalue(), debug=True, system=LOG_SYSTEM)
-            log.msg('STDERR:\n%s' % pp.stderr.getvalue(), debug=True, system=LOG_SYSTEM)
-            tree = ET.parse(pp.stderr)
-            state = list(tree.getiterator('message'))[0].text
-            message = list(tree.getiterator('message'))[0].text
+            try:
+                tree = ET.parse(pp.stderr)
+                state = list(tree.getiterator('message'))[0].text
+                message = list(tree.getiterator('message'))[0].text
 
-            if state == ARGIA_TERMINATED:
-                self.state.switchState(state.TERMINATED)
-            elif state == ARGIA_RESERVED:
-                self.state.switchState(state.RESERVED)
-            else:
-                log.msg('Unexpected state from argia provision failure: %s' % state, system=LOG_SYSTEM)
+                if state == ARGIA_TERMINATED:
+                    self.state.switchState(state.TERMINATED)
+                elif state == ARGIA_RESERVED:
+                    self.state.switchState(state.RESERVED)
+                else:
+                    log.msg('Unexpected state from argia provision failure: %s' % state, system=LOG_SYSTEM)
 
-            err = error.ReserveError(message)
-            d.errback(failure.Failure(err))
+                d.errback( error.ProvisionError(message) )
+            except Exception, e:
+                log.msg('Error handling provision failure: %s' % str(e), system=LOG_SYSTEM)
+                log.msg('STDOUT:\n%s' % pp.stdout.getvalue(), debug=True, system=LOG_SYSTEM)
+                log.msg('STDERR:\n%s' % pp.stderr.getvalue(), debug=True, system=LOG_SYSTEM)
+                d.errback( error.ProvisionError('Error handling reservation failure: %s' % str(e)) )
 
         process_proto = ArgiaProcessProtocol()
         try:
