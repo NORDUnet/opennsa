@@ -252,9 +252,9 @@ class RequesterService:
         method, req = self.decoder.parse_request('reserveFailed', soap_data)
 
         correlation_id = str(req.correlationId)
-        requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_id, error_message = self._getGFTParameters(req.reservationFailed)
+        requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_id, error_message = self._getGFTParameters(req.reserveFailed)
 
-        self.requester.reservationFailed(correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_message)
+        self.requester.reserveFailed(correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_message)
 
         reply = self.decoder.marshal_result(correlation_id, method)
         return reply
