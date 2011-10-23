@@ -196,7 +196,7 @@ class RequesterClient:
         nsi_ex.text = error_msg
         res_fail.serviceException = nsi_ex
 
-        d = self.client.invoke(requester_uri, 'reservationFailed', correlation_id, res_fail)
+        d = self.client.invoke(requester_uri, 'reserveFailed', correlation_id, res_fail)
         return d
 
 
