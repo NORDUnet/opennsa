@@ -14,7 +14,7 @@ import StringIO
 
 from xml.etree import ElementTree as ET
 
-from twisted.python import log, failure
+from twisted.python import log
 from twisted.internet import reactor, protocol, defer, task
 
 from opennsa import error, state
@@ -368,37 +368,46 @@ class ArgiaConnection:
 
         d = defer.Deferred()
 
-        def releaseConfirmed(_, process_proto):
-            tree = ET.parse(process_proto.stdout)
-            argia_state = list(tree.getiterator('state'))[0].text
-            reservation_id = list(tree.getiterator('reservationId'))[0].text
+        def releaseConfirmed(_, pp):
+            log.msg('Received reservation reply from Argia. CID: %s, Ports: %s -> %s' % (id(self), self.source_port, self.dest_port), system=LOG_SYSTEM)
+            try:
+                tree = ET.parse(process_proto.stdout)
+                argia_state = list(tree.getiterator('state'))[0].text
+                reservation_id = list(tree.getiterator('reservationId'))[0].text
 
-            if argia_state not in (ARGIA_SCHEDULED):
-                e = error.ReleaseError('Got unexpected state from Argia (%s)' % argia_state)
-                d.errback(failure.Failure(e))
-                return
+                if argia_state in (ARGIA_SCHEDULED):
+                    self._cancelTransition()
+                    self.state.switchState(state.SCHEDULED)
+                    self.argia_id = reservation_id
+                    d.callback(self)
+                else:
+                    d.errback( error.ReleaseError('Got unexpected state from Argia (%s)' % argia_state) )
+            except Exception, e:
+                log.msg('Error handling release reply: %s' % str(e), system=LOG_SYSTEM)
+                self._logProcessPipes(pp)
+                d.errback( error.ReleaseError('Error handling release reply: %s' % str(e)) )
 
-            self._cancelTransition()
-            self.state.switchState(state.SCHEDULED)
-            self.argia_id = reservation_id
-            d.callback(self)
+        def releaseFailed(err, pp):
+            log.msg('Received reservation failure from Argia. CID: %s, Ports: %s -> %s' % (id(self), self.source_port, self.dest_port), system=LOG_SYSTEM)
+            try:
+                tree = ET.parse(process_proto.stderr)
+                message = list(tree.getiterator('message'))[0].text
+                argia_state = list(tree.getiterator('state'))[0].text
 
-        def releaseFailed(err, process_proto):
-            tree = ET.parse(process_proto.stderr)
-            message = list(tree.getiterator('message'))[0].text
-            argia_state = list(tree.getiterator('state'))[0].text
+                if argia_state == ARGIA_PROVISIONED:
+                    self.state.switchState(state.PROVISIONED)
+                elif argia_state == ARGIA_TERMINATED:
+                    self.state.switchState(state.TERMINATED)
+                else:
+                    log.msg('Unknown state returned from Argia in release faliure (%s)' % message, system=LOG_SYSTEM)
 
-            log.msg('Error releasing connection in Argia: %s' % message, system=LOG_SYSTEM)
+                d.errback( error.ReleaseError('Error releasing connection: %s' % str(err)) )
 
-            if argia_state == ARGIA_PROVISIONED:
-                self.state.switchState(state.PROVISIONED)
-            elif argia_state == ARGIA_TERMINATED:
-                self.state.switchState(state.TERMINATED)
-            else:
-                log.msg('Unknown state returned from Argia in release faliure', system=LOG_SYSTEM)
+            except Exception, e:
+                log.msg('Error handling release failure: %s' % str(e), system=LOG_SYSTEM)
+                self._logProcessPipes(pp)
+                d.errback( error.ReleaseError('Error handling release failure: %s' % str(e)) )
 
-            e = error.ReleaseError('Error releasing connection: %s' % str(err))
-            d.errback(e)
 
         process_proto = ArgiaProcessProtocol()
         try:
