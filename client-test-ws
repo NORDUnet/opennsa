@@ -51,8 +51,8 @@ def doMain():
     #source_stp      = nsa.STP('Martinique', 'M1')
     #dest_stp        = nsa.STP('Martinique', 'M3')
 
-    start_time = datetime.datetime.utcfromtimestamp(time.time() + 20 ).isoformat().rsplit('.',1)[0] + 'Z'
-    end_time   = datetime.datetime.utcfromtimestamp(time.time() + 120 ).isoformat().rsplit('.',1)[0] + 'Z'
+    start_time = datetime.datetime.utcfromtimestamp(time.time() + 3 )
+    end_time   = datetime.datetime.utcfromtimestamp(time.time() + 120 )
     #start_time, end_time = end_time, start_time
 
     bwp = nsa.BandwidthParameters(1000)
