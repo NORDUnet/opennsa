@@ -190,6 +190,11 @@ class ArgiaConnection:
         log.msg('State transition scheduled: In %i seconds to state %s' % (transition_delta_seconds, state), system=LOG_SYSTEM)
 
 
+    def _logProcessPipes(self, process_proto):
+        log.msg('STDOUT:\n%s' % process_proto.stdout.getvalue(), debug=True, system=LOG_SYSTEM)
+        log.msg('STDERR:\n%s' % process_proto.stderr.getvalue(), debug=True, system=LOG_SYSTEM)
+
+
     def _cancelTransition(self):
 
         self.scheduled_transition_call.cancel()
@@ -256,8 +261,7 @@ class ArgiaConnection:
 
             except Exception, e:
                 log.msg('Error handling reservation reply: %s' % str(e), system=LOG_SYSTEM)
-                log.msg('STDOUT:\n%s' % pp.stdout.getvalue(), debug=True, system=LOG_SYSTEM)
-                log.msg('STDERR:\n%s' % pp.stderr.getvalue(), debug=True, system=LOG_SYSTEM)
+                self._logProcessPipes(pp)
                 d.errback( error.ReserveError('Error handling reservation reply: %s' % str(e)) )
 
 
@@ -270,8 +274,7 @@ class ArgiaConnection:
                 d.errback( error.ReserveError('Reservation failed in Argia backend: %s' % message) )
             except Exception, e:
                 log.msg('Error handling reservation failure: %s' % str(e), system=LOG_SYSTEM)
-                log.msg('STDOUT:\n%s' % pp.stdout.getvalue(), debug=True, system=LOG_SYSTEM)
-                log.msg('STDERR:\n%s' % pp.stderr.getvalue(), debug=True, system=LOG_SYSTEM)
+                self._logProcessPipes(pp)
                 d.errback( error.ReserveError('Error handling reservation failure: %s' % str(e)) )
 
         process_proto.d.addCallbacks(reservationConfirmed, reservationFailed, callbackArgs=[process_proto], errbackArgs=[process_proto])
@@ -321,8 +324,7 @@ class ArgiaConnection:
 
             except Exception, e:
                 log.msg('Error handling provision reply: %s' % str(e), system=LOG_SYSTEM)
-                log.msg('STDOUT:\n%s' % pp.stdout.getvalue(), debug=True, system=LOG_SYSTEM)
-                log.msg('STDERR:\n%s' % pp.stderr.getvalue(), debug=True, system=LOG_SYSTEM)
+                self._logProcessPipes(pp)
                 d.errback( error.ReserveError('Error handling reservation reply: %s' % str(e)) )
 
         def provisionFailed(err, pp):
@@ -342,8 +344,7 @@ class ArgiaConnection:
                 d.errback( error.ProvisionError(message) )
             except Exception, e:
                 log.msg('Error handling provision failure: %s' % str(e), system=LOG_SYSTEM)
-                log.msg('STDOUT:\n%s' % pp.stdout.getvalue(), debug=True, system=LOG_SYSTEM)
-                log.msg('STDERR:\n%s' % pp.stderr.getvalue(), debug=True, system=LOG_SYSTEM)
+                self._logProcessPipes(pp)
                 d.errback( error.ProvisionError('Error handling reservation failure: %s' % str(e)) )
 
         process_proto = ArgiaProcessProtocol()
@@ -434,8 +435,7 @@ class ArgiaConnection:
                     d.errback( error.TerminateError('Got unexpected state from Argia (%s)' % argia_state) )
             except Exception, e:
                 log.msg('Error handling termination reply: %s' % str(e), system=LOG_SYSTEM)
-                log.msg('STDOUT:\n%s' % pp.stdout.getvalue(), debug=True, system=LOG_SYSTEM)
-                log.msg('STDERR:\n%s' % pp.stderr.getvalue(), debug=True, system=LOG_SYSTEM)
+                self._logProcessPipes(pp)
                 d.errback( error.TerminateError('Error handling termination reply: %s' % str(e)) )
 
         def terminateFailed(err, pp):
@@ -453,8 +453,7 @@ class ArgiaConnection:
                 d.errback( error.TerminateError('Error terminating connection: %s' % str(message)) )
             except Exception, e:
                 log.msg('Error terminating connection in Argia: %s' % message, system=LOG_SYSTEM)
-                log.msg('STDOUT:\n%s' % pp.stdout.getvalue(), debug=True, system=LOG_SYSTEM)
-                log.msg('STDERR:\n%s' % pp.stderr.getvalue(), debug=True, system=LOG_SYSTEM)
+                self._logProcessPipes(pp)
                 d.errback( error.TerminateError('Error handling termination failure: %s' % str(e)) )
 
         process_proto = ArgiaProcessProtocol()
