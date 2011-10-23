@@ -88,9 +88,8 @@ class DUDConnection:
         self.service_parameters = service_parameters
         self.network_name = network_name
 
-        self.state      = state.ConnectionState()
-        self.auto_provision_deferred = None
-        self.auto_release_deferred   = None
+        self.state = state.ConnectionState()
+        self.auto_transition_deferred = None
 
 
     def stps(self):
@@ -99,14 +98,10 @@ class DUDConnection:
 
     def deSchedule(self):
 
-        if self.state == state.AUTO_PROVISION:
-            log.msg('Cancelling auto-provision. CID %s' % id(self), system='DUDBackend Network %s' % self.network_name)
-            self.auto_provision_deferred.cancel()
-            self.auto_provision_deferred = None
-        elif self.state == state.PROVISIONED:
-            log.msg('Cancelling auto-release for connection %s' % id(self), system='DUDBackend Network %s' % self.network_name)
-            self.auto_release_deferred.cancel()
-            self.auto_release_deferred = None
+        if self.auto_transition_deferred:
+            log.msg('Cancelling automatic state transition.  CID %s' % id(self), system='DUDBackend Network %s' % self.network_name)
+            self.auto_transition_deferred.cancel()
+            self.auto_transition_deferred = None
 
 
     def reserve(self):
@@ -125,6 +120,7 @@ class DUDConnection:
 
         def doProvision():
             log.msg('PROVISION. CID: %s' % id(self), system='DUDBackend Network %s' % self.network_name)
+            self.deSchedule()
             try:
                 self.state.switchState(state.PROVISIONING)
             except error.StateTransitionError:
@@ -134,8 +130,8 @@ class DUDConnection:
             # total_seconds() is only available from python 2.7 so we use this
             stop_delta_seconds = (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6.0
 
-            self.auto_release_deferred = task.deferLater(reactor, stop_delta_seconds, self.release)
-            self.auto_release_deferred.addErrback(deferTaskFailed)
+            self.auto_transition_deferred = task.deferLater(reactor, stop_delta_seconds, self.release)
+            self.auto_transition_deferred.addErrback(deferTaskFailed)
             self.state.switchState(state.PROVISIONED)
 
         dt_now = datetime.datetime.utcnow()
@@ -148,8 +144,8 @@ class DUDConnection:
             start_delta_seconds = (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6.0
             start_delta_seconds = max(start_delta_seconds, 0) # if we dt_now during calculation
 
-            self.auto_provision_deferred = task.deferLater(reactor, start_delta_seconds, doProvision)
-            self.auto_provision_deferred.addErrback(deferTaskFailed)
+            self.auto_transition_deferred = task.deferLater(reactor, start_delta_seconds, doProvision)
+            self.auto_transition_deferred.addErrback(deferTaskFailed)
             self.state.switchState(state.AUTO_PROVISION)
             log.msg('Connection %s scheduled for auto-provision in %i seconds ' % (id(self), start_delta_seconds), system='DUDBackend Network %s' % self.network_name)
 
@@ -159,13 +155,13 @@ class DUDConnection:
     def release(self):
 
         log.msg('RELEASE. CID: %s' % id(self), system='DUDBackend Network %s' % self.network_name)
+        self.deSchedule()
         try:
             self.state.switchState(state.RELEASING)
         except error.StateTransitionError, e:
             log.msg('Release error: ' + str(e), system='DUDBackend Network %s' % self.network_name)
             return defer.fail(e)
 
-        self.deSchedule()
         self.state.switchState(state.SCHEDULED)
         return defer.succeed(self)
 
