@@ -310,14 +310,14 @@ class ArgiaConnection:
             try:
                 tree = ET.parse(pp.stdout)
                 argia_state = list(tree.getiterator('state'))[0].text
-                connection_id = list(tree.getiterator('connectionId'))[0].text
+                argia_id    = list(tree.getiterator('reservationId'))[0].text
 
                 if argia_state not in (ARGIA_PROVISIONED, ARGIA_AUTO_PROVISION):
                     d.errback( error.ReserveError('Got unexpected state from Argia (%s)' % argia_state) )
                 else:
                     self._cancelTransition()
                     self.state.switchState(state.PROVISIONED)
-                    self.argia_id = connection_id
+                    self.argia_id = argia_id
                     log.msg('Connection provisioned. CID: %s' % id(self), system=LOG_SYSTEM)
                     self._scheduleStateTransition(self.service_parameters.start_time, state.TERMINATED)
                     d.callback(self)
