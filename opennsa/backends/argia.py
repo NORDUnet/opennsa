@@ -33,7 +33,6 @@ ARGIA_CMD_TERMINATE = 'cancel'
 
 # These state are internal to the Argia NRM and cannot be shared with the NSI service layer
 ARGIA_RESERVED        = 'RESERVED'
-ARGIA_SCHEDULED       = 'SCHEDULED'
 ARGIA_AUTO_PROVISION  = 'AUTO_PROVISION'
 ARGIA_PROVISIONING    = 'PROVISIONING'
 ARGIA_PROVISIONED     = 'PROVISIONED'
@@ -197,8 +196,9 @@ class ArgiaConnection:
 
     def _cancelTransition(self):
 
-        self.scheduled_transition_call.cancel()
-        self.scheduled_transition_call = None
+        if self.scheduled_transition_call:
+            self.scheduled_transition_call.cancel()
+            self.scheduled_transition_call = None
 
 
     def _constructReservationPayload(self):
@@ -373,12 +373,12 @@ class ArgiaConnection:
             try:
                 tree = ET.parse(process_proto.stdout)
                 argia_state = list(tree.getiterator('state'))[0].text
-                reservation_id = list(tree.getiterator('reservationId'))[0].text
+                argia_id    = list(tree.getiterator('reservationId'))[0].text
 
-                if argia_state in (ARGIA_SCHEDULED):
+                if argia_state in (ARGIA_RESERVED):
                     self._cancelTransition()
                     self.state.switchState(state.SCHEDULED)
-                    self.argia_id = reservation_id
+                    self.argia_id = argia_id
                     d.callback(self)
                 else:
                     d.errback( error.ReleaseError('Got unexpected state from Argia (%s)' % argia_state) )
