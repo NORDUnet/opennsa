@@ -56,7 +56,6 @@ class ArgiaBackend:
     def createConnection(self, source_port, dest_port, service_parameters):
 
         self._checkTiming(service_parameters.start_time, service_parameters.end_time)
-        self._checkResourceAvailability(source_port, dest_port, service_parameters.start_time, service_parameters.end_time)
         ac = ArgiaConnection(source_port, dest_port, service_parameters)
         self.connections.append(ac)
         return ac
@@ -77,31 +76,6 @@ class ArgiaBackend:
 
         if res_start > datetime.datetime(2025, 1, 1):
             raise error.InvalidRequestError('Refusing to make reservation with start time after 2025')
-
-
-    def _checkResourceAvailability(self, source_port, dest_port, res_start, res_end):
-
-        # port temporal availability
-        def portOverlap(res1_start_time, res1_end_time, res2_start_time, res2_end_time):
-            if res1_start_time >= res2_start_time and res1_start_time <= res2_end_time:
-                return True
-            if res1_start_time <= res2_start_time and res1_start_time <= res2_end_time:
-                return True
-            return False
-
-        for cn in self.connections:
-            if cn.state() == state.TERMINATED:
-                continue # don't check terminated state (we need a cleanup thingie)
-            csp = cn.service_parameters
-            if source_port in [ cn.source_port, cn.dest_port ]:
-                if portOverlap(csp.start_time, csp.end_time, res_start, res_end):
-                    raise error.ResourceNotAvailableError('Port %s not available in specified time span' % source_port)
-
-            if dest_port == [ cn.source_port, cn.dest_port ]:
-                if portOverlap(csp.start_time, csp.end_time, res_start, res_end):
-                    raise error.ResourceNotAvailableError('Port %s not available in specified time span' % dest_port)
-
-        # all good
 
 
 
