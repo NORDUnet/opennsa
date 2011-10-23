@@ -256,8 +256,8 @@ class ArgiaConnection:
 
             except Exception, e:
                 log.msg('Error handling reservation reply: %s' % str(e), system=LOG_SYSTEM)
-                log.msg('STDOUT:\n%s' % pp.stdout.getvalue(), debug=True)
-                log.msg('STDERR:\n%s' % pp.stderr.getvalue(), debug=True)
+                log.msg('STDOUT:\n%s' % pp.stdout.getvalue(), debug=True, system=LOG_SYSTEM)
+                log.msg('STDERR:\n%s' % pp.stderr.getvalue(), debug=True, system=LOG_SYSTEM)
                 d.errback( error.ReserveError('Error handling reservation reply: %s' % str(e)) )
 
 
@@ -270,8 +270,8 @@ class ArgiaConnection:
                 d.errback( error.ReserveError('Reservation failed in Argia backend: %s' % message) )
             except Exception, e:
                 log.msg('Error handling reservation failure: %s' % str(e), system=LOG_SYSTEM)
-                log.msg('STDOUT:\n%s' % pp.stdout.getvalue(), debug=True)
-                log.msg('STDERR:\n%s' % pp.stderr.getvalue(), debug=True)
+                log.msg('STDOUT:\n%s' % pp.stdout.getvalue(), debug=True, system=LOG_SYSTEM)
+                log.msg('STDERR:\n%s' % pp.stderr.getvalue(), debug=True, system=LOG_SYSTEM)
                 d.errback( error.ReserveError('Error handling reservation failure: %s' % str(e)) )
 
         process_proto.d.addCallbacks(reservationConfirmed, reservationFailed, callbackArgs=[process_proto], errbackArgs=[process_proto])
@@ -329,8 +329,8 @@ class ArgiaConnection:
 
         def provisionFailed(err, pp):
             log.msg('Received provision failure from Argia. CID: %s, Ports: %s -> %s' % (id(self), self.source_port, self.dest_port), system=LOG_SYSTEM)
-            log.msg('STDOUT:\n%s' % pp.stdout.getvalue(), debug=True)
-            log.msg('STDERR:\n%s' % pp.stderr.getvalue(), debug=True)
+            log.msg('STDOUT:\n%s' % pp.stdout.getvalue(), debug=True, system=LOG_SYSTEM)
+            log.msg('STDERR:\n%s' % pp.stderr.getvalue(), debug=True, system=LOG_SYSTEM)
             tree = ET.parse(pp.stderr)
             state = list(tree.getiterator('message'))[0].text
             message = list(tree.getiterator('message'))[0].text
@@ -433,8 +433,8 @@ class ArgiaConnection:
                     d.errback( error.TerminateError('Got unexpected state from Argia (%s)' % argia_state) )
             except Exception, e:
                 log.msg('Error handling termination reply: %s' % str(e), system=LOG_SYSTEM)
-                log.msg('STDOUT:\n%s' % pp.stdout.getvalue(), debug=True)
-                log.msg('STDERR:\n%s' % pp.stderr.getvalue(), debug=True)
+                log.msg('STDOUT:\n%s' % pp.stdout.getvalue(), debug=True, system=LOG_SYSTEM)
+                log.msg('STDERR:\n%s' % pp.stderr.getvalue(), debug=True, system=LOG_SYSTEM)
                 d.errback( error.TerminateError('Error handling termination reply: %s' % str(e)) )
 
         def terminateFailed(err, pp):
@@ -452,8 +452,8 @@ class ArgiaConnection:
                 d.errback( error.TerminateError('Error terminating connection: %s' % str(message)) )
             except Exception, e:
                 log.msg('Error terminating connection in Argia: %s' % message, system=LOG_SYSTEM)
-                log.msg('STDOUT:\n%s' % pp.stdout.getvalue(), debug=True)
-                log.msg('STDERR:\n%s' % pp.stderr.getvalue(), debug=True)
+                log.msg('STDOUT:\n%s' % pp.stdout.getvalue(), debug=True, system=LOG_SYSTEM)
+                log.msg('STDERR:\n%s' % pp.stderr.getvalue(), debug=True, system=LOG_SYSTEM)
                 d.errback( error.TerminateError('Error handling termination failure: %s' % str(e)) )
 
         process_proto = ArgiaProcessProtocol()
