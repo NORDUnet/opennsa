@@ -15,23 +15,23 @@ class NSIProxy:
         self.topology   = topology  # used for network -> nsa lookups
 
 
-    def reservation(self, network, session_security_attr, global_reservation_id, description, connection_id, service_parameters):
+    def reserve(self, network, session_security_attr, global_reservation_id, description, connection_id, service_parameters):
 
         remote_nsa = self.topology.getNetwork(network).nsa
-        return self.client.reservation(self.nsa_, remote_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters)
+        return self.client.reserve(self.nsa_, remote_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters)
 
 
-    def reservationConfirmed(self, reply_to, remote_nsa, global_reservation_id, description, connection_id, service_parameters):
+    def reserveConfirmed(self, reply_to, remote_nsa, global_reservation_id, description, connection_id, service_parameters):
 
-        return self.client.reservationConfirmed(reply_to, remote_nsa, self.nsa_, global_reservation_id, description, connection_id, service_parameters)
-
-
-    def reservationFailed(self, remote_nsa, global_reservation_id, description, connection_id, service_exception):
-
-        return self.clent.reservationFailed(remote_nsa, self.nsa_, global_reservation_id, description, connection_id, service_exception)
+        return self.client.reserveConfirmed(reply_to, remote_nsa, self.nsa_, global_reservation_id, description, connection_id, service_parameters)
 
 
-    def terminateReservation(self, network, session_security_attr, connection_id):
+    def reserveFailed(self, remote_nsa, global_reservation_id, description, connection_id, service_exception):
+
+        return self.clent.reserveFailed(remote_nsa, self.nsa_, global_reservation_id, description, connection_id, service_exception)
+
+
+    def terminate(self, network, session_security_attr, connection_id):
 
         remote_nsa = self.topology.getNetwork(network).nsa
         return self.client.terminate(self.nsa_, remote_nsa, session_security_attr, connection_id)

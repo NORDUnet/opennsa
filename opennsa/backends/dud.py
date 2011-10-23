@@ -109,7 +109,7 @@ class DUDConnection:
             self.auto_release_deferred = None
 
 
-    def reservation(self):
+    def reserve(self):
 
         log.msg('RESERVE. CID: %s, Ports: %s -> %s' % (id(self), self.source_port, self.dest_port), system='DUDBackend Network %s' % self.network_name)
         try:

@@ -12,6 +12,8 @@ from twisted.python import log
 from opennsa import nsa
 from opennsa.protocols.webservice.ext import sudsservice
 
+from suds.sax import date as sudsdate
+
 WSDL_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__),"../../../wsdl/"))
 WSDL_PROVIDER   = 'file://%s/ogf_nsi_connection_provider_v1_0.wsdl' % WSDL_PATH
 WSDL_REQUESTER  = 'file://%s/ogf_nsi_connection_requester_v1_0.wsdl' % WSDL_PATH
@@ -35,13 +37,13 @@ class ProviderService:
         self.decoder = sudsservice.WSDLMarshaller(WSDL_PROVIDER)
 
         # not sure what query callbacs are doing here
-        #self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/07/connection/service/queryConfirmed"', ...)
-        #self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/07/connection/service/queryFailed"', ...)
-        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/07/connection/service/reservation"',   self.reservation)
-        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/07/connection/service/provision"',     self.provision)
-        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/07/connection/service/release"',       self.release)
-        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/07/connection/service/terminate"',     self.terminate)
-        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/07/connection/service/query"',         self.query)
+        #self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/10/connection/service/queryConfirmed"', ...)
+        #self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/10/connection/service/queryFailed"', ...)
+        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/10/connection/service/reserve"',       self.reserve)
+        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/10/connection/service/provision"',     self.provision)
+        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/10/connection/service/release"',       self.release)
+        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/10/connection/service/terminate"',     self.terminate)
+        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/10/connection/service/query"',         self.query)
 
 
     def _getGRTParameters(self, grt):
@@ -62,15 +64,15 @@ class ProviderService:
         return reply
 
 
-    def reservation(self, soap_action, soap_data):
+    def reserve(self, soap_action, soap_data):
 
-        assert soap_action == '"http://schemas.ogf.org/nsi/2011/07/connection/service/reservation"'
-        method, req = self.decoder.parse_request('reservation', soap_data)
+        assert soap_action == '"http://schemas.ogf.org/nsi/2011/10/connection/service/reserve"'
+        method, req = self.decoder.parse_request('reserve', soap_data)
 
         correlation_id, reply_to, = self._getRequestParameters(req)
-        res = req.reservation.reservation
+        res = req.reserve.reservation
 
-        requester_nsa, provider_nsa = _decodeNSAs(req.reservation)
+        requester_nsa, provider_nsa = _decodeNSAs(req.reserve)
         session_security_attr       = None
         connection_id               = res.connectionId
         global_reservation_id       = res.globalReservationId if 'globalReservationId' in res else None
@@ -87,22 +89,22 @@ class ProviderService:
         # how to check for existence of optional parameters easily  - in / hasattr both works
         bw = sp.bandwidth
         bwp = nsa.BandwidthParameters(bw.desired if 'desired' in bw else None, bw.minimum if 'minimum' in bw else None, bw.maximum if 'maximum' in bw else None)
-        start_time = sp.schedule.startTime
-        end_time   = sp.schedule.endTime
+        start_time = sudsdate.DateTime(sp.schedule.startTime).value
+        end_time   = sudsdate.DateTime(sp.schedule.endTime).value
 
-        if start_time.tzinfo is None:
-            log.msg('No timezone info specified in schedule start time in reservation request, assuming UTC time.')
+#        if start_time.tzinfo is None:
+#            log.msg('No timezone info specified in schedule start time in reserve request, assuming UTC time.')
         st = start_time.utctimetuple()
         start_time = datetime.datetime(st.tm_year, st.tm_mon, st.tm_mday, st.tm_hour, st.tm_min, st.tm_sec)
 
-        if end_time.tzinfo is None:
-            log.msg('No timezone info specified in schedule start time in reservation request, assuming UTC time.')
+#        if end_time.tzinfo is None:
+#            log.msg('No timezone info specified in schedule start time in reservation request, assuming UTC time.')
         et = end_time.utctimetuple()
         end_time = datetime.datetime(et.tm_year, et.tm_mon, et.tm_mday, et.tm_hour, et.tm_min, et.tm_sec)
 
         service_parameters      = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, bandwidth=bwp)
 
-        d = self.provider.reservation(correlation_id, reply_to, requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters)
+        d = self.provider.reserve(correlation_id, reply_to, requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters)
         d.addErrback(log.err)
 
         # The deferred will fire when the reservation is made.
@@ -190,23 +192,23 @@ class RequesterService:
         self.requester = requester
         self.decoder = sudsservice.WSDLMarshaller(WSDL_REQUESTER)
 
-        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/07/connection/service/reservationConfirmed"',  self.reservationConfirmed)
-        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/07/connection/service/reservationFailed"',     self.reservationFailed)
+        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/10/connection/service/reserveConfirmed"',      self.reserveConfirmed)
+        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/10/connection/service/reserveFailed"',         self.reserveFailed)
 
-        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/07/connection/service/provisionConfirmed"',    self.provisionConfirmed)
-        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/07/connection/service/provisionFailed"',       self.provisionFailed)
+        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/10/connection/service/provisionConfirmed"',    self.provisionConfirmed)
+        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/10/connection/service/provisionFailed"',       self.provisionFailed)
 
-        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/07/connection/service/releaseConfirmed"',      self.releaseConfirmed)
-        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/07/connection/service/releaseFailed"',         self.releaseFailed)
+        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/10/connection/service/releaseConfirmed"',      self.releaseConfirmed)
+        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/10/connection/service/releaseFailed"',         self.releaseFailed)
 
-        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/07/connection/service/terminateConfirmed"',    self.terminateConfirmed)
-        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/07/connection/service/terminateFailed"',       self.terminateFailed)
+        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/10/connection/service/terminateConfirmed"',    self.terminateConfirmed)
+        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/10/connection/service/terminateFailed"',       self.terminateFailed)
 
-        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/07/connection/service/queryConfirmed"',        self.queryConfirmed)
-        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/07/connection/service/queryFailed"',           self.queryFailed)
+        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/10/connection/service/queryConfirmed"',        self.queryConfirmed)
+        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/10/connection/service/queryFailed"',           self.queryFailed)
 
-        #"http://schemas.ogf.org/nsi/2011/07/connection/service/forcedEnd"
-        #"http://schemas.ogf.org/nsi/2011/07/connection/service/query"
+        #"http://schemas.ogf.org/nsi/2011/10/connection/service/forcedEnd"
+        #"http://schemas.ogf.org/nsi/2011/10/connection/service/query"
 
 
     def _getGFTParameters(self, gft):
@@ -225,29 +227,29 @@ class RequesterService:
         return requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_id, error_message
 
 
-    def reservationConfirmed(self, soap_action, soap_data):
+    def reserveConfirmed(self, soap_action, soap_data):
 
-        assert soap_action == '"http://schemas.ogf.org/nsi/2011/07/connection/service/reservationConfirmed"'
-        method, req = self.decoder.parse_request('reservationConfirmed', soap_data)
+        assert soap_action == '"http://schemas.ogf.org/nsi/2011/10/connection/service/reserveConfirmed"'
+        method, req = self.decoder.parse_request('reserveConfirmed', soap_data)
 
-        requester_nsa, provider_nsa = _decodeNSAs(req.reservationConfirmed)
-        res = req.reservationConfirmed.reservation
+        requester_nsa, provider_nsa = _decodeNSAs(req.reserveConfirmed)
+        res = req.reserveConfirmed.reservation
 
         correlation_id          = str(req.correlationId)
         global_reservation_id   = str(res.globalReservationId)
         description             = str(res.description)
         connection_id           = str(res.connectionId)
 
-        self.requester.reservationConfirmed(correlation_id, requester_nsa, provider_nsa, None, global_reservation_id, description, connection_id, None)
+        self.requester.reserveConfirmed(correlation_id, requester_nsa, provider_nsa, None, global_reservation_id, description, connection_id, None)
 
         reply = self.decoder.marshal_result(correlation_id, method)
         return reply
 
 
-    def reservationFailed(self, soap_action, soap_data):
+    def reserveFailed(self, soap_action, soap_data):
 
-        assert soap_action == '"http://schemas.ogf.org/nsi/2011/07/connection/service/reservationFailed"'
-        method, req = self.decoder.parse_request('reservationFailed', soap_data)
+        assert soap_action == '"http://schemas.ogf.org/nsi/2011/10/connection/service/reserveFailed"'
+        method, req = self.decoder.parse_request('reserveFailed', soap_data)
 
         correlation_id = str(req.correlationId)
         requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_id, error_message = self._getGFTParameters(req.reservationFailed)
@@ -260,7 +262,7 @@ class RequesterService:
 
     def provisionConfirmed(self, soap_action, soap_data):
 
-        assert soap_action == '"http://schemas.ogf.org/nsi/2011/07/connection/service/provisionConfirmed"'
+        assert soap_action == '"http://schemas.ogf.org/nsi/2011/10/connection/service/provisionConfirmed"'
         method, req = self.decoder.parse_request('provisionConfirmed', soap_data)
 
         requester_nsa, provider_nsa = _decodeNSAs(req.provisionConfirmed)
@@ -275,7 +277,7 @@ class RequesterService:
 
     def provisionFailed(self, soap_action, soap_data):
 
-        assert soap_action == '"http://schemas.ogf.org/nsi/2011/07/connection/service/provisionFailed"'
+        assert soap_action == '"http://schemas.ogf.org/nsi/2011/10/connection/service/provisionFailed"'
         method, req = self.decoder.parse_request('provisionFailed', soap_data)
 
         correlation_id = str(req.correlationId)
@@ -289,7 +291,7 @@ class RequesterService:
 
     def releaseConfirmed(self, soap_action, soap_data):
 
-        assert soap_action == '"http://schemas.ogf.org/nsi/2011/07/connection/service/releaseConfirmed"'
+        assert soap_action == '"http://schemas.ogf.org/nsi/2011/10/connection/service/releaseConfirmed"'
         method, req = self.decoder.parse_request('releaseConfirmed', soap_data)
 
         requester_nsa, provider_nsa = _decodeNSAs(req.releaseConfirmed)
@@ -304,7 +306,7 @@ class RequesterService:
 
     def releaseFailed(self, soap_action, soap_data):
 
-        assert soap_action == '"http://schemas.ogf.org/nsi/2011/07/connection/service/releaseFailed"'
+        assert soap_action == '"http://schemas.ogf.org/nsi/2011/10/connection/service/releaseFailed"'
         method, req = self.decoder.parse_request('releaseFailed', soap_data)
 
         correlation_id = str(req.correlationId)
@@ -318,7 +320,7 @@ class RequesterService:
 
     def terminateConfirmed(self, soap_action, soap_data):
 
-        assert soap_action == '"http://schemas.ogf.org/nsi/2011/07/connection/service/terminateConfirmed"'
+        assert soap_action == '"http://schemas.ogf.org/nsi/2011/10/connection/service/terminateConfirmed"'
         method, req = self.decoder.parse_request('terminateConfirmed', soap_data)
 
         requester_nsa, provider_nsa = _decodeNSAs(req.terminateConfirmed)
@@ -333,7 +335,7 @@ class RequesterService:
 
     def terminateFailed(self, soap_action, soap_data):
 
-        assert soap_action == '"http://schemas.ogf.org/nsi/2011/07/connection/service/terminateFailed"'
+        assert soap_action == '"http://schemas.ogf.org/nsi/2011/10/connection/service/terminateFailed"'
         method, req = self.decoder.parse_request('terminateFailed', soap_data)
 
         correlation_id = str(req.correlationId)
@@ -347,7 +349,7 @@ class RequesterService:
 
     def queryConfirmed(self, soap_action, soap_data):
 
-        assert soap_action == '"http://schemas.ogf.org/nsi/2011/07/connection/service/queryConfirmed"'
+        assert soap_action == '"http://schemas.ogf.org/nsi/2011/10/connection/service/queryConfirmed"'
         method, req = self.decoder.parse_request('queryConfirmed', soap_data)
 
         requester_nsa, provider_nsa = _decodeNSAs(req.queryConfirmed)

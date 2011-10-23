@@ -39,16 +39,16 @@ class ProviderClient:
 
     def _createGenericRequestType(self, requester_nsa, provider_nsa, connection_id):
 
-        req = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}GenericRequestType')
+        req = self.client.createType('{http://schemas.ogf.org/nsi/2011/10/connection/types}GenericRequestType')
         req.requesterNSA = requester_nsa.urn()
         req.providerNSA  = provider_nsa.urn()
         req.connectionId = connection_id
         return req
 
 
-    def reservation(self, correlation_id, requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters):
+    def reserve(self, correlation_id, requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters):
 
-        res_req = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}ReservationType')
+        res_req = self.client.createType('{http://schemas.ogf.org/nsi/2011/10/connection/types}ReserveType')
 
         res_req.requesterNSA                = requester_nsa.urn()
         res_req.providerNSA                 = provider_nsa.urn()
@@ -91,7 +91,7 @@ class ProviderClient:
         #res_req.reservation.serviceParameters.serviceAttributes.guaranteed = [ '1a' ]
         #res_req.reservation.serviceParameters.serviceAttributes.preferred  = [ '2c', '3d' ]
 
-        d = self.client.invoke(provider_nsa.url(), 'reservation', correlation_id, self.reply_to, res_req)
+        d = self.client.invoke(provider_nsa.url(), 'reserve', correlation_id, self.reply_to, res_req)
         return d
 
 
@@ -118,7 +118,7 @@ class ProviderClient:
 
     def query(self, correlation_id, requester_nsa, provider_nsa, session_security_attr, operation="Summary", connection_ids=None, global_reservation_ids=None):
 
-        req = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}QueryType')
+        req = self.client.createType('{http://schemas.ogf.org/nsi/2011/10/connection/types}QueryType')
         #print req
 
         req.requesterNSA = requester_nsa.urn()
@@ -143,7 +143,7 @@ class RequesterClient:
 
     def _createGenericConfirmType(self, requester_nsa, provider_nsa, global_reservation_id, connection_id):
 
-        conf = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}GenericConfirmedType')
+        conf = self.client.createType('{http://schemas.ogf.org/nsi/2011/10/connection/types}GenericConfirmedType')
         conf.requesterNSA        = requester_nsa
         conf.providerNSA         = provider_nsa
         conf.globalReservationId = global_reservation_id
@@ -151,11 +151,11 @@ class RequesterClient:
         return conf
 
 
-    def reservationConfirmed(self, requester_uri, correlation_id, requester_nsa, provider_nsa, global_reservation_id, description, connection_id, service_parameters):
+    def reserveConfirmed(self, requester_uri, correlation_id, requester_nsa, provider_nsa, global_reservation_id, description, connection_id, service_parameters):
 
         #correlation_id = self._createCorrelationId()
 
-        res_conf = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}ReservationConfirmedType')
+        res_conf = self.client.createType('{http://schemas.ogf.org/nsi/2011/10/connection/types}ReserveConfirmedType')
 
         res_conf.requesterNSA   = requester_nsa
         res_conf.providerNSA    = provider_nsa
@@ -176,14 +176,14 @@ class RequesterClient:
         res_conf.reservation.path.sourceSTP.stpId = service_parameters.source_stp.urn()
         res_conf.reservation.path.destSTP.stpId   = service_parameters.dest_stp.urn()
 
-        d = self.client.invoke(requester_uri, 'reservationConfirmed', correlation_id, res_conf)
+        d = self.client.invoke(requester_uri, 'reserveConfirmed', correlation_id, res_conf)
         return d
 
 
-    def reservationFailed(self, requester_uri, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_msg):
+    def reserveFailed(self, requester_uri, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_msg):
 
-        res_fail = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}GenericFailedType')
-        nsi_ex   = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}NsiExceptionType')
+        res_fail = self.client.createType('{http://schemas.ogf.org/nsi/2011/10/connection/types}GenericFailedType')
+        nsi_ex   = self.client.createType('{http://schemas.ogf.org/nsi/2011/10/connection/types}ServiceExceptionType')
 
         res_fail.requesterNSA   = requester_nsa
         res_fail.providerNSA    = provider_nsa
@@ -192,9 +192,9 @@ class RequesterClient:
         res_fail.connectionId           = connection_id
         res_fail.connectionState        = connection_state
 
-        nsi_ex.messageId = 'RESERVATION_FAILURE'
+        nsi_ex.errorId = 'RESERVATION_FAILURE'
         nsi_ex.text = error_msg
-        res_fail.ServiceException = nsi_ex
+        res_fail.serviceException = nsi_ex
 
         d = self.client.invoke(requester_uri, 'reservationFailed', correlation_id, res_fail)
         return d
@@ -209,8 +209,8 @@ class RequesterClient:
 
     def provisionFailed(self, requester_uri, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_msg):
 
-        gft = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}GenericFailedType')
-        net = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}NsiExceptionType')
+        gft = self.client.createType('{http://schemas.ogf.org/nsi/2011/10/connection/types}GenericFailedType')
+        net = self.client.createType('{http://schemas.ogf.org/nsi/2011/10/connection/types}ServiceExceptionType')
 
         gft.requesterNSA   = requester_nsa
         gft.providerNSA    = provider_nsa
@@ -219,9 +219,9 @@ class RequesterClient:
         gft.connectionId           = connection_id
         gft.connectionState        = connection_state
 
-        net.messageId = 'PROVISION_FAILURE'
+        net.errorId = 'PROVISION_FAILURE'
         net.text = error_msg
-        gft.ServiceException = net
+        gft.serviceException = net
 
         d = self.client.invoke(requester_uri, 'provisionFailed', correlation_id, gft)
         return d
@@ -236,8 +236,8 @@ class RequesterClient:
 
     def releaseFailed(self, requester_uri, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_msg):
 
-        gft = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}GenericFailedType')
-        net = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}NsiExceptionType')
+        gft = self.client.createType('{http://schemas.ogf.org/nsi/2011/10/connection/types}GenericFailedType')
+        net = self.client.createType('{http://schemas.ogf.org/nsi/2011/10/connection/types}ServiceExceptionType')
 
         gft.requesterNSA   = requester_nsa
         gft.providerNSA    = provider_nsa
@@ -246,9 +246,9 @@ class RequesterClient:
         gft.connectionId           = connection_id
         gft.connectionState        = connection_state
 
-        net.messageId = 'RELEASE_FAILURE'
+        net.errorId = 'RELEASE_FAILURE'
         net.text = error_msg
-        gft.ServiceException = net
+        gft.serviceException = net
 
         d = self.client.invoke(requester_uri, 'releaseFailed', correlation_id, gft)
         return d
@@ -263,8 +263,8 @@ class RequesterClient:
 
     def terminateFailed(self, requester_uri, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_msg):
 
-        gft = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}GenericFailedType')
-        net = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}NsiExceptionType')
+        gft = self.client.createType('{http://schemas.ogf.org/nsi/2011/10/connection/types}GenericFailedType')
+        net = self.client.createType('{http://schemas.ogf.org/nsi/2011/10/connection/types}ServiceExceptionType')
 
         gft.requesterNSA   = requester_nsa
         gft.providerNSA    = provider_nsa
@@ -273,9 +273,9 @@ class RequesterClient:
         gft.connectionId           = connection_id
         gft.connectionState        = connection_state
 
-        net.messageId = 'TERMINATE_FAILURE'
+        net.errorId = 'TERMINATE_FAILURE'
         net.text = error_msg
-        gft.ServiceException = net
+        gft.serviceException = net
 
         d = self.client.invoke(requester_uri, 'terminateFailed', correlation_id, gft)
         return d
@@ -283,14 +283,14 @@ class RequesterClient:
 
     def queryConfirmed(self, requester_uri, correlation_id, requester_nsa, provider_nsa, operation, connections):
 
-        res = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}QueryConfirmedType')
+        res = self.client.createType('{http://schemas.ogf.org/nsi/2011/10/connection/types}QueryConfirmedType')
         res.requesterNSA = requester_nsa
         res.providerNSA  = provider_nsa
 
         if operation == "Summary":
             qsrs = []
             for conn in connections:
-                qsr = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}QuerySummaryResultType')
+                qsr = self.client.createType('{http://schemas.ogf.org/nsi/2011/10/connection/types}QuerySummaryResultType')
                 #print qsr
                 qsr.globalReservationId = conn.global_reservation_id
                 qsr.description         = conn.description
@@ -308,7 +308,7 @@ class RequesterClient:
                 qsr.serviceParameters.bandwidth.maximum  = conn.service_parameters.bandwidth.maximum
 
                 def createOrderedSTP(stp, rank):
-                    ostp = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}OrderedServiceTerminationPointType')
+                    ostp = self.client.createType('{http://schemas.ogf.org/nsi/2011/10/connection/types}OrderedServiceTerminationPointType')
                     ostp.stpId = stp.urn()
                     ostp._order = rank
                     return ostp
@@ -325,7 +325,7 @@ class RequesterClient:
             res.reservationSummary = qsrs
 
         elif operation == "Details":
-            qdr = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}QueryDetailsResultType')
+            qdr = self.client.createType('{http://schemas.ogf.org/nsi/2011/10/connection/types}QueryDetailsResultType')
             #print qdr
             qdr.globalReservationId = '123'
             res.reservationDetails = [ qdr ]
@@ -340,15 +340,15 @@ class RequesterClient:
     def queryFailed(self, requester_uri, correlation_id, requester_nsa, provider_nsa, error_msg):
 
         print "CLIENT QUERY FAILED"
-        qft = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}QueryFailedType')
-        net = self.client.createType('{http://schemas.ogf.org/nsi/2011/07/connection/types}NsiExceptionType')
+        qft = self.client.createType('{http://schemas.ogf.org/nsi/2011/10/connection/types}QueryFailedType')
+        net = self.client.createType('{http://schemas.ogf.org/nsi/2011/10/connection/types}ServiceExceptionType')
 
         qft.requesterNSA = requester_nsa
         qft.providerNSA  = provider_nsa
 
-        net.messageId = 'QUERY_FAILURE'
+        net.errorId = 'QUERY_FAILURE'
         net.text = error_msg
-        qft.ServiceException = net
+        qft.serviceException = net
 
         d = self.client.invoke(requester_uri, 'queryFailed', correlation_id, qft)
         return d

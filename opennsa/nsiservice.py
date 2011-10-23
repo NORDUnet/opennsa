@@ -52,7 +52,7 @@ class NSIService:
 
     # command functionality
 
-    def reservation(self, requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters):
+    def reserve(self, requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters):
 
         def setupSubConnection(source_stp, dest_stp, conn, service_parameters):
 
@@ -74,7 +74,7 @@ class NSIService:
         # --
 
         log.msg('', system='opennsa')
-        log.msg('Connection %s. Reservation request from %s.' % (connection_id, requester_nsa), system='opennsa.NSIService')
+        log.msg('Connection %s. Reserve request from %s.' % (connection_id, requester_nsa), system='opennsa.NSIService')
 
         if connection_id in self.connections.get(requester_nsa, {}):
             raise error.ReserveError('Connection with id %s already exists' % connection_id)
@@ -151,8 +151,8 @@ class NSIService:
             log.msg('Error setting up connection: %s' % str(e), system='opennsa.NSIService')
             return defer.fail(e)
 
-        def logReservation(conn):
-            log.msg('Connection %s: Reservation succeeded' % conn.connection_id, system='opennsa.NSIService')
+        def logReserve(conn):
+            log.msg('Connection %s: Reserve succeeded' % conn.connection_id, system='opennsa.NSIService')
             return conn
 
         def logError(err):
@@ -160,8 +160,8 @@ class NSIService:
             return err
 
         # now reserve connections needed to create path
-        d = conn.reservation()
-        d.addCallbacks(logReservation, logError)
+        d = conn.reserve()
+        d.addCallbacks(logReserve, logError)
         return d
 
 

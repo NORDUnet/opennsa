@@ -21,51 +21,41 @@
 
     This document is the SOAP endpoint definition for a provider NSA.  It
     holds definitions for messages the provider NSA will receive.  For the
-    reservation, provision, release, and terminate message sets the provider
+    reserve, provision, release, and terminate message sets the provider
     will receive request messages only.  For the query operation a provider
     NSA must support request, confirmed, and failed messages due to the
     possibility that a provider NSA may query the requester for a list of
     connection reservations.
-
-    Version: 0.01 Draft, 2011/02/22, John MacAuley
-    Version: 0.02 Draft, 2011/03/15, John MacAuley
-    Version: 0.03 Draft, 2011/03/22, John MacAuley
-    Version: 0.04 Draft, 2011/04/24, John MacAuley
-    Version: 0.05 Draft, 2011/07/05, John MacAuley
-    Version: 0.06 Draft, 2011/07/06, John MacAuley
-    Version: 0.07 Draft, 2011/07/29, John MacAuley
-    Version: 0.08 Draft, 2011/08/02, John MacAuley
-    Version: 0.09 Draft, 2011/08/06, John MacAuley
 -->
 <wsdl:definitions name="ogf_nsi_connection_provider_v1_0"
-    targetNamespace="http://schemas.ogf.org/nsi/2011/07/connection/provider"
+    targetNamespace="http://schemas.ogf.org/nsi/2011/10/connection/provider"
     xmlns="http://schemas.xmlsoap.org/wsdl/"
     xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
     xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
-    xmlns:tns="http://schemas.ogf.org/nsi/2011/07/connection/provider"
-    xmlns:interface="http://schemas.ogf.org/nsi/2011/07/connection/interface">
+    xmlns:tns="http://schemas.ogf.org/nsi/2011/10/connection/provider"
+    xmlns:interface="http://schemas.ogf.org/nsi/2011/10/connection/interface">
 
-    <wsdl:import namespace="http://schemas.ogf.org/nsi/2011/07/connection/interface"
+    <wsdl:import namespace="http://schemas.ogf.org/nsi/2011/10/connection/interface"
         location="ogf_nsi_connection_interface_v1_0.wsdl" />
 
     <!-- WSDL operation definitions with associated input (request), output
         (response), and fault (error response) messages. -->
     <wsdl:portType name="ConnectionProviderPort">
         
-        <!-- ********** Reservation operation set *********** -->
+        <!-- ********** Reserve operation set *********** -->
         
-        <wsdl:operation name="reservation">
+        <wsdl:operation name="reserve">
             <wsdl:documentation>
-                The reservation message is sent from a Requester NSA to a
-                Provider NSA when a new reservation is being requested. The
-                reservationACK indicates that the Provider NSA has accepted the
-                reservation request for processing. A reservationConfirmed or
-                reservationFailed message will be sent asynchronously to the
-                Requester NSA when reservation processing has completed.
+                The reserve message is sent from a Requester NSA to a Provider
+                NSA when a new reservation is being requested. The reserveACK
+                indicates that the Provider NSA has accepted the reservation
+                request for processing. A reserveConfirmed or reserveFailed
+                message will be sent asynchronously to the Requester NSA
+                when reservation processing has completed.
             </wsdl:documentation>
-            <wsdl:input  name="reservation"         message="interface:NSI_reservationRequest" />
-            <wsdl:output name="reservationACK"      message="interface:NSI_acknowledgment" />
-            <wsdl:fault  name="serviceException"    message="interface:NSI_serviceException" />
+            <wsdl:input  name="reserve"             message="interface:reserveRequest" />
+            <wsdl:output name="reserveACK"          message="interface:acknowledgment" />
+            <wsdl:fault  name="serviceException"    message="interface:serviceException" />
         </wsdl:operation>
         
         <!-- ********** Provision operation set *********** -->
@@ -80,9 +70,9 @@
                 asynchronously to the Requester NSA when provision processing
                 has completed.
             </wsdl:documentation>
-            <wsdl:input  name="provision"           message="interface:NSI_provisionRequest" />
-            <wsdl:output name="provisionACK"        message="interface:NSI_acknowledgment" />
-            <wsdl:fault  name="serviceException"    message="interface:NSI_serviceException" />
+            <wsdl:input  name="provision"           message="interface:provisionRequest" />
+            <wsdl:output name="provisionACK"        message="interface:acknowledgment" />
+            <wsdl:fault  name="serviceException"    message="interface:serviceException" />
         </wsdl:operation>
         
         <!-- ********** Release operation set *********** -->
@@ -96,9 +86,9 @@
                 or releaseFailed message will be sent asynchronously to the
                 Requester NSA when release processing has completed.
             </wsdl:documentation>
-            <wsdl:input  name="release"             message="interface:NSI_releaseRequest" />
-            <wsdl:output name="releaseACK"          message="interface:NSI_acknowledgment" />
-            <wsdl:fault  name="serviceException"    message="interface:NSI_serviceException" />
+            <wsdl:input  name="release"             message="interface:releaseRequest" />
+            <wsdl:output name="releaseACK"          message="interface:acknowledgment" />
+            <wsdl:fault  name="serviceException"    message="interface:serviceException" />
         </wsdl:operation>
         
         <!-- ********** Terminate operation set *********** -->
@@ -112,9 +102,9 @@
                 terminateFailed message will be sent asynchronously to the Requester
                 NSA when terminate processing has completed.
             </wsdl:documentation>
-            <wsdl:input  name="terminate"           message="interface:NSI_terminateRequest" />
-            <wsdl:output name="terminateACK"        message="interface:NSI_acknowledgment" />
-            <wsdl:fault  name="serviceException"    message="interface:NSI_serviceException" />
+            <wsdl:input  name="terminate"           message="interface:terminateRequest" />
+            <wsdl:output name="terminateACK"        message="interface:acknowledgment" />
+            <wsdl:fault  name="serviceException"    message="interface:serviceException" />
         </wsdl:operation>
         
         <!-- ********** Query operation set *********** -->
@@ -128,9 +118,9 @@
                 asynchronously to the requesting NSA when query processing has
                 completed.
             </wsdl:documentation>
-            <wsdl:input  name="query"               message="interface:NSI_queryRequest" />
-            <wsdl:output name="queryACK"            message="interface:NSI_acknowledgment" />
-            <wsdl:fault  name="serviceException"    message="interface:NSI_serviceException" />
+            <wsdl:input  name="query"               message="interface:queryRequest" />
+            <wsdl:output name="queryACK"            message="interface:acknowledgment" />
+            <wsdl:fault  name="serviceException"    message="interface:serviceException" />
         </wsdl:operation>
         
         <wsdl:operation name="queryConfirmed">
@@ -140,9 +130,9 @@
                 response to an original query request from the associated Requester
                 NSA.
             </wsdl:documentation>
-            <wsdl:input  name="queryConfirmed"      message="interface:NSI_queryConfirmed" />
-            <wsdl:output name="queryConfirmedACK"   message="interface:NSI_acknowledgment" />
-            <wsdl:fault  name="serviceException"    message="interface:NSI_serviceException" />
+            <wsdl:input  name="queryConfirmed"      message="interface:queryConfirmed" />
+            <wsdl:output name="queryConfirmedACK"   message="interface:acknowledgment" />
+            <wsdl:fault  name="serviceException"    message="interface:serviceException" />
         </wsdl:operation>
         
         <wsdl:operation name="queryFailed">
@@ -152,20 +142,20 @@
                 response to an original query request from the associated
                 Requester NSA.
             </wsdl:documentation>
-            <wsdl:input  name="queryFailed"         message="interface:NSI_queryFailed" />
-            <wsdl:output name="queryFailedACK"      message="interface:NSI_acknowledgment" />
-            <wsdl:fault  name="serviceException"    message="interface:NSI_serviceException" />
+            <wsdl:input  name="queryFailed"         message="interface:queryFailed" />
+            <wsdl:output name="queryFailedACK"      message="interface:acknowledgment" />
+            <wsdl:fault  name="serviceException"    message="interface:serviceException" />
         </wsdl:operation>
     </wsdl:portType>
     
     <wsdl:binding name="ConnectionServiceProviderSoapBinding" type="tns:ConnectionProviderPort">
         <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http" />
 
-        <!-- ********** Reservation operation set ********** -->
+        <!-- ********** Reserve operation set ********** -->
 
-        <wsdl:operation name="reservation">
+        <wsdl:operation name="reserve">
             <soap:operation
-                soapAction="http://schemas.ogf.org/nsi/2011/07/connection/service/reservation"
+                soapAction="http://schemas.ogf.org/nsi/2011/10/connection/service/reserve"
                 style="document" />
             <wsdl:input><soap:body use="literal" /></wsdl:input>
             <wsdl:output><soap:body use="literal" /></wsdl:output>
@@ -178,7 +168,7 @@
 
         <wsdl:operation name="provision">
             <soap:operation
-                soapAction="http://schemas.ogf.org/nsi/2011/07/connection/service/provision"
+                soapAction="http://schemas.ogf.org/nsi/2011/10/connection/service/provision"
                 style="document" />
             <wsdl:input><soap:body use="literal" /></wsdl:input>
             <wsdl:output><soap:body use="literal" /></wsdl:output>
@@ -191,7 +181,7 @@
 
         <wsdl:operation name="release">
             <soap:operation
-                soapAction="http://schemas.ogf.org/nsi/2011/07/connection/service/release"
+                soapAction="http://schemas.ogf.org/nsi/2011/10/connection/service/release"
                 style="document" />
             <wsdl:input><soap:body use="literal" /></wsdl:input>
             <wsdl:output><soap:body use="literal" /></wsdl:output>
@@ -204,7 +194,7 @@
 
         <wsdl:operation name="terminate">
             <soap:operation
-                soapAction="http://schemas.ogf.org/nsi/2011/07/connection/service/terminate"
+                soapAction="http://schemas.ogf.org/nsi/2011/10/connection/service/terminate"
                 style="document" />
             <wsdl:input><soap:body use="literal" /></wsdl:input>
             <wsdl:output><soap:body use="literal" /></wsdl:output>
@@ -217,7 +207,7 @@
 
         <wsdl:operation name="query">
             <soap:operation
-                soapAction="http://schemas.ogf.org/nsi/2011/07/connection/service/query"
+                soapAction="http://schemas.ogf.org/nsi/2011/10/connection/service/query"
                 style="document" />
             <wsdl:input><soap:body use="literal" /></wsdl:input>
             <wsdl:output><soap:body use="literal" /></wsdl:output>
@@ -228,7 +218,7 @@
 
         <wsdl:operation name="queryConfirmed">
             <soap:operation
-                soapAction="http://schemas.ogf.org/nsi/2011/07/connection/service/queryConfirmed"
+                soapAction="http://schemas.ogf.org/nsi/2011/10/connection/service/queryConfirmed"
                 style="document" />
             <wsdl:input><soap:body use="literal" /></wsdl:input>
             <wsdl:output><soap:body use="literal" /></wsdl:output>
@@ -239,7 +229,7 @@
         
         <wsdl:operation name="queryFailed">
             <soap:operation
-                soapAction="http://schemas.ogf.org/nsi/2011/07/connection/service/queryFailed"
+                soapAction="http://schemas.ogf.org/nsi/2011/10/connection/service/queryFailed"
                 style="document" />
             <wsdl:input><soap:body use="literal" /></wsdl:input>
             <wsdl:output><soap:body use="literal" /></wsdl:output>

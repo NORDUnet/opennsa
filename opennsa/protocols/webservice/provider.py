@@ -9,20 +9,20 @@ class Provider:
         self.requester_client = requester_client
 
 
-    def reservation(self, correlation_id, reply_to, requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters):
+    def reserve(self, correlation_id, reply_to, requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters):
 
-        def notifyReservationSuccess(_):
+        def notifyReserveSuccess(_):
             # should probably use result somehow
-            d = self.requester_client.reservationConfirmed(reply_to, correlation_id, requester_nsa, provider_nsa, global_reservation_id, description, connection_id, service_parameters)
+            d = self.requester_client.reserveConfirmed(reply_to, correlation_id, requester_nsa, provider_nsa, global_reservation_id, description, connection_id, service_parameters)
             return d
 
-        def notifyReservationFailure(err):
+        def notifyReserveFailure(err):
             error_msg = err.getErrorMessage()
-            d = self.requester_client.reservationFailed(reply_to, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, 'TERMINATED', error_msg)
+            d = self.requester_client.reserveFailed(reply_to, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, 'TERMINATED', error_msg)
             return d
 
-        d = self.nsi_service.reservation(requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters)
-        d.addCallbacks(notifyReservationSuccess, notifyReservationFailure)
+        d = self.nsi_service.reserve(requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters)
+        d.addCallbacks(notifyReserveSuccess, notifyReserveFailure)
         return d
 
 

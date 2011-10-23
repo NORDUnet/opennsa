@@ -19,27 +19,14 @@
     Protocol v1.0. This can be considered the "transport" protocol definition that
     will carry the transport independent NSI message set.  Comments and questions
     can be directed to the mailing list group mailing list (nsi-wg@ogf.org).
-
-    Please see the accompanying CHANGES.txt file for a detailed list of changes
-    made for the most recent updates.
-    
-    Version: 0.01 Draft, 2011/02/22, John MacAuley
-    Version: 0.02 Draft, 2011/03/15, John MacAuley
-    Version: 0.03 Draft, 2011/03/22, John MacAuley
-    Version: 0.04 Draft, 2011/04/24, John MacAuley
-    Version: 0.05 Draft, 2011/07/05, John MacAuley
-    Version: 0.06 Draft, 2011/07/06, John MacAuley
-    Version: 0.07 Draft, 2011/07/29, John MacAuley
-    Version: 0.08 Draft, 2011/08/02, John MacAuley
-    Version: 0.09 Draft, 2011/08/06, John MacAuley
 -->
 <wsdl:definitions name="ogf_nsi_connection_interface_v1_0"
-    targetNamespace="http://schemas.ogf.org/nsi/2011/07/connection/interface"
+    targetNamespace="http://schemas.ogf.org/nsi/2011/10/connection/interface"
     xmlns="http://schemas.xmlsoap.org/wsdl/"
-    xmlns:tns="http://schemas.ogf.org/nsi/2011/07/connection/interface"
+    xmlns:tns="http://schemas.ogf.org/nsi/2011/10/connection/interface"
     xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
     xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-    xmlns:types="http://schemas.ogf.org/nsi/2011/07/connection/types">
+    xmlns:types="http://schemas.ogf.org/nsi/2011/10/connection/types">
 
     <!-- OGF NSI protocol 1.0 description -->
     <wsdl:documentation>
@@ -54,17 +41,18 @@
         There are five primitives supported in this version of the
         protocol:
     
-        1. Reservation - Make a request to reserve network resources for a
+        1. Reserve - Make a request to reserve network resources for a
         connection between two STP’s constrained by certain service
         parameters.
     
         2. Provision - Provider NSA has been given permission to setup a
-        reservation (associated with a previous reservation message) on
+        reservation (associated with a previous reserve message) on
         the Requester NSA's behalf but subject to the constraints of
         the requested service.
     
         3. Release - Provider NSA should release the provisioned resources
         without removing the reservation.
+        
         4. Terminate - Provider NSA should release the provisioned resources
         and terminate the reservation.
     
@@ -80,17 +68,17 @@
         each primitive consists of three operations:
     
         1. Request - A Requester NSA issues an operation request message
-        such as "reservationRequest" to the Provider NSA. The Requester
+        such as "reserveRequest" to the Provider NSA. The Requester
         NSA can expect an response to the request at some point in
         the future.
     
         2. Confirmed - A Provider NSA sends this positive operation
-        response message (such as "reservationConfirmed") to the Requester
-        NSA that issued the original request message ("reservationRequest").
+        response message (such as "reserveConfirmed") to the Requester
+        NSA that issued the original request message ("reserveRequest").
     
         3. Failed - A Provider NSA sends this negative operation response
-        message (such as "reservationFailed") to the Requester NSA that
-        issued the original request message ("reservationRequest").
+        message (such as "reserveFailed") to the Requester NSA that
+        issued the original request message ("reserveRequest").
     
         To fit this asynchronous NSI protocol into a synchronous SOAP
         over HTTP binding we require each of the Requester and Provider
@@ -101,8 +89,21 @@
         Request, Confirmed, and Failed operations are defined with
         input (request), output (acknowledgment), and fault (error)
         messages as part of their WSDL definition. The output message,
-        or response, for each operation is an empty element definition
-        providing a simple acknowledgment.
+        or response, for each operation is an element definition providing a
+        simple acknowledgment with the request correlationId.
+        
+        Note on acknowledgment handling:
+        Depending on NSA implementation and thread timing an acknowledgment to
+        a request operation may be returned after the confirm/fail for the
+        request has been returned to the Requesting NSA.
+        
+        The following guidelines for acknowledgment handling are proposed:
+        
+        1. For protocol robustness, Requesting NSA should be able to accept
+        confirm/fail before acknowledgment.
+        
+        2. Acknowledgment should be sent by Provider NSA before the
+        confirm/fail.
     
         Each NSI CS request message in this WSDL definition has the
         following elements:
@@ -122,21 +123,21 @@
     </wsdl:documentation>
 
     <wsdl:types>
-        <xsd:schema targetNamespace="http://schemas.ogf.org/nsi/2011/07/connection/interface"
+        <xsd:schema targetNamespace="http://schemas.ogf.org/nsi/2011/10/connection/interface"
             xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
 
             <!--  Import common NSI types from protocol schema. -->
-            <xsd:import namespace="http://schemas.ogf.org/nsi/2011/07/connection/types"
+            <xsd:import namespace="http://schemas.ogf.org/nsi/2011/10/connection/types"
                     schemaLocation="ogf_nsi_connection_types_v1_0.xsd" />
     
             <!-- *************************************************************
                  *          NSI CS protocol WSDL message elements.           *
                  ************************************************************* -->
     
-            <!-- ********** Reservation message elements ********** -->
-            <xsd:element name="reservationRequest"   type="tns:ReservationRequestType" />
-            <xsd:element name="reservationConfirmed" type="tns:ReservationConfirmedRequestType" />
-            <xsd:element name="reservationFailed"    type="tns:ReservationFailedRequestType" />
+            <!-- ********** Reserve message elements ********** -->
+            <xsd:element name="reserveRequest"   type="tns:ReserveRequestType" />
+            <xsd:element name="reserveConfirmed" type="tns:ReserveConfirmedRequestType" />
+            <xsd:element name="reserveFailed"    type="tns:ReserveFailedRequestType" />
             
             <!-- ********** Provision message elements ********** -->
             <xsd:element name="provisionRequest"    type="tns:ProvisionRequestType" />
@@ -161,20 +162,20 @@
             <!-- ********** ForcedEnd notification message elements ********** -->
             <xsd:element name="forcedEndRequest" type="tns:ForcedEndRequestType" />
 
-            <!-- ********** Acknowledgement message elements ********** -->
+            <!-- ********** Acknowledgment message element ********** -->
             <xsd:element name="acknowledgment"   type="tns:GenericAcknowledgmentType" />
             
-            <!-- ********** Fault message elements ********** -->
-            <xsd:element name="serviceException" type="types:NsiExceptionType"/>
+            <!-- ********** Fault message element ********** -->
+            <xsd:element name="serviceException" type="types:ServiceExceptionType"/>
     
             <!-- *************************************************************
                  *          NSI CS protocol WSDL specific types.             *
                  ************************************************************* -->
             
-            <xsd:complexType name="ReservationRequestType">
+            <xsd:complexType name="ReserveRequestType">
                 <xsd:annotation>
                     <xsd:documentation  xml:lang="en">
-                        Provides transport envelope for the reservation request
+                        Provides transport envelope for the reserve request
                         message.  Will map to a WSDL request (input) message
                         type in support of the NSI CS protocol.
                         
@@ -189,53 +190,53 @@
                         which the asynchronous Confirmed or Failed message
                         associated with this request will be delivered.
                         
-                        reservation - reservation specific message parameters.
+                        reserve - reservation specific message parameters.
                     </xsd:documentation>
                 </xsd:annotation>
                 <xsd:sequence>
                     <xsd:element name="correlationId" type="types:uuidType" />
                     <xsd:element name="replyTo"       type="xsd:anyURI" />
-                    <xsd:element ref="types:reservation" />
+                    <xsd:element ref="types:reserve" />
                 </xsd:sequence>
             </xsd:complexType>
     
-            <xsd:complexType name="ReservationConfirmedRequestType">
+            <xsd:complexType name="ReserveConfirmedRequestType">
                 <xsd:annotation>
                     <xsd:documentation  xml:lang="en">
-                        Provides transport envelope for the reservation confirmed
+                        Provides transport envelope for the reserve confirmed
                         message.  Will map to a WSDL request (input) message type
                         in support of the NSI CS protocol.
                         
                         Elements:
                         correlationId - The identifier provided in the original
-                        reservation request.
+                        reserve request.
                         
-                        reservationConfirmed - positive reservation result.
+                        reserveConfirmed - positive reserve result.
                     </xsd:documentation>
                 </xsd:annotation>
                 <xsd:sequence>
                     <xsd:element name="correlationId" type="types:uuidType" />
-                    <xsd:element ref="types:reservationConfirmed" />
+                    <xsd:element ref="types:reserveConfirmed" />
                 </xsd:sequence>
             </xsd:complexType>
     
-            <xsd:complexType name="ReservationFailedRequestType">
+            <xsd:complexType name="ReserveFailedRequestType">
                 <xsd:annotation>
                     <xsd:documentation  xml:lang="en">
-                        Provides transport envelope for the reservation failed
+                        Provides transport envelope for the reserve failed
                         message.  Will map to a WSDL request (input) message type
                         in support of the NSI CS protocol.
                         
                         Elements:
                         correlationId - The identifier provided in the original
-                        reservation request.
+                        reserve request.
                         
-                        reservationFailed - negative reservation result.
+                        reserveFailed - negative reserve result.
                     </xsd:documentation>
                 </xsd:annotation>
                 <xsd:sequence>
                     <xsd:element name="correlationId" type="types:uuidType" />
-                    <xsd:element ref="types:reservationFailed" />
+                    <xsd:element ref="types:reserveFailed" />
                 </xsd:sequence>
             </xsd:complexType>
     
@@ -524,15 +525,11 @@
                         
                         Elements:
                         correlationId - An identifier provided by the requesting
-                        NSA used to correlate an acknowledgement.  There will be
-                        no asynchronous response for this request. It is
-                        recommended that a Universally Unique Identifier (UUID)
-                        URN as per IETF RFC 4122 be used as a globally unique
-                        value.
-                        
-                        replyTo - The Requester NSA's SOAP endpoint address to
-                        which the asynchronous Confirmed or Failed message
-                        associated with this request will be delivered.
+                        NSA used to correlate to the corresponding
+                        acknowledgment.  There will be no asynchronous
+                        response for this request. It is recommended that a
+                        Universally Unique Identifier (UUID) URN as per IETF
+                        RFC 4122 be used as a globally unique value.
                         
                         forcedEnd - forcedEnd message specific parameters.
                     </xsd:documentation>
@@ -551,7 +548,22 @@
  
                         Elements:
                         correlationId - The identifier provided in the original
-                        query request.
+                        request operation.
+                        
+                        Notes on acknowledgment:
+                        Depending on NSA implementation and thread timing an
+                        acknowledgment to a request operation may be returned
+                        after the confirm/fail for the request has been returned
+                        to the Requesting NSA.
+                        
+                        The following guidelines for acknowledgment handling are
+                        proposed:
+                        
+                        1. For protocol robustness, Requesting NSA should be
+                        able to accept confirm/fail before acknowledgment.
+                        
+                        2. Acknowledgment should be sent by Provider NSA before
+                        the confirm/fail.
                    </xsd:documentation>
                 </xsd:annotation>
                 <xsd:sequence>
@@ -567,84 +579,83 @@
         *         NSI protocol WSDL message definitions.            *
         ************************************************************* -->
 
-    <!-- ********** Reservation message set ********** -->
-    <wsdl:message name="NSI_reservationRequest">
-        <wsdl:part name="parameters" element="tns:reservationRequest" />
+    <!-- ********** Reserve message set ********** -->
+    <wsdl:message name="reserveRequest">
+        <wsdl:part name="parameters" element="tns:reserveRequest" />
     </wsdl:message>
 
-    <wsdl:message name="NSI_reservationConfirmed">
-        <wsdl:part name="parameters" element="tns:reservationConfirmed" />
+    <wsdl:message name="reserveConfirmed">
+        <wsdl:part name="parameters" element="tns:reserveConfirmed" />
     </wsdl:message>
 
-    <wsdl:message name="NSI_reservationFailed">
-        <wsdl:part name="parameters" element="tns:reservationFailed" />
+    <wsdl:message name="reserveFailed">
+        <wsdl:part name="parameters" element="tns:reserveFailed" />
     </wsdl:message>
 
     <!-- ********** Provision message set ********** -->
-    <wsdl:message name="NSI_provisionRequest">
+    <wsdl:message name="provisionRequest">
         <wsdl:part name="parameters" element="tns:provisionRequest" />
     </wsdl:message>
 
-    <wsdl:message name="NSI_provisionConfirmed">
+    <wsdl:message name="provisionConfirmed">
         <wsdl:part name="parameters" element="tns:provisionConfirmed" />
     </wsdl:message>
 
-    <wsdl:message name="NSI_provisionFailed">
+    <wsdl:message name="provisionFailed">
         <wsdl:part name="parameters" element="tns:provisionFailed" />
     </wsdl:message>
 
     <!-- ********** Release message set ********** -->
-    <wsdl:message name="NSI_releaseRequest">
+    <wsdl:message name="releaseRequest">
         <wsdl:part name="parameters" element="tns:releaseRequest" />
     </wsdl:message>
 
-    <wsdl:message name="NSI_releaseConfirmed">
+    <wsdl:message name="releaseConfirmed">
         <wsdl:part name="parameters" element="tns:releaseConfirmed" />
     </wsdl:message>
 
-    <wsdl:message name="NSI_releaseFailed">
+    <wsdl:message name="releaseFailed">
         <wsdl:part name="parameters" element="tns:releaseFailed" />
     </wsdl:message>
 
     <!-- ********** Terminate message set ********** -->
-    <wsdl:message name="NSI_terminateRequest">
+    <wsdl:message name="terminateRequest">
         <wsdl:part name="parameters" element="tns:terminateRequest" />
     </wsdl:message>
 
-    <wsdl:message name="NSI_terminateConfirmed">
+    <wsdl:message name="terminateConfirmed">
         <wsdl:part name="parameters" element="tns:terminateConfirmed" />
     </wsdl:message>
 
-    <wsdl:message name="NSI_terminateFailed">
+    <wsdl:message name="terminateFailed">
         <wsdl:part name="parameters" element="tns:terminateFailed" />
     </wsdl:message>
 
     <!-- ********** Query message set ********** -->
-    <wsdl:message name="NSI_queryRequest">
+    <wsdl:message name="queryRequest">
         <wsdl:part name="parameters" element="tns:queryRequest" />
     </wsdl:message>
     
-    <wsdl:message name="NSI_queryConfirmed">
+    <wsdl:message name="queryConfirmed">
         <wsdl:part name="parameters" element="tns:queryConfirmed" />
     </wsdl:message>
 
-    <wsdl:message name="NSI_queryFailed">
+    <wsdl:message name="queryFailed">
         <wsdl:part name="parameters" element="tns:queryFailed" />
     </wsdl:message>
 
     <!-- ********** ForcedEnd notification message set ********** -->
-    <wsdl:message name="NSI_forcedEndRequest">
+    <wsdl:message name="forcedEndRequest">
         <wsdl:part name="parameters" element="tns:forcedEndRequest" />
     </wsdl:message>
     
-    <!-- ********** Acknowledgement message set ********** -->
-    
-    <wsdl:message name="NSI_acknowledgment">
+    <!-- ********** Acknowledgment message set ********** -->
+    <wsdl:message name="acknowledgment">
         <wsdl:part name="result" element="tns:acknowledgment" />
     </wsdl:message>
     
     <!-- ********** Fault message set ********** -->
-    <wsdl:message name="NSI_serviceException">
-        <wsdl:part name="serviceException" element="tns:serviceException"/>
+    <wsdl:message name="serviceException">
+        <wsdl:part name="exception" element="tns:serviceException"/>
     </wsdl:message>
 </wsdl:definitions>

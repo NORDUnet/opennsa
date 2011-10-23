@@ -19,24 +19,11 @@
     v1.0. This can be considered the transport independent protocol
     representation.  Comments and questions can be directed to the mailing list
     group mailing list (nsi-wg@ogf.org).
-
-    Please see the accompanying CHANGES.txt file for a detailed list of changes
-    made for the most recent updates.
-
-    Version: 0.01 Draft, 2011/02/22, John MacAuley
-    Version: 0.02 Draft, 2011/03/15, John MacAuley
-    Version: 0.03 Draft, 2011/03/22, John MacAuley
-    Version: 0.04 Draft, 2011/04/24, John MacAuley
-    Version: 0.05 Draft, 2011/07/05, John MacAuley
-    Version: 0.06 Draft, 2011/07/06, John MacAuley
-    Version: 0.07 Draft, 2011/07/29, John MacAuley
-    Version: 0.08 Draft, 2011/08/02, John MacAuley
-    Version: 0.09 Draft, 2011/08/06, John MacAuley
 -->
-<xsd:schema targetNamespace="http://schemas.ogf.org/nsi/2011/07/connection/types"
+<xsd:schema targetNamespace="http://schemas.ogf.org/nsi/2011/10/connection/types"
     xmlns:xsd="http://www.w3.org/2001/XMLSchema"
     xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion"
-    xmlns:tns="http://schemas.ogf.org/nsi/2011/07/connection/types">
+    xmlns:tns="http://schemas.ogf.org/nsi/2011/10/connection/types">
 
     <xsd:annotation>
         <xsd:documentation xml:lang="en">
@@ -50,12 +37,12 @@
             There are five primitives supported in this version of the
             protocol:
 
-            1. Reservation - Make a request to reserve network resources for a
+            1. Reserve - Make a request to reserve network resources for a
             connection between two STP's constrained by a certain service
             parameters.
 
             2. Provision - Provider NSA has been given permission to setup a
-            reservation (associated with a previous reservation message) on
+            reservation (associated with a previous reserve message) on
             the Requester NSA's behalf but subject to the constraints of
             the requested service.
 
@@ -77,17 +64,17 @@
             each primitive consists of three operations:
 
             1. Request - A Requester NSA issues an operation request message
-            such as "reservationRequest" to the Provider NSA. The Requester
+            such as "reserveRequest" to the Provider NSA. The Requester
             NSA can expect an response to the request at some point in
             the future.
 
             2. Confirmed - A Provider NSA sends this positive operation
-            response message (such as "reservationConfirmed") to the Requester
-            NSA that issued the original request message ("reservationRequest").
+            response message (such as "reserveConfirmed") to the Requester
+            NSA that issued the original request message ("reserveRequest").
 
             3. Failed - A Provider NSA sends this negative operation response
-            message (such as "reservationFailed") to the Requester NSA that
-            issued the original request message ("reservationRequest").
+            message (such as "reserveFailed") to the Requester NSA that
+            issued the original request message ("reserveRequest").
         </xsd:documentation>
     </xsd:annotation>
 
@@ -100,10 +87,10 @@
          *                  NSI protocol messages                         *
          ****************************************************************** -->
 
-    <!-- ********** Reservation message elements ********** -->
-    <xsd:element name="reservation"          type="tns:ReservationType" />
-    <xsd:element name="reservationConfirmed" type="tns:ReservationConfirmedType" />
-    <xsd:element name="reservationFailed"    type="tns:GenericFailedType" />
+    <!-- ********** Reserve message elements ********** -->
+    <xsd:element name="reserve"          type="tns:ReserveType" />
+    <xsd:element name="reserveConfirmed" type="tns:ReserveConfirmedType" />
+    <xsd:element name="reserveFailed"    type="tns:GenericFailedType" />
 
     <!-- ********** Provision message elements ********** -->
     <xsd:element name="provision"            type="tns:GenericRequestType" />
@@ -132,12 +119,12 @@
          *                   NSI message types                            *
          ****************************************************************** -->
 
-    <xsd:complexType name="ReservationType">
+    <xsd:complexType name="ReserveType">
         <xsd:annotation>
             <xsd:documentation xml:lang="en">
-                Type definition for the reservation message to reserve
-                network resources for a connection between two STP's
-                constrained by a certain service parameters.
+                Type definition for the reserve message that allows a
+                Requester NSA to reserve network resources for a connection
+                between two STP's constrained by a certain service parameters.
 
                 Elements:
 
@@ -163,11 +150,11 @@
         </xsd:sequence>
     </xsd:complexType>
 
-    <xsd:complexType name="ReservationConfirmedType">
+    <xsd:complexType name="ReserveConfirmedType">
         <xsd:annotation>
             <xsd:documentation xml:lang="en">
-                Type definition for the reservationConfirmed message. A Provider NSA
-                sends this positive reservationRequest response to the Requester NSA
+                Type definition for the reserveConfirmed message. A Provider NSA
+                sends this positive reserveRequest response to the Requester NSA
                 that issued the original request message.
 
                 Elements:
@@ -282,7 +269,7 @@
         <xsd:sequence>
             <xsd:element name="requesterNSA"     type="tns:NsaIdType" />
             <xsd:element name="providerNSA"      type="tns:NsaIdType" />
-            <xsd:element name="ServiceException" type="tns:NsiExceptionType" />
+            <xsd:element name="serviceException" type="tns:ServiceExceptionType" />
         </xsd:sequence>
     </xsd:complexType>
     
@@ -332,7 +319,7 @@
                 operation (Provider Agent).
 
                 globalReservationId - An optional global reservation id that was
-                originally provided in the reservation request.
+                originally provided in the reserve request.
 
                 connectionId - The unique identifier for a connection that is known
                 between a Requesting and Provider NSA pair.
@@ -362,7 +349,7 @@
                 operation (Provider Agent).
 
                 globalReservationId - An optional global reservation id that was
-                originally provided in the reservation request.
+                originally provided in the reserve request.
 
                 connectionId - The locally unique identifier for a connection that
                 is known between a Requesting and Provider NSA pair.
@@ -379,7 +366,7 @@
             <xsd:element name="globalReservationId" type="tns:GlobalReservationIdType" minOccurs="0" />
             <xsd:element name="connectionId"        type="tns:ConnectionIdType" />
             <xsd:element name="connectionState"     type="tns:ConnectionStateType" />
-            <xsd:element name="ServiceException"    type="tns:NsiExceptionType" />
+            <xsd:element name="serviceException"    type="tns:ServiceExceptionType" />
         </xsd:sequence>
     </xsd:complexType>
     
@@ -391,7 +378,7 @@
         <xsd:annotation>
             <xsd:documentation xml:lang="en">
                 Element group containing the common reservation elements for both
-                reservation requests, confirmations, and query messages.
+                reserve requests, confirmations, and query messages.
                 
                 Elements:
                 
@@ -534,9 +521,9 @@
          </xsd:documentation>
       </xsd:annotation>
         <xsd:sequence>
-            <xsd:element name="startTime"    type="xsd:dateTime" minOccurs="0" />
+            <xsd:element name="startTime"    type="tns:DateTimeType" minOccurs="0" />
             <xsd:choice minOccurs="0">
-                <xsd:element name="endTime"  type="xsd:dateTime" />
+                <xsd:element name="endTime"  type="tns:DateTimeType" />
                 <xsd:element name="duration" type="xsd:duration" />
             </xsd:choice>
         </xsd:sequence>
@@ -559,9 +546,9 @@
          </xsd:documentation>
         </xsd:annotation>
         <xsd:sequence>
-            <xsd:element name="desired" type="xsd:integer" />
-            <xsd:element name="minimum" type="xsd:integer" minOccurs="0" />
-            <xsd:element name="maximum" type="xsd:integer" minOccurs="0" />
+            <xsd:element name="desired" type="xsd:int" />
+            <xsd:element name="minimum" type="xsd:int" minOccurs="0" />
+            <xsd:element name="maximum" type="xsd:int" minOccurs="0" />
         </xsd:sequence>
     </xsd:complexType>
 
@@ -645,7 +632,7 @@
         <xsd:sequence>
             <xsd:element name="stpId" type="tns:StpIdType" />
         </xsd:sequence>
-        <xsd:attribute   name="order" type="xsd:integer" />
+        <xsd:attribute   name="order" type="xsd:int" />
     </xsd:complexType>
 
    <xsd:complexType name="TechnologySpecificAttributesType">
@@ -722,7 +709,7 @@
             <xsd:element name="connectionState" type="tns:ConnectionStateType" />
             <xsd:element name="pathList"        type="tns:PathListType" minOccurs="0" />
         </xsd:sequence>
-        <xsd:attribute name="order" type="xsd:integer" />
+        <xsd:attribute name="order" type="xsd:int" />
     </xsd:complexType>
 
     <xsd:complexType name="PathListType">
@@ -775,7 +762,7 @@
             <xsd:element name="stpList"         type="tns:StpListType" minOccurs="0" />
             <xsd:element name="children"        type="tns:ChildListType" minOccurs="0" />
         </xsd:sequence>
-        <xsd:attribute name="order" type="xsd:integer" />
+        <xsd:attribute name="order" type="xsd:int" />
     </xsd:complexType>
     
     <xsd:complexType name="ChildListType">
@@ -796,16 +783,16 @@
         </xsd:sequence>
     </xsd:complexType>
 
-    <xsd:complexType name="NsiExceptionType">
+    <xsd:complexType name="ServiceExceptionType">
         <xsd:annotation>
             <xsd:documentation xml:lang="en">
-                Common NSI exception used for both SOAP faults and the protocol Failed
-                message.
+                Common service exception used for both SOAP faults and the
+                protocol Failed message.
 
                 Elements:
 
-                messageId - Message identifier uniquely identifying each known fault
-                within the protocol.
+                errorId - Error identifier uniquely identifying each known
+                fault within the protocol.
 
                 text - User friendly message text describing the error.
 
@@ -814,7 +801,7 @@
             </xsd:documentation>
         </xsd:annotation>
         <xsd:sequence>
-            <xsd:element name="messageId" type="xsd:string" />
+            <xsd:element name="errorId" type="xsd:string" />
             <xsd:element name="text"      type="xsd:string" />
             <xsd:element name="variables" type="saml:AttributeStatementType" minOccurs="0" />
         </xsd:sequence>
@@ -888,6 +875,23 @@
         </xsd:restriction>
     </xsd:simpleType>
 
+    <xsd:simpleType name="DateTimeType">
+        <xsd:annotation>
+            <xsd:documentation xml:lang="en">
+                The time zone support of W3C XML Schema is quite controversial
+                and needs some additional constraints to avoid comparison
+                problems. These patterns can be kept relatively simple since
+                the syntax of the datetime is already checked by the schema
+                validator and only simple additional checks need to be added.
+                This type definition checks that the time part ends with a "Z"
+                or contains a sign.
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:restriction base="xsd:dateTime">
+            <xsd:pattern value=".+T.+(Z|[+-].+)"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
     <xsd:simpleType name="DirectionalityType">
         <xsd:annotation>
             <xsd:documentation xml:lang="en">
@@ -906,7 +910,7 @@
                 Connection state values for the connection services state machine.
             </xsd:documentation>
         </xsd:annotation>
-            <xsd:restriction base="xsd:string">
+        <xsd:restriction base="xsd:string">
             <xsd:enumeration value="Initial" />
             <xsd:enumeration value="Reserving" />
             <xsd:enumeration value="Reserved" />
@@ -916,7 +920,7 @@
             <xsd:enumeration value="Provisioned" />
             <xsd:enumeration value="Releasing" />
             <xsd:enumeration value="Cleaning" />
-            <xsd:enumeration value="Terminateing" />
+            <xsd:enumeration value="Terminating" />
             <xsd:enumeration value="Terminated" />
             <xsd:enumeration value="Unknown" />
         </xsd:restriction>

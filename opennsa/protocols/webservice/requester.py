@@ -66,25 +66,25 @@ class Requester:
             d.callback(result)
 
 
-    def reservation(self, requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters):
+    def reserve(self, requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters):
 
         correlation_id = client.createCorrelationId()
-        rd = self.addCall(provider_nsa, correlation_id, 'reservation')
-        cd = self.provider_client.reservation(correlation_id, requester_nsa, provider_nsa, session_security_attr,
-                                              global_reservation_id, description, connection_id, service_parameters)
+        rd = self.addCall(provider_nsa, correlation_id, 'reserve')
+        cd = self.provider_client.reserve(correlation_id, requester_nsa, provider_nsa, session_security_attr,
+                                          global_reservation_id, description, connection_id, service_parameters)
         # need to chain cd.errback to rd.errback (only error path)
         return rd
 
 
-    def reservationConfirmed(self, correlation_id, requester_nsa, provider_nsa, session_security_attr,
+    def reserveConfirmed(self, correlation_id, requester_nsa, provider_nsa, session_security_attr,
                              global_reservation_id, description, connection_id, service_parameter):
 
-        self.triggerCall(provider_nsa, correlation_id, 'reservation', connection_id)
+        self.triggerCall(provider_nsa, correlation_id, 'reserve', connection_id)
 
 
-    def reservationFailed(self, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_message):
+    def reserveFailed(self, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_message):
 
-        self.triggerCall(provider_nsa, correlation_id, 'reservation', error.ReserveError(error_message))
+        self.triggerCall(provider_nsa, correlation_id, 'reserve', error.ReserveError(error_message))
 
 
     def provision(self, requester_nsa, provider_nsa, session_security_attr, connection_id):

@@ -225,7 +225,7 @@ class ArgiaConnection:
         return payload
 
 
-    def reservation(self):
+    def reserve(self):
 
         log.msg('RESERVE. CID: %s, Ports: %s -> %s' % (id(self), self.source_port, self.dest_port), system=LOG_SYSTEM)
 

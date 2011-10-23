@@ -32,16 +32,16 @@ class SubConnection:
         return self.source_stp, self.dest_stp
 
 
-    def reservation(self):
+    def reserve(self):
 
         assert self._proxy is not None, 'Proxy not set for SubConnection, cannot invoke method'
 
-        def reservationDone(int_res_id):
+        def reserveDone(int_res_id):
             log.msg('Sub-connection for network %s (%s -> %s) reserved' % (self.network, self.source_stp.endpoint, self.dest_stp.endpoint), system='opennsa.Connection')
             self.state.switchState(state.RESERVED)
             return self
 
-        def reservationFailed(err):
+        def reserveFailed(err):
             self.state.switchState(state.TERMINATED)
             return err
 
@@ -53,8 +53,8 @@ class SubConnection:
                                                     bandwidth=self.service_parameters.bandwidth)
 
         self.state.switchState(state.RESERVING)
-        d = self._proxy.reservation(self.network, None, self.parent_connection.global_reservation_id, self.parent_connection.description, self.connection_id, sub_service_params)
-        d.addCallbacks(reservationDone, reservationFailed)
+        d = self._proxy.reserve(self.network, None, self.parent_connection.global_reservation_id, self.parent_connection.description, self.connection_id, sub_service_params)
+        d.addCallbacks(reserveDone, reserveFailed)
         return d
 
 
@@ -71,7 +71,7 @@ class SubConnection:
             return err
 
         self.state.switchState(state.TERMINATING)
-        d = self._proxy.terminateReservation(self.network, None, self.connection_id)
+        d = self._proxy.terminate(self.network, None, self.connection_id)
         d.addCallbacks(terminateDone, terminateFailed)
         return d
 
@@ -141,9 +141,9 @@ class Connection:
             return self.sub_connections
 
 
-    def reservation(self):
+    def reserve(self):
 
-        def reservationRequestsDone(results):
+        def reserveRequestsDone(results):
             successes = [ r[0] for r in results ]
             if all(successes):
                 self.state.switchState(state.RESERVED)
@@ -152,7 +152,7 @@ class Connection:
                 self.state.switchState(state.TERMINATED)
                 if any(successes):
                     failure_msg = ' # '.join( [ f.getErrorMessage() for success,f in results if success is False ] )
-                    error_msg = 'Partial failure in reservation, may require manual cleanup (%s)' % failure_msg
+                    error_msg = 'Partial failure in reserve, may require manual cleanup (%s)' % failure_msg
                 else:
                     failure_msg = ' # '.join( [ f.getErrorMessage() for _,f in results ] )
                     error_msg = 'Reservation failed for all local/sub connections (%s)' % failure_msg
@@ -162,11 +162,11 @@ class Connection:
 
         defs = []
         for sc in self.connections():
-            d = sc.reservation()
+            d = sc.reserve()
             defs.append(d)
 
         dl = defer.DeferredList(defs, consumeErrors=True)
-        dl.addCallbacks(reservationRequestsDone) # never errbacks
+        dl.addCallbacks(reserveRequestsDone) # never errbacks
         return dl
 
 
