@@ -144,7 +144,7 @@ class ArgiaConnection:
 
     def _scheduleStateTransition(self, transition_time, state):
 
-        assert self.scheduled_transition_call is None
+        assert self.scheduled_transition_call is None, 'Scheduling transition while other transition is scheduled'
 
         def _switchState(conn, state):
             conn.state.switchState(state)
@@ -152,7 +152,7 @@ class ArgiaConnection:
 
         dt_now = datetime.datetime.utcnow()
 
-        assert transition_time > dt_now
+        assert transition_time >= dt_now, 'Scheduled transition is not in the future (%s >= %s is False)' % (transition_time, dt_now)
 
         td = (transition_time - dt_now)
         transition_delta_seconds = (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6.0
@@ -276,6 +276,7 @@ class ArgiaConnection:
 
         log.msg('Provisioning connection. Start time: %s, Current time: %s).' % (self.service_parameters.start_time, dt_now), system=LOG_SYSTEM)
 
+        self._cancelTransition()
         self.state.switchState(state.PROVISIONING)
         d = defer.Deferred()
 
@@ -287,13 +288,12 @@ class ArgiaConnection:
                 argia_id    = list(tree.getiterator('reservationId'))[0].text
 
                 if argia_state not in (ARGIA_PROVISIONED, ARGIA_AUTO_PROVISION):
-                    d.errback( error.ReserveError('Got unexpected state from Argia (%s)' % argia_state) )
+                    d.errback( error.ProvisionError('Got unexpected state from Argia (%s)' % argia_state) )
                 else:
-                    self._cancelTransition()
                     self.state.switchState(state.PROVISIONED)
                     self.argia_id = argia_id
                     log.msg('Connection provisioned. CID: %s' % id(self), system=LOG_SYSTEM)
-                    self._scheduleStateTransition(self.service_parameters.start_time, state.TERMINATED)
+                    self._scheduleStateTransition(self.service_parameters.end_time, state.TERMINATED)
                     d.callback(self)
 
             except Exception, e:
