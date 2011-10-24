@@ -10,6 +10,8 @@ import json
 import StringIO
 from xml.etree import ElementTree as ET
 
+import rdflib
+
 from opennsa import nsa, error
 
 
@@ -258,4 +260,49 @@ def parseGOLETopology(topology_source):
         topo.addNetwork(network)
 
     return topo
+
+
+
+def parseGOLERDFTopology(topology_source):
+
+    def stripURNPrefix(text):
+        URN_PREFIX = 'urn:ogf:network:'
+        assert text.startswith(URN_PREFIX)
+        return text.split(':')[-1]
+
+    OWL_NS = rdflib.namespace.Namespace("http://www.w3.org/2002/07/owl#")
+    RDF_NS = rdflib.namespace.Namespace('http://www.w3.org/1999/02/22-rdf-syntax-ns#')
+    DTOX_NS = rdflib.namespace.Namespace('http://www.glif.is/working-groups/tech/dtox#')
+
+    graph = rdflib.ConjunctiveGraph()
+    try:
+        graph.parse(topology_source)
+    except:
+        raise error.TopologyError('Invalid topology source')
+
+    topo = Topology()
+
+    for nsnetwork in graph.subjects(RDF_NS['type'],DTOX_NS['NSNetwork']):
+        # Setup the base network object, with NSA
+        nsaId = graph.value(subject=nsnetwork, predicate=DTOX_NS['managedBy'])
+        network_name = stripURNPrefix(str(nsnetwork))
+        network_nsa_ep = graph.value(subject=nsaId, predicate=DTOX_NS['csProviderEndpoint'])
+        network_nsa = nsa.NetworkServiceAgent(stripURNPrefix(str(nsaId)), str(network_nsa_ep))
+        network = nsa.Network(network_name, network_nsa)
+
+        # Add all the STPs and connections to the network
+        for stp in graph.objects(nsnetwork, DTOX_NS['hasSTP']):
+            stp_name = stripURNPrefix(str(stp))
+            dest_stp = graph.value(subject=stp, predicate=DTOX_NS['connectedTo'])
+            # If there is a destination, add that, otherwise the value stays None.
+            if dest_stp:
+                dest_network = graph.value(predicate=DTOX_NS['hasSTP'], object=dest_stp)
+                dest_stp = nsa.STP(stripURNPrefix(str(dest_network)), stripURNPrefix(str(dest_stp)))
+            ep = nsa.NetworkEndpoint(network_name, stp_name, None, dest_stp, None, None)
+            network.addEndpoint(ep)
+
+        topo.addNetwork(network)
+
+    return topo
+
 
