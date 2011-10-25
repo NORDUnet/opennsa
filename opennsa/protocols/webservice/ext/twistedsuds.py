@@ -94,7 +94,7 @@ class TwistedSUDSClient:
                 pass # these are pretty common when the remote shuts down
             else:
                 action = soap_action[1:-1].split('/')[-1]
-                log.msg('SOAP method invocation failed: %s. URL: %s. Action: %s.' % (err.getErrorMessage(), url, action), system='opennsa.TwistedSUDSClient')
+                log.msg('SOAP method invocation failed: %s. URL: %s. Action: %s.' % (err.getErrorMessage(), url, action), system='TwistedSUDSClient')
 
         method = self._getMethod(method_name)
 
@@ -104,7 +104,7 @@ class TwistedSUDSClient:
         soap_action = str(method.soap.action)
 
         short_action = soap_action[1:-1].split('/')[-1]
-        log.msg('SOAP Dispatch: URL: %s. Action: %s. Length %s' % (url, short_action, len(soap_envelope)), system='TwistedSUDS', debug=True)
+        log.msg('SOAP Dispatch: URL: %s. Action: %s. Length %s' % (url, short_action, len(soap_envelope)), system='TwistedSUDSClient', debug=True)
 
         # dispatch
         d, factory = self._httpRequest(url, soap_action, soap_envelope)
@@ -158,7 +158,7 @@ class TwistedSUDSClient:
 
     def _parseResponse(self, response, factory, method, short_action):
 
-        log.msg('Received SOAP response for %s' % short_action, debug=True)
+        log.msg('Received SOAP response for %s' % short_action, debug=True, system='TwistedSUDSClient')
         if factory.status == '200':
             _, result = method.binding.input.get_reply(method, response)
             return result
