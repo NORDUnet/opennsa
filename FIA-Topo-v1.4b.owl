@@ -271,12 +271,12 @@
         <connectedTo rdf:resource="urn:ogf:network:stp:northernlight.ets:ams-83"/>
     </owl:NamedIndividual>
     
-    <!-- urn:ogf:network:stp:netherlight.ets:chi-80 -->
+    <!-- urn:ogf:network:stp:netherlight.ets:chi-80 
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:netherlight.ets:chi-80">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [1100,300]</rdfs:comment>
         <connectedTo rdf:resource="urn:ogf:network:stp:starlight.ets:ams-80"/>
-    </owl:NamedIndividual>
+    </owl:NamedIndividual> -->
     <!-- urn:ogf:network:stp:netherlight.ets:chi-81 -->
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:netherlight.ets:chi-81">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
@@ -296,12 +296,12 @@
         <connectedTo rdf:resource="urn:ogf:network:stp:starlight.ets:ams-83"/>
     </owl:NamedIndividual>
     
-    <!-- urn:ogf:network:stp:netherlight.ets:poz-80 -->
+    <!-- urn:ogf:network:stp:netherlight.ets:poz-80 
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:netherlight.ets:poz-80">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [1400,300]</rdfs:comment>
         <connectedTo rdf:resource="urn:ogf:network:stp:pionier.ets:ams-80"/>
-    </owl:NamedIndividual>
+    </owl:NamedIndividual>-->
     <!-- urn:ogf:network:stp:netherlight.ets:poz-81 -->
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:netherlight.ets:poz-81">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
@@ -331,7 +331,7 @@
         <hasSTP rdf:resource="urn:ogf:network:stp:netherlight.ets:ps-81"/>
         <hasSTP rdf:resource="urn:ogf:network:stp:netherlight.ets:ps-82"/>
         <hasSTP rdf:resource="urn:ogf:network:stp:netherlight.ets:ps-83"/>
-        <hasSTP rdf:resource="urn:ogf:network:stp:netherlight.ets:chi-80"/>
+ <!--   <hasSTP rdf:resource="urn:ogf:network:stp:netherlight.ets:chi-80"/> -->
         <hasSTP rdf:resource="urn:ogf:network:stp:netherlight.ets:chi-81"/>
         <hasSTP rdf:resource="urn:ogf:network:stp:netherlight.ets:chi-82"/>
         <hasSTP rdf:resource="urn:ogf:network:stp:netherlight.ets:chi-83"/>
@@ -339,7 +339,7 @@
         <hasSTP rdf:resource="urn:ogf:network:stp:netherlight.ets:cph-81"/>
         <hasSTP rdf:resource="urn:ogf:network:stp:netherlight.ets:cph-82"/>
         <hasSTP rdf:resource="urn:ogf:network:stp:netherlight.ets:cph-83"/>
-        <hasSTP rdf:resource="urn:ogf:network:stp:netherlight.ets:poz-80"/>
+  <!--  <hasSTP rdf:resource="urn:ogf:network:stp:netherlight.ets:poz-80"/> -->
         <hasSTP rdf:resource="urn:ogf:network:stp:netherlight.ets:poz-81"/>
         <hasSTP rdf:resource="urn:ogf:network:stp:netherlight.ets:poz-82"/>
         <hasSTP rdf:resource="urn:ogf:network:stp:netherlight.ets:poz-83"/>
@@ -476,11 +476,11 @@
         <rdfs:comment xml:lang="en">Position : [100,2900]</rdfs:comment>
     </owl:NamedIndividual>
     
-    <!-- urn:ogf:network:stp:pionier.ets:ams-80 -->
+    <!-- urn:ogf:network:stp:pionier.ets:ams-80 modified for aist adjacency -->
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:pionier.ets:ams-80">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [400,2300]</rdfs:comment>
-        <connectedTo rdf:resource="urn:ogf:network:stp:netherlight.ets:poz-80"/>
+        <connectedTo rdf:resource="urn:ogf:network:stp:aist.ets:chi-80"/>
     </owl:NamedIndividual>
     <!-- urn:ogf:network:stp:pionier.ets:ams-81 -->
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:pionier.ets:ams-81">
@@ -591,12 +591,13 @@
         <rdfs:comment xml:lang="en">Position : [2050,2900]</rdfs:comment>
     </owl:NamedIndividual>
     
-    <!-- urn:ogf:network:stp:starlight.ets:ams-80 -->
+    <!-- urn:ogf:network:stp:starlight.ets:ams-80 
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:starlight.ets:ams-80">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [2350,2300]</rdfs:comment>
         <connectedTo rdf:resource="urn:ogf:network:stp:netherlight.ets:chi-80"/>
     </owl:NamedIndividual>
+    -->
     <!-- urn:ogf:network:stp:starlight.ets:ams-81 -->
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:starlight.ets:ams-81">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
@@ -616,12 +617,13 @@
         <connectedTo rdf:resource="urn:ogf:network:stp:netherlight.ets:chi-83"/>
     </owl:NamedIndividual>
     
-    <!-- urn:ogf:network:stp:starlight.ets:tsu-80 -->
+    <!-- urn:ogf:network:stp:starlight.ets:tsu-80 
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:starlight.ets:tsu-80">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [2650,2300]</rdfs:comment>
         <connectedTo rdf:resource="urn:ogf:network:stp:aist.ets:chi-80"/>
     </owl:NamedIndividual>
+    -->
     <!-- urn:ogf:network:stp:starlight.ets:tsu-81 -->
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:starlight.ets:tsu-81">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
@@ -677,11 +679,11 @@
         <hasSTP rdf:resource="urn:ogf:network:stp:starlight.ets:ps-81"/>
         <hasSTP rdf:resource="urn:ogf:network:stp:starlight.ets:ps-82"/>
         <hasSTP rdf:resource="urn:ogf:network:stp:starlight.ets:ps-83"/>
-        <hasSTP rdf:resource="urn:ogf:network:stp:starlight.ets:ams-80"/>
+  <!--  <hasSTP rdf:resource="urn:ogf:network:stp:starlight.ets:ams-80"/> -->
         <hasSTP rdf:resource="urn:ogf:network:stp:starlight.ets:ams-81"/>
         <hasSTP rdf:resource="urn:ogf:network:stp:starlight.ets:ams-82"/>
         <hasSTP rdf:resource="urn:ogf:network:stp:starlight.ets:ams-83"/>
-        <hasSTP rdf:resource="urn:ogf:network:stp:starlight.ets:tsu-80"/>
+   <!-- <hasSTP rdf:resource="urn:ogf:network:stp:starlight.ets:tsu-80"/> -->
         <hasSTP rdf:resource="urn:ogf:network:stp:starlight.ets:tsu-81"/>
         <hasSTP rdf:resource="urn:ogf:network:stp:starlight.ets:fuj-82"/>
         <hasSTP rdf:resource="urn:ogf:network:stp:starlight.ets:fuj-83"/>
@@ -736,12 +738,13 @@
         <rdfs:comment xml:lang="en">Position : [50,4900]</rdfs:comment>
     </owl:NamedIndividual>
     
-    <!-- urn:ogf:network:stp:aist.ets:chi-80 -->
+    <!-- urn:ogf:network:stp:aist.ets:chi-80 modified for pionier adjacency -->
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:aist.ets:chi-80">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [350,4300]</rdfs:comment>
-        <connectedTo rdf:resource="urn:ogf:network:stp:starlight.ets:tsu-80"/>
+        <connectedTo rdf:resource="urn:ogf:network:stp:pionier.ets:ams-80"/>
     </owl:NamedIndividual>
+    
     <!-- urn:ogf:network:stp:aist.ets:chi-81 -->
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:aist.ets:chi-81">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
