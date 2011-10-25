@@ -232,6 +232,9 @@ def parseGOLETopology(topology_source):
                     endpoint = cpe.text or None
                 nsas[rt_name] = { 'endpoint' : endpoint }
 
+            elif rt == 'Location':
+                pass # we don't use that currently (in OpenNSA)
+
             else:
                 print "Unknown Topology Resource", rt
 
