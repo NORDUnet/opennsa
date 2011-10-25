@@ -231,9 +231,10 @@ class NSIService:
                 match = lambda conn : conn.connection_id in connection_ids if connection_ids is not None else False or \
                                       conn.global_reservation_id in global_reservation_ids if connection_ids is not None else False
 
-            if requester_nsa == 'OpenNSA-querier':
-                for connections in self.connections.items():
-                    for conn in connections:
+            if requester_nsa == 'urn:ogf:network:nsa:OpenNSA-querier':
+                log.msg('Enabling special demo query support for querier: %s' % (requester_nsa), system='opennsa.NSIService')
+                for connections in self.connections.values():
+                    for conn in connections.values():
                         if match(conn):
                             conns.append(conn)
 
