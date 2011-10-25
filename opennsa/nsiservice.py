@@ -56,11 +56,11 @@ class NSIService:
 
         def setupSubConnection(source_stp, dest_stp, conn, service_parameters):
 
-            assert source_stp.network == dest_stp.network
+            assert source_stp.network == dest_stp.network, 'Source and destination network differ in sub-connection'
 
             # should check for local network
             if source_stp.network == self.network:
-                assert conn.local_connection is None
+                assert conn.local_connection is None, 'Cannot have multiple local sub-connection in connection'
                 conn.local_connection = self.backend.createConnection(source_stp.endpoint, dest_stp.endpoint, service_parameters)
 
             else:
