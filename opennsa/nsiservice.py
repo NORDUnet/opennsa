@@ -13,7 +13,7 @@ from twisted.python import log
 from twisted.internet import defer
 
 from opennsa.interface import NSIServiceInterface
-from opennsa import nsa, error, topology, proxy, connection
+from opennsa import error, topology, proxy, connection
 
 
 
