@@ -85,6 +85,7 @@ class Topology:
 
         paths = []
         if routes == []:
+            # wtf is this doing here
             paths.append( nsa.Path(source_stp, dest_stp, []) )
         else:
             for sdps in routes:
@@ -193,11 +194,6 @@ def parseGOLETopology(topology_source):
         assert text.startswith(GLIF_PREFIX)
         return text.split(GLIF_PREFIX)[1]
 
-    def stripURNPrefix(text):
-        URN_PREFIX = 'urn:ogf:network:'
-        assert text.startswith(URN_PREFIX)
-        return text.split(':')[-1]
-
     stps = {}
     nsas = {}
     networks = {}
@@ -209,27 +205,27 @@ def parseGOLETopology(topology_source):
             # determine indivdual (resource) type
             se = e.getiterator(RDF_TYPE)[0]
             rt = stripGLIFPrefix(se.attrib[RDF_RESOURCE])
-            rt_name = stripURNPrefix( e.attrib[RDF_ABOUT] )
+            rt_name = e.attrib[RDF_ABOUT]
 
             if rt == 'STP':
                 connected_to = None
                 for ct in e.getiterator(GLIF_CONNECTED_TO):
-                    connected_to = stripURNPrefix( ct.attrib[RDF_RESOURCE] )
+                    connected_to = ct.attrib[RDF_RESOURCE]
                 stps[rt_name] = { 'connected_to' : connected_to }
 
             elif rt == 'NSNetwork':
                 ns_stps = []
                 for sse in e.getiterator(GLIF_HAS_STP):
-                    ns_stps.append( stripURNPrefix( sse.attrib[RDF_RESOURCE] ) )
+                    ns_stps.append( sse.attrib[RDF_RESOURCE] )
                 ns_nsa = None
                 for mb in e.getiterator(GLIF_MANAGED_BY):
-                    ns_nsa = stripURNPrefix( mb.attrib[RDF_RESOURCE] )
+                    ns_nsa = mb.attrib[RDF_RESOURCE]
                 networks[rt_name] = { 'stps': ns_stps, 'nsa' : ns_nsa }
 
             elif rt == 'NSA':
                 endpoint = None
                 for cpe in e.getiterator(GLIF_PROVIDER_ENDPOINT):
-                    endpoint = cpe.text or None
+                    endpoint = cpe.text
                 nsas[rt_name] = { 'endpoint' : endpoint }
 
             elif rt == 'Location':
@@ -238,26 +234,38 @@ def parseGOLETopology(topology_source):
             else:
                 print "Unknown Topology Resource", rt
 
-    stp_rmap = {}
 
-    for network_name, network_params in networks.items():
-        for stp_name in network_params['stps']:
-            stp_rmap[stp_name] = nsa.STP(network_name, stp_name)
+    NSNETWORK_PREFIX = 'urn:ogf:network:nsnetwork:'
+    NSA_PREFIX       = 'urn:ogf:network:nsa:'
+    STP_PREFIX       = 'urn:ogf:network:stp:'
+
+    def stripPrefix(text, prefix):
+        assert text.startswith(prefix), 'Text did not start with specified prefix'
+        ul = len(prefix)
+        return text[ul:]
+
 
     topo = Topology()
 
     for network_name, network_params in networks.items():
 
-        nsa_name = network_params['nsa']
-        nsa_info = nsas[nsa_name]
-        nsa_endpoint = nsa_info.get('endpoint') or 'NSA_ENDPOINT_DUMMY'
+        nsa_name     = network_params['nsa']
+        nsa_endpoint = nsas[nsa_name].get('endpoint')
 
-        network_nsa = nsa.NetworkServiceAgent(nsa_name, nsa_endpoint)
-        network = nsa.Network(network_name, network_nsa)
+        t_network_name  = stripPrefix(network_name, NSNETWORK_PREFIX)
+        t_nsa_name      = stripPrefix(nsa_name, NSA_PREFIX)
+
+        network_nsa = nsa.NetworkServiceAgent(t_nsa_name, nsa_endpoint)
+        network = nsa.Network(t_network_name, network_nsa)
 
         for stp_name in network_params['stps']:
-            dest_stp = stp_rmap.get(stps.get(stp_name,{}).get('connected_to'))
-            ep = nsa.NetworkEndpoint(network_name, stp_name, None, dest_stp, None, None)
+            t_stp_name = stripPrefix(stp_name, STP_PREFIX).split(':')[-1]
+            dest_stp = None
+            dest_stp_urn = stps.get(stp_name,{}).get('connected_to')
+            if dest_stp_urn:
+                dest_network, dest_port = stripPrefix(dest_stp_urn, STP_PREFIX).split(':',1)
+                dest_stp = nsa.STP(dest_network, dest_port)
+            ep = nsa.NetworkEndpoint(t_network_name, t_stp_name, None, dest_stp, None, None)
             network.addEndpoint(ep)
 
         topo.addNetwork(network)
