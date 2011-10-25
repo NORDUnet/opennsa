@@ -231,9 +231,16 @@ class NSIService:
                 match = lambda conn : conn.connection_id in connection_ids if connection_ids is not None else False or \
                                       conn.global_reservation_id in global_reservation_ids if connection_ids is not None else False
 
-            for conn in self.connections.get(requester_nsa, {}).values():
-                if match(conn):
-                    conns.append(conn)
+            if requester_nsa == 'OpenNSA-querier':
+                for connections in self.connections.items():
+                    for conn in connections:
+                        if match(conn):
+                            conns.append(conn)
+
+            else:
+                for conn in self.connections.get(requester_nsa, {}).values():
+                    if match(conn):
+                        conns.append(conn)
 
             return defer.succeed(conns)
 
