@@ -11,7 +11,7 @@ from opennsa.protocols.webservice import client
 
 
 
-DEFAULT_CALLBACK_TIMEOUT = 600 # 10 minutes
+DEFAULT_CALLBACK_TIMEOUT = 60 # 1 minute
 
 
 
