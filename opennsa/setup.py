@@ -3,7 +3,7 @@ High-level functionality for creating clients and services in OpenNSA.
 """
 
 from opennsa import nsiservice
-from opennsa.protocols.webservice import client as wsclient, service as wsservice, provider as wsprovider, requester as wsrequester, resource as wsresource
+from opennsa.protocols.webservice import client as wsclient, service as wsservice, provider as wsprovider, requester as wsrequester, resource as wsresource, ctxfactory
 
 
 WEBSERVICE  = 'webservice'
@@ -24,8 +24,8 @@ def createService(network_name, topology_file, backend, host, port, wsdl_dir, ho
 
         resource, site = wsresource.createService()
 
+        ctx_factory = None
         if hostcert and hostkey and ca_dir:
-            from opennsa.protocol.webservice import ctxfactory
             ctx_factory = ctxfactory.ContextFactory(hostkey, hostcert, ca_dir)
 
         provider_client     = wsclient.ProviderClient(service_url, wsdl_dir, ctx_factory=ctx_factory)
