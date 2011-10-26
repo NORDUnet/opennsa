@@ -28,6 +28,7 @@ RDF_RESOURCE            = ET.QName('{%s}resource' % RDF_NS)
 
 GLIF_HAS_STP            = ET.QName('{%s}hasSTP' % GLIF_PREFIX)
 GLIF_CONNECTED_TO       = ET.QName('{%s}connectedTo' % GLIF_PREFIX)
+GLIF_MAPS_TO            = ET.QName('{%s}mapsTo' % GLIF_PREFIX)
 GLIF_MAX_CAPACITY       = ET.QName('{%s}maxCapacity' % GLIF_PREFIX)
 GLIF_AVAILABLE_CAPACITY = ET.QName('{%s}availableCapacity' % GLIF_PREFIX)
 GLIF_MANAGED_BY         = ET.QName('{%s}managedBy' % GLIF_PREFIX)
@@ -71,10 +72,10 @@ class Topology:
         """
         # check that STPs exist
         snw = self.getNetwork(source_stp.network)
-        snw.getEndpoint(source_stp.endpoint)
+        sep = snw.getEndpoint(source_stp.endpoint)
 
         dnw = self.getNetwork(dest_stp.network)
-        dnw.getEndpoint(dest_stp.endpoint)
+        dep = dnw.getEndpoint(dest_stp.endpoint)
 
         # find endpoint pairs
         #print "FIND PATH", source_stp, dest_stp
@@ -85,11 +86,10 @@ class Topology:
 
         paths = []
         if routes == []:
-            # wtf is this doing here
-            paths.append( nsa.Path(source_stp, dest_stp, []) )
+            paths.append( nsa.Path(sep, dep, []) )
         else:
             for sdps in routes:
-                paths.append( nsa.Path(source_stp, dest_stp, sdps ) )
+                paths.append( nsa.Path(sep, dep, sdps ) )
 
         return paths
 
@@ -209,9 +209,12 @@ def parseGOLETopology(topology_source):
 
             if rt == 'STP':
                 connected_to = None
+                maps_to = None
                 for ct in e.getiterator(GLIF_CONNECTED_TO):
                     connected_to = ct.attrib[RDF_RESOURCE]
-                stps[rt_name] = { 'connected_to' : connected_to }
+                for ct in e.getiterator(GLIF_MAPS_TO):
+                    maps_to = ct.attrib[RDF_RESOURCE]
+                stps[rt_name] = { 'connected_to' : connected_to, 'maps_to' : maps_to }
 
             elif rt == 'NSNetwork':
                 ns_stps = []
@@ -260,12 +263,13 @@ def parseGOLETopology(topology_source):
 
         for stp_name in network_params['stps']:
             t_stp_name = stripPrefix(stp_name, STP_PREFIX).split(':')[-1]
+            maps_to = stps.get(stp_name,{}).get('maps_to')
             dest_stp = None
             dest_stp_urn = stps.get(stp_name,{}).get('connected_to')
             if dest_stp_urn:
                 dest_network, dest_port = stripPrefix(dest_stp_urn, STP_PREFIX).split(':',1)
                 dest_stp = nsa.STP(dest_network, dest_port)
-            ep = nsa.NetworkEndpoint(t_network_name, t_stp_name, None, dest_stp, None, None)
+            ep = nsa.NetworkEndpoint(t_network_name, t_stp_name, maps_to, dest_stp, None, None)
             network.addEndpoint(ep)
 
         topo.addNetwork(network)

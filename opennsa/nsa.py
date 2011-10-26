@@ -72,15 +72,23 @@ class Path:
 
 class NetworkEndpoint(STP):
 
-    def __init__(self, network, endpoint, config, dest_stp=None, max_capacity=None, available_capacity=None):
+    def __init__(self, network, endpoint, nrm_port=None, dest_stp=None, max_capacity=None, available_capacity=None):
         STP.__init__(self, network, endpoint)
-        self.config = config
+        self.nrm_port = nrm_port # this is config as well - at least for now
         self.dest_stp = dest_stp
         self.max_capacity = max_capacity
         self.available_capacity = available_capacity
 
+
+    def nrmPort(self):
+        if self.nrm_port:
+            return self.nrm_port
+        else:
+            return self.endpoint
+
+
     def __str__(self):
-        return '<NetworkEndpoint %s:%s-%s#%s>' % (self.network, self.endpoint, self.dest_stp, self.config)
+        return '<NetworkEndpoint %s:%s-%s#%s>' % (self.network, self.endpoint, self.dest_stp, self.nrm_port)
 
 
 

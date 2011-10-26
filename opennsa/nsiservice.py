@@ -56,19 +56,19 @@ class NSIService:
 
     def reserve(self, requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters):
 
-        def setupSubConnection(source_stp, dest_stp, conn, service_parameters):
+        def setupSubConnection(source_ep, dest_ep, conn, service_parameters):
 
-            assert source_stp.network == dest_stp.network, 'Source and destination network differ in sub-connection'
+            assert source_ep.network == dest_ep.network, 'Source and destination network differ in sub-connection'
 
             # should check for local network
-            if source_stp.network == self.network:
+            if source_ep.network == self.network:
                 assert conn.local_connection is None, 'Cannot have multiple local sub-connection in connection'
-                conn.local_connection = self.backend.createConnection(source_stp.endpoint, dest_stp.endpoint, service_parameters)
+                conn.local_connection = self.backend.createConnection(source_ep.nrmPort(), dest_ep.nrmPort(), service_parameters)
 
             else:
                 sub_conn_id = 'urn:uuid:' + str(uuid.uuid1())
                 # FIXME should be setup with NSA context, not network
-                sub_conn = connection.SubConnection(conn, sub_conn_id, source_stp.network, source_stp, dest_stp, service_parameters, proxy=self.proxy)
+                sub_conn = connection.SubConnection(conn, sub_conn_id, source_ep.network, source_ep, dest_ep, service_parameters, proxy=self.proxy)
                 conn.sub_connections.append(sub_conn)
 
             return conn
@@ -96,7 +96,10 @@ class NSIService:
             if source_stp.network == self.network and dest_stp.network == self.network:
                 log.msg('Connection %s: Simple path creation: %s:%s -> %s:%s (%s)' % path_info, system=LOG_SYSTEM)
 
-                setupSubConnection(source_stp, dest_stp, conn, service_parameters)
+                # we need to resolve this from our topology in order to get any local configuration
+                source_ep = self.topology.getEndpoint(self.network, source_stp.endpoint)
+                dest_ep   = self.topology.getEndpoint(self.network, dest_stp.endpoint)
+                setupSubConnection(source_ep, dest_ep, conn, service_parameters)
 
         # This code is for chaining requests and is currently not used, but might be needed sometime in the future
         # Once we get proper a topology service, some chaining will be necessary.
@@ -141,13 +144,13 @@ class NSIService:
                 selected_path = paths[0] # shortest path
                 log.msg('Attempting to create path %s' % selected_path, system=LOG_SYSTEM)
 
-                prev_source_stp = source_stp
+                prev_source_stp = selected_path.source_stp
 
                 for stp_pair in selected_path.endpoint_pairs:
                     setupSubConnection(prev_source_stp, stp_pair.stp1, conn, service_parameters)
                     prev_source_stp = stp_pair.stp2
                 # last hop
-                setupSubConnection(prev_source_stp, dest_stp, conn, service_parameters)
+                setupSubConnection(prev_source_stp, selected_path.dest_stp, conn, service_parameters)
 
         except Exception, e:
             log.msg('Error setting up connection: %s' % str(e), system=LOG_SYSTEM)
