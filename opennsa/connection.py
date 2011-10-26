@@ -13,6 +13,9 @@ from opennsa import error, nsa, state
 
 
 
+LOG_SYSTEM = 'opennsa.Connection'
+
+
 class SubConnection:
 
     def __init__(self, parent_connection, connection_id, network, source_stp, dest_stp, service_parameters, proxy=None):
@@ -37,7 +40,7 @@ class SubConnection:
         assert self._proxy is not None, 'Proxy not set for SubConnection, cannot invoke method'
 
         def reserveDone(int_res_id):
-            log.msg('Sub-connection for network %s (%s -> %s) reserved' % (self.network, self.source_stp.endpoint, self.dest_stp.endpoint), system='opennsa.Connection')
+            log.msg('Sub-connection for network %s (%s -> %s) reserved' % (self.network, self.source_stp.endpoint, self.dest_stp.endpoint), system=LOG_SYSTEM)
             self.state.switchState(state.RESERVED)
             return self
 
@@ -158,8 +161,8 @@ class Connection:
                     for rc in reserved_connections:
                         d = rc.terminate()
                         d.addCallbacks(
-                            lambda c : log.msg('Succesfully terminated sub-connection after partial reservation failure (%s)' % str(c)),
-                            lambda f : log.msg('Error terminating connection after partial-reservation failure: %s' % str(f))
+                            lambda c : log.msg('Succesfully terminated sub-connection after partial reservation failure (%s)' % str(c), system=LOG_SYSTEM),
+                            lambda f : log.msg('Error terminating connection after partial-reservation failure: %s' % str(f), system=LOG_SYSTEM)
                         )
                 else:
                     failure_msg = ' # '.join( [ f.getErrorMessage() for _,f in results ] )
@@ -185,7 +188,7 @@ class Connection:
             if all(successes):
                 self.state.switchState(state.TERMINATED)
                 if len(successes) > 1:
-                    log.msg('Connection %s and all sub connections(%i) terminated' % (self.connection_id, len(results)-1), system='opennsa.NSIService')
+                    log.msg('Connection %s and all sub connections(%i) terminated' % (self.connection_id, len(results)-1), system=LOG_SYSTEM)
                 return self
             if any(successes):
                 self.state.switchState(state.TERMINATED)
@@ -215,7 +218,7 @@ class Connection:
             if all(successes):
                 self.state.switchState(state.PROVISIONED)
                 if len(results) > 1:
-                    log.msg('Connection %s and all sub connections(%i) provisioned' % (self.connection_id, len(results)-1), system='opennsa.NSIService')
+                    log.msg('Connection %s and all sub connections(%i) provisioned' % (self.connection_id, len(results)-1), system=LOG_SYSTEM)
                 return self
             if any(successes):
                 self.state.switchState(state.TERMINATED)
@@ -245,7 +248,7 @@ class Connection:
             if all(successes):
                 self.state.switchState(state.RESERVED)
                 if len(results) > 1:
-                    log.msg('Connection %s and all sub connections(%i) released' % (self.connection_id, len(results)-1), system='opennsa.NSIService')
+                    log.msg('Connection %s and all sub connections(%i) released' % (self.connection_id, len(results)-1), system=LOG_SYSTEM)
                 return self
             if any(successes):
                 self.state.switchState(state.TERMINATED)
