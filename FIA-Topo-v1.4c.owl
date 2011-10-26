@@ -201,7 +201,7 @@
         <hasSTP rdf:resource="urn:ogf:network:stp:northernlight.ets:ams-82"/>
         <hasSTP rdf:resource="urn:ogf:network:stp:northernlight.ets:ams-83"/>
         <managedBy rdf:resource="urn:ogf:network:nsa:northernlight"/>
-        <locatedAt rdf:resource="urn.ogf.network:nsnetwork:northernlight.ets:location"/>
+        <locatedAt rdf:resource="urn:ogf:network:nsnetwork:northernlight.ets:location"/>
     </owl:NamedIndividual>
     
     <!-- urn:ogf:network:nsnetwork:northernlight.ets:location -->
@@ -344,7 +344,7 @@
         <hasSTP rdf:resource="urn:ogf:network:stp:netherlight.ets:poz-82"/>
         <hasSTP rdf:resource="urn:ogf:network:stp:netherlight.ets:poz-83"/>
         <managedBy rdf:resource="urn:ogf:network:nsa:netherlight"/>
-        <locatedAt rdf:resource="urn.ogf.network:nsnetwork:netherlight.ets:location"/>
+        <locatedAt rdf:resource="urn:ogf:network:nsnetwork:netherlight.ets:location"/>
     </owl:NamedIndividual>
 
     <!-- urn:ogf:network:nsnetwork:netherlight.ets:location -->
@@ -431,7 +431,7 @@
         <hasSTP rdf:resource="urn:ogf:network:stp:geant.ets:poz-82"/>
         <hasSTP rdf:resource="urn:ogf:network:stp:geant.ets:poz-83"/>
         <managedBy rdf:resource="urn:ogf:network:nsa:geant"/>
-        <locatedAt rdf:resource="urn.ogf.network:nsnetwork:geant.ets:location"/>
+        <locatedAt rdf:resource="urn:ogf:network:nsnetwork:geant.ets:location"/>
     </owl:NamedIndividual>
 
     <!-- urn:ogf:network:nsnetwork:geant.ets:location -->
@@ -545,7 +545,7 @@
         <hasSTP rdf:resource="urn:ogf:network:stp:pionier.ets:gn3-82"/>
         <hasSTP rdf:resource="urn:ogf:network:stp:pionier.ets:gn3-83"/>
         <managedBy rdf:resource="urn:ogf:network:nsa:pionier"/>
-        <locatedAt rdf:resource="urn.ogf.network:nsnetwork:pionier.ets:location"/>
+        <locatedAt rdf:resource="urn:ogf:network:nsnetwork:pionier.ets:location"/>
     </owl:NamedIndividual>
     
     <!-- urn:ogf:network:nsnetwork:pionier.ets:location -->
@@ -692,7 +692,7 @@
         <hasSTP rdf:resource="urn:ogf:network:stp:starlight.ets:dae-82"/>
         <hasSTP rdf:resource="urn:ogf:network:stp:starlight.ets:dae-83"/>
         <managedBy rdf:resource="urn:ogf:network:nsa:starlight"/>
-        <locatedAt rdf:resource="urn.ogf.network:nsnetwork:starlight.ets:location"/>
+        <locatedAt rdf:resource="urn:ogf:network:nsnetwork:starlight.ets:location"/>
     </owl:NamedIndividual>
     
     <!-- urn:ogf:network:nsnetwork:starlight.ets:location -->
@@ -766,7 +766,7 @@
         <hasSTP rdf:resource="urn:ogf:network:stp:aist.ets:chi-80"/>
         <hasSTP rdf:resource="urn:ogf:network:stp:aist.ets:chi-81"/>
         <managedBy rdf:resource="urn:ogf:network:nsa:aist"/>
-        <locatedAt rdf:resource="urn.ogf.network:nsnetwork:aist.ets:location"/>
+        <locatedAt rdf:resource="urn:ogf:network:nsnetwork:aist.ets:location"/>
     </owl:NamedIndividual>
 
     <!-- urn:ogf:network:nsnetwork:aist.ets:location -->
@@ -837,7 +837,7 @@
         <hasSTP rdf:resource="urn:ogf:network:stp:kddi-labs.ets:chi-82"/>
         <hasSTP rdf:resource="urn:ogf:network:stp:kddi-labs.ets:chi-83"/>
         <managedBy rdf:resource="urn:ogf:network:nsa:kddi-labs"/>
-        <locatedAt rdf:resource="urn.ogf.network:nsnetwork:kddi-labs.ets:location"/>
+        <locatedAt rdf:resource="urn:ogf:network:nsnetwork:kddi-labs.ets:location"/>
     </owl:NamedIndividual>
 
     <!-- urn:ogf:network:nsnetwork:kddi-labs.ets:location -->
@@ -922,7 +922,7 @@
         <hasSTP rdf:resource="urn:ogf:network:stp:krlight.ets:chi-82"/>
         <hasSTP rdf:resource="urn:ogf:network:stp:krlight.ets:chi-83"/>
         <managedBy rdf:resource="urn:ogf:network:nsa:krlight"/>
-        <locatedAt rdf:resource="urn.ogf.network:nsnetwork:krlight.ets:location"/>
+        <locatedAt rdf:resource="urn:ogf:network:nsnetwork:krlight.ets:location"/>
     </owl:NamedIndividual>
 
     <!-- urn:ogf:network:nsnetwork:krlight.ets:location -->
