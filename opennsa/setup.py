@@ -24,9 +24,9 @@ def createService(network_name, topology_file, backend, host, port, wsdl_dir, ho
 
         resource, site = wsresource.createService()
 
-        if hostcert and hostkey and ca_dir
+        if hostcert and hostkey and ca_dir:
             from opennsa.protocol.webservice import ctxfactory
-            ctx_factory = ContextFactory(hostkey, hostcert, ca_dir)
+            ctx_factory = ctxfactory.ContextFactory(hostkey, hostcert, ca_dir)
 
         provider_client     = wsclient.ProviderClient(service_url, wsdl_dir, ctx_factory=ctx_factory)
         requester = wsrequester.Requester(provider_client)
