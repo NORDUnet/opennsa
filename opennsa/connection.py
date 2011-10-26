@@ -152,7 +152,15 @@ class Connection:
                 self.state.switchState(state.TERMINATED)
                 if any(successes):
                     failure_msg = ' # '.join( [ f.getErrorMessage() for success,f in results if success is False ] )
-                    error_msg = 'Partial failure in reserve, may require manual cleanup (%s)' % failure_msg
+                    error_msg = 'Partial failure in reserve, attempting termination of reserved sub-connections (%s)' % failure_msg
+                    # terminate non-failed connections
+                    reserved_connections = [ conn for success,conn in results if success ]
+                    for rc in reserved_connections:
+                        d = rc.terminate()
+                        d.addCallbacks(
+                            lambda c : log.msg('Succesfully terminated sub-connection after partial reservation failure (%s)' % str(c)),
+                            lambda f : log.msg('Error terminating connection after partial-reservation failure: %s' % str(f))
+                        )
                 else:
                     failure_msg = ' # '.join( [ f.getErrorMessage() for _,f in results ] )
                     error_msg = 'Reservation failed for all local/sub connections (%s)' % failure_msg
