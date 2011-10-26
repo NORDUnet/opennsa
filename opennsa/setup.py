@@ -12,7 +12,7 @@ PROTOCOL    = WEBSERVICE
 
 
 
-def createService(network_name, topology_file, backend, host, port, wsdl_dir):
+def createService(network_name, topology_file, backend, host, port, wsdl_dir, hostcert=None, hostkey=None, ca_dir=None):
 
     protocol = WEBSERVICE
 
@@ -24,7 +24,11 @@ def createService(network_name, topology_file, backend, host, port, wsdl_dir):
 
         resource, site = wsresource.createService()
 
-        provider_client     = wsclient.ProviderClient(service_url, wsdl_dir)
+        if hostcert and hostkey and ca_dir
+            from opennsa.protocol.webservice import ctxfactory
+            ctx_factory = ContextFactory(hostkey, hostcert, ca_dir)
+
+        provider_client     = wsclient.ProviderClient(service_url, wsdl_dir, ctx_factory=ctx_factory)
         requester = wsrequester.Requester(provider_client)
         requester_service   = wsservice.RequesterService(resource, requester)
 

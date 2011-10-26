@@ -31,10 +31,10 @@ def createCorrelationId():
 
 class ProviderClient:
 
-    def __init__(self, reply_to, wsdl_dir):
+    def __init__(self, reply_to, wsdl_dir, ctx_factory=None):
 
         self.reply_to = reply_to
-        self.client = twistedsuds.TwistedSUDSClient(WSDL_PROVIDER % wsdl_dir)
+        self.client = twistedsuds.TwistedSUDSClient(WSDL_PROVIDER % wsdl_dir, ctx_factory=ctx_factory)
 
 
     def _createGenericRequestType(self, requester_nsa, provider_nsa, connection_id):
