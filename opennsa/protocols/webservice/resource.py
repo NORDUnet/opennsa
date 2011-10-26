@@ -37,7 +37,7 @@ class SOAPResource(resource.Resource):
             return 'Invalid SOAP Action for this resource'
 
         decoder = self.soap_actions[soap_action]
-        soap_data = request.content.getvalue()
+        soap_data = request.content.read()
 
         log.msg('Received SOAP request. Action: %s. Length: %i' % (soap_action, len(soap_data)), system='opennsa.ConnectionServiceResource', debug=True)
 
