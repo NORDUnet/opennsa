@@ -28,6 +28,36 @@ DEFAULT_TIMEOUT = 20 # seconds
 
 
 
+def _httpRequest(url, soap_action, soap_envelope, timeout=DEFAULT_TIMEOUT, ctx_factory=None):
+    # copied from twisted.web.client in order to get access to the
+    # factory (which contains response codes, headers, etc)
+
+    if type(url) is not str:
+        e = ValueError('URL must be string, not %s' % type(url))
+        return defer.fail(e), None
+
+    scheme, host, port, _ = twclient._parse(url)
+
+    factory = twclient.HTTPClientFactory(url, method='POST', postdata=soap_envelope, timeout=timeout)
+    factory.noisy = False # stop spewing about factory start/stop
+
+    # fix missing port in header (bug in twisted.web.client)
+    if port:
+        factory.headers['host'] = host + ':' + str(port)
+
+    factory.headers['Content-Type'] = 'text/xml' # CXF will complain if this is not set
+    factory.headers['soapaction'] = soap_action
+    factory.headers['Authorization'] = 'bnNpZGVtbzpSaW9QbHVnLUZlc3QyMDExIQ==' # base64.b64encode('nsidemo:RioPlug-Fest2011!')
+
+    if scheme == 'https':
+        reactor.connectSSL(host, port, factory, ctx_factory)
+    else:
+        reactor.connectTCP(host, port, factory)
+
+    return factory.deferred, factory
+
+
+
 class FileTransport(Transport):
     """
     File-only transport to plug into SUDS.
@@ -61,7 +91,7 @@ class FileTransport(Transport):
 
 class TwistedSUDSClient:
 
-    def __init__(self, wsdl, timeout=DEFAULT_TIMEOUT):
+    def __init__(self, wsdl, timeout=DEFAULT_TIMEOUT, ctx_factory=None):
 
         self.options = Options()
         self.options.transport = FileTransport()
@@ -72,6 +102,7 @@ class TwistedSUDSClient:
         self.type_factory = Factory(self.wsdl)
 
         self.timeout = timeout
+        self.ctx_factory = ctx_factory
 
 
     def createType(self, type_name):
@@ -107,7 +138,7 @@ class TwistedSUDSClient:
         log.msg('SOAP Dispatch: URL: %s. Action: %s. Length %s' % (url, short_action, len(soap_envelope)), system='TwistedSUDSClient', debug=True)
 
         # dispatch
-        d, factory = self._httpRequest(url, soap_action, soap_envelope)
+        d, factory = _httpRequest(url, soap_action, soap_envelope, timeout=self.timeout, ctx_factory=self.ctx_factory)
         d.addCallback(self._parseResponse, factory, method, short_action)
         d.addErrback(invokeError, url, soap_action)
         return d
@@ -124,36 +155,6 @@ class TwistedSUDSClient:
         # print port.methods.keys()
         method = port.methods[method_name]
         return method
-
-
-    def _httpRequest(self, url, soap_action, soap_envelope):
-        # copied from twisted.web.client in order to get access to the
-        # factory (which contains response codes, headers, etc)
-
-        if type(url) is not str:
-            e = ValueError('URL must be string, not %s' % type(url))
-            return defer.fail(e), None
-
-        scheme, host, port, _ = twclient._parse(url)
-
-        factory = twclient.HTTPClientFactory(url, method='POST', postdata=soap_envelope, timeout=self.timeout)
-        factory.noisy = False # stop spewing about factory start/stop
-
-        # fix missing port in header (bug in twisted.web.client)
-        if port:
-            factory.headers['host'] = host + ':' + str(port)
-
-        factory.headers['Content-Type'] = 'text/xml' # CXF will complain if this is not set
-        factory.headers['soapaction'] = soap_action
-        factory.headers['Authorization'] = 'bnNpZGVtbzpSaW9QbHVnLUZlc3QyMDExIQ==' # base64.b64encode('nsidemo:RioPlug-Fest2011!')
-
-        if scheme == 'https':
-            raise NotImplementedError('https currently not supported')
-            reactor.connectSSL(host, port, factory, ctxFactory)
-        else:
-            reactor.connectTCP(host, port, factory)
-
-        return factory.deferred, factory
 
 
     def _parseResponse(self, response, factory, method, short_action):
