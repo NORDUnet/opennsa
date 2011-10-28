@@ -174,6 +174,10 @@ class ServiceParameters:
         self.bandwidth = bandwidth or BandwidthParameters()
 
 
+    def subConnectionClone(self, source_stp, dest_stp):
+        return ServiceParameters(self.start_time, self.end_time, source_stp, dest_stp, None, self.directionality, self.bandwidth)
+
+
     def protoSP(self):
         return { 'start_time' : self.start_time,
                  'end_time'   : self.end_time,
