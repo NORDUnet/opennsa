@@ -30,6 +30,17 @@ Requirements:
 These should be included in the package system in most recent Linux distributions.
 
 
+Command line tool:
+
+Start test service:
+twistd -noy opennsa.tac
+
+Make a reservation:
+./onsa reserve -u http://localhost:9080/NSI/services/ConnectionService -p OpenNSA-HTJClient -r Aruba -s Aruba:A1 -d Aruba:A4
+
+Do a ./onsa --help for more information.
+
+
 License: 3-clause BSD. See LICENSE for more details.
 
 Developer contact: htj <at> nordu.net

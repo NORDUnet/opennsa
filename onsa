@@ -1,0 +1,86 @@
+#!/usr/bin/env python
+
+import os
+import sys
+
+from twisted.python import log, usage
+from twisted.internet import reactor, defer
+
+from opennsa.cli import parser, commands
+
+
+class SimpleObserver(log.FileLogObserver):
+
+    debug = False
+
+    def emit(self, eventDict):
+        if 'debug' in eventDict:
+            if eventDict['debug'] and self.debug:
+                pass # want debug
+            else:
+                return # do not want debug
+
+        text = log.textFromEventDict(eventDict)
+        if text is None:
+            return
+        text += "\n"
+        self.write(text)
+        self.flush()
+
+
+
+def doMain():
+    config = parser.Options()
+    try:
+        config.parseOptions()
+    except usage.UsageError, errortext:
+        print '%s: %s' % (sys.argv[0], errortext)
+        print '%s: Try --help for usage details.' % (sys.argv[0])
+        return
+
+    observer = SimpleObserver(sys.stdout)
+    log.startLoggingWithObserver(observer.emit)
+
+    if config['verbose']:
+        observer.debug = True
+
+    wsdl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'wsdl')
+
+    if config.subCommand == 'reserve':
+        return commands.reserve(wsdl_dir,
+                                config.subOptions['service-url'],
+                                config.subOptions['provider'],
+                                config.subOptions['requester'],
+                                config.subOptions['source-stp'],
+                                config.subOptions['dest-stp'])
+
+    elif config.subCommand:
+        print 'Unknown command: %s, should not happen' % config.subCommand
+        print 'Cowardly bailing out'
+        return
+
+    else:
+        print "No subcommand specified"
+        print '%s: Try --help for usage details.' % (sys.argv[0])
+        return
+
+
+
+def main():
+
+    def printError(error):
+        if error.type == SystemExit:
+            return
+        #print "Error: %s" % error.value
+        log.err(error)
+
+    d = defer.maybeDeferred(doMain)
+    d.addErrback(printError)
+    d.addBoth(lambda _ : reactor.stop())
+    return d
+
+
+if __name__ == '__main__':
+    reactor.callWhenRunning(main)
+    reactor.run()
+
