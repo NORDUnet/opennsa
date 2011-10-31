@@ -9,14 +9,14 @@ from opennsa import setup, logging
 from opennsa.backends import argia
 
 
-DEBUG = True
+DEBUG = False
 
-HOST = 'localhost'
+HOST = 'nsa.badlab.crc.ca'
 PORT = 9080
 
-TOPOFILE = 'Rio-Inter-Domain-Topo-Ring-v1.1h.owl'
+TOPOFILE = 'FIA-Topo-v1.4c-starlight.owl'
 WSDL_DIR = os.path.join(os.getcwd(), 'wsdl')
-NETWORK_NAME = 'Aruba'
+NETWORK_NAME = 'starlight.ets'
 
 
 backend = argia.ArgiaBackend()
