@@ -27,8 +27,8 @@ from twisted.conch.ssh import common, transport, keys, userauth, connection, cha
 
 class ClientTransport(transport.SSHClientTransport):
 
-    def __init__(self, host_fingerprint):
-        self.host_fingerprint
+    def __init__(self): #, host_fingerprint):
+        self.host_fingerprint = JUNOS_HOST_FINGERPRINT
 
     def verifyHostKey(self, public_key, fingerprint):
         if fingerprint != self.host_fingerprint:
