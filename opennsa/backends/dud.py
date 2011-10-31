@@ -111,7 +111,7 @@ class DUDConnection:
             self.state.switchState(state.RESERVING)
             self.state.switchState(state.RESERVED)
         except error.StateTransitionError:
-            return defer.fail(error.ReservationError('Cannot reserve connection in state %s' % self.state()))
+            return defer.fail(error.ReserveError('Cannot reserve connection in state %s' % self.state()))
         # need to schedule transition to SCHEDULED
         return defer.succeed(self)
 
