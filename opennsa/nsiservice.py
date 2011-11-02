@@ -52,28 +52,29 @@ class NSIService:
             return conn
 
 
+    def setupSubConnection(self, source_ep, dest_ep, conn, service_parameters):
+
+        assert source_ep.network == dest_ep.network, 'Source and destination network differ in sub-connection'
+
+        sub_sps = service_parameters.subConnectionClone(source_ep, dest_ep)
+
+        # should check for local network
+        if source_ep.network == self.network:
+            assert conn.local_connection is None, 'Cannot have multiple local sub-connection in connection'
+            conn.local_connection = self.backend.createConnection(source_ep.nrmPort(), dest_ep.nrmPort(), sub_sps)
+
+        else:
+            sub_conn_id = 'urn:uuid:' + str(uuid.uuid1())
+            # FIXME should be setup with NSA context, not network
+            sub_conn = connection.SubConnection(conn, sub_conn_id, source_ep.network, source_ep, dest_ep, sub_sps, proxy=self.proxy)
+            conn.sub_connections.append(sub_conn)
+
+        return conn
+
+
     # command functionality
 
     def reserve(self, requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters):
-
-        def setupSubConnection(source_ep, dest_ep, conn, service_parameters):
-
-            assert source_ep.network == dest_ep.network, 'Source and destination network differ in sub-connection'
-
-            sub_sps = service_parameters.subConnectionClone(source_ep, dest_ep)
-
-            # should check for local network
-            if source_ep.network == self.network:
-                assert conn.local_connection is None, 'Cannot have multiple local sub-connection in connection'
-                conn.local_connection = self.backend.createConnection(source_ep.nrmPort(), dest_ep.nrmPort(), sub_sps)
-
-            else:
-                sub_conn_id = 'urn:uuid:' + str(uuid.uuid1())
-                # FIXME should be setup with NSA context, not network
-                sub_conn = connection.SubConnection(conn, sub_conn_id, source_ep.network, source_ep, dest_ep, sub_sps, proxy=self.proxy)
-                conn.sub_connections.append(sub_conn)
-
-            return conn
 
         # --
 
@@ -101,7 +102,7 @@ class NSIService:
                 # we need to resolve this from our topology in order to get any local configuration
                 source_ep = self.topology.getEndpoint(self.network, source_stp.endpoint)
                 dest_ep   = self.topology.getEndpoint(self.network, dest_stp.endpoint)
-                setupSubConnection(source_ep, dest_ep, conn, service_parameters)
+                self.setupSubConnection(source_ep, dest_ep, conn, service_parameters)
 
         # This code is for chaining requests and is currently not used, but might be needed sometime in the future
         # Once we get proper a topology service, some chaining will be necessary.
@@ -149,10 +150,10 @@ class NSIService:
                 prev_source_stp = selected_path.source_stp
 
                 for stp_pair in selected_path.endpoint_pairs:
-                    setupSubConnection(prev_source_stp, stp_pair.stp1, conn, service_parameters)
+                    self.setupSubConnection(prev_source_stp, stp_pair.stp1, conn, service_parameters)
                     prev_source_stp = stp_pair.stp2
                 # last hop
-                setupSubConnection(prev_source_stp, selected_path.dest_stp, conn, service_parameters)
+                self.setupSubConnection(prev_source_stp, selected_path.dest_stp, conn, service_parameters)
 
         except Exception, e:
             log.msg('Error setting up connection: %s' % str(e), system=LOG_SYSTEM)
