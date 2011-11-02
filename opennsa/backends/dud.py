@@ -13,6 +13,7 @@ from twisted.internet import reactor, defer, task
 from zope.interface import implements
 
 from opennsa import nsa, error, state, interface as nsainterface
+from opennsa.backends.common import calendar as reservationcalendar
 
 
 
@@ -20,55 +21,24 @@ class DUDNSIBackend:
 
     implements(nsainterface.NSIBackendInterface)
 
-    def __init__(self, network_name=None):
+    def __init__(self, network_name):
         self.network_name = network_name
+        self.calendar = reservationcalendar.ReservationCalendar()
         self.connections = []
 
 
     def createConnection(self, source_port, dest_port, service_parameters):
 
-        self._checkReservation(source_port, dest_port, service_parameters.start_time, service_parameters.end_time)
-        ac = DUDConnection(source_port, dest_port, service_parameters, self.network_name)
+        # probably need a short hand for this
+        self.calendar.checkReservation(source_port, service_parameters.start_time, service_parameters.end_time)
+        self.calendar.checkReservation(dest_port  , service_parameters.start_time, service_parameters.end_time)
+
+        self.calendar.addConnection(source_port, service_parameters.start_time, service_parameters.end_time)
+        self.calendar.addConnection(dest_port  , service_parameters.start_time, service_parameters.end_time)
+
+        ac = DUDConnection(source_port, dest_port, service_parameters, self.network_name, self.calendar)
         self.connections.append(ac)
         return ac
-
-
-    def _checkReservation(self, source_port, dest_port, res_start, res_end):
-        # check that ports are available in the specified schedule
-        if res_start in [ None, '' ] or res_end in [ None, '' ]:
-            raise error.InvalidRequestError('Reservation must specify start and end time (was either None or '')')
-
-        # sanity checks
-        if res_start > res_end:
-            raise error.InvalidRequestError('Refusing to make reservation with reverse duration')
-
-        if res_start < datetime.datetime.utcnow():
-            raise error.InvalidRequestError('Refusing to make reservation with start time in the past')
-
-        if res_start > datetime.datetime(2025, 1, 1):
-            raise error.InvalidRequestError('Refusing to make reservation with start time after 2025')
-
-        # port temporal availability
-        def portOverlap(res1_start_time, res1_end_time, res2_start_time, res2_end_time):
-            if res1_start_time >= res2_start_time and res1_start_time <= res2_end_time:
-                return True
-            if res1_start_time <= res2_start_time and res1_start_time <= res2_end_time:
-                return True
-            return False
-
-        for cn in self.connections:
-            if cn.state() == state.TERMINATED:
-                continue # skip connection if terminated - is not taking resources (need some periodic cleanup)
-            csp = cn.service_parameters
-            if source_port in [ cn.source_port, cn.dest_port ]:
-                if portOverlap(csp.start_time, csp.end_time, res_start, res_end):
-                    raise error.InvalidRequestError('Port %s not available in specified time span' % source_port)
-
-            if dest_port == [ cn.source_port, cn.dest_port ]:
-                if portOverlap(csp.start_time, csp.end_time, res_start, res_end):
-                    raise error.InvalidRequestError('Port %s not available in specified time span' % dest_port)
-
-        # all good
 
 
 
@@ -82,11 +52,12 @@ def deferTaskFailed(err):
 
 class DUDConnection:
 
-    def __init__(self, source_port, dest_port, service_parameters, network_name=None):
+    def __init__(self, source_port, dest_port, service_parameters, network_name, calendar):
         self.source_port = source_port
         self.dest_port  = dest_port
         self.service_parameters = service_parameters
         self.network_name = network_name
+        self.calendar = calendar
 
         self.state = state.ConnectionState()
         self.auto_transition_deferred = None
@@ -169,7 +140,11 @@ class DUDConnection:
     def terminate(self):
 
         log.msg('TERMINATE. CID : %s' % id(self), system='DUDBackend Network %s' % self.network_name)
+
         self.deSchedule()
+        self.calendar.removeConnection(self.source_port, self.service_parameters.start_time, self.service_parameters.end_time)
+        self.calendar.removeConnection(self.dest_port  , self.service_parameters.start_time, self.service_parameters.end_time)
+
         self.state.switchState(state.TERMINATED)
         return defer.succeed(self)
 
