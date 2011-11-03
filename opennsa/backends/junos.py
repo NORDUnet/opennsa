@@ -26,6 +26,8 @@ OpenNSA JunOS backend.
 # Basically stuff should end with [edit] :-)
 #
 
+import StringIO
+
 from twisted.internet import defer, protocol, reactor, endpoints
 from twisted.conch import error
 from twisted.conch.ssh import common, transport, keys, userauth, connection, channel
@@ -50,13 +52,11 @@ COMMAND_DELETE_CONNECTIONS  = 'delete protocols connections interface-switch ps-
 
 
 
-
-
 class SSHClientTransport(transport.SSHClientTransport):
 
     def __init__(self, fingerprints=None):
         self.fingerprints = fingerprints or []
-        self.client_connection = None
+        self.secure_defer = defer.Deferred()
 
 
     def verifyHostKey(self, public_key, fingerprint):
@@ -67,9 +67,7 @@ class SSHClientTransport(transport.SSHClientTransport):
 
 
     def connectionSecure(self):
-        self.client_connection = ClientConnection()
-        self.requestService(ClientUserAuth(USERNAME, self.client_connection, PUBLIC_KEY_PATH, PRIVATE_KEY_PATH))
-
+        self.secure_defer.callback(self)
 
 
 
@@ -87,7 +85,6 @@ class SSHClientFactory(protocol.ClientFactory):
         p = self.protocol(self.fingerprints)
         p.factory = self
         return p
-
 
 
 
@@ -109,106 +106,144 @@ class ClientUserAuth(userauth.SSHUserAuthClient):
 
 
 
-class ClientConnection(connection.SSHConnection):
+class SSHConnection(connection.SSHConnection):
+
+    def __init__(self):
+        connection.SSHConnection.__init__(self)
+        self.service_started = defer.Deferred()
 
     def serviceStarted(self):
-        print "SERVICE START"
-        self.openChannel(ConfigureChannel(conn = self))
+        self.service_started.callback(self)
 
 
 
-class ConfigureChannel(channel.SSHChannel):
+class SSHChannel(channel.SSHChannel):
 
     name = 'session'
 
-    def channelOpen(self, data):
-        #d = self.conn.sendRequest(self, 'exec', common.NS('configure'), wantReply = 1)
-        pass # don't do anything now, wait until we get a request
-        return self.ping()
+    def __init__(self, localWindow = 0, localMaxPacket = 0, remoteWindow = 0, remoteMaxPacket = 0, conn = None, data=None, avatar = None):
+        channel.SSHChannel.__init__(self, localWindow = 0, localMaxPacket = 0, remoteWindow = 0, remoteMaxPacket = 0, conn = None, data=None, avatar = None)
+        self.channel_open = defer.Deferred()
+        self.data = None
 
+    def channelOpen(self, data):
+        self.data = StringIO.StringIO()
+        self.channel_open.callback(self)
+        #print "CHANNEL OPEN"
 
     def ping(self):
+        #print "PING"
         d = self.conn.sendRequest(self, 'exec', common.NS('ping orval.grid.aau.dk count 2'), wantReply = 1)
         d.addCallback(self.sendEOF)
         d.addCallback(self.closeIt)
         return d
-#        d.addCallback(self._cbSendRequest)
-#        self.catData = ''
 
     def sendEOF(self, passthru):
-        print "# SENDING EOF"
+        #print "# SENDING EOF"
         self.conn.sendEOF(self)
         return passthru
-
 
     def closeIt(self, passthru):
         #self.conn.transport.loseConnection()
         return passthru
 
     def dataReceived(self, data):
-        print "#", data,
+        print "#", len(data)
         #self.catData += data
+        self.data.write(data)
+
+    def eofReceived(self):
+        #print "EOF RECEIVED"
+        self.data.seek(0)
+        print self.data.read()
 
     def closed(self):
-        print "# SSH Connection closed"
-#        print 'We got this from "cat":', self.catData
+        pass
+        #print "# SSH Connection closed"
 
 
 
 
 
+class JunOSCommandSender:
 
+
+    def __init__(self):
+        self.client = None
+        self.proto  = None
+
+
+    def createSSHConnection(self):
+
+        def transportSecure(client, proto):
+            return proto
+
+        def gotProtocol(proto):
+            proto.secure_defer.addCallback(transportSecure, proto)
+            return proto.secure_defer
+
+        # should check if there is an existing protocol in place
+
+        factory = SSHClientFactory( [ JUNOS_HOST_FINGERPRINT ] )
+        point = endpoints.TCP4ClientEndpoint(reactor, JUNOS_HOST, JUNOS_HOST_PORT)
+        d = point.connect(factory)
+        d.addCallback(gotProtocol)
+        return d
+
+
+    def getSSHChannel(self):
+
+        def serviceStarted(connection):
+            channel = SSHChannel(conn = connection)
+            connection.openChannel(channel)
+            return channel.channel_open
+
+        def gotProtocol(proto):
+            ssh_connection = SSHConnection()
+            proto.requestService(ClientUserAuth(USERNAME, ssh_connection, PUBLIC_KEY_PATH, PRIVATE_KEY_PATH))
+            ssh_connection.service_started.addCallback(serviceStarted)
+            return ssh_connection.service_started
+
+        d = self.createSSHConnection()
+        d.addCallback(gotProtocol)
+        return d
+
+
+    def reserve(self, source_port, dest_port, start_time, end_time):
+
+        def gotChannel(channel):
+            d = channel.ping()
+            return d
+
+        d = self.getSSHChannel()
+        d.addCallback(gotChannel)
+        return d
+
+
+# --------
 
 
 class JunOSBackend:
 
     def __init__(self, network_name):
         self.network_name = network_name
-
-
-    def createSSHConnection(self):
-
-        #factory = protocol.ClientFactory()
-        #factory.protocol = ClientTransport
-        #connector = reactor.connectTCP(JUNOS_HOST, JUNOS_HOST_PORT, factory)
-        #print dir(connector)
-        #return factory
-
-        factory = SSHClientFactory( [ JUNOS_HOST_FINGERPRINT ] )
-        point = endpoints.TCP4ClientEndpoint(reactor, JUNOS_HOST, JUNOS_HOST_PORT)
-        d = point.connect(factory)
-        return d
-
-
-    def getSSHChannel(self):
-
-        def gotProtocol(p):
-            print "PROTO", p
-            print "CC", p.client_connection
-
-        d = self.createSSHConnection()
-        d.addCallback(gotProtocol)
-        return d
-#        channel = None
-#        return channel
-#        d.addCallback(gotProtocol)
+        self.command_sender = JunOSCommandSender()
 
 
     def createConnection(self, source_port, dest_port, service_parameters):
 
-        d = self.getSSHChannel()
-        return d
-
+        c = JunOSConnection(source_port, dest_port, service_parameters, self.command_sender)
+        return c
 
 
 
 class JunOSConnection:
 
-    def __init__(self, source_port, dest_port, service_parameters, channel):
+    def __init__(self, source_port, dest_port, service_parameters, command_sender):
         self.source_port = source_port
         self.dest_port = dest_port
-        self.service_parameters
-        self.channel = channel
+        self.service_parameters = service_parameters
+        self.command_sender = command_sender
 
 
     def stps(self):
@@ -216,19 +251,25 @@ class JunOSConnection:
 
 
     def reserve(self):
-        err = NotImplementedError('constructing..')
-        return defer.fail(err)
+
+        #print self.service_parameters
+        d = self.command_sender.reserve(self.source_port, self.dest_port, self.service_parameters.start_time, self.service_parameters.end_time)
+
+        return defer.fail(NotImplementedError('constructing..'))
 
 
     def provision(self):
         err = NotImplementedError('constructing..')
+        return defer.fail(err)
 
 
     def release(self):
         err = NotImplementedError('constructing..')
+        return defer.fail(err)
 
 
     def terminate(self):
         err = NotImplementedError('constructing..')
+        return defer.fail(err)
 
 
