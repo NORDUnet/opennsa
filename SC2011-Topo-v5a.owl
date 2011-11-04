@@ -480,7 +480,9 @@
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#NSA"/>
         <rdfs:label xml:lang="en">netherlight</rdfs:label>
         <managing rdf:resource="urn:ogf:network:nsnetwork:netherlight.ets" />
-        <adminContact rdf:datatype="http://www.w3.org/2001/XMLSchema#string">3.	OpenDRAC (SURFnet) 3.1.	Implementation name: OpenDRAC 3.2.	Proj Manager:  name: John MacAuley email: john.macauley@surfnet.nl phone:  1-613-220-6817 skype: john.macauley 3.3.	Software Developer name: John MacAuley email: john.macauley@surfnet.nl phone:  1-613-220-6817 skype: john.macauley</adminContact>
+        <adminContact rdf:datatype="http://www.w3.org/2001/XMLSchema#string">3.	OpenDRAC (SURFnet) 3.1.	Implementation name: OpenDRAC 3.2.	Proj Manager:  name: John MacAuley email: john.macauley@surfnet.nl phone:  1-613-220-6817 skype: john.macauley 3.3.	Software Developer name: John MacAuley email: john.macauley@surfnet.nl phone:  1-613-220-6817 skype: john.macauley
+        : SC2011 booth# 642
+        </adminContact>
         <csProviderEndpoint rdf:datatype="http://www.w3.org/2001/XMLSchema#string">http://phineas.surfnet.nl:8080/nsi-v1/ConnectionServiceProvider</csProviderEndpoint>
         <rdfs:comment xml:lang="en">Position : [1500,50]</rdfs:comment>
     </owl:NamedIndividual>
@@ -1301,25 +1303,25 @@
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:czechlight.ets:ams-80">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [2800,300]</rdfs:comment>
-        <connectedTo rdf:resource="urn:ogf:network:stp:pionier.ets:pra-80"/>
+        <connectedTo rdf:resource="urn:ogf:network:stp:netherlight.ets:pra-80"/>
     </owl:NamedIndividual>
     <!-- urn:ogf:network:stp:czechlight.ets:ams-81 -->
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:czechlight.ets:ams-81">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [2800,500]</rdfs:comment>
-        <connectedTo rdf:resource="urn:ogf:network:stp:pionier.ets:pra-81"/>
+        <connectedTo rdf:resource="urn:ogf:network:stp:netherlight.ets:pra-81"/>
     </owl:NamedIndividual>
     <!-- urn:ogf:network:stp:czechlight.ets:ams-82 -->
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:czechlight.ets:ams-82">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [2800,700]</rdfs:comment>
-        <connectedTo rdf:resource="urn:ogf:network:stp:pionier.ets:pra-82"/>
+        <connectedTo rdf:resource="urn:ogf:network:stp:netherlight.ets:pra-82"/>
     </owl:NamedIndividual>
     <!-- urn:ogf:network:stp:czechlight.ets:ams-83 -->
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:czechlight.ets:ams-83">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [2800,900]</rdfs:comment>
-        <connectedTo rdf:resource="urn:ogf:network:stp:pionier.ets:pra-83"/>
+        <connectedTo rdf:resource="urn:ogf:network:stp:netherlight.ets:pra-83"/>
     </owl:NamedIndividual>
     
     <!-- urn:ogf:network:nsnetwork:czechlight.ets -->
@@ -1557,7 +1559,9 @@
     <owl:NamedIndividual rdf:about="urn:ogf:network:nsa:uva">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#NSA"/>
         <managing rdf:resource="urn:ogf:network:nsnetwork:uvalight.ets" />
-        <adminContact rdf:datatype="http://www.w3.org/2001/XMLSchema#string">6.	OpenNSA  6.1.	Implementation name: OpenNSA 6.2.	Project manager:  name: Jeroen van der Ham   email: vdham@uva.nl mobile: use skype   skype: just1sand0s  6.3. Engineer: Ralph Koning email: r.koning@uva.nl  skype: ralph-uva-sne	Key software engineer: name: Henrik Thostrup-Jensen email: htj@nordu.net skype: henrik.thostrup.jensen</adminContact>
+        <adminContact rdf:datatype="http://www.w3.org/2001/XMLSchema#string">6.	OpenNSA  6.1.	Implementation name: OpenNSA 6.2.	Project manager:  name: Jeroen van der Ham   email: vdham@uva.nl mobile: use skype   skype: just1sand0s  6.3. Engineer: Ralph Koning email: r.koning@uva.nl  skype: ralph-uva-sne	Key software engineer: name: Henrik Thostrup-Jensen email: htj@nordu.net skype: henrik.thostrup.jensen
+        : SC2011 booth# 642
+        </adminContact>
         <csProviderEndpoint rdf:datatype="http://www.w3.org/2001/XMLSchema#string">http://nsa.uvalight.nl:9080/NSI/services/ConnectionService</csProviderEndpoint>
         <rdfs:comment xml:lang="en">Position : [350,100]</rdfs:comment>
     </owl:NamedIndividual>
