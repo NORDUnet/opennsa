@@ -11,6 +11,17 @@
         - Made sure all NSI networks explicitly defined STPs ps-80 thru ps-81 
             (even though they are not strictly required since they do not form SDPs)
         - Modified some comments
+    v3:  Nov 2, 2011
+        - Added czechlight.ets network
+            (Connected via Netherlight, using the same DRAC csProvider as NL)
+        - added jgnx.ets csProviderEndpoint
+        - modified some comments
+    v4:  Nov 2, 2011
+        - Added ESnet.ets
+            (Connected to StarLight sing USLHCnet link)
+        - Moved USLHCnet link to StarLight and ESnet
+        - Corected STP object in AIST network
+        - Updated POC info for CzechLight
 -->
 <rdf:RDF xmlns="http://www.glif.is/working-groups/tech/dtox#"
      xml:base="http://www.glif.is/working-groups/tech/dtox"
@@ -308,32 +319,7 @@
         <rdfs:comment xml:lang="en">Position : [1100,900]</rdfs:comment>
         <connectedTo rdf:resource="urn:ogf:network:stp:starlight.ets:ams-83"/>
     </owl:NamedIndividual>
-    
-    <!-- urn:ogf:network:stp:netherlight.ets:chi2-80   USLHCnet -->
-        <owl:NamedIndividual rdf:about="urn:ogf:network:stp:netherlight.ets:chi2-80">
-        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
-        <rdfs:comment xml:lang="en">Position : [1100,300]</rdfs:comment>
-        <connectedTo rdf:resource="urn:ogf:network:stp:starlight.ets:ams2-80"/>
-        </owl:NamedIndividual> -->
-    <!-- urn:ogf:network:stp:netherlight.ets:chi2-81   USLHCnet -->
-        <owl:NamedIndividual rdf:about="urn:ogf:network:stp:netherlight.ets:chi2-81">
-        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
-        <rdfs:comment xml:lang="en">Position : [1100,500]</rdfs:comment>
-        <connectedTo rdf:resource="urn:ogf:network:stp:starlight.ets:ams2-81"/>
-        </owl:NamedIndividual> -->
-    <!-- urn:ogf:network:stp:netherlight.ets:chi2-82   USLHCnet -->
-    <owl:NamedIndividual rdf:about="urn:ogf:network:stp:netherlight.ets:chi2-82">
-        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
-        <rdfs:comment xml:lang="en">Position : [1100,700]</rdfs:comment>
-        <connectedTo rdf:resource="urn:ogf:network:stp:starlight.ets:ams2-82"/>
-    </owl:NamedIndividual> 
-    <!-- urn:ogf:network:stp:netherlight.ets:chi2-83   USLHCnet -->
-    <owl:NamedIndividual rdf:about="urn:ogf:network:stp:netherlight.ets:chi2-83">
-        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
-        <rdfs:comment xml:lang="en">Position : [1100,900]</rdfs:comment>
-        <connectedTo rdf:resource="urn:ogf:network:stp:starlight.ets:ams2-83"/>
-    </owl:NamedIndividual>
-    
+ 
     <!-- urn:ogf:network:stp:netherlight.ets:poz-80 -->
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:netherlight.ets:poz-80">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
@@ -359,6 +345,31 @@
         <connectedTo rdf:resource="urn:ogf:network:stp:pionier.ets:ams-83"/>
     </owl:NamedIndividual>
 
+    <!-- urn:ogf:network:stp:netherlight.ets:pra-80 -->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:stp:netherlight.ets:pra-80">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
+        <rdfs:comment xml:lang="en">Position : [1400,300]</rdfs:comment>
+        <connectedTo rdf:resource="urn:ogf:network:stp:czechlight.ets:ams-80"/>
+    </owl:NamedIndividual>
+    <!-- urn:ogf:network:stp:netherlight.ets:pra-81 -->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:stp:netherlight.ets:pra-81">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
+        <rdfs:comment xml:lang="en">Position : [1400,300]</rdfs:comment>
+        <connectedTo rdf:resource="urn:ogf:network:stp:czechlight.ets:ams-81"/>
+    </owl:NamedIndividual>
+    <!-- urn:ogf:network:stp:netherlight.ets:pra-82 -->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:stp:netherlight.ets:pra-82">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
+        <rdfs:comment xml:lang="en">Position : [1400,300]</rdfs:comment>
+        <connectedTo rdf:resource="urn:ogf:network:stp:czechlight.ets:ams-82"/>
+    </owl:NamedIndividual>
+    <!-- urn:ogf:network:stp:netherlight.ets:pra-83 -->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:stp:netherlight.ets:pra-83">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
+        <rdfs:comment xml:lang="en">Position : [1400,300]</rdfs:comment>
+        <connectedTo rdf:resource="urn:ogf:network:stp:czechlight.ets:ams-83"/>
+    </owl:NamedIndividual>
+    
     <!-- urn:ogf:network:nsnetwork:netherlight.ets -->
 
     <owl:NamedIndividual rdf:about="urn:ogf:network:nsnetwork:netherlight.ets">
@@ -373,10 +384,6 @@
         <hasSTP rdf:resource="urn:ogf:network:stp:netherlight.ets:chi-81"/>
         <hasSTP rdf:resource="urn:ogf:network:stp:netherlight.ets:chi-82"/>
         <hasSTP rdf:resource="urn:ogf:network:stp:netherlight.ets:chi-83"/>
-        <hasSTP rdf:resource="urn:ogf:network:stp:netherlight.ets:chi2-80"/>
-        <hasSTP rdf:resource="urn:ogf:network:stp:netherlight.ets:chi2-81"/>
-        <hasSTP rdf:resource="urn:ogf:network:stp:netherlight.ets:chi2-82"/>
-        <hasSTP rdf:resource="urn:ogf:network:stp:netherlight.ets:chi2-83"/>
         <hasSTP rdf:resource="urn:ogf:network:stp:netherlight.ets:cph-80"/>
         <hasSTP rdf:resource="urn:ogf:network:stp:netherlight.ets:cph-81"/>
         <hasSTP rdf:resource="urn:ogf:network:stp:netherlight.ets:cph-82"/>
@@ -385,6 +392,10 @@
         <hasSTP rdf:resource="urn:ogf:network:stp:netherlight.ets:poz-81"/>
         <hasSTP rdf:resource="urn:ogf:network:stp:netherlight.ets:poz-82"/>
         <hasSTP rdf:resource="urn:ogf:network:stp:netherlight.ets:poz-83"/>
+        <hasSTP rdf:resource="urn:ogf:network:stp:netherlight.ets:pra-80"/>
+        <hasSTP rdf:resource="urn:ogf:network:stp:netherlight.ets:pra-81"/>
+        <hasSTP rdf:resource="urn:ogf:network:stp:netherlight.ets:pra-82"/>
+        <hasSTP rdf:resource="urn:ogf:network:stp:netherlight.ets:pra-83"/>
         <managedBy rdf:resource="urn:ogf:network:nsa:netherlight"/>
         <locatedAt rdf:resource="urn:ogf:network:nsnetwork:netherlight.ets:location"/>
     </owl:NamedIndividual>
@@ -657,29 +668,29 @@
         <connectedTo rdf:resource="urn:ogf:network:stp:netherlight.ets:chi-83"/>
     </owl:NamedIndividual>
     
-    <!-- urn:ogf:network:stp:starlight.ets:ams2-80   USLHCnet -->
-    <owl:NamedIndividual rdf:about="urn:ogf:network:stp:starlight.ets:ams2-80">
+    <!-- urn:ogf:network:stp:starlight.ets:esn-80   USLHCnet -->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:stp:starlight.ets:esn-80">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [2350,2900]</rdfs:comment>
-        <connectedTo rdf:resource="urn:ogf:network:stp:netherlight.ets:chi2-80"/>
+        <connectedTo rdf:resource="urn:ogf:network:stp:esnet.ets:chi-80"/>
     </owl:NamedIndividual>   
-    <!-- urn:ogf:network:stp:starlight.ets:ams2-81   USLHCnet -->
-    <owl:NamedIndividual rdf:about="urn:ogf:network:stp:starlight.ets:ams2-81">
+    <!-- urn:ogf:network:stp:starlight.ets:esn-81   USLHCnet -->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:stp:starlight.ets:esn-81">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [2350,2900]</rdfs:comment>
-        <connectedTo rdf:resource="urn:ogf:network:stp:netherlight.ets:chi2-81"/>
+        <connectedTo rdf:resource="urn:ogf:network:stp:esnet.ets:chi-81"/>
     </owl:NamedIndividual>   
-    <!-- urn:ogf:network:stp:starlight.ets:ams2-82   USLHCnet -->
-    <owl:NamedIndividual rdf:about="urn:ogf:network:stp:starlight.ets:ams2-82">
+    <!-- urn:ogf:network:stp:starlight.ets:esn-82   USLHCnet -->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:stp:starlight.ets:esn-82">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [2350,2900]</rdfs:comment>
-        <connectedTo rdf:resource="urn:ogf:network:stp:netherlight.ets:chi2-82"/>
+        <connectedTo rdf:resource="urn:ogf:network:stp:esnet.ets:chi-82"/>
     </owl:NamedIndividual>   
-    <!-- urn:ogf:network:stp:starlight.ets:ams2-83   USLHCnet -->
-    <owl:NamedIndividual rdf:about="urn:ogf:network:stp:starlight.ets:ams2-83">
+    <!-- urn:ogf:network:stp:starlight.ets:esn-83   USLHCnet -->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:stp:starlight.ets:esn-83">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [2350,2900]</rdfs:comment>
-        <connectedTo rdf:resource="urn:ogf:network:stp:netherlight.ets:chi-83"/>
+        <connectedTo rdf:resource="urn:ogf:network:stp:esnet.ets:chi-83"/>
     </owl:NamedIndividual>
     
     <!-- urn:ogf:network:stp:starlight.ets:tok-80  -->
@@ -746,10 +757,10 @@
         <hasSTP rdf:resource="urn:ogf:network:stp:starlight.ets:ams-81"/>
         <hasSTP rdf:resource="urn:ogf:network:stp:starlight.ets:ams-82"/>
         <hasSTP rdf:resource="urn:ogf:network:stp:starlight.ets:ams-83"/>     
-        <hasSTP rdf:resource="urn:ogf:network:stp:starlight.ets:ams2-80"/>
-        <hasSTP rdf:resource="urn:ogf:network:stp:starlight.ets:ams2-81"/>
-        <hasSTP rdf:resource="urn:ogf:network:stp:starlight.ets:ams2-82"/>
-        <hasSTP rdf:resource="urn:ogf:network:stp:starlight.ets:ams2-83"/>
+        <hasSTP rdf:resource="urn:ogf:network:stp:starlight.ets:esn-80"/>
+        <hasSTP rdf:resource="urn:ogf:network:stp:starlight.ets:esn-81"/>
+        <hasSTP rdf:resource="urn:ogf:network:stp:starlight.ets:esn-82"/>
+        <hasSTP rdf:resource="urn:ogf:network:stp:starlight.ets:esn-83"/>
         <hasSTP rdf:resource="urn:ogf:network:stp:starlight.ets:tok-80"/>
         <hasSTP rdf:resource="urn:ogf:network:stp:starlight.ets:tok-81"/>
         <hasSTP rdf:resource="urn:ogf:network:stp:starlight.ets:tok-82"/>
@@ -805,11 +816,11 @@
         <rdfs:comment xml:lang="en">Position : [50,4900]</rdfs:comment>
     </owl:NamedIndividual>
     
-    <!-- urn:ogf:network:stp:aist.ets:tok-80 modified for pionier adjacency -->
+    <!-- urn:ogf:network:stp:aist.ets:tok-80 -->
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:aist.ets:tok-80">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [350,4300]</rdfs:comment>
-        <connectedTo rdf:resource="urn:ogf:network:stp:pionier.ets:ams-80"/>
+        <connectedTo rdf:resource="urn:ogf:network:stp:jgnx.ets:tsu-80"/>
     </owl:NamedIndividual>
     <!-- urn:ogf:network:stp:aist.ets:tok-81 -->
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:aist.ets:tok-81">
@@ -1175,9 +1186,185 @@
     <owl:NamedIndividual rdf:about="urn:ogf:network:nsa:jgnx">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#NSA"/>
         <managing rdf:resource="urn:ogf:network:nsnetwork:jgnx.ets" />
-        <adminContact rdf:datatype="http://www.w3.org/2001/XMLSchema#string">5.	G-Lambda/KDDILabs (KDDI Labs) 5.1.	Implementation Name:   G-lambda/KDDILabs  5.2.	Project manager name: Jin Tanaka  email: tanaka@ote.kddi.com  mobile:  81-nnnnnnn  skype: jintanapan  5.3.	Key software engineer  name: Takahiro Miyamoto  email: tk-miyamoto@kddilabs.jp mobile:  81-90-1966-5153  skype: takahiro.miyamoto </adminContact>
-        <csProviderEndpoint rdf:datatype="http://www.w3.org/2001/XMLSchema#string">dummy</csProviderEndpoint>
+        <adminContact rdf:datatype="http://www.w3.org/2001/XMLSchema#string">5.	G-Lambda/KDDILabs (KDDI Labs) 5.1.	Implementation Name:   G-lambda/KDDILabs  5.2.	Project manager name: Jin Tanaka  email: tanaka@ote.kddi.com  mobile: +81-80-5062-9352   skype: jintanapan  5.3.	Key software engineer  name: Takahiro Miyamoto  email: tk-miyamoto@kddilabs.jp mobile:  81-90-1966-5153  skype: takahiro.miyamoto </adminContact>
+        <csProviderEndpoint rdf:datatype="http://www.w3.org/2001/XMLSchema#string">http://202.180.38.130:8080/connectionprovider</csProviderEndpoint>
         <rdfs:comment xml:lang="en">Position : [700,2100]</rdfs:comment>
+    </owl:NamedIndividual>
+    
+
+<!-- *** CzechLight -->
+    
+    
+    <!-- urn:ogf:network:stp:czechlight.ets:ps-80 -->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:stp:czechlight.ets:ps-80">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
+        <rdfs:comment xml:lang="en">Position : [2200,300]</rdfs:comment>
+    </owl:NamedIndividual>
+    <!-- urn:ogf:network:stp:czechlight.ets:ps-81 -->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:stp:czechlight.ets:ps-81">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
+        <rdfs:comment xml:lang="en">Position : [2200,500]</rdfs:comment>
+    </owl:NamedIndividual>
+    <!-- urn:ogf:network:stp:czechlight.ets:ps-82 -->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:stp:czechlight.ets:ps-82">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
+        <rdfs:comment xml:lang="en">Position : [2200,700]</rdfs:comment>
+    </owl:NamedIndividual>
+    <!-- urn:ogf:network:stp:czechlight.ets:ps-83 -->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:stp:czechlight.ets:ps-83">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
+        <rdfs:comment xml:lang="en">Position : [2200,900]</rdfs:comment>
+    </owl:NamedIndividual>
+    
+    <!-- urn:ogf:network:stp:czechlight.ets:ams-80 -->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:stp:czechlight.ets:ams-80">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
+        <rdfs:comment xml:lang="en">Position : [2800,300]</rdfs:comment>
+        <connectedTo rdf:resource="urn:ogf:network:stp:pionier.ets:pra-80"/>
+    </owl:NamedIndividual>
+    <!-- urn:ogf:network:stp:czechlight.ets:ams-81 -->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:stp:czechlight.ets:ams-81">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
+        <rdfs:comment xml:lang="en">Position : [2800,500]</rdfs:comment>
+        <connectedTo rdf:resource="urn:ogf:network:stp:pionier.ets:pra-81"/>
+    </owl:NamedIndividual>
+    <!-- urn:ogf:network:stp:czechlight.ets:ams-82 -->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:stp:czechlight.ets:ams-82">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
+        <rdfs:comment xml:lang="en">Position : [2800,700]</rdfs:comment>
+        <connectedTo rdf:resource="urn:ogf:network:stp:pionier.ets:pra-82"/>
+    </owl:NamedIndividual>
+    <!-- urn:ogf:network:stp:czechlight.ets:ams-83 -->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:stp:czechlight.ets:ams-83">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
+        <rdfs:comment xml:lang="en">Position : [2800,900]</rdfs:comment>
+        <connectedTo rdf:resource="urn:ogf:network:stp:pionier.ets:pra-83"/>
+    </owl:NamedIndividual>
+    
+    <!-- urn:ogf:network:nsnetwork:czechlight.ets -->
+    
+    <owl:NamedIndividual rdf:about="urn:ogf:network:nsnetwork:czechlight.ets">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#NSNetwork"/>
+        <rdfs:label xml:lang="en">czechlight.ets</rdfs:label>
+        <rdfs:comment xml:lang="en">Position : [2500,50]</rdfs:comment>
+        <hasSTP rdf:resource="urn:ogf:network:stp:czechlight.ets:ps-80"/>
+        <hasSTP rdf:resource="urn:ogf:network:stp:czechlight.ets:ps-81"/>
+        <hasSTP rdf:resource="urn:ogf:network:stp:czechlight.ets:ps-82"/>
+        <hasSTP rdf:resource="urn:ogf:network:stp:czechlight.ets:ps-83"/>
+        <hasSTP rdf:resource="urn:ogf:network:stp:czechlight.ets:ams-80"/>
+        <hasSTP rdf:resource="urn:ogf:network:stp:czechlight.ets:ams-81"/>
+        <hasSTP rdf:resource="urn:ogf:network:stp:czechlight.ets:ams-82"/>
+        <hasSTP rdf:resource="urn:ogf:network:stp:czechlight.ets:ams-83"/>
+        <managedBy rdf:resource="urn:ogf:network:nsa:czechlight"/>
+        <locatedAt rdf:resource="urn:ogf:network:nsnetwork:czechlight.ets:location"/>
+    </owl:NamedIndividual>
+    
+    <!-- urn:ogf:network:nsnetwork:czechlight.ets:location  Prague, CZ -->
+    
+    <owl:NamedIndividual rdf:about="urn:ogf:network:nsnetwork:czechlight.ets:location">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#Location"/>
+        <lat rdf:datatype="http://www.w3.org/2001/XMLSchema#float">50.088</lat>
+        <long rdf:datatype="http://www.w3.org/2001/XMLSchema#float">14.421</long>
+        <rdfs:comment xml:lang="en">Position : [2950,100]</rdfs:comment>
+    </owl:NamedIndividual>
+    
+    <!-- urn:ogf:network:nsa:czechlight -->
+    
+    <owl:NamedIndividual rdf:about="urn:ogf:network:nsa:czechlight">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#NSA"/>
+        <managing rdf:resource="urn:ogf:network:nsnetwork:czechlight.ets" />
+        <adminContact rdf:datatype="http://www.w3.org/2001/XMLSchema#string">3.	OpenDRAC (SURFnet) 3.1.	Implementation name: OpenDRAC 3.2.	Proj Manager:  name: Michal Altmann  email: m.altmann@cesnet.cz phone: +420775603522   skype: michal_altmann 3.3.	Software Developer name: John MacAuley email: john.macauley@surfnet.nl phone:  1-613-220-6817 skype: john.macauley</adminContact>
+        <csProviderEndpoint rdf:datatype="http://www.w3.org/2001/XMLSchema#string">http://phineas.surfnet.nl:8080/nsi-v1/ConnectionServiceProvider</csProviderEndpoint>
+        <rdfs:comment xml:lang="en">Position : [2800,100]</rdfs:comment>
+    </owl:NamedIndividual>
+    
+ 
+    <!-- *** ESnet -->
+    
+    
+    <!-- urn:ogf:network:stp:esnet.ets:ps-80 -->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:stp:esnet.ets:ps-80">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
+        <rdfs:comment xml:lang="en">Position : [2200,300]</rdfs:comment>
+    </owl:NamedIndividual>
+    <!-- urn:ogf:network:stp:esnet.ets:ps-81 -->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:stp:esnet.ets:ps-81">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
+        <rdfs:comment xml:lang="en">Position : [2200,500]</rdfs:comment>
+    </owl:NamedIndividual>
+    <!-- urn:ogf:network:stp:esnet.ets:ps-82 -->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:stp:esnet.ets:ps-82">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
+        <rdfs:comment xml:lang="en">Position : [2200,700]</rdfs:comment>
+    </owl:NamedIndividual>
+    <!-- urn:ogf:network:stp:esnet.ets:ps-83 -->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:stp:esnet.ets:ps-83">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
+        <rdfs:comment xml:lang="en">Position : [2200,900]</rdfs:comment>
+    </owl:NamedIndividual>
+    
+    <!-- urn:ogf:network:stp:esnet.ets:chi-80 -->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:stp:esnet.ets:chi-80">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
+        <rdfs:comment xml:lang="en">Position : [2800,300]</rdfs:comment>
+        <connectedTo rdf:resource="urn:ogf:network:stp:starlight.ets:esn-80"/>
+    </owl:NamedIndividual>
+    <!-- urn:ogf:network:stp:esnet.ets:chi-81 -->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:stp:esnet.ets:chi-81">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
+        <rdfs:comment xml:lang="en">Position : [2800,500]</rdfs:comment>
+        <connectedTo rdf:resource="urn:ogf:network:stp:starlight.ets:esn-81"/>
+    </owl:NamedIndividual>
+    <!-- urn:ogf:network:stp:esnet.ets:chi-82 -->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:stp:esnet.ets:chi-82">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
+        <rdfs:comment xml:lang="en">Position : [2800,700]</rdfs:comment>
+        <connectedTo rdf:resource="urn:ogf:network:stp:starlight.ets:esn-82"/>
+    </owl:NamedIndividual>
+    <!-- urn:ogf:network:stp:esnet.ets:chi-83 -->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:stp:esnet.ets:chi-83">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
+        <rdfs:comment xml:lang="en">Position : [2800,900]</rdfs:comment>
+        <connectedTo rdf:resource="urn:ogf:network:stp:starlight.ets:esn-83"/>
+    </owl:NamedIndividual>
+    
+    <!-- urn:ogf:network:nsnetwork:esnet.ets -->
+    
+    <owl:NamedIndividual rdf:about="urn:ogf:network:nsnetwork:esnet.ets">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#NSNetwork"/>
+        <rdfs:label xml:lang="en">esnet.ets</rdfs:label>
+        <rdfs:comment xml:lang="en">Position : [2500,50]</rdfs:comment>
+        <hasSTP rdf:resource="urn:ogf:network:stp:esnet.ets:ps-80"/>
+        <hasSTP rdf:resource="urn:ogf:network:stp:esnet.ets:ps-81"/>
+        <hasSTP rdf:resource="urn:ogf:network:stp:esnet.ets:ps-82"/>
+        <hasSTP rdf:resource="urn:ogf:network:stp:esnet.ets:ps-83"/>
+        <hasSTP rdf:resource="urn:ogf:network:stp:esnet.ets:chi-80"/>
+        <hasSTP rdf:resource="urn:ogf:network:stp:esnet.ets:chi-81"/>
+        <hasSTP rdf:resource="urn:ogf:network:stp:esnet.ets:chi-82"/>
+        <hasSTP rdf:resource="urn:ogf:network:stp:esnet.ets:chi-83"/>
+        <managedBy rdf:resource="urn:ogf:network:nsa:esnet"/>
+        <locatedAt rdf:resource="urn:ogf:network:nsnetwork:esnet.ets:location"/>
+    </owl:NamedIndividual>
+    
+    <!-- urn:ogf:network:nsnetwork:esnet.ets:location  ???, US -->
+    
+    <owl:NamedIndividual rdf:about="urn:ogf:network:nsnetwork:esnet.ets:location">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#Location"/>
+        <lat rdf:datatype="http://www.w3.org/2001/XMLSchema#float">41.947908</lat>
+        <long rdf:datatype="http://www.w3.org/2001/XMLSchema#float">-87.655789</long>
+        <rdfs:comment xml:lang="en">Position : [2950,100]</rdfs:comment>
+    </owl:NamedIndividual>
+    
+    <!-- urn:ogf:network:nsa:esnet -->
+    
+    <owl:NamedIndividual rdf:about="urn:ogf:network:nsa:esnet">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#NSA"/>
+        <managing rdf:resource="urn:ogf:network:nsnetwork:esnet.ets" />
+        <adminContact rdf:datatype="http://www.w3.org/2001/XMLSchema#string">
+            7.1.	Implementation name: OSCARS  7.2.	Project Manager: Name:  Inder Monga Email: imonga@es.net 7.3.	Software development engineer: Name: Evangelos Chaniotakis Email:  haniotak@es.net
+        </adminContact>
+        <csProviderEndpoint rdf:datatype="http://www.w3.org/2001/XMLSchema#string">http://jupiter.es.net:8288/ConnectionService</csProviderEndpoint>
+        <rdfs:comment xml:lang="en">Position : [2800,100]</rdfs:comment>
     </owl:NamedIndividual>
     
     
