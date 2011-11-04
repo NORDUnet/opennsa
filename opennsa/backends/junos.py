@@ -28,12 +28,17 @@ OpenNSA JunOS backend.
 
 import StringIO
 
+from twisted.python import log
 from twisted.internet import defer, protocol, reactor, endpoints
 from twisted.conch import error
 from twisted.conch.ssh import common, transport, keys, userauth, connection, channel
 
-# Stuff to get from config:
+from opennsa import state
+from opennsa.backends.common import calendar as reservationcalendar
 
+
+
+# Stuff to get from config:
 JUNOS_HOST              = 'cph.dcn.nordu.net'
 JUNOS_HOST_PORT         = 22
 JUNOS_HOST_FINGERPRINT  = 'd8:43:73:ee:a4:87:87:36:3f:c4:e5:3e:7c:d9:8b:d7'
@@ -42,14 +47,75 @@ USERNAME                = 'opennsa'
 PUBLIC_KEY_PATH         = '/home/opennsa/.ssh/id_rsa.pub'
 PRIVATE_KEY_PATH        = '/home/opennsa/.ssh/id_rsa'
 
-# commands - parametize these later
+#> set protocols connections interface-switch ps-to-netherlight-1780 interface ge-1/0/5.1780
+#> set protocols connections interface-switch ps-to-netherlight-1780 interface ge-1/1/9.1780
+#> set interfaces ge-1/0/5 unit 1780 vlan-id 1780 encapsulation vlan-ccc
+#> set interfaces ge-1/1/9 unit 1780 vlan-id 1780 encapsulation vlan-ccc
+
+# parameterized commands
 COMMAND_CONFIGURE           = 'configure'
-COMMAND_SET_CONNECTIONS     = 'set protocols connections interface-switch ps-to-netherlight-1780 interface ge-1/0/5.1780' # connection name / interface
-COMMAND_SET_INTERFACES      = 'set interfaces ge-1/0/5 unit 1780 vlan-id 1780 encapsulation vlan-ccc'
-COMMAND_DELETE_INTERFACE    = 'delete interfaces ge-1/1/9 unit 1780'
-COMMAND_DELETE_CONNECTIONS  = 'delete protocols connections interface-switch ps-to-netherlight-1780'
+COMMAND_SET_CONNECTIONS     = 'set protocols connections interface-switch %(name)s interface %(interface)s' # connection name / interface
+COMMAND_SET_INTERFACES      = 'set interfaces %(port)s unit %(vlan)s vlan-id %(vlan)s encapsulation vlan-ccc' # port / vlan / vlan
+COMMAND_DELETE_INTERFACES   = 'delete interfaces %(port)s unit %(vlan)s' # port / vlan
+COMMAND_DELETE_CONNECTIONS  = 'delete protocols connections interface-switch %(name)s' # name
+
+LOG_SYSTEM = 'opennsa.JunOS'
+
+PORT_MAPPING = {
+    'ams-80'    : 'ge-1/0/5.1780',
+    'ams-81'    : 'ge-1/0/5.1781',
+    'ams-82'    : 'ge-1/0/5.1782',
+    'ams-83'    : 'ge-1/0/5.1783',
+    'ps-80'     : 'ge-1/1/9.1780',
+    'ps-81'     : 'ge-1/1/9.1781',
+    'ps-82'     : 'ge-1/1/9.1782',
+    'ps-83'     : 'ge-1/1/9.1783'
+}
+
+NAME_PREFIX = 'ps-to-netherlight-'
 
 
+def portToInterfaceVLAN(topo_port):
+
+    interface = PORT_MAPPING[topo_port]
+    port, vlan = interface.split('.')
+    connection_name = NAME_PREFIX + vlan
+    return connection_name, interface, port, vlan
+
+
+def createConfigureCommands(source_port, dest_port):
+
+    s_connection_name, s_interface, s_port, s_vlan = portToInterfaceVLAN(source_port)
+    d_connection_name, d_interface, d_port, d_vlan = portToInterfaceVLAN(dest_port)
+
+    assert s_vlan == d_vlan, 'Source and destination VLANs differ, unpossible!'
+
+    cfg_conn_source = COMMAND_SET_CONNECTIONS % {'name':s_connection_name, 'interface':s_interface }
+    cfg_conn_dest   = COMMAND_SET_CONNECTIONS % {'name':d_connection_name, 'interface':d_interface }
+    cfg_intf_source = COMMAND_SET_INTERFACES  % {'port':s_port, 'vlan': s_vlan }
+    cfg_intf_dest   = COMMAND_SET_INTERFACES  % {'port':d_port, 'vlan': d_vlan }
+
+    commands = [ cfg_conn_source, cfg_conn_dest, cfg_intf_source, cfg_intf_dest ]
+    return commands
+
+
+def createDeleteCommands(source_port, dest_port):
+
+    s_connection_name, s_interface, s_port, s_vlan = portToInterfaceVLAN(source_port)
+    d_connection_name, d_interface, d_port, d_vlan = portToInterfaceVLAN(dest_port)
+
+    assert s_vlan == d_vlan, 'Source and destination VLANs differ, unpossible!'
+
+    del_conn_source = COMMAND_DELETE_CONNECTIONS % {'name':s_connection_name, 'interface':s_interface }
+    del_conn_dest   = COMMAND_DELETE_CONNECTIONS % {'name':d_connection_name, 'interface':d_interface }
+    del_intf_source = COMMAND_DELETE_INTERFACES  % {'port':s_port, 'vlan': s_vlan }
+    del_intf_dest   = COMMAND_DELETE_INTERFACES  % {'port':d_port, 'vlan': d_vlan }
+
+    commands = [ del_conn_source, del_conn_dest, del_intf_source, del_intf_dest ]
+    return commands
+
+
+# ----
 
 
 class SSHClientTransport(transport.SSHClientTransport):
@@ -124,42 +190,119 @@ class SSHChannel(channel.SSHChannel):
     def __init__(self, localWindow = 0, localMaxPacket = 0, remoteWindow = 0, remoteMaxPacket = 0, conn = None, data=None, avatar = None):
         channel.SSHChannel.__init__(self, localWindow = 0, localMaxPacket = 0, remoteWindow = 0, remoteMaxPacket = 0, conn = None, data=None, avatar = None)
         self.channel_open = defer.Deferred()
-        self.data = None
+
+        self.data = StringIO.StringIO()
+        self.line = ''
+
+        self.wait_defer = None
+        self.wait_line  = None
 
     def channelOpen(self, data):
         self.data = StringIO.StringIO()
         self.channel_open.callback(self)
         #print "CHANNEL OPEN"
 
-    def ping(self):
-        #print "PING"
-        d = self.conn.sendRequest(self, 'exec', common.NS('ping orval.grid.aau.dk count 2'), wantReply = 1)
-        d.addCallback(self.sendEOF)
-        d.addCallback(self.closeIt)
-        return d
 
-    def sendEOF(self, passthru):
-        #print "# SENDING EOF"
+    @defer.inlineCallbacks
+    def sendCommands(self, commands):
+        log.msg('sendCommands', system=LOG_SYSTEM)
+#        set_connection = COMMAND_SET_CONNECTIONS
+#        set_interface  = COMMAND_SET_INTERFACES
+
+        try:
+            yield self.conn.sendRequest(self, 'shell', '', wantReply=1)
+
+            d = self.waitForLine('[edit]')
+            self.write('configure\r\n')
+            yield d
+
+            print "CONFIGURE MODE ENTERED"
+
+            for cmd in commands:
+                print "CMD", cmd
+#                d = self.waitForLine('[edit]')
+#                self.write(cmd + '\r\n')
+#                yield d
+
+#            d = self.waitForLine('[edit]')
+#            self.write(set_interface + '\r\n')
+#            yield d
+
+#            self.write('commit')
+            print "COMMANDS SENT"
+
+        except Exception, e:
+            print "E", e
+
+#        print self.data.getvalue()
+
+#        d = defer.Deferred()
+#        print "BLOCK"
+#        yield d
+
+        self.sendEOF()
+        self.closeIt()
+
+        # read data, check for "commit complete"
+
+        #return d
+
+
+    def request_exit_status(self, data):
+        if self.data:
+            print "Exit status:", data
+
+    def waitForLine(self, line):
+#        print "WAIT", line
+        self.wait_line = line
+        self.wait_defer = defer.Deferred()
+        return self.wait_defer
+
+
+    def matchLine(self, line):
+        if self.wait_line and self.wait_defer:
+            if self.wait_line == line.strip():
+                print "=", line
+                d = self.wait_defer
+                self.wait_line  = None
+                self.wait_defer = None
+                d.callback(self)
+            else:
+                print "!", line
+
+
+    def sendEOF(self, passthru=None):
         self.conn.sendEOF(self)
         return passthru
 
-    def closeIt(self, passthru):
-        #self.conn.transport.loseConnection()
+
+    def closeIt(self, passthru=None):
+        self.loseConnection()
         return passthru
 
+
     def dataReceived(self, data):
-        print "#", len(data)
-        #self.catData += data
-        self.data.write(data)
+        if len(data) == 0:
+            pass
+        else:
+            #print '#', data.strip()
+            self.line += data
+            if '\n' in data:
+                lines = [ line.strip() for line in self.line.split('\n') if line.strip() ]
+                self.line = ''
+                for l in lines:
+                    self.matchLine(l)
+
 
     def eofReceived(self):
-        #print "EOF RECEIVED"
-        self.data.seek(0)
-        print self.data.read()
+        print "EOF RECEIVED"
+#        self.eof_defer.callback(self)
+#        self.data.seek(0)
+#        print "DATA\n", self.data.read()
+#        self.data.seek(0)
 
     def closed(self):
-        pass
-        #print "# SSH Connection closed"
+        log.msg("SSHChannel closed", system=LOG_SYSTEM)
 
 
 
@@ -183,6 +326,9 @@ class JunOSCommandSender:
             return proto.secure_defer
 
         # should check if there is an existing protocol in place
+        if self.proto:
+            log.msg('Reusing SSH connection', system=LOG_SYSTEM)
+            return defer.succeed(self.proto)
 
         factory = SSHClientFactory( [ JUNOS_HOST_FINGERPRINT ] )
         point = endpoints.TCP4ClientEndpoint(reactor, JUNOS_HOST, JUNOS_HOST_PORT)
@@ -209,15 +355,25 @@ class JunOSCommandSender:
         return d
 
 
-    def reserve(self, source_port, dest_port, start_time, end_time):
+    def provision(self, source_port, dest_port, start_time, end_time):
+
+        commands = createConfigureCommands(source_port, dest_port)
 
         def gotChannel(channel):
-            d = channel.ping()
+            d = channel.sendCommands(commands)
             return d
 
         d = self.getSSHChannel()
         d.addCallback(gotChannel)
         return d
+
+
+    def release(self, source_port, dest_port, start_time, end_time):
+
+        # should we use the connection label here or?
+        err = NotImplementedError('constructing..')
+        return defer.fail(err)
+
 
 
 # --------
@@ -228,22 +384,34 @@ class JunOSBackend:
     def __init__(self, network_name):
         self.network_name = network_name
         self.command_sender = JunOSCommandSender()
+        self.calendar = reservationcalendar.ReservationCalendar()
 
 
     def createConnection(self, source_port, dest_port, service_parameters):
 
-        c = JunOSConnection(source_port, dest_port, service_parameters, self.command_sender)
+        # probably need a short hand for this
+        self.calendar.checkReservation(source_port, service_parameters.start_time, service_parameters.end_time)
+        self.calendar.checkReservation(dest_port  , service_parameters.start_time, service_parameters.end_time)
+
+        self.calendar.addConnection(source_port, service_parameters.start_time, service_parameters.end_time)
+        self.calendar.addConnection(dest_port  , service_parameters.start_time, service_parameters.end_time)
+
+        c = JunOSConnection(source_port, dest_port, service_parameters, self.command_sender, self.calendar)
         return c
 
 
 
 class JunOSConnection:
 
-    def __init__(self, source_port, dest_port, service_parameters, command_sender):
+    def __init__(self, source_port, dest_port, service_parameters, command_sender, calendar):
         self.source_port = source_port
         self.dest_port = dest_port
         self.service_parameters = service_parameters
         self.command_sender = command_sender
+        self.calendar = calendar
+
+        self.state = state.ConnectionState()
+
 
 
     def stps(self):
@@ -251,16 +419,18 @@ class JunOSConnection:
 
 
     def reserve(self):
+        # resource availability has already been checked in the backend during connection creation
+        # since we assume no other NRM for this backend (OpenNSA have exclusive rights to the HW) there is nothing to do here
 
-        #print self.service_parameters
-        d = self.command_sender.reserve(self.source_port, self.dest_port, self.service_parameters.start_time, self.service_parameters.end_time)
-
-        return defer.fail(NotImplementedError('constructing..'))
+        # state transition to SCHEDULED should be added sometime
+        return defer.succeed(self)
 
 
     def provision(self):
-        err = NotImplementedError('constructing..')
-        return defer.fail(err)
+
+        # start the hardware, we'll worry about scheduling later
+        d = self.command_sender.provision(self.source_port, self.dest_port, self.service_parameters.start_time, self.service_parameters.end_time)
+        return d
 
 
     def release(self):
@@ -269,6 +439,10 @@ class JunOSConnection:
 
 
     def terminate(self):
+
+        self.calendar.removeConnection(self.source_port, self.service_parameters.start_time, self.service_parameters.end_time)
+        self.calendar.removeConnection(self.dest_port  , self.service_parameters.start_time, self.service_parameters.end_time)
+
         err = NotImplementedError('constructing..')
         return defer.fail(err)
 
