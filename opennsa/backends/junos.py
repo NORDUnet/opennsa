@@ -106,12 +106,12 @@ def createDeleteCommands(source_port, dest_port):
 
     assert s_vlan == d_vlan, 'Source and destination VLANs differ, unpossible!'
 
-    del_conn_source = COMMAND_DELETE_CONNECTIONS % {'name':s_connection_name, 'interface':s_interface }
-    del_conn_dest   = COMMAND_DELETE_CONNECTIONS % {'name':d_connection_name, 'interface':d_interface }
     del_intf_source = COMMAND_DELETE_INTERFACES  % {'port':s_port, 'vlan': s_vlan }
     del_intf_dest   = COMMAND_DELETE_INTERFACES  % {'port':d_port, 'vlan': d_vlan }
+    del_conn        = COMMAND_DELETE_CONNECTIONS % {'name':s_connection_name } # , 'interface':s_interface }
+#    del_conn_dest   = COMMAND_DELETE_CONNECTIONS % {'name':d_connection_name, 'interface':d_interface }
 
-    commands = [ del_conn_source, del_conn_dest, del_intf_source, del_intf_dest ]
+    commands = [ del_intf_source, del_intf_dest, del_conn ]
     return commands
 
 
@@ -191,14 +191,12 @@ class SSHChannel(channel.SSHChannel):
         channel.SSHChannel.__init__(self, localWindow = 0, localMaxPacket = 0, remoteWindow = 0, remoteMaxPacket = 0, conn = None, data=None, avatar = None)
         self.channel_open = defer.Deferred()
 
-        self.data = StringIO.StringIO()
         self.line = ''
 
         self.wait_defer = None
         self.wait_line  = None
 
     def channelOpen(self, data):
-        self.data = StringIO.StringIO()
         self.channel_open.callback(self)
         #print "CHANNEL OPEN"
 
@@ -216,25 +214,21 @@ class SSHChannel(channel.SSHChannel):
             self.write('configure\r\n')
             yield d
 
-            print "CONFIGURE MODE ENTERED"
+            log.msg('Entered configure mode', system=LOG_SYSTEM)
 
             for cmd in commands:
-                print "CMD", cmd
-#                d = self.waitForLine('[edit]')
-#                self.write(cmd + '\r\n')
-#                yield d
+                log.msg('CMD> %s' % cmd, system=LOG_SYSTEM)
+                d = self.waitForLine('[edit]')
+                self.write(cmd + '\r\n')
+                yield d
 
-#            d = self.waitForLine('[edit]')
-#            self.write(set_interface + '\r\n')
-#            yield d
-
-#            self.write('commit')
-            print "COMMANDS SENT"
+            d = self.waitForLine('[edit]')
+            self.write('commit check')
+            yield d
+            log.msg('Commands sent', system=LOG_SYSTEM)
 
         except Exception, e:
             print "E", e
-
-#        print self.data.getvalue()
 
 #        d = defer.Deferred()
 #        print "BLOCK"
@@ -249,11 +243,10 @@ class SSHChannel(channel.SSHChannel):
 
 
     def request_exit_status(self, data):
-        if self.data:
-            print "Exit status:", data
+        if data and len(data) != 4:
+            log.msg('Exit status data: %s' % data, system=LOG_SYSTEM)
 
     def waitForLine(self, line):
-#        print "WAIT", line
         self.wait_line = line
         self.wait_defer = defer.Deferred()
         return self.wait_defer
@@ -262,13 +255,13 @@ class SSHChannel(channel.SSHChannel):
     def matchLine(self, line):
         if self.wait_line and self.wait_defer:
             if self.wait_line == line.strip():
-                print "=", line
+#                print "=", line
                 d = self.wait_defer
                 self.wait_line  = None
                 self.wait_defer = None
                 d.callback(self)
-            else:
-                print "!", line
+#            else:
+#                print "!", line
 
 
     def sendEOF(self, passthru=None):
@@ -285,7 +278,6 @@ class SSHChannel(channel.SSHChannel):
         if len(data) == 0:
             pass
         else:
-            #print '#', data.strip()
             self.line += data
             if '\n' in data:
                 lines = [ line.strip() for line in self.line.split('\n') if line.strip() ]
@@ -294,15 +286,11 @@ class SSHChannel(channel.SSHChannel):
                     self.matchLine(l)
 
 
-    def eofReceived(self):
-        print "EOF RECEIVED"
-#        self.eof_defer.callback(self)
-#        self.data.seek(0)
-#        print "DATA\n", self.data.read()
-#        self.data.seek(0)
+#    def eofReceived(self):
+#        log.msg("EOF received", system=LOG_SYSTEM)
 
-    def closed(self):
-        log.msg("SSHChannel closed", system=LOG_SYSTEM)
+#    def closed(self):
+#        log.msg("SSHChannel closed", system=LOG_SYSTEM)
 
 
 
@@ -370,10 +358,15 @@ class JunOSCommandSender:
 
     def release(self, source_port, dest_port, start_time, end_time):
 
-        # should we use the connection label here or?
-        err = NotImplementedError('constructing..')
-        return defer.fail(err)
+        commands = createDeleteCommands(source_port, dest_port)
 
+        def gotChannel(channel):
+            d = channel.sendCommands(commands)
+            return d
+
+        d = self.getSSHChannel()
+        d.addCallback(gotChannel)
+        return d
 
 
 # --------
@@ -421,6 +414,9 @@ class JunOSConnection:
     def reserve(self):
         # resource availability has already been checked in the backend during connection creation
         # since we assume no other NRM for this backend (OpenNSA have exclusive rights to the HW) there is nothing to do here
+        self.state.switchState(state.RESERVING)
+
+        self.state.switchState(state.RESERVED)
 
         # state transition to SCHEDULED should be added sometime
         return defer.succeed(self)
@@ -428,22 +424,39 @@ class JunOSConnection:
 
     def provision(self):
 
+        def provisioned(_):
+            self.state.switchState(state.PROVISIONED)
+            return self
+
         # start the hardware, we'll worry about scheduling later
+        self.state.switchState(state.PROVISIONING)
         d = self.command_sender.provision(self.source_port, self.dest_port, self.service_parameters.start_time, self.service_parameters.end_time)
+        d.addCallback(provisioned)
         return d
 
 
     def release(self):
-        err = NotImplementedError('constructing..')
-        return defer.fail(err)
+
+        def released(_):
+            self.state.switchState(state.RESERVED)
+            return self
+
+        self.state.switchState(state.RELEASING)
+
+        d = self.command_sender.release(self.source_port, self.dest_port, self.service_parameters.start_time, self.service_parameters.end_time)
+        d.addCallback(released)
+        return d
 
 
     def terminate(self):
 
+        self.state.switchState(state.TERMINATING)
+
         self.calendar.removeConnection(self.source_port, self.service_parameters.start_time, self.service_parameters.end_time)
         self.calendar.removeConnection(self.dest_port  , self.service_parameters.start_time, self.service_parameters.end_time)
 
-        err = NotImplementedError('constructing..')
-        return defer.fail(err)
+        self.state.switchState(state.TERMINATED)
+
+        return defer.succeed(self)
 
 
