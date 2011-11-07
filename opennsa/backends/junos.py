@@ -444,6 +444,8 @@ class JunOSConnection:
         if self.service_parameters.end_time <= dt_now:
             return defer.fail(error.ProvisionError('Cannot provision connection after end time (end time: %s, current time: %s).' % (self.service_parameters.end_time, dt_now)))
 
+        # switch state to auto provision so we know that the connection be be provisioned before cancelling any transition
+        self.state.switchState(state.AUTO_PROVISION)
         self.scheduler.cancelTransition() # cancel any pending scheduled switch
 
         if self.service_parameters.start_time <= dt_now:
@@ -454,20 +456,26 @@ class JunOSConnection:
             _ = self.scheduler.scheduleTransition(self.service_parameters.start_time, doProvision, state.PROVISIONING)
             # the scheduled defer won't callback until provisioned so we make one up for the caller
             d = defer.succeed(self)
-            self.state.switchState(state.AUTO_PROVISION)
 
         return d
 
 
     def release(self):
 
+        log.msg('RELEASING. ID: %s' % id(self), system=LOG_SYSTEM)
+
         def released(_):
+            log.msg('RELEASED. ID: %s' % id(self), system=LOG_SYSTEM)
             self.state.switchState(state.RESERVED)
             return self
 
-        self.scheduler.cancelTransition() # cancel any pending automatic release
+        try:
+            self.state.switchState(state.RELEASING)
+        except error.StateTransitionError, e:
+            log.msg('Release error: %s' % str(e), system=LOG_SYSTEM)
+            return defer.fail(e)
 
-        self.state.switchState(state.RELEASING)
+        self.scheduler.cancelTransition() # cancel any pending automatic release
 
         d = self.command_sender.release(self.source_port, self.dest_port, self.service_parameters.start_time, self.service_parameters.end_time)
         d.addCallback(released)
@@ -476,13 +484,30 @@ class JunOSConnection:
 
     def terminate(self):
 
-        self.state.switchState(state.TERMINATING)
+        def terminated(_):
+            log.msg('TERMINATED. ID: %s' % id(self), system=LOG_SYSTEM)
+            self.calendar.removeConnection(self.source_port, self.service_parameters.start_time, self.service_parameters.end_time)
+            self.calendar.removeConnection(self.dest_port  , self.service_parameters.start_time, self.service_parameters.end_time)
+            self.state.switchState(state.TERMINATED)
 
-        self.calendar.removeConnection(self.source_port, self.service_parameters.start_time, self.service_parameters.end_time)
-        self.calendar.removeConnection(self.dest_port  , self.service_parameters.start_time, self.service_parameters.end_time)
+        log.msg('TERMINATING. ID: %s' % id(self), system=LOG_SYSTEM)
 
-        self.state.switchState(state.TERMINATED)
+        release = False
+        if self.state() in ('PROVISIONED'):
+            release = True
 
-        return defer.succeed(self)
+        try:
+            self.state.switchState(state.TERMINATING)
+        except error.StateTransitionError, e:
+            log.msg('Terminate error: %s' % str(e), system=LOG_SYSTEM)
+            return defer.fail(e)
+
+        if release:
+            d = self.command_sender.release(self.source_port, self.dest_port, self.service_parameters.start_time, self.service_parameters.end_time)
+        else:
+            d = defer.succeed(None)
+
+        d.addCallback(terminated)
+        return d
 
 
