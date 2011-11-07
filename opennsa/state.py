@@ -23,15 +23,16 @@ PROVISIONED         = 'Provisioned'
 RELEASING           = 'Releasing'
 CLEANING            = 'Cleaning'
 
-TERMINATING         = 'Terminateing' # John can't spell
+TERMINATING         = 'Terminating'
 TERMINATED          = 'Terminated'
 
 # allowed state transitions
+# the scheduled -> auto provision is not canon, but AFAICT it should be okay
 TRANSITIONS = {
     INITIAL         : [ RESERVING                                                               ],
     RESERVING       : [ RESERVED,       TERMINATING,    CLEANING,     TERMINATED                ],
     RESERVED        : [ SCHEDULED,      AUTO_PROVISION, PROVISIONING, TERMINATING, TERMINATED   ],
-    SCHEDULED       : [ PROVISIONING,   RELEASING,      TERMINATING,  TERMINATED                ],
+    SCHEDULED       : [ AUTO_PROVISION, PROVISIONING,   RELEASING,    TERMINATING, TERMINATED   ],
     AUTO_PROVISION  : [ PROVISIONING,   TERMINATING,    TERMINATED                              ],
     PROVISIONING    : [ PROVISIONED,    TERMINATING,    TERMINATED                              ],
     PROVISIONED     : [ RELEASING,      TERMINATING,    TERMINATING,                            ],
