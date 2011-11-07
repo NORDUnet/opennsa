@@ -47,7 +47,7 @@ def _httpRequest(url, soap_action, soap_envelope, timeout=DEFAULT_TIMEOUT, ctx_f
 
     factory.headers['Content-Type'] = 'text/xml' # CXF will complain if this is not set
     factory.headers['soapaction'] = soap_action
-    factory.headers['Authorization'] = 'bnNpZGVtbzpSaW9QbHVnLUZlc3QyMDExIQ==' # base64.b64encode('nsidemo:RioPlug-Fest2011!')
+    factory.headers['Authorization'] = 'Basic bnNpZGVtbzpSaW9QbHVnLUZlc3QyMDExIQ==' # base64.b64encode('nsidemo:RioPlug-Fest2011!')
 
     if scheme == 'https':
         reactor.connectSSL(host, port, factory, ctx_factory)
