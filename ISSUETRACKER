@@ -1,0 +1,20 @@
+This is the OpenNSA issue tracker :-)
+
+
+General:
+  Connection state layering problem (top state only updated on commands)
+  Persistence for connections
+  Cleanups (mostly in backends)
+  Command line client (Jeroen and HTJ will have a fight-off about which to use :-) )
+  More backends :-)
+
+
+Argia backend:
+  State scheduling to terminated does not work.
+  Switch to using calendar and scheduler
+  Use the query interface
+
+DUD backend:
+  Switch to using calendar and scheduler
+
+
