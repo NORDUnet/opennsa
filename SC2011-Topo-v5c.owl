@@ -32,6 +32,9 @@
         - corrected ConenctsTo relation for Netherlight links to Czechlight. 
     v5b 
         - Changed Netherlight NSA csProviderEndpoint to HTTP version.
+    v5c 
+        - re-Changed NetehrLight NSA csProviderEndpoint
+        - noted StarLight SC booth #
 -->
 <rdf:RDF xmlns="http://www.glif.is/working-groups/tech/dtox#"
      xml:base="http://www.glif.is/working-groups/tech/dtox"
@@ -860,7 +863,9 @@
     <owl:NamedIndividual rdf:about="urn:ogf:network:nsa:starlight">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#NSA"/>
         <managing rdf:resource="urn:ogf:network:nsnetwork:starlight.ets" />
-        <adminContact rdf:datatype="http://www.w3.org/2001/XMLSchema#string">6.	OpenNSA (NORDUnet) 6.1.	Implementation name: OpenNSA over Argia 6.2.	Project manager:     name: Scott Campbell email: scott.campbell@crc.gc.ca  mobile:   skype: scottcampbell00  6.3.	Key software engineer: name: Henrik Thostrup-Jensen email: htj@nordu.net skype: henrik.thostrup.jensen</adminContact>
+        <adminContact rdf:datatype="http://www.w3.org/2001/XMLSchema#string">6.	OpenNSA (NORDUnet) 6.1.	Implementation name: OpenNSA over Argia 6.2.	Project manager:     name: Scott Campbell email: scott.campbell@crc.gc.ca  mobile:   skype: scottcampbell00  6.3.	Key software engineer: name: Henrik Thostrup-Jensen email: htj@nordu.net skype: henrik.thostrup.jensen
+        : SC2011 booth # 2615 
+        </adminContact>
         <csProviderEndpoint rdf:datatype="http://www.w3.org/2001/XMLSchema#string">http://nsa.badlab.crc.ca:9080/NSI/services/ConnectionService</csProviderEndpoint>
         <rdfs:comment xml:lang="en">Position : [2650,2100]</rdfs:comment>
     </owl:NamedIndividual>
@@ -873,7 +878,7 @@
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [50,4300]</rdfs:comment>
     </owl:NamedIndividual>
-    <!-- urn:ogf:network:stp:aist.ets:ps-81 -->
+    <!-- urn:ogf:network:stp:aist.ets:ps-81 --> 
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:aist.ets:ps-81">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [50,4500]</rdfs:comment>
@@ -1566,7 +1571,7 @@
         <adminContact rdf:datatype="http://www.w3.org/2001/XMLSchema#string">6.	OpenNSA  6.1.	Implementation name: OpenNSA 6.2.	Project manager:  name: Jeroen van der Ham   email: vdham@uva.nl mobile: use skype   skype: just1sand0s  6.3. Engineer: Ralph Koning email: r.koning@uva.nl  skype: ralph-uva-sne	Key software engineer: name: Henrik Thostrup-Jensen email: htj@nordu.net skype: henrik.thostrup.jensen
         : SC2011 booth# 642
         </adminContact>
-        <csProviderEndpoint rdf:datatype="http://www.w3.org/2001/XMLSchema#string">http://nsa.uvalight.nl:9080/NSI/services/ConnectionService</csProviderEndpoint>
+        <csProviderEndpoint rdf:datatype="http://www.w3.org/2001/XMLSchema#string">http://drac.uvalight.nl:8080/nsi-v1/ConnectionServiceProvider</csProviderEndpoint>
         <rdfs:comment xml:lang="en">Position : [350,100]</rdfs:comment>
     </owl:NamedIndividual>
     
