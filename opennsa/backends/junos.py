@@ -203,7 +203,7 @@ class SSHChannel(channel.SSHChannel):
     @defer.inlineCallbacks
     def sendCommands(self, commands):
         LT = '\r' # line termination
-        log.msg('sendCommands', system=LOG_SYSTEM)
+        #log.msg('sendCommands', system=LOG_SYSTEM)
 
         try:
             yield self.conn.sendRequest(self, 'shell', '', wantReply=1)
@@ -493,7 +493,7 @@ class JunOSConnection:
         log.msg('TERMINATING. ID: %s' % id(self), system=LOG_SYSTEM)
 
         release = False
-        if self.state() in ('PROVISIONED'):
+        if self.state() in (state.PROVISIONED):
             release = True
 
         try:
