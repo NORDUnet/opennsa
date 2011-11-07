@@ -44,7 +44,7 @@ class TransitionScheduler:
         d = task.deferLater(reactor, transition_delta_seconds, call, state)
         d.addErrback(deferTaskFailed)
         self.scheduled_transition_call = d
-        log.msg('State transition scheduled: In %i seconds to state %s' % (transition_delta_seconds,, state state), system=LOG_SYSTEM)
+        log.msg('State transition scheduled: In %i seconds to state %s' % (transition_delta_seconds, state), system=LOG_SYSTEM)
 
 
     def cancelTransition(self):
