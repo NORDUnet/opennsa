@@ -40,6 +40,7 @@ class TransitionScheduler:
 
         td = (transition_time - dt_now)
         transition_delta_seconds = (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6.0
+        transition_delta_seconds = max(start_delta_seconds, 0) # if dt_now is passed during calculation
 
         d = task.deferLater(reactor, transition_delta_seconds, call, state)
         d.addErrback(deferTaskFailed)
