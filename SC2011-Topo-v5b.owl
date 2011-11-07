@@ -28,6 +28,10 @@
         - Updated csProviderEndpoint for KrLight
         - labeled the start of each network with a comment containing: "*** <netname>"
         - Updated various contact info
+    v5a 
+        - corrected ConenctsTo relation for Netherlight links to Czechlight. 
+    v5b 
+        - Changed Netherlight NSA csProviderEndpoint to HTTP version.
 -->
 <rdf:RDF xmlns="http://www.glif.is/working-groups/tech/dtox#"
      xml:base="http://www.glif.is/working-groups/tech/dtox"
@@ -483,7 +487,7 @@
         <adminContact rdf:datatype="http://www.w3.org/2001/XMLSchema#string">3.	OpenDRAC (SURFnet) 3.1.	Implementation name: OpenDRAC 3.2.	Proj Manager:  name: John MacAuley email: john.macauley@surfnet.nl phone:  1-613-220-6817 skype: john.macauley 3.3.	Software Developer name: John MacAuley email: john.macauley@surfnet.nl phone:  1-613-220-6817 skype: john.macauley
         : SC2011 booth# 642
         </adminContact>
-        <csProviderEndpoint rdf:datatype="http://www.w3.org/2001/XMLSchema#string">http://phineas.surfnet.nl:8080/nsi-v1/ConnectionServiceProvider</csProviderEndpoint>
+        <csProviderEndpoint rdf:datatype="http://www.w3.org/2001/XMLSchema#string">http://dracproxy01.surfnet.nl:8080/nsi-v1/ConnectionServiceProvider</csProviderEndpoint>
         <rdfs:comment xml:lang="en">Position : [1500,50]</rdfs:comment>
     </owl:NamedIndividual>
 
@@ -1357,7 +1361,7 @@
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#NSA"/>
         <managing rdf:resource="urn:ogf:network:nsnetwork:czechlight.ets" />
         <adminContact rdf:datatype="http://www.w3.org/2001/XMLSchema#string">3.	OpenDRAC (SURFnet) 3.1.	Implementation name: OpenDRAC 3.2.	Proj Manager:  name: Michal Altmann  email: m.altmann@cesnet.cz phone: +420775603522   skype: michal_altmann 3.3.	Software Developer name: John MacAuley email: john.macauley@surfnet.nl phone:  1-613-220-6817 skype: john.macauley</adminContact>
-        <csProviderEndpoint rdf:datatype="http://www.w3.org/2001/XMLSchema#string">http://phineas.surfnet.nl:8080/nsi-v1/ConnectionServiceProvider</csProviderEndpoint>
+        <csProviderEndpoint rdf:datatype="http://www.w3.org/2001/XMLSchema#string">http://dracproxy01.surfnet.nl:8080/nsi-v1/ConnectionServiceProvider</csProviderEndpoint>
         <rdfs:comment xml:lang="en">Position : [2800,100]</rdfs:comment>
     </owl:NamedIndividual>
     
