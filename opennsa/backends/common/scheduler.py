@@ -32,7 +32,7 @@ class TransitionScheduler:
 
     def scheduleTransition(self, transition_time, call, state):
 
-        assert self.scheduled_transition_call is None, 'Scheduling transition while other transition is scheduled'
+        assert self.scheduled_transition_call is None or self.scheduled_transition_call.called is True, 'Scheduling transition while other transition is scheduled'
 
         dt_now = datetime.datetime.utcnow()
 
