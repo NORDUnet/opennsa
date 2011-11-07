@@ -108,8 +108,7 @@ def createDeleteCommands(source_port, dest_port):
 
     del_intf_source = COMMAND_DELETE_INTERFACES  % {'port':s_port, 'vlan': s_vlan }
     del_intf_dest   = COMMAND_DELETE_INTERFACES  % {'port':d_port, 'vlan': d_vlan }
-    del_conn        = COMMAND_DELETE_CONNECTIONS % {'name':s_connection_name } # , 'interface':s_interface }
-#    del_conn_dest   = COMMAND_DELETE_CONNECTIONS % {'name':d_connection_name, 'interface':d_interface }
+    del_conn        = COMMAND_DELETE_CONNECTIONS % {'name':s_connection_name }
 
     commands = [ del_intf_source, del_intf_dest, del_conn ]
     return commands
@@ -203,15 +202,14 @@ class SSHChannel(channel.SSHChannel):
 
     @defer.inlineCallbacks
     def sendCommands(self, commands):
+        LT = '\r' # line termination
         log.msg('sendCommands', system=LOG_SYSTEM)
-#        set_connection = COMMAND_SET_CONNECTIONS
-#        set_interface  = COMMAND_SET_INTERFACES
 
         try:
             yield self.conn.sendRequest(self, 'shell', '', wantReply=1)
 
             d = self.waitForLine('[edit]')
-            self.write('configure\r\n')
+            self.write('configure' + LT)
             yield d
 
             log.msg('Entered configure mode', system=LOG_SYSTEM)
@@ -219,27 +217,27 @@ class SSHChannel(channel.SSHChannel):
             for cmd in commands:
                 log.msg('CMD> %s' % cmd, system=LOG_SYSTEM)
                 d = self.waitForLine('[edit]')
-                self.write(cmd + '\r\n')
+                self.write(cmd + LT)
                 yield d
 
-            d = self.waitForLine('[edit]')
-            self.write('commit check')
+            # commit commands, check for 'commit complete' as success
+            # not quite sure how to handle failure here
+
+#            # test stuff
+#            d = self.waitForLine('[edit]')
+#            self.write('commit check' + LT)
+
+            d = self.waitForLine('commit complete')
+            self.write('commit' + LT)
             yield d
-            log.msg('Commands sent', system=LOG_SYSTEM)
 
         except Exception, e:
-            print "E", e
+            log.msg('Error sending commands: %s' % str(e))
+            raise e
 
-#        d = defer.Deferred()
-#        print "BLOCK"
-#        yield d
-
+        log.msg('Commands successfully sent', system=LOG_SYSTEM)
         self.sendEOF()
         self.closeIt()
-
-        # read data, check for "commit complete"
-
-        #return d
 
 
     def request_exit_status(self, data):
@@ -255,13 +253,12 @@ class SSHChannel(channel.SSHChannel):
     def matchLine(self, line):
         if self.wait_line and self.wait_defer:
             if self.wait_line == line.strip():
-#                print "=", line
                 d = self.wait_defer
                 self.wait_line  = None
                 self.wait_defer = None
                 d.callback(self)
-#            else:
-#                print "!", line
+            else:
+                pass
 
 
     def sendEOF(self, passthru=None):
@@ -284,14 +281,6 @@ class SSHChannel(channel.SSHChannel):
                 self.line = ''
                 for l in lines:
                     self.matchLine(l)
-
-
-#    def eofReceived(self):
-#        log.msg("EOF received", system=LOG_SYSTEM)
-
-#    def closed(self):
-#        log.msg("SSHChannel closed", system=LOG_SYSTEM)
-
 
 
 
