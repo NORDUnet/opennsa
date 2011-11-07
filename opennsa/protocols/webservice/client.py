@@ -313,12 +313,10 @@ class RequesterClient:
                     ostp._order = rank
                     return ostp
 
-                i = 0
-                for sc in conn.connections():
-                    p1, p2 = sc.stps()
-                    qsr.path.stpList.stp.append( createOrderedSTP(p1, i) )
-                    qsr.path.stpList.stp.append( createOrderedSTP(p2, i+1) )
-                    i += 2
+                # create list of all stps, but skip source and dest stp
+                stps = [ stp for sc in conn.connections() for stp in sc.stps() ] [1:-1]
+                for i, stp in zip(range(len(stps)), stps):
+                    qsr.path.stpList.stp.append( createOrderedSTP(stp, i) )
 
                 qsrs.append(qsr)
 
