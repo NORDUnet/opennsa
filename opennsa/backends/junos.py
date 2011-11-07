@@ -502,6 +502,8 @@ class JunOSConnection:
             log.msg('Terminate error: %s' % str(e), system=LOG_SYSTEM)
             return defer.fail(e)
 
+        self.scheduler.cancelTransition() # cancel any pending automatic provision/release transition
+
         if release:
             d = self.command_sender.release(self.source_port, self.dest_port, self.service_parameters.start_time, self.service_parameters.end_time)
         else:
