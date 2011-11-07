@@ -26,15 +26,15 @@ OpenNSA JunOS backend.
 # Basically stuff should end with [edit] :-)
 #
 
-import StringIO
+import datetime
 
 from twisted.python import log
 from twisted.internet import defer, protocol, reactor, endpoints
 from twisted.conch import error
-from twisted.conch.ssh import common, transport, keys, userauth, connection, channel
+from twisted.conch.ssh import transport, keys, userauth, connection, channel
 
 from opennsa import state
-from opennsa.backends.common import calendar as reservationcalendar
+from opennsa.backends.common import calendar as reservationcalendar, scheduler
 
 
 
@@ -235,7 +235,7 @@ class SSHChannel(channel.SSHChannel):
             log.msg('Error sending commands: %s' % str(e))
             raise e
 
-        log.msg('Commands successfully sent', system=LOG_SYSTEM)
+        log.msg('Commands successfully committed', system=LOG_SYSTEM)
         self.sendEOF()
         self.closeIt()
 
@@ -393,7 +393,7 @@ class JunOSConnection:
         self.calendar = calendar
 
         self.state = state.ConnectionState()
-
+        self.scheduler = scheduler.TransitionScheduler()
 
 
     def stps(self):
@@ -401,26 +401,61 @@ class JunOSConnection:
 
 
     def reserve(self):
+
+        def scheduled(_):
+            self.state.switchState(state.SCHEDULED)
+            log.msg('Scheduled state transition to: %s. ID: %s' % (state.SCHEDULED, id(self)), system=LOG_SYSTEM)
+            return self
+
+        log.msg('RESERVING. ID: %s, Ports: %s -> %s' % (id(self), self.source_port, self.dest_port), system=LOG_SYSTEM)
+
         # resource availability has already been checked in the backend during connection creation
         # since we assume no other NRM for this backend (OpenNSA have exclusive rights to the HW) there is nothing to do here
-        self.state.switchState(state.RESERVING)
+        try:
+            self.state.switchState(state.RESERVING)
+            self.state.switchState(state.RESERVED)
+        except error.StateTransitionError:
+            return defer.fail(error.ReserveError('Cannot reserve connection in state %s' % self.state()))
 
-        self.state.switchState(state.RESERVED)
+        self.scheduler.scheduleTransition(self.service_parameters.start_time, scheduled, state.SCHEDULED)
 
-        # state transition to SCHEDULED should be added sometime
         return defer.succeed(self)
 
 
     def provision(self):
 
-        def provisioned(_):
-            self.state.switchState(state.PROVISIONED)
-            return self
+        def doProvision(_):
+            log.msg('PROVISIONING. ID: %s' % id(self), system=LOG_SYSTEM)
+            try:
+                self.state.switchState(state.PROVISIONING)
+            except error.StateTransitionError:
+                return defer.fail(error.ProvisionError('Cannot provision connection in state %s' % self.state()))
 
-        # start the hardware, we'll worry about scheduling later
-        self.state.switchState(state.PROVISIONING)
-        d = self.command_sender.provision(self.source_port, self.dest_port, self.service_parameters.start_time, self.service_parameters.end_time)
-        d.addCallback(provisioned)
+            def provisioned(_):
+                doRelease = lambda _ : self.release()
+                self.scheduler.scheduleTransition(self.service_parameters.end_time, doRelease, state.RELEASING)
+                self.state.switchState(state.PROVISIONED)
+
+            d = self.command_sender.provision(self.source_port, self.dest_port, self.service_parameters.start_time, self.service_parameters.end_time)
+            d.addCallback(provisioned)
+            return d
+
+        dt_now = datetime.datetime.utcnow()
+        if self.service_parameters.end_time <= dt_now:
+            return defer.fail(error.ProvisionError('Cannot provision connection after end time (end time: %s, current time: %s).' % (self.service_parameters.end_time, dt_now)))
+
+        self.scheduler.cancelTransition() # cancel any pending scheduled switch
+
+        if self.service_parameters.start_time <= dt_now:
+            # do provision now
+            d = doProvision(None)
+        else:
+            # schedule provision
+            _ = self.scheduler.scheduleTransition(self.service_parameters.start_time, doProvision, state.PROVISIONING)
+            # the scheduled defer won't callback until provisioned so we make one up for the caller
+            d = defer.succeed(self)
+            self.state.switchState(state.AUTO_PROVISION)
+
         return d
 
 
@@ -429,6 +464,8 @@ class JunOSConnection:
         def released(_):
             self.state.switchState(state.RESERVED)
             return self
+
+        self.scheduler.cancelTransition() # cancel any pending automatic release
 
         self.state.switchState(state.RELEASING)
 
