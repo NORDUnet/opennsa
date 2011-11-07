@@ -30,7 +30,7 @@ class TransitionScheduler:
         self.scheduled_transition_call = None
 
 
-    def scheduleTransition(self, conn_id, transition_time, call, state):
+    def scheduleTransition(self, transition_time, call, state):
 
         assert self.scheduled_transition_call is None, 'Scheduling transition while other transition is scheduled'
 
