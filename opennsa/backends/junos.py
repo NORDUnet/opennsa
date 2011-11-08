@@ -30,10 +30,10 @@ import datetime
 
 from twisted.python import log
 from twisted.internet import defer, protocol, reactor, endpoints
-from twisted.conch import error
+from twisted.conch import error as concherror
 from twisted.conch.ssh import transport, keys, userauth, connection, channel
 
-from opennsa import state
+from opennsa import state, error
 from opennsa.backends.common import calendar as reservationcalendar, scheduler
 
 
@@ -128,7 +128,7 @@ class SSHClientTransport(transport.SSHClientTransport):
         if fingerprint in self.fingerprints:
             return defer.succeed(1)
         else:
-            return defer.fail(error.ConchError('Fingerprint not accepted'))
+            return defer.fail(concherror.ConchError('Fingerprint not accepted'))
 
 
     def connectionSecure(self):
