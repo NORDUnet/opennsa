@@ -56,9 +56,17 @@ class ArgiaBackend:
     def createConnection(self, source_port, dest_port, service_parameters):
 
         self._checkTiming(service_parameters.start_time, service_parameters.end_time)
+        self._checkVLANMatch(source_port, dest_port)
         ac = ArgiaConnection(source_port, dest_port, service_parameters)
         self.connections.append(ac)
         return ac
+
+
+    def _checkVLANMatch(self, source_port, dest_port):
+        source_vlan = source_port.split('=',1)[1]
+        dest_vlan = dest_port.split('=',1)[1]
+        if source_vlan != dest_vlan:
+            raise error.InvalidRequestError('Cannot create connection between different VLANs.')
 
 
     # this could be generic
