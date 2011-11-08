@@ -156,6 +156,7 @@ class Connection:
                 if any(successes):
                     failure_msg = ' # '.join( [ f.getErrorMessage() for success,f in results if success is False ] )
                     log.msg('Partial failure in reserve, attempting termination of reserved sub-connections (%s)' % failure_msg, system=LOG_SYSTEM)
+                    error_msg = 'Partial failure in reserve, attempting termination of reserved sub-connections (%s)' % failure_msg
                     # terminate non-failed connections
                     reserved_connections = [ conn for success,conn in results if success ]
                     for rc in reserved_connections:
