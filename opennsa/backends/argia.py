@@ -260,7 +260,7 @@ class ArgiaConnection:
         dt_now = datetime.datetime.utcnow()
 
         if self.service_parameters.end_time <= dt_now:
-            return defer.fail(error.ProvisionError('Cannot provision connection after end time (end time: %s, current time: %s).' % (self.service_parameters.end_time, dt_now)))
+            return defer.fail(error.ProvisionError('Cannot provision connection after end time. End time: %s, Current time: %s.' % (self.service_parameters.end_time, dt_now)))
 
         # Argia can schedule, so we don't have to
 
@@ -274,7 +274,7 @@ class ArgiaConnection:
 #            conn.state = AUTO_PROVISION
 #            log.msg('Connection %s scheduled for auto-provision in %i seconds ' % (conn_id, start_delta_seconds), system=LOG_SYSTEM)
 
-        log.msg('Provisioning connection. Start time: %s, Current time: %s).' % (self.service_parameters.start_time, dt_now), system=LOG_SYSTEM)
+        log.msg('Provisioning connection. Start time: %s, Current time: %s.' % (self.service_parameters.start_time, dt_now), system=LOG_SYSTEM)
 
         self._cancelTransition()
         self.state.switchState(state.PROVISIONING)
