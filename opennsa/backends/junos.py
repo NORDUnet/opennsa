@@ -371,7 +371,7 @@ class JunOSBackend:
 
     def createConnection(self, source_port, dest_port, service_parameters):
 
-        self._checkVLANMatch(source_port, dest_port):
+        self._checkVLANMatch(source_port, dest_port)
 
         # probably need a short hand for this
         self.calendar.checkReservation(source_port, service_parameters.start_time, service_parameters.end_time)
