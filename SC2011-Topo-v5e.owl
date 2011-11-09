@@ -35,6 +35,13 @@
     v5c 
         - re-Changed NetehrLight NSA csProviderEndpoint
         - noted StarLight SC booth #
+    v5d
+        - changed the UvA nsa name to "...nsa:uvalight"
+        - in PPT diagram: change CESnet to CESNET (label change only)
+        - in PPT diagram: changed Krlight to KRLight (label change only)
+    v5e
+        - corrected "managedBy" nsa name for uvalight.ets from uva to "uvalight"
+        
 -->
 <rdf:RDF xmlns="http://www.glif.is/working-groups/tech/dtox#"
      xml:base="http://www.glif.is/working-groups/tech/dtox"
@@ -1550,7 +1557,7 @@
         <hasSTP rdf:resource="urn:ogf:network:stp:uvalight.ets:ams2-81"/>
         <hasSTP rdf:resource="urn:ogf:network:stp:uvalight.ets:ams2-82"/>
         <hasSTP rdf:resource="urn:ogf:network:stp:uvalight.ets:ams2-83"/>
-        <managedBy rdf:resource="urn:ogf:network:nsa:uva"/>
+        <managedBy rdf:resource="urn:ogf:network:nsa:uvalight"/>
         <locatedAt rdf:resource="urn:ogf:network:nsnetwork:uvalight.ets:location"/>
     </owl:NamedIndividual>
     
@@ -1563,9 +1570,9 @@
         <rdfs:comment xml:lang="en">Position : [350,300]</rdfs:comment>
     </owl:NamedIndividual>
     
-    <!-- urn:ogf:network:nsa:uva -->
+    <!-- urn:ogf:network:nsa:uvalight -->
     
-    <owl:NamedIndividual rdf:about="urn:ogf:network:nsa:uva">
+    <owl:NamedIndividual rdf:about="urn:ogf:network:nsa:uvalight">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#NSA"/>
         <managing rdf:resource="urn:ogf:network:nsnetwork:uvalight.ets" />
         <adminContact rdf:datatype="http://www.w3.org/2001/XMLSchema#string">6.	OpenNSA  6.1.	Implementation name: OpenNSA 6.2.	Project manager:  name: Jeroen van der Ham   email: vdham@uva.nl mobile: use skype   skype: just1sand0s  6.3. Engineer: Ralph Koning email: r.koning@uva.nl  skype: ralph-uva-sne	Key software engineer: name: Henrik Thostrup-Jensen email: htj@nordu.net skype: henrik.thostrup.jensen
