@@ -220,9 +220,9 @@ class RequesterService:
         connection_state            = str(gft.connectionState)
         error_id                    = None
         error_message               = None
-        if 'ServiceException' in gft:
-            error_id                = str(gft.ServiceException.messageId) if 'messageId' in gft.ServiceException else None
-            error_message           = str(gft.ServiceException.text)      if 'text' in gft.ServiceException else None
+        if 'serviceException' in gft:
+            error_id                = str(gft.serviceException.messageId) if 'messageId' in gft.serviceException else None
+            error_message           = str(gft.serviceException.text)      if 'text' in gft.serviceException else None
 
         return requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_id, error_message
 
