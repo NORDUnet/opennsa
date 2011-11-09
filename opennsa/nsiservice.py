@@ -237,7 +237,7 @@ class NSIService:
                 match = lambda conn : True
             else:
                 match = lambda conn : conn.connection_id in connection_ids if connection_ids is not None else False or \
-                                      conn.global_reservation_id in global_reservation_ids if connection_ids is not None else False
+                                      conn.global_reservation_id in global_reservation_ids if global_reservation_ids is not None else False
 
             if requester_nsa == 'urn:ogf:network:nsa:OpenNSA-querier':
                 log.msg('Enabling special demo query support for querier: %s' % (requester_nsa), system=LOG_SYSTEM)
