@@ -15,7 +15,7 @@ import StringIO
 from xml.etree import ElementTree as ET
 
 from twisted.python import log
-from twisted.internet import reactor, protocol, defer #, task
+from twisted.internet import reactor, protocol, defer
 
 from opennsa import error, state
 from opennsa.backends.common import scheduler
@@ -152,34 +152,6 @@ class ArgiaConnection:
         return self.service_parameters.source_stp, self.service_parameters.dest_stp
 
 
-#    def _scheduleStateTransition(self, transition_time, state):
-#
-#        assert self.scheduled_transition_call is None, 'Scheduling transition while other transition is scheduled'
-#
-#        def _switchState(conn, state):
-#            conn.state.switchState(state)
-#            log.msg('State transtion. CID: %s, State: %s' % (id(self), self.state()), system=LOG_SYSTEM)
-#
-#        dt_now = datetime.datetime.utcnow()
-#
-#        assert transition_time >= dt_now, 'Scheduled transition is not in the future (%s >= %s is False)' % (transition_time, dt_now)
-#
-#        td = (transition_time - dt_now)
-#        transition_delta_seconds = (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6.0
-#
-#        d = task.deferLater(reactor, transition_delta_seconds, _switchState, self, state)
-#        d.addErrback(deferTaskFailed)
-#        self.scheduled_transition_call = d
-#        log.msg('State transition scheduled: In %i seconds to state %s' % (transition_delta_seconds, state), system=LOG_SYSTEM)
-#
-#
-#    def _cancelTransition(self):
-#
-#        if self.scheduled_transition_call:
-#            self.scheduled_transition_call.cancel()
-#            self.scheduled_transition_call = None
-
-
     def _logProcessPipes(self, process_proto):
         log.msg('STDOUT:\n%s' % process_proto.stdout.getvalue(), debug=True, system=LOG_SYSTEM)
         log.msg('STDERR:\n%s' % process_proto.stderr.getvalue(), debug=True, system=LOG_SYSTEM)
@@ -238,8 +210,7 @@ class ArgiaConnection:
                 if argia_state == ARGIA_RESERVED:
                     self.argia_id = reservation_id
                     self.state.switchState(state.RESERVED)
-                    #self._scheduleStateTransition(self.service_parameters.start_time, state.SCHEDULED)
-                    self.scheduler.scheduleTransition(self.service_parameters.start_time, lambda _ : self.state.switchState(state.SCHEDULED), None)
+                    self.scheduler.scheduleTransition(self.service_parameters.start_time, lambda _ : self.state.switchState(state.SCHEDULED), state.SCHEDULED)
                     d.callback(self)
                 else:
                     d.errback( error.ReserveError('Got unexpected state from Argia (%s)' % argia_state) )
@@ -273,22 +244,13 @@ class ArgiaConnection:
         if self.service_parameters.end_time <= dt_now:
             return defer.fail(error.ProvisionError('Cannot provision connection after end time. End time: %s, Current time: %s.' % (self.service_parameters.end_time, dt_now)))
 
-        # Argia can schedule, so we don't have to
-
-#        elif conn.start_time > dt_now:
-#            td = conn.start_time - dt_now
-#            # total_seconds() is only available from python 2.7 so we use this
-#            start_delta_seconds = (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6.0
-#
-#            conn.auto_provision_deferred = task.deferLater(reactor, start_delta_seconds, doProvision, conn)
-#            conn.auto_provision_deferred.addErrback(deferTaskFailed)
-#            conn.state = AUTO_PROVISION
-#            log.msg('Connection %s scheduled for auto-provision in %i seconds ' % (conn_id, start_delta_seconds), system=LOG_SYSTEM)
-
         log.msg('Provisioning connection. Start time: %s, Current time: %s.' % (self.service_parameters.start_time, dt_now), system=LOG_SYSTEM)
 
-#        self._cancelTransition()
-        self.state.switchState(state.PROVISIONING)
+        try:
+            self.state.switchState(state.PROVISIONING)
+        except error.StateTransitionError:
+            return defer.fail(error.ProvisionError('Cannot reserve connection in state %s' % self.state()))
+
         self.scheduler.cancelTransition() # cancel potential automatic state transition to scheduled
         d = defer.Deferred()
 
@@ -305,8 +267,7 @@ class ArgiaConnection:
                     self.state.switchState(state.PROVISIONED)
                     self.argia_id = argia_id
                     log.msg('Connection provisioned. CID: %s' % id(self), system=LOG_SYSTEM)
-#                    self._scheduleStateTransition(self.service_parameters.end_time, state.TERMINATED)
-                    self.scheduler.scheduleTransition(self.service_parameters.end_time, lambda _ : self.terminate(), None)
+                    self.scheduler.scheduleTransition(self.service_parameters.end_time, lambda _ : self.terminate(), state.TERMINATED)
                     d.callback(self)
 
             except Exception, e:
@@ -364,7 +325,6 @@ class ArgiaConnection:
                 argia_id    = list(tree.getiterator('reservationId'))[0].text
 
                 if argia_state in (ARGIA_RESERVED):
-#                    self._cancelTransition()
                     self.state.switchState(state.SCHEDULED)
                     self.argia_id = argia_id
                     d.callback(self)
@@ -416,6 +376,7 @@ class ArgiaConnection:
         except error.StateTransitionError:
             return defer.fail(error.TerminateError('Cannot terminate connection in state %s' % self.state()))
 
+        self.scheduler.cancelTransition()
         d = defer.Deferred()
 
         def terminateConfirmed(_, pp):
@@ -424,7 +385,6 @@ class ArgiaConnection:
                 tree = ET.parse(pp.stdout)
                 argia_state = list(tree.getiterator('state'))[0].text
                 if argia_state == ARGIA_TERMINATED:
-                    self._cancelTransition()
                     self.state.switchState(state.TERMINATED)
                     self.argia_id = None
                     d.callback(self)
