@@ -1,6 +1,10 @@
 """
 Simple SSL context factory.
 """
+import os
+
+from OpenSSL import SSL
+
 
 
 class ContextFactory:
@@ -16,7 +20,7 @@ class ContextFactory:
         self.ca_dir = ca_dir
 
         if self.verify and ca_dir is None:
-            raise ConfigurationError('Certificate directory must be specified')
+            raise ValueError('Certificate directory must be specified')
 
 
     def getContext(self):
