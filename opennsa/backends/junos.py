@@ -475,7 +475,7 @@ class JunOSConnection:
 
         def released(_):
             log.msg('RELEASED. ID: %s' % id(self), system=LOG_SYSTEM)
-            self.state.switchState(state.RESERVED)
+            self.state.switchState(state.SCHEDULED)
             return self
 
         try:
