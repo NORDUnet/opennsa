@@ -56,17 +56,48 @@ class SDP: # service demarcation point
 
 
 
+class Link: # intra network link
+
+    def __init__(self, stp1, stp2):
+        assert stp1.network == stp2.network, 'Refusing to creating STP pair with STPs with different network'
+        self.stp1 = stp1
+        self.stp2 = stp2
+
+
+    def __eq__(self, other):
+        if not isinstance(other, Link):
+            return False
+        return self.stp1 == other.stp1 and self.stp2 == other.stp2
+
+
+    def __str__(self):
+        return '<Link %s::%s=%s>' % (self.stp1.network, self.stp1.endpoint, self.stp2.endpoint)
+
+
+
+
 class Path:
     """
     Represent a path from a source and destitionation STP, with the endpoint pairs between them.
     """
-    def __init__(self, source_stp, dest_stp, endpoint_pairs):
-        self.source_stp      = source_stp
-        self.dest_stp        = dest_stp
-        self.endpoint_pairs  = endpoint_pairs
+    def __init__(self, network_links):
+        self.network_links = network_links
+
+
+    def links(self):
+        return self.network_links
+
+
+    def sourceEndpoint(self):
+        return self.network_links[0].stp1
+
+
+    def destEndpoint(self):
+        return self.network_links[-1].stp2
+
 
     def __str__(self):
-        return '%s - %s - %s' % (self.source_stp, ' - '.join( [ str(e) for e in self.endpoint_pairs ] ), self.dest_stp)
+        return ' - '.join( [ str(nl) for nl in self.network_links ] )
 
 
 

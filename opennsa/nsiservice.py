@@ -143,17 +143,12 @@ class NSIService:
                 paths = self.topology.findPaths(source_stp, dest_stp)
 
                 # check for no paths
-                paths.sort(key=lambda e : len(e.endpoint_pairs))
+                paths.sort(key=lambda e : len(e.links()))
                 selected_path = paths[0] # shortest path
                 log.msg('Attempting to create path %s' % selected_path, system=LOG_SYSTEM)
 
-                prev_source_stp = selected_path.source_stp
-
-                for stp_pair in selected_path.endpoint_pairs:
-                    self.setupSubConnection(prev_source_stp, stp_pair.stp1, conn, service_parameters)
-                    prev_source_stp = stp_pair.stp2
-                # last hop
-                self.setupSubConnection(prev_source_stp, selected_path.dest_stp, conn, service_parameters)
+                for link in selected_path.links():
+                    self.setupSubConnection(link.stp1, link.stp2, conn, service_parameters)
 
         except Exception, e:
             log.msg('Error setting up connection: %s' % str(e), system=LOG_SYSTEM)

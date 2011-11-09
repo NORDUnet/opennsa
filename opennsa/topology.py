@@ -66,6 +66,20 @@ class Topology:
                 return ep
 
 
+    def convertSDPRouteToLinks(self, source_ep, dest_ep, route):
+
+        nl_route = []
+        prev_source_ep = source_ep
+
+        for sdp in route:
+            nl_route.append( nsa.Link(prev_source_ep, sdp.stp1) )
+            prev_source_ep = sdp.stp2
+        # last hop
+        nl_route.append( nsa.Link(prev_source_ep, dest_ep) )
+
+        return nl_route
+
+
     def findPaths(self, source_stp, dest_stp, bandwidth=None):
         """
         Find possible paths between two endpoints.
@@ -84,42 +98,38 @@ class Topology:
         if bandwidth is not None:
             routes = self.filterBandwidth(routes, bandwidth)
 
+        network_paths = [ self.convertSDPRouteToLinks(sep, dep, route) for route in routes ]
+
         # topology cannot represent vlans properly yet
         # this means that all ports can be matched with all ports internally in a network
         # this is incorrect if the network does not support vlan rewriting
         # currently only netherlight supports vlan rewriting (nov. 2011)
-        routes = self._pruneMismatchedPorts(sep, dep, routes)
+        network_paths = self._pruneMismatchedPorts(network_paths)
 
-        paths = []
-        if routes == []:
-            paths.append( nsa.Path(sep, dep, []) )
-        else:
-            for sdps in routes:
-                paths.append( nsa.Path(sep, dep, sdps ) )
+        paths = [ nsa.Path(np) for np in network_paths ]
 
         return paths
 
 
-    def _pruneMismatchedPorts(self, source_ep, dest_ep, routes):
+
+    def _pruneMismatchedPorts(self, network_paths):
 
         valid_routes = []
 
-        for path in routes:
+        for np in network_paths:
 
-            cur_source_ep = source_ep
-            for sdp in path:
-                cur_dest_ep = sdp.stp1
-                assert cur_source_ep.network == cur_dest_ep.network, 'Cannot prune mismatched endpoint pairs %s %s' % (cur_source_ep, cur_dest_ep)
-                source_vlan = cur_source_ep.endpoint.split('-')[-1]
-                dest_vlan   = cur_dest_ep.endpoint.split('-')[-1]
-                if cur_source_ep.network in ('netherlight.ets') or source_vlan == dest_vlan:
-                    cur_source_ep = sdp.stp2
-                    continue
+            for link in np:
+                if not link.stp1.network.endswith('.ets'):
+                    continue # not a vlan capable network, STPs can connect
+                source_vlan = link.stp1.endpoint.split('-')[-1]
+                dest_vlan   = link.stp2.endpoint.split('-')[-1]
+                if source_vlan == dest_vlan or link.stp1.network in ('netherlight.ets'):
+                    continue # STPs can connect
                 else:
                     break
 
-            else: # loop did not break
-                valid_routes.append(path)
+            else: # only choosen if no break occurs in the loop
+                valid_routes.append(np)
 
         return valid_routes
 
