@@ -84,6 +84,12 @@ class Topology:
         if bandwidth is not None:
             routes = self.filterBandwidth(routes, bandwidth)
 
+        # topology cannot represent vlans properly yet
+        # this means that all ports can be matched with all ports internally in a network
+        # this is incorrect if the network does not support vlan rewriting
+        # currently only netherlight supports vlan rewriting (nov. 2011)
+        routes = self._pruneMismatchedPorts(sep, dep, routes)
+
         paths = []
         if routes == []:
             paths.append( nsa.Path(sep, dep, []) )
@@ -92,6 +98,31 @@ class Topology:
                 paths.append( nsa.Path(sep, dep, sdps ) )
 
         return paths
+
+
+    def _pruneMismatchedPorts(self, source_ep, dest_ep, routes):
+
+        valid_routes = []
+
+        for path in routes:
+
+            cur_source_ep = source_ep
+            for sdp in path:
+                cur_dest_ep = sdp.stp1
+                assert cur_source_ep.network == cur_dest_ep.network, 'Cannot prune mismatched endpoint pairs %s %s' % (cur_source_ep, cur_dest_ep)
+                source_vlan = cur_source_ep.endpoint.split('-')[-1]
+                dest_vlan   = cur_dest_ep.endpoint.split('-')[-1]
+                if cur_source_ep.network in ('netherlight.ets') or source_vlan == dest_vlan:
+                    cur_source_ep = sdp.stp2
+                    continue
+                else:
+                    break
+
+            else: # loop did not break
+                valid_routes.append(path)
+
+        return valid_routes
+
 
 
     def findPathEndpoints(self, source_stp, dest_stp, visited_networks=None):
