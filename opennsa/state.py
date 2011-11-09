@@ -35,7 +35,7 @@ TRANSITIONS = {
     SCHEDULED       : [ AUTO_PROVISION, PROVISIONING,   RELEASING,    TERMINATING, TERMINATED   ],
     AUTO_PROVISION  : [ PROVISIONING,   TERMINATING,    TERMINATED                              ],
     PROVISIONING    : [ PROVISIONED,    TERMINATING,    TERMINATED                              ],
-    PROVISIONED     : [ RELEASING,      TERMINATING,    TERMINATING,                            ],
+    PROVISIONED     : [ RELEASING,      TERMINATING,                                            ],
     RELEASING       : [ RESERVED,       SCHEDULED,      TERMINATING,    TERMINATED              ],
     CLEANING        : [ TERMINATED                                                              ],
     TERMINATING     : [ TERMINATED,                                                             ],
