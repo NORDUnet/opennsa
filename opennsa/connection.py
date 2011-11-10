@@ -151,24 +151,31 @@ class Connection:
             if all(successes):
                 self.state.switchState(state.RESERVED)
                 return self
+
             else:
-                self.state.switchState(state.TERMINATED)
-                if any(successes):
-                    failure_msg = ' # '.join( [ f.getErrorMessage() for success,f in results if success is False ] )
-                    log.msg('Partial failure in reserve, attempting termination of reserved sub-connections (%s)' % failure_msg, system=LOG_SYSTEM)
-                    error_msg = 'Partial failure in reserve, attempting termination of reserved sub-connections (%s)' % failure_msg
-                    # terminate non-failed connections
-                    reserved_connections = [ conn for success,conn in results if success ]
-                    for rc in reserved_connections:
-                        d = rc.terminate()
-                        d.addCallbacks(
-                            lambda c : log.msg('Succesfully terminated sub-connection after partial reservation failure (%s)' % str(c), system=LOG_SYSTEM),
-                            lambda f : log.msg('Error terminating connection after partial-reservation failure: %s' % str(f), system=LOG_SYSTEM)
-                        )
-                else:
-                    failure_msg = ' # '.join( [ f.getErrorMessage() for _,f in results ] )
-                    error_msg = 'Reservation failed for all local/sub connections (%s)' % failure_msg
+                # at least one reservation failed
+                self.state.switchState(state.CLEANING)
+                failures = [ f for success, f in results if success is False ]
+                failure_msg = ', '.join( [ f.getErrorMessage() for f in failures ] )
+                error_msg = 'Reservation failure. %i/%i connections failed. Reasons: %s.' % (len(failures), len(results), failure_msg)
+                log.msg(error_msg, system=LOG_SYSTEM)
+
+                # terminate non-failed connections
+                # currently we don't try and be too clever about cleaning, just do it, and switch state
+                defs = []
+                reserved_connections = [ conn for success,conn in results if success ]
+                for rc in reserved_connections:
+                    d = rc.terminate()
+                    d.addCallbacks(
+                        lambda c : log.msg('Succesfully terminated sub-connection after partial reservation failure (%s)' % str(c), system=LOG_SYSTEM),
+                        lambda f : log.msg('Error terminating connection after partial-reservation failure: %s' % str(f), system=LOG_SYSTEM)
+                    )
+                    defs.append(d)
+                dl = defer.DeferredList(defs)
+                dl.addCallback(lambda _ : self.state.switchState(state.TERMINATED) )
+
                 return defer.fail( error.ReserveError(error_msg) )
+
 
         self.state.switchState(state.RESERVING)
 
