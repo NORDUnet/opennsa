@@ -94,7 +94,12 @@ class Topology:
         # find endpoint pairs
         #print "FIND PATH", source_stp, dest_stp
 
-        routes = self.findPathEndpoints(source_stp, dest_stp)
+        if snw == dnw:
+            # same network, make direct connection and nothing else
+            routes = [ [] ]
+        else:
+            routes = self.findPathEndpoints(source_stp, dest_stp)
+
         if bandwidth is not None:
             routes = self.filterBandwidth(routes, bandwidth)
 
