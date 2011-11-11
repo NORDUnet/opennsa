@@ -72,6 +72,7 @@ class ProviderClient:
         #role_attr._NameFormat = 'urn:oasis:names:tc:SAML:2.0:attrname-format:basic'
         #role_attr.AttributeValue = ['AuthorizedUser']
         #res_req.sessionSecurityAttr['Attribute'] = [ user_attr, role_attr ]
+        res_req.sessionSecurityAttr['Attribute'] = [ None ] # we replace this later (hack on)
 
         res_req.reservation.globalReservationId     = global_reservation_id
         res_req.reservation.description             = description
