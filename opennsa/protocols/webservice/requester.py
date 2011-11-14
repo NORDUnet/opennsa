@@ -49,10 +49,12 @@ class Requester:
         assert provider_nsa.startswith('urn:'), 'Invalid provider nsa specified'
         #print "TRIGGER CALL", self.calls
         key = (provider_nsa, correlation_id)
-        if not key in self.calls:
+        try:
+            acd = self.calls.pop(key)
+        except KeyError:
             log.msg('Got callback for unknown call. Action: %s. NSA: %s' % (action, provider_nsa), system='opennsa.Requester')
+            return
 
-        acd = self.calls.pop( (provider_nsa, correlation_id) )
         ract, d, call = acd
         assert ract == action, "%s != %s" % (ract, action)
 
