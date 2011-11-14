@@ -129,23 +129,10 @@ class TwistedSUDSClient:
 
         method = self._getMethod(method_name)
 
-        saml_attributes = """
-                <saml:Attribute NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:basic" Name="globalUserName" xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion">
-                    <saml:AttributeValue xsi:type="xs:string" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">jrv@internet2.edu</saml:AttributeValue>
-                </saml:Attribute>
-                <saml:Attribute NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:basic" Name="role">
-                    <saml:AttributeValue xsi:type="xs:string" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">AuthorizedUser</saml:AttributeValue>
-                </saml:Attribute>
-        """
-
         # build envelope and get action
         soap_envelope = method.binding.input.get_message(method, args, {})
         soap_envelope = soap_envelope.str().encode('utf-8')
         soap_action = str(method.soap.action)
-
-        # HACK ON!
-        if '<Attribute/>' in soap_envelope:
-            soap_envelope = soap_envelope.replace('<Attribute/>', saml_attributes.strip())
 
         short_action = soap_action[1:-1].split('/')[-1]
         log.msg('SOAP Dispatch: URL: %s. Action: %s. Length %s' % (url, short_action, len(soap_envelope)), system='TwistedSUDSClient', debug=True)

@@ -54,10 +54,10 @@ class ProviderClient:
         res_req.providerNSA                 = provider_nsa.urn()
 
         #<sessionSecurityAttr>
-        #    <ns5:Attribute NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:basic" Name="globalUserName">
+        #    <ns5:Attribute Name="globalUserName" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:basic">
         #        <ns5:AttributeValue xsi:type="xs:string" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">jrv@internet2.edu</ns5:AttributeValue>
         #    </ns5:Attribute>
-        #    <ns5:Attribute NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:basic" Name="role">
+        #    <ns5:Attribute Name="role" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:basic">
         #        <ns5:AttributeValue xsi:type="xs:string" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">AuthorizedUser</ns5:AttributeValue>
         #    </ns5:Attribute>
         #</sessionSecurityAttr>
@@ -72,7 +72,6 @@ class ProviderClient:
         #role_attr._NameFormat = 'urn:oasis:names:tc:SAML:2.0:attrname-format:basic'
         #role_attr.AttributeValue = ['AuthorizedUser']
         #res_req.sessionSecurityAttr['Attribute'] = [ user_attr, role_attr ]
-        res_req.sessionSecurityAttr['Attribute'] = [ None ] # we replace this later (hack on)
 
         res_req.reservation.globalReservationId     = global_reservation_id
         res_req.reservation.description             = description
