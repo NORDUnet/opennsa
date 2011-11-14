@@ -237,7 +237,7 @@ class RequesterService:
 
         correlation_id          = str(req.correlationId)
         global_reservation_id   = str(res.globalReservationId)
-        description             = str(res.description)
+        description             = str(res.description)          if 'description' in res else None
         connection_id           = str(res.connectionId)
 
         self.requester.reserveConfirmed(correlation_id, requester_nsa, provider_nsa, None, global_reservation_id, description, connection_id, None)
