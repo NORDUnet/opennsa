@@ -234,8 +234,10 @@ class NSIService:
                 match = lambda conn : conn.connection_id in connection_ids if connection_ids is not None else False or \
                                       conn.global_reservation_id in global_reservation_ids if global_reservation_ids is not None else False
 
+            # This hack can be removed after SC11
             if requester_nsa == 'urn:ogf:network:nsa:OpenNSA-querier':
-                log.msg('Enabling special demo query support for querier: %s' % (requester_nsa), system=LOG_SYSTEM)
+                # Be less noisy, query is something that happens fairly often.
+                #log.msg('Enabling special demo query support for querier: %s' % (requester_nsa), system=LOG_SYSTEM)
                 for connections in self.connections.values():
                     for conn in connections.values():
                         if match(conn):
