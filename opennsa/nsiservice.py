@@ -60,14 +60,13 @@ class NSIService:
 
         # should check for local network
         if source_ep.network == self.network:
-            assert conn.local_connection is None, 'Cannot have multiple local sub-connection in connection'
-            conn.local_connection = self.backend.createConnection(source_ep.nrmPort(), dest_ep.nrmPort(), sub_sps)
-
+            sub_conn = self.backend.createConnection(source_ep.nrmPort(), dest_ep.nrmPort(), sub_sps)
         else:
             sub_conn_id = 'urn:uuid:' + str(uuid.uuid1())
             # FIXME should be setup with NSA context, not network
             sub_conn = connection.SubConnection(conn, sub_conn_id, source_ep.network, source_ep, dest_ep, sub_sps, proxy=self.proxy)
-            conn.sub_connections.append(sub_conn)
+
+        conn.sub_connections.append(sub_conn)
 
         return conn
 

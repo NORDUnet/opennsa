@@ -129,19 +129,11 @@ class Connection:
         self.service_parameters         = service_parameters
         self.global_reservation_id      = global_reservation_id
         self.description                = description
-        self.local_connection           = None
         self.sub_connections            = []
 
 
-    def hasLocalConnection(self):
-        return self.local_connection is not None
-
-
     def connections(self):
-        if self.local_connection is not None:
-            return [ self.local_connection ] + self.sub_connections
-        else:
-            return self.sub_connections
+        return self.sub_connections
 
 
     def reserve(self):
