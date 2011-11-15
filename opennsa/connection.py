@@ -217,17 +217,29 @@ class Connection:
             successes = [ r[0] for r in results ]
             if all(successes):
                 self.state.switchState(state.PROVISIONED)
-                if len(results) > 1:
-                    log.msg('Connection %s and all sub connections(%i) provisioned' % (self.connection_id, len(results)-1), system=LOG_SYSTEM)
                 return self
-            if any(successes):
-                self.state.switchState(state.TERMINATED)
-                err = error.ProvisionError('Provision partially failed (may require manual cleanup)')
-                return failure.Failure(err)
+
             else:
-                self.state.switchState(state.TERMINATED)
-                err = error.ProvisionError('Provision failed for all local/sub connections')
-                return failure.Failure(err)
+                # at least one provision failed
+                failures = [ f for success, f in results if success is False ]
+                failure_msg = ', '.join( [ f.getErrorMessage() for f in failures ] )
+                error_msg = 'Provision failure. %i/%i connections failed. Reasons: %s.' % (len(failures), len(results), failure_msg)
+                log.msg(error_msg, system=LOG_SYSTEM)
+                self.state.switchState(state.RELEASING)
+
+                # release provisioned connections
+                provisioned_connections = [ conn for success,conn in results if success ]
+                for pc in provisioned_connections:
+                    d = pc.terminate()
+                    d.addCallbacks(
+                        lambda c : log.msg('Succesfully released sub-connection after partial provision failure (%s)' % str(c), system=LOG_SYSTEM),
+                        lambda f : log.msg('Error releasing connection after partial provision failure: %s' % str(f), system=LOG_SYSTEM)
+                    )
+                    defs.append(d)
+                dl = defer.DeferredList(defs)
+                dl.addCallback(lambda _ : self.state.switchState(state.SCHEDULED) )
+
+        # --
 
         self.state.switchState(state.PROVISIONING)
 
