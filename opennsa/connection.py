@@ -225,7 +225,8 @@ class Connection:
                 failure_msg = ', '.join( [ f.getErrorMessage() for f in failures ] )
                 error_msg = 'Provision failure. %i/%i connections failed. Reasons: %s.' % (len(failures), len(results), failure_msg)
                 log.msg(error_msg, system=LOG_SYSTEM)
-                self.state.switchState(state.RELEASING)
+                # not sure what state should be used here...
+                #self.state.switchState(state.RELEASING)
 
                 # release provisioned connections
                 provisioned_connections = [ conn for success,conn in results if success ]
