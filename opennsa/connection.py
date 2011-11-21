@@ -235,7 +235,6 @@ class Connection:
                 if self.service_parameters.start_time <= dt_now:
                     provisioned(state.PROVISIONING)
                 else:
-                    print "DEFER PROV", self.state()
                     self.scheduler.scheduleTransition(self.service_parameters.start_time, provisioned, state.PROVISIONING)
                 return self
 
