@@ -8,12 +8,12 @@ Copyright: NORDUnet (2011)
 import datetime
 
 from twisted.python import log
-from twisted.internet import reactor, defer, task
+from twisted.internet import defer
 
 from zope.interface import implements
 
 from opennsa import nsa, error, state, interface as nsainterface
-from opennsa.backends.common import calendar as reservationcalendar
+from opennsa.backends.common import scheduler, calendar as reservationcalendar
 
 
 
@@ -59,89 +59,76 @@ class DUDConnection:
         self.network_name = network_name
         self.calendar = calendar
 
+        self.scheduler = scheduler.TransitionScheduler()
         self.state = state.ConnectionState()
-        self.auto_transition_deferred = None
 
 
     def stps(self):
         return nsa.STP(self.network_name, self.source_port), nsa.STP(self.network_name, self.dest_port)
 
 
-    def deSchedule(self):
-
-        if self.auto_transition_deferred:
-            log.msg('Cancelling automatic state transition.  CID %s' % id(self), system='DUDBackend Network %s' % self.network_name)
-            self.auto_transition_deferred.cancel()
-            self.auto_transition_deferred = None
-
-
     def reserve(self):
 
-        log.msg('RESERVE. CID: %s, Ports: %s -> %s' % (id(self), self.source_port, self.dest_port), system='DUDBackend Network %s' % self.network_name)
+        log.msg('RESERVING. CID: %s, Ports: %s -> %s' % (id(self), self.source_port, self.dest_port), system='DUDBackend Network %s' % self.network_name)
         try:
             self.state.switchState(state.RESERVING)
             self.state.switchState(state.RESERVED)
         except error.StateTransitionError:
             return defer.fail(error.ReserveError('Cannot reserve connection in state %s' % self.state()))
-        # need to schedule transition to SCHEDULED
+
+        self.scheduler.scheduleTransition(self.service_parameters.start_time, lambda s : self.state.switchState(s), state.SCHEDULED)
         return defer.succeed(self)
 
 
     def provision(self):
 
-        def doProvision():
-            log.msg('PROVISION. CID: %s' % id(self), system='DUDBackend Network %s' % self.network_name)
-            self.deSchedule()
+        def doProvision(_):
+            log.msg('PROVISIONING. CID: %s' % id(self), system='DUDBackend Network %s' % self.network_name)
             try:
                 self.state.switchState(state.PROVISIONING)
             except error.StateTransitionError:
                 return defer.fail(error.ProvisionError('Cannot provision connection in state %s' % self.state()))
-            # schedule release
-            td = self.service_parameters.end_time -  datetime.datetime.utcnow()
-            # total_seconds() is only available from python 2.7 so we use this
-            stop_delta_seconds = (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6.0
 
-            self.auto_transition_deferred = task.deferLater(reactor, stop_delta_seconds, self.release)
-            self.auto_transition_deferred.addErrback(deferTaskFailed)
+            self.scheduler.scheduleTransition(self.service_parameters.end_time, lambda _ : self.terminate(), state.TERMINATING)
             self.state.switchState(state.PROVISIONED)
 
         dt_now = datetime.datetime.utcnow()
-
         if self.service_parameters.end_time <= dt_now:
             return defer.fail(error.ProvisionError('Cannot provision connection after end time (end time: %s, current time: %s).' % (self.service_parameters.end_time, dt_now)))
-        else:
-            td = self.service_parameters.start_time - dt_now
-            # total_seconds() is only available from python 2.7 so we use this
-            start_delta_seconds = (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6.0
-            start_delta_seconds = max(start_delta_seconds, 0) # if we dt_now during calculation
 
-            self.auto_transition_deferred = task.deferLater(reactor, start_delta_seconds, doProvision)
-            self.auto_transition_deferred.addErrback(deferTaskFailed)
-            self.state.switchState(state.AUTO_PROVISION)
-            log.msg('Connection %s scheduled for auto-provision in %i seconds ' % (id(self), start_delta_seconds), system='DUDBackend Network %s' % self.network_name)
+        self.state.switchState(state.AUTO_PROVISION)
+        self.scheduler.cancelTransition() # cancel any pending scheduled switch
+
+        if self.service_parameters.start_time <= dt_now:
+            doProvision(state.PROVISIONING)
+        else:
+            self.scheduler.scheduleTransition(self.service_parameters.start_time, doProvision, state.PROVISIONING)
 
         return defer.succeed(self)
 
 
     def release(self):
 
-        log.msg('RELEASE. CID: %s' % id(self), system='DUDBackend Network %s' % self.network_name)
-        self.deSchedule()
+        log.msg('RELEASING. CID: %s' % id(self), system='DUDBackend Network %s' % self.network_name)
         try:
             self.state.switchState(state.RELEASING)
         except error.StateTransitionError, e:
             log.msg('Release error: ' + str(e), system='DUDBackend Network %s' % self.network_name)
             return defer.fail(e)
 
+        self.scheduler.cancelTransition() # cancel any pending scheduled switch
+        self.scheduler.scheduleTransition(self.service_parameters.end_time, lambda _ : self.terminate(), state.TERMINATING)
         self.state.switchState(state.SCHEDULED)
         return defer.succeed(self)
 
 
     def terminate(self):
 
-        log.msg('TERMINATE. CID : %s' % id(self), system='DUDBackend Network %s' % self.network_name)
+        log.msg('TERMINATING. CID : %s' % id(self), system='DUDBackend Network %s' % self.network_name)
 
-        self.deSchedule()
+        self.state.switchState(state.TERMINATING)
+        self.scheduler.cancelTransition() # cancel any pending scheduled switch
+
         self.calendar.removeConnection(self.source_port, self.service_parameters.start_time, self.service_parameters.end_time)
         self.calendar.removeConnection(self.dest_port  , self.service_parameters.start_time, self.service_parameters.end_time)
 
