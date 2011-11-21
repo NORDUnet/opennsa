@@ -5,11 +5,13 @@ Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2011)
 """
 
+import datetime
 
 from twisted.python import log, failure
 from twisted.internet import defer
 
 from opennsa import error, nsa, state
+from opennsa.backends.common import scheduler
 
 
 
@@ -129,6 +131,7 @@ class Connection:
         self.service_parameters         = service_parameters
         self.global_reservation_id      = global_reservation_id
         self.description                = description
+        self.scheduler                  = scheduler.TransitionScheduler()
         self.sub_connections            = []
 
 
@@ -138,10 +141,14 @@ class Connection:
 
     def reserve(self):
 
+        def schedule(_):
+            self.state.switchState(state.SCHEDULED)
+
         def reserveRequestsDone(results):
             successes = [ r[0] for r in results ]
             if all(successes):
                 self.state.switchState(state.RESERVED)
+                self.scheduler.scheduleTransition(self.service_parameters.start_time, schedule, state.SCHEDULED)
                 return self
 
             else:
@@ -200,6 +207,7 @@ class Connection:
                 return failure.Failure(err)
 
         self.state.switchState(state.TERMINATING)
+        self.scheduler.cancelTransition() # cancel any pending scheduled switch
 
         defs = []
         for sc in self.connections():
@@ -213,10 +221,22 @@ class Connection:
 
     def provision(self):
 
+        def provisioned(_):
+            # we cannot switch directly from sheduled/auto-provision to provisioned,
+            # but an aggregate state cannot really be in provisioning (at least not in OpenNSA)
+            self.state.switchState(state.PROVISIONING)
+            self.state.switchState(state.PROVISIONED)
+            self.scheduler.scheduleTransition(self.service_parameters.end_time, lambda _ : self.terminate(), state.TERMINATING)
+
         def provisionComplete(results):
             successes = [ r[0] for r in results ]
             if all(successes):
-                self.state.switchState(state.PROVISIONED)
+                dt_now = datetime.datetime.utcnow()
+                if self.service_parameters.start_time <= dt_now:
+                    provisioned(state.PROVISIONING)
+                else:
+                    print "DEFER PROV", self.state()
+                    self.scheduler.scheduleTransition(self.service_parameters.start_time, provisioned, state.PROVISIONING)
                 return self
 
             else:
@@ -242,7 +262,9 @@ class Connection:
 
         # --
 
-        self.state.switchState(state.PROVISIONING)
+        # switch state to auto provision so we know that the connection be be provisioned before cancelling any transition
+        self.state.switchState(state.AUTO_PROVISION)
+        self.scheduler.cancelTransition() # cancel any pending scheduled switch
 
         defs = []
         for sc in self.connections():
@@ -262,6 +284,7 @@ class Connection:
                 self.state.switchState(state.SCHEDULED)
                 if len(results) > 1:
                     log.msg('Connection %s and all sub connections(%i) released' % (self.connection_id, len(results)-1), system=LOG_SYSTEM)
+                self.scheduler.scheduleTransition(self.service_parameters.end_time, lambda _ : self.terminate(), state.TERMINATING)
                 return self
             if any(successes):
                 self.state.switchState(state.TERMINATED)
@@ -272,6 +295,7 @@ class Connection:
                 return failure.Failure(err)
 
         self.state.switchState(state.RELEASING)
+        self.scheduler.cancelTransition() # cancel any pending scheduled switch
 
         defs = []
         for sc in self.connections():
