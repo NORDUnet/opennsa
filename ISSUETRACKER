@@ -1,7 +1,6 @@
 This is the OpenNSA issue tracker :-)
 
 Stuff to do:
-  Proper state changes in aggregation states
   Better error reporting (per network) wrt. failures
   Investigate error message on connection id
   TLS (send mail aswell)
@@ -9,10 +8,10 @@ Stuff to do:
 
 
 General:
+  Deal with bandwidth in calendar (requires joint resource concept)
   Connection state layering problem (top state only updated on commands)
   Better handling of aggregation failures (partial or not)
   Persistence for connections
-  Cleanups (mostly in backends)
   Command line client (Jeroen and HTJ will have a fight-off about which to use :-) )
   More backends :-)
 
