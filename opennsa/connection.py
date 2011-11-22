@@ -20,17 +20,18 @@ LOG_SYSTEM = 'opennsa.Connection'
 
 class SubConnection:
 
-    def __init__(self, parent_connection, connection_id, network, source_stp, dest_stp, service_parameters, proxy=None):
-        self.state = state.ConnectionState()
+    def __init__(self, parent_connection, connection_id, nsa, source_stp, dest_stp, service_parameters, proxy):
         self.parent_connection  = parent_connection
         self.connection_id      = connection_id
-        self.network            = network
+        self.nsa                = nsa
         self.source_stp         = source_stp
         self.dest_stp           = dest_stp
         self.service_parameters = service_parameters
 
+        self.state = state.ConnectionState()
+
         # the one should not be persistent, but should be set when re-created at startup
-        self._proxy = proxy
+        self.proxy = proxy
 
 
     def stps(self):
@@ -39,10 +40,8 @@ class SubConnection:
 
     def reserve(self):
 
-        assert self._proxy is not None, 'Proxy not set for SubConnection, cannot invoke method'
-
         def reserveDone(int_res_id):
-            log.msg('Sub-connection for network %s (%s -> %s) reserved' % (self.network, self.source_stp.endpoint, self.dest_stp.endpoint), system=LOG_SYSTEM)
+            log.msg('Sub-connection for (%s -> %s) via %s reserved' % (self.source_stp.endpoint, self.dest_stp.endpoint, self.nsa), system=LOG_SYSTEM)
             self.state.switchState(state.RESERVED)
             return self
 
@@ -58,14 +57,12 @@ class SubConnection:
                                                     bandwidth=self.service_parameters.bandwidth)
 
         self.state.switchState(state.RESERVING)
-        d = self._proxy.reserve(self.network, None, self.parent_connection.global_reservation_id, self.parent_connection.description, self.connection_id, sub_service_params)
+        d = self.proxy.reserve(self.nsa, None, self.parent_connection.global_reservation_id, self.parent_connection.description, self.connection_id, sub_service_params)
         d.addCallbacks(reserveDone, reserveFailed)
         return d
 
 
     def terminate(self):
-
-        assert self._proxy is not None, 'Proxy not set for SubConnection, cannot invoke method'
 
         def terminateDone(_):
             self.state.switchState(state.TERMINATED)
@@ -76,14 +73,12 @@ class SubConnection:
             return err
 
         self.state.switchState(state.TERMINATING)
-        d = self._proxy.terminate(self.network, None, self.connection_id)
+        d = self.proxy.terminate(self.nsa, None, self.connection_id)
         d.addCallbacks(terminateDone, terminateFailed)
         return d
 
 
     def provision(self):
-
-        assert self._proxy is not None, 'Proxy not set for SubConnection, cannot invoke method'
 
         def provisionDone(conn_id):
             assert conn_id == self.connection_id
@@ -95,14 +90,12 @@ class SubConnection:
             return err
 
         self.state.switchState(state.PROVISIONING)
-        d = self._proxy.provision(self.network, None, self.connection_id)
+        d = self.proxy.provision(self.nsa, None, self.connection_id)
         d.addCallbacks(provisionDone, provisionFailed)
         return d
 
 
     def release(self):
-
-        assert self._proxy is not None, 'Proxy not set for SubConnection, cannot invoke method'
 
         def releaseDone(conn_id):
             assert conn_id == self.connection_id
@@ -114,7 +107,7 @@ class SubConnection:
             return err
 
         self.state.switchState(state.RELEASING)
-        d = self._proxy.release(self.network, None, self.connection_id)
+        d = self.proxy.release(self.nsa, None, self.connection_id)
         d.addCallbacks(releaseDone, releaseFailed)
         return d
 

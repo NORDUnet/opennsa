@@ -63,8 +63,8 @@ class NSIService:
             sub_conn = self.backend.createConnection(source_ep.nrmPort(), dest_ep.nrmPort(), sub_sps)
         else:
             sub_conn_id = 'urn:uuid:' + str(uuid.uuid1())
-            # FIXME should be setup with NSA context, not network
-            sub_conn = connection.SubConnection(conn, sub_conn_id, source_ep.network, source_ep, dest_ep, sub_sps, proxy=self.proxy)
+            remote_nsa = self.topology.getNetwork(source_ep.network).nsa
+            sub_conn = connection.SubConnection(conn, sub_conn_id, remote_nsa, source_ep, dest_ep, sub_sps, self.proxy)
 
         conn.sub_connections.append(sub_conn)
 
