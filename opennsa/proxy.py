@@ -9,10 +9,9 @@ Copyright: NORDUnet (2011)
 
 class NSIProxy:
 
-    def __init__(self, client, nsa_, topology):
+    def __init__(self, client, nsa_):
         self.client     = client    # client adhering to the NSIInterface
         self.nsa_       = nsa_      # this is the identity of the caller
-        self.topology   = topology  # used for network -> nsa lookups
 
 
     def reserve(self, remote_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters):

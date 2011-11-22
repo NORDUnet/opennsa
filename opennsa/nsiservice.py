@@ -37,7 +37,7 @@ class NSIService:
 
         # get own nsa from topology
         self.nsa = self.topology.getNetwork(self.network).nsa
-        self.proxy = proxy.NSIProxy(client, self.nsa, self.topology)
+        self.proxy = proxy.NSIProxy(client, self.nsa)
 
         self.connections = {} # persistence, ha!
 
