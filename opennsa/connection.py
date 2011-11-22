@@ -283,7 +283,7 @@ class Connection:
                 self.state.switchState(state.SCHEDULED)
                 if len(results) > 1:
                     log.msg('Connection %s and all sub connections(%i) released' % (self.connection_id, len(results)-1), system=LOG_SYSTEM)
-                self.scheduler.scheduleTransition(self.service_parameters.end_time, lambda _ : self.terminate(), state.TERMINATING)
+                self.scheduler.scheduleTransition(self.service_parameters.end_time, lambda s : self.state.switchState(state.TERMINATED), state.TERMINATED)
                 return self
             if any(successes):
                 self.state.switchState(state.TERMINATED)
