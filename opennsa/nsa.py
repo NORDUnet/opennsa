@@ -39,6 +39,8 @@ class STP: # Service Termination Point
 
 
 class SDP: # service demarcation point
+    # This abstraction is only used in the topology module these days
+    # It is rather backwards to work with except for pathfinding
 
     def __init__(self, stp1, stp2):
         self.stp1 = stp1
