@@ -158,7 +158,7 @@ class NSIService:
             return conn
 
         def logError(err):
-            log.msg(err.getErrorMessage(), system=LOG_SYSTEM)
+            log.msg('Connection %s: Reserve failed' % conn.connection_id, system=LOG_SYSTEM)
             return err
 
         # now reserve connections needed to create path
