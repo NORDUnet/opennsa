@@ -34,7 +34,7 @@ class NSIProxy:
         return self.client.release(self.nsa_, remote_nsa, session_security_attr, connection_id)
 
 
-    def query(self, remote_nsa, session_security_attributes, query_filter):
+    def query(self, remote_nsa, session_security_attr, query_filter):
 
         return self.client.query(self.nsa_, remote_nsa, session_security_attr, query_filter)
 
