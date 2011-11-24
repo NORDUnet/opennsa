@@ -405,6 +405,10 @@ class JunOSConnection:
         self.scheduler = scheduler.TransitionScheduler()
 
 
+    def curator(self):
+        return 'JunOS NRM'
+
+
     def stps(self):
         return self.service_parameters.source_stp, self.service_parameters.dest_stp
 

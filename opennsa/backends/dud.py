@@ -63,6 +63,11 @@ class DUDConnection:
         self.state = state.ConnectionState()
 
 
+    def curator(self):
+        # the entity responsible for connection, mainly used for logging
+        return 'DUD NRM'
+
+
     def stps(self):
         return nsa.STP(self.network_name, self.source_port), nsa.STP(self.network_name, self.dest_port)
 

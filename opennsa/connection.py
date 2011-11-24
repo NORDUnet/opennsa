@@ -18,6 +18,16 @@ from opennsa.backends.common import scheduler
 LOG_SYSTEM = 'opennsa.Connection'
 
 
+
+def connPath(conn):
+    """
+    Utility function for getting a string with the source and dest STP of connection.
+    """
+    source_stp, dest_stp = conn.stps()
+    return '<%s:%s--%s:%s>' % (source_stp.network, source_stp.endpoint, dest_stp.network, dest_stp.endpoint)
+
+
+
 class SubConnection:
 
     def __init__(self, parent_connection, connection_id, nsa, source_stp, dest_stp, service_parameters, proxy):
@@ -32,6 +42,10 @@ class SubConnection:
 
         # the one should not be persistent, but should be set when re-created at startup
         self.proxy = proxy
+
+
+    def curator(self):
+        return self.nsa.identity
 
 
     def stps(self):
@@ -147,10 +161,20 @@ class Connection:
             else:
                 # at least one reservation failed
                 self.state.switchState(state.CLEANING)
-                failures = [ f for success, f in results if success is False ]
-                failure_msg = ', '.join( [ f.getErrorMessage() for f in failures ] )
-                error_msg = 'Reservation failure. %i/%i connections failed. Reasons: %s.' % (len(failures), len(results), failure_msg)
-                log.msg(error_msg, system=LOG_SYSTEM)
+                # log the failures in an understandable way
+                failures = [ (conn, f) for (success, f), conn in zip(results, self.connections()) if success is False ]
+                failure_msgs = [ conn.curator() + ' ' + connPath(conn) + ' ' + f.getErrorMessage() for (conn, f) in failures ]
+                log.msg('Connection %s: %i/%i reservations failed.' % (self.connection_id, len(failures), len(results)), system=LOG_SYSTEM)
+                for msg in failure_msgs:
+                    log.msg('* Failure: ' + msg, system=LOG_SYSTEM)
+
+                # build the error message to send back
+                if len(results) == 1:
+                    # only one connection, we just return the plain failure
+                    error_msg = failures[0][1].getErrorMessage()
+                else:
+                    # multiple failures, here we build a more complicated error string
+                    error_msg = '%i/%i reservations failed: %s' % (len(failures), len(results), '. '.join(failure_msgs))
 
                 # terminate non-failed connections
                 # currently we don't try and be too clever about cleaning, just do it, and switch state
@@ -159,7 +183,7 @@ class Connection:
                 for rc in reserved_connections:
                     d = rc.terminate()
                     d.addCallbacks(
-                        lambda c : log.msg('Succesfully terminated sub-connection after partial reservation failure (%s)' % str(c), system=LOG_SYSTEM),
+                        lambda c : log.msg('Succesfully terminated sub-connection after partial reservation failure %s %s' % (c.curator(), connPath(c)) , system=LOG_SYSTEM),
                         lambda f : log.msg('Error terminating connection after partial-reservation failure: %s' % str(f), system=LOG_SYSTEM)
                     )
                     defs.append(d)
@@ -171,13 +195,10 @@ class Connection:
 
         self.state.switchState(state.RESERVING)
 
-        defs = []
-        for sc in self.connections():
-            d = sc.reserve()
-            defs.append(d)
+        defs = [ sc.reserve() for sc in self.connections() ]
 
         dl = defer.DeferredList(defs, consumeErrors=True)
-        dl.addCallbacks(reserveRequestsDone) # never errbacks
+        dl.addCallback(reserveRequestsDone) # never errbacks
         return dl
 
 

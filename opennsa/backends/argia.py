@@ -148,6 +148,10 @@ class ArgiaConnection:
         self.scheduled_transition_call = None
 
 
+    def curator(self):
+        return 'Argia NRM'
+
+
     def stps(self):
         return self.service_parameters.source_stp, self.service_parameters.dest_stp
 
