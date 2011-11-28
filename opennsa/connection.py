@@ -199,37 +199,6 @@ class Connection:
         return dl
 
 
-    def terminate(self):
-
-        def connectionTerminated(results):
-            successes = [ r[0] for r in results ]
-            if all(successes):
-                self.state.switchState(state.TERMINATED)
-                if len(successes) > 1:
-                    log.msg('Connection %s and all sub connections(%i) terminated' % (self.connection_id, len(results)-1), system=LOG_SYSTEM)
-                return self
-            if any(successes):
-                self.state.switchState(state.TERMINATED)
-                err = error.TerminateError('Cancel partially failed (may require manual cleanup)')
-                return failure.Failure(err)
-            else:
-                self.state.switchState(state.TERMINATED)
-                err = error.TerminateError('Cancel failed for all local/sub connections')
-                return failure.Failure(err)
-
-        self.state.switchState(state.TERMINATING)
-        self.scheduler.cancelTransition() # cancel any pending scheduled switch
-
-        defs = []
-        for sc in self.connections():
-            d = sc.terminate()
-            defs.append(d)
-
-        dl = defer.DeferredList(defs, consumeErrors=True)
-        dl.addCallback(connectionTerminated)
-        return dl
-
-
     def provision(self):
 
         def provisioned(_):
@@ -314,5 +283,36 @@ class Connection:
 
         dl = defer.DeferredList(defs, consumeErrors=True)
         dl.addCallback(connectionReleased)
+        return dl
+
+
+    def terminate(self):
+
+        def connectionTerminated(results):
+            successes = [ r[0] for r in results ]
+            if all(successes):
+                self.state.switchState(state.TERMINATED)
+                if len(successes) > 1:
+                    log.msg('Connection %s and all sub connections(%i) terminated' % (self.connection_id, len(results)-1), system=LOG_SYSTEM)
+                return self
+            if any(successes):
+                self.state.switchState(state.TERMINATED)
+                err = error.TerminateError('Cancel partially failed (may require manual cleanup)')
+                return failure.Failure(err)
+            else:
+                self.state.switchState(state.TERMINATED)
+                err = error.TerminateError('Cancel failed for all local/sub connections')
+                return failure.Failure(err)
+
+        self.state.switchState(state.TERMINATING)
+        self.scheduler.cancelTransition() # cancel any pending scheduled switch
+
+        defs = []
+        for sc in self.connections():
+            d = sc.terminate()
+            defs.append(d)
+
+        dl = defer.DeferredList(defs, consumeErrors=True)
+        dl.addCallback(connectionTerminated)
         return dl
 
