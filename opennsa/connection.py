@@ -148,14 +148,11 @@ class Connection:
 
     def reserve(self):
 
-        def schedule(_):
-            self.state.switchState(state.SCHEDULED)
-
         def reserveRequestsDone(results):
             successes = [ r[0] for r in results ]
             if all(successes):
                 self.state.switchState(state.RESERVED)
-                self.scheduler.scheduleTransition(self.service_parameters.start_time, schedule, state.SCHEDULED)
+                self.scheduler.scheduleTransition(self.service_parameters.start_time, self.state.switchState, state.SCHEDULED)
                 return self
 
             else:
