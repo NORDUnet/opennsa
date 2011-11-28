@@ -198,7 +198,7 @@ class NSIService:
         try:
             conn = self.getConnection(requester_nsa, connection_id)
             d = conn.provision()
-            d.addCallbacks(provisionSucceeded, _logError)
+            d.addCallback(provisionSucceeded)
             return d
         except error.NoSuchConnectionError, e:
             log.msg('NSA %s requested non-existing connection %s' % (requester_nsa, connection_id), system=LOG_SYSTEM)
