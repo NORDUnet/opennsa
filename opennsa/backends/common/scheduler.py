@@ -36,7 +36,8 @@ class TransitionScheduler:
 
         dt_now = datetime.datetime.utcnow()
 
-        assert transition_time >= dt_now, 'Scheduled transition is not in the future (%s >= %s is False)' % (transition_time, dt_now)
+        # allow a bit leeway in transition to avoid odd race conditions
+        assert transition_time >= (dt_now + datetime.timedelta(seconds=1)), 'Scheduled transition is not in the future (%s >= %s is False)' % (transition_time, dt_now)
 
         td = (transition_time - dt_now)
         transition_delta_seconds = (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6.0
