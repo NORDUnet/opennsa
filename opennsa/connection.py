@@ -78,51 +78,19 @@ class SubConnection:
 
     def terminate(self):
 
-        def terminateDone(_):
-            self.state.switchState(state.TERMINATED)
-            return self
-
-        def terminateFailed(err):
-            self.state.switchState(state.TERMINATED)
-            return err
-
-        self.state.switchState(state.TERMINATING)
         d = self.proxy.terminate(self.nsa, None, self.connection_id)
-        d.addCallbacks(terminateDone, terminateFailed)
         return d
 
 
     def provision(self):
 
-        def provisionDone(conn_id):
-            assert conn_id == self.connection_id
-            self.state.switchState(state.PROVISIONED)
-            return self
-
-        def provisionFailed(err):
-            self.state.switchState(state.TERMINATED)
-            return err
-
-        self.state.switchState(state.PROVISIONING)
         d = self.proxy.provision(self.nsa, None, self.connection_id)
-        d.addCallbacks(provisionDone, provisionFailed)
         return d
 
 
     def release(self):
 
-        def releaseDone(conn_id):
-            assert conn_id == self.connection_id
-            self.state.switchState(state.RESERVED)
-            return self
-
-        def releaseFailed(err):
-            self.state.switchState(state.TERMINATED)
-            return err
-
-        self.state.switchState(state.RELEASING)
         d = self.proxy.release(self.nsa, None, self.connection_id)
-        d.addCallbacks(releaseDone, releaseFailed)
         return d
 
 
@@ -202,9 +170,9 @@ class Connection:
     def provision(self):
 
         def provisioned(_):
-            # we cannot switch directly from sheduled/auto-provision to provisioned,
-            # but an aggregate state cannot really be in provisioning (at least not in OpenNSA)
-            self.state.switchState(state.PROVISIONING)
+            if self.state() == state.AUTO_PROVISION:
+                # cannot switch directly from auto-provision to provisioned,
+                self.state.switchState(state.PROVISIONING)
             self.state.switchState(state.PROVISIONED)
             self.scheduler.scheduleTransition(self.service_parameters.end_time, lambda _ : self.terminate(), state.TERMINATING)
 
@@ -212,43 +180,64 @@ class Connection:
             successes = [ r[0] for r in results ]
             if all(successes):
                 dt_now = datetime.datetime.utcnow()
-                if self.service_parameters.start_time <= dt_now:
-                    provisioned(state.PROVISIONING)
+                if self.state() == state.AUTO_PROVISION:
+                    if self.service_parameters.start_time < dt_now:
+                        self.scheduler.scheduleTransition(self.service_parameters.start_time, provisioned, state.PROVISIONING) # there is a race condition here
+                    else:
+                        # start time was crossed while getting replies
+                        provisioned(None)
+                elif self.state() == state.PROVISIONING:
+                    provisioned(None)
                 else:
-                    self.scheduler.scheduleTransition(self.service_parameters.start_time, provisioned, state.PROVISIONING)
+                    log.msg('ERROR: Invalid state for provisionComplete to be handled (%s).' % self.state())
                 return self
 
             else:
-                # at least one provision failed
-                failures = [ f for success, f in results if success is False ]
-                failure_msg = ', '.join( [ f.getErrorMessage() for f in failures ] )
-                error_msg = 'Provision failure. %i/%i connections failed. Reasons: %s.' % (len(failures), len(results), failure_msg)
-                log.msg(error_msg, system=LOG_SYSTEM)
-                # not sure what state should be used here...
-                #self.state.switchState(state.RELEASING)
+                # at least one provision failed, provisioned connections should be released
+
+                # log the failures in an understandable way
+                failures = [ (conn, f) for (success, f), conn in zip(results, self.connections()) if success is False ]
+                failure_msgs = [ conn.curator() + ' ' + connPath(conn) + ' ' + f.getErrorMessage() for (conn, f) in failures ]
+                log.msg('Connection %s: %i/%i provisions failed.' % (self.connection_id, len(failures), len(results)), system=LOG_SYSTEM)
+                for msg in failure_msgs:
+                    log.msg('* Failure: ' + msg, system=LOG_SYSTEM)
+
+                # build the error message to send back
+                if len(results) == 1:
+                    # only one connection, we just return the plain failure
+                    error_msg = failures[0][1].getErrorMessage()
+                else:
+                    # multiple failures, here we build a more complicated error string
+                    error_msg = '%i/%i reservations failed: %s' % (len(failures), len(results), '. '.join(failure_msgs))
+
+                if self.state() == state.AUTO_PROVISION:
+                    self.state.switchState(state.PROVISIONING) # state machine isn't quite clear on what we should be here
 
                 # release provisioned connections
                 provisioned_connections = [ conn for success,conn in results if success ]
                 for pc in provisioned_connections:
-                    d = pc.terminate()
+                    d = pc.release()
                     d.addCallbacks(
-                        lambda c : log.msg('Succesfully released sub-connection after partial provision failure (%s)' % str(c), system=LOG_SYSTEM),
+                        lambda c : log.msg('Succesfully released sub-connection after partial provision failure %s %s' % (c.curator(), connPath(c)), system=LOG_SYSTEM),
                         lambda f : log.msg('Error releasing connection after partial provision failure: %s' % str(f), system=LOG_SYSTEM)
                     )
                     defs.append(d)
                 dl = defer.DeferredList(defs)
                 dl.addCallback(lambda _ : self.state.switchState(state.SCHEDULED) )
 
+                return defer.fail( error.ProvisionError(error_msg) )
+
         # --
 
-        # switch state to auto provision so we know that the connection be be provisioned before cancelling any transition
-        self.state.switchState(state.AUTO_PROVISION)
+        # initial state switch (this validates if the transition is possible)
+        if self.service_parameters.start_time < datetime.datetime.utcnow():
+            self.state.switchState(state.AUTO_PROVISION)
+        else:
+            self.state.switchState(state.PROVISIONING)
+
         self.scheduler.cancelTransition() # cancel any pending scheduled switch
 
-        defs = []
-        for sc in self.connections():
-            d = sc.provision()
-            defs.append(d)
+        defs = [ sc.provision() for sc in self.connections() ]
 
         dl = defer.DeferredList(defs, consumeErrors=True)
         dl.addCallback(provisionComplete)
