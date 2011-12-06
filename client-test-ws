@@ -44,48 +44,53 @@ def doMain():
     #provider = provider_orval_aruba
     #provider = provider_martinique
 
-    #source_stp      = nsa.STP('Aruba', 'Ashley' )
     source_stp      = nsa.STP('Aruba', 'A1' )
     #source_stp      = nsa.STP('Aruba', 'Axel' )
-    dest_stp        = nsa.STP('Aruba', 'A2')
     #source_stp      = nsa.STP('Martinique', 'M1')
-    #dest_stp        = nsa.STP('Martinique', 'M3')
+
+    #dest_stp        = nsa.STP('Aruba', 'A2')
+    dest_stp        = nsa.STP('Bonaire', 'B3')
 
     start_time = datetime.datetime.utcfromtimestamp(time.time() + 3 )
     end_time   = datetime.datetime.utcfromtimestamp(time.time() + 120 )
     #start_time, end_time = end_time, start_time
 
-    bwp = nsa.BandwidthParameters(1000)
+    bwp = nsa.BandwidthParameters(200)
     #service_params  = nsa.ServiceParameters('2011-09-01T08:56:00Z', '2011-10-01T08:56:00Z' , source_stp, dest_stp, bwp)
     service_params  = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, bandwidth=bwp)
-    global_reservation_id = 'gid-%i'  % random.randrange(100,999)
-    connection_id         = 'conn-%i' % random.randrange(100,999)
+    global_reservation_id = 'urn:uuid:' + str(uuid.uuid1())
+    connection_id         = 'urn:uuid:' + str(uuid.uuid1())
 
     print "Connection id", connection_id
 
-    r = yield client.reservation(client_nsa, provider.nsa, None, global_reservation_id, 'Test Connection', connection_id, service_params)
+    r = yield client.reserve(client_nsa, provider.nsa, None, global_reservation_id, 'Test Connection', connection_id, service_params)
     print "Reservation created. Connection ID:", connection_id
 
-    qr = yield client.query(client_nsa, provider.nsa, None, "Summary", connection_ids = [ connection_id ] )
-    print "State", qr.queryConfirmed.reservationSummary[0].connectionState
+    qc = yield client.query(client_nsa, provider.nsa, None, "Summary", connection_ids = [ connection_id ] )
+    print "State", qc.reservationSummary[0].connectionState
 
     _ = yield client.provision(client_nsa, provider.nsa, None, connection_id)
-    print "Provision made"
+    print "Connection provisioned"
 
-    qr = yield client.query(client_nsa, provider.nsa, None, "Summary", connection_ids = [ connection_id ] )
-    print "State", qr.queryConfirmed.reservationSummary[0].connectionState
+    qc = yield client.query(client_nsa, provider.nsa, None, "Summary", connection_ids = [ connection_id ] )
+    print "State", qc.reservationSummary[0].connectionState
+
+    time.sleep(3)
+
+    qc = yield client.query(client_nsa, provider.nsa, None, "Summary", connection_ids = [ connection_id ] )
+    print "State", qc.reservationSummary[0].connectionState
 
     _ = yield client.release(client_nsa, provider.nsa, None, connection_id)
-    print "Provision released"
+    print "Connection released"
 
     qr = yield client.query(client_nsa, provider.nsa, None, "Summary", connection_ids = [ connection_id ] )
-    print "State", qr.queryConfirmed.reservationSummary[0].connectionState
+    print "State", qc.reservationSummary[0].connectionState
 
     _ = yield client.terminate(client_nsa, provider.nsa, None, connection_id)
     print "Reservation terminated"
 
-    r = yield client.query(client_nsa, provider.nsa, None, "Summary", connection_ids = [ connection_id ] )
-    print "State", r.queryConfirmed.reservationSummary[0].connectionState
+    qc = yield client.query(client_nsa, provider.nsa, None, "Summary", connection_ids = [ connection_id ] )
+    print "State", qc.reservationSummary[0].connectionState
 
 
 
