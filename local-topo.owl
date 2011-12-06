@@ -263,14 +263,14 @@
         <hasSTP rdf:resource="urn:ogf:network:stp:Bonaire:B2"/>
         <hasSTP rdf:resource="urn:ogf:network:stp:Bonaire:B3"/>
         <hasSTP rdf:resource="urn:ogf:network:stp:Bonaire:B4"/>
-        <managedBy rdf:resource="urn:ogf:network:nsa:Bonaire-OpenDRAC"/>
+        <managedBy rdf:resource="urn:ogf:network:nsa:Bonaire"/>
     </owl:NamedIndividual>
 
 
 
-    <!-- urn:ogf:network:nsa:Bonaire-OpenDRAC -->
+    <!-- urn:ogf:network:nsa:Bonaire-->
 
-    <owl:NamedIndividual rdf:about="urn:ogf:network:nsa:Bonaire-OpenDRAC">
+    <owl:NamedIndividual rdf:about="urn:ogf:network:nsa:Bonaire">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#NSA"/>
         <rdfs:label xml:lang="en">SURFnet OpenDRAC - The NSI Edition</rdfs:label>
         <managing rdf:resource="urn:ogf:network:nsnetwork:Bonaire" />
