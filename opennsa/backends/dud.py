@@ -74,6 +74,10 @@ class DUDConnection:
 
     def reserve(self):
 
+        def scheduled(st):
+            self.state.switchState(state.SCHEDULED)
+            self.scheduler.scheduleTransition(self.service_parameters.end_time, lambda _ : self.terminate(), state.TERMINATING)
+
         log.msg('RESERVING. CID: %s, Ports: %s -> %s' % (id(self), self.source_port, self.dest_port), system='DUDBackend Network %s' % self.network_name)
         try:
             self.state.switchState(state.RESERVING)
@@ -81,7 +85,7 @@ class DUDConnection:
         except error.StateTransitionError:
             return defer.fail(error.ReserveError('Cannot reserve connection in state %s' % self.state()))
 
-        self.scheduler.scheduleTransition(self.service_parameters.start_time, lambda s : self.state.switchState(s), state.SCHEDULED)
+        self.scheduler.scheduleTransition(self.service_parameters.start_time, scheduled, state.SCHEDULED)
         return defer.succeed(self)
 
 
