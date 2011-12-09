@@ -6,26 +6,11 @@ import sys
 from twisted.python import log, usage
 from twisted.internet import reactor, defer
 
-from opennsa.cli import parser, commands
+from opennsa.cli import parser, commands, defaultsreader, logobserver
 
 
-class SimpleObserver(log.FileLogObserver):
-
-    debug = False
-
-    def emit(self, eventDict):
-        if 'debug' in eventDict:
-            if eventDict['debug'] and self.debug:
-                pass # want debug
-            else:
-                return # do not want debug
-
-        text = log.textFromEventDict(eventDict)
-        if text is None:
-            return
-        text += "\n"
-        self.write(text)
-        self.flush()
+CLI_DEFAULTS = '.opennsa-cli'
+WSDL_DEFAULT_DIRECTORY = '/usr/local/share/nsi/wsdl'
 
 
 
@@ -38,13 +23,25 @@ def doMain():
         print '%s: Try --help for usage details.' % (sys.argv[0])
         return
 
-    observer = SimpleObserver(sys.stdout)
+    observer = logobserver.SimpleObserver(sys.stdout)
     log.startLoggingWithObserver(observer.emit)
 
     if config['verbose']:
         observer.debug = True
 
-    wsdl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'wsdl')
+    # read defaults
+    defaults_file = config['defaultsfile'] or os.path.join( os.path.expanduser('~'), CLI_DEFAULTS )
+    if os.path.exists(defaults_file):
+        defaults = defaultsreader.readDefaults( open(defaults_file) )
+    else:
+        defaults = {}
+
+    print "Defaults:"
+    for k,v in defaults.items():
+        print " ", k, ":", v
+
+    wsdl_dir = config['wsdldirectory'] or defaults.get('wsdldirectory') or WSDL_DEFAULT_DIRECTORY
+
 
     if config.subCommand == 'reserve':
         return commands.reserve(wsdl_dir,

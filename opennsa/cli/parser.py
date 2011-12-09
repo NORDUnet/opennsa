@@ -2,9 +2,15 @@
 #
 # Commands: reserve, provision, release, terminate, query
 #
-# Flags:
+# Options:
+
+# -f defaults file
+# -w wsdl directory
+
 # -u service url
 # -t topology file
+
+# -n network
 
 # -p provider nsa
 # -r requester nsa
@@ -15,7 +21,13 @@
 # -s source stp
 # -d dest stp
 
-# -n network
+# -b bandwidth (megabits)
+
+# -h host (for callback)
+# -o port (for callback)
+
+# Flags
+# (none currently)
 
 # Not all commands will accept all flags and some flags are mutally exclusive
 
@@ -25,11 +37,17 @@ from twisted.python import usage
 
 # parameters
 
+class DefaultsFileOption(usage.Options):
+    optParameters = [ ['defaultsfile', 'f', None, 'Service URL'] ]
+
+class WSDLDirectoryOption(usage.Options):
+    optParameters = [ ['wsdldirectory', 'w', None, 'Service URL'] ]
+
 class ServiceURLOption(usage.Options):
-    optParameters = [ ['service-url', 'u', None, 'Service URL'] ]
+    optParameters = [ ['serviceurl', 'u', None, 'Service URL'] ]
 
 class ToplogyFileOption(usage.Options):
-    optParameters = [ ['toplogy-file', 't', None, 'Topology File'] ]
+    optParameters = [ ['toplogyfile', 't', None, 'Topology File'] ]
 
 class NetworkOption(usage.Options):
     optParameters = [ ['network', 'n', None, 'Provider Network'] ]
@@ -58,6 +76,15 @@ class StartTimeOption(usage.Options):
 class EndTimeOption(usage.Options):
     optParameters = [ ['end-time', 'e', None, 'End time'] ]
 
+class BandwidthOption(usage.Options):
+    optParameters = [ ['bandwidth', 'b', None, 'Bandwidth (Megabits)'] ]
+
+class HostOption(usage.Options):
+    optParameters = [ ['host', 'h', None, 'Host (for callback)'] ]
+
+class PortOption(usage.Options):
+    optParameters = [ ['port', 'o', None, 'Port (for callback)'] ]
+
 
 # command options
 
@@ -66,7 +93,8 @@ class ReserveOptions(ServiceURLOption, ProviderNSAOption, RequesterNSAOption, So
     pass
 
 
-class Options(usage.Options):
+#class Options(usage.Options):
+class Options(DefaultsFileOption, WSDLDirectoryOption):
     subCommands = [
         ['reserve', None,   ReserveOptions, 'Create an NSI reservation']
     ]
