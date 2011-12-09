@@ -43,11 +43,12 @@ class DefaultsFileOption(usage.Options):
 class WSDLDirectoryOption(usage.Options):
     optParameters = [ ['wsdldirectory', 'w', None, 'Service URL'] ]
 
+
 class ServiceURLOption(usage.Options):
     optParameters = [ ['serviceurl', 'u', None, 'Service URL'] ]
 
-class ToplogyFileOption(usage.Options):
-    optParameters = [ ['toplogyfile', 't', None, 'Topology File'] ]
+class TopologyFileOption(usage.Options):
+    optParameters = [ ['topologyfile', 't', None, 'Topology File'] ]
 
 class NetworkOption(usage.Options):
     optParameters = [ ['network', 'n', None, 'Provider Network'] ]
@@ -89,11 +90,14 @@ class PortOption(usage.Options):
 # command options
 
 
-class ReserveOptions(ServiceURLOption, ProviderNSAOption, RequesterNSAOption, SourceSTPOption, DestSTPOption):
-    pass
+class ReserveOptions(ServiceURLOption, TopologyFileOption, NetworkOption, ProviderNSAOption, RequesterNSAOption, SourceSTPOption, DestSTPOption):
+
+    def postOptions(self):
+        if self['serviceurl'] and (self['topologyfile'] or self['network']):
+            raise usage.UsageError('Cannot set both service url while having topology file or network.')
 
 
-#class Options(usage.Options):
+
 class Options(DefaultsFileOption, WSDLDirectoryOption):
     subCommands = [
         ['reserve', None,   ReserveOptions, 'Create an NSI reservation']
