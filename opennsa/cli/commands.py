@@ -13,13 +13,13 @@ from opennsa import nsa
 
 
 @defer.inlineCallbacks
-def reserve(client, requester_url, service_url, topology_file, network, provider_nsa, requester_nsa, source_stp, dest_stp):
+def reserve(client, client_nsa, provider_nsa, source_stp, dest_stp):
 
-    client_nsa      = nsa.NetworkServiceAgent(requester_nsa, requester_url)
-    provider_nsa    = nsa.NetworkServiceAgent(provider_nsa, service_url)
+#    client_nsa      = nsa.NetworkServiceAgent(requester_nsa, requester_url)
+#    provider_nsa    = nsa.NetworkServiceAgent(provider_nsa, service_url)
 
     source_network, source_port = source_stp.split(':',1)
-    dest_network, dest_port     = dest_stp.split(':', 1)
+    dest_network,   dest_port   = dest_stp.split(':', 1)
 
     r_source_stp    = nsa.STP(source_network, source_port)
     r_dest_stp      = nsa.STP(dest_network,   dest_port)
@@ -40,25 +40,24 @@ def reserve(client, requester_url, service_url, topology_file, network, provider
 
 
 @defer.inlineCallbacks
-def provision(wsdl_dir, service_url, provider_nsa, requester_nsa, source_stp, dest_stp):
+def provision(client, client_nsa, provider_nsa, connection_id):
 
-    pass
-
-
-
-@defer.inlineCallbacks
-def release():
-
-    pass
-
+    _ = yield client.provision(client_nsa, provider_nsa, None, connection_id)
+    log.msg('Connection %s provisioned' % connection_id)
 
 
 @defer.inlineCallbacks
-def terminate():
+def release(client, client_nsa, provider_nsa, connection_id):
 
-    pass
+    _ = yield client.release(client_nsa, provider_nsa, None, connection_id)
+    log.msg('Connection %s released' % connection_id)
 
 
+@defer.inlineCallbacks
+def terminate(client, client_nsa, provider_nsa, connection_id):
+
+    _ = yield client.terminate(client_nsa, provider_nsa, None, connection_id)
+    log.msg('Connection %s terminated' % connection_id)
 
 
 @defer.inlineCallbacks

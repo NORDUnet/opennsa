@@ -34,52 +34,45 @@
 
 from twisted.python import usage
 
-
-# constans, so we don't use strings in other modules
-
-VERBOSE         = 'verbose'
-DEFAULTS_FILE   = 'defaultsfile'
-WSDL_DIRECTORY  = 'wsdldirectory'
-HOST            = 'host'
-PORT            = 'port'
+from opennsa.cli import options
 
 
 # parameters used for all commands
 
 class DefaultsFileOption(usage.Options):
-    optParameters = [ [ DEFAULTS_FILE, 'f', None, 'Service URL'] ]
+    optParameters = [ [ options.DEFAULTS_FILE, 'f', None, 'Service URL'] ]
 
 class WSDLDirectoryOption(usage.Options):
-    optParameters = [ [ WSDL_DIRECTORY, 'w', None, 'Service URL'] ]
+    optParameters = [ [ options.WSDL_DIRECTORY, 'w', None, 'Service URL'] ]
 
 class HostOption(usage.Options):
-    optParameters = [ [ HOST, 'h', None, 'Host (for callback)'] ]
+    optParameters = [ [ options.HOST, 'h', None, 'Host (for callback)'] ]
 
 class PortOption(usage.Options):
-    optParameters = [ [ PORT, 'o', None, 'Port (for callback)'] ]
+    optParameters = [ [ options.PORT, 'o', None, 'Port (for callback)'] ]
 
 # parameters which are only used for some commands
 
 class ServiceURLOption(usage.Options):
-    optParameters = [ ['serviceurl', 'u', None, 'Service URL'] ]
+    optParameters = [ [ options.SERVICE_URL, 'u', None, 'Service URL'] ]
 
 class TopologyFileOption(usage.Options):
-    optParameters = [ ['topologyfile', 't', None, 'Topology File'] ]
+    optParameters = [ [ options.TOPOLOGY_FILE, 't', None, 'Topology File'] ]
 
 class NetworkOption(usage.Options):
-    optParameters = [ ['network', 'n', None, 'Provider Network'] ]
+    optParameters = [ [ options.NETWORK, 'n', None, 'Provider Network'] ]
 
 class ProviderNSAOption(usage.Options):
-    optParameters = [ ['provider', 'p', None, 'Provider NSA Identity'] ]
+    optParameters = [ [ options.PROVIDER, 'p', None, 'Provider NSA Identity'] ]
 
 class RequesterNSAOption(usage.Options):
-    optParameters = [ ['requester', 'r', None, 'Requester NSA Identity'] ]
+    optParameters = [ [ options.REQUESTER, 'r', None, 'Requester NSA Identity'] ]
 
 class SourceSTPOption(usage.Options):
-    optParameters = [ ['source-stp', 's', None, 'Source STP'] ]
+    optParameters = [ [ options.SOURCE_STP, 's', None, 'Source STP'] ]
 
 class DestSTPOption(usage.Options):
-    optParameters = [ ['dest-stp', 'd', None, 'Dest STP'] ]
+    optParameters = [ [ options.DEST_STP, 'd', None, 'Dest STP'] ]
 
 class ConnectionIDOption(usage.Options):
     optParameters = [ ['connection-id', 'c', None, 'Connection id'] ]
@@ -103,7 +96,7 @@ class BandwidthOption(usage.Options):
 class ReserveOptions(ServiceURLOption, TopologyFileOption, NetworkOption, ProviderNSAOption, RequesterNSAOption, SourceSTPOption, DestSTPOption):
 
     def postOptions(self):
-        if self['serviceurl'] and (self['topologyfile'] or self['network']):
+        if self[options.SERVICE_URL] and (self[options.TOPOLOGY_FILE] or self[options.NETWORK]):
             raise usage.UsageError('Cannot set both service url while having topology file or network.')
 
 
@@ -114,7 +107,7 @@ class Options(DefaultsFileOption, WSDLDirectoryOption, HostOption, PortOption):
     ]
 
     optFlags = [
-        [ VERBOSE, 'v', 'Print out more information']
+        [ options.VERBOSE, 'v', 'Print out more information']
     ]
 
     def postOptions(self):

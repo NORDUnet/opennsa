@@ -7,8 +7,8 @@ import socket
 from twisted.python import log, usage
 from twisted.internet import reactor, defer
 
-from opennsa import setup
-from opennsa.cli import parser, commands, defaultsreader, logobserver
+from opennsa import setup, nsa
+from opennsa.cli import options, parser, commands, logobserver
 
 
 CLI_DEFAULTS            = '.opennsa-cli'
@@ -28,13 +28,13 @@ def doMain():
     observer = logobserver.SimpleObserver(sys.stdout)
     log.startLoggingWithObserver(observer.emit)
 
-    if config[parser.VERBOSE]:
+    if config[options.VERBOSE]:
         observer.debug = True
 
     # read defaults
-    defaults_file = config[parser.DEFAULTSFILE] or os.path.join( os.path.expanduser('~'), CLI_DEFAULTS )
+    defaults_file = config[options.DEFAULTS_FILE] or os.path.join( os.path.expanduser('~'), CLI_DEFAULTS )
     if os.path.exists(defaults_file):
-        defaults = defaultsreader.readDefaults( open(defaults_file) )
+        defaults = options.readDefaults( open(defaults_file) )
     else:
         defaults = {}
 
@@ -42,40 +42,60 @@ def doMain():
     for k,v in defaults.items():
         print " ", k, ":", v
 
-    wsdl_dir = config[parser.WSDL_DIRECTORY] or defaults.get(parser.WSDL_DIRECTORY) or WSDL_DEFAULT_DIRECTORY
-    host = config[parser.HOST] or defaults[parser.HOST] or socket.getfqdn()
-    port = config[parser.PORT] or defaults[parser.PORT] or 7080
-    requester_url = REQUESTER_URL_BASE % (host, port)
+    wsdl_dir        = config[options.WSDL_DIRECTORY]    or defaults.get(options.WSDL_DIRECTORY) or WSDL_DEFAULT_DIRECTORY
+    host            = config[options.HOST]              or defaults.get(options.HOST)           or socket.getfqdn()
+    port            = config[options.PORT]              or defaults.get(options.PORT)           or 7080
+    requester_url   = REQUESTER_URL_BASE % (host, port)
+
+    print config.subOptions[options.TOPOLOGY_FILE]
+
+    topology_file   = config.subOptions[options.TOPOLOGY_FILE]  or defaults.get(options.TOPOLOGY_FILE)
+    network         = config.subOptions[options.NETWORK]        or defaults.get(options.NETWORK)
+    service_url     = config.subOptions[options.SERVICE_URL]    or defaults.get(options.SERVICE_URL)
+
+    requester_nsa   = config.subOptions[options.REQUESTER]      or defaults.get(options.REQUESTER)      or 'OpenNSA-CLI'
+    provider_nsa    = config.subOptions[options.PROVIDER]       or defaults.get(options.PROVIDER)
+
+    if topology_file and network:
+        client_nsa      = nsa.NetworkServiceAgent(requester_nsa, requester_url)
+
+        from opennsa import topology
+        topo = topology.parseGOLETopology( open(topology_file) )
+        provider_nsa  = topo.getNetwork(network).nsa
+
+    elif service_url:
+        client_nsa      = nsa.NetworkServiceAgent(requester_nsa, requester_url)
+        provider_nsa    = nsa.NetworkServiceAgent(provider_nsa, service_url)
+
+    else:
+        raise usage.UsageError('Neither topology file+network or service URL defined')
 
     client, service, factory = setup.createClient(host, port, wsdl_dir)
     reactor.listenTCP(port, factory)
 
     if config.subCommand == 'reserve':
-        return commands.reserve(client,
-                                requester_url,
-                                config.subOptions['serviceurl'],
-                                config.subOptions['topologyfile'],
-                                config.subOptions['network'],
-                                config.subOptions['serviceurl'],
-                                config.subOptions['provider'],
-                                config.subOptions['requester'],
-                                config.subOptions['source-stp'],
-                                config.subOptions['dest-stp'])
+        source_stp = config.subOptions[options.SOURCE_STP]  or defaults.get(options.SOURCE_STP)
+        dest_stp   = config.subOptions[options.DEST_STP]    or defaults.get(options.DEST_STP)
+        if source_stp is None:
+            raise usage.UsageError('Source STP is not defined')
+        if dest_stp is None:
+            raise usage.UsageError('Dest STP is not defined')
+        return commands.reserve(client, client_nsa, provider_nsa, source_stp, dest_stp)
 
     elif config.subCommand == 'provision':
-        return commands.provision()
+        return commands.provision(client, client_nsa, connection_id)
 
     elif config.subCommand == 'release':
-        return commands.release()
+        return commands.release(client, client_nsa, provider_nsa, connection_id)
 
     elif config.subCommand == 'terminate':
-        return commands.terminate()
+        return commands.terminate(client, client_nsa, provider_nsa, connection_id)
 
     elif config.subCommand == 'querysummary':
-        return commands.querysummary()
+        return commands.querysummary(client, client_nsa, provider_nsa)
 
     elif config.subCommand == 'querydetails':
-        return commands.querydetails()
+        return commands.querydetails(client, client_nsa, provider_nsa)
 
     else:
         print "No subcommand specified"
@@ -89,8 +109,11 @@ def main():
     def printError(error):
         if error.type == SystemExit:
             return
-        #print "Error: %s" % error.value
-        log.err(error)
+        elif error.type == usage.UsageError:
+            log.msg("Usage error: " + error.getErrorMessage())
+        else:
+            #print "Error: %s" % error.value
+            log.err(error)
 
     d = defer.maybeDeferred(doMain)
     d.addErrback(printError)
