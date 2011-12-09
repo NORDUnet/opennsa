@@ -2,16 +2,18 @@
 
 import os
 import sys
+import socket
 
 from twisted.python import log, usage
 from twisted.internet import reactor, defer
 
+from opennsa import setup
 from opennsa.cli import parser, commands, defaultsreader, logobserver
 
 
-CLI_DEFAULTS = '.opennsa-cli'
-WSDL_DEFAULT_DIRECTORY = '/usr/local/share/nsi/wsdl'
-
+CLI_DEFAULTS            = '.opennsa-cli'
+WSDL_DEFAULT_DIRECTORY  = '/usr/local/share/nsi/wsdl'
+REQUESTER_URL_BASE      = 'http://%s:%i/NSI/services/ConnectionService'
 
 
 def doMain():
@@ -26,11 +28,11 @@ def doMain():
     observer = logobserver.SimpleObserver(sys.stdout)
     log.startLoggingWithObserver(observer.emit)
 
-    if config['verbose']:
+    if config[parser.VERBOSE]:
         observer.debug = True
 
     # read defaults
-    defaults_file = config['defaultsfile'] or os.path.join( os.path.expanduser('~'), CLI_DEFAULTS )
+    defaults_file = config[parser.DEFAULTSFILE] or os.path.join( os.path.expanduser('~'), CLI_DEFAULTS )
     if os.path.exists(defaults_file):
         defaults = defaultsreader.readDefaults( open(defaults_file) )
     else:
@@ -40,21 +42,40 @@ def doMain():
     for k,v in defaults.items():
         print " ", k, ":", v
 
-    wsdl_dir = config['wsdldirectory'] or defaults.get('wsdldirectory') or WSDL_DEFAULT_DIRECTORY
+    wsdl_dir = config[parser.WSDL_DIRECTORY] or defaults.get(parser.WSDL_DIRECTORY) or WSDL_DEFAULT_DIRECTORY
+    host = config[parser.HOST] or defaults[parser.HOST] or socket.getfqdn()
+    port = config[parser.PORT] or defaults[parser.PORT] or 7080
+    requester_url = REQUESTER_URL_BASE % (host, port)
 
+    client, service, factory = setup.createClient(host, port, wsdl_dir)
+    reactor.listenTCP(port, factory)
 
     if config.subCommand == 'reserve':
-        return commands.reserve(wsdl_dir,
-                                config.subOptions['service-url'],
+        return commands.reserve(client,
+                                requester_url,
+                                config.subOptions['serviceurl'],
+                                config.subOptions['topologyfile'],
+                                config.subOptions['network'],
+                                config.subOptions['serviceurl'],
                                 config.subOptions['provider'],
                                 config.subOptions['requester'],
                                 config.subOptions['source-stp'],
                                 config.subOptions['dest-stp'])
 
-    elif config.subCommand:
-        print 'Unknown command: %s, should not happen' % config.subCommand
-        print 'Cowardly bailing out'
-        return
+    elif config.subCommand == 'provision':
+        return commands.provision()
+
+    elif config.subCommand == 'release':
+        return commands.release()
+
+    elif config.subCommand == 'terminate':
+        return commands.terminate()
+
+    elif config.subCommand == 'querysummary':
+        return commands.querysummary()
+
+    elif config.subCommand == 'querydetails':
+        return commands.querydetails()
 
     else:
         print "No subcommand specified"

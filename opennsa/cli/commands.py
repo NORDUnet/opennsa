@@ -1,33 +1,22 @@
 # cli commands
 
-import os
 import uuid
 import random
 import time
 import datetime
 
 from twisted.python import log
-from twisted.internet import reactor, defer
+from twisted.internet import defer
 
-from opennsa import nsa, setup
+from opennsa import nsa
 
-
-# this needs be configurable somehow
-HOST = 'localhost'
-PORT = 7080
 
 
 @defer.inlineCallbacks
-def reserve(wsdl_dir, service_url, provider_nsa, requester_nsa, source_stp, dest_stp):
+def reserve(client, requester_url, service_url, topology_file, network, provider_nsa, requester_nsa, source_stp, dest_stp):
 
-    client, service, factory = setup.createClient(HOST, PORT, wsdl_dir)
-
-    reactor.listenTCP(PORT, factory)
-
-    requester_url = 'http://%s:%i/NSI/services/ConnectionService' % (HOST, PORT)
-
-    client_nsa  = nsa.NetworkServiceAgent(requester_nsa, requester_url)
-    provider    = nsa.Network('Do we need this?', nsa.NetworkServiceAgent(provider_nsa, service_url))
+    client_nsa      = nsa.NetworkServiceAgent(requester_nsa, requester_url)
+    provider_nsa    = nsa.NetworkServiceAgent(provider_nsa, service_url)
 
     source_network, source_port = source_stp.split(':',1)
     dest_network, dest_port     = dest_stp.split(':', 1)
@@ -43,9 +32,43 @@ def reserve(wsdl_dir, service_url, provider_nsa, requester_nsa, source_stp, dest
     global_id       = 'urn:uuid:' + str(uuid.uuid1())
     connection_id   = 'conn-%i' % random.randrange(1000,9999)
 
-    print "Connection ID", connection_id
-    print "Global ID", global_id
+    log.msg("Connection ID: %s" % connection_id)
+    log.msg("Global ID: %s" % global_id)
 
-    r = yield client.reserve(client_nsa, provider.nsa, None, global_id, 'Test Connection', connection_id, service_params)
+    r = yield client.reserve(client_nsa, provider_nsa, None, global_id, 'Test Connection', connection_id, service_params)
     print "Reservation created. Connection ID:", connection_id
+
+
+@defer.inlineCallbacks
+def provision(wsdl_dir, service_url, provider_nsa, requester_nsa, source_stp, dest_stp):
+
+    pass
+
+
+
+@defer.inlineCallbacks
+def release():
+
+    pass
+
+
+
+@defer.inlineCallbacks
+def terminate():
+
+    pass
+
+
+
+
+@defer.inlineCallbacks
+def querysummary():
+
+    pass
+
+
+@defer.inlineCallbacks
+def querydetails():
+
+    raise NotImplementedError('QueryDetails command not implemented')
 

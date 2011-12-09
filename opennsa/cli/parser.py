@@ -7,9 +7,12 @@
 # -f defaults file
 # -w wsdl directory
 
-# -u service url
-# -t topology file
+# -h host (for callback)
+# -o port (for callback)
 
+# -u service url
+
+# -t topology file
 # -n network
 
 # -p provider nsa
@@ -23,9 +26,6 @@
 
 # -b bandwidth (megabits)
 
-# -h host (for callback)
-# -o port (for callback)
-
 # Flags
 # (none currently)
 
@@ -35,14 +35,30 @@
 from twisted.python import usage
 
 
-# parameters
+# constans, so we don't use strings in other modules
+
+VERBOSE         = 'verbose'
+DEFAULTS_FILE   = 'defaultsfile'
+WSDL_DIRECTORY  = 'wsdldirectory'
+HOST            = 'host'
+PORT            = 'port'
+
+
+# parameters used for all commands
 
 class DefaultsFileOption(usage.Options):
-    optParameters = [ ['defaultsfile', 'f', None, 'Service URL'] ]
+    optParameters = [ [ DEFAULTS_FILE, 'f', None, 'Service URL'] ]
 
 class WSDLDirectoryOption(usage.Options):
-    optParameters = [ ['wsdldirectory', 'w', None, 'Service URL'] ]
+    optParameters = [ [ WSDL_DIRECTORY, 'w', None, 'Service URL'] ]
 
+class HostOption(usage.Options):
+    optParameters = [ [ HOST, 'h', None, 'Host (for callback)'] ]
+
+class PortOption(usage.Options):
+    optParameters = [ [ PORT, 'o', None, 'Port (for callback)'] ]
+
+# parameters which are only used for some commands
 
 class ServiceURLOption(usage.Options):
     optParameters = [ ['serviceurl', 'u', None, 'Service URL'] ]
@@ -80,12 +96,6 @@ class EndTimeOption(usage.Options):
 class BandwidthOption(usage.Options):
     optParameters = [ ['bandwidth', 'b', None, 'Bandwidth (Megabits)'] ]
 
-class HostOption(usage.Options):
-    optParameters = [ ['host', 'h', None, 'Host (for callback)'] ]
-
-class PortOption(usage.Options):
-    optParameters = [ ['port', 'o', None, 'Port (for callback)'] ]
-
 
 # command options
 
@@ -98,13 +108,13 @@ class ReserveOptions(ServiceURLOption, TopologyFileOption, NetworkOption, Provid
 
 
 
-class Options(DefaultsFileOption, WSDLDirectoryOption):
+class Options(DefaultsFileOption, WSDLDirectoryOption, HostOption, PortOption):
     subCommands = [
         ['reserve', None,   ReserveOptions, 'Create an NSI reservation']
     ]
 
     optFlags = [
-        ['verbose', 'v', 'Print out more information']
+        [ VERBOSE, 'v', 'Print out more information']
     ]
 
     def postOptions(self):
