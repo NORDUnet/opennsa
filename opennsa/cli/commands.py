@@ -56,7 +56,9 @@ def querysummary(client, client_nsa, provider_nsa, connection_ids, global_reserv
 
 
 @defer.inlineCallbacks
-def querydetails():
+def querydetails(client, client_nsa, provider_nsa, connection_ids, global_reservation_ids):
 
-    raise NotImplementedError('QueryDetails command not implemented')
+    qc = yield client.query(client_nsa, provider_nsa, None, "Details", connection_ids, global_reservation_ids)
+    log.msg('Query results:')
+    log.msg( str(qc) )
 

@@ -69,6 +69,5 @@ To provision the connection:
 
 ./onsa provision -n northernlight.ets -c <connection-id>
 
-Similarly with release and terminate.
-
+Similarly with release and terminate, querysummary, and querydetails.
 
