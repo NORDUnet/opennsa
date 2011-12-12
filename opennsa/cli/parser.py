@@ -75,43 +75,45 @@ class DestSTPOption(usage.Options):
     optParameters = [ [ options.DEST_STP, 'd', None, 'Dest STP'] ]
 
 class ConnectionIDOption(usage.Options):
-    optParameters = [ ['connection-id', 'c', None, 'Connection id'] ]
+    optParameters = [ [ options.CONNECTION_ID, 'c', None, 'Connection id'] ]
 
 class GlobalIDOption(usage.Options):
-    optParameters = [ ['global-id', 'g', None, 'Global id'] ]
+    optParameters = [ [ options.GLOBAL_ID, 'g', None, 'Global id'] ]
 
 class StartTimeOption(usage.Options):
-    optParameters = [ ['start-time', 'a', None, 'Start time'] ]
+    optParameters = [ [ options.START_TIME, 'a', None, 'Start time'] ]
 
 class EndTimeOption(usage.Options):
-    optParameters = [ ['end-time', 'e', None, 'End time'] ]
+    optParameters = [ [ options.END_TIME, 'e', None, 'End time'] ]
 
 class BandwidthOption(usage.Options):
-    optParameters = [ ['bandwidth', 'b', None, 'Bandwidth (Megabits)'] ]
+    optParameters = [ [ options.BANDWIDTH, 'b', None, 'Bandwidth (Megabits)'] ]
 
 
 # command options
 
 
-class NetworkCommandOptions(ServiceURLOption, TopologyFileOption, NetworkOption, ProviderNSAOption, RequesterNSAOption):
+class NetworkCommandOptions(ServiceURLOption, TopologyFileOption, NetworkOption, ProviderNSAOption, RequesterNSAOption, ConnectionIDOption, GlobalIDOption):
 
     def postOptions(self):
         if self[options.SERVICE_URL] and (self[options.TOPOLOGY_FILE] or self[options.NETWORK]):
             raise usage.UsageError('Cannot set both service url while having topology file or network.')
 
 
-class ReserveOptions(NetworkCommandOptions, SourceSTPOption, DestSTPOption, ConnectionIDOption):
+class ReserveOptions(NetworkCommandOptions, SourceSTPOption, DestSTPOption, ConnectionIDOption, StartTimeOption, EndTimeOption, BandwidthOption):
     pass
 
-class ProvisionOptions(NetworkCommandOptions, ConnectionIDOption):
-    pass
 
+class ProvisionReleaseTerminateOptions(NetworkCommandOptions, ConnectionIDOption):
+    pass
 
 
 class Options(DefaultsFileOption, WSDLDirectoryOption, HostOption, PortOption):
     subCommands = [
         ['reserve',     None,   ReserveOptions,   'Create a reservation'],
-        ['provision',   None,   ProvisionOptions, 'Provision a connection.']
+        ['provision',   None,   ProvisionReleaseTerminateOptions, 'Provision a connection.'],
+        ['provision',   None,   ProvisionReleaseTerminateOptions, 'Release a connection.'],
+        ['provision',   None,   ProvisionReleaseTerminateOptions, 'Terminate a connection.']
     ]
 
     optFlags = [
