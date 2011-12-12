@@ -112,8 +112,8 @@ class Options(DefaultsFileOption, WSDLDirectoryOption, HostOption, PortOption):
     subCommands = [
         ['reserve',     None,   ReserveOptions,   'Create a reservation'],
         ['provision',   None,   ProvisionReleaseTerminateOptions, 'Provision a connection.'],
-        ['provision',   None,   ProvisionReleaseTerminateOptions, 'Release a connection.'],
-        ['provision',   None,   ProvisionReleaseTerminateOptions, 'Terminate a connection.']
+        ['release',     None,   ProvisionReleaseTerminateOptions, 'Release a connection.'],
+        ['terminate',   None,   ProvisionReleaseTerminateOptions, 'Terminate a connection.']
     ]
 
     optFlags = [
