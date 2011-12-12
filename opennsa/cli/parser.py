@@ -115,7 +115,7 @@ class Options(DefaultsFileOption, WSDLDirectoryOption, HostOption, PortOption):
         ['release',         None,   NetworkCommandOptions,  'Release a connection.'],
         ['terminate',       None,   NetworkCommandOptions,  'Terminate a connection.'],
         ['querysummary',    None,   NetworkCommandOptions,  'Query a connection (summary).'],
-        ['querydetauls',    None,   NetworkCommandOptions,  'Query a connection (recursive).']
+        ['querydetails',    None,   NetworkCommandOptions,  'Query a connection (recursive).']
     ]
 
     optFlags = [
