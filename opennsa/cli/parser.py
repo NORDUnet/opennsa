@@ -110,10 +110,12 @@ class ProvisionReleaseTerminateOptions(NetworkCommandOptions):
 
 class Options(DefaultsFileOption, WSDLDirectoryOption, HostOption, PortOption):
     subCommands = [
-        ['reserve',     None,   ReserveOptions,   'Create a reservation'],
-        ['provision',   None,   ProvisionReleaseTerminateOptions, 'Provision a connection.'],
-        ['release',     None,   ProvisionReleaseTerminateOptions, 'Release a connection.'],
-        ['terminate',   None,   ProvisionReleaseTerminateOptions, 'Terminate a connection.']
+        ['reserve',         None,   ReserveOptions,         'Create a reservation'],
+        ['provision',       None,   NetworkCommandOptions,  'Provision a connection.'],
+        ['release',         None,   NetworkCommandOptions,  'Release a connection.'],
+        ['terminate',       None,   NetworkCommandOptions,  'Terminate a connection.'],
+        ['querysummary',    None,   NetworkCommandOptions,  'Query a connection (summary).'],
+        ['querydetauls',    None,   NetworkCommandOptions,  'Query a connection (recursive).']
     ]
 
     optFlags = [

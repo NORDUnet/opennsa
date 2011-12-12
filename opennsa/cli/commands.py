@@ -48,9 +48,9 @@ def terminate(client, client_nsa, provider_nsa, connection_id):
 
 
 @defer.inlineCallbacks
-def querysummary():
+def querysummary(client, client_nsa, provider_nsa, connection_ids, global_reservation_ids):
 
-    qc = yield client.terminate(client_nsa, provider_nsa, None, connection_id)
+    qc = yield client.query(client_nsa, provider_nsa, None, "Summary", connection_ids, global_reservation_ids)
     log.msg('Query results:')
     log.msg( str(qc) )
 

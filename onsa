@@ -132,7 +132,9 @@ def doMain():
 
     elif config.subCommand == 'querysummary':
 
-        return commands.querysummary(client, client_nsa, provider_nsa, connection_id, global_id)
+        connection_ids  = [ connection_id   ] if connection_id  else None
+        global_ids      = [ global_id       ] if global_id      else None
+        return commands.querysummary(client, client_nsa, provider_nsa, connection_ids, global_ids)
 
     elif config.subCommand == 'querydetails':
         return commands.querydetails(client, client_nsa, provider_nsa)
