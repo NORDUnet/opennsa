@@ -50,7 +50,9 @@ def terminate(client, client_nsa, provider_nsa, connection_id):
 @defer.inlineCallbacks
 def querysummary():
 
-    pass
+    qc = yield client.terminate(client_nsa, provider_nsa, None, connection_id)
+    log.msg('Query results:')
+    log.msg( str(qc) )
 
 
 @defer.inlineCallbacks

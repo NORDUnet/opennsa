@@ -131,7 +131,8 @@ def doMain():
         return commands.terminate(client, client_nsa, provider_nsa, connection_id)
 
     elif config.subCommand == 'querysummary':
-        return commands.querysummary(client, client_nsa, provider_nsa)
+
+        return commands.querysummary(client, client_nsa, provider_nsa, connection_id, global_id)
 
     elif config.subCommand == 'querydetails':
         return commands.querydetails(client, client_nsa, provider_nsa)
