@@ -12,12 +12,11 @@ Stuff to do:
 General:
   Deal with bandwidth in calendar (requires joint resource concept)
   Persistence for connections
-  Command line client (Jeroen and HTJ will have a fight-off about which to use :-) )
-  More backends :-)
+  Force10 E300 backend
+  NCS backend
 
 
 Argia backend:
   State scheduling to terminated does not work.
-  Switch to using calendar and scheduler
   Use the query interface
 
