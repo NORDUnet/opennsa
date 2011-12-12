@@ -18,6 +18,7 @@ WSDL_DEFAULT_DIRECTORY  = '/usr/local/share/nsi/wsdl'
 REQUESTER_URL_BASE      = 'http://%s:%i/NSI/services/ConnectionService'
 
 
+@defer.inlineCallbacks
 def doMain():
     config = parser.Options()
     try:
@@ -107,40 +108,40 @@ def doMain():
         if global_id is None:
             global_id = 'conn-%i' % random.randrange(1000,9999)
 
-        return commands.reserve(client, client_nsa, provider_nsa, source_stp, dest_stp, start_time, end_time, bandwidth, connection_id, global_id)
+        yield commands.reserve(client, client_nsa, provider_nsa, source_stp, dest_stp, start_time, end_time, bandwidth, connection_id, global_id)
 
     elif config.subCommand == 'provision':
 
         if connection_id is None:
             raise usage.UsageError('Connection ID is not defined')
 
-        return commands.provision(client, client_nsa, provider_nsa, connection_id)
+        yield commands.provision(client, client_nsa, provider_nsa, connection_id)
 
     elif config.subCommand == 'release':
 
         if connection_id is None:
             raise usage.UsageError('Connection ID is not defined')
 
-        return commands.release(client, client_nsa, provider_nsa, connection_id)
+        yield commands.release(client, client_nsa, provider_nsa, connection_id)
 
     elif config.subCommand == 'terminate':
 
         if connection_id is None:
             raise usage.UsageError('Connection ID is not defined')
 
-        return commands.terminate(client, client_nsa, provider_nsa, connection_id)
+        yield commands.terminate(client, client_nsa, provider_nsa, connection_id)
 
     elif config.subCommand == 'querysummary':
 
         connection_ids  = [ connection_id   ] if connection_id  else None
         global_ids      = [ global_id       ] if global_id      else None
-        return commands.querysummary(client, client_nsa, provider_nsa, connection_ids, global_ids)
+        yield commands.querysummary(client, client_nsa, provider_nsa, connection_ids, global_ids)
 
     elif config.subCommand == 'querydetails':
 
         connection_ids  = [ connection_id   ] if connection_id  else None
         global_ids      = [ global_id       ] if global_id      else None
-        return commands.querydetails(client, client_nsa, provider_nsa, connection_ids, global_ids)
+        yield commands.querydetails(client, client_nsa, provider_nsa, connection_ids, global_ids)
 
     # some aggregate commands
     elif config.subCommand == 'resvprov':
