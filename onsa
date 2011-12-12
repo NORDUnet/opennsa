@@ -115,8 +115,6 @@ def doMain():
 
         if connection_id is None:
             raise usage.UsageError('Connection ID is not defined')
-        if global_id is None:
-            raise usage.UsageError('Global ID is not defined')
 
         return commands.provision(client, client_nsa, connection_id)
 
@@ -124,8 +122,6 @@ def doMain():
 
         if connection_id is None:
             raise usage.UsageError('Connection ID is not defined')
-        if global_id is None:
-            raise usage.UsageError('Global ID is not defined')
 
         return commands.release(client, client_nsa, provider_nsa, connection_id)
 
@@ -133,8 +129,6 @@ def doMain():
 
         if connection_id is None:
             raise usage.UsageError('Connection ID is not defined')
-        if global_id is None:
-            raise usage.UsageError('Global ID is not defined')
 
         return commands.terminate(client, client_nsa, provider_nsa, connection_id)
 

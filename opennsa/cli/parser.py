@@ -100,11 +100,11 @@ class NetworkCommandOptions(ServiceURLOption, TopologyFileOption, NetworkOption,
             raise usage.UsageError('Cannot set both service url while having topology file or network.')
 
 
-class ReserveOptions(NetworkCommandOptions, SourceSTPOption, DestSTPOption, ConnectionIDOption, StartTimeOption, EndTimeOption, BandwidthOption):
+class ReserveOptions(NetworkCommandOptions, SourceSTPOption, DestSTPOption, StartTimeOption, EndTimeOption, BandwidthOption):
     pass
 
 
-class ProvisionReleaseTerminateOptions(NetworkCommandOptions, ConnectionIDOption):
+class ProvisionReleaseTerminateOptions(NetworkCommandOptions):
     pass
 
 
