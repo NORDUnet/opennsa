@@ -76,7 +76,7 @@ def doMain():
             raise usage.UsageError('Neither topology file+network or service URL defined')
 
         client, service, factory = setup.createClient(host, port, wsdl_dir)
-        reactor.listenTCP(port, factory)
+        iport = reactor.listenTCP(port, factory)
 
     # commands
 
@@ -151,6 +151,8 @@ def doMain():
         print '%s: Try --help for usage details.' % (sys.argv[0])
         return
 
+    # shutdown service
+    yield iport.stopListening()
 
 
 def main():
