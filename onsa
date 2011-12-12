@@ -40,9 +40,9 @@ def doMain():
     else:
         defaults = {}
 
-    print "Defaults:"
+    log.msg('Defaults:', debug=True)
     for k,v in defaults.items():
-        print " ", k, ":", v
+        log.msg(' %s : %s' % (k,v), debug=True)
 
     if config.subCommand in ['reserve', 'provision', 'release', 'terminate', 'querysummary', 'querydetails']:
 
@@ -50,8 +50,6 @@ def doMain():
         host            = config[options.HOST]              or defaults.get(options.HOST)           or socket.getfqdn()
         port            = config[options.PORT]              or defaults.get(options.PORT)           or 7080
         requester_url   = REQUESTER_URL_BASE % (host, port)
-
-        print config.subOptions[options.TOPOLOGY_FILE]
 
         topology_file   = config.subOptions[options.TOPOLOGY_FILE]  or defaults.get(options.TOPOLOGY_FILE)
         network         = config.subOptions[options.NETWORK]        or defaults.get(options.NETWORK)
