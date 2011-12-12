@@ -49,6 +49,12 @@ The starttime and endtime can be set to xsd datetime value, but can also be
 assigned a +X value, with X being the number of seconds into the future. This
 makes it easy to always get some usefull values when testing.
 
+If an option is specified both on the command line and in the defaults file,
+the command line value will be used.
+
+It is possible to set all options which can be set on the command line in the
+defaults file, with the exception of the command to perform.
+
 
 ** Using the tool **
 
