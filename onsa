@@ -116,7 +116,7 @@ def doMain():
         if connection_id is None:
             raise usage.UsageError('Connection ID is not defined')
 
-        return commands.provision(client, client_nsa, connection_id)
+        return commands.provision(client, client_nsa, provider_nsa, connection_id)
 
     elif config.subCommand == 'release':
 
