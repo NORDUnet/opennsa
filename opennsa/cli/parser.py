@@ -93,17 +93,25 @@ class BandwidthOption(usage.Options):
 # command options
 
 
-class ReserveOptions(ServiceURLOption, TopologyFileOption, NetworkOption, ProviderNSAOption, RequesterNSAOption, SourceSTPOption, DestSTPOption):
+class NetworkCommandOptions(ServiceURLOption, TopologyFileOption, NetworkOption, ProviderNSAOption, RequesterNSAOption):
 
     def postOptions(self):
         if self[options.SERVICE_URL] and (self[options.TOPOLOGY_FILE] or self[options.NETWORK]):
             raise usage.UsageError('Cannot set both service url while having topology file or network.')
 
 
+class ReserveOptions(NetworkCommandOptions, SourceSTPOption, DestSTPOption, ConnectionIDOption):
+    pass
+
+class ProvisionOptions(NetworkCommandOptions, ConnectionIDOption):
+    pass
+
+
 
 class Options(DefaultsFileOption, WSDLDirectoryOption, HostOption, PortOption):
     subCommands = [
-        ['reserve', None,   ReserveOptions, 'Create an NSI reservation']
+        ['reserve',     None,   ReserveOptions,   'Create a reservation'],
+        ['provision',   None,   ProvisionOptions, 'Provision a connection.']
     ]
 
     optFlags = [

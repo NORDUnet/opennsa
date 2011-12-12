@@ -27,6 +27,9 @@ BANDWIDTH       = 'bandwidth'
 START_TIME      = 'starttime'
 END_TIME        = 'endtime'
 
+CONNECTION_ID   = 'connection-id'
+GLOBAL_ID       = 'global-id'
+
 # other constants
 XSD_DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S"
 

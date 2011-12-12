@@ -2,7 +2,9 @@
 
 import os
 import sys
+import uuid
 import socket
+import random
 
 from twisted.python import log, usage
 from twisted.internet import reactor, defer
@@ -42,53 +44,98 @@ def doMain():
     for k,v in defaults.items():
         print " ", k, ":", v
 
-    wsdl_dir        = config[options.WSDL_DIRECTORY]    or defaults.get(options.WSDL_DIRECTORY) or WSDL_DEFAULT_DIRECTORY
-    host            = config[options.HOST]              or defaults.get(options.HOST)           or socket.getfqdn()
-    port            = config[options.PORT]              or defaults.get(options.PORT)           or 7080
-    requester_url   = REQUESTER_URL_BASE % (host, port)
+    if config.subCommand in ['reserve', 'provision', 'release', 'terminate', 'querysummary', 'querydetails']:
 
-    print config.subOptions[options.TOPOLOGY_FILE]
+        wsdl_dir        = config[options.WSDL_DIRECTORY]    or defaults.get(options.WSDL_DIRECTORY) or WSDL_DEFAULT_DIRECTORY
+        host            = config[options.HOST]              or defaults.get(options.HOST)           or socket.getfqdn()
+        port            = config[options.PORT]              or defaults.get(options.PORT)           or 7080
+        requester_url   = REQUESTER_URL_BASE % (host, port)
 
-    topology_file   = config.subOptions[options.TOPOLOGY_FILE]  or defaults.get(options.TOPOLOGY_FILE)
-    network         = config.subOptions[options.NETWORK]        or defaults.get(options.NETWORK)
-    service_url     = config.subOptions[options.SERVICE_URL]    or defaults.get(options.SERVICE_URL)
+        print config.subOptions[options.TOPOLOGY_FILE]
 
-    requester_nsa   = config.subOptions[options.REQUESTER]      or defaults.get(options.REQUESTER)      or 'OpenNSA-CLI'
-    provider_nsa    = config.subOptions[options.PROVIDER]       or defaults.get(options.PROVIDER)
+        topology_file   = config.subOptions[options.TOPOLOGY_FILE]  or defaults.get(options.TOPOLOGY_FILE)
+        network         = config.subOptions[options.NETWORK]        or defaults.get(options.NETWORK)
+        service_url     = config.subOptions[options.SERVICE_URL]    or defaults.get(options.SERVICE_URL)
 
-    if topology_file and network:
-        client_nsa      = nsa.NetworkServiceAgent(requester_nsa, requester_url)
+        requester_nsa   = config.subOptions[options.REQUESTER]      or defaults.get(options.REQUESTER)      or 'OpenNSA-CLI'
+        provider_nsa    = config.subOptions[options.PROVIDER]       or defaults.get(options.PROVIDER)
 
-        from opennsa import topology
-        topo = topology.parseGOLETopology( open(topology_file) )
-        provider_nsa  = topo.getNetwork(network).nsa
+        connection_id   = config.subOptions[options.CONNECTION_ID]  or defaults.get(options.CONNECTION_ID)
+        global_id       = config.subOptions[options.GLOBAL_ID]      or defaults.get(options.GLOBAL_ID)
 
-    elif service_url:
-        client_nsa      = nsa.NetworkServiceAgent(requester_nsa, requester_url)
-        provider_nsa    = nsa.NetworkServiceAgent(provider_nsa, service_url)
+        if topology_file and network:
+            client_nsa      = nsa.NetworkServiceAgent(requester_nsa, requester_url)
 
-    else:
-        raise usage.UsageError('Neither topology file+network or service URL defined')
+            from opennsa import topology
+            topo = topology.parseGOLETopology( open(topology_file) )
+            provider_nsa  = topo.getNetwork(network).nsa
 
-    client, service, factory = setup.createClient(host, port, wsdl_dir)
-    reactor.listenTCP(port, factory)
+        elif service_url:
+            client_nsa      = nsa.NetworkServiceAgent(requester_nsa, requester_url)
+            provider_nsa    = nsa.NetworkServiceAgent(provider_nsa, service_url)
+
+        else:
+            raise usage.UsageError('Neither topology file+network or service URL defined')
+
+        client, service, factory = setup.createClient(host, port, wsdl_dir)
+        reactor.listenTCP(port, factory)
+
+    # commands
 
     if config.subCommand == 'reserve':
+
         source_stp = config.subOptions[options.SOURCE_STP]  or defaults.get(options.SOURCE_STP)
         dest_stp   = config.subOptions[options.DEST_STP]    or defaults.get(options.DEST_STP)
         if source_stp is None:
             raise usage.UsageError('Source STP is not defined')
         if dest_stp is None:
             raise usage.UsageError('Dest STP is not defined')
-        return commands.reserve(client, client_nsa, provider_nsa, source_stp, dest_stp)
+
+        start_time  = config.subOptions[options.START_TIME] or defaults.get(options.START_TIME)
+        end_time    = config.subOptions[options.END_TIME]   or defaults.get(options.END_TIME)
+        if start_time is None:
+            raise usage.UsageError('Start time is not defined')
+        if end_time is None:
+            raise usage.UsageError('End time is not defined')
+
+        bandwidth = config.subOptions[options.BANDWIDTH] or defaults.get(options.BANDWIDTH)
+        if bandwidth is None:
+            raise usage.UsageError('Bandwidth is not defined')
+
+        bandwidth = config.subOptions[options.BANDWIDTH] or defaults.get(options.BANDWIDTH)
+
+        if connection_id is None:
+            connection_id = uuid.uuid1()
+        if global_id is None:
+            global_id = 'conn-%i' % random.randrange(1000,9999)
+
+        return commands.reserve(client, client_nsa, provider_nsa, source_stp, dest_stp, start_time, end_time, bandwidth, connection_id, global_id)
 
     elif config.subCommand == 'provision':
+
+        if connection_id is None:
+            raise usage.UsageError('Connection ID is not defined')
+        if global_id is None:
+            raise usage.UsageError('Global ID is not defined')
+
         return commands.provision(client, client_nsa, connection_id)
 
     elif config.subCommand == 'release':
+
+        if connection_id is None:
+            raise usage.UsageError('Connection ID is not defined')
+        if global_id is None:
+            raise usage.UsageError('Global ID is not defined')
+
         return commands.release(client, client_nsa, provider_nsa, connection_id)
 
     elif config.subCommand == 'terminate':
+
+        if connection_id is None:
+            raise usage.UsageError('Connection ID is not defined')
+        if global_id is None:
+            raise usage.UsageError('Global ID is not defined')
+
         return commands.terminate(client, client_nsa, provider_nsa, connection_id)
 
     elif config.subCommand == 'querysummary':
@@ -96,6 +143,10 @@ def doMain():
 
     elif config.subCommand == 'querydetails':
         return commands.querydetails(client, client_nsa, provider_nsa)
+
+    # some aggregate commands
+    elif config.subCommand == 'resvprov':
+        raise NotImplementedError('Reserve + provision aggregate command not implemented')
 
     else:
         print "No subcommand specified"
