@@ -56,9 +56,6 @@ class SubConnection:
             log.msg('Sub-connection for (%s -> %s) via %s reserved' % (self.source_stp.endpoint, self.dest_stp.endpoint, self.nsa), system=LOG_SYSTEM)
             return self
 
-        def reserveFailed(err):
-            return err
-
         sub_service_params  = nsa.ServiceParameters(self.service_parameters.start_time,
                                                     self.service_parameters.end_time,
                                                     self.source_stp,
