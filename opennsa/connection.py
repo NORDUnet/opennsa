@@ -53,7 +53,7 @@ class SubConnection:
     def reserve(self):
 
         def reserveDone(int_res_id):
-            log.msg('Sub-connection for (%s -> %s) via %s reserved' % (self.source_stp.endpoint, self.dest_stp.endpoint, self.nsa), system=LOG_SYSTEM)
+            log.msg('Remote connection %s via %s reserved' % (connPath(self), self.nsa), debug=True, system=LOG_SYSTEM)
             return self
 
         sub_service_params  = nsa.ServiceParameters(self.service_parameters.start_time,
@@ -70,22 +70,34 @@ class SubConnection:
 
     def terminate(self):
 
+        def terminateDone(int_res_id):
+            log.msg('Remote connection %s via %s terminated' % (connPath(self), self.nsa), debug=True, system=LOG_SYSTEM)
+            return self
+
         d = self.proxy.terminate(self.nsa, None, self.connection_id)
-        d.addCallback(lambda _ : self)
+        d.addCallback(terminateDone)
         return d
 
 
     def provision(self):
 
+        def provisionDone(int_res_id):
+            log.msg('Remote connection %s via %s provisioned' % (connPath(self), self.nsa), debug=True, system=LOG_SYSTEM)
+            return self
+
         d = self.proxy.provision(self.nsa, None, self.connection_id)
-        d.addCallback(lambda _ : self)
+        d.addCallback(provisionDone)
         return d
 
 
     def release(self):
 
+        def releaseDone(int_res_id):
+            log.msg('Remote connection %s via %s released' % (connPath(self), self.nsa), debug=True, system=LOG_SYSTEM)
+            return self
+
         d = self.proxy.release(self.nsa, None, self.connection_id)
-        d.addCallback(lambda _ : self)
+        d.addCallback(releaseDone)
         return d
 
 
