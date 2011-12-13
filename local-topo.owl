@@ -330,17 +330,17 @@
         <hasSTP rdf:resource="urn:ogf:network:stp:Curacao:C2"/>
         <hasSTP rdf:resource="urn:ogf:network:stp:Curacao:C3"/>
         <hasSTP rdf:resource="urn:ogf:network:stp:Curacao:C4"/>
-        <managedBy rdf:resource="urn:ogf:network:nsa:Curacao-AutoBAHN"/>
+        <managedBy rdf:resource="urn:ogf:network:nsa:Curacao"/>
     </owl:NamedIndividual>
 
 
 
-    <!-- urn:ogf:network:nsa:Curacao-AutoBAHN -->
+    <!-- urn:ogf:network:nsa:Curacao -->
 
-    <owl:NamedIndividual rdf:about="urn:ogf:network:nsa:Curacao-AutoBAHN">
+    <owl:NamedIndividual rdf:about="urn:ogf:network:nsa:Curacao">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#NSA"/>
         <managing rdf:resource="urn:ogf:network:nsnetwork:Curacao" />
-        <adminContact rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1.	AutoBAHN  (GEANT) 1.1.	Implementation Name: AutoBAHN  1.2.	Project manager for the development effort:  name: Radek Krztwania  email: radek.krzywania@man.poznan.pl  skype: Radoslaw.krzywania 1.3.	Key software engineer:  name: Michal Balcerkiewicz  email: michalb@man.poznan.pl  skype= michalb.psnc</adminContact>
+        <adminContact rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1.	Curacao Admin Contact</adminContact>
         <csProviderEndpoint rdf:datatype="http://www.w3.org/2001/XMLSchema#string">http://localhost:9082/NSI/services/ConnectionService</csProviderEndpoint>
         <rdfs:comment xml:lang="en">Position : [3138,173]</rdfs:comment>
     </owl:NamedIndividual>
