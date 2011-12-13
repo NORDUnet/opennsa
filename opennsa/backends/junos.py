@@ -417,8 +417,7 @@ class JunOSConnection:
 
         def scheduled(_):
             self.state.switchState(state.SCHEDULED)
-            log.msg('Scheduled state transition to: %s. ID: %s' % (state.SCHEDULED, id(self)), system=LOG_SYSTEM)
-            return self
+            self.scheduler.scheduleTransition(self.service_parameters.end_time, lambda _ : self.terminate(), state.TERMINATING)
 
         log.msg('RESERVING. ID: %s, Ports: %s -> %s' % (id(self), self.source_port, self.dest_port), system=LOG_SYSTEM)
 

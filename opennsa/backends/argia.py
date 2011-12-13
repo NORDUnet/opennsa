@@ -187,6 +187,10 @@ class ArgiaConnection:
 
     def reserve(self):
 
+        def scheduled(st):
+            self.state.switchState(state.SCHEDULED)
+            self.scheduler.scheduleTransition(self.service_parameters.end_time, lambda _ : self.terminate(), state.TERMINATING)
+
         log.msg('RESERVE. CID: %s, Ports: %s -> %s' % (id(self), self.source_port, self.dest_port), system=LOG_SYSTEM)
 
         try:
@@ -214,7 +218,7 @@ class ArgiaConnection:
                 if argia_state == ARGIA_RESERVED:
                     self.argia_id = reservation_id
                     self.state.switchState(state.RESERVED)
-                    self.scheduler.scheduleTransition(self.service_parameters.start_time, lambda _ : self.state.switchState(state.SCHEDULED), state.SCHEDULED)
+                    self.scheduler.scheduleTransition(self.service_parameters.start_time, scheduled, state.SCHEDULED)
                     d.callback(self)
                 else:
                     d.errback( error.ReserveError('Got unexpected state from Argia (%s)' % argia_state) )
