@@ -4,7 +4,6 @@ Stuff to do:
   Send provisonConfirmed/Failed when provision actually happens/fail
   Better handling and reporting of aggregation failures (partial or not)
   Investigate error message on connection id
-  Scheduled switch doesn't schedule termination.
   TLS (send mail aswell)
   Configuration
 
