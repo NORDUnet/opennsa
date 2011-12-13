@@ -38,8 +38,6 @@ class SubConnection:
         self.dest_stp           = dest_stp
         self.service_parameters = service_parameters
 
-        self.state = state.ConnectionState()
-
         # the one should not be persistent, but should be set when re-created at startup
         self.proxy = proxy
 
@@ -56,11 +54,9 @@ class SubConnection:
 
         def reserveDone(int_res_id):
             log.msg('Sub-connection for (%s -> %s) via %s reserved' % (self.source_stp.endpoint, self.dest_stp.endpoint, self.nsa), system=LOG_SYSTEM)
-            self.state.switchState(state.RESERVED)
             return self
 
         def reserveFailed(err):
-            self.state.switchState(state.TERMINATED)
             return err
 
         sub_service_params  = nsa.ServiceParameters(self.service_parameters.start_time,
@@ -70,9 +66,8 @@ class SubConnection:
                                                     directionality=self.service_parameters.directionality,
                                                     bandwidth=self.service_parameters.bandwidth)
 
-        self.state.switchState(state.RESERVING)
         d = self.proxy.reserve(self.nsa, None, self.parent_connection.global_reservation_id, self.parent_connection.description, self.connection_id, sub_service_params)
-        d.addCallbacks(reserveDone, reserveFailed)
+        d.addCallback(reserveDone)
         return d
 
 
