@@ -79,18 +79,21 @@ class SubConnection:
     def terminate(self):
 
         d = self.proxy.terminate(self.nsa, None, self.connection_id)
+        d.addCallback(lambda _ : self)
         return d
 
 
     def provision(self):
 
         d = self.proxy.provision(self.nsa, None, self.connection_id)
+        d.addCallback(lambda _ : self)
         return d
 
 
     def release(self):
 
         d = self.proxy.release(self.nsa, None, self.connection_id)
+        d.addCallback(lambda _ : self)
         return d
 
 
