@@ -161,7 +161,7 @@ class Connection:
                 for rc in reserved_connections:
                     d = rc.terminate()
                     d.addCallbacks(
-                        lambda c : log.msg('Succesfully terminated sub-connection after partial reservation failure %s %s' % (c.curator(), connPath(c)) , system=LOG_SYSTEM),
+                        lambda c : log.msg('Succesfully terminated sub connection after partial reservation failure %s %s' % (c.curator(), connPath(c)) , system=LOG_SYSTEM),
                         lambda f : log.msg('Error terminating connection after partial-reservation failure: %s' % str(f), system=LOG_SYSTEM)
                     )
                     defs.append(d)
@@ -269,10 +269,10 @@ class Connection:
                 return self
             if any(successes):
                 self.state.switchState(state.TERMINATED)
-                raise error.ReleaseError('Release partially failed (may require manual cleanup)')
+                raise error.ReleaseError('Release partially failed (may require manual intervention to fix)')
             else:
                 self.state.switchState(state.TERMINATED)
-                err = error.ReleaseError('Release failed for all local/sub connection')
+                err = error.ReleaseError('Release failed for all sub connections')
                 return failure.Failure(err)
 
         self.state.switchState(state.RELEASING)
@@ -303,7 +303,7 @@ class Connection:
                 return failure.Failure(err)
             else:
                 self.state.switchState(state.TERMINATED)
-                err = error.TerminateError('Cancel failed for all local/sub connections')
+                err = error.TerminateError('Cancel failed for all sub connections')
                 return failure.Failure(err)
 
         self.state.switchState(state.TERMINATING)
