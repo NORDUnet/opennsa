@@ -22,17 +22,18 @@ TOPOFILE = 'SC2011-Topo-v5f.owl'
 WSDL_DIR = os.path.join(os.getcwd(), 'wsdl')
 NETWORK_NAME = 'northernlight.ets'
 
+ctx_factory = None
+if TLS:
+    from opennsa import ctxfactory
+    ctx_factory = ctxfactory.ContextFactory()
 
 backend = junos.JunOSBackend(NETWORK_NAME)
-factory = setup.createService(NETWORK_NAME, open(TOPOFILE), backend, HOST, PORT, WSDL_DIR)
+factory = setup.createService(NETWORK_NAME, open(TOPOFILE), backend, HOST, PORT, WSDL_DIR, ctx_factory)
 
 application = service.Application("OpenNSA")
 application.setComponent(ILogObserver, logging.DebugLogObserver(sys.stdout, DEBUG).emit)
 
-
 if TLS:
-    from opennsa import ctxfactory
-    ctx_factory = ctxfactory.ContextFactory()
     internet.SSLServer(PORT, factory, ctx_factory).setServiceParent(application)
 else:
     internet.TCPServer(PORT, factory).setServiceParent(application)
