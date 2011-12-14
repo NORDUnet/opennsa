@@ -14,7 +14,7 @@ DEBUG = True
 HOST = 'orval.grid.aau.dk'
 PORT = 9080
 
-TOPOFILE = 'FIA-Topo-v1.4c.owl'
+TOPOFILE = 'SC2011-Topo-v5f.owl'
 WSDL_DIR = os.path.join(os.getcwd(), 'wsdl')
 NETWORK_NAME = 'northernlight.ets'
 
