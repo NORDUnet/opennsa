@@ -1,6 +1,6 @@
 #!/usr/bin/env python # syntax highlightning
 
-import os, sys, socket
+import os, sys
 
 from twisted.python.log import ILogObserver
 from twisted.application import internet, service
@@ -10,9 +10,13 @@ from opennsa.backends import junos
 
 
 DEBUG = True
+TLS = True
 
 HOST = 'orval.grid.aau.dk'
-PORT = 9080
+TCP_PORT = 9080
+TLS_PORT = 9443
+
+PORT = TLS_PORT if TLS else TCP_PORT
 
 TOPOFILE = 'SC2011-Topo-v5f.owl'
 WSDL_DIR = os.path.join(os.getcwd(), 'wsdl')
@@ -25,5 +29,11 @@ factory = setup.createService(NETWORK_NAME, open(TOPOFILE), backend, HOST, PORT,
 application = service.Application("OpenNSA")
 application.setComponent(ILogObserver, logging.DebugLogObserver(sys.stdout, DEBUG).emit)
 
-internet.TCPServer(PORT, factory).setServiceParent(application)
+
+if TLS:
+    from opennsa import ctxfactory
+    ctx_factory = ctxfactory.ContextFactory()
+    internet.SSLServer(PORT, factory, ctx_factory).setServiceParent(application)
+else:
+    internet.TCPServer(PORT, factory).setServiceParent(application)
 
