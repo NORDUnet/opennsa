@@ -1,16 +1,17 @@
 This is the OpenNSA issue tracker :-)
 
-Stuff to do:
+General:
+
   Send provisonConfirmed/Failed when provision actually happens/fail
   Better handling and reporting of aggregation failures (partial or not)
   Investigate error message on connection id
-  TLS (send mail aswell)
+  TLS support in client.
   Configuration
-
-
-General:
-  Deal with bandwidth in calendar (requires joint resource concept)
   Persistence for connections
+  Deal with bandwidth in calendar (requires joint resource concept)
+
+
+Backends:
   Force10 E300 backend
   NCS backend
 
