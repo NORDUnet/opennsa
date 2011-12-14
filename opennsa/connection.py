@@ -30,7 +30,11 @@ def connPath(conn):
 
 class SubConnection:
 
-    def __init__(self, parent_connection, connection_id, nsa, source_stp, dest_stp, service_parameters, proxy):
+    def __init__(self, client, requester_nsa, provider_nsa, parent_connection, connection_id, source_stp, dest_stp, service_parameters):
+        self.client             = client
+        self.requester_nsa      = requester_nsa # this the identity of the current nsa
+        self.provider_nsa       = provider_nsa
+
         self.parent_connection  = parent_connection
         self.connection_id      = connection_id
         self.nsa                = nsa
@@ -38,8 +42,7 @@ class SubConnection:
         self.dest_stp           = dest_stp
         self.service_parameters = service_parameters
 
-        # the one should not be persistent, but should be set when re-created at startup
-        self.proxy = proxy
+        self.session_security_attr = None
 
 
     def curator(self):
@@ -63,7 +66,8 @@ class SubConnection:
                                                     directionality=self.service_parameters.directionality,
                                                     bandwidth=self.service_parameters.bandwidth)
 
-        d = self.proxy.reserve(self.nsa, None, self.parent_connection.global_reservation_id, self.parent_connection.description, self.connection_id, sub_service_params)
+        d = self.client.reserve(self.requester_nsa, self.provider_nsa, self.session_security_attr,
+                                self.parent_connection.global_reservation_id, self.parent_connection.description, self.connection_id, sub_service_params)
         d.addCallback(reserveDone)
         return d
 
@@ -74,7 +78,7 @@ class SubConnection:
             log.msg('Remote connection %s via %s terminated' % (connPath(self), self.nsa), debug=True, system=LOG_SYSTEM)
             return self
 
-        d = self.proxy.terminate(self.nsa, None, self.connection_id)
+        d = self.client.terminate(self.requester_nsa, self.provider_nsa, self.session_security_attr, self.connection_id)
         d.addCallback(terminateDone)
         return d
 
@@ -85,7 +89,7 @@ class SubConnection:
             log.msg('Remote connection %s via %s provisioned' % (connPath(self), self.nsa), debug=True, system=LOG_SYSTEM)
             return self
 
-        d = self.proxy.provision(self.nsa, None, self.connection_id)
+        d = self.client.provision(self.requester_nsa, self.provider_nsa, self.session_security_attr, self.connection_id)
         d.addCallback(provisionDone)
         return d
 
@@ -96,7 +100,7 @@ class SubConnection:
             log.msg('Remote connection %s via %s released' % (connPath(self), self.nsa), debug=True, system=LOG_SYSTEM)
             return self
 
-        d = self.proxy.release(self.nsa, None, self.connection_id)
+        d = self.client.release(self.requester_nsa, self.provider_nsa, self.session_security_attr, self.connection_id)
         d.addCallback(releaseDone)
         return d
 

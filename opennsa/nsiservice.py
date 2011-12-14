@@ -13,7 +13,7 @@ from twisted.python import log
 from twisted.internet import defer
 
 from opennsa.interface import NSIServiceInterface
-from opennsa import error, topology, proxy, connection
+from opennsa import error, topology, connection
 
 
 LOG_SYSTEM = 'opennsa.NSIService'
@@ -36,8 +36,8 @@ class NSIService:
         self.topology = topology.parseGOLETopology(topology_file)
 
         # get own nsa from topology
+        self.client = client
         self.nsa = self.topology.getNetwork(self.network).nsa
-        self.proxy = proxy.NSIProxy(client, self.nsa)
 
         self.connections = {} # persistence, ha!
 
@@ -64,7 +64,7 @@ class NSIService:
         else:
             sub_conn_id = 'urn:uuid:' + str(uuid.uuid1())
             remote_nsa = self.topology.getNetwork(source_ep.network).nsa
-            sub_conn = connection.SubConnection(conn, sub_conn_id, remote_nsa, source_ep, dest_ep, sub_sps, self.proxy)
+            sub_conn = connection.SubConnection(self.client, self.nsa, remote_nsa, conn, sub_conn_id, source_ep, dest_ep, sub_sps)
 
         conn.sub_connections.append(sub_conn)
 
