@@ -25,7 +25,7 @@ NETWORK_NAME = 'northernlight.ets'
 ctx_factory = None
 if TLS:
     from opennsa import ctxfactory
-    ctx_factory = ctxfactory.ContextFactory()
+    ctx_factory = ctxfactory.ContextFactory('/etc/grid-security/hostkey.pem', '/etc/grid-security/hostcert.pem', '/etc/grid-security/certificates', False)
 
 backend = junos.JunOSBackend(NETWORK_NAME)
 factory = setup.createService(NETWORK_NAME, open(TOPOFILE), backend, HOST, PORT, WSDL_DIR, ctx_factory)

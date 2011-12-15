@@ -11,21 +11,14 @@ from OpenSSL import SSL
 
 
 
-DEFAULT_HOST_KEY  = '/etc/grid-security/hostkey.pem'
-DEFAULT_HOST_CERT = '/etc/grid-security/hostcert.pem'
-DEFAULT_CERTIFICATES = '/etc/grid-security/certificates'
-
-
-
 class ContextFactory:
 
-    def __init__(self, key_path=DEFAULT_HOST_KEY, cert_path=DEFAULT_HOST_CERT,
-                 verify=True, ca_dir=DEFAULT_CERTIFICATES):
+    def __init__(self, private_key_path, public_key_path, certificate_dir, verify=True):
 
-        self.key_path = key_path
-        self.cert_path = cert_path
-        self.verify = verify
-        self.ca_dir = ca_dir
+        self.private_key_path   = private_key_path
+        self.public_key_path    = public_key_path
+        self.certificate_dir    = certificate_dir
+        self.verify             = verify
 
         self.ctx = None
 
@@ -43,8 +36,8 @@ class ContextFactory:
 
         ctx = SSL.Context(SSL.TLSv1_METHOD) # only tls v1 (its almost 2012, should be okay
 
-        ctx.use_privatekey_file(self.key_path)
-        ctx.use_certificate_file(self.cert_path)
+        ctx.use_privatekey_file(self.private_key_path)
+        ctx.use_certificate_file(self.public_key_path)
         ctx.check_privatekey() # sanity check
 
         def verify_callback(conn, x509, error_number, error_depth, allowed):
@@ -54,10 +47,10 @@ class ContextFactory:
         if self.verify:
             ctx.set_verify(SSL.VERIFY_PEER, verify_callback)
 
-            calist = [ ca for ca in os.listdir(self.ca_dir) if ca.endswith('.0') ]
+            calist = [ ca for ca in os.listdir(self.certificate_dir) if ca.endswith('.0') ]
             for ca in calist:
                 # openssl wants absolute paths
-                ca = os.path.join(self.ca_dir, ca)
+                ca = os.path.join(self.certificate_dir, ca)
                 ctx.load_verify_locations(ca)
 
         return ctx

@@ -87,7 +87,7 @@ def doMain():
 
             if public_key and private_key and certificate_dir:
                 from opennsa import ctxfactory
-                ctx_factory = ctxfactory.ContextFactory(private_key, public_key, verify=not skip_cert_verify, certificate_dir)
+                ctx_factory = ctxfactory.ContextFactory(private_key, public_key, certificate_dir, not skip_cert_verify)
             else:
                 log.msg('Only partial security configuration given. Cannot create SSL/TLS context.')
 
