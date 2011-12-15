@@ -47,7 +47,7 @@ def createService(network_name, topology_file, backend, host, port, wsdl_dir, ct
 
 
 
-def createClient(host, port, wsdl_dir):
+def createClient(host, port, wsdl_dir, ctx_factory=None):
 
     protocol = WEBSERVICE
 
@@ -55,9 +55,10 @@ def createClient(host, port, wsdl_dir):
 
         resource, site = wsresource.createService()
 
+        # we only support http for callback currently
         service_url = 'http://%s:%i/NSI/services/ConnectionService' % (host,port)
 
-        provider_client     = wsclient.ProviderClient(service_url, wsdl_dir)
+        provider_client     = wsclient.ProviderClient(service_url, wsdl_dir, ctx_factory=ctx_factory)
         requester = wsrequester.Requester(provider_client, callback_timeout=35)
         requester_service   = wsservice.RequesterService(resource, requester)
 

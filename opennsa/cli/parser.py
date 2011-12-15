@@ -4,6 +4,7 @@
 #
 # Options:
 
+# -v verbose
 # -f defaults file
 # -w wsdl directory
 
@@ -23,11 +24,19 @@
 
 # -s source stp
 # -d dest stp
-
+# -a start time
+# -e end time
 # -b bandwidth (megabits)
 
+# -l public key
+# -k private key
+# -i certificate directory
+
 # Flags
-# (none currently)
+# -z (skip) verify certificate (default is to verify)
+
+# free switches
+# ijmxyz
 
 # Not all commands will accept all flags and some flags are mutally exclusive
 
@@ -89,11 +98,39 @@ class EndTimeOption(usage.Options):
 class BandwidthOption(usage.Options):
     optParameters = [ [ options.BANDWIDTH, 'b', None, 'Bandwidth (Megabits)'] ]
 
+class PublicKeyOption(usage.Options):
+    optParameters = [ [ options.PUBLIC_KEY, 'l', None, 'Public key path' ] ]
+
+class PrivateKeyOption(usage.Options):
+    optParameters = [ [ options.PRIVATE_KEY, 'k', None, 'Private key path' ] ]
+
+class CertificateDirectoryOption(usage.Options):
+    optParameters = [ [ options.CERTIFICATE_DIR, 'i', None, 'Certificate directory' ] ]
+
+# flags
+
+class SkipCertificateVerificationFlag(usage.Options):
+    optFlags = [ [ options.SKIP_CERT_VERIFY, 'z', 'Skip certificate verification' ] ]
+
 
 # command options
 
+class BaseOptions(DefaultsFileOption, WSDLDirectoryOption, HostOption, PortOption):
 
-class NetworkCommandOptions(ServiceURLOption, TopologyFileOption, NetworkOption, ProviderNSAOption, RequesterNSAOption, ConnectionIDOption, GlobalIDOption):
+    optFlags = [
+        [ options.VERBOSE, 'v', 'Print out more information']
+    ]
+
+    def opt_version(self):
+        from twisted import copyright
+        print "OpenNSA Development version. " + \
+              "Running on Twisted version", copyright.version
+        raise SystemExit
+
+
+class NetworkCommandOptions(BaseOptions, ServiceURLOption, TopologyFileOption, NetworkOption,
+                            ProviderNSAOption, RequesterNSAOption, ConnectionIDOption, GlobalIDOption,
+                            PublicKeyOption, PrivateKeyOption, CertificateDirectoryOption, SkipCertificateVerificationFlag):
 
     def postOptions(self):
         if self[options.SERVICE_URL] and (self[options.TOPOLOGY_FILE] or self[options.NETWORK]):
@@ -108,7 +145,7 @@ class ProvisionReleaseTerminateOptions(NetworkCommandOptions):
     pass
 
 
-class Options(DefaultsFileOption, WSDLDirectoryOption, HostOption, PortOption):
+class Options(BaseOptions):
     subCommands = [
         ['reserve',         None,   ReserveOptions,         'Create a reservation'],
         ['provision',       None,   NetworkCommandOptions,  'Provision a connection.'],
@@ -118,17 +155,7 @@ class Options(DefaultsFileOption, WSDLDirectoryOption, HostOption, PortOption):
         ['querydetails',    None,   NetworkCommandOptions,  'Query a connection (recursive).']
     ]
 
-    optFlags = [
-        [ options.VERBOSE, 'v', 'Print out more information']
-    ]
-
     def postOptions(self):
         if self.subCommand is None:
             return usage.UsageError('No option specified')
-
-    def opt_version(self):
-        from twisted import copyright
-        print "OpenNSA Development version. " + \
-              "Running on Twisted version", copyright.version
-        raise SystemExit
 
