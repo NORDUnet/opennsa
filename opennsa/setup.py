@@ -20,7 +20,11 @@ def createService(network_name, topology_file, backend, host, port, wsdl_dir, ct
 
         # reminds an awful lot about client setup
 
-        service_url = 'http://%s:%i/NSI/services/ConnectionService' % (host,port)
+        if ctx_factory:
+            proto_scheme = 'https://'
+        else:
+            proto_scheme = 'http://'
+        service_url = proto_scheme + '%s:%i/NSI/services/ConnectionService' % (host,port)
 
         resource, site = wsresource.createService()
 
