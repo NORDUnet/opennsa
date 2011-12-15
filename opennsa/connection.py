@@ -37,7 +37,6 @@ class SubConnection:
 
         self.parent_connection  = parent_connection
         self.connection_id      = connection_id
-        self.nsa                = nsa
         self.source_stp         = source_stp
         self.dest_stp           = dest_stp
         self.service_parameters = service_parameters
@@ -46,7 +45,7 @@ class SubConnection:
 
 
     def curator(self):
-        return self.nsa.identity
+        return self.provider_nsa.identity
 
 
     def stps(self):
@@ -56,7 +55,7 @@ class SubConnection:
     def reserve(self):
 
         def reserveDone(int_res_id):
-            log.msg('Remote connection %s via %s reserved' % (connPath(self), self.nsa), debug=True, system=LOG_SYSTEM)
+            log.msg('Remote connection %s via %s reserved' % (connPath(self), self.provider_nsa), debug=True, system=LOG_SYSTEM)
             return self
 
         sub_service_params  = nsa.ServiceParameters(self.service_parameters.start_time,
@@ -75,7 +74,7 @@ class SubConnection:
     def terminate(self):
 
         def terminateDone(int_res_id):
-            log.msg('Remote connection %s via %s terminated' % (connPath(self), self.nsa), debug=True, system=LOG_SYSTEM)
+            log.msg('Remote connection %s via %s terminated' % (connPath(self), self.provider_nsa), debug=True, system=LOG_SYSTEM)
             return self
 
         d = self.client.terminate(self.requester_nsa, self.provider_nsa, self.session_security_attr, self.connection_id)
@@ -86,7 +85,7 @@ class SubConnection:
     def provision(self):
 
         def provisionDone(int_res_id):
-            log.msg('Remote connection %s via %s provisioned' % (connPath(self), self.nsa), debug=True, system=LOG_SYSTEM)
+            log.msg('Remote connection %s via %s provisioned' % (connPath(self), self.provider_nsa), debug=True, system=LOG_SYSTEM)
             return self
 
         d = self.client.provision(self.requester_nsa, self.provider_nsa, self.session_security_attr, self.connection_id)
@@ -97,7 +96,7 @@ class SubConnection:
     def release(self):
 
         def releaseDone(int_res_id):
-            log.msg('Remote connection %s via %s released' % (connPath(self), self.nsa), debug=True, system=LOG_SYSTEM)
+            log.msg('Remote connection %s via %s released' % (connPath(self), self.provider_nsa), debug=True, system=LOG_SYSTEM)
             return self
 
         d = self.client.release(self.requester_nsa, self.provider_nsa, self.session_security_attr, self.connection_id)
