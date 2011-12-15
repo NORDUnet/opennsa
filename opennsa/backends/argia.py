@@ -204,7 +204,7 @@ class ArgiaConnection:
         try:
             reactor.spawnProcess(process_proto, ARGIA_CLIENT, [COMMAND_BIN, ARGIA_CMD_RESERVE], path=COMMAND_DIR)
         except OSError, e:
-            return defer.fail(error.ReserverError('Failed to invoke argia control command (%s)' % str(e)))
+            return defer.fail(error.ReserveError('Failed to invoke argia control command (%s)' % str(e)))
 
         d = defer.Deferred()
 
@@ -307,7 +307,7 @@ class ArgiaConnection:
         try:
             reactor.spawnProcess(process_proto, ARGIA_CLIENT, args=[COMMAND_BIN, ARGIA_CMD_PROVISION, self.argia_id], path=COMMAND_DIR)
         except OSError, e:
-            return defer.fail(error.ReserverError('Failed to invoke argia control command (%s)' % str(e)))
+            return defer.fail(error.ReserveError('Failed to invoke argia control command (%s)' % str(e)))
         process_proto.d.addCallbacks(provisionConfirmed, provisionFailed, callbackArgs=[process_proto], errbackArgs=[process_proto])
 
         return d
