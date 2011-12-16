@@ -7,16 +7,23 @@ from opennsa.protocols.webservice import client, service, provider, requester, r
 
 
 
-def createService(network_name, topology_file, backend, host, port, wsdl_dir, ctx_factory=None):
-
-    # reminds an awful lot about client setup
+def _createServiceURL(host, port, ctx_factory=None):
 
     if ctx_factory:
         proto_scheme = 'https://'
     else:
         proto_scheme = 'http://'
-    service_url = proto_scheme + '%s:%i/NSI/services/ConnectionService' % (host,port)
 
+    service_url = proto_scheme + '%s:%i/NSI/services/ConnectionService' % (host,port)
+    return service_url
+
+
+
+def createService(network_name, topology_file, backend, host, port, wsdl_dir, ctx_factory=None):
+
+    # reminds an awful lot about client setup
+
+    service_url = _createServiceURL(host, port, ctx_factory)
     nsi_resource, site = resource.createService()
 
     provider_client     = client.ProviderClient(service_url, wsdl_dir, ctx_factory=ctx_factory)
@@ -37,10 +44,8 @@ def createService(network_name, topology_file, backend, host, port, wsdl_dir, ct
 
 def createClient(host, port, wsdl_dir, ctx_factory=None):
 
+    service_url = _createServiceURL(host, port, ctx_factory)
     nsi_resource, site = resource.createService()
-
-    # we only support http for callback currently
-    service_url = 'http://%s:%i/NSI/services/ConnectionService' % (host,port)
 
     provider_client     = client.ProviderClient(service_url, wsdl_dir, ctx_factory=ctx_factory)
     nsi_requester = requester.Requester(provider_client, callback_timeout=65)
