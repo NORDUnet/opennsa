@@ -1,0 +1,12 @@
+include README
+include Makefile
+include ISSUES
+include SC2011-Topo-v5f.owl
+include onsa
+include client-test
+include opennsa.tac
+include opennsa-abc.tac
+include opennsa-northernlight.tac
+include opennsa-starlight.tac
+recursive-include wsdl *
+recursive-include docs *
