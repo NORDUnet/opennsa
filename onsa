@@ -91,8 +91,7 @@ def doMain():
             else:
                 log.msg('Only partial security configuration given. Cannot create SSL/TLS context.')
 
-
-        client, service, factory = setup.createClient(host, port, wsdl_dir, ctx_factory)
+        client, factory = setup.createClient(host, port, wsdl_dir, ctx_factory)
         iport = reactor.listenTCP(port, factory)
 
     # commands

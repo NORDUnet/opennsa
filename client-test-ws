@@ -30,7 +30,7 @@ def doMain():
 
     wsdl_dir =  os.path.join(os.path.dirname(os.path.abspath(__file__)), 'wsdl')
 
-    client, service, factory = setup.createClient(HOST, PORT, wsdl_dir)
+    client, factory = setup.createClient(HOST, PORT, wsdl_dir)
 
     reactor.listenTCP(PORT, factory)
 
@@ -50,6 +50,7 @@ def doMain():
 
     #dest_stp        = nsa.STP('Aruba', 'A2')
     dest_stp        = nsa.STP('Bonaire', 'B3')
+    #dest_stp        = nsa.STP('Curacao', 'C3')
 
     start_time = datetime.datetime.utcfromtimestamp(time.time() + 3 )
     end_time   = datetime.datetime.utcfromtimestamp(time.time() + 120 )
