@@ -29,6 +29,13 @@ class SOAPResource(resource.Resource):
 
     def render_POST(self, request):
 
+        # log peer identity if using ssl/tls at some point we should probably do something with the identity
+        if request.isSecure():
+            cert = request.transport.getPeerCertificate()
+            if cert:
+                subject = '/' + '/'.join([ '='.join(c) for c in cert.get_subject().get_components() ])
+                log.msg('Certificate subject: %s' % subject, system='opennsa.SOAPResource')
+
         soap_action = request.requestHeaders.getRawHeaders('soapaction',[None])[0]
 
         if not soap_action in self.soap_actions:
