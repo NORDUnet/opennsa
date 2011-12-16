@@ -42,16 +42,18 @@ class ContextFactory:
 
         def verify_callback(conn, x509, error_number, error_depth, allowed):
             # just return what openssl thinks is right
-            return allowed
+            if self.verify:
+                return allowed # return what openssl thinks is right
+            else:
+                return 1 # allow everything which has a cert
 
-        if self.verify:
-            ctx.set_verify(SSL.VERIFY_PEER, verify_callback)
+        ctx.set_verify(SSL.VERIFY_PEER, verify_callback)
 
-            calist = [ ca for ca in os.listdir(self.certificate_dir) if ca.endswith('.0') ]
-            for ca in calist:
-                # openssl wants absolute paths
-                ca = os.path.join(self.certificate_dir, ca)
-                ctx.load_verify_locations(ca)
+        calist = [ ca for ca in os.listdir(self.certificate_dir) if ca.endswith('.0') ]
+        for ca in calist:
+            # openssl wants absolute paths
+            ca = os.path.join(self.certificate_dir, ca)
+            ctx.load_verify_locations(ca)
 
         return ctx
 
