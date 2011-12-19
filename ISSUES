@@ -5,8 +5,6 @@ General:
   Send provisonConfirmed/Failed when provision actually happens/fail
   Better handling and reporting of aggregation failures (partial or not)
   Investigate error message on connection id
-  TLS support in client.
-  Configuration
   Persistence for connections
   Deal with bandwidth in calendar (requires joint resource concept)
 
