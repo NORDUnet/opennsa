@@ -2,9 +2,22 @@
 High-level functionality for creating clients and services in OpenNSA.
 """
 
-from opennsa import nsiservice
+import os
+import sys
+from ConfigParser import NoOptionError
+
+from twisted.python.log import ILogObserver
+from twisted.application import internet, service as appservice
+
+from opennsa import config, logging, nsiservice
 from opennsa.protocols.webservice import client, service, provider, requester, resource
 
+
+
+class ConfigurationError(Exception):
+    """
+    Raised in case of invalid/inconsistent configuration.
+    """
 
 
 def _createServiceURL(host, port, ctx_factory=None):
@@ -52,4 +65,74 @@ def createClient(host, port, wsdl_dir, ctx_factory=None):
     service.RequesterService(nsi_resource, nsi_requester)
 
     return nsi_requester, site
+
+
+
+def createApplication(config_file=config.DEFAULT_CONFIG_FILE, tls=True, authz_verify=True, debug=False):
+
+    cfg = config.readConfig(config_file)
+
+    try:
+        network_name = cfg.get(config.BLOCK_SERVICE, config.CONFIG_NETWORK_NAME)
+    except NoOptionError:
+        raise ConfigurationError('No network name specified in configuration file (mandatory)')
+
+    topology_file = cfg.get(config.BLOCK_SERVICE, config.CONFIG_TOPOLOGY_FILE)
+    if not os.path.exists(topology_file):
+        raise ConfigurationError('Specified (or default) topology file does not exist (%s)' % topology_file)
+
+    wsdl_dir = cfg.get(config.BLOCK_SERVICE, config.CONFIG_WSDL_DIRECTORY)
+    if not os.path.exists(wsdl_dir):
+        raise ConfigurationError('Specified (or default) WSDL directory does not exist (%s)' % wsdl_dir)
+
+    try:
+        host = cfg.get(config.BLOCK_SERVICE, config.CONFIG_HOST)
+    except NoOptionError:
+        import socket
+        host = socket.getfqdn() # this a guess
+
+    try:
+        port = cfg.get(config.BLOCK_SERVICE, config.CONFIG_PORT)
+    except NoOptionError:
+        port = config.DEFAULT_TLS_PORT if tls else config.DEFAULT_TCP_PORT
+
+    ctx_factory = None
+    if tls:
+        from opennsa import ctxfactory
+        try:
+            hostkey  = cfg.get(config.BLOCK_SERVICE, config.CONFIG_HOSTKEY)
+            hostcert = cfg.get(config.BLOCK_SERVICE, config.CONFIG_HOSTCERT)
+            certdir  = cfg.get(config.BLOCK_SERVICE, config.CONFIG_CERTIFICATE_DIR)
+            verify   = cfg.get(config.BLOCK_SERVICE, config.CONFIG_VERIFY)
+            ctx_factory = ctxfactory.ContextFactory(hostkey, hostcert, certdir, verify)
+        except NoOptionError, e:
+            raise ConfigurationError('Missing TLS options (%s)' % str(e))
+
+    # backend
+
+    if config.BLOCK_DUD in cfg.sections():
+        from opennsa.backends import dud
+        backend = dud.DUDNSIBackend(network_name)
+    elif config.BLOCK_JUNOS in cfg.sections():
+        from opennsa.backends import junos
+        backend = junos.JunOSBackend(network_name)
+    elif config.BLOCK_ARGIA in cfg.sections():
+        from opennsa.backends import argia
+        backend = argia.ArgiaBackend()
+    else:
+        raise ConfigurationError('No or invalid backend specified')
+
+    # setup application
+
+    factory = createService(network_name, open(topology_file), backend, host, port, wsdl_dir, ctx_factory)
+
+    application = appservice.Application("OpenNSA")
+    application.setComponent(ILogObserver, logging.DebugLogObserver(sys.stdout, debug).emit)
+
+    if tls:
+        internet.SSLServer(port, factory, ctx_factory).setServiceParent(application)
+    else:
+        internet.TCPServer(port, factory).setServiceParent(application)
+
+    return application
 
