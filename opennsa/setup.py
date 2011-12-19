@@ -41,7 +41,7 @@ def createService(network_name, topology_file, backend, host, port, wsdl_dir, ct
 
     provider_client     = client.ProviderClient(service_url, wsdl_dir, ctx_factory=ctx_factory)
     nsi_requester = requester.Requester(provider_client, 30)
-    service.RequesterService(nsi_resource, nsi_requester)
+    service.RequesterService(nsi_resource, nsi_requester, wsdl_dir)
 
     # now provider service
 
@@ -49,7 +49,7 @@ def createService(network_name, topology_file, backend, host, port, wsdl_dir, ct
 
     requester_client = client.RequesterClient(wsdl_dir)
     nsi_provider = provider.Provider(nsi_service, requester_client)
-    service.ProviderService(nsi_resource, nsi_provider)
+    service.ProviderService(nsi_resource, nsi_provider, wsdl_dir)
 
     return site
 

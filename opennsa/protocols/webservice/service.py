@@ -14,9 +14,8 @@ from opennsa.protocols.webservice.ext import sudsservice
 
 from suds.sax import date as sudsdate
 
-WSDL_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__),"../../../wsdl/"))
-WSDL_PROVIDER   = 'file://%s/ogf_nsi_connection_provider_v1_0.wsdl' % WSDL_PATH
-WSDL_REQUESTER  = 'file://%s/ogf_nsi_connection_requester_v1_0.wsdl' % WSDL_PATH
+WSDL_PROVIDER   = 'file://%s/ogf_nsi_connection_provider_v1_0.wsdl'
+WSDL_REQUESTER  = 'file://%s/ogf_nsi_connection_requester_v1_0.wsdl'
 
 
 
@@ -29,12 +28,11 @@ def _decodeNSAs(subreq):
 
 class ProviderService:
 
-    def __init__(self, soap_resource, provider):
+    def __init__(self, soap_resource, provider, wsdl_dir):
 
         self.provider = provider
         self.soap_resource = soap_resource
-        #self.nsi_service = nsi_service
-        self.decoder = sudsservice.WSDLMarshaller(WSDL_PROVIDER)
+        self.decoder = sudsservice.WSDLMarshaller(WSDL_PROVIDER % wsdl_dir)
 
         # not sure what query callbacs are doing here
         #self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/10/connection/service/queryConfirmed"', ...)
@@ -186,11 +184,11 @@ class ProviderService:
 
 class RequesterService:
 
-    def __init__(self, soap_resource, requester):
+    def __init__(self, soap_resource, requester, wsdl_dir):
 
         self.soap_resource = soap_resource
         self.requester = requester
-        self.decoder = sudsservice.WSDLMarshaller(WSDL_REQUESTER)
+        self.decoder = sudsservice.WSDLMarshaller(WSDL_REQUESTER % wsdl_dir)
 
         self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/10/connection/service/reserveConfirmed"',      self.reserveConfirmed)
         self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/10/connection/service/reserveFailed"',         self.reserveFailed)
