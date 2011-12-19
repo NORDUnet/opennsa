@@ -16,12 +16,12 @@
 
 CONFIG_FILE=/etc/opennsa.conf
 
-# Maybe these should be configurable as well
-TACFILE=/usr/local/share/opennsa/opennsa.tac
 PIDFILE=/var/run/opennsa.pid
 
 DEFAULT_LOGFILE=/var/log/opennsa.log
 DEFAULT_USER=root
+
+APP_START="from opennsa import setup ; application = setup.createApplication()"
 
 do_start() {
     # get logfile from config file or set to default if not found
@@ -33,6 +33,10 @@ do_start() {
     USER=${USER:-$DEFAULT_USER}
     USER_ID=`id -u $USER`
     GROUP_ID=`id -g $USER`
+
+    # setup .tac file in temporary file (saves us a file in the distro and more importantly getting the location in this script).
+    TACFILE=`mktemp` || exit 1
+    echo $APP_START > $TACFILE
 
     # start the opennsa service using twistd
     twistd --pidfile $PIDFILE -l $LOGFILE -y $TACFILE -u $USER_ID -g $GROUP_ID
