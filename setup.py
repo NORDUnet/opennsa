@@ -72,7 +72,9 @@ setup(name='OpenNSA',
                                      'wsdl/xenc-schema.xsd',
                                      'wsdl/xmldsig-core-schema.xsd']),
         ('share/opennsa',           ['opennsa-northernlight.tac',
-                                     'opennsa-starlight.tac'])
+                                     'opennsa-starlight.tac',
+        ('/etc',                    ['datafiles/opennsa.conf'],
+        ('/etc/init.d',             ['datafiles/opennsa'],
       ]
 
 )
