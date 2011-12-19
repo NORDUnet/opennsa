@@ -1,0 +1,69 @@
+#! /bin/sh
+# /etc/init.d/opennsa: Start the OpenNSA service
+
+### BEGIN INIT INFO
+# Provides:             opennsa
+# Required-Start:       $network
+# Required-Stop:        $network
+# Should-Start:         $time
+# Should-Stop:          $time
+# Default-Start:        2 3 4 5
+# Default-Stop:         0 1 6
+# Short-Description:    OpenNSA Service
+### END INIT INFO
+
+. /lib/lsb/init-functions
+
+CONFIG_FILE=/etc/opennsa.conf
+
+# Maybe these should be configurable as well
+TACFILE=/usr/local/share/opennsa/opennsa.tac
+PIDFILE=/var/run/opennsa.pid
+
+DEFAULT_LOGFILE=/var/log/opennsa.log
+DEFAULT_USER=root
+
+do_start() {
+    # get logfile from config file or set to default if not found
+    LOGFILE=`grep ^logfile= $CONFIG_FILE | tail -n 1 | cut -f2 -d'='`
+    LOGFILE=${LOGFILE:-$DEFAULT_LOGFILE}
+
+    # get runtime user from config file or set to root if not found
+    USER=`grep ^user= $CONFIG_FILE | tail -n 1 | cut -f2 -d'='`
+    USER=${USER:-$DEFAULT_USER}
+    USER_ID=`id -u $USER`
+    GROUP_ID=`id -g $USER`
+
+    # start the opennsa service using twistd
+    twistd --pidfile $PIDFILE -l $LOGFILE -y $TACFILE -u $USER_ID -g $GROUP_ID
+}
+
+do_stop() {
+    kill `cat $PIDFILE` || rm $PIDFILE
+}
+
+case "$1" in
+  start)
+    echo "Starting OpenNSA service"
+    do_start
+    ;;
+  stop)
+    echo "Stopping OpenNSA service"
+    do_stop
+    ;;
+  restart|reload)
+    echo "Restarting OpenNSA service"
+    do_stop
+    sleep 1 # erhmm...
+    do_start
+    ;;
+  status)
+    status_of_proc -p $PIDFILE "twistd" "OpenNSA service" && exit 0 || exit $?
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|restart|reload|status}"
+    exit 1
+    ;;
+esac
+
+exit 0
