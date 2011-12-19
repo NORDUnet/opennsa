@@ -49,7 +49,7 @@ class InstallOpenNSAData(install_data):
 cmdclasses = {'install': InstallOpenNSA, 'install_data': InstallOpenNSAData} 
 
 
-setup(name='OpenNSA',
+setup(name='opennsa',
       version=__version__,
       description='Implementation of the Network Service Interface (NSI)',
       author='Henrik Thostrup Jensen',
