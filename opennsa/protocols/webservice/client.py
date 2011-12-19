@@ -7,13 +7,9 @@ Copyright: NORDUnet (2011)
 
 import uuid
 
-from twisted.python import log
-
 from opennsa.protocols.webservice.ext import twistedsuds
 
 
-#import os
-#WSDL_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__),"../../../wsdl/"))
 WSDL_PROVIDER   = 'file://%s/ogf_nsi_connection_provider_v1_0.wsdl'
 WSDL_REQUESTER  = 'file://%s/ogf_nsi_connection_requester_v1_0.wsdl'
 
