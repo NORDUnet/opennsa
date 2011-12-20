@@ -3,7 +3,6 @@ High-level functionality for creating clients and services in OpenNSA.
 """
 
 import os
-import sys
 from ConfigParser import NoOptionError
 
 from twisted.python.log import ILogObserver
@@ -77,6 +76,13 @@ def createApplication(config_file=config.DEFAULT_CONFIG_FILE, tls=True, authz_ve
     except NoOptionError:
         raise ConfigurationError('No network name specified in configuration file (mandatory)')
 
+    log_file_path = cfg.get(config.BLOCK_SERVICE, config.CONFIG_LOG_FILE)
+    if log_file_path:
+        log_file = open(log_file_path, 'w')
+    else:
+        import sys
+        log_file = sys.stdout
+
     topology_file = cfg.get(config.BLOCK_SERVICE, config.CONFIG_TOPOLOGY_FILE)
     if not os.path.exists(topology_file):
         raise ConfigurationError('Specified (or default) topology file does not exist (%s)' % topology_file)
@@ -127,7 +133,7 @@ def createApplication(config_file=config.DEFAULT_CONFIG_FILE, tls=True, authz_ve
     factory = createService(network_name, open(topology_file), backend, host, port, wsdl_dir, ctx_factory)
 
     application = appservice.Application("OpenNSA")
-    application.setComponent(ILogObserver, logging.DebugLogObserver(sys.stdout, debug).emit)
+    application.setComponent(ILogObserver, logging.DebugLogObserver(log_file, debug).emit)
 
     if tls:
         internet.SSLServer(port, factory, ctx_factory).setServiceParent(application)

@@ -27,6 +27,7 @@ BLOCK_ARGIA      = 'argia'
 
 # service block
 CONFIG_NETWORK_NAME     = 'network'     # mandatory
+CONFIG_LOG_FILE         = 'logfile'
 CONFIG_HOST             = 'host'
 CONFIG_PORT             = 'port'
 CONFIG_TOPOLOGY_FILE    = 'topology'
