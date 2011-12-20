@@ -50,6 +50,7 @@ def _httpRequest(url, soap_action, soap_envelope, timeout=DEFAULT_TIMEOUT, ctx_f
     factory.headers['Authorization'] = 'Basic bnNpZGVtbzpSaW9QbHVnLUZlc3QyMDExIQ==' # base64.b64encode('nsidemo:RioPlug-Fest2011!')
 
     if scheme == 'https':
+        assert ctx_factory is not None, 'Cannot perform https request without context factory.'
         reactor.connectSSL(host, port, factory, ctx_factory)
     else:
         reactor.connectTCP(host, port, factory)

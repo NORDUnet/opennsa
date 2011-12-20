@@ -132,9 +132,9 @@ class ProviderClient:
 
 class RequesterClient:
 
-    def __init__(self, wsdl_dir):
+    def __init__(self, wsdl_dir, ctx_factory=None):
 
-        self.client = twistedsuds.TwistedSUDSClient(WSDL_REQUESTER % wsdl_dir)
+        self.client = twistedsuds.TwistedSUDSClient(WSDL_REQUESTER % wsdl_dir, ctx_factory=ctx_factory)
 
 
     def _createGenericConfirmType(self, requester_nsa, provider_nsa, global_reservation_id, connection_id):
