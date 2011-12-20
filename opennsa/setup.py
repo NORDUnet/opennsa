@@ -61,7 +61,7 @@ def createClient(host, port, wsdl_dir, ctx_factory=None):
 
     provider_client     = client.ProviderClient(service_url, wsdl_dir, ctx_factory=ctx_factory)
     nsi_requester = requester.Requester(provider_client, callback_timeout=65)
-    service.RequesterService(nsi_resource, nsi_requester)
+    service.RequesterService(nsi_resource, nsi_requester, wsdl_dir)
 
     return nsi_requester, site
 
