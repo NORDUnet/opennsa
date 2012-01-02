@@ -28,12 +28,20 @@ DEFAULT_TIMEOUT = 20 # seconds
 
 
 
+class RequestError(Exception):
+    """
+    Raised when a request could not be made or failed in an unexpected way.
+    Not rased for 5xx responses.
+    """
+
+
+
 def _httpRequest(url, soap_action, soap_envelope, timeout=DEFAULT_TIMEOUT, ctx_factory=None):
     # copied from twisted.web.client in order to get access to the
     # factory (which contains response codes, headers, etc)
 
     if type(url) is not str:
-        e = ValueError('URL must be string, not %s' % type(url))
+        e = RequestError('URL must be string, not %s' % type(url))
         return defer.fail(e), None
 
     scheme, host, port, _ = twclient._parse(url)
@@ -50,7 +58,8 @@ def _httpRequest(url, soap_action, soap_envelope, timeout=DEFAULT_TIMEOUT, ctx_f
     factory.headers['Authorization'] = 'Basic bnNpZGVtbzpSaW9QbHVnLUZlc3QyMDExIQ==' # base64.b64encode('nsidemo:RioPlug-Fest2011!')
 
     if scheme == 'https':
-        assert ctx_factory is not None, 'Cannot perform https request without context factory.'
+        if ctx_factory is None:
+            return defer.fail(RequestError('Cannot perform https request without context factory.')), None
         reactor.connectSSL(host, port, factory, ctx_factory)
     else:
         reactor.connectTCP(host, port, factory)
@@ -140,8 +149,8 @@ class TwistedSUDSClient:
 
         # dispatch
         d, factory = _httpRequest(url, soap_action, soap_envelope, timeout=self.timeout, ctx_factory=self.ctx_factory)
-        d.addCallback(self._parseResponse, factory, method, short_action)
-        d.addErrback(invokeError, url, soap_action)
+        d.addCallbacks(self._parseResponse, invokeError,
+                       callbargArgs=(factory, method, short_action), errbackArgs=(url, soap_action))
         return d
 
 
