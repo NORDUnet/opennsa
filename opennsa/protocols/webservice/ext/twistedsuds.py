@@ -59,7 +59,7 @@ def _httpRequest(url, soap_action, soap_envelope, timeout=DEFAULT_TIMEOUT, ctx_f
 
     if scheme == 'https':
         if ctx_factory is None:
-            return defer.fail(RequestError('Cannot perform https request without context factory.')), None
+            return defer.fail(RequestError('Cannot perform https request without context factory')), None
         reactor.connectSSL(host, port, factory, ctx_factory)
     else:
         reactor.connectTCP(host, port, factory)
@@ -135,7 +135,8 @@ class TwistedSUDSClient:
                 pass # these are pretty common when the remote shuts down
             else:
                 action = soap_action[1:-1].split('/')[-1]
-                log.msg('SOAP method invocation failed: %s. URL: %s. Action: %s.' % (err.getErrorMessage(), url, action), system='TwistedSUDSClient')
+                log.msg('SOAP method invocation failed: %s, URL: %s, Action: %s' % (err.getErrorMessage(), url, action), system='TwistedSUDSClient')
+            return err
 
         method = self._getMethod(method_name)
 
