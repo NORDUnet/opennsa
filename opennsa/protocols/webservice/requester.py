@@ -97,9 +97,14 @@ class Requester:
     def provision(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
         correlation_id = client.createCorrelationId()
+
+        def provisionRequestFailed(err):
+            # invocation failed, so we error out immediately
+            self.triggerCall(provider_nsa.urn(), correlation_id, 'provision', error.ProvisionError(err.getErrorMessage()))
+
         rd = self.addCall(provider_nsa, correlation_id, 'provision')
         cd = self.provider_client.provision(correlation_id, requester_nsa, provider_nsa, session_security_attr, connection_id)
-        # need to chain cd.errback to rd.errback (only error path)
+        cd.addErrback(provisionRequestFailed)
         return rd
 
 
@@ -116,9 +121,14 @@ class Requester:
     def release(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
         correlation_id = client.createCorrelationId()
+
+        def releaseRequestFailed(err):
+            # invocation failed, so we error out immediately
+            self.triggerCall(provider_nsa.urn(), correlation_id, 'release', error.ReleaseError(err.getErrorMessage()))
+
         rd = self.addCall(provider_nsa, correlation_id, 'release')
         cd = self.provider_client.release(correlation_id, requester_nsa, provider_nsa, session_security_attr, connection_id)
-        # need to chain cd.errback to rd.errback (only error path)
+        cd.addErrback(releaseRequestFailed)
         return rd
 
     def releaseConfirmed(self, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id):
@@ -134,9 +144,14 @@ class Requester:
     def terminate(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
         correlation_id = client.createCorrelationId()
+
+        def terminateRequestFailed(err):
+            # invocation failed, so we error out immediately
+            self.triggerCall(provider_nsa.urn(), correlation_id, 'terminate', error.TerminateError(err.getErrorMessage()))
+
         rd = self.addCall(provider_nsa, correlation_id, 'terminate')
         cd = self.provider_client.terminate(correlation_id, requester_nsa, provider_nsa, session_security_attr, connection_id)
-        # need to chain cd.errback to rd.errback (only error path)
+        cd.addErrback(terminateRequestFailed)
         return rd
 
 
@@ -153,9 +168,14 @@ class Requester:
     def query(self, requester_nsa, provider_nsa, session_security_attr, operation='Summary', connection_ids=None, global_reservation_ids=None):
 
         correlation_id = client.createCorrelationId()
+
+        def queryRequestFailed(err):
+            # invocation failed, so we error out immediately
+            self.triggerCall(provider_nsa.urn(), correlation_id, 'query', error.QueryError(err.getErrorMessage()))
+
         rd = self.addCall(provider_nsa, correlation_id, 'query')
         cd = self.provider_client.query(correlation_id, requester_nsa, provider_nsa, session_security_attr, operation, connection_ids, global_reservation_ids)
-        # need to chain cd.errback to rd.errback (only error path)
+        cd.addErrback(queryRequestFailed)
         return rd
 
     def queryConfirmed(self, correlation_id, requester_nsa, provider_nsa, query_result):
@@ -163,6 +183,7 @@ class Requester:
         self.triggerCall(provider_nsa, correlation_id, 'query', query_result)
 
 
-    def queryFailed(self, correlation_id, requester_nsa, provider_nsa, query_result):
-        print "REQUESTER QUERY FAILED"
+    def queryFailed(self, correlation_id, requester_nsa, provider_nsa, error_message):
+
+        self.triggerCall(provider_nsa, correlation_id, 'query', error.QueryError(error_message))
 
