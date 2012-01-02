@@ -7,6 +7,8 @@ General:
   Investigate error message on connection id
   Persistence for connections
   Deal with bandwidth in calendar (requires joint resource concept)
+  A way to deal with the mapsTo to local ports
+  - Which doesn't require modification of the core NSI topology
 
 
 Backends:
