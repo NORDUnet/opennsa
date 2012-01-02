@@ -176,6 +176,11 @@ def doMain():
 
 def main():
 
+    def slightlyDelayedShutdown(_):
+        # this means that the reactor/kernel will have a bit of time
+        # to push off any replies/acks before shutdown
+        reactor.callLater(0.1, reactor.stop)
+
     def printError(error):
         if error.type == SystemExit:
             return
@@ -187,7 +192,7 @@ def main():
 
     d = defer.maybeDeferred(doMain)
     d.addErrback(printError)
-    d.addBoth(lambda _ : reactor.stop())
+    d.addBoth(slightlyDelayedShutdown)
     return d
 
 
