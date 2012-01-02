@@ -367,5 +367,20 @@ class RequesterService:
 
 
     def queryFailed(self, soap_action, soap_data):
-        raise NotImplementedError('Service query failure handling not implemented in Requestor.')
+
+        assert soap_action == '"http://schemas.ogf.org/nsi/2011/10/connection/service/queryFailed"'
+        method, req = self.decoder.parse_request('queryFailed', soap_data)
+
+        correlation_id          = str(req.correlationId)
+
+        requester_nsa, provider_nsa = _decodeNSAs(req.queryFailed)
+
+        qf = req.queryFailed
+        #error_id                = str(qf.serviceException.messageId) if 'messageId' in qf.serviceException else None
+        error_message           = str(qf.serviceException.text)      if 'text' in qf.serviceException else None
+
+        d = self.requester.queryFailed(correlation_id, requester_nsa, provider_nsa, error_message)
+
+        reply = self.decoder.marshal_result(correlation_id, method)
+        return reply
 
