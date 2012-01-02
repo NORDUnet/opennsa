@@ -150,7 +150,7 @@ class TwistedSUDSClient:
         # dispatch
         d, factory = _httpRequest(url, soap_action, soap_envelope, timeout=self.timeout, ctx_factory=self.ctx_factory)
         d.addCallbacks(self._parseResponse, invokeError,
-                       callbargArgs=(factory, method, short_action), errbackArgs=(url, soap_action))
+                       callbackArgs=(factory, method, short_action), errbackArgs=(url, soap_action))
         return d
 
 
