@@ -127,8 +127,8 @@ class TwistedSUDSClient:
         Invoke a SOAP/WSDL action. No getattr/getitem magic, sorry.
 
         @args url: URL/Endpoint to POST SOAP at.
-        @args method_name: Method to invoke.
-        @args *args Argument for method.
+        @args method_name: SOAP Method to invoke.
+        @args *args Argument for SOAP method.
         """
         def invokeError(err, url, soap_action):
             if isinstance(err.value, ConnectionDone):
