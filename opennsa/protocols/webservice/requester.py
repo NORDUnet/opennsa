@@ -71,10 +71,15 @@ class Requester:
     def reserve(self, requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters):
 
         correlation_id = client.createCorrelationId()
+
+        def reserveRequestFailed(err):
+            # invocation failed, so we error out immediately
+            self.triggerCall(provider_nsa.urn(), correlation_id, 'reserve', error.ReserveError(err.getErrorMessage()))
+
         rd = self.addCall(provider_nsa, correlation_id, 'reserve')
         cd = self.provider_client.reserve(correlation_id, requester_nsa, provider_nsa, session_security_attr,
                                           global_reservation_id, description, connection_id, service_parameters)
-        # need to chain cd.errback to rd.errback (only error path)
+        cd.addErrback(reserveRequestFailed)
         return rd
 
 
