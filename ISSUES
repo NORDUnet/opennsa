@@ -9,11 +9,13 @@ General:
   Deal with bandwidth in calendar (requires joint resource concept)
   A way to deal with the mapsTo to local ports
   - Which doesn't require modification of the core NSI topology
+  TLS for client service
 
 
 Backends:
   Force10 E300 backend
   NCS backend
+  Generic backend for simple setup/teardown deployments (no intermediate NRM)
 
 
 Argia backend:
