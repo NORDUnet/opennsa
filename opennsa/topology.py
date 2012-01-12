@@ -18,22 +18,31 @@ from opennsa import nsa, error
 # Constants for parsing GOLE topology format
 OWL_NS  = 'http://www.w3.org/2002/07/owl#'
 RDF_NS  = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'
-
-GLIF_PREFIX = 'http://www.glif.is/working-groups/tech/dtox#'
+DTOX_NS = 'http://www.glif.is/working-groups/tech/dtox#'
 
 NAMED_INDIVIDUAL        = ET.QName('{%s}NamedIndividual' % OWL_NS)
 RDF_ABOUT               = ET.QName('{%s}about' % RDF_NS)
 RDF_TYPE                = ET.QName('{%s}type' % RDF_NS)
 RDF_RESOURCE            = ET.QName('{%s}resource' % RDF_NS)
 
-GLIF_HAS_STP            = ET.QName('{%s}hasSTP' % GLIF_PREFIX)
-GLIF_CONNECTED_TO       = ET.QName('{%s}connectedTo' % GLIF_PREFIX)
-GLIF_MAPS_TO            = ET.QName('{%s}mapsTo' % GLIF_PREFIX)
-GLIF_MAX_CAPACITY       = ET.QName('{%s}maxCapacity' % GLIF_PREFIX)
-GLIF_AVAILABLE_CAPACITY = ET.QName('{%s}availableCapacity' % GLIF_PREFIX)
-GLIF_MANAGED_BY         = ET.QName('{%s}managedBy' % GLIF_PREFIX)
-GLIF_PROVIDER_ENDPOINT  = ET.QName('{%s}csProviderEndpoint' % GLIF_PREFIX)
+GLIF_HAS_STP            = ET.QName('{%s}hasSTP'             % DTOX_NS)
+GLIF_CONNECTED_TO       = ET.QName('{%s}connectedTo'        % DTOX_NS)
+GLIF_MAPS_TO            = ET.QName('{%s}mapsTo'             % DTOX_NS)
+GLIF_MAX_CAPACITY       = ET.QName('{%s}maxCapacity'        % DTOX_NS)
+GLIF_AVAILABLE_CAPACITY = ET.QName('{%s}availableCapacity'  % DTOX_NS)
+GLIF_MANAGED_BY         = ET.QName('{%s}managedBy'          % DTOX_NS)
+GLIF_PROVIDER_ENDPOINT  = ET.QName('{%s}csProviderEndpoint' % DTOX_NS)
 
+NSNETWORK_PREFIX = 'urn:ogf:network:nsnetwork:'
+NSA_PREFIX       = 'urn:ogf:network:nsa:'
+STP_PREFIX       = 'urn:ogf:network:stp:'
+
+
+
+def _stripPrefix(text, prefix):
+    assert text.startswith(prefix), 'Text did not start with specified prefix'
+    ul = len(prefix)
+    return text[ul:]
 
 
 
@@ -237,8 +246,8 @@ def parseGOLETopology(topology_source):
         raise error.TopologyError('Invalid topology source')
 
     def stripGLIFPrefix(text):
-        assert text.startswith(GLIF_PREFIX)
-        return text.split(GLIF_PREFIX)[1]
+        assert text.startswith(DTOX_NS)
+        return text.split(DTOX_NS)[1]
 
     stps = {}
     nsas = {}
@@ -326,14 +335,8 @@ def parseGOLETopology(topology_source):
 
 def parseGOLERDFTopology(topology_source):
 
-    def stripURNPrefix(text):
-        URN_PREFIX = 'urn:ogf:network:'
-        assert text.startswith(URN_PREFIX)
-        return text.split(':')[-1]
-
-    OWL_NS = rdflib.namespace.Namespace("http://www.w3.org/2002/07/owl#")
-    RDF_NS = rdflib.namespace.Namespace('http://www.w3.org/1999/02/22-rdf-syntax-ns#')
-    DTOX_NS = rdflib.namespace.Namespace('http://www.glif.is/working-groups/tech/dtox#')
+    RDF  = rdflib.Namespace(RDF_NS)
+    DTOX = rdflib.Namespace(DTOX_NS)
 
     graph = rdflib.ConjunctiveGraph()
     try:
@@ -343,22 +346,24 @@ def parseGOLERDFTopology(topology_source):
 
     topo = Topology()
 
-    for nsnetwork in graph.subjects(RDF_NS['type'],DTOX_NS['NSNetwork']):
-        # Setup the base network object, with NSA
-        nsaId = graph.value(subject=nsnetwork, predicate=DTOX_NS['managedBy'])
-        network_name = stripURNPrefix(str(nsnetwork))
-        network_nsa_ep = graph.value(subject=nsaId, predicate=DTOX_NS['csProviderEndpoint'])
-        network_nsa = nsa.NetworkServiceAgent(stripURNPrefix(str(nsaId)), str(network_nsa_ep))
+    for nsnetwork in graph.subjects(RDF['type'],DTOX['NSNetwork']):
+        # Setup the network object
+
+        nsa_id = graph.value(subject=nsnetwork, predicate=DTOX['managedBy'])
+        nsa_endpoint = graph.value(subject=nsa_id, predicate=DTOX['csProviderEndpoint'])
+
+        network_name = _stripPrefix(str(nsnetwork), NSNETWORK_PREFIX)
+        network_nsa = nsa.NetworkServiceAgent(_stripPrefix(str(nsa_id), NSA_PREFIX), str(nsa_endpoint))
         network = nsa.Network(network_name, network_nsa)
 
         # Add all the STPs and connections to the network
-        for stp in graph.objects(nsnetwork, DTOX_NS['hasSTP']):
-            stp_name = stripURNPrefix(str(stp))
-            dest_stp = graph.value(subject=stp, predicate=DTOX_NS['connectedTo'])
+        for stp in graph.objects(nsnetwork, DTOX['hasSTP']):
+            stp_name = _stripPrefix(str(stp), STP_PREFIX)
+            dest_stp = graph.value(subject=stp, predicate=DTOX['connectedTo'])
             # If there is a destination, add that, otherwise the value stays None.
             if dest_stp:
-                dest_network = graph.value(predicate=DTOX_NS['hasSTP'], object=dest_stp)
-                dest_stp = nsa.STP(stripURNPrefix(str(dest_network)), stripURNPrefix(str(dest_stp)))
+                dest_network = graph.value(predicate=DTOX['hasSTP'], object=dest_stp)
+                dest_stp = nsa.STP(_stripPrefix(str(dest_network), NSNETWORK_PREFIX), _stripPrefix(str(dest_stp), STP_PREFIX) )
             ep = nsa.NetworkEndpoint(network_name, stp_name, None, dest_stp, None, None)
             network.addEndpoint(ep)
 
