@@ -29,11 +29,11 @@ class NSIService:
 
     implements(NSIServiceInterface)
 
-    def __init__(self, network, backend, topology_file, client):
+    def __init__(self, network, backend, topology_sources, client):
         self.network = network
         self.backend = backend
 
-        self.topology = topology.parseGOLETopology(topology_file)
+        self.topology = topology.parseGOLERDFTopology(topology_sources)
 
         # get own nsa from topology
         self.client = client

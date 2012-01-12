@@ -333,16 +333,17 @@ def parseGOLETopology(topology_source):
 
 
 
-def parseGOLERDFTopology(topology_source):
+def parseGOLERDFTopology(topology_sources):
 
     RDF  = rdflib.Namespace(RDF_NS)
     DTOX = rdflib.Namespace(DTOX_NS)
 
     graph = rdflib.ConjunctiveGraph()
     try:
-        graph.parse(topology_source)
-    except:
-        raise error.TopologyError('Invalid topology source')
+        for source, format_ in topology_sources:
+            graph.parse(source, format=format_)
+    except Exception, e:
+        raise error.TopologyError('Error parsing topology source: %s' % str(e))
 
     topo = Topology()
 

@@ -31,7 +31,7 @@ def _createServiceURL(host, port, ctx_factory=None):
 
 
 
-def createService(network_name, topology_file, backend, host, port, wsdl_dir, ctx_factory=None):
+def createService(network_name, topology_sources, backend, host, port, wsdl_dir, ctx_factory=None):
 
     # reminds an awful lot about client setup
 
@@ -44,7 +44,7 @@ def createService(network_name, topology_file, backend, host, port, wsdl_dir, ct
 
     # now provider service
 
-    nsi_service  = nsiservice.NSIService(network_name, backend, topology_file, nsi_requester)
+    nsi_service  = nsiservice.NSIService(network_name, backend, topology_sources, nsi_requester)
 
     requester_client = client.RequesterClient(wsdl_dir, ctx_factory)
     nsi_provider = provider.Provider(nsi_service, requester_client)
@@ -83,9 +83,12 @@ def createApplication(config_file=config.DEFAULT_CONFIG_FILE, tls=True, authz_ve
         import sys
         log_file = sys.stdout
 
-    topology_file = cfg.get(config.BLOCK_SERVICE, config.CONFIG_TOPOLOGY_FILE)
-    if not os.path.exists(topology_file):
-        raise ConfigurationError('Specified (or default) topology file does not exist (%s)' % topology_file)
+    topology_list = cfg.get(config.BLOCK_SERVICE, config.CONFIG_TOPOLOGY_FILE)
+    topology_files = topology_list.split(',')
+    for topology_file in topology_files:
+        if not os.path.exists(topology_file):
+            raise ConfigurationError('Specified (or default) topology file does not exist (%s)' % topology_file)
+    topology_sources = [ (open(tf), 'n3' if tf.endswith('.n3') else 'xml' ) for tf in topology_file ]
 
     wsdl_dir = cfg.get(config.BLOCK_SERVICE, config.CONFIG_WSDL_DIRECTORY)
     if not os.path.exists(wsdl_dir):
@@ -130,7 +133,7 @@ def createApplication(config_file=config.DEFAULT_CONFIG_FILE, tls=True, authz_ve
 
     # setup application
 
-    factory = createService(network_name, open(topology_file), backend, host, port, wsdl_dir, ctx_factory)
+    factory = createService(network_name, topology_sources, backend, host, port, wsdl_dir, ctx_factory)
 
     application = appservice.Application("OpenNSA")
     application.setComponent(ILogObserver, logging.DebugLogObserver(log_file, debug).emit)
