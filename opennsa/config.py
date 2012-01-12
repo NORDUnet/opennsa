@@ -38,6 +38,9 @@ CONFIG_HOSTCERT         = 'hostcert'    # mandatory
 CONFIG_CERTIFICATE_DIR  = 'certdir'     # mandatory (but dir can be empty)
 CONFIG_VERIFY           = 'verify'
 
+ARGIA_COMMAND_DIR       = 'commanddir'
+ARGIA_COMMAND_BIN       = 'commandbin'
+
 
 
 def readConfig(filename):

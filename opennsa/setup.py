@@ -126,8 +126,10 @@ def createApplication(config_file=config.DEFAULT_CONFIG_FILE, tls=True, authz_ve
         from opennsa.backends import junos
         backend = junos.JunOSBackend(network_name)
     elif config.BLOCK_ARGIA in cfg.sections():
+        command_dir = cfg.get(config.BLOCK_ARGIA, config.ARGIA_COMMAND_DIR)
+        command_bin = cfg.get(config.BLOCK_ARGIA, config.ARGIA_COMMAND_BIN)
         from opennsa.backends import argia
-        backend = argia.ArgiaBackend()
+        backend = argia.ArgiaBackend(command_dir, command_bin)
     else:
         raise ConfigurationError('No or invalid backend specified')
 

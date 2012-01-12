@@ -22,11 +22,6 @@ from opennsa.backends.common import scheduler
 
 
 
-COMMAND_DIR = '/home/nsi/nsiArgia'
-COMMAND_BIN = 'nsaResClient.sh'
-
-ARGIA_CLIENT   = os.path.join(COMMAND_DIR, COMMAND_BIN)
-
 ARGIA_CMD_RESERVE   = 'reserve'
 ARGIA_CMD_PROVISION = 'provision'
 ARGIA_CMD_RELEASE   = 'release'
@@ -51,14 +46,16 @@ class ArgiaBackendError(Exception):
 
 class ArgiaBackend:
 
-    def __init__(self):
+    def __init__(self, command_dir, command_bin):
+        self.command_dir = command_dir # directory for argia command
+        self.command_bin = command_bin # name of argia executable
         self.connections = []
 
     def createConnection(self, source_port, dest_port, service_parameters):
 
         self._checkTiming(service_parameters.start_time, service_parameters.end_time)
         self._checkVLANMatch(source_port, dest_port)
-        ac = ArgiaConnection(source_port, dest_port, service_parameters)
+        ac = ArgiaConnection(source_port, dest_port, service_parameters, self.command_dir, self.command_bin)
         self.connections.append(ac)
         return ac
 
@@ -135,10 +132,13 @@ class ArgiaConnection:
 
 #   should implement connection interface instead - does not exist currently
 
-    def __init__(self, source_port, dest_port, service_parameters):
+    def __init__(self, source_port, dest_port, service_parameters, command_dir, command_bin):
         self.source_port = source_port
         self.dest_port = dest_port
         self.service_parameters = service_parameters
+        self.command_dir = command_dir
+        self.command_bin = command_bin
+        self.command = os.path.join(command_dir, command_bin)
 
         self.state = state.ConnectionState()
         self.scheduler = scheduler.TransitionScheduler()
@@ -202,7 +202,7 @@ class ArgiaConnection:
         process_proto = ArgiaProcessProtocol(payload)
 
         try:
-            reactor.spawnProcess(process_proto, ARGIA_CLIENT, [COMMAND_BIN, ARGIA_CMD_RESERVE], path=COMMAND_DIR)
+            reactor.spawnProcess(process_proto, self.command, [self.command_bin, ARGIA_CMD_RESERVE], path=self.command_dir)
         except OSError, e:
             return defer.fail(error.ReserveError('Failed to invoke argia control command (%s)' % str(e)))
 
@@ -305,7 +305,7 @@ class ArgiaConnection:
 
         process_proto = ArgiaProcessProtocol()
         try:
-            reactor.spawnProcess(process_proto, ARGIA_CLIENT, args=[COMMAND_BIN, ARGIA_CMD_PROVISION, self.argia_id], path=COMMAND_DIR)
+            reactor.spawnProcess(process_proto, self.commnad, args=[self.command_bin, ARGIA_CMD_PROVISION, self.argia_id], path=self.command_dir)
         except OSError, e:
             return defer.fail(error.ReserveError('Failed to invoke argia control command (%s)' % str(e)))
         process_proto.d.addCallbacks(provisionConfirmed, provisionFailed, callbackArgs=[process_proto], errbackArgs=[process_proto])
@@ -367,7 +367,7 @@ class ArgiaConnection:
 
         process_proto = ArgiaProcessProtocol()
         try:
-            reactor.spawnProcess(process_proto, ARGIA_CLIENT, args=[COMMAND_BIN, ARGIA_CMD_RELEASE, self.argia_id], path=COMMAND_DIR)
+            reactor.spawnProcess(process_proto, self.command, args=[self.command_bin, ARGIA_CMD_RELEASE, self.argia_id], path=self.command_dir)
         except OSError, e:
             return defer.fail(error.ReleaseError('Failed to invoke argia control command (%s)' % str(e)))
         process_proto.d.addCallbacks(releaseConfirmed, releaseFailed, callbackArgs=[process_proto], errbackArgs=[process_proto])
@@ -423,7 +423,7 @@ class ArgiaConnection:
 
         process_proto = ArgiaProcessProtocol()
         try:
-            reactor.spawnProcess(process_proto, ARGIA_CLIENT, args=[COMMAND_BIN, ARGIA_CMD_TERMINATE, self.argia_id], path=COMMAND_DIR)
+            reactor.spawnProcess(process_proto, self.command, args=[self.command_bin, ARGIA_CMD_TERMINATE, self.argia_id], path=self.command_dir)
         except OSError, e:
             return defer.fail(error.TerminateError('Failed to invoke argia control command (%s)' % str(e)))
         process_proto.d.addCallbacks(terminateConfirmed, terminateFailed, callbackArgs=[process_proto], errbackArgs=[process_proto])
