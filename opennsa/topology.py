@@ -74,6 +74,8 @@ class Topology:
             if ep.endpoint == endpoint:
                 return ep
 
+        raise error.TopologyError('No endpoint named %s for network %s' % (endpoint, network))
+
 
     def convertSDPRouteToLinks(self, source_ep, dest_ep, route):
 
@@ -360,6 +362,9 @@ def parseGOLERDFTopology(topology_sources):
         # Add all the STPs and connections to the network
         for stp in graph.objects(nsnetwork, DTOX['hasSTP']):
             stp_name = _stripPrefix(str(stp), STP_PREFIX)
+            assert stp_name.startswith(network_name), 'STP-Network name %s does not match' % stp_name
+            stp_name = stp_name[len(network_name) + 1:] # strip network name of stp
+
             dest_stp = graph.value(subject=stp, predicate=DTOX['connectedTo'])
             # If there is a destination, add that, otherwise the value stays None.
             if dest_stp:
