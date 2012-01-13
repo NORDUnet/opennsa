@@ -362,14 +362,16 @@ def parseGOLERDFTopology(topology_sources):
         # Add all the STPs and connections to the network
         for stp in graph.objects(nsnetwork, DTOX['hasSTP']):
             stp_name = _stripPrefix(str(stp), STP_PREFIX)
-            assert stp_name.startswith(network_name), 'STP-Network name %s does not match' % stp_name
+            assert stp_name.startswith(network_name), 'STP-Network name %s does not match with %s' % (stp_name,network_name)
             stp_name = stp_name[len(network_name) + 1:] # strip network name of stp
 
             dest_stp = graph.value(subject=stp, predicate=DTOX['connectedTo'])
             # If there is a destination, add that, otherwise the value stays None.
             if dest_stp:
                 dest_network = graph.value(predicate=DTOX['hasSTP'], object=dest_stp)
-                dest_stp = nsa.STP(_stripPrefix(str(dest_network), NSNETWORK_PREFIX), _stripPrefix(str(dest_stp), STP_PREFIX) )
+                dest_network_name = _stripPrefix(str(dest_network), NSNETWORK_PREFIX)
+                dest_stp_name = _stripPrefix(str(dest_stp), STP_PREFIX+dest_network_name+":")
+                dest_stp = nsa.STP(network_name, dest_stp_name)
             ep = nsa.NetworkEndpoint(network_name, stp_name, None, dest_stp, None, None)
             network.addEndpoint(ep)
 
