@@ -88,7 +88,7 @@ def createApplication(config_file=config.DEFAULT_CONFIG_FILE, tls=True, authz_ve
     for topology_file in topology_files:
         if not os.path.exists(topology_file):
             raise ConfigurationError('Specified (or default) topology file does not exist (%s)' % topology_file)
-    topology_sources = [ (open(tf), 'n3' if tf.endswith('.n3') else 'xml' ) for tf in topology_file ]
+    topology_sources = [ (open(tf), 'n3' if tf.endswith('.n3') else 'xml' ) for tf in topology_files ]
 
     wsdl_dir = cfg.get(config.BLOCK_SERVICE, config.CONFIG_WSDL_DIRECTORY)
     if not os.path.exists(wsdl_dir):
