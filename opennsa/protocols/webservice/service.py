@@ -6,7 +6,6 @@ Copyright: NORDUnet (2011)
 """
 
 import datetime
-import os
 from twisted.python import log
 
 from opennsa import nsa

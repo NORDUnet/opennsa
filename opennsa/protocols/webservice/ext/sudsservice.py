@@ -12,7 +12,7 @@ Copyright (C) 2011 by Henrik Thostrup Jensen <htj@nordu.net>
 License: BSD
 """
 
-from suds.client import Client, Factory
+from suds.client import Client
 from suds.sax.parser import Parser
 
 
