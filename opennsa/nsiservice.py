@@ -19,11 +19,6 @@ from opennsa import error, topology, connection
 LOG_SYSTEM = 'opennsa.NSIService'
 
 
-def _logError(err):
-    log.msg(err.getErrorMessage(), system=LOG_SYSTEM)
-    return err
-
-
 
 class NSIService:
 
@@ -94,14 +89,13 @@ class NSIService:
 
         path_info = ( connection_id, source_stp.network, source_stp.endpoint, dest_stp.network, dest_stp.endpoint, self.network)
 
-        try:
-            if source_stp.network == self.network and dest_stp.network == self.network:
-                log.msg('Connection %s: Simple path creation: %s:%s -> %s:%s (%s)' % path_info, system=LOG_SYSTEM)
+        if source_stp.network == self.network and dest_stp.network == self.network:
+            log.msg('Connection %s: Simple path creation: %s:%s -> %s:%s (%s)' % path_info, system=LOG_SYSTEM)
 
-                # we need to resolve this from our topology in order to get any local configuration
-                source_ep = self.topology.getEndpoint(self.network, source_stp.endpoint)
-                dest_ep   = self.topology.getEndpoint(self.network, dest_stp.endpoint)
-                self.setupSubConnection(source_ep, dest_ep, conn, service_parameters)
+            # we need to resolve this from our topology in order to get any local configuration
+            source_ep = self.topology.getEndpoint(self.network, source_stp.endpoint)
+            dest_ep   = self.topology.getEndpoint(self.network, dest_stp.endpoint)
+            self.setupSubConnection(source_ep, dest_ep, conn, service_parameters)
 
         # This code is for chaining requests and is currently not used, but might be needed sometime in the future
         # Once we get proper a topology service, some chaining will be necessary.
@@ -134,24 +128,20 @@ class NSIService:
         #    log.msg('Tree creation %s:  %s:%s -> %s:%s (%s)' % path_info, system=LOG_SYSTEM)
 
 
-            # create the connection in tree/fanout style
-            else:
-                # log about creation and the connection type
-                log.msg('Connection %s: Aggregate path creation: %s:%s -> %s:%s (%s)' % path_info, system=LOG_SYSTEM)
-                # making the connection is the same for all though :-)
-                paths = self.topology.findPaths(source_stp, dest_stp)
+        # create the connection in tree/fanout style
+        else:
+            # log about creation and the connection type
+            log.msg('Connection %s: Aggregate path creation: %s:%s -> %s:%s (%s)' % path_info, system=LOG_SYSTEM)
+            # making the connection is the same for all though :-)
+            paths = self.topology.findPaths(source_stp, dest_stp)
 
-                # check for no paths
-                paths.sort(key=lambda e : len(e.links()))
-                selected_path = paths[0] # shortest path
-                log.msg('Attempting to create path %s' % selected_path, system=LOG_SYSTEM)
+            # check for no paths
+            paths.sort(key=lambda e : len(e.links()))
+            selected_path = paths[0] # shortest path
+            log.msg('Attempting to create path %s' % selected_path, system=LOG_SYSTEM)
 
-                for link in selected_path.links():
-                    self.setupSubConnection(link.stp1, link.stp2, conn, service_parameters)
-
-        except Exception, e:
-            log.msg('Error setting up connection: %s' % str(e), system=LOG_SYSTEM)
-            return defer.fail(e)
+            for link in selected_path.links():
+                self.setupSubConnection(link.stp1, link.stp2, conn, service_parameters)
 
         def logReserve(conn):
             log.msg('Connection %s: Reserve succeeded' % conn.connection_id, system=LOG_SYSTEM)
@@ -176,13 +166,9 @@ class NSIService:
         try:
             conn = self.getConnection(requester_nsa, connection_id)
             d = conn.terminate()
-            d.addErrback(_logError)
             return d
         except error.NoSuchConnectionError, e:
             log.msg('NSA %s requested non-existing connection %s' % (requester_nsa, connection_id), system=LOG_SYSTEM)
-            return defer.fail(e)
-        except Exception, e:
-            log.msg('Unexpected error during terminate: %s' % str(e), system=LOG_SYSTEM)
             return defer.fail(e)
 
 
@@ -203,9 +189,6 @@ class NSIService:
         except error.NoSuchConnectionError, e:
             log.msg('NSA %s requested non-existing connection %s' % (requester_nsa, connection_id), system=LOG_SYSTEM)
             return defer.fail(e)
-        except Exception, e:
-            log.msg('Unexpected error during provision: %s' % str(e), system=LOG_SYSTEM)
-            return defer.fail(e)
 
 
     def release(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
@@ -216,13 +199,9 @@ class NSIService:
         try:
             conn = self.getConnection(requester_nsa, connection_id)
             d = conn.release()
-            d.addErrback(_logError)
             return d
         except error.NoSuchConnectionError, e:
             log.msg('NSA %s requested non-existing connection %s' % (requester_nsa, connection_id), system=LOG_SYSTEM)
-            return defer.fail(e)
-        except Exception, e:
-            log.msg('Unexpected error during release: %s' % str(e), system=LOG_SYSTEM)
             return defer.fail(e)
 
 
@@ -230,31 +209,26 @@ class NSIService:
 
         # security check here
 
-        try:
-            conns = []
-            if connection_ids is None and global_reservation_ids is None:
-                match = lambda conn : True
-            else:
-                match = lambda conn : conn.connection_id in connection_ids if connection_ids is not None else False or \
-                                      conn.global_reservation_id in global_reservation_ids if global_reservation_ids is not None else False
+        conns = []
+        if connection_ids is None and global_reservation_ids is None:
+            match = lambda conn : True
+        else:
+            match = lambda conn : conn.connection_id in connection_ids if connection_ids is not None else False or \
+                                  conn.global_reservation_id in global_reservation_ids if global_reservation_ids is not None else False
 
-            # This hack can be removed after SC11
-            if requester_nsa == 'urn:ogf:network:nsa:OpenNSA-querier':
-                # Be less noisy, query is something that happens fairly often.
-                #log.msg('Enabling special demo query support for querier: %s' % (requester_nsa), system=LOG_SYSTEM)
-                for connections in self.connections.values():
-                    for conn in connections.values():
-                        if match(conn):
-                            conns.append(conn)
-
-            else:
-                for conn in self.connections.get(requester_nsa, {}).values():
+        # This hack can be removed after SC11
+        if requester_nsa == 'urn:ogf:network:nsa:OpenNSA-querier':
+            # Be less noisy, query is something that happens fairly often.
+            #log.msg('Enabling special demo query support for querier: %s' % (requester_nsa), system=LOG_SYSTEM)
+            for connections in self.connections.values():
+                for conn in connections.values():
                     if match(conn):
                         conns.append(conn)
 
-            return defer.succeed(conns)
+        else:
+            for conn in self.connections.get(requester_nsa, {}).values():
+                if match(conn):
+                    conns.append(conn)
 
-        except Exception, e:
-            log.msg('Unexpected error during query: %s' % str(e), system=LOG_SYSTEM)
-            return defer.fail(e)
+        return defer.succeed(conns)
 
