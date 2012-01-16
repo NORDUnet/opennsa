@@ -370,7 +370,7 @@ def parseGOLERDFTopology(topology_sources):
             if dest_stp:
                 dest_network = graph.value(predicate=DTOX['hasSTP'], object=dest_stp)
                 dest_network_name = _stripPrefix(str(dest_network), NSNETWORK_PREFIX)
-                dest_stp_name = _stripPrefix(str(dest_stp), STP_PREFIX+dest_network_name+":")
+                dest_stp_name = _stripPrefix(str(dest_stp), STP_PREFIX + dest_network_name + ":")
                 dest_stp = nsa.STP(dest_network_name, dest_stp_name)
             ep = nsa.NetworkEndpoint(network_name, stp_name, None, dest_stp, None, None)
             network.addEndpoint(ep)
