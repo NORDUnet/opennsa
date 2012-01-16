@@ -8,11 +8,16 @@ Copyright: NORDUnet (2011)
 
 import urlparse
 
+from twisted.python import log
+
 from opennsa import error
+
 
 
 STP_PREFIX = 'urn:ogf:network:stp:'
 NSA_PREFIX = 'urn:ogf:network:nsa:'
+
+LOG_SYSTEM = 'opennsa.nsa'
 
 
 
@@ -107,7 +112,9 @@ class NetworkEndpoint(STP):
 
     def __init__(self, network, endpoint, nrm_port=None, dest_stp=None, max_capacity=None, available_capacity=None):
         STP.__init__(self, network, endpoint)
-        self.nrm_port = nrm_port # this is config as well - at least for now
+        if nrm_port is None:
+            log.msg('Warning: NRM Port for %s is undefined' % endpoint)
+        self.nrm_port = nrm_port
         self.dest_stp = dest_stp
         self.max_capacity = max_capacity
         self.available_capacity = available_capacity
