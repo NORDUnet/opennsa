@@ -85,14 +85,6 @@ class ArgiaBackend:
 
 
 
-def deferTaskFailed(err):
-    if err.check(defer.CancelledError):
-        pass # this just means that the task was cancelled
-    else:
-        log.err(err)
-
-
-
 class ArgiaProcessProtocol(protocol.ProcessProtocol):
 
     def __init__(self, initial_payload=None):

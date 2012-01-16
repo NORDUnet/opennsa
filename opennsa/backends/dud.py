@@ -42,14 +42,6 @@ class DUDNSIBackend:
 
 
 
-def deferTaskFailed(err):
-    if err.check(defer.CancelledError):
-        pass # this just means that the task was cancelled
-    else:
-        log.err(err)
-
-
-
 class DUDConnection:
 
     def __init__(self, source_port, dest_port, service_parameters, network_name, calendar):
