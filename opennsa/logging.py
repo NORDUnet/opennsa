@@ -17,7 +17,7 @@ class EarlyObserver:
 
     def emit(self, eventDict):
         msg = ''.join(eventDict['message'])
-        sys.stdout.write('#' + msg + "\n")
+        sys.stdout.write(msg + "\n")
         sys.stdout.flush()
 
     def stop(self):
