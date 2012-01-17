@@ -59,37 +59,29 @@ COMMAND_DELETE_CONNECTIONS  = 'delete protocols connections interface-switch %(n
 
 LOG_SYSTEM = 'opennsa.JunOS'
 
-PORT_MAPPING = {
-    'ams-80'    : 'ge-1/0/5.1780',
-    'ams-81'    : 'ge-1/0/5.1781',
-    'ams-82'    : 'ge-1/0/5.1782',
-    'ams-83'    : 'ge-1/0/5.1783',
-    'ps-80'     : 'ge-1/1/9.1780',
-    'ps-81'     : 'ge-1/1/9.1781',
-    'ps-82'     : 'ge-1/1/9.1782',
-    'ps-83'     : 'ge-1/1/9.1783'
+PORT_NAME = {
+    'ge-1/0/5'  : 'ams', # amsterdam
+    'ge-1/1/9'  : 'ps'   # perfsonar
 }
 
-NAME_PREFIX = 'ps-to-netherlight-'
+
+def portToInterfaceVLAN(nrm_port):
+
+    port, vlan = nrm_port.split('.')
+    return port, vlan
 
 
-def portToInterfaceVLAN(topo_port):
+def createConfigureCommands(source_nrm_port, dest_nrm_port):
 
-    interface = PORT_MAPPING[topo_port]
-    port, vlan = interface.split('.')
-    connection_name = NAME_PREFIX + vlan
-    return connection_name, interface, port, vlan
-
-
-def createConfigureCommands(source_port, dest_port):
-
-    s_connection_name, s_interface, s_port, s_vlan = portToInterfaceVLAN(source_port)
-    d_connection_name, d_interface, d_port, d_vlan = portToInterfaceVLAN(dest_port)
+    s_port, s_vlan = portToInterfaceVLAN(source_nrm_port)
+    d_port, d_vlan = portToInterfaceVLAN(dest_nrm_port)
 
     assert s_vlan == d_vlan, 'Source and destination VLANs differ, unpossible!'
 
-    cfg_conn_source = COMMAND_SET_CONNECTIONS % {'name':s_connection_name, 'interface':s_interface }
-    cfg_conn_dest   = COMMAND_SET_CONNECTIONS % {'name':d_connection_name, 'interface':d_interface }
+    switch_name = 'nsi-%s-%s-%s' % (PORT_NAME.get(s_port, 'na'), PORT_NAME.get(d_port, 'na'), s_vlan)
+
+    cfg_conn_source = COMMAND_SET_CONNECTIONS % {'name':switch_name, 'interface':source_nrm_port }
+    cfg_conn_dest   = COMMAND_SET_CONNECTIONS % {'name':switch_name, 'interface':dest_nrm_port   }
     cfg_intf_source = COMMAND_SET_INTERFACES  % {'port':s_port, 'vlan': s_vlan }
     cfg_intf_dest   = COMMAND_SET_INTERFACES  % {'port':d_port, 'vlan': d_vlan }
 
@@ -97,16 +89,18 @@ def createConfigureCommands(source_port, dest_port):
     return commands
 
 
-def createDeleteCommands(source_port, dest_port):
+def createDeleteCommands(source_nrm_port, dest_nrm_port):
 
-    s_connection_name, s_interface, s_port, s_vlan = portToInterfaceVLAN(source_port)
-    d_connection_name, d_interface, d_port, d_vlan = portToInterfaceVLAN(dest_port)
+    s_port, s_vlan = portToInterfaceVLAN(source_nrm_port)
+    d_port, d_vlan = portToInterfaceVLAN(dest_nrm_port)
 
     assert s_vlan == d_vlan, 'Source and destination VLANs differ, unpossible!'
 
+    switch_name = 'nsi-%s-%s-%s' % (PORT_NAME.get(s_port, 'na'), PORT_NAME.get(d_port, 'na'), s_vlan)
+
     del_intf_source = COMMAND_DELETE_INTERFACES  % {'port':s_port, 'vlan': s_vlan }
     del_intf_dest   = COMMAND_DELETE_INTERFACES  % {'port':d_port, 'vlan': d_vlan }
-    del_conn        = COMMAND_DELETE_CONNECTIONS % {'name':s_connection_name }
+    del_conn        = COMMAND_DELETE_CONNECTIONS % {'name':switch_name }
 
     commands = [ del_intf_source, del_intf_dest, del_conn ]
     return commands
@@ -330,9 +324,9 @@ class JunOSCommandSender:
         return d
 
 
-    def setupLink(self, source_port, dest_port):
+    def setupLink(self, source_nrm_port, dest_nrm_port):
 
-        commands = createConfigureCommands(source_port, dest_port)
+        commands = createConfigureCommands(source_nrm_port, dest_nrm_port)
 
         def gotChannel(channel):
             d = channel.sendCommands(commands)
@@ -343,9 +337,9 @@ class JunOSCommandSender:
         return d
 
 
-    def teardownLink(self, source_port, dest_port):
+    def teardownLink(self, source_nrm_port, dest_nrm_port):
 
-        commands = createDeleteCommands(source_port, dest_port)
+        commands = createDeleteCommands(source_nrm_port, dest_nrm_port)
 
         def gotChannel(channel):
             d = channel.sendCommands(commands)
@@ -367,25 +361,25 @@ class JunOSBackend:
         self.calendar = reservationcalendar.ReservationCalendar()
 
 
-    def createConnection(self, source_port, dest_port, service_parameters):
+    def createConnection(self, source_nrm_port, dest_nrm_port, service_parameters):
 
-        self._checkVLANMatch(source_port, dest_port)
+        self._checkVLANMatch(source_nrm_port, dest_nrm_port)
 
         # probably need a short hand for this
-        self.calendar.checkReservation(source_port, service_parameters.start_time, service_parameters.end_time)
-        self.calendar.checkReservation(dest_port  , service_parameters.start_time, service_parameters.end_time)
+        self.calendar.checkReservation(source_nrm_port, service_parameters.start_time, service_parameters.end_time)
+        self.calendar.checkReservation(dest_nrm_port  , service_parameters.start_time, service_parameters.end_time)
 
-        self.calendar.addConnection(source_port, service_parameters.start_time, service_parameters.end_time)
-        self.calendar.addConnection(dest_port  , service_parameters.start_time, service_parameters.end_time)
+        self.calendar.addConnection(source_nrm_port, service_parameters.start_time, service_parameters.end_time)
+        self.calendar.addConnection(dest_nrm_port  , service_parameters.start_time, service_parameters.end_time)
 
-        c = simplebackend.GenericConnection(source_port, dest_port, service_parameters, self.network_name, self.calendar,
+        c = simplebackend.GenericConnection(source_nrm_port, dest_nrm_port, service_parameters, self.network_name, self.calendar,
                                             'JunOS NRM', LOG_SYSTEM, self.command_sender)
         return c
 
 
-    def _checkVLANMatch(self, source_port, dest_port):
-        source_vlan = source_port.split('-',1)[1]
-        dest_vlan = dest_port.split('-',1)[1]
+    def _checkVLANMatch(self, source_nrm_port, dest_nrm_port):
+        source_vlan = source_nrm_port.split('.',1)[1]
+        dest_vlan = dest_nrm_port.split('.',1)[1]
         if source_vlan != dest_vlan:
             raise error.InvalidRequestError('Cannot create connection between different VLANs.')
 
