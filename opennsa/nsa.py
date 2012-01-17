@@ -112,8 +112,6 @@ class NetworkEndpoint(STP):
 
     def __init__(self, network, endpoint, nrm_port=None, dest_stp=None, max_capacity=None, available_capacity=None):
         STP.__init__(self, network, endpoint)
-        if nrm_port is None:
-            log.msg('Warning: NRM Port for %s is undefined' % endpoint)
         self.nrm_port = nrm_port
         self.dest_stp = dest_stp
         self.max_capacity = max_capacity
@@ -121,10 +119,8 @@ class NetworkEndpoint(STP):
 
 
     def nrmPort(self):
-        if self.nrm_port:
-            return self.nrm_port
-        else:
-            return self.endpoint
+        assert self.nrm_port is not None, 'No NRM port defined for NetworkEndpoint %s' % str(self)
+        return self.nrm_port
 
 
     def __str__(self):
