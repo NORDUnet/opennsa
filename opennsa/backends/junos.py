@@ -26,15 +26,13 @@ OpenNSA JunOS backend.
 # Basically stuff should end with [edit] :-)
 #
 
-import datetime
-
 from twisted.python import log
 from twisted.internet import defer, protocol, reactor, endpoints
 from twisted.conch import error as concherror
 from twisted.conch.ssh import transport, keys, userauth, connection, channel
 
-from opennsa import state, error
-from opennsa.backends.common import calendar as reservationcalendar, scheduler
+from opennsa import error
+from opennsa.backends.common import calendar as reservationcalendar, simplebackend
 
 
 
@@ -332,7 +330,7 @@ class JunOSCommandSender:
         return d
 
 
-    def provision(self, source_port, dest_port, start_time, end_time):
+    def setupLink(self, source_port, dest_port):
 
         commands = createConfigureCommands(source_port, dest_port)
 
@@ -345,7 +343,7 @@ class JunOSCommandSender:
         return d
 
 
-    def release(self, source_port, dest_port, start_time, end_time):
+    def teardownLink(self, source_port, dest_port):
 
         commands = createDeleteCommands(source_port, dest_port)
 
@@ -380,7 +378,8 @@ class JunOSBackend:
         self.calendar.addConnection(source_port, service_parameters.start_time, service_parameters.end_time)
         self.calendar.addConnection(dest_port  , service_parameters.start_time, service_parameters.end_time)
 
-        c = JunOSConnection(source_port, dest_port, service_parameters, self.command_sender, self.calendar)
+        c = simplebackend.GenericConnection(source_port, dest_port, service_parameters, self.network_name, self.calendar,
+                                            'JunOS NRM', LOG_SYSTEM, self.command_sender)
         return c
 
 
@@ -389,139 +388,4 @@ class JunOSBackend:
         dest_vlan = dest_port.split('-',1)[1]
         if source_vlan != dest_vlan:
             raise error.InvalidRequestError('Cannot create connection between different VLANs.')
-
-
-
-class JunOSConnection:
-
-    def __init__(self, source_port, dest_port, service_parameters, command_sender, calendar):
-        self.source_port = source_port
-        self.dest_port = dest_port
-        self.service_parameters = service_parameters
-        self.command_sender = command_sender
-        self.calendar = calendar
-
-        self.state = state.ConnectionState()
-        self.scheduler = scheduler.TransitionScheduler()
-
-
-    def curator(self):
-        return 'JunOS NRM'
-
-
-    def stps(self):
-        return self.service_parameters.source_stp, self.service_parameters.dest_stp
-
-
-    def reserve(self):
-
-        def scheduled(_):
-            self.state.switchState(state.SCHEDULED)
-            self.scheduler.scheduleTransition(self.service_parameters.end_time, lambda _ : self.terminate(), state.TERMINATING)
-
-        log.msg('RESERVING. ID: %s, Ports: %s -> %s' % (id(self), self.source_port, self.dest_port), system=LOG_SYSTEM)
-
-        # resource availability has already been checked in the backend during connection creation
-        # since we assume no other NRM for this backend (OpenNSA have exclusive rights to the HW) there is nothing to do here
-        try:
-            self.state.switchState(state.RESERVING)
-            self.state.switchState(state.RESERVED)
-        except error.StateTransitionError:
-            return defer.fail(error.ReserveError('Cannot reserve connection in state %s' % self.state()))
-
-        self.scheduler.scheduleTransition(self.service_parameters.start_time, scheduled, state.SCHEDULED)
-
-        return defer.succeed(self)
-
-
-    def provision(self):
-
-        def doProvision(_):
-            log.msg('PROVISIONING. ID: %s' % id(self), system=LOG_SYSTEM)
-            try:
-                self.state.switchState(state.PROVISIONING)
-            except error.StateTransitionError:
-                return defer.fail(error.ProvisionError('Cannot provision connection in state %s' % self.state()))
-
-            def provisioned(_):
-                doRelease = lambda _ : self.release()
-                self.scheduler.scheduleTransition(self.service_parameters.end_time, doRelease, state.RELEASING)
-                self.state.switchState(state.PROVISIONED)
-
-            d = self.command_sender.provision(self.source_port, self.dest_port, self.service_parameters.start_time, self.service_parameters.end_time)
-            d.addCallback(provisioned)
-            return d
-
-        dt_now = datetime.datetime.utcnow()
-        if self.service_parameters.end_time <= dt_now:
-            return defer.fail(error.ProvisionError('Cannot provision connection after end time (end time: %s, current time: %s).' % (self.service_parameters.end_time, dt_now)))
-
-        # switch state to auto provision so we know that the connection be be provisioned before cancelling any transition
-        self.state.switchState(state.AUTO_PROVISION)
-        self.scheduler.cancelTransition() # cancel any pending scheduled switch
-
-        if self.service_parameters.start_time <= dt_now:
-            # do provision now
-            d = doProvision(None)
-        else:
-            # schedule provision
-            _ = self.scheduler.scheduleTransition(self.service_parameters.start_time, doProvision, state.PROVISIONING)
-            # the scheduled defer won't callback until provisioned so we make one up for the caller
-            d = defer.succeed(self)
-
-        return d
-
-
-    def release(self):
-
-        log.msg('RELEASING. ID: %s' % id(self), system=LOG_SYSTEM)
-
-        def released(_):
-            log.msg('RELEASED. ID: %s' % id(self), system=LOG_SYSTEM)
-            self.state.switchState(state.SCHEDULED)
-            return self
-
-        try:
-            self.state.switchState(state.RELEASING)
-        except error.StateTransitionError, e:
-            log.msg('Release error: %s' % str(e), system=LOG_SYSTEM)
-            return defer.fail(e)
-
-        self.scheduler.cancelTransition() # cancel any pending automatic release
-
-        d = self.command_sender.release(self.source_port, self.dest_port, self.service_parameters.start_time, self.service_parameters.end_time)
-        d.addCallback(released)
-        return d
-
-
-    def terminate(self):
-
-        def terminated(_):
-            log.msg('TERMINATED. ID: %s' % id(self), system=LOG_SYSTEM)
-            self.calendar.removeConnection(self.source_port, self.service_parameters.start_time, self.service_parameters.end_time)
-            self.calendar.removeConnection(self.dest_port  , self.service_parameters.start_time, self.service_parameters.end_time)
-            self.state.switchState(state.TERMINATED)
-
-        log.msg('TERMINATING. ID: %s' % id(self), system=LOG_SYSTEM)
-
-        release = False
-        if self.state() in (state.PROVISIONED):
-            release = True
-
-        try:
-            self.state.switchState(state.TERMINATING)
-        except error.StateTransitionError, e:
-            log.msg('Terminate error: %s' % str(e), system=LOG_SYSTEM)
-            return defer.fail(e)
-
-        self.scheduler.cancelTransition() # cancel any pending automatic provision/release transition
-
-        if release:
-            d = self.command_sender.release(self.source_port, self.dest_port, self.service_parameters.start_time, self.service_parameters.end_time)
-        else:
-            d = defer.succeed(None)
-
-        d.addCallback(terminated)
-        return d
-
 
