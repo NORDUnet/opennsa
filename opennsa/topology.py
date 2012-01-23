@@ -365,6 +365,8 @@ def parseGOLERDFTopology(topology_sources):
             assert stp_name.startswith(network_name), 'STP-Network name %s does not match with %s' % (stp_name,network_name)
             stp_name = stp_name[len(network_name) + 1:] # strip network name of stp
 
+            nrm_port = graph.value(subject=stp, predicate=DTOX['mapsTo'])
+
             dest_stp = graph.value(subject=stp, predicate=DTOX['connectedTo'])
             # If there is a destination, add that, otherwise the value stays None.
             if dest_stp:
@@ -372,7 +374,7 @@ def parseGOLERDFTopology(topology_sources):
                 dest_network_name = _stripPrefix(str(dest_network), NSNETWORK_PREFIX)
                 dest_stp_name = _stripPrefix(str(dest_stp), STP_PREFIX + dest_network_name + ":")
                 dest_stp = nsa.STP(dest_network_name, dest_stp_name)
-            ep = nsa.NetworkEndpoint(network_name, stp_name, None, dest_stp, None, None)
+            ep = nsa.NetworkEndpoint(network_name, stp_name, nrm_port, dest_stp, None, None)
             network.addEndpoint(ep)
 
         topo.addNetwork(network)
