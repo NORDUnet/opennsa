@@ -158,20 +158,6 @@ class NSIService:
         return d
 
 
-    def terminate(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
-
-        log.msg('', system=LOG_SYSTEM)
-        # security check here
-
-        try:
-            conn = self.getConnection(requester_nsa, connection_id)
-            d = conn.terminate()
-            return d
-        except error.NoSuchConnectionError, e:
-            log.msg('NSA %s requested non-existing connection %s' % (requester_nsa, connection_id), system=LOG_SYSTEM)
-            return defer.fail(e)
-
-
     def provision(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
         def provisionSucceeded(conn):
@@ -199,6 +185,20 @@ class NSIService:
         try:
             conn = self.getConnection(requester_nsa, connection_id)
             d = conn.release()
+            return d
+        except error.NoSuchConnectionError, e:
+            log.msg('NSA %s requested non-existing connection %s' % (requester_nsa, connection_id), system=LOG_SYSTEM)
+            return defer.fail(e)
+
+
+    def terminate(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
+
+        log.msg('', system=LOG_SYSTEM)
+        # security check here
+
+        try:
+            conn = self.getConnection(requester_nsa, connection_id)
+            d = conn.terminate()
             return d
         except error.NoSuchConnectionError, e:
             log.msg('NSA %s requested non-existing connection %s' % (requester_nsa, connection_id), system=LOG_SYSTEM)
