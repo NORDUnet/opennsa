@@ -1,13 +1,13 @@
 """
 Decoding and encoding of SOAP request via WSDL description.
 
-Original version by Dieter Maurer.
+Original version by Dieter Maurer (dm.zope.rpc.wsdl_suds package).
 
 Modified by Henrik Thostrup Jensen to not be tied into Zope and be a bit more
 generic and support for soap action and custom types.
 
 Copyright (C) 2010 by Dr. Dieter Maurer <dieter@handshake.de>
-Copyright (C) 2011 by Henrik Thostrup Jensen <htj@nordu.net>
+Copyright (C) 2011-2012 by Henrik Thostrup Jensen <htj@nordu.net>
 
 License: BSD
 """
@@ -103,8 +103,34 @@ class WSDLMarshaller:
         return str(reply.str())
 
 
-    def marshal_exception(self, exc):
+    def marshal_exception(self, exc, method):
+
         raise NotImplementedError("cannot yet handle exceptions")
+
+        # The following code is very much unfinished and there is no
+        # guaranty that it is correct or even makes sense
+        # Currently it finds the fault return types (there should only
+        # be one AFAICT). How to get from there and to to a fault body
+        # is still open.
+
+        from suds.xsd.query import TypeQuery, ElementQuery
+
+        rtypes = []
+
+        for f in method.unwrapped_.soap.faults:
+            for p in f.parts:
+                if p.element is not None:
+                    query = ElementQuery(p.element)
+                else:
+                    query = TypeQuery(p.type)
+                pt = query.execute(method.binding.output.schema())
+                if pt is None:
+                    raise TypeNotFound(query.ref)
+                if p.type is not None:
+                    pt = PartElement(p.name, pt)
+                rtypes.append(pt)
+
+        return rtypes
 
 
     def soapActions(self):
