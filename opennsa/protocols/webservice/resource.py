@@ -55,8 +55,17 @@ class SOAPResource(resource.Resource):
             request.write(reply_data)
             request.finish()
 
+        def decodeError(err):
+            error_msg = err.getErrorMessage()
+            log.msg('Failure during SOAP decoding/dispatch: %s' % error_msg)
+            log.err(err)
+            request.setResponseCode(500) # Internal server error
+            request.setHeader('Content-Type', 'text/plain') # This will make some SOAP implementation sad, but there isn't alot that can be done at this point
+            request.write(error_msg)
+            request.finish()
+
         d = defer.maybeDeferred(decoder, soap_action, soap_data)
-        d.addCallback(reply)
+        d.addCallbacks(reply, decodeError)
 
         return server.NOT_DONE_YET
 
