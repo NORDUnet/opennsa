@@ -292,12 +292,15 @@ class JunOSCommandSender:
 
         def gotProtocol(proto):
             proto.secure_defer.addCallback(transportSecure, proto)
+            self.proto = proto
             return proto.secure_defer
 
         # should check if there is an existing protocol in place
         if self.proto:
             log.msg('Reusing SSH connection', system=LOG_SYSTEM)
             return defer.succeed(self.proto)
+        else:
+            log.msg('Creating new SSH connection', system=LOG_SYSTEM)
 
         factory = SSHClientFactory( [ JUNOS_HOST_FINGERPRINT ] )
         point = endpoints.TCP4ClientEndpoint(reactor, JUNOS_HOST, JUNOS_HOST_PORT)
