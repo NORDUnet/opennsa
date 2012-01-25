@@ -52,6 +52,8 @@ PRIVATE_KEY_PATH        = '/home/opennsa/.ssh/id_rsa'
 
 # parameterized commands
 COMMAND_CONFIGURE           = 'configure'
+COMMAND_COMMIT              = 'commit'
+
 COMMAND_SET_CONNECTIONS     = 'set protocols connections interface-switch %(name)s interface %(interface)s' # connection name / interface
 COMMAND_SET_INTERFACES      = 'set interfaces %(port)s unit %(vlan)s vlan-id %(vlan)s encapsulation vlan-ccc' # port / vlan / vlan
 COMMAND_DELETE_INTERFACES   = 'delete interfaces %(port)s unit %(vlan)s' # port / vlan
@@ -201,7 +203,7 @@ class SSHChannel(channel.SSHChannel):
             yield self.conn.sendRequest(self, 'shell', '', wantReply=1)
 
             d = self.waitForLine('[edit]')
-            self.write('configure' + LT)
+            self.write(COMMAND_CONFIGURE + LT)
             yield d
 
             log.msg('Entered configure mode', system=LOG_SYSTEM)
@@ -220,7 +222,7 @@ class SSHChannel(channel.SSHChannel):
 #            self.write('commit check' + LT)
 
             d = self.waitForLine('commit complete')
-            self.write('commit' + LT)
+            self.write(COMMAND_COMMIT + LT)
             yield d
 
         except Exception, e:
@@ -281,27 +283,20 @@ class JunOSCommandSender:
 
 
     def __init__(self):
-        self.client = None
-        self.proto  = None
+        self.ssh_connection = None # cached connection
 
 
-    def createSSHConnection(self):
-
-        def transportSecure(client, proto):
+    def createTCPConnection(self):
+        # sets up base connection and verifies host
+        def hostVerified(client, proto):
             return proto
 
         def gotProtocol(proto):
-            proto.secure_defer.addCallback(transportSecure, proto)
+            proto.secure_defer.addCallback(hostVerified, proto)
             self.proto = proto
             return proto.secure_defer
 
-        # should check if there is an existing protocol in place
-        if self.proto:
-            log.msg('Reusing SSH connection', system=LOG_SYSTEM)
-            return defer.succeed(self.proto)
-        else:
-            log.msg('Creating new SSH connection', system=LOG_SYSTEM)
-
+        log.msg('Creating new TCP connection', system=LOG_SYSTEM) # Can be removed, once we are working and not eating connections
         factory = SSHClientFactory( [ JUNOS_HOST_FINGERPRINT ] )
         point = endpoints.TCP4ClientEndpoint(reactor, JUNOS_HOST, JUNOS_HOST_PORT)
         d = point.connect(factory)
@@ -309,21 +304,39 @@ class JunOSCommandSender:
         return d
 
 
-    def getSSHChannel(self):
+    def getSSHConnection(self):
 
-        def serviceStarted(connection):
-            channel = SSHChannel(conn = connection)
-            connection.openChannel(channel)
-            return channel.channel_open
+        def gotSSHConnection(ssh_connection):
+            # save ssh connection so we can reuse it later
+            self.ssh_connection = ssh_connection
+            return self.ssh_connection
 
-        def gotProtocol(proto):
+        def gotTCPConnection(proto):
             ssh_connection = SSHConnection()
             proto.requestService(ClientUserAuth(USERNAME, ssh_connection, PUBLIC_KEY_PATH, PRIVATE_KEY_PATH))
-            ssh_connection.service_started.addCallback(serviceStarted)
+            ssh_connection.service_started.addCallback(gotSSHConnection)
             return ssh_connection.service_started
 
-        d = self.createSSHConnection()
-        d.addCallback(gotProtocol)
+        # should check if there is an existing protocol in place
+        if self.ssh_connection:
+            log.msg('Reusing SSH connection', system=LOG_SYSTEM)
+            return defer.succeed(self.ssh_connection)
+
+        log.msg('Creating new SSH connection', system=LOG_SYSTEM)
+        d = self.createTCPConnection()
+        d.addCallback(gotTCPConnection)
+        return d
+
+
+    def getSSHChannel(self):
+
+        def gotSSHConnection(ssh_connection):
+            channel = SSHChannel(conn = ssh_connection)
+            ssh_connection.openChannel(channel)
+            return channel.channel_open
+
+        d = self.getSSHConnection()
+        d.addCallback(gotSSHConnection)
         return d
 
 
