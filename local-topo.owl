@@ -141,47 +141,40 @@
      -->
 
 
-
-
     <!-- urn:ogf:network:stp:Aruba:A1 -->
-
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:Aruba:A1">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [347,559]</rdfs:comment>
+        <dtox:mapsTo>Aruba_A1</dtox:mapsTo>
     </owl:NamedIndividual>
-
 
 
     <!-- urn:ogf:network:stp:Aruba:A2 -->
-
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:Aruba:A2">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [601,561]</rdfs:comment>
+        <dtox:mapsTo>Aruba_A2</dtox:mapsTo>
     </owl:NamedIndividual>
-
 
 
     <!-- urn:ogf:network:stp:Aruba:A3 -->
-
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:Aruba:A3">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [864,558]</rdfs:comment>
+        <dtox:mapsTo>Aruba_A4</dtox:mapsTo>
     </owl:NamedIndividual>
 
 
-
     <!-- urn:ogf:network:stp:Aruba:A4 -->
-
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:Aruba:A4">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [1123,557]</rdfs:comment>
         <connectedTo rdf:resource="urn:ogf:network:stp:Bonaire:B1"/>
+        <dtox:mapsTo>Aruba_A4</dtox:mapsTo>
     </owl:NamedIndividual>
 
 
-
     <!-- urn:ogf:network:nsnetwork:Aruba -->
-
     <owl:NamedIndividual rdf:about="urn:ogf:network:nsnetwork:Aruba">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#NSNetwork"/>
         <rdfs:label xml:lang="en">Aruba</rdfs:label>
@@ -194,9 +187,7 @@
     </owl:NamedIndividual>
 
 
-
     <!-- urn:ogf:network:nsa:Aruba-OpenNSA -->
-
     <owl:NamedIndividual rdf:about="urn:ogf:network:nsa:Aruba-OpenNSA">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#NSA"/>
         <managing rdf:resource="urn:ogf:network:nsnetwork:Aruba" />
@@ -206,53 +197,45 @@
     </owl:NamedIndividual>
 
 
-
     <!-- urn:ogf:network:stp:Bonaire:B1 -->
-
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:Bonaire:B1">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [1826,468]</rdfs:comment>
         <connectedTo rdf:resource="urn:ogf:network:stp:Aruba:A4"/>
-        <mapsTo rdf:resource="netherlight.net:f25s1t:0-2:NORDUnet"/>
         <owl:partOf rdf:resource="urn:ogf:network:nsnetwork:Bonaire" />
+        <dtox:mapsTo>Bonaire_B1</dtox:mapsTo>
     </owl:NamedIndividual>
 
 
-
     <!-- urn:ogf:network:stp:Bonaire:B2 -->
-
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:Bonaire:B2">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [2077,466]</rdfs:comment>
         <owl:partOf rdf:resource="urn:ogf:network:nsnetwork:Bonaire" />
+        <dtox:mapsTo>Bonaire_B2</dtox:mapsTo>
     </owl:NamedIndividual>
 
 
-
     <!-- urn:ogf:network:stp:Bonaire:B3 -->
-
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:Bonaire:B3">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [2333,466]</rdfs:comment>
         <owl:partOf rdf:resource="urn:ogf:network:nsnetwork:Bonaire" />
+        <dtox:mapsTo>Bonaire_B3</dtox:mapsTo>
     </owl:NamedIndividual>
 
 
-
     <!-- urn:ogf:network:stp:Bonaire:B4 -->
-
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:Bonaire:B4">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [2592,466]</rdfs:comment>
         <connectedTo rdf:resource="urn:ogf:network:stp:Curacao:C1"/>
-        <mapsTo rdf:resource="netherlight.net:f25s1t:0-8:PSNC"/>
         <owl:partOf rdf:resource="urn:ogf:network:nsnetwork:Bonaire" />
+        <dtox:mapsTo>Bonaire_B4</dtox:mapsTo>
     </owl:NamedIndividual>
 
 
-
     <!-- urn:ogf:network:nsnetwork:Bonaire -->
-
     <owl:NamedIndividual rdf:about="urn:ogf:network:nsnetwork:Bonaire">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#NSNetwork"/>
         <rdfs:label xml:lang="en">Bonaire</rdfs:label>
@@ -266,9 +249,7 @@
     </owl:NamedIndividual>
 
 
-
     <!-- urn:ogf:network:nsa:Bonaire-->
-
     <owl:NamedIndividual rdf:about="urn:ogf:network:nsa:Bonaire">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#NSA"/>
         <rdfs:label xml:lang="en">SURFnet OpenDRAC - The NSI Edition</rdfs:label>
@@ -280,9 +261,7 @@
     </owl:NamedIndividual>
 
 
-
     <!-- urn:ogf:network:stp:Curacao:C1 -->
-
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:Curacao:C1">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [3463,454]</rdfs:comment>
@@ -290,27 +269,21 @@
     </owl:NamedIndividual>
 
 
-
     <!-- urn:ogf:network:stp:Curacao:C2 -->
-
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:Curacao:C2">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [3725,455]</rdfs:comment>
     </owl:NamedIndividual>
 
 
-
     <!-- urn:ogf:network:stp:Curacao:C3 -->
-
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:Curacao:C3">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [3981,458]</rdfs:comment>
     </owl:NamedIndividual>
 
 
-
     <!-- urn:ogf:network:stp:Curacao:C4 -->
-
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:Curacao:C4">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [4239,458]</rdfs:comment>
@@ -318,9 +291,7 @@
     </owl:NamedIndividual>
 
 
-
     <!-- urn:ogf:network:nsnetwork:Curacao -->
-
     <owl:NamedIndividual rdf:about="urn:ogf:network:nsnetwork:Curacao">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#NSNetwork"/>
         <rdfs:label xml:lang="en">Curacao</rdfs:label>
@@ -333,9 +304,7 @@
     </owl:NamedIndividual>
 
 
-
     <!-- urn:ogf:network:nsa:Curacao -->
-
     <owl:NamedIndividual rdf:about="urn:ogf:network:nsa:Curacao">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#NSA"/>
         <managing rdf:resource="urn:ogf:network:nsnetwork:Curacao" />
@@ -345,9 +314,7 @@
     </owl:NamedIndividual>
 
 
-
     <!-- urn:ogf:network:stp:Dominica:D1 -->
-
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:Dominica:D1">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [3348,1237]</rdfs:comment>
@@ -355,36 +322,28 @@
     </owl:NamedIndividual>
 
 
-
     <!-- urn:ogf:network:stp:Dominica:D2 -->
-
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:Dominica:D2">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [3601,1237]</rdfs:comment>
     </owl:NamedIndividual>
 
 
-
     <!-- urn:ogf:network:stp:Dominica:D3 -->
-
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:Dominica:D3">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [3862,1237]</rdfs:comment>
     </owl:NamedIndividual>
 
 
-
     <!-- urn:ogf:network:stp:Dominica:D4 -->
-
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:Dominica:D4">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [4125,1233]</rdfs:comment>
     </owl:NamedIndividual>
 
 
-
     <!-- urn:ogf:network:nsa:Dominica -->
-
     <owl:NamedIndividual rdf:about="urn:ogf:network:nsnetwork:Dominica">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#NSNetwork"/>
         <rdfs:label xml:lang="en">Dominica</rdfs:label>
@@ -397,9 +356,7 @@
     </owl:NamedIndividual>
 
 
-
     <!-- urn:ogf:network:nsa:Dominica-OSCARS -->
-
     <owl:NamedIndividual rdf:about="urn:ogf:network:nsa:Dominica-OSCARS">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#NSA"/>
         <managing rdf:resource="urn:ogf:network:nsnetwork:Dominica" />
