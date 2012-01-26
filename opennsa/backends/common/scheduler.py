@@ -20,7 +20,7 @@ def deferTaskFailed(err):
     if err.check(defer.CancelledError):
         pass # this just means that the task was cancelled
     else:
-        log.err(err)
+        return err
 
 
 
@@ -47,6 +47,7 @@ class TransitionScheduler:
         d.addErrback(deferTaskFailed)
         self.scheduled_transition_call = d
         log.msg('State transition scheduled: In %i seconds to state %s' % (transition_delta_seconds, state), system=LOG_SYSTEM)
+        return d
 
 
     def cancelTransition(self):
