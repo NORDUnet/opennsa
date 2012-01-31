@@ -104,7 +104,7 @@ class ProviderService:
         service_parameters      = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, bandwidth=bwp)
 
         d = self.provider.reserve(correlation_id, reply_to, requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters)
-        d.addCallbacks(self._createReply, self._createFault, callbackArgs=(method,correlation_id))
+        d.addCallbacks(self._createReply, self._createFault, callbackArgs=(method,correlation_id), errbackArgs=(method,))
         return d
 
 
@@ -116,7 +116,7 @@ class ProviderService:
         requester_nsa, provider_nsa, connection_id = self._getGRTParameters(req.provision)
 
         d = self.provider.provision(correlation_id, reply_to, requester_nsa, provider_nsa, None, connection_id)
-        d.addCallbacks(self._createReply, self._createFault, callbackArgs=(method,correlation_id))
+        d.addCallbacks(self._createReply, self._createFault, callbackArgs=(method,correlation_id), errbackArgs=(method,))
         return d
 
 
@@ -128,7 +128,7 @@ class ProviderService:
         requester_nsa, provider_nsa, connection_id = self._getGRTParameters(req.release)
 
         d = self.provider.release(correlation_id, reply_to, requester_nsa, provider_nsa, None, connection_id)
-        d.addCallbacks(self._createReply, self._createFault, callbackArgs=(method,correlation_id))
+        d.addCallbacks(self._createReply, self._createFault, callbackArgs=(method,correlation_id), errbackArgs=(method,))
         return d
 
 
@@ -140,7 +140,7 @@ class ProviderService:
         requester_nsa, provider_nsa, connection_id = self._getGRTParameters(req.terminate)
 
         d = self.provider.terminate(correlation_id, reply_to, requester_nsa, provider_nsa, None, connection_id)
-        d.addCallbacks(self._createReply, self._createFault, callbackArgs=(method,correlation_id))
+        d.addCallbacks(self._createReply, self._createFault, callbackArgs=(method,correlation_id), errbackArgs=(method,))
         return d
 
 
