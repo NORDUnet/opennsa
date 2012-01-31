@@ -1,14 +1,15 @@
 """
 Core abstractions used in OpenNSA.
 
+In design pattern terms, these would be Data Transfer Objects (DTOs).
+Though some of them do actually have some functionality methods.
+
 Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2011)
 """
 
 
 import urlparse
-
-from twisted.python import log
 
 from opennsa import error
 
