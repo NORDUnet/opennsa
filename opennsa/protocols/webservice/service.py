@@ -56,9 +56,15 @@ class ProviderService:
         return correlation_id, reply_to
 
 
-    def genericReply(connection_id, request, decoder, method, correlation_id):
-        reply = decoder.marshal_result(correlation_id, method)
+    def _createReply(self, _, method, correlation_id):
+        reply = self.decoder.marshal_result(correlation_id, method)
         return reply
+
+
+    def _createFault(self, err, method):
+        log.msg('Fault reply not implemented yet')
+        log.msg(str(err))
+        return err # Will make the resource return 500
 
 
     def reserve(self, soap_action, soap_data):
@@ -102,17 +108,8 @@ class ProviderService:
         service_parameters      = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, bandwidth=bwp)
 
         d = self.provider.reserve(correlation_id, reply_to, requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters)
-        d.addErrback(log.err)
-
-        # The deferred will fire when the reservation is made.
-
-        # The initial reservation ACK should be send when the reservation
-        # request is persistent, and a callback should then be issued once
-        # the connection has been reserved. Unfortuantely there is
-        # currently no way of telling when the request is persitent, so we
-        # just return immediately.
-        reply = self.decoder.marshal_result(correlation_id, method)
-        return reply
+        d.addCallbacks(self._createReply, self._createFault, callbackArgs=(method,correlation_id))
+        return d
 
 
     def provision(self, soap_action, soap_data):
@@ -123,9 +120,8 @@ class ProviderService:
         requester_nsa, provider_nsa, connection_id = self._getGRTParameters(req.provision)
 
         d = self.provider.provision(correlation_id, reply_to, requester_nsa, provider_nsa, None, connection_id)
-
-        reply = self.decoder.marshal_result(correlation_id, method)
-        return reply
+        d.addCallbacks(self._createReply, self._createFault, callbackArgs=(method,correlation_id))
+        return d
 
 
     def release(self, soap_action, soap_data):
@@ -136,10 +132,8 @@ class ProviderService:
         requester_nsa, provider_nsa, connection_id = self._getGRTParameters(req.release)
 
         d = self.provider.release(correlation_id, reply_to, requester_nsa, provider_nsa, None, connection_id)
-
-        reply = self.decoder.marshal_result(correlation_id, method)
-        return reply
-
+        d.addCallbacks(self._createReply, self._createFault, callbackArgs=(method,correlation_id))
+        return d
 
 
     def terminate(self, soap_action, soap_data):
@@ -150,9 +144,8 @@ class ProviderService:
         requester_nsa, provider_nsa, connection_id = self._getGRTParameters(req.terminate)
 
         d = self.provider.terminate(correlation_id, reply_to, requester_nsa, provider_nsa, None, connection_id)
-
-        reply = self.decoder.marshal_result(correlation_id, method)
-        return reply
+        d.addCallbacks(self._createReply, self._createFault, callbackArgs=(method,correlation_id))
+        return d
 
 
     def query(self, soap_action, soap_data):
@@ -175,9 +168,8 @@ class ProviderService:
             global_reservation_ids = qf.globalReservationId
 
         d = self.provider.query(correlation_id, reply_to, requester_nsa, provider_nsa, None, operation, connection_ids, global_reservation_ids)
-
-        reply = self.decoder.marshal_result(correlation_id, method)
-        return reply
+        d.addCallbacks(self._createReply, self._createFault, callbackArgs=(method,correlation_id))
+        return d
 
 
 
