@@ -95,13 +95,9 @@ class ProviderService:
         start_time = sudsdate.DateTime(sp.schedule.startTime).value
         end_time   = sudsdate.DateTime(sp.schedule.endTime).value
 
-#        if start_time.tzinfo is None:
-#            log.msg('No timezone info specified in schedule start time in reserve request, assuming UTC time.')
         st = start_time.utctimetuple()
         start_time = datetime.datetime(st.tm_year, st.tm_mon, st.tm_mday, st.tm_hour, st.tm_min, st.tm_sec)
 
-#        if end_time.tzinfo is None:
-#            log.msg('No timezone info specified in schedule start time in reservation request, assuming UTC time.')
         et = end_time.utctimetuple()
         end_time = datetime.datetime(et.tm_year, et.tm_mon, et.tm_mday, et.tm_hour, et.tm_min, et.tm_sec)
 
