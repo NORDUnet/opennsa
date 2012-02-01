@@ -18,7 +18,7 @@ TLS_PORT = 9443
 
 PORT = TLS_PORT if TLS else TCP_PORT
 
-TOPOFILE = 'SC2011-Topo-v5f.owl'
+TOPOFILE = 'AutoGOLE-Topo-2012-01-25.owl'
 WSDL_DIR = os.path.join(os.getcwd(), 'wsdl')
 NETWORK_NAME = 'northernlight.ets'
 
