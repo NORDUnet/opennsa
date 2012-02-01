@@ -266,6 +266,7 @@
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [3463,454]</rdfs:comment>
         <connectedTo rdf:resource="urn:ogf:network:stp:Bonaire:B4"/>
+        <dtox:mapsTo>Curacao_C1</dtox:mapsTo>
     </owl:NamedIndividual>
 
 
@@ -273,6 +274,7 @@
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:Curacao:C2">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [3725,455]</rdfs:comment>
+        <dtox:mapsTo>Curacao_C2</dtox:mapsTo>
     </owl:NamedIndividual>
 
 
@@ -280,6 +282,7 @@
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:Curacao:C3">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [3981,458]</rdfs:comment>
+        <dtox:mapsTo>Curacao_C3</dtox:mapsTo>
     </owl:NamedIndividual>
 
 
@@ -288,6 +291,7 @@
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [4239,458]</rdfs:comment>
         <connectedTo rdf:resource="urn:ogf:network:stp:Dominica:D1"/>
+        <dtox:mapsTo>Curacao_C4</dtox:mapsTo>
     </owl:NamedIndividual>
 
 
