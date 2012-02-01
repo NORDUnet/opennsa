@@ -145,6 +145,7 @@
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:Aruba:A1">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [347,559]</rdfs:comment>
+        <connectedTo rdf:resource="urn:ogf:network:stp:Dominica:D4"/>
         <dtox:mapsTo>Aruba_A1</dtox:mapsTo>
     </owl:NamedIndividual>
 
@@ -183,15 +184,15 @@
         <hasSTP rdf:resource="urn:ogf:network:stp:Aruba:A2"/>
         <hasSTP rdf:resource="urn:ogf:network:stp:Aruba:A3"/>
         <hasSTP rdf:resource="urn:ogf:network:stp:Aruba:A4"/>
-        <managedBy rdf:resource="urn:ogf:network:nsa:Aruba-OpenNSA"/>
+        <managedBy rdf:resource="urn:ogf:network:nsa:Aruba"/>
     </owl:NamedIndividual>
 
 
-    <!-- urn:ogf:network:nsa:Aruba-OpenNSA -->
-    <owl:NamedIndividual rdf:about="urn:ogf:network:nsa:Aruba-OpenNSA">
+    <!-- urn:ogf:network:nsa:Aruba -->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:nsa:Aruba">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#NSA"/>
         <managing rdf:resource="urn:ogf:network:nsnetwork:Aruba" />
-        <adminContact rdf:datatype="http://www.w3.org/2001/XMLSchema#string">6.	OpenNSA (NORDUnet) 6.1.	Implementation name: OpenNSA 6.2.	Project manager:     name: Jerry Sobieski email: jerry@nordu.net mobile:  1-301-346-1849 skype: jerry.sobieski 6.3.	Key software engineer: name: Henrik Thostrup-Jensen email: htj@nordu.net skype: henrik.thostrup.jensen</adminContact>
+        <adminContact rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Aruba network</adminContact>
         <csProviderEndpoint rdf:datatype="http://www.w3.org/2001/XMLSchema#string">http://localhost:9080/NSI/services/ConnectionService</csProviderEndpoint>
         <rdfs:comment xml:lang="en">Position : [93,237]</rdfs:comment>
     </owl:NamedIndividual>
@@ -254,7 +255,7 @@
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#NSA"/>
         <rdfs:label xml:lang="en">SURFnet OpenDRAC - The NSI Edition</rdfs:label>
         <managing rdf:resource="urn:ogf:network:nsnetwork:Bonaire" />
-        <adminContact rdf:datatype="http://www.w3.org/2001/XMLSchema#string">3.	OpenDRAC (SURFnet) 3.1.	Implementation name: OpenDRAC 3.2.	Proj Manager:  name: John MacAuley email: john.macauley@surfnet.nl phone:  1-613-220-6817 skype: john.macauley 3.3.	Software Developer name: John MacAuley email: john.macauley@surfnet.nl phone:  1-613-220-6817 skype: john.macauley</adminContact>
+        <adminContact rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Bonaire Network</adminContact>
         <hostName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">phineas.surfnet.nl</hostName>
         <csProviderEndpoint rdf:datatype="http://www.w3.org/2001/XMLSchema#string">http://localhost:9081/NSI/services/ConnectionService</csProviderEndpoint>
         <rdfs:comment xml:lang="en">Position : [1586,174]</rdfs:comment>
@@ -344,6 +345,7 @@
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:Dominica:D4">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [4125,1233]</rdfs:comment>
+        <connectedTo rdf:resource="urn:ogf:network:stp:Aruba:A1"/>
     </owl:NamedIndividual>
 
 
@@ -356,16 +358,16 @@
         <hasSTP rdf:resource="urn:ogf:network:stp:Dominica:D2"/>
         <hasSTP rdf:resource="urn:ogf:network:stp:Dominica:D3"/>
         <hasSTP rdf:resource="urn:ogf:network:stp:Dominica:D4"/>
-        <managedBy rdf:resource="urn:ogf:network:nsa:Dominica-OSCARS"/>
+        <managedBy rdf:resource="urn:ogf:network:nsa:Dominica"/>
     </owl:NamedIndividual>
 
 
-    <!-- urn:ogf:network:nsa:Dominica-OSCARS -->
-    <owl:NamedIndividual rdf:about="urn:ogf:network:nsa:Dominica-OSCARS">
+    <!-- urn:ogf:network:nsa:Dominica-->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:nsa:Dominica">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#NSA"/>
         <managing rdf:resource="urn:ogf:network:nsnetwork:Dominica" />
         <csProviderEndpoint rdf:datatype="http://www.w3.org/2001/XMLSchema#string">http://localhost:9083/NSI/services/ConnectionService</csProviderEndpoint>
-        <adminContact rdf:datatype="http://www.w3.org/2001/XMLSchema#string">7.	OSCARS (ESnet) 7.1.	Implementation name: OSCARS 7.2.	Project Manager: Name:  Inder Monga Email: imonga@es.net 7.3.	Software development engineer: Name: Evangelos Chaniotakis Email:  haniotak@es.net</adminContact>
+        <adminContact rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Dominica Network</adminContact>
         <rdfs:comment xml:lang="en">Position : [3099,915]</rdfs:comment>
     </owl:NamedIndividual>
 
