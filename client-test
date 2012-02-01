@@ -23,6 +23,14 @@ HOST = 'localhost'
 PORT = 7080
 
 
+def matchState(query_result, expected_state):
+    state =  query_result.reservationSummary[0].connectionState
+    if state == expected_state:
+        print 'State match (%s)' % expected_state
+    else:
+        print "State mismatch. Was %s, should have been %s" % (state, expected_state)
+
+
 @defer.inlineCallbacks
 def doMain():
 
@@ -67,31 +75,31 @@ def doMain():
     r = yield client.reserve(client_nsa, provider.nsa, None, global_reservation_id, 'Test Connection', connection_id, service_params)
     print "Reservation created. Connection ID:", connection_id
 
-    qc = yield client.query(client_nsa, provider.nsa, None, "Summary", connection_ids = [ connection_id ] )
-    print "State", qc.reservationSummary[0].connectionState
+    qr = yield client.query(client_nsa, provider.nsa, None, "Summary", connection_ids = [ connection_id ] )
+    matchState(qr, 'Reserved')
 
-    _ = yield client.provision(client_nsa, provider.nsa, None, connection_id)
+    d = client.provision(client_nsa, provider.nsa, None, connection_id)
+
+    qr = yield client.query(client_nsa, provider.nsa, None, "Summary", connection_ids = [ connection_id ] )
+    matchState(qr, 'Auto-Provision')
+
+    yield d
     print "Connection provisioned"
 
-    qc = yield client.query(client_nsa, provider.nsa, None, "Summary", connection_ids = [ connection_id ] )
-    print "State", qc.reservationSummary[0].connectionState
-
-    time.sleep(3)
-
-    qc = yield client.query(client_nsa, provider.nsa, None, "Summary", connection_ids = [ connection_id ] )
-    print "State", qc.reservationSummary[0].connectionState
+    qr = yield client.query(client_nsa, provider.nsa, None, "Summary", connection_ids = [ connection_id ] )
+    matchState(qr, 'Provisioned')
 
     _ = yield client.release(client_nsa, provider.nsa, None, connection_id)
     print "Connection released"
 
     qr = yield client.query(client_nsa, provider.nsa, None, "Summary", connection_ids = [ connection_id ] )
-    print "State", qc.reservationSummary[0].connectionState
+    matchState(qr, 'Scheduled')
 
     _ = yield client.terminate(client_nsa, provider.nsa, None, connection_id)
     print "Reservation terminated"
 
-    qc = yield client.query(client_nsa, provider.nsa, None, "Summary", connection_ids = [ connection_id ] )
-    print "State", qc.reservationSummary[0].connectionState
+    qr = yield client.query(client_nsa, provider.nsa, None, "Summary", connection_ids = [ connection_id ] )
+    matchState(qr, 'Terminated')
 
 
 
