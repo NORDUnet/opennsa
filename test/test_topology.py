@@ -1,295 +1,300 @@
+import StringIO
+
 from twisted.trial import unittest
 
 from opennsa import nsa, topology
 
 
-# Copy of the NSI Quad topology for the RIO plugfest
-# Has been "minimized"
-TEST_TOPOLOGY_GOLE  = """<?xml version="1.0"?>
+# Copy of the test topology
+TEST_TOPOLOGY = """<?xml version="1.0"?>
 <rdf:RDF xmlns="http://www.glif.is/working-groups/tech/dtox#"
      xml:base="http://www.glif.is/working-groups/tech/dtox"
      xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
-     xmlns:Curacao="http://www.glif.is/working-groups/tech/dtox#Curacao:"
-     xmlns:Bonaire="http://www.glif.is/working-groups/tech/dtox#Bonaire:"
-     xmlns:Aruba="http://www.glif.is/working-groups/tech/dtox#Aruba:"
      xmlns:owl="http://www.w3.org/2002/07/owl#"
      xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-     xmlns:dtox="http://www.glif.is/working-groups/tech/dtox#"
-     xmlns:Dominica="http://www.glif.is/working-groups/tech/dtox#Dominica:">
+     xmlns:dtox="http://www.glif.is/working-groups/tech/dtox#">
 
-    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Aruba">
-        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#Node"/>
-        <hasSwitchMatrix rdf:resource="http://www.glif.is/working-groups/tech/dtox#Aruba.XM"/>
+    <owl:Ontology rdf:about="http://www.glif.is/working-groups/tech/dtox"/>
+
+    <!-- urn:ogf:network:stp:Aruba:A1 -->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:stp:Aruba:A1">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
+        <rdfs:comment xml:lang="en">Position : [347,559]</rdfs:comment>
+        <connectedTo rdf:resource="urn:ogf:network:stp:Dominica:D4"/>
+        <dtox:mapsTo>Aruba_A1</dtox:mapsTo>
     </owl:NamedIndividual>
 
-    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Aruba.Loc">
-        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#GOLE"/>
+
+    <!-- urn:ogf:network:stp:Aruba:A2 -->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:stp:Aruba:A2">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
+        <rdfs:comment xml:lang="en">Position : [601,561]</rdfs:comment>
+        <dtox:mapsTo>Aruba_A2</dtox:mapsTo>
     </owl:NamedIndividual>
 
-    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Aruba.XM">
-        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#SwitchMatrix"/>
-        <canSwap rdf:datatype="http://www.w3.org/2001/XMLSchema#string">yes</canSwap>
-        <hasPort rdf:resource="http://www.glif.is/working-groups/tech/dtox#Aruba:Aiden"/>
-        <hasPort rdf:resource="http://www.glif.is/working-groups/tech/dtox#Aruba:Amelia"/>
-        <hasPort rdf:resource="http://www.glif.is/working-groups/tech/dtox#Aruba:Ashley"/>
-        <hasPort rdf:resource="http://www.glif.is/working-groups/tech/dtox#Aruba:Axel"/>
+
+    <!-- urn:ogf:network:stp:Aruba:A3 -->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:stp:Aruba:A3">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
+        <rdfs:comment xml:lang="en">Position : [864,558]</rdfs:comment>
+        <dtox:mapsTo>Aruba_A4</dtox:mapsTo>
     </owl:NamedIndividual>
 
-    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Aruba:Aiden">
-        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#Port"/>
-        <maxCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">500.0</maxCapacity>
-        <availableCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">500.0</availableCapacity>
-        <connectedTo rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Bonaire:Brutus</connectedTo>
+
+    <!-- urn:ogf:network:stp:Aruba:A4 -->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:stp:Aruba:A4">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
+        <rdfs:comment xml:lang="en">Position : [1123,557]</rdfs:comment>
+        <connectedTo rdf:resource="urn:ogf:network:stp:Bonaire:B1"/>
+        <dtox:mapsTo>Aruba_A4</dtox:mapsTo>
     </owl:NamedIndividual>
 
-    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Aruba:Amelia">
-        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#Port"/>
-        <connectedTo rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></connectedTo>
-        <maxCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</maxCapacity>
-        <availableCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</availableCapacity>
+
+    <!-- urn:ogf:network:nsnetwork:Aruba -->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:nsnetwork:Aruba">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#NSNetwork"/>
+        <rdfs:label xml:lang="en">Aruba</rdfs:label>
+        <rdfs:comment xml:lang="en">Position : [696,135]</rdfs:comment>
+        <hasSTP rdf:resource="urn:ogf:network:stp:Aruba:A1"/>
+        <hasSTP rdf:resource="urn:ogf:network:stp:Aruba:A2"/>
+        <hasSTP rdf:resource="urn:ogf:network:stp:Aruba:A3"/>
+        <hasSTP rdf:resource="urn:ogf:network:stp:Aruba:A4"/>
+        <managedBy rdf:resource="urn:ogf:network:nsa:Aruba"/>
     </owl:NamedIndividual>
 
-    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Aruba:Ashley">
-        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#Port"/>
-        <connectedTo rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></connectedTo>
-        <maxCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</maxCapacity>
-        <availableCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</availableCapacity>
+
+    <!-- urn:ogf:network:nsa:Aruba -->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:nsa:Aruba">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#NSA"/>
+        <managing rdf:resource="urn:ogf:network:nsnetwork:Aruba" />
+        <adminContact rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Aruba network</adminContact>
+        <csProviderEndpoint rdf:datatype="http://www.w3.org/2001/XMLSchema#string">http://localhost:9080/NSI/services/ConnectionService</csProviderEndpoint>
+        <rdfs:comment xml:lang="en">Position : [93,237]</rdfs:comment>
     </owl:NamedIndividual>
 
-    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Aruba:Axel">
-        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#Port"/>
-        <maxCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</maxCapacity>
-        <availableCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</availableCapacity>
-        <connectedTo rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Dominica:Dirk</connectedTo>
+
+    <!-- urn:ogf:network:stp:Bonaire:B1 -->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:stp:Bonaire:B1">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
+        <rdfs:comment xml:lang="en">Position : [1826,468]</rdfs:comment>
+        <connectedTo rdf:resource="urn:ogf:network:stp:Aruba:A4"/>
+        <owl:partOf rdf:resource="urn:ogf:network:nsnetwork:Bonaire" />
+        <dtox:mapsTo>Bonaire_B1</dtox:mapsTo>
     </owl:NamedIndividual>
 
-    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Bonaire">
-        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#Node"/>
-        <hasSwitchMatrix rdf:resource="http://www.glif.is/working-groups/tech/dtox#Bonaire.XM"/>
+
+    <!-- urn:ogf:network:stp:Bonaire:B2 -->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:stp:Bonaire:B2">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
+        <rdfs:comment xml:lang="en">Position : [2077,466]</rdfs:comment>
+        <owl:partOf rdf:resource="urn:ogf:network:nsnetwork:Bonaire" />
+        <dtox:mapsTo>Bonaire_B2</dtox:mapsTo>
     </owl:NamedIndividual>
 
-    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Bonaire.Loc">
-        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#GOLE"/>
+
+    <!-- urn:ogf:network:stp:Bonaire:B3 -->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:stp:Bonaire:B3">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
+        <rdfs:comment xml:lang="en">Position : [2333,466]</rdfs:comment>
+        <owl:partOf rdf:resource="urn:ogf:network:nsnetwork:Bonaire" />
+        <dtox:mapsTo>Bonaire_B3</dtox:mapsTo>
     </owl:NamedIndividual>
 
-    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Bonaire.XM">
-        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#SwitchMatrix"/>
-        <canSwap rdf:datatype="http://www.w3.org/2001/XMLSchema#string">yes</canSwap>
-        <hasPort rdf:resource="http://www.glif.is/working-groups/tech/dtox#Bonaire:Basil"/>
-        <hasPort rdf:resource="http://www.glif.is/working-groups/tech/dtox#Bonaire:Betty"/>
-        <hasPort rdf:resource="http://www.glif.is/working-groups/tech/dtox#Bonaire:Bjorn"/>
-        <hasPort rdf:resource="http://www.glif.is/working-groups/tech/dtox#Bonaire:Brutus"/>
+
+    <!-- urn:ogf:network:stp:Bonaire:B4 -->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:stp:Bonaire:B4">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
+        <rdfs:comment xml:lang="en">Position : [2592,466]</rdfs:comment>
+        <connectedTo rdf:resource="urn:ogf:network:stp:Curacao:C1"/>
+        <owl:partOf rdf:resource="urn:ogf:network:nsnetwork:Bonaire" />
+        <dtox:mapsTo>Bonaire_B4</dtox:mapsTo>
     </owl:NamedIndividual>
 
-    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Bonaire:Basil">
-        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#Port"/>
-        <connectedTo rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></connectedTo>
-        <maxCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</maxCapacity>
-        <availableCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</availableCapacity>
+
+    <!-- urn:ogf:network:nsnetwork:Bonaire -->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:nsnetwork:Bonaire">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#NSNetwork"/>
+        <rdfs:label xml:lang="en">Bonaire</rdfs:label>
+        <rdfs:comment xml:lang="en">Position : [2178,58]</rdfs:comment>
+        <canSwap rdf:datatype="http://www.w3.org/2001/XMLSchema#string">no</canSwap>
+        <hasSTP rdf:resource="urn:ogf:network:stp:Bonaire:B1"/>
+        <hasSTP rdf:resource="urn:ogf:network:stp:Bonaire:B2"/>
+        <hasSTP rdf:resource="urn:ogf:network:stp:Bonaire:B3"/>
+        <hasSTP rdf:resource="urn:ogf:network:stp:Bonaire:B4"/>
+        <managedBy rdf:resource="urn:ogf:network:nsa:Bonaire"/>
     </owl:NamedIndividual>
 
-    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Bonaire:Betty">
-        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#Port"/>
-        <connectedTo rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></connectedTo>
-        <maxCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</maxCapacity>
-        <availableCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</availableCapacity>
+
+    <!-- urn:ogf:network:nsa:Bonaire-->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:nsa:Bonaire">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#NSA"/>
+        <rdfs:label xml:lang="en">SURFnet OpenDRAC - The NSI Edition</rdfs:label>
+        <managing rdf:resource="urn:ogf:network:nsnetwork:Bonaire" />
+        <adminContact rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Bonaire Network</adminContact>
+        <hostName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">phineas.surfnet.nl</hostName>
+        <csProviderEndpoint rdf:datatype="http://www.w3.org/2001/XMLSchema#string">http://localhost:9081/NSI/services/ConnectionService</csProviderEndpoint>
+        <rdfs:comment xml:lang="en">Position : [1586,174]</rdfs:comment>
     </owl:NamedIndividual>
 
-    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Bonaire:Bjorn">
-        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#Port"/>
-        <availableCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</availableCapacity>
-        <maxCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</maxCapacity>
-        <connectedTo rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Curacao:Cynthia</connectedTo>
+
+    <!-- urn:ogf:network:stp:Curacao:C1 -->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:stp:Curacao:C1">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
+        <rdfs:comment xml:lang="en">Position : [3463,454]</rdfs:comment>
+        <connectedTo rdf:resource="urn:ogf:network:stp:Bonaire:B4"/>
+        <dtox:mapsTo>Curacao_C1</dtox:mapsTo>
     </owl:NamedIndividual>
 
-    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Bonaire:Brutus">
-        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#Port"/>
-        <availableCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">500.0</availableCapacity>
-        <maxCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">500.0</maxCapacity>
-        <connectedTo rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Aruba:Aiden</connectedTo>
+
+    <!-- urn:ogf:network:stp:Curacao:C2 -->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:stp:Curacao:C2">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
+        <rdfs:comment xml:lang="en">Position : [3725,455]</rdfs:comment>
+        <dtox:mapsTo>Curacao_C2</dtox:mapsTo>
     </owl:NamedIndividual>
 
-    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Curacao">
-        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#Node"/>
-        <hasSwitchMatrix rdf:resource="http://www.glif.is/working-groups/tech/dtox#Curacao.XM"/>
+
+    <!-- urn:ogf:network:stp:Curacao:C3 -->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:stp:Curacao:C3">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
+        <rdfs:comment xml:lang="en">Position : [3981,458]</rdfs:comment>
+        <dtox:mapsTo>Curacao_C3</dtox:mapsTo>
     </owl:NamedIndividual>
 
-    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Curacao.Loc">
-        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#GOLE"/>
+
+    <!-- urn:ogf:network:stp:Curacao:C4 -->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:stp:Curacao:C4">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
+        <rdfs:comment xml:lang="en">Position : [4239,458]</rdfs:comment>
+        <connectedTo rdf:resource="urn:ogf:network:stp:Dominica:D1"/>
+        <dtox:mapsTo>Curacao_C4</dtox:mapsTo>
     </owl:NamedIndividual>
 
-    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Curacao.XM">
-        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#SwitchMatrix"/>
-        <canSwap rdf:datatype="http://www.w3.org/2001/XMLSchema#string">yes</canSwap>
-        <hasPort rdf:resource="http://www.glif.is/working-groups/tech/dtox#Curacao:Calista"/>
-        <hasPort rdf:resource="http://www.glif.is/working-groups/tech/dtox#Curacao:Carter"/>
-        <hasPort rdf:resource="http://www.glif.is/working-groups/tech/dtox#Curacao:Chuck"/>
-        <hasPort rdf:resource="http://www.glif.is/working-groups/tech/dtox#Curacao:Cynthia"/>
+
+    <!-- urn:ogf:network:nsnetwork:Curacao -->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:nsnetwork:Curacao">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#NSNetwork"/>
+        <rdfs:label xml:lang="en">Curacao</rdfs:label>
+        <rdfs:comment xml:lang="en">Position : [3690,102]</rdfs:comment>
+        <hasSTP rdf:resource="urn:ogf:network:stp:Curacao:C1"/>
+        <hasSTP rdf:resource="urn:ogf:network:stp:Curacao:C2"/>
+        <hasSTP rdf:resource="urn:ogf:network:stp:Curacao:C3"/>
+        <hasSTP rdf:resource="urn:ogf:network:stp:Curacao:C4"/>
+        <managedBy rdf:resource="urn:ogf:network:nsa:Curacao"/>
     </owl:NamedIndividual>
 
-    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Curacao:Calista">
-        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#Port"/>
-        <connectedTo rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></connectedTo>
-        <availableCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</availableCapacity>
-        <maxCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</maxCapacity>
+
+    <!-- urn:ogf:network:nsa:Curacao -->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:nsa:Curacao">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#NSA"/>
+        <managing rdf:resource="urn:ogf:network:nsnetwork:Curacao" />
+        <adminContact rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1.	Curacao Admin Contact</adminContact>
+        <csProviderEndpoint rdf:datatype="http://www.w3.org/2001/XMLSchema#string">http://localhost:9082/NSI/services/ConnectionService</csProviderEndpoint>
+        <rdfs:comment xml:lang="en">Position : [3138,173]</rdfs:comment>
     </owl:NamedIndividual>
 
-    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Curacao:Carter">
-        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#Port"/>
-        <availableCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</availableCapacity>
-        <maxCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</maxCapacity>
-        <connectedTo rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Dominica:Drusilla</connectedTo>
+
+    <!-- urn:ogf:network:stp:Dominica:D1 -->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:stp:Dominica:D1">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
+        <rdfs:comment xml:lang="en">Position : [3348,1237]</rdfs:comment>
+        <connectedTo rdf:resource="urn:ogf:network:stp:Curacao:C4"/>
     </owl:NamedIndividual>
 
-    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Curacao:Chuck">
-        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#Port"/>
-        <connectedTo rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></connectedTo>
-        <maxCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</maxCapacity>
-        <availableCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</availableCapacity>
+
+    <!-- urn:ogf:network:stp:Dominica:D2 -->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:stp:Dominica:D2">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
+        <rdfs:comment xml:lang="en">Position : [3601,1237]</rdfs:comment>
     </owl:NamedIndividual>
 
-    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Curacao:Cynthia">
-        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#Port"/>
-        <availableCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</availableCapacity>
-        <maxCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</maxCapacity>
-        <connectedTo rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Bonaire:Bjorn</connectedTo>
+
+    <!-- urn:ogf:network:stp:Dominica:D3 -->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:stp:Dominica:D3">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
+        <rdfs:comment xml:lang="en">Position : [3862,1237]</rdfs:comment>
     </owl:NamedIndividual>
 
-    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Dominica">
-        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#Node"/>
-        <hasSwitchMatrix rdf:resource="http://www.glif.is/working-groups/tech/dtox#Dominica.XM"/>
+
+    <!-- urn:ogf:network:stp:Dominica:D4 -->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:stp:Dominica:D4">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
+        <rdfs:comment xml:lang="en">Position : [4125,1233]</rdfs:comment>
+        <connectedTo rdf:resource="urn:ogf:network:stp:Aruba:A1"/>
     </owl:NamedIndividual>
 
-    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Dominica.Loc">
-        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#GOLE"/>
+
+    <!-- urn:ogf:network:nsa:Dominica -->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:nsnetwork:Dominica">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#NSNetwork"/>
+        <rdfs:label xml:lang="en">Dominica</rdfs:label>
+        <rdfs:comment xml:lang="en">Position : [3522,838]</rdfs:comment>
+        <hasSTP rdf:resource="urn:ogf:network:stp:Dominica:D1"/>
+        <hasSTP rdf:resource="urn:ogf:network:stp:Dominica:D2"/>
+        <hasSTP rdf:resource="urn:ogf:network:stp:Dominica:D3"/>
+        <hasSTP rdf:resource="urn:ogf:network:stp:Dominica:D4"/>
+        <managedBy rdf:resource="urn:ogf:network:nsa:Dominica"/>
     </owl:NamedIndividual>
 
-    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Dominica.XM">
-        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#SwitchMatrix"/>
-        <canSwap rdf:datatype="http://www.w3.org/2001/XMLSchema#string">yes</canSwap>
-        <hasPort rdf:resource="http://www.glif.is/working-groups/tech/dtox#Dominica:Daisy"/>
-        <hasPort rdf:resource="http://www.glif.is/working-groups/tech/dtox#Dominica:Dirk"/>
-        <hasPort rdf:resource="http://www.glif.is/working-groups/tech/dtox#Dominica:Dorte"/>
-        <hasPort rdf:resource="http://www.glif.is/working-groups/tech/dtox#Dominica:Drusilla"/>
+
+    <!-- urn:ogf:network:nsa:Dominica-->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:nsa:Dominica">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#NSA"/>
+        <managing rdf:resource="urn:ogf:network:nsnetwork:Dominica" />
+        <csProviderEndpoint rdf:datatype="http://www.w3.org/2001/XMLSchema#string">http://localhost:9083/NSI/services/ConnectionService</csProviderEndpoint>
+        <adminContact rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Dominica Network</adminContact>
+        <rdfs:comment xml:lang="en">Position : [3099,915]</rdfs:comment>
     </owl:NamedIndividual>
 
-    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Dominica:Daisy">
-        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#Port"/>
-        <connectedTo rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></connectedTo>
-        <availableCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</availableCapacity>
-        <maxCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</maxCapacity>
-    </owl:NamedIndividual>
-
-    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Dominica:Dirk">
-        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#Port"/>
-        <availableCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</availableCapacity>
-        <maxCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</maxCapacity>
-        <connectedTo rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Aruba:Axel</connectedTo>
-    </owl:NamedIndividual>
-
-    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Dominica:Dorte">
-        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#Port"/>
-        <connectedTo rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></connectedTo>
-        <availableCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</availableCapacity>
-        <maxCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</maxCapacity>
-    </owl:NamedIndividual>
-
-    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Dominica:Drusilla">
-        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#Port"/>
-        <maxCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</maxCapacity>
-        <availableCapacity rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1000.0</availableCapacity>
-        <connectedTo rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Curacao:Carter</connectedTo>
-    </owl:NamedIndividual>
-
-    <owl:NamedIndividual rdf:about="http://www.glif.is/working-groups/tech/dtox#Maui">
-        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#Node"/>
-    </owl:NamedIndividual>
 </rdf:RDF>
 """
 
+STP_A1 = nsa.STP('Aruba', 'A1')
+STP_A2 = nsa.STP('Aruba', 'A2')
+STP_A3 = nsa.STP('Aruba', 'A3')
+STP_A4 = nsa.STP('Aruba', 'A4')
 
-TEST_TOPOLOGY_JSON = """
-{
-  "Aruba" : {
-    "address"   : "address-aruba",
-    "endpoints" : [
-      { "name" : "Aiden",   "config" : "-", "max-capacity":  500, "available-capacity":  500, "dest-network" : "Bonaire", "dest-ep" : "Brutus"  },
-      { "name" : "Amelia",  "config" : "-", "max-capacity": 1000, "available-capacity": 1000  },
-      { "name" : "Ashley",  "config" : "-", "max-capacity": 1000, "available-capacity": 1000  },
-      { "name" : "Axel",    "config" : "-", "max-capacity": 1000, "available-capacity": 1000, "dest-network" : "Dominica", "dest-ep" : "Dirk"    }
-    ]
-  },
+STP_B1 = nsa.STP('Bonaire', 'B1')
+STP_B2 = nsa.STP('Bonaire', 'B2')
+STP_B3 = nsa.STP('Bonaire', 'B3')
+STP_B4 = nsa.STP('Bonaire', 'B4')
 
-  "Bonaire" : {
-    "address"   : "address-bonaire",
-    "endpoints" : [
-      { "name" : "Basil",   "config" : "-", "max-capacity": 1000, "available-capacity": 1000 },
-      { "name" : "Bette",   "config" : "-", "max-capacity": 1000, "available-capacity": 1000 },
-      { "name" : "Bjorn",   "config" : "-", "max-capacity": 1000, "available-capacity": 1000, "dest-network" : "Curacao", "dest-ep" : "Cynthia" },
-      { "name" : "Brutus",  "config" : "-", "max-capacity":  500, "available-capacity":  500, "dest-network" : "Aruba"  , "dest-ep" : "Aiden"   }
-    ]
-  },
+STP_C1 = nsa.STP('Curacao', 'C1')
+STP_C2 = nsa.STP('Curacao', 'C2')
+STP_C3 = nsa.STP('Curacao', 'C3')
+STP_C4 = nsa.STP('Curacao', 'C4')
 
-  "Curacao" : {
-    "address"   : "address-curacao",
-    "endpoints" : [
-      { "name" : "Calista", "config" : "-", "max-capacity": 1000, "available-capacity": 1000 },
-      { "name" : "Carter",  "config" : "-", "max-capacity": 1000, "available-capacity": 1000, "dest-network" : "Dominica",  "dest-ep" : "Drusilla"  },
-      { "name" : "Chuck",   "config" : "-", "max-capacity": 1000, "available-capacity": 1000  },
-      { "name" : "Cynthia", "config" : "-", "max-capacity": 1000, "available-capacity": 1000, "dest-network" : "Bonaire",   "dest-ep" : "Bjorn"     }
-    ]
-  },
-
-  "Dominica" : {
-    "address"   : "address-dominica",
-    "endpoints" : [
-      { "name" : "Daisy",   "config" : "-", "max-capacity": 1000, "available-capacity": 1000 },
-      { "name" : "Dirk",    "config" : "-", "max-capacity": 1000, "available-capacity": 1000, "dest-network" : "Aruba",   "dest-ep" : "Axel"    },
-      { "name" : "Dorte",   "config" : "-", "max-capacity": 1000, "available-capacity": 1000 },
-      { "name" : "Drusilla","config" : "-", "max-capacity": 1000, "available-capacity": 1000, "dest-network" : "Curacao", "dest-ep" : "Carter"  }
-    ]
-  }
-
-}
-"""
-
-STP_AIDEN   = nsa.STP('Aruba', 'Aiden')
-STP_AXEL    = nsa.STP('Aruba', 'Axel')
-
-STP_BRUTUS  = nsa.STP('Bonaire', 'Brutus')
-STP_BJORN   = nsa.STP('Bonaire', 'Bjorn')
-
-STP_CARTER  = nsa.STP('Curacao', 'Carter')
-STP_CYNTHIA = nsa.STP('Curacao', 'Cynthia')
-
-STP_DIRK    = nsa.STP('Dominica', 'Dirk')
-STP_DRUSILLA= nsa.STP('Dominica', 'Drusilla')
+STP_D1 = nsa.STP('Dominica', 'D1')
+STP_D2 = nsa.STP('Dominica', 'D2')
+STP_D3 = nsa.STP('Dominica', 'D3')
+STP_D4 = nsa.STP('Dominica', 'D4')
 
 
 TEST_PATH_1 = {
-    'source_network'  : 'Aruba',    'source_endpoint' : 'Ashley',
-    'dest_network'    : 'Curacao',  'dest_endpoint'   : 'Chuck',
-    'paths'           :  [ [ nsa.SDP( STP_AIDEN, STP_BRUTUS ), nsa.SDP( STP_BJORN, STP_CYNTHIA )   ],
-                           [ nsa.SDP( STP_AXEL, STP_DIRK), nsa.SDP( STP_DRUSILLA, STP_CARTER )  ]
-                         ]
+    'source_stp' : STP_A2,
+    'dest_stp'   : STP_C3,
+    'paths'      :  [ [ nsa.Link(STP_A2, STP_A4), nsa.Link(STP_B1, STP_B4), nsa.Link(STP_C1, STP_C3) ],
+                      [ nsa.Link(STP_A2, STP_A1), nsa.Link(STP_D4, STP_D1), nsa.Link(STP_C4, STP_C3) ]
+                    ]
 }
 
 TEST_PATH_2 = {
-    'source_network'  : 'Aruba',    'source_endpoint' : 'Amelia',
-    'dest_network'    : 'Bonaire',  'dest_endpoint'   : 'Bjorn',
-    'paths'           : [ [ nsa.SDP( STP_AIDEN, STP_BRUTUS ) ],
-                          [ nsa.SDP( STP_AXEL, STP_DIRK ), nsa.SDP(STP_DRUSILLA, STP_CARTER ), nsa.SDP(STP_CYNTHIA, STP_BJORN ) ] ]
+    'source_stp' : STP_A2,
+    'dest_stp'   : STP_B2,
+    'paths'      : [ [ nsa.Link(STP_A2, STP_A4), nsa.Link(STP_B1, STP_B2) ],
+                     [ nsa.Link(STP_A2, STP_A1), nsa.Link(STP_D4, STP_D1), nsa.Link(STP_C4, STP_C1), nsa.Link(STP_B4, STP_B2) ] ]
 }
 
+# Currently we do not have bandwidth, so this us unused
 TEST_PATH_3 = {
-    'source_network'  : 'Aruba',    'source_endpoint' : 'Ashley',
-    'dest_network'    : 'Bonaire',  'dest_endpoint'   : 'Basil',
-    'paths'           :  [ [ nsa.SDP( STP_AXEL, STP_DIRK), nsa.SDP(STP_DRUSILLA, STP_CARTER), nsa.SDP(STP_CYNTHIA, STP_BJORN) ] ],
-    'bandwidth'       : nsa.BandwidthParameters(1000, 1000, 1000)
+    'source_stp': STP_A2,
+    'dest_stp'  : STP_B3,
+    'paths'     :  [ [ nsa.Link(STP_A2, STP_A1), nsa.Link(STP_D4, STP_D1), nsa.Link(STP_C4, STP_C1), nsa.Link(STP_B4, STP_B3) ] ],
+    'bandwidth' : nsa.BandwidthParameters(1000, 1000, 1000)
 }
 
-TEST_PATHS = [ TEST_PATH_1, TEST_PATH_2, TEST_PATH_3 ]
+TEST_PATHS = [ TEST_PATH_1, TEST_PATH_2 ]
 
 
 
@@ -297,35 +302,19 @@ class GenericTopologyTest:
 
     def testParseAndFindPath(self):
 
-        for ts in TEST_PATHS:
-            source_stp = nsa.STP(ts['source_network'], ts['source_endpoint'])
-            dest_stp   = nsa.STP(ts['dest_network'], ts['dest_endpoint'])
+        for tp in TEST_PATHS:
 
-            paths = self.topo.findPaths(source_stp, dest_stp, ts.get('bandwidth'))
+            paths = self.topo.findPaths(tp['source_stp'], tp['dest_stp'], tp.get('bandwidth'))
             for path in paths:
-                self.assertEquals(ts['source_network'],  path.source_stp.network)
-                self.assertEquals(ts['source_endpoint'], path.source_stp.endpoint)
-                self.assertEquals(ts['dest_network'],    path.dest_stp.network)
-                self.assertEquals(ts['dest_endpoint'],   path.dest_stp.endpoint)
-
-            leps = [ path.endpoint_pairs for path in paths ]
-
-            self.assertEquals(len(leps), len(ts['paths']), 'Unexpected number of paths')
-            for p in ts['paths']:
-                self.assertIn(p, leps)
+                self.assertIn(path.network_links, tp['paths'])
+            self.assertEquals(len(paths), len(tp['paths']))
 
 
 
 class GOLETopologyTest(GenericTopologyTest, unittest.TestCase):
 
     def setUp(self):
-        self.topo = topology.parseGOLETopology(TEST_TOPOLOGY_GOLE)
-
-
-
-class JSONTopologyTest(GenericTopologyTest, unittest.TestCase):
-
-    def setUp(self):
-        self.topo = topology.parseJSONTopology(TEST_TOPOLOGY_JSON)
+        f = StringIO.StringIO(TEST_TOPOLOGY)
+        self.topo = topology.parseGOLERDFTopology( [ (f, 'xml') ] )
 
 
