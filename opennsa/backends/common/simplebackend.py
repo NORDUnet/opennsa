@@ -105,7 +105,7 @@ class GenericConnection:
         self.scheduler.cancelTransition() # cancel any pending scheduled switch
 
         if self.service_parameters.start_time <= dt_now:
-            defer_provision = doProvision()
+            defer_provision = doProvision(None)
         else:
             defer_provision = self.scheduler.scheduleTransition(self.service_parameters.start_time, doProvision, state.PROVISIONING)
             self.logStateUpdate('PROVISION SCHEDULED')
