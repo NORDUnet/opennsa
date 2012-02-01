@@ -2,7 +2,7 @@
 Connection abstraction.
 
 Author: Henrik Thostrup Jensen <htj@nordu.net>
-Copyright: NORDUnet (2011)
+Copyright: NORDUnet (2011-2012)
 """
 
 import datetime
@@ -10,7 +10,7 @@ import datetime
 from twisted.python import log, failure
 from twisted.internet import defer
 
-from opennsa import error, nsa, state
+from opennsa import error, nsa, state, event, subscription
 from opennsa.backends.common import scheduler
 
 
@@ -90,7 +90,7 @@ class SubConnection:
 
         d = self.client.provision(self.requester_nsa, self.provider_nsa, self.session_security_attr, self.connection_id)
         d.addCallback(provisionDone)
-        return d
+        return defer.succeed(None), d
 
 
     def release(self):
@@ -107,7 +107,7 @@ class SubConnection:
 
 class Connection:
 
-    def __init__(self, requester_nsa, connection_id, source_stp, dest_stp, service_parameters=None, global_reservation_id=None, description=None):
+    def __init__(self, event_registry, requester_nsa, connection_id, source_stp, dest_stp, service_parameters=None, global_reservation_id=None, description=None):
         self.state = state.ConnectionState()
         self.requester_nsa              = requester_nsa
         self.connection_id              = connection_id
@@ -119,9 +119,51 @@ class Connection:
         self.scheduler                  = scheduler.TransitionScheduler()
         self.sub_connections            = []
 
+        self.subscriptions              = []
+        self.event_registry = event_registry
+
 
     def connections(self):
         return self.sub_connections
+
+
+    def addSubscription(self, sub):
+        self.subscriptions.append(sub)
+
+
+    def eventDispatch(self, event, success, result):
+        defs = []
+        for sub in reversed(self.subscriptions):
+            if sub.match(event):
+                d = subscription.dispatchNotification(success, result, sub, self.event_registry)
+                defs.append(d)
+                self.subscriptions.remove(sub)
+
+        if defs:
+            return defer.DeferredList(defs)
+        else:
+            log.msg('No subscriptions for event %s (possible bug / warning)' % event, system=LOG_SYSTEM)
+            return defer.succeed(None)
+
+
+    def _buildErrorMessage(self, results, action):
+
+        # should probably seperate loggin somehow
+        failures = [ (conn, f) for (success, f), conn in zip(results, self.connections()) if success is False ]
+        failure_msgs = [ conn.curator() + ' ' + connPath(conn) + ' ' + f.getErrorMessage() for (conn, f) in failures ]
+        log.msg('Connection %s: %i/%i %s failed.' % (self.connection_id, len(failures), len(results), action), system=LOG_SYSTEM)
+        for msg in failure_msgs:
+            log.msg('* Failure: ' + msg, system=LOG_SYSTEM)
+
+        # build the error message to send back
+        if len(results) == 1:
+            # only one connection, we just return the plain failure
+            error_msg = failures[0][1].getErrorMessage()
+        else:
+            # multiple failures, here we build a more complicated error string
+            error_msg = '%i/%i %s failed: %s' % (len(failures), len(results), action, '. '.join(failure_msgs))
+
+        return error_msg
 
 
     def reserve(self):
@@ -136,26 +178,12 @@ class Connection:
             successes = [ r[0] for r in results ]
             if all(successes):
                 self.state.switchState(state.RESERVED)
+                log.msg('Connection %s: Reserve succeeded' % self.connection_id, system=LOG_SYSTEM)
                 self.scheduler.scheduleTransition(self.service_parameters.start_time, scheduled, state.SCHEDULED)
-                return self
+                self.eventDispatch(event.RESERVE_RESPONSE, True, self)
 
             else:
-                # at least one reservation failed
-                self.state.switchState(state.CLEANING)
-                # log the failures in an understandable way
-                failures = [ (conn, f) for (success, f), conn in zip(results, self.connections()) if success is False ]
-                failure_msgs = [ conn.curator() + ' ' + connPath(conn) + ' ' + f.getErrorMessage() for (conn, f) in failures ]
-                log.msg('Connection %s: %i/%i reservations failed.' % (self.connection_id, len(failures), len(results)), system=LOG_SYSTEM)
-                for msg in failure_msgs:
-                    log.msg('* Failure: ' + msg, system=LOG_SYSTEM)
-
-                # build the error message to send back
-                if len(results) == 1:
-                    # only one connection, we just return the plain failure
-                    error_msg = failures[0][1].getErrorMessage()
-                else:
-                    # multiple failures, here we build a more complicated error string
-                    error_msg = '%i/%i reservations failed: %s' % (len(failures), len(results), '. '.join(failure_msgs))
+                error_msg = self._buildErrorMessage(results, 'reservations')
 
                 # terminate non-failed connections
                 # currently we don't try and be too clever about cleaning, just do it, and switch state
@@ -171,7 +199,8 @@ class Connection:
                 dl = defer.DeferredList(defs)
                 dl.addCallback(lambda _ : self.state.switchState(state.TERMINATED) )
 
-                return defer.fail( error.ReserveError(error_msg) )
+                err = failure.Failure(error.ReserveError(error_msg))
+                self.eventDispatch(event.RESERVE_RESPONSE, False, err)
 
 
         self.state.switchState(state.RESERVING)
@@ -185,51 +214,28 @@ class Connection:
 
     def provision(self):
 
-        def provisioned(_):
-            if self.state() == state.AUTO_PROVISION:
-                # cannot switch directly from auto-provision to provisioned,
-                self.state.switchState(state.PROVISIONING)
-            self.state.switchState(state.PROVISIONED)
-            self.scheduler.scheduleTransition(self.service_parameters.end_time, lambda _ : self.terminate(), state.TERMINATING)
-
         def provisionComplete(results):
             successes = [ r[0] for r in results ]
             if all(successes):
                 dt_now = datetime.datetime.utcnow()
                 if self.state() == state.AUTO_PROVISION:
-                    if self.service_parameters.start_time < dt_now:
-                        self.scheduler.scheduleTransition(self.service_parameters.start_time, provisioned, state.PROVISIONING) # there is a race condition here
-                    else:
-                        # start time was crossed while getting replies
-                        provisioned(None)
-                elif self.state() == state.PROVISIONING:
-                    provisioned(None)
-                else:
-                    log.msg('ERROR: Invalid state for provisionComplete to be handled (%s).' % self.state())
-                return self
+                    # cannot switch directly from auto-provision to provisioned,
+                    self.state.switchState(state.PROVISIONING)
+
+                self.state.switchState(state.PROVISIONED)
+                self.scheduler.scheduleTransition(self.service_parameters.end_time, lambda _ : self.terminate(), state.TERMINATING)
+
+                self.eventDispatch(event.PROVISION_RESPONSE, True, self)
 
             else:
                 # at least one provision failed, provisioned connections should be released
-
-                # log the failures in an understandable way
-                failures = [ (conn, f) for (success, f), conn in zip(results, self.connections()) if success is False ]
-                failure_msgs = [ conn.curator() + ' ' + connPath(conn) + ' ' + f.getErrorMessage() for (conn, f) in failures ]
-                log.msg('Connection %s: %i/%i provisions failed.' % (self.connection_id, len(failures), len(results)), system=LOG_SYSTEM)
-                for msg in failure_msgs:
-                    log.msg('* Failure: ' + msg, system=LOG_SYSTEM)
-
-                # build the error message to send back
-                if len(results) == 1:
-                    # only one connection, we just return the plain failure
-                    error_msg = failures[0][1].getErrorMessage()
-                else:
-                    # multiple failures, here we build a more complicated error string
-                    error_msg = '%i/%i reservations failed: %s' % (len(failures), len(results), '. '.join(failure_msgs))
+                error_msg = self._buildErrorMessage(results, 'provisions')
 
                 if self.state() == state.AUTO_PROVISION:
                     self.state.switchState(state.PROVISIONING) # state machine isn't quite clear on what we should be here
 
                 # release provisioned connections
+                defs = []
                 provisioned_connections = [ conn for success,conn in results if success ]
                 for pc in provisioned_connections:
                     d = pc.release()
@@ -241,7 +247,11 @@ class Connection:
                 dl = defer.DeferredList(defs)
                 dl.addCallback(lambda _ : self.state.switchState(state.SCHEDULED) )
 
-                return defer.fail( error.ProvisionError(error_msg) )
+                def releaseDone(_):
+                    err = failure.Failure(error.ProvisionError(error_msg))
+                    self.eventDispatch(event.PROVISION_RESPONSE, False, err)
+
+                dl.addCallback(releaseDone)
 
         # --
 
@@ -254,8 +264,11 @@ class Connection:
         self.scheduler.cancelTransition() # cancel any pending scheduled switch
 
         defs = [ sc.provision() for sc in self.connections() ]
+        prov_confirmed_defs , provision_done_defs = zip(*defs) # first is for confirmation, second is for link up
+        #defs = [ sc.provision() for sc in self.connections() ]
 
-        dl = defer.DeferredList(defs, consumeErrors=True)
+        dl = defer.DeferredList(provision_done_defs, consumeErrors=True)
+        #dl = defer.DeferredList(defs, consumeErrors=True)
         dl.addCallback(provisionComplete)
         return dl
 
@@ -269,14 +282,13 @@ class Connection:
                 if len(results) > 1:
                     log.msg('Connection %s and all sub connections(%i) released' % (self.connection_id, len(results)-1), system=LOG_SYSTEM)
                 self.scheduler.scheduleTransition(self.service_parameters.end_time, lambda s : self.state.switchState(state.TERMINATED), state.TERMINATED)
-                return self
-            if any(successes):
-                self.state.switchState(state.TERMINATED)
-                raise error.ReleaseError('Release partially failed (may require manual intervention to fix)')
+                self.eventDispatch(event.RELEASE_RESPONSE, True, self)
+
             else:
-                self.state.switchState(state.TERMINATED)
-                err = error.ReleaseError('Release failed for all sub connections')
-                return failure.Failure(err)
+                error_msg = self._buildErrorMessage(results, 'releases')
+                err = error.ReleaseError(error_msg)
+                f = failure.Failure(err)
+                self.eventDispatch(event.RELEASE_RESPONSE, False, f)
 
         self.state.switchState(state.RELEASING)
         self.scheduler.cancelTransition() # cancel any pending scheduled switch
@@ -299,15 +311,13 @@ class Connection:
                 self.state.switchState(state.TERMINATED)
                 if len(successes) > 1:
                     log.msg('Connection %s and all sub connections(%i) terminated' % (self.connection_id, len(results)-1), system=LOG_SYSTEM)
-                return self
-            if any(successes):
-                self.state.switchState(state.TERMINATED)
-                err = error.TerminateError('Terminate partially failed (may require manual cleanup)')
-                return failure.Failure(err)
+                self.eventDispatch(event.TERMINATE_RESPONSE, True, self)
+
             else:
-                self.state.switchState(state.TERMINATED)
-                err = error.TerminateError('Terminate failed for all sub connections')
-                return failure.Failure(err)
+                error_msg = self._buildErrorMessage(results, 'terminates')
+                err = error.TerminateError(error_msg)
+                f = failure.Failure(err)
+                self.eventDispatch(event.TERMINATE_RESPONSE, False, f)
 
         self.state.switchState(state.TERMINATING)
         self.scheduler.cancelTransition() # cancel any pending scheduled switch

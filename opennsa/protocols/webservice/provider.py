@@ -3,13 +3,10 @@ import traceback
 from twisted.python import log
 from twisted.internet import defer
 
-from opennsa import error
+from opennsa import error, event, subscription
 
 
-
-# Errors we shouldn't log about (handled elsewhere)
-IGNORE_ERRORS = [ error.NoSuchConnectionError ]
-
+WS_PROTO_EVENT_SYSTEM = 'nsi-1.0-soap'
 
 
 def _createErrorMessage(err):
@@ -28,113 +25,160 @@ def _createErrorMessage(err):
 class Provider:
 
 
-    def __init__(self, nsi_service, requester_client):
-        self.nsi_service = nsi_service
+    def __init__(self, event_registry, requester_client):
         self.requester_client = requester_client
+        self.event_registry = event_registry
+
+        event_registry.registerEventHandler(event.RESERVE_RESPONSE,   self.notifyReserveResult,   WS_PROTO_EVENT_SYSTEM)
+        event_registry.registerEventHandler(event.PROVISION_RESPONSE, self.notifyProvisionResult, WS_PROTO_EVENT_SYSTEM)
+        event_registry.registerEventHandler(event.RELEASE_RESPONSE,   self.notifyReleaseResult,   WS_PROTO_EVENT_SYSTEM)
+        event_registry.registerEventHandler(event.TERMINATE_RESPONSE, self.notifyTerminateResult, WS_PROTO_EVENT_SYSTEM)
+        event_registry.registerEventHandler(event.QUERY_RESPONSE,     self.notifyQueryResult,     WS_PROTO_EVENT_SYSTEM)
+
+
+    def _extractData(self, data):
+
+        reply_to                = data['reply_to']
+        correlation_id          = data['correlation_id']
+        requester_nsa           = data['requester_nsa']
+        provider_nsa            = data['provider_nsa']
+        connection_id           = data['connection_id']
+        global_reservation_id   = data['global_reservation_id']
+
+        return reply_to, correlation_id, requester_nsa, provider_nsa, connection_id, global_reservation_id
 
 
     def reserve(self, correlation_id, reply_to, requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters):
 
-        def notifyReserveSuccess(_):
-            # should probably use result somehow
+        data = { 'reply_to'      : reply_to,      'correlation_id'        : correlation_id,
+                 'requester_nsa' : requester_nsa, 'provider_nsa'          : provider_nsa,
+                 'connection_id' : connection_id, 'global_reservation_id' : None,
+                 'description'   : description,   'service_parameters'    : service_parameters }
+
+        sub = subscription.Subscription(event.RESERVE_RESPONSE, WS_PROTO_EVENT_SYSTEM, data)
+
+        handler = self.event_registry.getHandler(event.RESERVE, event.SYSTEM_SERVICE)
+        d = handler(requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters, sub)
+        return d
+
+
+    def notifyReserveResult(self, success, result, data):
+
+        reply_to, correlation_id, requester_nsa, provider_nsa, connection_id, global_reservation_id = self._extractData(data)
+        description         = data['description']
+        service_parameters  = data['service_parameters']
+
+        if success:
             d = self.requester_client.reserveConfirmed(reply_to, correlation_id, requester_nsa, provider_nsa, global_reservation_id, description, connection_id, service_parameters)
             return d
-
-        def notifyReserveFailure(err):
-            error_msg = _createErrorMessage(err)
+        else:
+            error_msg = _createErrorMessage(result)
             d = self.requester_client.reserveFailed(reply_to, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, 'TERMINATED', error_msg)
-            if err.check(IGNORE_ERRORS):
-                log.msg('Error during reservation call (failure has been send to client)')
-                log.err(err)
             return d
-
-        d = defer.maybeDeferred(self.nsi_service.reserve,
-                                requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters)
-        d.addCallbacks(notifyReserveSuccess, notifyReserveFailure)
-        return d
 
 
     def provision(self, correlation_id, reply_to, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
-        def notifyProvisionSuccess(_):
-            # should probably use result somehow
-            global_reservation_id = None
+        data = { 'reply_to'      : reply_to,      'correlation_id'        : correlation_id,
+                 'requester_nsa' : requester_nsa, 'provider_nsa'          : provider_nsa,
+                 'connection_id' : connection_id, 'global_reservation_id' : None }
+        sub = subscription.Subscription(event.PROVISION_RESPONSE, WS_PROTO_EVENT_SYSTEM, data)
+
+        handler = self.event_registry.getHandler(event.PROVISION, event.SYSTEM_SERVICE)
+        d = handler(requester_nsa, provider_nsa, session_security_attr, connection_id, sub)
+        return d
+
+
+    def notifyProvisionResult(self, success, result, data):
+
+        reply_to, correlation_id, requester_nsa, provider_nsa, connection_id, global_reservation_id = self._extractData(data)
+
+        if success:
             d = self.requester_client.provisionConfirmed(reply_to, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id)
             return d
-
-        def notifyProvisionFailure(err):
-            error_msg = _createErrorMessage(err)
-            global_reservation_id = None
+        else:
+            error_msg = _createErrorMessage(result)
             d = self.requester_client.provisionFailed(reply_to, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, 'TERMINATED', error_msg)
-            if err.check(IGNORE_ERRORS):
-                log.msg('Error during provision call (failure has been send to client)')
-                log.err(err)
             return d
-
-        d = defer.maybeDeferred(self.nsi_service.provision, requester_nsa, provider_nsa, session_security_attr, connection_id)
-        d.addCallbacks(notifyProvisionSuccess, notifyProvisionFailure)
-        return d
 
 
     def release(self, correlation_id, reply_to, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
-        def notifyReleaseSuccess(_):
-            # should probably use result somehow
-            global_reservation_id = None
+        data = { 'reply_to'      : reply_to,      'correlation_id'        : correlation_id,
+                 'requester_nsa' : requester_nsa, 'provider_nsa'          : provider_nsa,
+                 'connection_id' : connection_id, 'global_reservation_id' : None }
+        sub = subscription.Subscription(event.RELEASE_RESPONSE, WS_PROTO_EVENT_SYSTEM, data)
+
+        handler = self.event_registry.getHandler(event.RELEASE, event.SYSTEM_SERVICE)
+        d = handler(requester_nsa, provider_nsa, session_security_attr, connection_id, sub)
+        return d
+
+
+    def notifyReleaseResult(self, success, result, data):
+
+        reply_to, correlation_id, requester_nsa, provider_nsa, connection_id, global_reservation_id = self._extractData(data)
+
+        if success:
             d = self.requester_client.releaseConfirmed(reply_to, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id)
             return d
-
-        def notifyReleaseFailure(err):
-            error_msg = _createErrorMessage(err)
-            global_reservation_id = None
+        else:
+            error_msg = _createErrorMessage(result)
             d = self.requester_client.releaseFailed(reply_to, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, 'TERMINATED', error_msg)
-            if err.check(IGNORE_ERRORS):
-                log.msg('Error during release call (failure has been send to client)')
-                log.err(err)
             return d
-
-        d = self.nsi_service.release(requester_nsa, provider_nsa, session_security_attr, connection_id)
-        d.addCallbacks(notifyReleaseSuccess, notifyReleaseFailure)
-        return d
 
 
     def terminate(self, correlation_id, reply_to, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
-        def notifyTerminateSuccess(_):
-            # should probably use result somehow
-            global_reservation_id = None
+        data = { 'reply_to'      : reply_to,      'correlation_id'        : correlation_id,
+                 'requester_nsa' : requester_nsa, 'provider_nsa'          : provider_nsa,
+                 'connection_id' : connection_id, 'global_reservation_id' : None }
+        sub = subscription.Subscription(event.TERMINATE_RESPONSE, WS_PROTO_EVENT_SYSTEM, data)
+
+        handler = self.event_registry.getHandler(event.TERMINATE, event.SYSTEM_SERVICE)
+        d = handler(requester_nsa, provider_nsa, session_security_attr, connection_id, sub)
+        return d
+
+
+    def notifyTerminateResult(self, success, result, data):
+
+        reply_to, correlation_id, requester_nsa, provider_nsa, connection_id, global_reservation_id = self._extractData(data)
+
+        if success:
             d = self.requester_client.terminateConfirmed(reply_to, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id)
             return d
-
-        def notifyTerminateFailure(err):
-            error_msg = _createErrorMessage(err)
-            global_reservation_id = None
+        else:
+            error_msg = _createErrorMessage(result)
             d = self.requester_client.terminateFailed(reply_to, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, 'TERMINATED', error_msg)
-            if err.check(IGNORE_ERRORS):
-                log.msg('Error during release call (failure has been send to client)')
-                log.err(err)
             return d
-
-        d = self.nsi_service.terminate(requester_nsa, provider_nsa, session_security_attr, connection_id)
-        d.addCallbacks(notifyTerminateSuccess, notifyTerminateFailure)
-        return d
 
 
     def query(self, correlation_id, reply_to, requester_nsa, provider_nsa, session_security_attr, operation, connection_ids, global_reservation_ids):
 
-        def notifyQuerySuccess(conns):
-            d = self.requester_client.queryConfirmed(reply_to, correlation_id, requester_nsa, provider_nsa, operation, conns)
-            return d
+        data = { 'reply_to'      : reply_to,      'correlation_id'        : correlation_id,
+                 'requester_nsa' : requester_nsa, 'provider_nsa'          : provider_nsa,
+                 'operation'     : operation,     'connection_ids'        : connection_ids,
+                 'global_reservation_ids' : global_reservation_ids }
 
-        def notifyQueryFailure(err):
-            error_msg = _createErrorMessage(err)
-            d = self.requester_client.queryFailed(reply_to, correlation_id, requester_nsa, provider_nsa, error_msg)
-            if err.check(IGNORE_ERRORS):
-                log.msg('Error during query call (failure has been send to client)')
-                log.err(err)
-            return d
+        sub = subscription.Subscription(event.QUERY_RESPONSE, WS_PROTO_EVENT_SYSTEM, data)
 
-        d = self.nsi_service.query(requester_nsa, provider_nsa, session_security_attr, operation, connection_ids, global_reservation_ids)
-        d.addCallbacks(notifyQuerySuccess, notifyQueryFailure)
+        handler = self.event_registry.getHandler(event.QUERY, event.SYSTEM_SERVICE)
+        d = handler(requester_nsa, provider_nsa, session_security_attr, operation, connection_ids, global_reservation_ids, sub)
         return d
+
+
+    def notifyQueryResult(self, success, result, data):
+
+        reply_to                = data['reply_to']
+        correlation_id          = data['correlation_id']
+        requester_nsa           = data['requester_nsa']
+        provider_nsa            = data['provider_nsa']
+        operation               = data['operation']
+
+        if success:
+            d = self.requester_client.queryConfirmed(reply_to, correlation_id, requester_nsa, provider_nsa, operation, result)
+            return d
+        else:
+            error_msg = _createErrorMessage(result)
+            d = self.requester_client.queryFailed(reply_to, correlation_id, requester_nsa, provider_nsa, error_msg)
+            return d
 

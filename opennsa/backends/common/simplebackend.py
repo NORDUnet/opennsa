@@ -66,7 +66,7 @@ class GenericConnection:
         except error.StateTransitionError:
             return defer.fail(error.ReserveError('Cannot reserve connection in state %s' % self.state()))
 
-        self.scheduler.scheduleTransition(self.service_parameters.start_time, scheduled, state.SCHEDULED)
+        d = self.scheduler.scheduleTransition(self.service_parameters.start_time, scheduled, state.SCHEDULED)
         self.logStateUpdate('RESERVED')
         return defer.succeed(self)
 
@@ -82,6 +82,7 @@ class GenericConnection:
             log.msg('Error setting up connection: %s' % err.getErrorMessage())
             self.state.switchState(state.TERMINATED)
             self.logStateUpdate('TERMINATED')
+            return err
 
         def doProvision(_):
             try:
@@ -92,6 +93,7 @@ class GenericConnection:
 
             d = self.connection_manager.setupLink(self.source_port, self.dest_port)
             d.addCallbacks(provisionSuccess, provisionFailure)
+            return d
 
 
         dt_now = datetime.datetime.utcnow()
@@ -103,12 +105,12 @@ class GenericConnection:
         self.scheduler.cancelTransition() # cancel any pending scheduled switch
 
         if self.service_parameters.start_time <= dt_now:
-            doProvision()
+            defer_provision = doProvision()
         else:
-            self.scheduler.scheduleTransition(self.service_parameters.start_time, doProvision, state.PROVISIONING)
+            defer_provision = self.scheduler.scheduleTransition(self.service_parameters.start_time, doProvision, state.PROVISIONING)
             self.logStateUpdate('PROVISION SCHEDULED')
 
-        return defer.succeed(self)
+        return defer.succeed(self), defer_provision
 
 
 

@@ -2,7 +2,6 @@ This is the OpenNSA issue tracker :-)
 
 General:
 
-  Send provisonConfirmed/Failed when provision actually happens/fail
   Better handling and reporting of aggregation failures (partial or not)
   Investigate error message on connection id
   Persistence for connections
@@ -13,7 +12,6 @@ General:
 Backends:
   Force10 E300 backend
   NCS backend
-  Generic backend for simple setup/teardown deployments (no intermediate NRM)
 
 
 Argia backend:

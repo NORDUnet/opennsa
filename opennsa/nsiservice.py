@@ -10,10 +10,11 @@ import uuid
 from zope.interface import implements
 
 from twisted.python import log
-from twisted.internet import defer
+from twisted.internet import reactor, defer
 
 from opennsa.interface import NSIServiceInterface
-from opennsa import error, topology, connection
+from opennsa import error, event, subscription, topology, connection
+
 
 
 LOG_SYSTEM = 'opennsa.NSIService'
@@ -24,9 +25,10 @@ class NSIService:
 
     implements(NSIServiceInterface)
 
-    def __init__(self, network, backend, topology_sources, client):
+    def __init__(self, network, backend, event_registry, topology_sources, client):
         self.network = network
         self.backend = backend
+        self.event_registry = event_registry
 
         self.topology = topology.parseGOLERDFTopology(topology_sources)
 
@@ -35,6 +37,13 @@ class NSIService:
         self.nsa = self.topology.getNetwork(self.network).nsa
 
         self.connections = {} # persistence, ha!
+
+        self.event_registry.registerEventHandler(event.RESERVE,   self.reserve,   event.SYSTEM_SERVICE)
+        self.event_registry.registerEventHandler(event.PROVISION, self.provision, event.SYSTEM_SERVICE)
+        self.event_registry.registerEventHandler(event.RELEASE,   self.release,   event.SYSTEM_SERVICE)
+        self.event_registry.registerEventHandler(event.TERMINATE, self.terminate, event.SYSTEM_SERVICE)
+        self.event_registry.registerEventHandler(event.QUERY,     self.query,     event.SYSTEM_SERVICE)
+
 
     # utility functionality
 
@@ -68,7 +77,7 @@ class NSIService:
 
     # command functionality
 
-    def reserve(self, requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters):
+    def reserve(self, requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters, sub):
 
         # --
 
@@ -81,7 +90,7 @@ class NSIService:
         source_stp = service_parameters.source_stp
         dest_stp   = service_parameters.dest_stp
 
-        conn = connection.Connection(requester_nsa, connection_id, source_stp, dest_stp, service_parameters, global_reservation_id, description)
+        conn = connection.Connection(self.event_registry, requester_nsa, connection_id, source_stp, dest_stp, service_parameters, global_reservation_id, description)
 
         self.connections.setdefault(requester_nsa, {})[conn.connection_id] = conn
 
@@ -143,69 +152,58 @@ class NSIService:
             for link in selected_path.links():
                 self.setupSubConnection(link.stp1, link.stp2, conn, service_parameters)
 
-        def logReserve(conn):
-            log.msg('Connection %s: Reserve succeeded' % conn.connection_id, system=LOG_SYSTEM)
-            return conn
-
-        def logError(err):
-            log.msg('Connection %s: Reserve failed' % conn.connection_id, system=LOG_SYSTEM)
-            log.err(err, debug=True)
-            return err
-
         # now reserve connections needed to create path
-        d = conn.reserve()
-        d.addCallbacks(logReserve, logError)
-        return d
+        conn.addSubscription(sub)
+        reactor.callWhenRunning(conn.reserve)
+        return defer.succeed(None)
 
 
-    def provision(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
-
-        def provisionSucceeded(conn):
-            log.msg('Connection %s: Provision succeeded' % conn.connection_id, system=LOG_SYSTEM)
-            return conn
+    def provision(self, requester_nsa, provider_nsa, session_security_attr, connection_id, sub):
 
         log.msg('', system=LOG_SYSTEM)
         # security check here
 
         try:
             conn = self.getConnection(requester_nsa, connection_id)
-            d = conn.provision()
-            d.addCallback(provisionSucceeded)
-            return d
+            conn.addSubscription(sub)
+            reactor.callWhenRunning(conn.provision)
+            return defer.succeed(None)
         except error.NoSuchConnectionError, e:
             log.msg('NSA %s requested non-existing connection %s' % (requester_nsa, connection_id), system=LOG_SYSTEM)
             return defer.fail(e)
 
 
-    def release(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
+    def release(self, requester_nsa, provider_nsa, session_security_attr, connection_id, sub):
 
         log.msg('', system=LOG_SYSTEM)
         # security check here
 
         try:
             conn = self.getConnection(requester_nsa, connection_id)
-            d = conn.release()
-            return d
+            conn.addSubscription(sub)
+            reactor.callWhenRunning(conn.release)
+            return defer.succeed(None)
         except error.NoSuchConnectionError, e:
             log.msg('NSA %s requested non-existing connection %s' % (requester_nsa, connection_id), system=LOG_SYSTEM)
             return defer.fail(e)
 
 
-    def terminate(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
+    def terminate(self, requester_nsa, provider_nsa, session_security_attr, connection_id, sub):
 
         log.msg('', system=LOG_SYSTEM)
         # security check here
 
         try:
             conn = self.getConnection(requester_nsa, connection_id)
-            d = conn.terminate()
-            return d
+            conn.addSubscription(sub)
+            reactor.callWhenRunning(conn.terminate)
+            return defer.succeed(None)
         except error.NoSuchConnectionError, e:
             log.msg('NSA %s requested non-existing connection %s' % (requester_nsa, connection_id), system=LOG_SYSTEM)
             return defer.fail(e)
 
 
-    def query(self, requester_nsa, provider_nsa, session_security_attr, operation, connection_ids=None, global_reservation_ids=None):
+    def query(self, requester_nsa, provider_nsa, session_security_attr, operation, connection_ids, global_reservation_ids, sub):
 
         # security check here
 
@@ -230,5 +228,10 @@ class NSIService:
                 if match(conn):
                     conns.append(conn)
 
-        return defer.succeed(conns)
+        if not sub.match(event.QUERY_RESPONSE):
+            log.msg('Got query request with non-query response subscription')
+        else:
+            d = subscription.dispatchNotification(True, conns, sub, self.event_registry)
+
+        return defer.succeed(None)
 

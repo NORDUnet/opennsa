@@ -31,7 +31,7 @@ def _createServiceURL(host, port, ctx_factory=None):
 
 
 
-def createService(network_name, topology_sources, backend, host, port, wsdl_dir, ctx_factory=None):
+def createService(network_name, topology_sources, backend, event_registry, host, port, wsdl_dir, ctx_factory=None):
 
     # reminds an awful lot about client setup
 
@@ -44,10 +44,10 @@ def createService(network_name, topology_sources, backend, host, port, wsdl_dir,
 
     # now provider service
 
-    nsi_service  = nsiservice.NSIService(network_name, backend, topology_sources, nsi_requester)
+    nsi_service  = nsiservice.NSIService(network_name, backend, event_registry, topology_sources, nsi_requester)
 
     requester_client = client.RequesterClient(wsdl_dir, ctx_factory)
-    nsi_provider = provider.Provider(nsi_service, requester_client)
+    nsi_provider = provider.Provider(event_registry, requester_client)
     service.ProviderService(nsi_resource, nsi_provider, wsdl_dir)
 
     return site
@@ -135,7 +135,11 @@ def createApplication(config_file=config.DEFAULT_CONFIG_FILE, tls=True, authz_ve
 
     # setup application
 
-    factory = createService(network_name, topology_sources, backend, host, port, wsdl_dir, ctx_factory)
+    from opennsa import event
+
+    event_registry = event.EventHandlerSubscription()
+
+    factory = createService(network_name, topology_sources, backend, event_registry, host, port, wsdl_dir, ctx_factory)
 
     application = appservice.Application("OpenNSA")
     application.setComponent(ILogObserver, logging.DebugLogObserver(log_file, debug).emit)
