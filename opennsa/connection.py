@@ -256,7 +256,7 @@ class Connection:
         # --
 
         # initial state switch (this validates if the transition is possible)
-        if self.service_parameters.start_time < datetime.datetime.utcnow():
+        if self.service_parameters.start_time > datetime.datetime.utcnow():
             self.state.switchState(state.AUTO_PROVISION)
         else:
             self.state.switchState(state.PROVISIONING)
