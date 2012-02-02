@@ -2,8 +2,6 @@ This is the OpenNSA issue tracker :-)
 
 General:
 
-  Explicit flag for TLS service
-  Better handling and reporting of aggregation failures (partial or not)
   Persistence for connections
   Deal with bandwidth in calendar (requires joint resource concept)
   TLS for client service
