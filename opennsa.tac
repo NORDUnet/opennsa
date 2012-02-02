@@ -2,5 +2,5 @@
 
 from opennsa import setup
 
-application = setup.createApplication('opennsa.conf', tls=False)
+application = setup.createApplication('opennsa.conf')
 
