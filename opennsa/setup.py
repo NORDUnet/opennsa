@@ -67,7 +67,7 @@ def createClient(host, port, wsdl_dir, ctx_factory=None):
 
 
 
-def createApplication(config_file=config.DEFAULT_CONFIG_FILE, tls=True, authz_verify=True, debug=False):
+def createApplication(config_file=config.DEFAULT_CONFIG_FILE, authz_verify=True, debug=False):
 
     cfg = config.readConfig(config_file)
 
@@ -101,21 +101,38 @@ def createApplication(config_file=config.DEFAULT_CONFIG_FILE, tls=True, authz_ve
         host = socket.getfqdn() # this a guess
 
     try:
+        tls = cfg.getboolean(config.BLOCK_SERVICE, config.CONFIG_TLS)
+    except NoOptionError:
+        tls = config.DEFAULT_TLS
+
+    try:
         port = cfg.get(config.BLOCK_SERVICE, config.CONFIG_PORT)
     except NoOptionError:
         port = config.DEFAULT_TLS_PORT if tls else config.DEFAULT_TCP_PORT
 
     ctx_factory = None
-    if tls:
-        from opennsa import ctxfactory
+    try:
+        hostkey  = cfg.get(config.BLOCK_SERVICE, config.CONFIG_HOSTKEY)
+        hostcert = cfg.get(config.BLOCK_SERVICE, config.CONFIG_HOSTCERT)
+        certdir  = cfg.get(config.BLOCK_SERVICE, config.CONFIG_CERTIFICATE_DIR)
         try:
-            hostkey  = cfg.get(config.BLOCK_SERVICE, config.CONFIG_HOSTKEY)
-            hostcert = cfg.get(config.BLOCK_SERVICE, config.CONFIG_HOSTCERT)
-            certdir  = cfg.get(config.BLOCK_SERVICE, config.CONFIG_CERTIFICATE_DIR)
-            verify   = cfg.get(config.BLOCK_SERVICE, config.CONFIG_VERIFY)
-            ctx_factory = ctxfactory.ContextFactory(hostkey, hostcert, certdir, verify)
+            verify = cfg.get(config.BLOCK_SERVICE, config.CONFIG_VERIFY)
         except NoOptionError, e:
-            raise ConfigurationError('Missing TLS options (%s)' % str(e))
+            verify = config.DEFAULT_VERIFY
+
+        if not os.path.exists(hostkey):
+            raise ConfigurationError('Specified hostkey does not exists (%s)' % hostkey)
+        if not os.path.exists(hostcert):
+            raise ConfigurationError('Specified hostcert does not exists (%s)' % hostcert)
+        if not os.path.exists(certdir):
+            raise ConfigurationError('Specified certdir does not exists (%s)' % certdir)
+
+        from opennsa import ctxfactory
+        ctx_factory = ctxfactory.ContextFactory(hostkey, hostcert, certdir, verify)
+    except NoOptionError, e:
+        # Not enough options for configuring tls context
+        if tls:
+            raise ConfigurationError('Missing TLS option: %s' % str(e))
 
     # backend
 
@@ -137,7 +154,7 @@ def createApplication(config_file=config.DEFAULT_CONFIG_FILE, tls=True, authz_ve
 
     from opennsa import event
 
-    event_registry = event.EventHandlerSubscription()
+    event_registry = event.EventHandlerRegistry()
 
     factory = createService(network_name, topology_sources, backend, event_registry, host, port, wsdl_dir, ctx_factory)
 

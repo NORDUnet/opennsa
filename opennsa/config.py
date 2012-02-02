@@ -12,6 +12,7 @@ import ConfigParser
 # defaults
 DEFAULT_CONFIG_FILE     = '/etc/opennsa.conf'
 DEFAULT_LOG_FILE        = '/var/log/opennsa.log'
+DEFAULT_TLS             = 'true'
 DEFAULT_TOPOLOGY_FILE   = '/usr/share/nsi/topology.owl'
 DEFAULT_WSDL_DIRECTORY  = '/usr/share/nsi/wsdl'
 DEFAULT_TCP_PORT        = 9080
@@ -30,11 +31,12 @@ CONFIG_NETWORK_NAME     = 'network'     # mandatory
 CONFIG_LOG_FILE         = 'logfile'
 CONFIG_HOST             = 'host'
 CONFIG_PORT             = 'port'
+CONFIG_TLS              = 'tls'
 CONFIG_TOPOLOGY_FILE    = 'topology'
 CONFIG_WSDL_DIRECTORY   = 'wsdl'
 
-CONFIG_HOSTKEY          = 'hostkey'     # mandatory
-CONFIG_HOSTCERT         = 'hostcert'    # mandatory
+CONFIG_HOSTKEY          = 'hostkey'     # mandatory, if tls is set
+CONFIG_HOSTCERT         = 'hostcert'    # mandatory, if tls is set
 CONFIG_CERTIFICATE_DIR  = 'certdir'     # mandatory (but dir can be empty)
 CONFIG_VERIFY           = 'verify'
 
