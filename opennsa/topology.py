@@ -6,7 +6,6 @@ Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2011)
 """
 
-import json
 import StringIO
 from xml.etree import ElementTree as ET
 
@@ -207,34 +206,6 @@ class Topology:
 
     def __str__(self):
         return '\n'.join( [ str(n) for n in self.networks ] )
-
-
-
-
-def parseJSONTopology(topology_source):
-
-    if isinstance(topology_source, file) or isinstance(topology_source, StringIO.StringIO):
-        topology_data = json.load(topology_source)
-    elif isinstance(topology_source, str):
-        topology_data = json.loads(topology_source)
-    else:
-        raise error.TopologyError('Invalid topology source')
-
-    topo = Topology()
-
-    for network_name, network_info in topology_data.items():
-        nn = nsa.NetworkServiceAgent(str(network_info['address']))
-        nw = nsa.Network(network_name, nn)
-        for epd in network_info.get('endpoints', []):
-            dest_stp = None
-            if 'dest-network' in epd and 'dest-ep' in epd:
-                dest_stp = nsa.STP( epd['dest-network'], epd['dest-ep'] )
-            ep = nsa.NetworkEndpoint(network_name, epd['name'], epd['config'], dest_stp, epd.get('max-capacity'), epd.get('available-capacity'))
-            nw.addEndpoint(ep)
-
-        topo.addNetwork(nw)
-
-    return topo
 
 
 
