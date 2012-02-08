@@ -40,7 +40,7 @@ STP_PREFIX       = 'urn:ogf:network:stp:'
 
 
 def _stripPrefix(text, prefix):
-    assert text.startswith(prefix), 'Text did not start with specified prefix'
+    assert text.startswith(prefix), 'Text did not start with specified prefix (text: %s, prefix: %s)' % (text, prefix)
     ul = len(prefix)
     return text[ul:]
 
@@ -366,6 +366,8 @@ def parseGOLERDFTopology(topology_sources):
             stp_name = stp_name[len(network_name) + 1:] # strip network name of stp
 
             nrm_port = graph.value(subject=stp, predicate=DTOX['mapsTo'])
+            if nrm_port:
+                nrm_port = str(nrm_port)
 
             dest_stp = graph.value(subject=stp, predicate=DTOX['connectedTo'])
             # If there is a destination, add that, otherwise the value stays None.
@@ -374,6 +376,7 @@ def parseGOLERDFTopology(topology_sources):
                 dest_network_name = _stripPrefix(str(dest_network), NSNETWORK_PREFIX)
                 dest_stp_name = _stripPrefix(str(dest_stp), STP_PREFIX + dest_network_name + ":")
                 dest_stp = nsa.STP(dest_network_name, dest_stp_name)
+
             ep = nsa.NetworkEndpoint(network_name, stp_name, nrm_port, dest_stp, None, None)
             network.addEndpoint(ep)
 

@@ -25,6 +25,8 @@ LOG_SYSTEM = 'opennsa.nsa'
 class STP: # Service Termination Point
 
     def __init__(self, network, endpoint):
+        assert type(network) is str, 'Invalid network type provided for STP initialization'
+        assert type(endpoint) is str, 'Invalid endpoint type provided for STP initialization'
         self.network = network
         self.endpoint = endpoint
 
@@ -113,6 +115,8 @@ class NetworkEndpoint(STP):
 
     def __init__(self, network, endpoint, nrm_port=None, dest_stp=None, max_capacity=None, available_capacity=None):
         STP.__init__(self, network, endpoint)
+        if nrm_port is not None:
+            assert type(nrm_port) is str, 'Invalid nrm_port type provided for NetworkEndpoint initialization'
         self.nrm_port = nrm_port
         self.dest_stp = dest_stp
         self.max_capacity = max_capacity
