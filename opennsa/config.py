@@ -24,6 +24,7 @@ DEFAULT_VERIFY          = 'true'
 BLOCK_SERVICE    = 'service'
 BLOCK_DUD        = 'dud'
 BLOCK_JUNOS      = 'junos'
+BLOCK_FORCE10    = 'force10'
 BLOCK_ARGIA      = 'argia'
 
 # service block
@@ -40,6 +41,15 @@ CONFIG_HOSTCERT         = 'hostcert'    # mandatory, if tls is set
 CONFIG_CERTIFICATE_DIR  = 'certdir'     # mandatory (but dir can be empty)
 CONFIG_VERIFY           = 'verify'
 
+# force10 block
+FORCE10_HOST            = 'host'
+FORCE10_PORT            = 'port'
+FORCE10_USER            = 'user'
+FORCE10_HOST_FINGERPRINT = 'fingerprint'
+FORCE10_SSH_PUBLIC_KEY  = 'publickey'
+FORCE10_SSH_PRIVATE_KEY = 'privatekey'
+
+# argia block
 ARGIA_COMMAND_DIR       = 'commanddir'
 ARGIA_COMMAND_BIN       = 'commandbin'
 

@@ -106,7 +106,7 @@ def createApplication(config_file=config.DEFAULT_CONFIG_FILE, authz_verify=True,
         tls = config.DEFAULT_TLS
 
     try:
-        port = cfg.get(config.BLOCK_SERVICE, config.CONFIG_PORT)
+        port = cfg.getint(config.BLOCK_SERVICE, config.CONFIG_PORT)
     except NoOptionError:
         port = config.DEFAULT_TLS_PORT if tls else config.DEFAULT_TCP_PORT
 
@@ -142,6 +142,9 @@ def createApplication(config_file=config.DEFAULT_CONFIG_FILE, authz_verify=True,
     elif config.BLOCK_JUNOS in cfg.sections():
         from opennsa.backends import junos
         backend = junos.JunOSBackend(network_name)
+    elif config.BLOCK_FORCE10 in cfg.sections():
+        from opennsa.backends import force10
+        backend = force10.Force10Backend(network_name, cfg.items(config.BLOCK_FORCE10))
     elif config.BLOCK_ARGIA in cfg.sections():
         command_dir = cfg.get(config.BLOCK_ARGIA, config.ARGIA_COMMAND_DIR)
         command_bin = cfg.get(config.BLOCK_ARGIA, config.ARGIA_COMMAND_BIN)
