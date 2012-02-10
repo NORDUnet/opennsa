@@ -27,12 +27,10 @@ OpenNSA JunOS backend.
 #
 
 from twisted.python import log
-from twisted.internet import defer, protocol, reactor, endpoints
-from twisted.conch import error as concherror
-from twisted.conch.ssh import transport, keys, userauth, connection, channel
+from twisted.internet import defer
 
-from opennsa import error
-from opennsa.backends.common import calendar as reservationcalendar, simplebackend
+from opennsa import error, config
+from opennsa.backends.common import calendar as reservationcalendar, simplebackend, ssh
 
 
 
@@ -61,16 +59,20 @@ COMMAND_DELETE_CONNECTIONS  = 'delete protocols connections interface-switch %(n
 
 LOG_SYSTEM = 'opennsa.JunOS'
 
-PORT_NAME = {
-    'ge-1/0/5'  : 'ams', # amsterdam
-    'ge-1/1/9'  : 'ps'   # perfsonar
-}
-
 
 def portToInterfaceVLAN(nrm_port):
 
     port, vlan = nrm_port.split('.')
     return port, vlan
+
+
+def createSwitchName(source_port, dest_port, source_vlan, dest_vlan):
+
+    sp = source_port.replace('/','').replace('-','')
+    dp = dest_port.replace('/','').replace('-','')
+
+    switch_name = 'nsi-%s-%s-%s' % (sp, dp, source_vlan)
+    return switch_name
 
 
 def createConfigureCommands(source_nrm_port, dest_nrm_port):
@@ -80,7 +82,7 @@ def createConfigureCommands(source_nrm_port, dest_nrm_port):
 
     assert s_vlan == d_vlan, 'Source and destination VLANs differ, unpossible!'
 
-    switch_name = 'nsi-%s-%s-%s' % (PORT_NAME.get(s_port, 'na'), PORT_NAME.get(d_port, 'na'), s_vlan)
+    switch_name = createSwitchName(s_port, d_port, s_vlan, d_vlan)
 
     cfg_conn_source = COMMAND_SET_CONNECTIONS % {'name':switch_name, 'interface':source_nrm_port }
     cfg_conn_dest   = COMMAND_SET_CONNECTIONS % {'name':switch_name, 'interface':dest_nrm_port   }
@@ -98,7 +100,7 @@ def createDeleteCommands(source_nrm_port, dest_nrm_port):
 
     assert s_vlan == d_vlan, 'Source and destination VLANs differ, unpossible!'
 
-    switch_name = 'nsi-%s-%s-%s' % (PORT_NAME.get(s_port, 'na'), PORT_NAME.get(d_port, 'na'), s_vlan)
+    switch_name = createSwitchName(s_port, d_port, s_vlan, d_vlan)
 
     del_intf_source = COMMAND_DELETE_INTERFACES  % {'port':s_port, 'vlan': s_vlan }
     del_intf_dest   = COMMAND_DELETE_INTERFACES  % {'port':d_port, 'vlan': d_vlan }
@@ -108,96 +110,23 @@ def createDeleteCommands(source_nrm_port, dest_nrm_port):
     return commands
 
 
-# ----
 
-
-class SSHClientTransport(transport.SSHClientTransport):
-
-    def __init__(self, fingerprints=None):
-        self.fingerprints = fingerprints or []
-        self.secure_defer = defer.Deferred()
-
-
-    def verifyHostKey(self, public_key, fingerprint):
-        if fingerprint in self.fingerprints:
-            return defer.succeed(1)
-        else:
-            return defer.fail(concherror.ConchError('Fingerprint not accepted'))
-
-
-    def connectionSecure(self):
-        self.secure_defer.callback(self)
-
-
-
-class SSHClientFactory(protocol.ClientFactory):
-
-    protocol = SSHClientTransport
-
-    def __init__(self, fingerprints=None):
-        # ClientFactory has no __init__ method, so we don't call it
-        self.fingerprints = fingerprints or []
-
-
-    def buildProtocol(self, addr):
-
-        p = self.protocol(self.fingerprints)
-        p.factory = self
-        return p
-
-
-
-class ClientUserAuth(userauth.SSHUserAuthClient):
-
-    def __init__(self, user, connection, public_key_path, private_key_path):
-        userauth.SSHUserAuthClient.__init__(self, user, connection)
-        self.public_key_path    = public_key_path
-        self.private_key_path   = private_key_path
-
-    def getPassword(self, prompt = None):
-        return # this says we won't do password authentication
-
-    def getPublicKey(self):
-        return keys.Key.fromFile(self.public_key_path)
-
-    def getPrivateKey(self):
-        return defer.succeed( keys.Key.fromFile(self.private_key_path) )
-
-
-
-class SSHConnection(connection.SSHConnection):
-
-    def __init__(self):
-        connection.SSHConnection.__init__(self)
-        self.service_started = defer.Deferred()
-
-    def serviceStarted(self):
-        self.service_started.callback(self)
-
-
-
-class SSHChannel(channel.SSHChannel):
+class SSHChannel(ssh.SSHChannel):
 
     name = 'session'
 
-    def __init__(self, localWindow = 0, localMaxPacket = 0, remoteWindow = 0, remoteMaxPacket = 0, conn = None, data=None, avatar = None):
-        channel.SSHChannel.__init__(self, localWindow = 0, localMaxPacket = 0, remoteWindow = 0, remoteMaxPacket = 0, conn = None, data=None, avatar = None)
-        self.channel_open = defer.Deferred()
+    def __init__(self, conn):
+        ssh.SSHChannel.__init__(self, conn=conn)
 
         self.line = ''
 
         self.wait_defer = None
         self.wait_line  = None
 
-    def channelOpen(self, data):
-        self.channel_open.callback(self)
-        #print "CHANNEL OPEN"
-
 
     @defer.inlineCallbacks
     def sendCommands(self, commands):
         LT = '\r' # line termination
-        #log.msg('sendCommands', system=LOG_SYSTEM)
 
         try:
             yield self.conn.sendRequest(self, 'shell', '', wantReply=1)
@@ -206,7 +135,7 @@ class SSHChannel(channel.SSHChannel):
             self.write(COMMAND_CONFIGURE + LT)
             yield d
 
-            log.msg('Entered configure mode', system=LOG_SYSTEM)
+            log.msg('Entered configure mode', debug=True, system=LOG_SYSTEM)
 
             for cmd in commands:
                 log.msg('CMD> %s' % cmd, system=LOG_SYSTEM)
@@ -217,9 +146,9 @@ class SSHChannel(channel.SSHChannel):
             # commit commands, check for 'commit complete' as success
             # not quite sure how to handle failure here
 
-#            # test stuff
-#            d = self.waitForLine('[edit]')
-#            self.write('commit check' + LT)
+            ## test stuff
+            #d = self.waitForLine('[edit]')
+            #self.write('commit check' + LT)
 
             d = self.waitForLine('commit complete')
             self.write(COMMAND_COMMIT + LT)
@@ -229,14 +158,10 @@ class SSHChannel(channel.SSHChannel):
             log.msg('Error sending commands: %s' % str(e))
             raise e
 
-        log.msg('Commands successfully committed', system=LOG_SYSTEM)
+        log.msg('Commands successfully committed', debug=True, system=LOG_SYSTEM)
         self.sendEOF()
         self.closeIt()
 
-
-    def request_exit_status(self, data):
-        if data and len(data) != 4:
-            log.msg('Exit status data: %s' % data, system=LOG_SYSTEM)
 
     def waitForLine(self, line):
         self.wait_line = line
@@ -253,16 +178,6 @@ class SSHChannel(channel.SSHChannel):
                 d.callback(self)
             else:
                 pass
-
-
-    def sendEOF(self, passthru=None):
-        self.conn.sendEOF(self)
-        return passthru
-
-
-    def closeIt(self, passthru=None):
-        self.loseConnection()
-        return passthru
 
 
     def dataReceived(self, data):
@@ -282,88 +197,52 @@ class SSHChannel(channel.SSHChannel):
 class JunOSCommandSender:
 
 
-    def __init__(self):
+    def __init__(self, host, port, ssh_host_fingerprint, user, ssh_public_key_path, ssh_private_key_path):
+
+        self.ssh_connection_creator = \
+             ssh.SSHConnectionCreator(host, port, [ ssh_host_fingerprint ], user, ssh_public_key_path, ssh_private_key_path)
+
         self.ssh_connection = None # cached connection
 
 
-    def createTCPConnection(self):
-        # sets up base connection and verifies host
-        def hostVerified(client, proto):
-            return proto
-
-        def gotProtocol(proto):
-            proto.secure_defer.addCallback(hostVerified, proto)
-            self.proto = proto
-            return proto.secure_defer
-
-        log.msg('Creating new TCP connection', system=LOG_SYSTEM) # Can be removed, once we are working and not eating connections
-        factory = SSHClientFactory( [ JUNOS_HOST_FINGERPRINT ] )
-        point = endpoints.TCP4ClientEndpoint(reactor, JUNOS_HOST, JUNOS_HOST_PORT)
-        d = point.connect(factory)
-        d.addCallback(gotProtocol)
-        return d
-
-
-    def getSSHConnection(self):
-
-        def gotSSHConnection(ssh_connection):
-            # save ssh connection so we can reuse it later
-            self.ssh_connection = ssh_connection
-            return self.ssh_connection
-
-        def gotTCPConnection(proto):
-            ssh_connection = SSHConnection()
-            proto.requestService(ClientUserAuth(USERNAME, ssh_connection, PUBLIC_KEY_PATH, PRIVATE_KEY_PATH))
-            ssh_connection.service_started.addCallback(gotSSHConnection)
-            return ssh_connection.service_started
-
-        # should check if there is an existing protocol in place
-        if self.ssh_connection:
-            log.msg('Reusing SSH connection', system=LOG_SYSTEM)
-            return defer.succeed(self.ssh_connection)
-
-        log.msg('Creating new SSH connection', system=LOG_SYSTEM)
-        d = self.createTCPConnection()
-        d.addCallback(gotTCPConnection)
-        return d
-
-
-    def getSSHChannel(self):
+    def _getSSHChannel(self):
 
         def gotSSHConnection(ssh_connection):
             channel = SSHChannel(conn = ssh_connection)
             ssh_connection.openChannel(channel)
             return channel.channel_open
 
-        d = self.getSSHConnection()
-        d.addCallback(gotSSHConnection)
+        if self.ssh_connection:
+            log.msg('Reusing SSH connection', debug=True, system=LOG_SYSTEM)
+            return gotSSHConnection(self.ssh_connection)
+        else:
+            log.msg('Creating new SSH connection', debug=True, system=LOG_SYSTEM)
+            d = self.ssh_connection_creator.getSSHConnection()
+            d.addCallback(gotSSHConnection)
+            return d
+
+
+    def _sendCommands(self, commands):
+
+        def gotChannel(channel):
+            d = channel.sendCommands(commands)
+            return d
+
+        d = self._getSSHChannel()
+        d.addCallback(gotChannel)
         return d
 
 
     def setupLink(self, source_nrm_port, dest_nrm_port):
 
         commands = createConfigureCommands(source_nrm_port, dest_nrm_port)
-
-        def gotChannel(channel):
-            d = channel.sendCommands(commands)
-            return d
-
-        d = self.getSSHChannel()
-        d.addCallback(gotChannel)
-        return d
+        return self._sendCommands(commands)
 
 
     def teardownLink(self, source_nrm_port, dest_nrm_port):
 
         commands = createDeleteCommands(source_nrm_port, dest_nrm_port)
-
-        def gotChannel(channel):
-            d = channel.sendCommands(commands)
-            return d
-
-        d = self.getSSHChannel()
-        d.addCallback(gotChannel)
-        return d
+        return self._sendCommands(commands)
 
 
 # --------
@@ -371,10 +250,21 @@ class JunOSCommandSender:
 
 class JunOSBackend:
 
-    def __init__(self, network_name):
+    def __init__(self, network_name, configuration):
         self.network_name = network_name
-        self.command_sender = JunOSCommandSender()
         self.calendar = reservationcalendar.ReservationCalendar()
+
+        # extract config items
+        cfg_dict = dict(configuration)
+
+        host             = cfg_dict[config.JUNOS_HOST]
+        port             = cfg_dict.get(config.JUNOS_PORT, 22)
+        host_fingerprint = cfg_dict[config.JUNOS_HOST_FINGERPRINT]
+        user             = cfg_dict[config.JUNOS_USER]
+        ssh_public_key   = cfg_dict[config.JUNOS_SSH_PUBLIC_KEY]
+        ssh_private_key  = cfg_dict[config.JUNOS_SSH_PRIVATE_KEY]
+
+        self.command_sender = JunOSCommandSender(host, port, host_fingerprint, user, ssh_public_key, ssh_private_key)
 
 
     def createConnection(self, source_nrm_port, dest_nrm_port, service_parameters):
@@ -394,8 +284,8 @@ class JunOSBackend:
 
 
     def _checkVLANMatch(self, source_nrm_port, dest_nrm_port):
-        source_vlan = source_nrm_port.split('.',1)[1]
-        dest_vlan = dest_nrm_port.split('.',1)[1]
+        _, source_vlan = portToInterfaceVLAN(source_nrm_port)
+        _, dest_vlan   = portToInterfaceVLAN(dest_nrm_port)
         if source_vlan != dest_vlan:
             raise error.InvalidRequestError('Cannot create connection between different VLANs.')
 

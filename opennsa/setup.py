@@ -152,7 +152,7 @@ def createApplication(config_file=config.DEFAULT_CONFIG_FILE, authz_verify=True,
         backend = dud.DUDNSIBackend(network_name)
     elif config.BLOCK_JUNOS in cfg.sections():
         from opennsa.backends import junos
-        backend = junos.JunOSBackend(network_name)
+        backend = junos.JunOSBackend(network_name, cfg.items(config.BLOCK_JUNOS))
     elif config.BLOCK_FORCE10 in cfg.sections():
         from opennsa.backends import force10
         backend = force10.Force10Backend(network_name, cfg.items(config.BLOCK_FORCE10))
@@ -170,7 +170,7 @@ def createApplication(config_file=config.DEFAULT_CONFIG_FILE, authz_verify=True,
 
     event_registry = event.EventHandlerRegistry()
 
-    factory = createService(network_name, topology_sources, backend, event_registry, host, port, wsdl_dir, ctx_factory)
+    factory = createService(network_name, topology_sources, backend, event_registry, host, port, wsdl_dir, ctx_factory, nrm_map_source)
 
     application = appservice.Application("OpenNSA")
     application.setComponent(ILogObserver, logging.DebugLogObserver(log_file, debug).emit)
