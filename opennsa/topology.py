@@ -263,7 +263,7 @@ def _parseNRMMapping(nrm_mapping_source):
 
     if isinstance(nrm_mapping_source, file) or isinstance(nrm_mapping_source, StringIO.StringIO):
         source = nrm_mapping_source
-    if isinstance(nrm_mapping_source, str):
+    elif isinstance(nrm_mapping_source, str):
         from StringIO import StringIO
         source = StringIO(nrm_mapping_source)
     else:
@@ -282,6 +282,8 @@ def _parseNRMMapping(nrm_mapping_source):
         if not m:
             continue
         stp, nrm_port = m.groups()
+        stp = stp.strip()
+        nrm_port = nrm_port.strip()
         assert stp.startswith(STP_PREFIX), 'Invalid STP specified in NRM Mapping'
 
         triples.append( (stp, str(GLIF_MAPS_TO), nrm_port ) )
