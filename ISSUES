@@ -5,10 +5,10 @@ General:
   Persistence for connections
   Deal with bandwidth in calendar (requires joint resource concept)
   TLS for client service
+  Profiling of protocol stack / backends
 
 
 Backends:
-  Force10 E300 backend
   NCS backend
 
 
