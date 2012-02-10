@@ -35,7 +35,7 @@ class ServiceTest(unittest.TestCase):
             topo_source = StringIO.StringIO(testtopology.TEST_TOPOLOGY)
             backend = dud.DUDNSIBackend(network)
             es = event.EventHandlerRegistry()
-            factory = setup.createService(network, [ (topo_source, 'xml') ], backend, es, HOST, port, WSDL_DIR)
+            factory = setup.createService(network, [ topo_source ], backend, es, HOST, port, WSDL_DIR)
 
             iport = reactor.listenTCP(port, factory, interface='localhost')
             self.iports.append(iport)

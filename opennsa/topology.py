@@ -1,36 +1,51 @@
 """
 OpenNSA topology database and parser.
 
-Author: Henrik Thostrup Jensen <htj@nordu.net>
+Should probably split out the parser and topology DTO for itself sometime.
 
-Copyright: NORDUnet (2011)
+Author: Henrik Thostrup Jensen <htj@nordu.net>
+        Jeroen van der Ham <vdham@uva.nl>
+
+Copyright: NORDUnet (2011-2012)
 """
 
+import re
 import StringIO
 from xml.etree import ElementTree as ET
-
-import rdflib
 
 from opennsa import nsa, error
 
 
 # Constants for parsing GOLE topology format
-OWL_NS  = 'http://www.w3.org/2002/07/owl#'
-RDF_NS  = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'
-DTOX_NS = 'http://www.glif.is/working-groups/tech/dtox#'
+RDF_SCHEMA_NS   = 'http://www.w3.org/2000/01/rdf-schema#'
+RDF_SYNTAX_NS   = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'
+OWL_NS          = 'http://www.w3.org/2002/07/owl#'
+DTOX_NS         = 'http://www.glif.is/working-groups/tech/dtox#'
 
-NAMED_INDIVIDUAL        = ET.QName('{%s}NamedIndividual' % OWL_NS)
-RDF_ABOUT               = ET.QName('{%s}about' % RDF_NS)
-RDF_TYPE                = ET.QName('{%s}type' % RDF_NS)
-RDF_RESOURCE            = ET.QName('{%s}resource' % RDF_NS)
 
-GLIF_HAS_STP            = ET.QName('{%s}hasSTP'             % DTOX_NS)
-GLIF_CONNECTED_TO       = ET.QName('{%s}connectedTo'        % DTOX_NS)
-GLIF_MAPS_TO            = ET.QName('{%s}mapsTo'             % DTOX_NS)
-GLIF_MAX_CAPACITY       = ET.QName('{%s}maxCapacity'        % DTOX_NS)
-GLIF_AVAILABLE_CAPACITY = ET.QName('{%s}availableCapacity'  % DTOX_NS)
-GLIF_MANAGED_BY         = ET.QName('{%s}managedBy'          % DTOX_NS)
-GLIF_PROVIDER_ENDPOINT  = ET.QName('{%s}csProviderEndpoint' % DTOX_NS)
+RDF_ABOUT               = '{%s}about'      % RDF_SYNTAX_NS
+RDF_TYPE                = '{%s}type'       % RDF_SYNTAX_NS
+RDF_RESOURCE            = '{%s}resource'   % RDF_SYNTAX_NS
+
+RDF_COMMENT             = '{%s}comment'    % RDF_SCHEMA_NS
+RDF_LABEL               = '{%s}label'      % RDF_SCHEMA_NS
+
+NAMED_INDIVIDUAL        = '{%s}NamedIndividual' % OWL_NS
+PART_OF                 = '{%s}partOf'          % OWL_NS
+
+GLIF_HAS_STP            = '{%s}hasSTP'             % DTOX_NS
+GLIF_CONNECTED_TO       = '{%s}connectedTo'        % DTOX_NS
+GLIF_MAPS_TO            = '{%s}mapsTo'             % DTOX_NS
+GLIF_MAX_CAPACITY       = '{%s}maxCapacity'        % DTOX_NS
+GLIF_AVAILABLE_CAPACITY = '{%s}availableCapacity'  % DTOX_NS
+GLIF_MANAGING           = '{%s}managing'           % DTOX_NS
+GLIF_HOST_NAME          = '{%s}hostName'           % DTOX_NS
+GLIF_CAN_SWAP           = '{%s}canSwap'            % DTOX_NS
+GLIF_MANAGED_BY         = '{%s}managedBy'          % DTOX_NS
+GLIF_ADMIN_CONTACT      = '{%s}adminContact'       % DTOX_NS
+GLIF_PROVIDER_ENDPOINT  = '{%s}csProviderEndpoint' % DTOX_NS
+
+GLIF_NETWORK            = DTOX_NS + 'NSNetwork'
 
 NSNETWORK_PREFIX = 'urn:ogf:network:nsnetwork:'
 NSA_PREFIX       = 'urn:ogf:network:nsa:'
@@ -208,8 +223,10 @@ class Topology:
         return '\n'.join( [ str(n) for n in self.networks ] )
 
 
+### Topology parsing
 
-def parseGOLETopology(topology_source):
+
+def _parseOWLTopology(topology_source):
 
     if isinstance(topology_source, file) or isinstance(topology_source, StringIO.StringIO):
         doc = ET.parse(topology_source)
@@ -218,141 +235,115 @@ def parseGOLETopology(topology_source):
     else:
         raise error.TopologyError('Invalid topology source')
 
-    def stripGLIFPrefix(text):
-        assert text.startswith(DTOX_NS)
-        return text.split(DTOX_NS)[1]
+    triples = []
 
-    stps = {}
-    nsas = {}
-    networks = {}
-
-    for e in doc.getiterator():
+    root = doc.getroot()
+    for e in root.getchildren():
 
         if e.tag == NAMED_INDIVIDUAL:
+            resource = e.attrib[RDF_ABOUT]
+            for el in e.getchildren():
+                if   el.tag == RDF_TYPE:                triples.append( (resource, str(RDF_TYPE),           el.attrib.values()[0]) )
+                elif el.tag == GLIF_CONNECTED_TO:       triples.append( (resource, str(GLIF_CONNECTED_TO),  el.attrib.values()[0]) )
+                elif el.tag == GLIF_HAS_STP:            triples.append( (resource, str(GLIF_HAS_STP),       el.attrib.values()[0]) )
+                elif el.tag == GLIF_MAPS_TO:            triples.append( (resource, str(GLIF_MAPS_TO),       el.text or el.attrib.values()[0]) )
+                elif el.tag == GLIF_PROVIDER_ENDPOINT:  triples.append( (resource, str(GLIF_PROVIDER_ENDPOINT), el.text) )
+                elif el.tag == GLIF_MANAGED_BY:         triples.append( (resource, str(GLIF_MANAGED_BY),    el.attrib.values()[0]) )
+                # We don't care about these
+                elif el.tag in (RDF_COMMENT, RDF_LABEL, PART_OF, GLIF_MANAGING, GLIF_ADMIN_CONTACT, GLIF_HOST_NAME, GLIF_CAN_SWAP):
+                    pass
+                else:
+                    print 'Unknow tag type in topology: %s' % el.tag
 
-            # determine indivdual (resource) type
-            se = e.getiterator(RDF_TYPE)[0]
-            rt = stripGLIFPrefix(se.attrib[RDF_RESOURCE])
-            rt_name = e.attrib[RDF_ABOUT]
+    return triples
 
-            if rt == 'STP':
-                connected_to = None
-                maps_to = None
-                for ct in e.getiterator(GLIF_CONNECTED_TO):
-                    connected_to = ct.attrib[RDF_RESOURCE]
-                for ct in e.getiterator(GLIF_MAPS_TO):
-                    maps_to = ct.attrib[RDF_RESOURCE]
-                stps[rt_name] = { 'connected_to' : connected_to, 'maps_to' : maps_to }
 
-            elif rt == 'NSNetwork':
-                ns_stps = []
-                for sse in e.getiterator(GLIF_HAS_STP):
-                    ns_stps.append( sse.attrib[RDF_RESOURCE] )
-                ns_nsa = None
-                for mb in e.getiterator(GLIF_MANAGED_BY):
-                    ns_nsa = mb.attrib[RDF_RESOURCE]
-                networks[rt_name] = { 'stps': ns_stps, 'nsa' : ns_nsa }
 
-            elif rt == 'NSA':
-                endpoint = None
-                for cpe in e.getiterator(GLIF_PROVIDER_ENDPOINT):
-                    endpoint = cpe.text
-                nsas[rt_name] = { 'endpoint' : endpoint }
+def _parseNRMMapping(nrm_mapping_source):
 
-            elif rt == 'Location':
-                pass # we don't use that currently (in OpenNSA)
+    if isinstance(nrm_mapping_source, file) or isinstance(nrm_mapping_source, StringIO.StringIO):
+        source = nrm_mapping_source
+    if isinstance(nrm_mapping_source, str):
+        from StringIO import StringIO
+        source = StringIO(nrm_mapping_source)
+    else:
+        raise error.TopologyError('Invalid NRM Mapping Source')
 
+    # regular expression for matching nrm mapping lines
+    NRM_MAP_RX = re.compile('''\s*(.*)\s*"(.*)"''')
+
+    triples = []
+
+    for line in source:
+        line = line.strip()
+        if line.startswith('#'):
+            continue
+        m = NRM_MAP_RX.match(line)
+        if not m:
+            continue
+        stp, nrm_port = m.groups()
+        assert stp.startswith(STP_PREFIX), 'Invalid STP specified in NRM Mapping'
+
+        triples.append( (stp, str(GLIF_MAPS_TO), nrm_port ) )
+
+    return triples
+
+
+
+def parseTopology(topology_sources, nrm_mapping_source=None):
+
+    triples = []
+
+    for ts in topology_sources:
+        triples += _parseOWLTopology(ts)
+
+    if nrm_mapping_source:
+        triples += _parseNRMMapping(nrm_mapping_source)
+
+    # extract topology from triples
+
+    triples.sort() # not really needed (but makes it easy to when printing)
+
+    def getSubject(pred, obj):
+        return [ t[0] for t in triples if t[1] == pred and t[2] == obj ]
+
+    def getObjects(subj, pred):
+        return [ t[2] for t in triples if t[0] == subj and t[1] == pred ]
+
+    topo = Topology()
+
+    networks = getSubject(RDF_TYPE, GLIF_NETWORK)
+
+    for network in networks:
+
+        nsas = getObjects(network, GLIF_MANAGED_BY)
+        endpoints = getObjects(nsas[0], GLIF_PROVIDER_ENDPOINT)
+
+        t_network_name  = _stripPrefix(network, NSNETWORK_PREFIX)
+        t_nsa_name      = _stripPrefix(nsas[0], NSA_PREFIX)
+        t_nsa_endpoint  = endpoints[0]
+
+        t_network_nsa = nsa.NetworkServiceAgent(t_nsa_name, t_nsa_endpoint)
+        t_network = nsa.Network(t_network_name, t_network_nsa)
+
+        stps = getObjects(network, GLIF_HAS_STP)
+        for stp in stps:
+            t_stp_name = _stripPrefix(stp, STP_PREFIX).split(':')[-1]
+
+            maps_to = getObjects(stp, GLIF_MAPS_TO)
+            t_maps_to = maps_to[0] if maps_to else None
+
+            dest_stps = getObjects(stp, GLIF_CONNECTED_TO)
+            if dest_stps:
+                dest_network, dest_port = _stripPrefix(dest_stps[0], STP_PREFIX).split(':',1)
+                t_dest_stp = nsa.STP(dest_network, dest_port)
             else:
-                print "Unknown Topology Resource", rt
+                t_dest_stp = None
 
+            ep = nsa.NetworkEndpoint(t_network_name, t_stp_name, t_maps_to, t_dest_stp, None, None)
+            t_network.addEndpoint(ep)
 
-    NSNETWORK_PREFIX = 'urn:ogf:network:nsnetwork:'
-    NSA_PREFIX       = 'urn:ogf:network:nsa:'
-    STP_PREFIX       = 'urn:ogf:network:stp:'
-
-    def stripPrefix(text, prefix):
-        assert text.startswith(prefix), 'Text did not start with specified prefix'
-        ul = len(prefix)
-        return text[ul:]
-
-
-    topo = Topology()
-
-    for network_name, network_params in networks.items():
-
-        nsa_name     = network_params['nsa']
-        nsa_endpoint = nsas[nsa_name].get('endpoint')
-
-        t_network_name  = stripPrefix(network_name, NSNETWORK_PREFIX)
-        t_nsa_name      = stripPrefix(nsa_name, NSA_PREFIX)
-
-        network_nsa = nsa.NetworkServiceAgent(t_nsa_name, nsa_endpoint)
-        network = nsa.Network(t_network_name, network_nsa)
-
-        for stp_name in network_params['stps']:
-            t_stp_name = stripPrefix(stp_name, STP_PREFIX).split(':')[-1]
-            maps_to = stps.get(stp_name,{}).get('maps_to')
-            dest_stp = None
-            dest_stp_urn = stps.get(stp_name,{}).get('connected_to')
-            if dest_stp_urn:
-                dest_network, dest_port = stripPrefix(dest_stp_urn, STP_PREFIX).split(':',1)
-                dest_stp = nsa.STP(dest_network, dest_port)
-            ep = nsa.NetworkEndpoint(t_network_name, t_stp_name, maps_to, dest_stp, None, None)
-            network.addEndpoint(ep)
-
-        topo.addNetwork(network)
+        topo.addNetwork(t_network)
 
     return topo
-
-
-
-def parseGOLERDFTopology(topology_sources):
-
-    RDF  = rdflib.Namespace(RDF_NS)
-    DTOX = rdflib.Namespace(DTOX_NS)
-
-    graph = rdflib.ConjunctiveGraph()
-    try:
-        for source, format_ in topology_sources:
-            graph.parse(source, format=format_)
-    except Exception, e:
-        raise error.TopologyError('Error parsing topology source: %s' % str(e))
-
-    topo = Topology()
-
-    for nsnetwork in graph.subjects(RDF['type'],DTOX['NSNetwork']):
-        # Setup the network object
-
-        nsa_id = graph.value(subject=nsnetwork, predicate=DTOX['managedBy'])
-        nsa_endpoint = graph.value(subject=nsa_id, predicate=DTOX['csProviderEndpoint'])
-
-        network_name = _stripPrefix(str(nsnetwork), NSNETWORK_PREFIX)
-        network_nsa = nsa.NetworkServiceAgent(_stripPrefix(str(nsa_id), NSA_PREFIX), str(nsa_endpoint))
-        network = nsa.Network(network_name, network_nsa)
-
-        # Add all the STPs and connections to the network
-        for stp in graph.objects(nsnetwork, DTOX['hasSTP']):
-            stp_name = _stripPrefix(str(stp), STP_PREFIX)
-            assert stp_name.startswith(network_name), 'STP-Network name %s does not match with %s' % (stp_name,network_name)
-            stp_name = stp_name[len(network_name) + 1:] # strip network name of stp
-
-            nrm_port = graph.value(subject=stp, predicate=DTOX['mapsTo'])
-            if nrm_port:
-                nrm_port = str(nrm_port)
-
-            dest_stp = graph.value(subject=stp, predicate=DTOX['connectedTo'])
-            # If there is a destination, add that, otherwise the value stays None.
-            if dest_stp:
-                dest_network = graph.value(predicate=DTOX['hasSTP'], object=dest_stp)
-                dest_network_name = _stripPrefix(str(dest_network), NSNETWORK_PREFIX)
-                dest_stp_name = _stripPrefix(str(dest_stp), STP_PREFIX + dest_network_name + ":")
-                dest_stp = nsa.STP(dest_network_name, dest_stp_name)
-
-            ep = nsa.NetworkEndpoint(network_name, stp_name, nrm_port, dest_stp, None, None)
-            network.addEndpoint(ep)
-
-        topo.addNetwork(network)
-
-    return topo
-
 

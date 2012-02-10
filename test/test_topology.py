@@ -72,6 +72,5 @@ class GOLETopologyTest(GenericTopologyTest, unittest.TestCase):
 
     def setUp(self):
         f = StringIO.StringIO(testtopology.TEST_TOPOLOGY)
-        self.topo = topology.parseGOLERDFTopology( [ (f, 'xml') ] )
-
+        self.topo = topology.parseTopology( [f] )
 

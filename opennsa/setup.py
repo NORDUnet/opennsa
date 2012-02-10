@@ -8,7 +8,7 @@ from ConfigParser import NoOptionError
 from twisted.python.log import ILogObserver
 from twisted.application import internet, service as appservice
 
-from opennsa import config, logging, nsiservice
+from opennsa import config, logging, topology, nsiservice
 from opennsa.protocols.webservice import client, service, provider, requester, resource
 
 
@@ -31,7 +31,8 @@ def _createServiceURL(host, port, ctx_factory=None):
 
 
 
-def createService(network_name, topology_sources, backend, event_registry, host, port, wsdl_dir, ctx_factory=None):
+def createService(network_name, topology_sources, backend, event_registry, host, port, wsdl_dir, ctx_factory=None, nrm_map_source=None):
+
 
     # reminds an awful lot about client setup
 
@@ -44,7 +45,8 @@ def createService(network_name, topology_sources, backend, event_registry, host,
 
     # now provider service
 
-    nsi_service  = nsiservice.NSIService(network_name, backend, event_registry, topology_sources, nsi_requester)
+    topo = topology.parseTopology(topology_sources, nrm_map_source)
+    nsi_service  = nsiservice.NSIService(network_name, backend, event_registry, topo, nsi_requester)
 
     requester_client = client.RequesterClient(wsdl_dir, ctx_factory)
     nsi_provider = provider.Provider(event_registry, requester_client)
@@ -88,7 +90,16 @@ def createApplication(config_file=config.DEFAULT_CONFIG_FILE, authz_verify=True,
     for topology_file in topology_files:
         if not os.path.exists(topology_file):
             raise ConfigurationError('Specified (or default) topology file does not exist (%s)' % topology_file)
-    topology_sources = [ (open(tf), 'n3' if tf.endswith('.n3') else 'xml' ) for tf in topology_files ]
+    topology_sources = [ open(tf) for tf in topology_files ]
+
+    try:
+        nrm_map_file = cfg.get(config.BLOCK_SERVICE, config.CONFIG_NRM_MAP_FILE)
+        if not os.path.exists(nrm_map_file):
+            raise ConfigurationError('Specified NRM mapping file does not exist (%s)' % nrm_map_file)
+        nrm_map_source = open(nrm_map_file)
+    except NoOptionError:
+        nrm_map_source = None
+
 
     wsdl_dir = cfg.get(config.BLOCK_SERVICE, config.CONFIG_WSDL_DIRECTORY)
     if not os.path.exists(wsdl_dir):

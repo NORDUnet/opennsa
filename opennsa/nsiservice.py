@@ -13,7 +13,7 @@ from twisted.python import log
 from twisted.internet import reactor, defer
 
 from opennsa.interface import NSIServiceInterface
-from opennsa import error, event, subscription, topology, connection
+from opennsa import error, event, subscription, connection
 
 
 
@@ -25,12 +25,12 @@ class NSIService:
 
     implements(NSIServiceInterface)
 
-    def __init__(self, network, backend, event_registry, topology_sources, client):
+    def __init__(self, network, backend, event_registry, topology, client):
         self.network = network
         self.backend = backend
         self.event_registry = event_registry
 
-        self.topology = topology.parseGOLERDFTopology(topology_sources)
+        self.topology = topology
 
         # get own nsa from topology
         self.client = client

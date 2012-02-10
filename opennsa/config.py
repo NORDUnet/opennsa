@@ -34,6 +34,7 @@ CONFIG_HOST             = 'host'
 CONFIG_PORT             = 'port'
 CONFIG_TLS              = 'tls'
 CONFIG_TOPOLOGY_FILE    = 'topology'
+CONFIG_NRM_MAP_FILE     = 'nrmmap'
 CONFIG_WSDL_DIRECTORY   = 'wsdl'
 
 CONFIG_HOSTKEY          = 'hostkey'     # mandatory, if tls is set
