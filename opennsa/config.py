@@ -42,13 +42,29 @@ CONFIG_HOSTCERT         = 'hostcert'    # mandatory, if tls is set
 CONFIG_CERTIFICATE_DIR  = 'certdir'     # mandatory (but dir can be empty)
 CONFIG_VERIFY           = 'verify'
 
+# generic ssh stuff, don't use directly
+_SSH_HOST               = 'host'
+_SSH_PORT               = 'port'
+_SSH_HOST_FINGERPRINT   = 'fingerprint'
+_SSH_USER               = 'user'
+_SSH_PUBLIC_KEY         = 'publickey'
+_SSH_PRIVATE_KEY        = 'privatekey'
+
+# junos block
+JUNOS_HOST              = _SSH_HOST
+JUNOS_PORT              = _SSH_PORT
+JUNOS_HOST_FINGERPRINT  = _SSH_HOST_FINGERPRINT
+JUNOS_USER              = _SSH_USER
+JUNOS_SSH_PUBLIC_KEY    = _SSH_PUBLIC_KEY
+JUNOS_SSH_PRIVATE_KEY   = _SSH_PRIVATE_KEY
+
 # force10 block
-FORCE10_HOST            = 'host'
-FORCE10_PORT            = 'port'
-FORCE10_USER            = 'user'
-FORCE10_HOST_FINGERPRINT = 'fingerprint'
-FORCE10_SSH_PUBLIC_KEY  = 'publickey'
-FORCE10_SSH_PRIVATE_KEY = 'privatekey'
+FORCE10_HOST            = _SSH_HOST
+FORCE10_PORT            = _SSH_PORT
+FORCE10_USER            = _SSH_USER
+FORCE10_HOST_FINGERPRINT = _SSH_HOST_FINGERPRINT
+FORCE10_SSH_PUBLIC_KEY  = _SSH_PUBLIC_KEY
+FORCE10_SSH_PRIVATE_KEY = _SSH_PRIVATE_KEY
 
 # argia block
 ARGIA_COMMAND_DIR       = 'commanddir'
