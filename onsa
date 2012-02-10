@@ -99,7 +99,7 @@ def doMain():
 
     # commands
 
-    if config.subCommand == 'reserve':
+    if config.subCommand in ('reserve', 'reserveprovision'):
 
         source_stp = config.subOptions[options.SOURCE_STP]  or defaults.get(options.SOURCE_STP)
         dest_stp   = config.subOptions[options.DEST_STP]    or defaults.get(options.DEST_STP)
@@ -127,6 +127,8 @@ def doMain():
             global_id = 'conn-%i' % random.randrange(1000,9999)
 
         yield commands.reserve(client, client_nsa, provider_nsa, source_stp, dest_stp, start_time, end_time, bandwidth, connection_id, global_id)
+        if config.subCommand == 'reserveprovision':
+            yield commands.provision(client, client_nsa, provider_nsa, connection_id)
 
     elif config.subCommand == 'provision':
 

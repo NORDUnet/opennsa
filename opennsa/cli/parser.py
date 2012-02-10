@@ -145,9 +145,10 @@ class ProvisionReleaseTerminateOptions(NetworkCommandOptions):
     pass
 
 
-class Options(BaseOptions):
+class Options:
     subCommands = [
         ['reserve',         None,   ReserveOptions,         'Create a reservation'],
+        ['reserveprovision',None,   ReserveOptions,         'Create a reservation and provision the connection.'],
         ['provision',       None,   NetworkCommandOptions,  'Provision a connection.'],
         ['release',         None,   NetworkCommandOptions,  'Release a connection.'],
         ['terminate',       None,   NetworkCommandOptions,  'Terminate a connection.'],
