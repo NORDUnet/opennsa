@@ -9,7 +9,6 @@ import random
 from twisted.python import log, usage
 from twisted.internet import reactor, defer
 
-from opennsa import setup, nsa
 from opennsa.cli import options, parser, commands, logobserver
 
 
@@ -28,14 +27,17 @@ def doMain():
         print '%s: Try --help for usage details.' % (sys.argv[0])
         return
 
+    # this import is slighly slow, so we delay it until parsing is successfull
+    from opennsa import setup, nsa
+
     observer = logobserver.SimpleObserver(sys.stdout)
     log.startLoggingWithObserver(observer.emit)
 
-    if config[options.VERBOSE]:
+    if config.subOptions[options.VERBOSE]:
         observer.debug = True
 
     # read defaults
-    defaults_file = config[options.DEFAULTS_FILE] or os.path.join( os.path.expanduser('~'), CLI_DEFAULTS )
+    defaults_file = config.subOptions[options.DEFAULTS_FILE] or os.path.join( os.path.expanduser('~'), CLI_DEFAULTS )
     if os.path.exists(defaults_file):
         defaults = options.readDefaults( open(defaults_file) )
     else:
@@ -45,11 +47,11 @@ def doMain():
     for k,v in defaults.items():
         log.msg(' %s : %s' % (k,v), debug=True)
 
-    if config.subCommand in ['reserve', 'provision', 'release', 'terminate', 'querysummary', 'querydetails']:
+    if config.subCommand in ['reserve', 'reserveprovision', 'provision', 'release', 'terminate', 'querysummary', 'querydetails']:
 
-        wsdl_dir        = config[options.WSDL_DIRECTORY]    or defaults.get(options.WSDL_DIRECTORY) or WSDL_DEFAULT_DIRECTORY
-        host            = config[options.HOST]              or defaults.get(options.HOST)           or socket.getfqdn()
-        port            = config[options.PORT]              or defaults.get(options.PORT)           or 7080
+        wsdl_dir        = config.subOptions[options.WSDL_DIRECTORY] or defaults.get(options.WSDL_DIRECTORY) or WSDL_DEFAULT_DIRECTORY
+        host            = config.subOptions[options.HOST]           or defaults.get(options.HOST)           or socket.getfqdn()
+        port            = config.subOptions[options.PORT]           or defaults.get(options.PORT)           or 7080
         requester_url   = REQUESTER_URL_BASE % (host, port)
 
         topology_file   = config.subOptions[options.TOPOLOGY_FILE]  or defaults.get(options.TOPOLOGY_FILE)

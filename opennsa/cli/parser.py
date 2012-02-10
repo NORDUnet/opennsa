@@ -115,22 +115,14 @@ class SkipCertificateVerificationFlag(usage.Options):
 
 # command options
 
-class BaseOptions(DefaultsFileOption, WSDLDirectoryOption, HostOption, PortOption):
+class NetworkCommandOptions(DefaultsFileOption, WSDLDirectoryOption, HostOption, PortOption,
+                            ServiceURLOption, TopologyFileOption, NetworkOption,
+                            ProviderNSAOption, RequesterNSAOption, ConnectionIDOption, GlobalIDOption,
+                            PublicKeyOption, PrivateKeyOption, CertificateDirectoryOption, SkipCertificateVerificationFlag):
 
     optFlags = [
         [ options.VERBOSE, 'v', 'Print out more information']
     ]
-
-    def opt_version(self):
-        from twisted import copyright
-        print "OpenNSA Development version. " + \
-              "Running on Twisted version", copyright.version
-        raise SystemExit
-
-
-class NetworkCommandOptions(BaseOptions, ServiceURLOption, TopologyFileOption, NetworkOption,
-                            ProviderNSAOption, RequesterNSAOption, ConnectionIDOption, GlobalIDOption,
-                            PublicKeyOption, PrivateKeyOption, CertificateDirectoryOption, SkipCertificateVerificationFlag):
 
     def postOptions(self):
         if self[options.SERVICE_URL] and (self[options.TOPOLOGY_FILE] or self[options.NETWORK]):
@@ -145,7 +137,7 @@ class ProvisionReleaseTerminateOptions(NetworkCommandOptions):
     pass
 
 
-class Options:
+class Options(usage.Options):
     subCommands = [
         ['reserve',         None,   ReserveOptions,         'Create a reservation'],
         ['reserveprovision',None,   ReserveOptions,         'Create a reservation and provision the connection.'],
@@ -159,4 +151,13 @@ class Options:
     def postOptions(self):
         if self.subCommand is None:
             return usage.UsageError('No option specified')
+
+
+    def opt_version(self):
+        from opennsa import __version__
+        from twisted import copyright
+        print "OpenNSA version %s. " % __version__ + \
+              "Running on Twisted version", copyright.version
+        raise SystemExit
+
 
