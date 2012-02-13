@@ -1,0 +1,22 @@
+# STP mapping for test topology
+
+urn:ogf:network:stp:Aruba:A1  "Aruba_A1"
+urn:ogf:network:stp:Aruba:A2  "Aruba_A2"
+urn:ogf:network:stp:Aruba:A3  "Aruba_A3"
+urn:ogf:network:stp:Aruba:A4  "Aruba_A4"
+
+urn:ogf:network:stp:Aruba:B1  "Aruba_B1"
+urn:ogf:network:stp:Aruba:B2  "Aruba_B2"
+urn:ogf:network:stp:Aruba:B3  "Aruba_B3"
+urn:ogf:network:stp:Aruba:B4  "Aruba_B4"
+
+urn:ogf:network:stp:Aruba:C1  "Aruba_C1"
+urn:ogf:network:stp:Aruba:C2  "Aruba_C2"
+urn:ogf:network:stp:Aruba:C3  "Aruba_C3"
+urn:ogf:network:stp:Aruba:C4  "Aruba_C4"
+
+urn:ogf:network:stp:Aruba:D1  "Aruba_D1"
+urn:ogf:network:stp:Aruba:D2  "Aruba_D2"
+urn:ogf:network:stp:Aruba:D3  "Aruba_D3"
+urn:ogf:network:stp:Aruba:D4  "Aruba_D4"
+
