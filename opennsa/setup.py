@@ -80,7 +80,7 @@ def createApplication(config_file=config.DEFAULT_CONFIG_FILE, authz_verify=True,
 
     log_file_path = cfg.get(config.BLOCK_SERVICE, config.CONFIG_LOG_FILE)
     if log_file_path:
-        log_file = open(log_file_path, 'w')
+        log_file = open(log_file_path, 'a')
     else:
         import sys
         log_file = sys.stdout
