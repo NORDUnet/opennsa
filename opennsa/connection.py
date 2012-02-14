@@ -217,7 +217,6 @@ class Connection:
         def provisionComplete(results):
             successes = [ r[0] for r in results ]
             if all(successes):
-                dt_now = datetime.datetime.utcnow()
                 if self.state() == state.AUTO_PROVISION:
                     # cannot switch directly from auto-provision to provisioned,
                     self.state.switchState(state.PROVISIONING)
