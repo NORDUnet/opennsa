@@ -1,7 +1,7 @@
 include README
 include Makefile
 include ISSUES
-include SC2011-Topo-v5f.owl
+include AutoGOLE-Topo-2012-01-25.owl
 include onsa
 include client-test
 include opennsa.tac
@@ -10,3 +10,4 @@ include opennsa-northernlight.tac
 include opennsa-starlight.tac
 recursive-include wsdl *
 recursive-include docs *
+recursive-include patches *
