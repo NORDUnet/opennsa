@@ -33,16 +33,7 @@ from opennsa import config
 from opennsa.backends.common import calendar as reservationcalendar, simplebackend, ssh
 
 
-
-# Stuff to get from config:
-JUNOS_HOST              = 'cph.dcn.nordu.net'
-JUNOS_HOST_PORT         = 22
-JUNOS_HOST_FINGERPRINT  = 'd8:43:73:ee:a4:87:87:36:3f:c4:e5:3e:7c:d9:8b:d7'
-
-USERNAME                = 'opennsa'
-PUBLIC_KEY_PATH         = '/home/opennsa/.ssh/id_rsa.pub'
-PRIVATE_KEY_PATH        = '/home/opennsa/.ssh/id_rsa'
-
+# Example commands used:
 #> set protocols connections interface-switch ps-to-netherlight-1780 interface ge-1/0/5.1780
 #> set protocols connections interface-switch ps-to-netherlight-1780 interface ge-1/1/9.1780
 #> set interfaces ge-1/0/5 unit 1780 vlan-id 1780 encapsulation vlan-ccc
