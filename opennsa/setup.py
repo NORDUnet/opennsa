@@ -157,10 +157,8 @@ def createApplication(config_file=config.DEFAULT_CONFIG_FILE, authz_verify=True,
         from opennsa.backends import force10
         backend = force10.Force10Backend(network_name, cfg.items(config.BLOCK_FORCE10))
     elif config.BLOCK_ARGIA in cfg.sections():
-        command_dir = cfg.get(config.BLOCK_ARGIA, config.ARGIA_COMMAND_DIR)
-        command_bin = cfg.get(config.BLOCK_ARGIA, config.ARGIA_COMMAND_BIN)
         from opennsa.backends import argia
-        backend = argia.ArgiaBackend(command_dir, command_bin)
+        backend = argia.ArgiaBackend(network_name, cfg.items(config.BLOCK_ARGIA)
     else:
         raise ConfigurationError('No or invalid backend specified')
 

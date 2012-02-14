@@ -17,7 +17,7 @@ from xml.etree import ElementTree as ET
 from twisted.python import log
 from twisted.internet import reactor, protocol, defer
 
-from opennsa import error, state
+from opennsa import error, state, config
 from opennsa.backends.common import scheduler
 
 
@@ -46,10 +46,17 @@ class ArgiaBackendError(Exception):
 
 class ArgiaBackend:
 
-    def __init__(self, command_dir, command_bin):
-        self.command_dir = command_dir # directory for argia command
-        self.command_bin = command_bin # name of argia executable
+    def __init__(self, network_name, configuration):
+
+        self.network_name = network_name # current unused
+
+        # extract config items
+        cfg_dict = dict(configuration)
+        command_dir = cfg_dict[config.ARGIA_COMMAND_DIR]
+        command_bin = cfg_dict[config.ARGIA_COMMAND_BIN]
+
         self.connections = []
+
 
     def createConnection(self, source_port, dest_port, service_parameters):
 
