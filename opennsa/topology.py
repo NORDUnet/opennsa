@@ -31,7 +31,6 @@ RDF_COMMENT             = '{%s}comment'    % RDF_SCHEMA_NS
 RDF_LABEL               = '{%s}label'      % RDF_SCHEMA_NS
 
 NAMED_INDIVIDUAL        = '{%s}NamedIndividual' % OWL_NS
-PART_OF                 = '{%s}partOf'          % OWL_NS
 
 GLIF_HAS_STP            = '{%s}hasSTP'             % DTOX_NS
 GLIF_CONNECTED_TO       = '{%s}connectedTo'        % DTOX_NS
@@ -39,9 +38,10 @@ GLIF_MAPS_TO            = '{%s}mapsTo'             % DTOX_NS
 GLIF_MAX_CAPACITY       = '{%s}maxCapacity'        % DTOX_NS
 GLIF_AVAILABLE_CAPACITY = '{%s}availableCapacity'  % DTOX_NS
 GLIF_MANAGING           = '{%s}managing'           % DTOX_NS
-GLIF_HOST_NAME          = '{%s}hostName'           % DTOX_NS
-GLIF_CAN_SWAP           = '{%s}canSwap'            % DTOX_NS
 GLIF_MANAGED_BY         = '{%s}managedBy'          % DTOX_NS
+GLIF_LOCATED_AT         = '{%s}locatedAt'          % DTOX_NS
+GLIF_LATITUDE           = '{%s}lat'                % DTOX_NS
+GLIF_LONGITUDE          = '{%s}long'               % DTOX_NS
 GLIF_ADMIN_CONTACT      = '{%s}adminContact'       % DTOX_NS
 GLIF_PROVIDER_ENDPOINT  = '{%s}csProviderEndpoint' % DTOX_NS
 
@@ -250,7 +250,7 @@ def _parseOWLTopology(topology_source):
                 elif el.tag == GLIF_PROVIDER_ENDPOINT:  triples.append( (resource, str(GLIF_PROVIDER_ENDPOINT), el.text) )
                 elif el.tag == GLIF_MANAGED_BY:         triples.append( (resource, str(GLIF_MANAGED_BY),    el.attrib.values()[0]) )
                 # We don't care about these
-                elif el.tag in (RDF_COMMENT, RDF_LABEL, PART_OF, GLIF_MANAGING, GLIF_ADMIN_CONTACT, GLIF_HOST_NAME, GLIF_CAN_SWAP):
+                elif el.tag in (RDF_COMMENT, RDF_LABEL, GLIF_MANAGING, GLIF_ADMIN_CONTACT, GLIF_LOCATED_AT, GLIF_LATITUDE, GLIF_LONGITUDE):
                     pass
                 else:
                     print 'Unknow tag type in topology: %s' % el.tag
