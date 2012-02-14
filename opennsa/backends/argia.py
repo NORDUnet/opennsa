@@ -52,8 +52,8 @@ class ArgiaBackend:
 
         # extract config items
         cfg_dict = dict(configuration)
-        command_dir = cfg_dict[config.ARGIA_COMMAND_DIR]
-        command_bin = cfg_dict[config.ARGIA_COMMAND_BIN]
+        self.command_dir = cfg_dict[config.ARGIA_COMMAND_DIR]
+        self.command_bin = cfg_dict[config.ARGIA_COMMAND_BIN]
 
         self.connections = []
 
@@ -304,7 +304,7 @@ class ArgiaConnection:
 
         process_proto = ArgiaProcessProtocol()
         try:
-            reactor.spawnProcess(process_proto, self.commnad, args=[self.command_bin, ARGIA_CMD_PROVISION, self.argia_id], path=self.command_dir)
+            reactor.spawnProcess(process_proto, self.command, args=[self.command_bin, ARGIA_CMD_PROVISION, self.argia_id], path=self.command_dir)
         except OSError, e:
             return defer.fail(error.ReserveError('Failed to invoke argia control command (%s)' % str(e)))
         process_proto.d.addCallbacks(provisionConfirmed, provisionFailed, callbackArgs=[process_proto], errbackArgs=[process_proto])
