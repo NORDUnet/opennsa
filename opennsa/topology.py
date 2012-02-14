@@ -151,9 +151,9 @@ class Topology:
             for link in np:
                 if not link.stp1.network.endswith('.ets'):
                     continue # not a vlan capable network, STPs can connect
-                source_vlan = link.stp1.endpoint.split('-')[-1]
-                dest_vlan   = link.stp2.endpoint.split('-')[-1]
-                if source_vlan == dest_vlan or link.stp1.network in ('netherlight.ets'):
+                source_vlan = link.stp1.endpoint[-2:]
+                dest_vlan   = link.stp2.endpoint[-2:]
+                if source_vlan == dest_vlan or link.stp1.network in ('northernlight.ets', 'netherlight.ets'):
                     continue # STPs can connect
                 else:
                     break
