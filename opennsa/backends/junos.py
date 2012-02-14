@@ -29,7 +29,7 @@ OpenNSA JunOS backend.
 from twisted.python import log
 from twisted.internet import defer
 
-from opennsa import error, config
+from opennsa import config
 from opennsa.backends.common import calendar as reservationcalendar, simplebackend, ssh
 
 
@@ -48,14 +48,20 @@ PRIVATE_KEY_PATH        = '/home/opennsa/.ssh/id_rsa'
 #> set interfaces ge-1/0/5 unit 1780 vlan-id 1780 encapsulation vlan-ccc
 #> set interfaces ge-1/1/9 unit 1780 vlan-id 1780 encapsulation vlan-ccc
 
+# VLAN swapping
+#> set interfaces ge-1/1/9 unit 1780 vlan-id 1780 encapsulation vlan-ccc input-vlan-map swap vlan-id 1781
+#> set interfaces ge-1/1/9 unit 1781 vlan-id 1781 encapsulation vlan-ccc input-vlan-map swap vlan-id 1780
+
 # parameterized commands
 COMMAND_CONFIGURE           = 'configure'
 COMMAND_COMMIT              = 'commit'
 
-COMMAND_SET_CONNECTIONS     = 'set protocols connections interface-switch %(name)s interface %(interface)s' # connection name / interface
-COMMAND_SET_INTERFACES      = 'set interfaces %(port)s unit %(vlan)s vlan-id %(vlan)s encapsulation vlan-ccc' # port / vlan / vlan
+COMMAND_SET_CONNECTIONS     = 'set protocols connections interface-switch %(switch)s interface %(interface)s' # switch name, interface
+COMMAND_SET_INTERFACES      = 'set interfaces %(port)s unit %(source_vlan)s vlan-id %(source_vlan)s encapsulation vlan-ccc' # port, source vlan, source vlan
+COMMAND_SET_INTERFACES_SWAP = 'set interfaces %(port)s unit %(source_vlan)s vlan-id %(source_vlan)s encapsulation vlan-ccc input-vlan-map swap vlan-id %(dest_vlan)s' # port, source vlan, source vlan, dest vlan
+
 COMMAND_DELETE_INTERFACES   = 'delete interfaces %(port)s unit %(vlan)s' # port / vlan
-COMMAND_DELETE_CONNECTIONS  = 'delete protocols connections interface-switch %(name)s' # name
+COMMAND_DELETE_CONNECTIONS  = 'delete protocols connections interface-switch %(switch)s' # switch
 
 LOG_SYSTEM = 'opennsa.JunOS'
 
@@ -71,23 +77,26 @@ def createSwitchName(source_port, dest_port, source_vlan, dest_vlan):
     sp = source_port.replace('/','').replace('-','')
     dp = dest_port.replace('/','').replace('-','')
 
-    switch_name = 'nsi-%s-%s-%s' % (sp, dp, source_vlan)
+    switch_name = 'nsi-%s-%s-%s-%s' % (sp, source_vlan, dp, dest_vlan)
     return switch_name
 
 
 def createConfigureCommands(source_nrm_port, dest_nrm_port):
 
-    s_port, s_vlan = portToInterfaceVLAN(source_nrm_port)
-    d_port, d_vlan = portToInterfaceVLAN(dest_nrm_port)
+    source_port, source_vlan = portToInterfaceVLAN(source_nrm_port)
+    dest_port,   dest_vlan   = portToInterfaceVLAN(dest_nrm_port)
 
-    assert s_vlan == d_vlan, 'Source and destination VLANs differ, unpossible!'
+    switch_name = createSwitchName(source_port, dest_port, source_vlan, dest_vlan)
 
-    switch_name = createSwitchName(s_port, d_port, s_vlan, d_vlan)
+    cfg_conn_source = COMMAND_SET_CONNECTIONS % { 'switch':switch_name, 'interface':source_nrm_port }
+    cfg_conn_dest   = COMMAND_SET_CONNECTIONS % { 'switch':switch_name, 'interface':dest_nrm_port   }
 
-    cfg_conn_source = COMMAND_SET_CONNECTIONS % {'name':switch_name, 'interface':source_nrm_port }
-    cfg_conn_dest   = COMMAND_SET_CONNECTIONS % {'name':switch_name, 'interface':dest_nrm_port   }
-    cfg_intf_source = COMMAND_SET_INTERFACES  % {'port':s_port, 'vlan': s_vlan }
-    cfg_intf_dest   = COMMAND_SET_INTERFACES  % {'port':d_port, 'vlan': d_vlan }
+    if source_vlan == dest_vlan:
+        cfg_intf_source = COMMAND_SET_INTERFACES % { 'port':source_port, 'source_vlan': source_vlan }
+        cfg_intf_dest   = COMMAND_SET_INTERFACES % { 'port':dest_port,   'source_vlan': dest_vlan   }
+    else:
+        cfg_intf_source = COMMAND_SET_INTERFACES_SWAP % { 'port':source_port, 'source_vlan':source_vlan, 'dest_vlan':dest_vlan }
+        cfg_intf_dest   = COMMAND_SET_INTERFACES_SWAP % { 'port':dest_port,   'source_vlan':dest_vlan,   'dest_vlan':source_vlan }
 
     commands = [ cfg_conn_source, cfg_conn_dest, cfg_intf_source, cfg_intf_dest ]
     return commands
@@ -95,16 +104,14 @@ def createConfigureCommands(source_nrm_port, dest_nrm_port):
 
 def createDeleteCommands(source_nrm_port, dest_nrm_port):
 
-    s_port, s_vlan = portToInterfaceVLAN(source_nrm_port)
-    d_port, d_vlan = portToInterfaceVLAN(dest_nrm_port)
+    source_port, source_vlan = portToInterfaceVLAN(source_nrm_port)
+    dest_port,   dest_vlan   = portToInterfaceVLAN(dest_nrm_port)
 
-    assert s_vlan == d_vlan, 'Source and destination VLANs differ, unpossible!'
+    switch_name = createSwitchName(source_port, dest_port, source_vlan, dest_vlan)
 
-    switch_name = createSwitchName(s_port, d_port, s_vlan, d_vlan)
-
-    del_intf_source = COMMAND_DELETE_INTERFACES  % {'port':s_port, 'vlan': s_vlan }
-    del_intf_dest   = COMMAND_DELETE_INTERFACES  % {'port':d_port, 'vlan': d_vlan }
-    del_conn        = COMMAND_DELETE_CONNECTIONS % {'name':switch_name }
+    del_intf_source = COMMAND_DELETE_INTERFACES  % {'port':source_port, 'vlan': source_vlan }
+    del_intf_dest   = COMMAND_DELETE_INTERFACES  % {'port':dest_port,   'vlan': dest_vlan   }
+    del_conn        = COMMAND_DELETE_CONNECTIONS % {'switch':switch_name }
 
     commands = [ del_intf_source, del_intf_dest, del_conn ]
     return commands
@@ -269,8 +276,6 @@ class JunOSBackend:
 
     def createConnection(self, source_nrm_port, dest_nrm_port, service_parameters):
 
-        self._checkVLANMatch(source_nrm_port, dest_nrm_port)
-
         # probably need a short hand for this
         self.calendar.checkReservation(source_nrm_port, service_parameters.start_time, service_parameters.end_time)
         self.calendar.checkReservation(dest_nrm_port  , service_parameters.start_time, service_parameters.end_time)
@@ -281,11 +286,4 @@ class JunOSBackend:
         c = simplebackend.GenericConnection(source_nrm_port, dest_nrm_port, service_parameters, self.network_name, self.calendar,
                                             'JunOS NRM', LOG_SYSTEM, self.command_sender)
         return c
-
-
-    def _checkVLANMatch(self, source_nrm_port, dest_nrm_port):
-        _, source_vlan = portToInterfaceVLAN(source_nrm_port)
-        _, dest_vlan   = portToInterfaceVLAN(dest_nrm_port)
-        if source_vlan != dest_vlan:
-            raise error.InvalidRequestError('Cannot create connection between different VLANs.')
 
