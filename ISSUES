@@ -1,8 +1,9 @@
-This is the OpenNSA issue tracker :-)
 
 General:
 
+  Documentation :-)
   Persistence for connections
+  Seperate protocol stack from connection
   Deal with bandwidth in calendar (requires joint resource concept)
   TLS for client service
   Profiling of protocol stack / backends
