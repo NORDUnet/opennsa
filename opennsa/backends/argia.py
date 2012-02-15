@@ -309,7 +309,7 @@ class ArgiaConnection:
             return defer.fail(error.ReserveError('Failed to invoke argia control command (%s)' % str(e)))
         process_proto.d.addCallbacks(provisionConfirmed, provisionFailed, callbackArgs=[process_proto], errbackArgs=[process_proto])
 
-        return d
+        return defer.succeed(None), d
 
 
     def release(self):
