@@ -107,7 +107,7 @@ class Path:
 
 
     def __str__(self):
-        return '<Path: ' + ' - '.join( [ str(nl) for nl in self.network_links ] ) + '>'
+        return '<Path: ' + ' '.join( [ str(nl) for nl in self.network_links ] ) + '>'
 
 
 
