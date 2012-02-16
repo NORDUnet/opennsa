@@ -72,7 +72,6 @@ TEST_TOPOLOGY = """<?xml version="1.0"?>
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [1826,468]</rdfs:comment>
         <connectedTo rdf:resource="urn:ogf:network:stp:Aruba:A4"/>
-        <owl:partOf rdf:resource="urn:ogf:network:nsnetwork:Bonaire" />
         <dtox:mapsTo>Bonaire_B1</dtox:mapsTo>
     </owl:NamedIndividual>
 
@@ -81,7 +80,6 @@ TEST_TOPOLOGY = """<?xml version="1.0"?>
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:Bonaire:B2">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [2077,466]</rdfs:comment>
-        <owl:partOf rdf:resource="urn:ogf:network:nsnetwork:Bonaire" />
         <dtox:mapsTo>Bonaire_B2</dtox:mapsTo>
     </owl:NamedIndividual>
 
@@ -90,7 +88,6 @@ TEST_TOPOLOGY = """<?xml version="1.0"?>
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:Bonaire:B3">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [2333,466]</rdfs:comment>
-        <owl:partOf rdf:resource="urn:ogf:network:nsnetwork:Bonaire" />
         <dtox:mapsTo>Bonaire_B3</dtox:mapsTo>
     </owl:NamedIndividual>
 
@@ -100,7 +97,6 @@ TEST_TOPOLOGY = """<?xml version="1.0"?>
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [2592,466]</rdfs:comment>
         <connectedTo rdf:resource="urn:ogf:network:stp:Curacao:C1"/>
-        <owl:partOf rdf:resource="urn:ogf:network:nsnetwork:Bonaire" />
         <dtox:mapsTo>Bonaire_B4</dtox:mapsTo>
     </owl:NamedIndividual>
 
@@ -110,7 +106,6 @@ TEST_TOPOLOGY = """<?xml version="1.0"?>
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#NSNetwork"/>
         <rdfs:label xml:lang="en">Bonaire</rdfs:label>
         <rdfs:comment xml:lang="en">Position : [2178,58]</rdfs:comment>
-        <canSwap rdf:datatype="http://www.w3.org/2001/XMLSchema#string">no</canSwap>
         <hasSTP rdf:resource="urn:ogf:network:stp:Bonaire:B1"/>
         <hasSTP rdf:resource="urn:ogf:network:stp:Bonaire:B2"/>
         <hasSTP rdf:resource="urn:ogf:network:stp:Bonaire:B3"/>
@@ -125,7 +120,6 @@ TEST_TOPOLOGY = """<?xml version="1.0"?>
         <rdfs:label xml:lang="en">SURFnet OpenDRAC - The NSI Edition</rdfs:label>
         <managing rdf:resource="urn:ogf:network:nsnetwork:Bonaire" />
         <adminContact rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Bonaire Network</adminContact>
-        <hostName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">phineas.surfnet.nl</hostName>
         <csProviderEndpoint rdf:datatype="http://www.w3.org/2001/XMLSchema#string">http://localhost:9081/NSI/services/ConnectionService</csProviderEndpoint>
         <rdfs:comment xml:lang="en">Position : [1586,174]</rdfs:comment>
     </owl:NamedIndividual>
