@@ -35,7 +35,7 @@ for network, port in SERVICES:
 
     backend = dud.DUDNSIBackend(network)
     es = event.EventHandlerRegistry()
-    factory = setup.createService(network, [ open(TOPOLOGY) ], backend, es, HOST, port, WSDL_DIR, open(MAPPING) )
+    factory = setup.createService(network, [ open(TOPOLOGY) ], backend, es, HOST, port, WSDL_DIR, nrm_map_source=open(MAPPING) )
 
     internet.TCPServer(port, factory, interface='localhost').setServiceParent(application)
 
