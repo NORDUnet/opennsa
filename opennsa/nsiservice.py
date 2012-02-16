@@ -13,7 +13,7 @@ from twisted.python import log
 from twisted.internet import reactor, defer
 
 from opennsa.interface import NSIServiceInterface
-from opennsa import error, event, subscription, connection
+from opennsa import error, registry, subscription, connection
 
 
 
@@ -25,10 +25,10 @@ class NSIService:
 
     implements(NSIServiceInterface)
 
-    def __init__(self, network, backend, event_registry, topology, client):
+    def __init__(self, network, backend, service_registry, topology, client):
         self.network = network
         self.backend = backend
-        self.event_registry = event_registry
+        self.service_registry = service_registry
 
         self.topology = topology
 
@@ -38,11 +38,11 @@ class NSIService:
 
         self.connections = {} # persistence, ha!
 
-        self.event_registry.registerEventHandler(event.RESERVE,   self.reserve,   event.SYSTEM_SERVICE)
-        self.event_registry.registerEventHandler(event.PROVISION, self.provision, event.SYSTEM_SERVICE)
-        self.event_registry.registerEventHandler(event.RELEASE,   self.release,   event.SYSTEM_SERVICE)
-        self.event_registry.registerEventHandler(event.TERMINATE, self.terminate, event.SYSTEM_SERVICE)
-        self.event_registry.registerEventHandler(event.QUERY,     self.query,     event.SYSTEM_SERVICE)
+        self.service_registry.registerEventHandler(registry.RESERVE,   self.reserve,   registry.SYSTEM_SERVICE)
+        self.service_registry.registerEventHandler(registry.PROVISION, self.provision, registry.SYSTEM_SERVICE)
+        self.service_registry.registerEventHandler(registry.RELEASE,   self.release,   registry.SYSTEM_SERVICE)
+        self.service_registry.registerEventHandler(registry.TERMINATE, self.terminate, registry.SYSTEM_SERVICE)
+        self.service_registry.registerEventHandler(registry.QUERY,     self.query,     registry.SYSTEM_SERVICE)
 
 
     # utility functionality
@@ -93,7 +93,7 @@ class NSIService:
         if source_stp == dest_stp:
             return defer.fail(error.ReserveError('Cannot connect %s to itself.' % source_stp))
 
-        conn = connection.Connection(self.event_registry, requester_nsa, connection_id, source_stp, dest_stp, service_parameters, global_reservation_id, description)
+        conn = connection.Connection(self.service_registry, requester_nsa, connection_id, source_stp, dest_stp, service_parameters, global_reservation_id, description)
 
         self.connections.setdefault(requester_nsa, {})[conn.connection_id] = conn
 
@@ -231,10 +231,10 @@ class NSIService:
                 if match(conn):
                     conns.append(conn)
 
-        if not sub.match(event.QUERY_RESPONSE):
+        if not sub.match(registry.QUERY_RESPONSE):
             log.msg('Got query request with non-query response subscription')
         else:
-            d = subscription.dispatchNotification(True, conns, sub, self.event_registry)
+            d = subscription.dispatchNotification(True, conns, sub, self.service_registry)
 
         return defer.succeed(None)
 

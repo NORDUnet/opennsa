@@ -22,7 +22,7 @@ SYSTEM_SERVICE        = 'service'
 
 
 
-class EventHandlerRegistry:
+class ServiceRegistry:
 
     def __init__(self):
         self.handlers = {}

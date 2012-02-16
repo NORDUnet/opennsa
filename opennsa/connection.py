@@ -10,7 +10,7 @@ import datetime
 from twisted.python import log, failure
 from twisted.internet import defer
 
-from opennsa import error, nsa, state, event, subscription
+from opennsa import error, nsa, state, registry, subscription
 from opennsa.backends.common import scheduler
 
 
@@ -107,7 +107,7 @@ class SubConnection:
 
 class Connection:
 
-    def __init__(self, event_registry, requester_nsa, connection_id, source_stp, dest_stp, service_parameters=None, global_reservation_id=None, description=None):
+    def __init__(self, service_registry, requester_nsa, connection_id, source_stp, dest_stp, service_parameters=None, global_reservation_id=None, description=None):
         self.state = state.ConnectionState()
         self.requester_nsa              = requester_nsa
         self.connection_id              = connection_id
@@ -120,7 +120,7 @@ class Connection:
         self.sub_connections            = []
 
         self.subscriptions              = []
-        self.event_registry = event_registry
+        self.service_registry           = service_registry
 
 
     def connections(self):
@@ -135,7 +135,7 @@ class Connection:
         defs = []
         for sub in reversed(self.subscriptions):
             if sub.match(event):
-                d = subscription.dispatchNotification(success, result, sub, self.event_registry)
+                d = subscription.dispatchNotification(success, result, sub, self.service_registry)
                 defs.append(d)
                 self.subscriptions.remove(sub)
 
@@ -180,7 +180,7 @@ class Connection:
                 self.state.switchState(state.RESERVED)
                 log.msg('Connection %s: Reserve succeeded' % self.connection_id, system=LOG_SYSTEM)
                 self.scheduler.scheduleTransition(self.service_parameters.start_time, scheduled, state.SCHEDULED)
-                self.eventDispatch(event.RESERVE_RESPONSE, True, self)
+                self.eventDispatch(registry.RESERVE_RESPONSE, True, self)
 
             else:
                 error_msg = self._buildErrorMessage(results, 'reservations')
@@ -200,7 +200,7 @@ class Connection:
                 dl.addCallback(lambda _ : self.state.switchState(state.TERMINATED) )
 
                 err = failure.Failure(error.ReserveError(error_msg))
-                self.eventDispatch(event.RESERVE_RESPONSE, False, err)
+                self.eventDispatch(registry.RESERVE_RESPONSE, False, err)
 
 
         self.state.switchState(state.RESERVING)
@@ -224,7 +224,7 @@ class Connection:
                 self.state.switchState(state.PROVISIONED)
                 self.scheduler.scheduleTransition(self.service_parameters.end_time, lambda _ : self.terminate(), state.TERMINATING)
 
-                self.eventDispatch(event.PROVISION_RESPONSE, True, self)
+                self.eventDispatch(registry.PROVISION_RESPONSE, True, self)
 
             else:
                 # at least one provision failed, provisioned connections should be released
@@ -248,7 +248,7 @@ class Connection:
 
                 def releaseDone(_):
                     err = failure.Failure(error.ProvisionError(error_msg))
-                    self.eventDispatch(event.PROVISION_RESPONSE, False, err)
+                    self.eventDispatch(registry.PROVISION_RESPONSE, False, err)
 
                 dl.addCallback(releaseDone)
 
@@ -281,13 +281,13 @@ class Connection:
                 if len(results) > 1:
                     log.msg('Connection %s and all sub connections(%i) released' % (self.connection_id, len(results)-1), system=LOG_SYSTEM)
                 self.scheduler.scheduleTransition(self.service_parameters.end_time, lambda s : self.state.switchState(state.TERMINATED), state.TERMINATED)
-                self.eventDispatch(event.RELEASE_RESPONSE, True, self)
+                self.eventDispatch(registry.RELEASE_RESPONSE, True, self)
 
             else:
                 error_msg = self._buildErrorMessage(results, 'releases')
                 err = error.ReleaseError(error_msg)
                 f = failure.Failure(err)
-                self.eventDispatch(event.RELEASE_RESPONSE, False, f)
+                self.eventDispatch(registry.RELEASE_RESPONSE, False, f)
 
         self.state.switchState(state.RELEASING)
         self.scheduler.cancelTransition() # cancel any pending scheduled switch
@@ -310,13 +310,13 @@ class Connection:
                 self.state.switchState(state.TERMINATED)
                 if len(successes) > 1:
                     log.msg('Connection %s and all sub connections(%i) terminated' % (self.connection_id, len(results)-1), system=LOG_SYSTEM)
-                self.eventDispatch(event.TERMINATE_RESPONSE, True, self)
+                self.eventDispatch(registry.TERMINATE_RESPONSE, True, self)
 
             else:
                 error_msg = self._buildErrorMessage(results, 'terminates')
                 err = error.TerminateError(error_msg)
                 f = failure.Failure(err)
-                self.eventDispatch(event.TERMINATE_RESPONSE, False, f)
+                self.eventDispatch(registry.TERMINATE_RESPONSE, False, f)
 
         self.state.switchState(state.TERMINATING)
         self.scheduler.cancelTransition() # cancel any pending scheduled switch

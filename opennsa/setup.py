@@ -8,7 +8,7 @@ from ConfigParser import NoOptionError
 from twisted.python.log import ILogObserver
 from twisted.application import internet, service as appservice
 
-from opennsa import config, logging, topology, nsiservice
+from opennsa import config, logging, registry, topology, nsiservice
 from opennsa.protocols.webservice import client, service, provider, requester, resource
 
 
@@ -31,7 +31,7 @@ def _createServiceURL(host, port, ctx_factory=None):
 
 
 
-def createService(network_name, topology_sources, backend, event_registry, host, port, wsdl_dir, ctx_factory=None, nrm_map_source=None):
+def createService(network_name, topology_sources, backend, service_registry, host, port, wsdl_dir, ctx_factory=None, nrm_map_source=None):
 
 
     # reminds an awful lot about client setup
@@ -46,10 +46,10 @@ def createService(network_name, topology_sources, backend, event_registry, host,
     # now provider service
 
     topo = topology.parseTopology(topology_sources, nrm_map_source)
-    nsi_service  = nsiservice.NSIService(network_name, backend, event_registry, topo, nsi_requester)
+    nsi_service  = nsiservice.NSIService(network_name, backend, service_registry, topo, nsi_requester)
 
     requester_client = client.RequesterClient(wsdl_dir, ctx_factory)
-    nsi_provider = provider.Provider(event_registry, requester_client)
+    nsi_provider = provider.Provider(service_registry, requester_client)
     service.ProviderService(nsi_resource, nsi_provider, wsdl_dir)
 
     return site
@@ -164,11 +164,10 @@ def createApplication(config_file=config.DEFAULT_CONFIG_FILE, authz_verify=True,
 
     # setup application
 
-    from opennsa import event
 
-    event_registry = event.EventHandlerRegistry()
+    service_registry = registry.EventHandlerRegistry()
 
-    factory = createService(network_name, topology_sources, backend, event_registry, host, port, wsdl_dir, ctx_factory, nrm_map_source)
+    factory = createService(network_name, topology_sources, backend, service_registry, host, port, wsdl_dir, ctx_factory, nrm_map_source)
 
     application = appservice.Application("OpenNSA")
     application.setComponent(ILogObserver, logging.DebugLogObserver(log_file, debug).emit)
