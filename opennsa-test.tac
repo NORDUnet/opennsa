@@ -11,6 +11,7 @@ from opennsa.backends import dud
 
 
 DEBUG = False
+PROFILE = False
 
 TOPOLOGY = 'test-topology.owl'
 MAPPING  = 'test-mapping.nrm'
@@ -26,7 +27,7 @@ WSDL_DIR = os.path.join(os.getcwd(), 'wsdl')
 #log.startLoggingWithObserver(earlyObserver.emit, setStdout=0)
 #log.defaultObserver = earlyObserver # This will make the log system plug it out when the real logging starts
 
-logObserver = logging.DebugLogObserver(sys.stdout, DEBUG)
+logObserver = logging.DebugLogObserver(sys.stdout, DEBUG, PROFILE)
 
 application = service.Application("OpenNSA")
 application.setComponent(ILogObserver, logObserver.emit)

@@ -5,6 +5,7 @@ Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2011)
 """
 
+import time
 import datetime
 from twisted.python import log
 
@@ -12,6 +13,9 @@ from opennsa import nsa
 from opennsa.protocols.webservice.ext import sudsservice
 
 from suds.sax import date as sudsdate
+
+
+LOG_SYSTEM = 'webservice.Service'
 
 WSDL_PROVIDER   = 'file://%s/ogf_nsi_connection_provider_v1_0.wsdl'
 WSDL_REQUESTER  = 'file://%s/ogf_nsi_connection_requester_v1_0.wsdl'
@@ -70,6 +74,9 @@ class ProviderService:
     def reserve(self, soap_action, soap_data):
 
         assert soap_action == '"http://schemas.ogf.org/nsi/2011/10/connection/service/reserve"'
+
+        t_start = time.time()
+
         method, req = self.decoder.parse_request('reserve', soap_data)
 
         correlation_id, reply_to, = self._getRequestParameters(req)
@@ -100,6 +107,9 @@ class ProviderService:
 
         et = end_time.utctimetuple()
         end_time = datetime.datetime(et.tm_year, et.tm_mon, et.tm_mday, et.tm_hour, et.tm_min, et.tm_sec)
+
+        t_delta = time.time() - t_start
+        log.msg('Profile: Reserve request parse time: %s' % round(t_delta, 3), profile=True, system=LOG_SYSTEM)
 
         service_parameters      = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, bandwidth=bwp)
 
