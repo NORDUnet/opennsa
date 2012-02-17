@@ -301,7 +301,7 @@ def parseTopology(topology_sources, nrm_mapping_source=None):
         triples = triples.union(topo_triples)
 
     if nrm_mapping_source:
-        topo_triples += _parseNRMMapping(nrm_mapping_source)
+        topo_triples = _parseNRMMapping(nrm_mapping_source)
         triples = triples.union(topo_triples)
 
     # extract topology from triples
