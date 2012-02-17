@@ -235,7 +235,7 @@ def _parseOWLTopology(topology_source):
     else:
         raise error.TopologyError('Invalid topology source')
 
-    triples = []
+    triples = set()
 
     root = doc.getroot()
     for e in root.getchildren():
@@ -243,12 +243,12 @@ def _parseOWLTopology(topology_source):
         if e.tag == NAMED_INDIVIDUAL:
             resource = e.attrib[RDF_ABOUT]
             for el in e.getchildren():
-                if   el.tag == RDF_TYPE:                triples.append( (resource, str(RDF_TYPE),           el.attrib.values()[0]) )
-                elif el.tag == GLIF_CONNECTED_TO:       triples.append( (resource, str(GLIF_CONNECTED_TO),  el.attrib.values()[0]) )
-                elif el.tag == GLIF_HAS_STP:            triples.append( (resource, str(GLIF_HAS_STP),       el.attrib.values()[0]) )
-                elif el.tag == GLIF_MAPS_TO:            triples.append( (resource, str(GLIF_MAPS_TO),       el.text or el.attrib.values()[0]) )
-                elif el.tag == GLIF_PROVIDER_ENDPOINT:  triples.append( (resource, str(GLIF_PROVIDER_ENDPOINT), el.text) )
-                elif el.tag == GLIF_MANAGED_BY:         triples.append( (resource, str(GLIF_MANAGED_BY),    el.attrib.values()[0]) )
+                if   el.tag == RDF_TYPE:                triples.add( (resource, str(RDF_TYPE),           el.attrib.values()[0]) )
+                elif el.tag == GLIF_CONNECTED_TO:       triples.add( (resource, str(GLIF_CONNECTED_TO),  el.attrib.values()[0]) )
+                elif el.tag == GLIF_HAS_STP:            triples.add( (resource, str(GLIF_HAS_STP),       el.attrib.values()[0]) )
+                elif el.tag == GLIF_MAPS_TO:            triples.add( (resource, str(GLIF_MAPS_TO),       el.text or el.attrib.values()[0]) )
+                elif el.tag == GLIF_PROVIDER_ENDPOINT:  triples.add( (resource, str(GLIF_PROVIDER_ENDPOINT), el.text) )
+                elif el.tag == GLIF_MANAGED_BY:         triples.add( (resource, str(GLIF_MANAGED_BY),    el.attrib.values()[0]) )
                 # We don't care about these
                 elif el.tag in (RDF_COMMENT, RDF_LABEL, GLIF_MANAGING, GLIF_ADMIN_CONTACT, GLIF_LOCATED_AT, GLIF_LATITUDE, GLIF_LONGITUDE):
                     pass
@@ -272,7 +272,7 @@ def _parseNRMMapping(nrm_mapping_source):
     # regular expression for matching nrm mapping lines
     NRM_MAP_RX = re.compile('''\s*(.*)\s*"(.*)"''')
 
-    triples = []
+    triples = set()
 
     for line in source:
         line = line.strip()
@@ -286,7 +286,7 @@ def _parseNRMMapping(nrm_mapping_source):
         nrm_port = nrm_port.strip()
         assert stp.startswith(STP_PREFIX), 'Invalid STP specified in NRM Mapping'
 
-        triples.append( (stp, str(GLIF_MAPS_TO), nrm_port ) )
+        triples.add( (stp, str(GLIF_MAPS_TO), nrm_port ) )
 
     return triples
 
@@ -294,17 +294,17 @@ def _parseNRMMapping(nrm_mapping_source):
 
 def parseTopology(topology_sources, nrm_mapping_source=None):
 
-    triples = []
+    triples = set()
 
     for ts in topology_sources:
-        triples += _parseOWLTopology(ts)
+        topo_triples = _parseOWLTopology(ts)
+        triples = triples.union(topo_triples)
 
     if nrm_mapping_source:
-        triples += _parseNRMMapping(nrm_mapping_source)
+        topo_triples += _parseNRMMapping(nrm_mapping_source)
+        triples = triples.union(topo_triples)
 
     # extract topology from triples
-
-    triples.sort() # not really needed (but makes it easy to when printing)
 
     def getSubject(pred, obj):
         return [ t[0] for t in triples if t[1] == pred and t[2] == obj ]
