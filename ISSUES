@@ -12,7 +12,3 @@ General:
 Backends:
   NCS backend
 
-
-Argia backend:
-  Needs a few things to be configurable
-
