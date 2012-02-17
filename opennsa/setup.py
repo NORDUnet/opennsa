@@ -165,7 +165,7 @@ def createApplication(config_file=config.DEFAULT_CONFIG_FILE, authz_verify=True,
     # setup application
 
 
-    service_registry = registry.EventHandlerRegistry()
+    service_registry = registry.ServiceRegistry()
 
     factory = createService(network_name, topology_sources, backend, service_registry, host, port, wsdl_dir, ctx_factory, nrm_map_source)
 
