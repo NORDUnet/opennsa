@@ -3,7 +3,7 @@ import traceback
 from twisted.python import log
 from twisted.internet import defer
 
-from opennsa import error, event, subscription
+from opennsa import error, registry, subscription
 
 
 WS_PROTO_EVENT_SYSTEM = 'nsi-1.0-soap'
@@ -29,11 +29,11 @@ class Provider:
         self.requester_client = requester_client
         self.event_registry = event_registry
 
-        event_registry.registerEventHandler(event.RESERVE_RESPONSE,   self.notifyReserveResult,   WS_PROTO_EVENT_SYSTEM)
-        event_registry.registerEventHandler(event.PROVISION_RESPONSE, self.notifyProvisionResult, WS_PROTO_EVENT_SYSTEM)
-        event_registry.registerEventHandler(event.RELEASE_RESPONSE,   self.notifyReleaseResult,   WS_PROTO_EVENT_SYSTEM)
-        event_registry.registerEventHandler(event.TERMINATE_RESPONSE, self.notifyTerminateResult, WS_PROTO_EVENT_SYSTEM)
-        event_registry.registerEventHandler(event.QUERY_RESPONSE,     self.notifyQueryResult,     WS_PROTO_EVENT_SYSTEM)
+        event_registry.registerEventHandler(registry.RESERVE_RESPONSE,   self.notifyReserveResult,   WS_PROTO_EVENT_SYSTEM)
+        event_registry.registerEventHandler(registry.PROVISION_RESPONSE, self.notifyProvisionResult, WS_PROTO_EVENT_SYSTEM)
+        event_registry.registerEventHandler(registry.RELEASE_RESPONSE,   self.notifyReleaseResult,   WS_PROTO_EVENT_SYSTEM)
+        event_registry.registerEventHandler(registry.TERMINATE_RESPONSE, self.notifyTerminateResult, WS_PROTO_EVENT_SYSTEM)
+        event_registry.registerEventHandler(registry.QUERY_RESPONSE,     self.notifyQueryResult,     WS_PROTO_EVENT_SYSTEM)
 
 
     def _extractData(self, data):
@@ -55,9 +55,9 @@ class Provider:
                  'connection_id' : connection_id, 'global_reservation_id' : None,
                  'description'   : description,   'service_parameters'    : service_parameters }
 
-        sub = subscription.Subscription(event.RESERVE_RESPONSE, WS_PROTO_EVENT_SYSTEM, data)
+        sub = subscription.Subscription(registry.RESERVE_RESPONSE, WS_PROTO_EVENT_SYSTEM, data)
 
-        handler = self.event_registry.getHandler(event.RESERVE, event.SYSTEM_SERVICE)
+        handler = self.event_registry.getHandler(registry.RESERVE, registry.SYSTEM_SERVICE)
         d = handler(requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters, sub)
         return d
 
@@ -82,9 +82,9 @@ class Provider:
         data = { 'reply_to'      : reply_to,      'correlation_id'        : correlation_id,
                  'requester_nsa' : requester_nsa, 'provider_nsa'          : provider_nsa,
                  'connection_id' : connection_id, 'global_reservation_id' : None }
-        sub = subscription.Subscription(event.PROVISION_RESPONSE, WS_PROTO_EVENT_SYSTEM, data)
+        sub = subscription.Subscription(registry.PROVISION_RESPONSE, WS_PROTO_EVENT_SYSTEM, data)
 
-        handler = self.event_registry.getHandler(event.PROVISION, event.SYSTEM_SERVICE)
+        handler = self.event_registry.getHandler(registry.PROVISION, registry.SYSTEM_SERVICE)
         d = handler(requester_nsa, provider_nsa, session_security_attr, connection_id, sub)
         return d
 
@@ -107,9 +107,9 @@ class Provider:
         data = { 'reply_to'      : reply_to,      'correlation_id'        : correlation_id,
                  'requester_nsa' : requester_nsa, 'provider_nsa'          : provider_nsa,
                  'connection_id' : connection_id, 'global_reservation_id' : None }
-        sub = subscription.Subscription(event.RELEASE_RESPONSE, WS_PROTO_EVENT_SYSTEM, data)
+        sub = subscription.Subscription(registry.RELEASE_RESPONSE, WS_PROTO_EVENT_SYSTEM, data)
 
-        handler = self.event_registry.getHandler(event.RELEASE, event.SYSTEM_SERVICE)
+        handler = self.event_registry.getHandler(registry.RELEASE, registry.SYSTEM_SERVICE)
         d = handler(requester_nsa, provider_nsa, session_security_attr, connection_id, sub)
         return d
 
@@ -132,9 +132,9 @@ class Provider:
         data = { 'reply_to'      : reply_to,      'correlation_id'        : correlation_id,
                  'requester_nsa' : requester_nsa, 'provider_nsa'          : provider_nsa,
                  'connection_id' : connection_id, 'global_reservation_id' : None }
-        sub = subscription.Subscription(event.TERMINATE_RESPONSE, WS_PROTO_EVENT_SYSTEM, data)
+        sub = subscription.Subscription(registry.TERMINATE_RESPONSE, WS_PROTO_EVENT_SYSTEM, data)
 
-        handler = self.event_registry.getHandler(event.TERMINATE, event.SYSTEM_SERVICE)
+        handler = self.event_registry.getHandler(registry.TERMINATE, registry.SYSTEM_SERVICE)
         d = handler(requester_nsa, provider_nsa, session_security_attr, connection_id, sub)
         return d
 
@@ -159,9 +159,9 @@ class Provider:
                  'operation'     : operation,     'connection_ids'        : connection_ids,
                  'global_reservation_ids' : global_reservation_ids }
 
-        sub = subscription.Subscription(event.QUERY_RESPONSE, WS_PROTO_EVENT_SYSTEM, data)
+        sub = subscription.Subscription(registry.QUERY_RESPONSE, WS_PROTO_EVENT_SYSTEM, data)
 
-        handler = self.event_registry.getHandler(event.QUERY, event.SYSTEM_SERVICE)
+        handler = self.event_registry.getHandler(registry.QUERY, registry.SYSTEM_SERVICE)
         d = handler(requester_nsa, provider_nsa, session_security_attr, operation, connection_ids, global_reservation_ids, sub)
         return d
 

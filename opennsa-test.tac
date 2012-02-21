@@ -6,7 +6,7 @@ from twisted.python import log
 from twisted.python.log import ILogObserver
 from twisted.application import internet, service
 
-from opennsa import setup, event, logging
+from opennsa import setup, registry, logging
 from opennsa.backends import dud
 
 
@@ -35,7 +35,7 @@ application.setComponent(ILogObserver, logObserver.emit)
 for network, port in SERVICES:
 
     backend = dud.DUDNSIBackend(network)
-    es = event.EventHandlerRegistry()
+    es = registry.ServiceRegistry()
     factory = setup.createService(network, [ open(TOPOLOGY) ], backend, es, HOST, port, WSDL_DIR, nrm_map_source=open(MAPPING) )
 
     internet.TCPServer(port, factory, interface='localhost').setServiceParent(application)
