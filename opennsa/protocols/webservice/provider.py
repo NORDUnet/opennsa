@@ -58,7 +58,7 @@ class Provider:
         sub = subscription.Subscription(registry.RESERVE_RESPONSE, WS_PROTO_EVENT_SYSTEM, data)
 
         handler = self.event_registry.getHandler(registry.RESERVE, registry.SYSTEM_SERVICE)
-        d = handler(requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters, sub)
+        d = defer.maybeDeferred(handler, requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters, sub)
         return d
 
 
@@ -85,7 +85,7 @@ class Provider:
         sub = subscription.Subscription(registry.PROVISION_RESPONSE, WS_PROTO_EVENT_SYSTEM, data)
 
         handler = self.event_registry.getHandler(registry.PROVISION, registry.SYSTEM_SERVICE)
-        d = handler(requester_nsa, provider_nsa, session_security_attr, connection_id, sub)
+        d = defer.maybeDeferred(handler, requester_nsa, provider_nsa, session_security_attr, connection_id, sub)
         return d
 
 
@@ -110,7 +110,7 @@ class Provider:
         sub = subscription.Subscription(registry.RELEASE_RESPONSE, WS_PROTO_EVENT_SYSTEM, data)
 
         handler = self.event_registry.getHandler(registry.RELEASE, registry.SYSTEM_SERVICE)
-        d = handler(requester_nsa, provider_nsa, session_security_attr, connection_id, sub)
+        d = defer.maybeDeferred(handler, requester_nsa, provider_nsa, session_security_attr, connection_id, sub)
         return d
 
 
@@ -135,7 +135,7 @@ class Provider:
         sub = subscription.Subscription(registry.TERMINATE_RESPONSE, WS_PROTO_EVENT_SYSTEM, data)
 
         handler = self.event_registry.getHandler(registry.TERMINATE, registry.SYSTEM_SERVICE)
-        d = handler(requester_nsa, provider_nsa, session_security_attr, connection_id, sub)
+        d = defer.maybeDeferred(handler, requester_nsa, provider_nsa, session_security_attr, connection_id, sub)
         return d
 
 
@@ -162,7 +162,7 @@ class Provider:
         sub = subscription.Subscription(registry.QUERY_RESPONSE, WS_PROTO_EVENT_SYSTEM, data)
 
         handler = self.event_registry.getHandler(registry.QUERY, registry.SYSTEM_SERVICE)
-        d = handler(requester_nsa, provider_nsa, session_security_attr, operation, connection_ids, global_reservation_ids, sub)
+        d = defer.maybeDeferred(handler, requester_nsa, provider_nsa, session_security_attr, operation, connection_ids, global_reservation_ids, sub)
         return d
 
 
