@@ -20,6 +20,26 @@ LOG_SYSTEM = 'webservice.Service'
 WSDL_PROVIDER   = 'file://%s/ogf_nsi_connection_provider_v1_0.wsdl'
 WSDL_REQUESTER  = 'file://%s/ogf_nsi_connection_requester_v1_0.wsdl'
 
+# Hack on!
+# Getting SUDS to throw service faults is more or less impossible as it is a client library
+# We do this instead
+SERVICE_FAULT = """<?xml version='1.0' encoding='UTF-8'?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+    <soap:Body>
+        <soap:Fault xmlns:envelope="http://www.w3.org/2003/05/soap-envelope">
+            <faultcode>soap:Server</faultcode>
+            <faultstring>%(error_text)s</faultstring>
+            <detail>
+                <nsi:serviceException xmlns:nsi="http://schemas.ogf.org/nsi/2011/10/connection/interface">
+                    <errorId>%(error_id)s</errorId>
+                    <text>%(error_text)s</text>
+                </nsi:serviceException>
+            </detail>
+        </soap:Fault>
+    </soap:Body>
+</soap:Envelope>
+"""
+
 
 
 def _decodeNSAs(subreq):
@@ -66,9 +86,14 @@ class ProviderService:
 
 
     def _createFault(self, err, method):
-        log.msg('Fault reply not implemented yet')
-        log.msg(str(err))
-        return err # Will make the resource return 500
+
+        error_text = err.getErrorMessage()
+
+        log.msg('Error during service invocation: %s' % error_text)
+
+        # need to do error type -> error id mapping
+        reply = SERVICE_FAULT % {'error_id': 'N/A', 'error_text': error_text }
+        return reply
 
 
     def reserve(self, soap_action, soap_data):
