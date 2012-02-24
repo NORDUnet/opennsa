@@ -212,12 +212,14 @@ class Force10CommandSender:
 
     def setupLink(self, source_nrm_port, dest_nrm_port):
 
+        log.msg('Setting up link: %s-%s' % (source_nrm_port, dest_nrm_port), debug=True, system=LOG_SYSTEM)
         commands = _createSetupCommands(source_nrm_port, dest_nrm_port)
         return self._sendCommands(commands)
 
 
     def teardownLink(self, source_nrm_port, dest_nrm_port):
 
+        log.msg('Tearing down link: %s-%s' % (source_nrm_port, dest_nrm_port), debug=True, system=LOG_SYSTEM)
         commands = _createTeardownCommands(source_nrm_port, dest_nrm_port)
         return self._sendCommands(commands)
 
