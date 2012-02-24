@@ -65,7 +65,7 @@ COMMAND_END             = 'end'
 COMMAND_INTERFACE_VLAN  = 'interface vlan %(vlan)i'
 COMMAND_NAME            = 'name %(name)s'
 COMMAND_NO_SHUTDOWN     = 'no shutdown'
-COMMAND_TAGGED          = 'tagged %(iname)s %(port)s'
+COMMAND_TAGGED          = 'tagged %(interface)s'
 
 COMMAND_NO_INTERFACE    = 'no interface vlan %(vlan)i'
 
@@ -74,24 +74,23 @@ COMMAND_NO_INTERFACE    = 'no interface vlan %(vlan)i'
 def _portToInterfaceVLAN(nrm_port):
 
     interface, vlan = nrm_port.rsplit('.')
-    iname, port = interface.split('-')
     vlan = int(vlan)
-    return iname, port, vlan
+    return interface, vlan
 
 
 def _createSetupCommands(source_nrm_port, dest_nrm_port):
 
-    s_iname, s_port, s_vlan = _portToInterfaceVLAN(source_nrm_port)
-    d_iname, d_port, d_vlan = _portToInterfaceVLAN(dest_nrm_port)
+    s_interface, s_vlan = _portToInterfaceVLAN(source_nrm_port)
+    d_interface, d_vlan = _portToInterfaceVLAN(dest_nrm_port)
 
     assert s_vlan == d_vlan, 'Source and destination VLANs differ, unpossible!'
 
     name = 'opennsa-%i' % s_vlan
 
-    cmd_vlan    = COMMAND_INTERFACE_VLAN    % { 'vlan'  : s_vlan }
-    cmd_name    = COMMAND_NAME              % { 'name'  : name   }
-    cmd_s_intf  = COMMAND_TAGGED            % { 'iname' : s_iname , 'port' : s_port }
-    cmd_d_intf  = COMMAND_TAGGED            % { 'iname' : d_iname , 'port' : d_port }
+    cmd_vlan    = COMMAND_INTERFACE_VLAN    % { 'vlan' : s_vlan }
+    cmd_name    = COMMAND_NAME              % { 'name' : name   }
+    cmd_s_intf  = COMMAND_TAGGED            % { 'interface' : s_interface }
+    cmd_d_intf  = COMMAND_TAGGED            % { 'interface' : d_interface }
 
     commands = [ cmd_vlan, cmd_name, COMMAND_NO_SHUTDOWN, cmd_s_intf, cmd_d_intf ]
     return commands
