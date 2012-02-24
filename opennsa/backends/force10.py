@@ -98,8 +98,8 @@ def _createSetupCommands(source_nrm_port, dest_nrm_port):
 
 def _createTeardownCommands(source_nrm_port, dest_nrm_port):
 
-    s_iname, s_port, s_vlan = _portToInterfaceVLAN(source_nrm_port)
-    d_iname, d_port, d_vlan = _portToInterfaceVLAN(dest_nrm_port)
+    _, s_vlan = _portToInterfaceVLAN(source_nrm_port)
+    _, d_vlan = _portToInterfaceVLAN(dest_nrm_port)
 
     assert s_vlan == d_vlan, 'Source and destination VLANs differ, unpossible!'
 
