@@ -38,7 +38,7 @@ TRANSITIONS = {
     PROVISIONED     : [ RELEASING,      TERMINATING,                                            ],
     RELEASING       : [ RESERVED,       SCHEDULED,      TERMINATING,    TERMINATED              ],
     CLEANING        : [ TERMINATED                                                              ],
-    TERMINATING     : [ TERMINATED,                                                             ],
+    TERMINATING     : [ TERMINATED,     CLEANING                                                ],
     TERMINATED      : [ ]
 }
 
