@@ -20,6 +20,7 @@ def deferTaskFailed(err):
     if err.check(defer.CancelledError):
         pass # this just means that the task was cancelled
     else:
+        log.err(err)
         return err
 
 
