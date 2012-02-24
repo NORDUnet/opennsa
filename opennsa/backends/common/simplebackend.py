@@ -66,7 +66,7 @@ class GenericConnection:
         except error.StateTransitionError:
             return defer.fail(error.ReserveError('Cannot reserve connection in state %s' % self.state()))
 
-        d = self.scheduler.scheduleTransition(self.service_parameters.start_time, scheduled, state.SCHEDULED)
+        self.scheduler.scheduleTransition(self.service_parameters.start_time, scheduled, state.SCHEDULED)
         self.logStateUpdate('RESERVED')
         return defer.succeed(self)
 
@@ -143,16 +143,37 @@ class GenericConnection:
 
     def terminate(self):
 
+        def removeCalendarEntry():
+            self.calendar.removeConnection(self.source_port, self.service_parameters.start_time, self.service_parameters.end_time)
+            self.calendar.removeConnection(self.dest_port  , self.service_parameters.start_time, self.service_parameters.end_time)
+
+        def terminateSuccess(_):
+            removeCalendarEntry()
+            self.state.switchState(state.TERMINATED)
+            self.logStateUpdate(state.TERMINATED)
+            return self
+
+        def terminateFailure(err):
+            log.msg('Error terminating connection: %s' % err.getErrorMessage())
+            removeCalendarEntry() # This might be wrong :-/
+            self.state.switchState(state.TERMINATED)
+            self.logStateUpdate(state.TERMINATED)
+            return err
+
+        teardown = True if self.state() == state.PROVISIONED else False
+
         self.state.switchState(state.TERMINATING) # we can (almost) always switch to this
-        self.logStateUpdate('TERMINATING')
+        self.logStateUpdate(state.TERMINATING)
         self.scheduler.cancelTransition() # cancel any pending scheduled switch
 
-        self.calendar.removeConnection(self.source_port, self.service_parameters.start_time, self.service_parameters.end_time)
-        self.calendar.removeConnection(self.dest_port  , self.service_parameters.start_time, self.service_parameters.end_time)
-
-        self.state.switchState(state.TERMINATED)
-        self.logStateUpdate('TERMINATED')
-        return defer.succeed(self)
+        if teardown:
+            self.state.switchState(state.CLEANING)
+            self.logStateUpdate(state.CLEANING)
+            d = self.connection_manager.teardownLink(self.source_port, self.dest_port)
+            d.addCallbacks(terminateSuccess, terminateFailure)
+            return d
+        else:
+            return terminateSuccess(None)
 
 
     def query(self, query_filter):
