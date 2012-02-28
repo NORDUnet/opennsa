@@ -205,6 +205,11 @@ class JunOSCommandSender:
 
     def _getSSHChannel(self):
 
+        def setSSHConnectionCache(ssh_connection):
+            log.msg('SSH Connection created and cached', system=LOG_SYSTEM)
+            self.ssh_connection = ssh_connection
+            return ssh_connection
+
         def gotSSHConnection(ssh_connection):
             channel = SSHChannel(conn = ssh_connection)
             ssh_connection.openChannel(channel)
@@ -214,8 +219,11 @@ class JunOSCommandSender:
             log.msg('Reusing SSH connection', debug=True, system=LOG_SYSTEM)
             return gotSSHConnection(self.ssh_connection)
         else:
-            log.msg('Creating new SSH connection', debug=True, system=LOG_SYSTEM)
+            # since creating a new connection should be uncommon, we log it
+            # this makes it possible to see if something fucks up and creates connections continuously
+            log.msg('Creating new SSH connection', system=LOG_SYSTEM)
             d = self.ssh_connection_creator.getSSHConnection()
+            d.addCallback(setSSHConnectionCache)
             d.addCallback(gotSSHConnection)
             return d
 
