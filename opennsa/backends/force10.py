@@ -93,7 +93,7 @@ def _createSetupCommands(source_nrm_port, dest_nrm_port):
     cmd_s_intf  = COMMAND_TAGGED            % { 'interface' : s_interface }
     cmd_d_intf  = COMMAND_TAGGED            % { 'interface' : d_interface }
 
-    commands = [ cmd_vlan, cmd_name, COMMAND_NO_SHUTDOWN, cmd_s_intf, cmd_d_intf ]
+    commands = [ cmd_vlan, cmd_name, cmd_s_intf, cmd_d_intf, COMMAND_NO_SHUTDOWN ]
     return commands
 
 
