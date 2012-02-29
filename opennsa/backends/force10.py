@@ -61,6 +61,7 @@ LOG_SYSTEM = 'opennsa.force10'
 
 COMMAND_CONFIGURE       = 'configure'
 COMMAND_END             = 'end'
+COMMAND_WRITE           = 'write'       # writes config
 
 COMMAND_INTERFACE_VLAN  = 'interface vlan %(vlan)i'
 COMMAND_NAME            = 'name %(name)s'
@@ -148,11 +149,16 @@ class SSHChannel(ssh.SSHChannel):
             self.write(COMMAND_END + LT)
             yield d
 
+            log.msg('Configuration done, writing configuration.', debug=True, system=LOG_SYSTEM)
+            d = self.waitForData('#')
+            self.write(COMMAND_WRITE + LT)
+            yield d
+
         except Exception, e:
             log.msg('Error sending commands: %s' % str(e))
             raise e
 
-        log.msg('Commands successfully send', debug=True, system=LOG_SYSTEM)
+        log.msg('Commands successfully send', system=LOG_SYSTEM)
         self.sendEOF()
         self.closeIt()
 
