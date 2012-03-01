@@ -63,7 +63,7 @@ setup(name='opennsa',
 
       data_files=[
         ('bin',                     ['onsa']),
-        ('share/nsi/topology',      ['AutoGOLE-Topo-2012-01-25.owl']),
+        ('share/nsi/topology',      ['AutoGOLE-Topo-2012-02-29.owl']),
         ('share/nsi/wsdl',          ['wsdl/ogf_nsi_connection_interface_v1_0.wsdl',
                                      'wsdl/ogf_nsi_connection_provider_v1_0.wsdl',
                                      'wsdl/ogf_nsi_connection_requester_v1_0.wsdl',
