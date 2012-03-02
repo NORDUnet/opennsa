@@ -30,6 +30,8 @@ class StateTransitionError(Exception):
     pass
 
 
+# These should really be replaced with proper errors
+
 class ReserveError(Exception):
     pass
 
