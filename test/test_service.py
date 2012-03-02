@@ -11,7 +11,7 @@ import StringIO
 from twisted.trial import unittest
 from twisted.internet import defer, reactor
 
-from opennsa import nsa, setup, event
+from opennsa import nsa, setup, registry
 from opennsa.backends import dud
 
 from . import topology as testtopology
@@ -34,8 +34,8 @@ class ServiceTest(unittest.TestCase):
 
             topo_source = StringIO.StringIO(testtopology.TEST_TOPOLOGY)
             backend = dud.DUDNSIBackend(network)
-            es = event.EventHandlerRegistry()
-            factory = setup.createService(network, [ topo_source ], backend, es, HOST, port, WSDL_DIR)
+            sr = registry.ServiceRegistry()
+            factory = setup.createService(network, [ topo_source ], backend, sr, HOST, port, WSDL_DIR)
 
             iport = reactor.listenTCP(port, factory, interface='localhost')
             self.iports.append(iport)
