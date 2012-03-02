@@ -2,7 +2,6 @@
 General:
 
   Documentation :-)
-  Path computation in CLI
   Make CLI setup more like regular config to lessen confusion
   Persistence for connections
   Seperate protocol stack from connection (done for provider, client still needs work)
@@ -12,8 +11,6 @@ General:
   Failing to send reserveConf can keep connection in INITIAL
   Need an easy way to see active/scheduled/future connections
   connection.py and simplebackend.py steps on each others toes in scheduled teardown
-  Query returns NRM port instead of STPs
-  Query doesn't return what it should (NSA id seems to be culprit)
 
  Client:
 
