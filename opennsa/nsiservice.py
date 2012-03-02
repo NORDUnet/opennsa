@@ -163,7 +163,8 @@ class NSIService:
 
         # now reserve connections needed to create path
         conn.addSubscription(sub)
-        reactor.callWhenRunning(conn.reserve)
+        d = task.deferLater(reactor, 0, conn.reserve)
+        d.addErrback(log.err)
         return defer.succeed(None)
 
 
@@ -175,7 +176,8 @@ class NSIService:
         try:
             conn = self.getConnection(requester_nsa, connection_id)
             conn.addSubscription(sub)
-            reactor.callWhenRunning(conn.provision)
+            d = task.deferLater(reactor, 0, conn.provision)
+            d.addErrback(log.err)
             return defer.succeed(None)
         except error.NoSuchConnectionError, e:
             log.msg('NSA %s requested non-existing connection %s' % (requester_nsa, connection_id), system=LOG_SYSTEM)
@@ -190,7 +192,8 @@ class NSIService:
         try:
             conn = self.getConnection(requester_nsa, connection_id)
             conn.addSubscription(sub)
-            reactor.callWhenRunning(conn.release)
+            d = task.deferLater(reactor, 0, conn.release)
+            d.addErrback(log.err)
             return defer.succeed(None)
         except error.NoSuchConnectionError, e:
             log.msg('NSA %s requested non-existing connection %s' % (requester_nsa, connection_id), system=LOG_SYSTEM)
