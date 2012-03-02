@@ -127,7 +127,7 @@ def createApplication(config_file=config.DEFAULT_CONFIG_FILE, authz_verify=True,
         hostcert = cfg.get(config.BLOCK_SERVICE, config.CONFIG_HOSTCERT)
         certdir  = cfg.get(config.BLOCK_SERVICE, config.CONFIG_CERTIFICATE_DIR)
         try:
-            verify = cfg.get(config.BLOCK_SERVICE, config.CONFIG_VERIFY)
+            verify = cfg.getboolean(config.BLOCK_SERVICE, config.CONFIG_VERIFY)
         except NoOptionError, e:
             verify = config.DEFAULT_VERIFY
 
