@@ -11,7 +11,7 @@ import StringIO
 from twisted.trial import unittest
 from twisted.internet import defer, reactor
 
-from opennsa import nsa, setup, registry
+from opennsa import nsa, error, setup, registry
 from opennsa.backends import dud
 
 from . import topology as testtopology
@@ -99,4 +99,26 @@ class ServiceTest(unittest.TestCase):
         from twisted.internet import task
         d = task.deferLater(reactor, 0.01, lambda : None)
         yield d
+
+
+    @defer.inlineCallbacks
+    def testInvalidNetwork(self):
+
+        provider = nsa.Network('Aruba', nsa.NetworkServiceAgent('Aruba-OpenNSA', 'http://localhost:9080/NSI/services/ConnectionService'))
+
+        source_stp      = nsa.STP('NoSuchNetwork', 'PS' )
+        dest_stp        = nsa.STP('Aruba', 'A2')
+
+        start_time = datetime.datetime.utcfromtimestamp(time.time() + 1.5 )
+        end_time   = datetime.datetime.utcfromtimestamp(time.time() + 120 )
+
+        bwp = nsa.BandwidthParameters(200)
+        service_params  = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, bandwidth=bwp)
+        connection_id         = 'conn-id1'
+
+        try:
+            yield self.client.reserve(self.client_nsa, provider.nsa, None, None, '', connection_id, service_params)
+            self.fail('Reserve call should have failed')
+        except error.ReserveError:
+            pass
 
