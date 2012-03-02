@@ -77,6 +77,6 @@ def path(topology_file, source_stp, dest_stp):
 
     paths = topo.findPaths(r_source_stp, r_dest_stp)
 
-    for p in paths:
+    for p in sorted(paths, key=lambda p : len(p.network_links)):
         print p
 
