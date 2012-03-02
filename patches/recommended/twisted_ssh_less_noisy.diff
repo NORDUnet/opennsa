@@ -1,0 +1,116 @@
+Index: twisted/conch/ssh/transport.py
+===================================================================
+--- twisted/conch/ssh/transport.py	(revision 33642)
++++ twisted/conch/ssh/transport.py	(working copy)
+@@ -536,13 +536,6 @@
+             self.sendDisconnect(DISCONNECT_KEY_EXCHANGE_FAILED,
+                                 "couldn't match all kex parts")
+             return
+-        log.msg('kex alg, key alg: %s %s' % (self.kexAlg, self.keyAlg))
+-        log.msg('outgoing: %s %s %s' % (self.nextEncryptions.outCipType,
+-                                        self.nextEncryptions.outMACType,
+-                                        self.outgoingCompressionType))
+-        log.msg('incoming: %s %s %s' % (self.nextEncryptions.inCipType,
+-                                        self.nextEncryptions.inMACType,
+-                                        self.incomingCompressionType))
+ 
+         if self._keyExchangeState == self._KEY_EXCHANGE_REQUESTED:
+             self._keyExchangeState = self._KEY_EXCHANGE_PROGRESSING
+@@ -606,7 +599,6 @@
+ 
+         @type service: C{SSHService}
+         """
+-        log.msg('starting service %s' % service.name)
+         if self.service:
+             self.service.serviceStopped()
+         self.service = service
+@@ -705,7 +697,6 @@
+         outs = [initIVSC, encKeySC, integKeySC]
+         ins = [initIVCS, encKeyCS, integKeyCS]
+         if self.isClient: # reverse for the client
+-            log.msg('REVERSE')
+             outs, ins = ins, outs
+         self.nextEncryptions.setKeys(outs[0], outs[1], ins[0], ins[1],
+                                      outs[2], ins[2])
+@@ -719,7 +710,6 @@
+         and compression parameters should be adopted.  Any messages which were
+         queued during key exchange will also be flushed.
+         """
+-        log.msg('NEW KEYS')
+         self.currentEncryptions = self.nextEncryptions
+         if self.outgoingCompressionType == 'zlib':
+             self.outgoingCompression = zlib.compressobj(6)
+Index: twisted/conch/ssh/connection.py
+===================================================================
+--- twisted/conch/ssh/connection.py	(revision 33642)
++++ twisted/conch/ssh/connection.py	(working copy)
+@@ -238,8 +238,6 @@
+         if channel.localWindowLeft < channel.localWindowSize / 2:
+             self.adjustWindow(channel, channel.localWindowSize - \
+                                        channel.localWindowLeft)
+-            #log.msg('local window left: %s/%s' % (channel.localWindowLeft,
+-            #                                    channel.localWindowSize))
+         log.callWithLogger(channel, channel.dataReceived, data)
+ 
+     def ssh_CHANNEL_EXTENDED_DATA(self, packet):
+@@ -407,8 +405,6 @@
+         @type channel:  subclass of C{SSHChannel}
+         @type extra:    C{str}
+         """
+-        log.msg('opening channel %s with %s %s'%(self.localChannelID,
+-                channel.localWindowSize, channel.localMaxPacket))
+         self.transport.sendPacket(MSG_CHANNEL_OPEN, common.NS(channel.name)
+                     + struct.pack('>3L', self.localChannelID,
+                     channel.localWindowSize, channel.localMaxPacket)
+@@ -429,7 +425,6 @@
+         """
+         if channel.localClosed:
+             return
+-        log.msg('sending request %s' % requestType)
+         self.transport.sendPacket(MSG_CHANNEL_REQUEST, struct.pack('>L',
+                                     self.channelsToRemoteChannel[channel])
+                                   + common.NS(requestType)+chr(wantReply)
+@@ -494,7 +489,6 @@
+         """
+         if channel.localClosed:
+             return # we're already closed
+-        log.msg('sending eof')
+         self.transport.sendPacket(MSG_CHANNEL_EOF, struct.pack('>L',
+                                     self.channelsToRemoteChannel[channel]))
+ 
+@@ -506,7 +500,6 @@
+         """
+         if channel.localClosed:
+             return # we're already closed
+-        log.msg('sending close %i' % channel.id)
+         self.transport.sendPacket(MSG_CHANNEL_CLOSE, struct.pack('>L',
+                 self.channelsToRemoteChannel[channel]))
+         channel.localClosed = True
+Index: twisted/conch/ssh/userauth.py
+===================================================================
+--- twisted/conch/ssh/userauth.py	(revision 33642)
++++ twisted/conch/ssh/userauth.py	(working copy)
+@@ -144,7 +144,6 @@
+             if it failed.
+         @rtype: C{defer.Deferred}
+         """
+-        log.msg('%s trying auth %s' % (user, kind))
+         if kind not in self.supportedAuthentications:
+             return defer.fail(
+                     error.ConchError('unsupported authentication, failing'))
+@@ -523,7 +522,6 @@
+                               if meth not in self.authenticatedWith],
+                              key=orderByPreference)
+ 
+-        log.msg('can continue with: %s' % canContinue)
+         return self._cbUserauthFailure(None, iter(canContinue))
+ 
+ 
+@@ -685,7 +683,6 @@
+         if publicKey is not None:
+             self.lastPublicKey = publicKey
+             self.triedPublicKeys.append(publicKey)
+-            log.msg('using key of type %s' % publicKey.type())
+             self.askForAuth('publickey', '\x00' + NS(publicKey.sshType()) +
+                             NS(publicKey.blob()))
+             return True
