@@ -151,7 +151,7 @@ class GenericConnection:
             removeCalendarEntry()
             self.state.switchState(state.TERMINATED)
             self.logStateUpdate(state.TERMINATED)
-            return self
+            return defer.succeed(self)
 
         def terminateFailure(err):
             log.msg('Error terminating connection: %s' % err.getErrorMessage())
