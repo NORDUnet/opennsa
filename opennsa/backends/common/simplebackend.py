@@ -45,7 +45,7 @@ class GenericConnection:
 
 
     def stps(self):
-        return nsa.STP(self.network_name, self.source_port), nsa.STP(self.network_name, self.dest_port)
+        return self.service_parameters.source_stp, self.service_parameters.dest_stp
 
 
     def logStateUpdate(self, state_msg):
