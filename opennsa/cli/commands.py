@@ -62,3 +62,21 @@ def querydetails(client, client_nsa, provider_nsa, connection_ids, global_reserv
     log.msg('Query results:')
     log.msg( str(qc) )
 
+
+def path(topology_file, source_stp, dest_stp):
+
+    from opennsa import topology
+
+    topo = topology.parseTopology( [ open(topology_file) ] )
+
+    source_network, source_port = source_stp.split(':',1)
+    dest_network,   dest_port   = dest_stp.split(':', 1)
+
+    r_source_stp    = nsa.STP(source_network, source_port)
+    r_dest_stp      = nsa.STP(dest_network,   dest_port)
+
+    paths = topo.findPaths(r_source_stp, r_dest_stp)
+
+    for p in paths:
+        print p
+

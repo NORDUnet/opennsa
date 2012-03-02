@@ -131,6 +131,7 @@ def doMain():
         yield commands.reserve(client, client_nsa, provider_nsa, source_stp, dest_stp, start_time, end_time, bandwidth, connection_id, global_id)
         if config.subCommand == 'reserveprovision':
             yield commands.provision(client, client_nsa, provider_nsa, connection_id)
+        yield iport.stopListening()
 
     elif config.subCommand == 'provision':
 
@@ -138,6 +139,7 @@ def doMain():
             raise usage.UsageError('Connection ID is not defined')
 
         yield commands.provision(client, client_nsa, provider_nsa, connection_id)
+        yield iport.stopListening()
 
     elif config.subCommand == 'release':
 
@@ -145,6 +147,7 @@ def doMain():
             raise usage.UsageError('Connection ID is not defined')
 
         yield commands.release(client, client_nsa, provider_nsa, connection_id)
+        yield iport.stopListening()
 
     elif config.subCommand == 'terminate':
 
@@ -152,30 +155,35 @@ def doMain():
             raise usage.UsageError('Connection ID is not defined')
 
         yield commands.terminate(client, client_nsa, provider_nsa, connection_id)
+        yield iport.stopListening()
 
     elif config.subCommand == 'querysummary':
 
         connection_ids  = [ connection_id   ] if connection_id  else None
         global_ids      = [ global_id       ] if global_id      else None
         yield commands.querysummary(client, client_nsa, provider_nsa, connection_ids, global_ids)
+        yield iport.stopListening()
 
     elif config.subCommand == 'querydetails':
 
         connection_ids  = [ connection_id   ] if connection_id  else None
         global_ids      = [ global_id       ] if global_id      else None
         yield commands.querydetails(client, client_nsa, provider_nsa, connection_ids, global_ids)
+        yield iport.stopListening()
 
-    # some aggregate commands
-    elif config.subCommand == 'resvprov':
-        raise NotImplementedError('Reserve + provision aggregate command not implemented')
+    elif config.subCommand == 'path':
+
+        topology_file   = config.subOptions[options.TOPOLOGY_FILE]  or defaults.get(options.TOPOLOGY_FILE)
+        source_stp = config.subOptions[options.SOURCE_STP]  or defaults.get(options.SOURCE_STP)
+        dest_stp   = config.subOptions[options.DEST_STP]    or defaults.get(options.DEST_STP)
+
+        commands.path(topology_file, source_stp, dest_stp)
 
     else:
         print "No subcommand specified"
         print '%s: Try --help for usage details.' % (sys.argv[0])
         return
 
-    # shutdown service
-    yield iport.stopListening()
 
 
 def main():

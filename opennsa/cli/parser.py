@@ -115,14 +115,16 @@ class SkipCertificateVerificationFlag(usage.Options):
 
 # command options
 
-class NetworkCommandOptions(DefaultsFileOption, WSDLDirectoryOption, HostOption, PortOption,
-                            ServiceURLOption, TopologyFileOption, NetworkOption,
-                            ProviderNSAOption, RequesterNSAOption, ConnectionIDOption, GlobalIDOption,
-                            PublicKeyOption, PrivateKeyOption, CertificateDirectoryOption, SkipCertificateVerificationFlag):
+class BaseOptions(DefaultsFileOption):
 
     optFlags = [
         [ options.VERBOSE, 'v', 'Print out more information']
     ]
+
+class NetworkCommandOptions(BaseOptions, WSDLDirectoryOption, HostOption, PortOption,
+                            ServiceURLOption, TopologyFileOption, NetworkOption,
+                            ProviderNSAOption, RequesterNSAOption, ConnectionIDOption, GlobalIDOption,
+                            PublicKeyOption, PrivateKeyOption, CertificateDirectoryOption, SkipCertificateVerificationFlag):
 
     def postOptions(self):
         if self[options.SERVICE_URL] and (self[options.TOPOLOGY_FILE] or self[options.NETWORK]):
@@ -130,6 +132,10 @@ class NetworkCommandOptions(DefaultsFileOption, WSDLDirectoryOption, HostOption,
 
 
 class ReserveOptions(NetworkCommandOptions, SourceSTPOption, DestSTPOption, StartTimeOption, EndTimeOption, BandwidthOption):
+    pass
+
+
+class PathOptions(BaseOptions, SourceSTPOption, DestSTPOption, TopologyFileOption):
     pass
 
 
@@ -145,7 +151,8 @@ class Options(usage.Options):
         ['release',         None,   NetworkCommandOptions,  'Release a connection.'],
         ['terminate',       None,   NetworkCommandOptions,  'Terminate a connection.'],
         ['querysummary',    None,   NetworkCommandOptions,  'Query a connection (summary).'],
-        ['querydetails',    None,   NetworkCommandOptions,  'Query a connection (recursive).']
+        ['querydetails',    None,   NetworkCommandOptions,  'Query a connection (recursive).'],
+        ['path',            None,   PathOptions,            'Presents from source STP to destination STP']
     ]
 
     def postOptions(self):
