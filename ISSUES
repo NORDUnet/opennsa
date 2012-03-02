@@ -1,24 +1,28 @@
+Long term:
+  Documentation :-)
+  Persistence for connections
+  Need an easy way to see active/scheduled/future connections
+   - In general: Get information out of OpenNSA in an easily digestable way
+
 
 General:
 
-  Documentation :-)
   Make CLI setup more like regular config to lessen confusion
-  Persistence for connections
   Seperate protocol stack from connection (done for provider, client still needs work)
   Deal with bandwidth in calendar (requires joint resource concept)
   Profiling of protocol stack / backends
-  Twisted SSH stack is very log noisy - Submit patches and have patches
   Failing to send reserveConf can keep connection in INITIAL
-  Need an easy way to see active/scheduled/future connections
   connection.py and simplebackend.py steps on each others toes in scheduled teardown
 
- Client:
+
+Client:
 
   TLS for client service - URL creation is heuristic -> suck!
   Better connection names - use UUIDs for global ids
 
 
 Backends:
+
   Multiple switches support
   NCS backend
   Force10: Should do shutdown when interfaces are not in use

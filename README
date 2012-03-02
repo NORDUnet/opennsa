@@ -29,6 +29,10 @@ Requirements:
 
 These should be included in the package system in most recent Linux distributions.
 
+If you use a backend which uses SSH (JunOS, Force10), there is a patch to
+remove some of the log statements in the Twisted SSH module, which is rather
+noisy. This makes the log a lot easier to read.
+
 
 Command line tool:
 
