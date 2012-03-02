@@ -144,6 +144,16 @@ class Topology:
 
     def _pruneMismatchedPorts(self, network_paths):
 
+        def vlan(endpoint):
+            vlan_id = [ c for c in endpoint if c.isdigit() ] [-1:]
+            if not vlan_id:
+                vlan = ord(endpoint[-1])
+            else:
+                vlan = int(vlan_id[0])
+            if vlan > 4:
+                vlan -= 4
+            return vlan
+
         valid_routes = []
 
         for np in network_paths:
@@ -151,11 +161,11 @@ class Topology:
             for link in np:
                 if not link.stp1.network.endswith('.ets'):
                     continue # not a vlan capable network, STPs can connect
-                source_vlan = link.stp1.endpoint[-2:]
-                dest_vlan   = link.stp2.endpoint[-2:]
-                if source_vlan == dest_vlan or link.stp1.network in ('northernlight.ets', 'netherlight.ets'):
-                    continue # STPs can connect
-                else:
+                if link.stp1.network in ('northernlight.ets', 'netherlight.ets'):
+                    continue # these can cross-connect
+                source_vlan = vlan(link.stp1.endpoint)
+                dest_vlan   = vlan(link.stp2.endpoint)
+                if source_vlan != dest_vlan:
                     break
 
             else: # only choosen if no break occurs in the loop
