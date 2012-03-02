@@ -8,7 +8,6 @@ from twisted.python import log
 
 class SimpleObserver(log.FileLogObserver):
 
-    first_line = True
     debug = False
 
     def emit(self, eventDict):
@@ -23,12 +22,12 @@ class SimpleObserver(log.FileLogObserver):
 
         if text is None:
             return
-        if self.first_line and text == 'Log opened.':
-            return # skip annoying twisted message
+
+        # skip annoying twisted messages
+        if text in [ 'Log opened.', 'Main loop terminated.' ]:
+            return
 
         text += "\n"
         self.write(text)
         self.flush()
-
-        self.first_line = False
 
