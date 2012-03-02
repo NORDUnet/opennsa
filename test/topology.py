@@ -234,6 +234,28 @@ TEST_TOPOLOGY = """<?xml version="1.0"?>
         <rdfs:comment xml:lang="en">Position : [3099,915]</rdfs:comment>
     </owl:NamedIndividual>
 
+
+    <!-- urn:ogf:network:stp:Hawaii:H1 -->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:stp:Hawaii:H1">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
+        <dtox:mapsTo>Hawaii_A4</dtox:mapsTo>
+    </owl:NamedIndividual>
+
+    <!-- urn:ogf:network:nsnetwork:Hawaii -->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:nsnetwork:Hawaii">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#NSNetwork"/>
+        <rdfs:label xml:lang="en">Hawaii</rdfs:label>
+        <hasSTP rdf:resource="urn:ogf:network:stp:Hawaii:H1"/>
+        <managedBy rdf:resource="urn:ogf:network:nsa:Hawaii"/>
+    </owl:NamedIndividual>
+
+    <!-- urn:ogf:network:nsa:Hawaii -->
+    <owl:NamedIndividual rdf:about="urn:ogf:network:nsa:Hawaii">
+        <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#NSA"/>
+        <managing rdf:resource="urn:ogf:network:nsnetwork:Hawaii" />
+        <csProviderEndpoint rdf:datatype="http://www.w3.org/2001/XMLSchema#string">http://localhost:9090/NSI/services/ConnectionService</csProviderEndpoint>
+    </owl:NamedIndividual>
+
 </rdf:RDF>
 """
 
