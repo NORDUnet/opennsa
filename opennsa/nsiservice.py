@@ -147,6 +147,12 @@ class NSIService:
             # making the connection is the same for all though :-)
             paths = self.topology.findPaths(source_stp, dest_stp)
 
+            # error out if we could not find a path
+            if not paths:
+                error_msg = 'Could not find a path for route %s:%s -> %s:%s' % (source_stp.network, source_stp.endpoint, dest_stp.network, dest_stp.endpoint)
+                log.msg(error_msg, system=LOG_SYSTEM)
+                raise error.TopologyError(error_msg)
+
             # check for no paths
             paths.sort(key=lambda e : len(e.links()))
             selected_path = paths[0] # shortest path

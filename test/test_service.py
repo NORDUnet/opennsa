@@ -102,7 +102,7 @@ class ServiceTest(unittest.TestCase):
 
 
     @defer.inlineCallbacks
-    def testInvalidNetwork(self):
+    def testInvalidNetworkReservation(self):
 
         provider = nsa.Network('Aruba', nsa.NetworkServiceAgent('Aruba-OpenNSA', 'http://localhost:9080/NSI/services/ConnectionService'))
 
@@ -119,6 +119,28 @@ class ServiceTest(unittest.TestCase):
         try:
             yield self.client.reserve(self.client_nsa, provider.nsa, None, None, '', connection_id, service_params)
             self.fail('Reserve call should have failed')
-        except error.ReserveError:
-            pass
+        except error.ReserveError, e:
+            self.failUnlessIn('No network named NoSuchNetwork', str(e))
+
+
+    @defer.inlineCallbacks
+    def testNoRouteReservation(self):
+
+        provider = nsa.Network('Aruba', nsa.NetworkServiceAgent('Aruba-OpenNSA', 'http://localhost:9080/NSI/services/ConnectionService'))
+
+        source_stp      = nsa.STP('Hawaii', 'H1' )
+        dest_stp        = nsa.STP('Aruba', 'A2')
+
+        start_time = datetime.datetime.utcfromtimestamp(time.time() + 1.5 )
+        end_time   = datetime.datetime.utcfromtimestamp(time.time() + 120 )
+
+        bwp = nsa.BandwidthParameters(200)
+        service_params  = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, bandwidth=bwp)
+        connection_id         = 'conn-id1'
+
+        try:
+            yield self.client.reserve(self.client_nsa, provider.nsa, None, None, '', connection_id, service_params)
+            self.fail('Reserve call should have failed')
+        except error.ReserveError, e:
+            self.failUnlessIn('Could not find a path', str(e))
 
