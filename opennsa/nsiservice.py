@@ -10,7 +10,7 @@ import uuid
 from zope.interface import implements
 
 from twisted.python import log
-from twisted.internet import reactor, defer
+from twisted.internet import reactor, defer, task
 
 from opennsa.interface import NSIServiceInterface
 from opennsa import error, registry, subscription, connection
@@ -205,7 +205,8 @@ class NSIService:
         try:
             conn = self.getConnection(requester_nsa, connection_id)
             conn.addSubscription(sub)
-            reactor.callWhenRunning(conn.terminate)
+            d = task.deferLater(reactor, 0, conn.terminate)
+            d.addErrback(log.err)
             return defer.succeed(None)
         except error.NoSuchConnectionError, e:
             log.msg('NSA %s requested non-existing connection %s' % (requester_nsa, connection_id), system=LOG_SYSTEM)
