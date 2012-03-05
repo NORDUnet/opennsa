@@ -160,6 +160,9 @@ class GenericConnection:
             self.logStateUpdate(state.TERMINATED)
             return err
 
+        if self.state() == state.TERMINATED:
+            return defer.succeed(self)
+
         teardown = True if self.state() == state.PROVISIONED else False
 
         self.state.switchState(state.TERMINATING) # we can (almost) always switch to this
