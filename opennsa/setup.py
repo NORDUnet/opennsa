@@ -19,24 +19,20 @@ class ConfigurationError(Exception):
     """
 
 
-def _createServiceURL(host, port, ctx_factory=None):
+def _createServiceURL(host, port, tls=False):
 
-    if ctx_factory:
-        proto_scheme = 'https://'
-    else:
-        proto_scheme = 'http://'
-
+    proto_scheme = 'https://' if tls else 'http://'
     service_url = proto_scheme + '%s:%i/NSI/services/ConnectionService' % (host,port)
     return service_url
 
 
 
-def createService(network_name, topology_sources, backend, service_registry, host, port, wsdl_dir, ctx_factory=None, nrm_map_source=None):
+def createService(network_name, topology_sources, backend, service_registry, host, port, wsdl_dir, tls=False, ctx_factory=None, nrm_map_source=None):
 
 
     # reminds an awful lot about client setup
 
-    service_url = _createServiceURL(host, port, ctx_factory)
+    service_url = _createServiceURL(host, port, tls)
     nsi_resource, site = resource.createService()
 
     provider_client     = client.ProviderClient(service_url, wsdl_dir, ctx_factory=ctx_factory)
@@ -56,9 +52,9 @@ def createService(network_name, topology_sources, backend, service_registry, hos
 
 
 
-def createClient(host, port, wsdl_dir, ctx_factory=None):
+def createClient(host, port, wsdl_dir, tls=False, ctx_factory=None):
 
-    service_url = _createServiceURL(host, port, ctx_factory)
+    service_url = _createServiceURL(host, port, tls)
     nsi_resource, site = resource.createService()
 
     provider_client     = client.ProviderClient(service_url, wsdl_dir, ctx_factory=ctx_factory)
@@ -167,7 +163,7 @@ def createApplication(config_file=config.DEFAULT_CONFIG_FILE, authz_verify=True,
 
     service_registry = registry.ServiceRegistry()
 
-    factory = createService(network_name, topology_sources, backend, service_registry, host, port, wsdl_dir, ctx_factory, nrm_map_source)
+    factory = createService(network_name, topology_sources, backend, service_registry, host, port, wsdl_dir, tls, ctx_factory, nrm_map_source)
 
     application = appservice.Application("OpenNSA")
     application.setComponent(ILogObserver, logging.DebugLogObserver(log_file, debug).emit)
