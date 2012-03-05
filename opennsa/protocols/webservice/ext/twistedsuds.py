@@ -24,7 +24,7 @@ from suds.client import Factory
 
 
 
-DEFAULT_TIMEOUT = 20 # seconds
+DEFAULT_TIMEOUT = 30 # seconds
 
 
 
