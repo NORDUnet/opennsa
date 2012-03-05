@@ -13,6 +13,7 @@ General:
   Profiling of protocol stack / backends
   Failing to send reserveConf can keep connection in INITIAL
   connection.py and simplebackend.py steps on each others toes in scheduled teardown
+  Make RPC + callback timeout configurable
 
 
 Client:
