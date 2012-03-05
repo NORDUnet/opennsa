@@ -222,7 +222,7 @@ class Connection:
                     self.state.switchState(state.PROVISIONING)
 
                 self.state.switchState(state.PROVISIONED)
-                self.scheduler.scheduleTransition(self.service_parameters.end_time, lambda _ : self.terminate(), state.TERMINATING)
+                self.scheduler.scheduleTransition(self.service_parameters.end_time, lambda _ : self.state.switchState(state.TERMINATING), state.TERMINATING)
 
                 self.eventDispatch(registry.PROVISION_RESPONSE, True, self)
 
