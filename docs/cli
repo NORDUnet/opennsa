@@ -28,8 +28,8 @@ alternate location using the -f (--defaults-file) option.
 Here is an example of a .opennsa-cli defaults file:
 
 """
-topology-file=/home/htj/opennsa/SC2011-Topo-v5f.owl
-wsdl-directory=/home/htj/opennsa/wsdl
+topology=/home/htj/opennsa/SC2011-Topo-v5f.owl
+wsdl=/home/htj/opennsa/wsdl
 bandwidth=200
 host=localhost
 port=7080

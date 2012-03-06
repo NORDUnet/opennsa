@@ -11,13 +11,13 @@ from twisted.python import log
 # option names, as constants so we don't use strings in other modules
 VERBOSE         = 'verbose'
 DEFAULTS_FILE   = 'defaults-file'
-WSDL_DIRECTORY  = 'wsdl-directory'
+WSDL_DIRECTORY  = 'wsdl'
 HOST            = 'host'
 PORT            = 'port'
 
-TOPOLOGY_FILE   = 'topology-file'
+TOPOLOGY_FILE   = 'topology'
 NETWORK         = 'network'
-SERVICE_URL     = 'service-url'
+SERVICE_URL     = 'service'
 REQUESTER       = 'requester'
 PROVIDER        = 'provider'
 
@@ -30,11 +30,11 @@ BANDWIDTH       = 'bandwidth'
 START_TIME      = 'starttime'
 END_TIME        = 'endtime'
 
-PUBLIC_KEY      = 'public-key'
-PRIVATE_KEY     = 'private-key'
-CERTIFICATE_DIR = 'certificate-directory'
+PUBLIC_KEY      = 'publickey'
+PRIVATE_KEY     = 'privatekey'
+CERTIFICATE_DIR = 'certdir'
 
-SKIP_CERT_VERIFY = 'verify-certificate'
+SKIP_CERT_VERIFY = 'verify'
 
 # other constants
 XSD_DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S"
