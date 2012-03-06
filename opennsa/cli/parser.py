@@ -33,10 +33,11 @@
 # -i certificate directory
 
 # Flags
+# -x Use TLS for callback port
 # -z (skip) verify certificate (default is to verify)
 
 # free switches
-# ijmxyz
+# ijmqyz
 
 # Not all commands will accept all flags and some flags are mutally exclusive
 
@@ -109,6 +110,9 @@ class CertificateDirectoryOption(usage.Options):
 
 # flags
 
+class TLSFlag(usage.Options):
+    optFlags = [ [ options.TLS, 'x', 'Use TLS for listener port' ] ]
+
 class SkipCertificateVerificationFlag(usage.Options):
     optFlags = [ [ options.SKIP_CERT_VERIFY, 'z', 'Skip certificate verification' ] ]
 
@@ -124,7 +128,7 @@ class BaseOptions(DefaultsFileOption):
 class NetworkCommandOptions(BaseOptions, WSDLDirectoryOption, HostOption, PortOption,
                             ServiceURLOption, TopologyFileOption, NetworkOption,
                             ProviderNSAOption, RequesterNSAOption, ConnectionIDOption, GlobalIDOption,
-                            PublicKeyOption, PrivateKeyOption, CertificateDirectoryOption, SkipCertificateVerificationFlag):
+                            TLSFlag, PublicKeyOption, PrivateKeyOption, CertificateDirectoryOption, SkipCertificateVerificationFlag):
 
     def postOptions(self):
         if self[options.SERVICE_URL] and (self[options.TOPOLOGY_FILE] or self[options.NETWORK]):

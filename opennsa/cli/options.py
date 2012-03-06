@@ -30,10 +30,10 @@ BANDWIDTH       = 'bandwidth'
 START_TIME      = 'starttime'
 END_TIME        = 'endtime'
 
+TLS             = 'tls'
 PUBLIC_KEY      = 'publickey'
 PRIVATE_KEY     = 'privatekey'
 CERTIFICATE_DIR = 'certdir'
-
 SKIP_CERT_VERIFY = 'verify'
 
 # other constants

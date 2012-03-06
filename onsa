@@ -78,6 +78,8 @@ def doMain():
         else:
             raise usage.UsageError('Neither topology file+network or service URL defined')
 
+        tls = config.subOptions[options.TLS] or defaults.get(options.TLS) or False
+
         # setup ssl context
         public_key          = config.subOptions[options.PUBLIC_KEY]         or defaults.get(options.PUBLIC_KEY)
         private_key         = config.subOptions[options.PRIVATE_KEY]        or defaults.get(options.PRIVATE_KEY)
@@ -90,13 +92,16 @@ def doMain():
             if public_key and private_key and certificate_dir:
                 from opennsa import ctxfactory
                 ctx_factory = ctxfactory.ContextFactory(private_key, public_key, certificate_dir, not skip_cert_verify)
+            elif tls:
+                raise usage.UsageError('Missing options for creating SSL/TLS context. Cannot setup TLS.')
             else:
-                log.msg('Only partial security configuration given. Cannot create SSL/TLS context.')
+                log.msg('Missing options for creating SSL/TLS context: Cannot create SSL/TLS context.')
 
-        tls = True if ctx_factory else False # this needs be configurable
+        if tls and not ctx_factory:
+            raise usage.UsageError('Options for TLS/SSL context not defined. Cannot setup TLS.')
 
         client, factory = setup.createClient(host, port, wsdl_dir, tls, ctx_factory)
-        if ctx_factory:
+        if tls:
             iport = reactor.listenSSL(port, factory, ctx_factory)
         else:
             iport = reactor.listenTCP(port, factory)
