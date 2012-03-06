@@ -11,6 +11,7 @@ General:
   Profiling of protocol stack / backends
   Failing to send reserveConf can keep connection in INITIAL (cannot reproduce)
   Make RPC + callback timeout configurable
+  Mailing list
 
 
 Client:
