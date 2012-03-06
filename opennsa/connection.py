@@ -222,7 +222,7 @@ class Connection:
                     self.state.switchState(state.PROVISIONING)
 
                 self.state.switchState(state.PROVISIONED)
-                self.scheduler.scheduleTransition(self.service_parameters.end_time, lambda _ : self.state.switchState(state.TERMINATING), state.TERMINATING)
+                self.scheduler.scheduleTransition(self.service_parameters.end_time, lambda _ : self.state.switchState(state.TERMINATED), state.TERMINATED)
 
                 self.eventDispatch(registry.PROVISION_RESPONSE, True, self)
 
@@ -317,6 +317,10 @@ class Connection:
                 err = error.TerminateError(error_msg)
                 f = failure.Failure(err)
                 self.eventDispatch(registry.TERMINATE_RESPONSE, False, f)
+
+        if self.state() == state.TERMINATED:
+            self.eventDispatch(registry.TERMINATE_RESPONSE, True, self)
+            return
 
         self.state.switchState(state.TERMINATING)
         self.scheduler.cancelTransition() # cancel any pending scheduled switch
