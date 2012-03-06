@@ -143,6 +143,10 @@ class PathOptions(BaseOptions, SourceSTPOption, DestSTPOption, TopologyFileOptio
     pass
 
 
+class TopologyOptions(BaseOptions, TopologyFileOption):
+    pass
+
+
 class ProvisionReleaseTerminateOptions(NetworkCommandOptions):
     pass
 
@@ -156,7 +160,8 @@ class Options(usage.Options):
         ['terminate',       None,   NetworkCommandOptions,  'Terminate a connection.'],
         ['querysummary',    None,   NetworkCommandOptions,  'Query a connection (summary).'],
         ['querydetails',    None,   NetworkCommandOptions,  'Query a connection (recursive).'],
-        ['path',            None,   PathOptions,            'Presents from source STP to destination STP']
+        ['path',            None,   PathOptions,            'Print possible paths from source STP to destination STP.'],
+        ['topology',        None,   TopologyOptions,        'Print (known) topology information.']
     ]
 
     def postOptions(self):

@@ -78,5 +78,17 @@ def path(topology_file, source_stp, dest_stp):
     paths = topo.findPaths(r_source_stp, r_dest_stp)
 
     for p in sorted(paths, key=lambda p : len(p.network_links)):
-        print p
+        log.msg(str(p))
+
+
+def topology(topology_file):
+
+    from opennsa import topology
+
+    topo = topology.parseTopology( [ open(topology_file) ] )
+
+    for nw in topo.networks:
+        ns = '%s (%s)' % (nw.name, ','.join( sorted( [ ep.endpoint for ep in nw.endpoints ] ) ) )
+        log.msg(ns)
+
 

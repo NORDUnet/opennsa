@@ -186,8 +186,13 @@ def doMain():
 
         commands.path(topology_file, source_stp, dest_stp)
 
+    elif config.subCommand == 'topology':
+
+        topology_file   = config.subOptions[options.TOPOLOGY_FILE]  or defaults.get(options.TOPOLOGY_FILE)
+        commands.topology(topology_file)
+
     else:
-        print "No subcommand specified"
+        print "Invalid subcommand specified"
         print '%s: Try --help for usage details.' % (sys.argv[0])
         return
 
