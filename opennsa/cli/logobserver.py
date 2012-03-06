@@ -26,6 +26,10 @@ class SimpleObserver(log.FileLogObserver):
         # skip annoying twisted messages
         if text in [ 'Log opened.', 'Main loop terminated.' ]:
             return
+        if text.startswith('twisted.web.server.Site starting on') or \
+           text.startswith('Starting factory <twisted.web.server.Site instance') or \
+           text.startswith('Stopping factory <twisted.web.server.Site instance'):
+            return
 
         text += "\n"
         self.write(text)
