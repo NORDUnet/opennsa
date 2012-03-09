@@ -191,6 +191,11 @@ def doMain():
         topology_file   = config.subOptions[options.TOPOLOGY_FILE]  or defaults.get(options.TOPOLOGY_FILE)
         commands.topology(topology_file)
 
+    elif config.subCommand == 'topology-graph':
+
+        topology_file   = config.subOptions[options.TOPOLOGY_FILE]  or defaults.get(options.TOPOLOGY_FILE)
+        commands.topologyGraph(topology_file)
+
     else:
         print "Invalid subcommand specified"
         print '%s: Try --help for usage details.' % (sys.argv[0])

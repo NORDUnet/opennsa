@@ -161,7 +161,8 @@ class Options(usage.Options):
         ['querysummary',    None,   NetworkCommandOptions,  'Query a connection (summary).'],
         ['querydetails',    None,   NetworkCommandOptions,  'Query a connection (recursive).'],
         ['path',            None,   PathOptions,            'Print possible paths from source STP to destination STP.'],
-        ['topology',        None,   TopologyOptions,        'Print (known) topology information.']
+        ['topology',        None,   TopologyOptions,        'Print (known) topology information.'],
+        ['topology-graph',  None,   TopologyOptions,        'Print a machine parsable network topology (Graphviz).']
     ]
 
     def postOptions(self):
