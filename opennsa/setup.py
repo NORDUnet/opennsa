@@ -8,7 +8,7 @@ from ConfigParser import NoOptionError
 from twisted.python.log import ILogObserver
 from twisted.application import internet, service as appservice
 
-from opennsa import config, logging, registry, topology, nsiservice
+from opennsa import config, logging, registry, topology, nsiservice, viewresource
 from opennsa.protocols.webservice import client, service, provider, requester, resource
 
 
@@ -47,6 +47,10 @@ def createService(network_name, topology_sources, backend, service_registry, hos
     requester_client = client.RequesterClient(wsdl_dir, ctx_factory)
     nsi_provider = provider.Provider(service_registry, requester_client)
     service.ProviderService(nsi_resource, nsi_provider, wsdl_dir)
+
+    # add connection list resource in a slightly hacky way
+    vr = viewresource.ConnectionListResource(nsi_service)
+    site.resource.children['NSI'].putChild('connections', vr)
 
     return site
 
