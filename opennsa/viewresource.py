@@ -49,6 +49,11 @@ class ConnectionListResource(resource.Resource):
                 body += 2*ib + '<p>\n'
 
             body += 2*ib + '<p> &nbsp; <p>\n'
+            break # so else block don't get triggered
+
+        else:
+
+            body += '<div>No connections defined</div>\n'
 
         body = str(body)
 
