@@ -36,6 +36,8 @@ PRIVATE_KEY     = 'privatekey'
 CERTIFICATE_DIR = 'certdir'
 SKIP_CERT_VERIFY = 'verify'
 
+FULL_GRAPH      = 'fullgraph'
+
 # other constants
 XSD_DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S"
 

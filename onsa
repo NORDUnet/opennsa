@@ -193,8 +193,9 @@ def doMain():
 
     elif config.subCommand == 'topology-graph':
 
-        topology_file   = config.subOptions[options.TOPOLOGY_FILE]  or defaults.get(options.TOPOLOGY_FILE)
-        commands.topologyGraph(topology_file)
+        topology_file = config.subOptions[options.TOPOLOGY_FILE]  or defaults.get(options.TOPOLOGY_FILE)
+        full_graph    = config.subOptions[options.FULL_GRAPH]     or False
+        commands.topologyGraph(topology_file, full_graph)
 
     else:
         print "Invalid subcommand specified"

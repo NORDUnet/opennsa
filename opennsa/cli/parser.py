@@ -116,6 +116,10 @@ class TLSFlag(usage.Options):
 class SkipCertificateVerificationFlag(usage.Options):
     optFlags = [ [ options.SKIP_CERT_VERIFY, 'z', 'Skip certificate verification' ] ]
 
+class FullGraphFlag(usage.Options):
+    optFlags = [ [ options.FULL_GRAPH, 'l', 'Render full graph with all links.' ] ]
+
+
 
 # command options
 
@@ -147,6 +151,10 @@ class TopologyOptions(BaseOptions, TopologyFileOption):
     pass
 
 
+class TopologyGraphOptions(TopologyOptions, FullGraphFlag):
+    pass
+
+
 class ProvisionReleaseTerminateOptions(NetworkCommandOptions):
     pass
 
@@ -162,7 +170,7 @@ class Options(usage.Options):
         ['querydetails',    None,   NetworkCommandOptions,  'Query a connection (recursive).'],
         ['path',            None,   PathOptions,            'Print possible paths from source STP to destination STP.'],
         ['topology',        None,   TopologyOptions,        'Print (known) topology information.'],
-        ['topology-graph',  None,   TopologyOptions,        'Print a machine parsable network topology (Graphviz).']
+        ['topology-graph',  None,   TopologyGraphOptions,   'Print a machine parsable network topology (Graphviz).']
     ]
 
     def postOptions(self):

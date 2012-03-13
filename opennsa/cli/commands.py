@@ -92,24 +92,31 @@ def topology(topology_file):
         log.msg(ns)
 
 
-def topologyGraph(topology_file):
+def topologyGraph(topology_file, all_links=False):
 
     from opennsa import topology
 
     topo = topology.parseTopology( [ open(topology_file) ] )
 
-    links = set()
+    links = []
 
     for nw in topo.networks:
         for ep in nw.endpoints:
             if ep.dest_stp:
                 nw1 = nw.name.replace('.ets', '').replace('-','_')
                 nw2 = ep.dest_stp.network.replace('.ets', '').replace('-', '_')
-                l = tuple( sorted( [ nw1, nw2 ] ) )
-                links.add(l)
+
+                if all_links:
+                    if nw1 < nw2: # this prevents us from building to many links
+                        l = tuple( [ nw1, nw2 ] )
+                        links.append(l)
+                else:
+                    l = tuple( sorted( [ nw1, nw2 ] ) )
+                    if not l in links:
+                        links.append(l)
 
     log.msg('graph Network {')
-    for l in links:
+    for l in sorted(links):
         log.msg('  %s -- %s;' % (l[0], l[1]))
     log.msg('}')
 
