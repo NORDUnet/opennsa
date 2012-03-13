@@ -106,12 +106,12 @@ def topologyGraph(topology_file, all_links=False):
                 nw1 = nw.name.replace('.ets', '').replace('-','_')
                 nw2 = ep.dest_stp.network.replace('.ets', '').replace('-', '_')
 
+                l = [ nw1, nw2 ]
                 if all_links:
-                    if nw1 < nw2: # this prevents us from building to many links
-                        l = tuple( [ nw1, nw2 ] )
+                    if nw1 < nw2: # this prevents us from building double links
                         links.append(l)
                 else:
-                    l = tuple( sorted( [ nw1, nw2 ] ) )
+                    l = sorted(l)
                     if not l in links:
                         links.append(l)
 
