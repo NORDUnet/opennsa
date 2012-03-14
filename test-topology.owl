@@ -223,7 +223,6 @@
     <!-- urn:ogf:network:nsa:Bonaire-->
     <owl:NamedIndividual rdf:about="urn:ogf:network:nsa:Bonaire">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#NSA"/>
-        <rdfs:label xml:lang="en">SURFnet OpenDRAC - The NSI Edition</rdfs:label>
         <managing rdf:resource="urn:ogf:network:nsnetwork:Bonaire" />
         <adminContact rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Bonaire Network</adminContact>
         <csProviderEndpoint rdf:datatype="http://www.w3.org/2001/XMLSchema#string">http://localhost:9081/NSI/services/ConnectionService</csProviderEndpoint>
@@ -314,7 +313,7 @@
     </owl:NamedIndividual>
 
 
-    <!-- urn:ogf:network:nsa:Dominica -->
+    <!-- urn:ogf:network:nsnetwork:Dominica -->
     <owl:NamedIndividual rdf:about="urn:ogf:network:nsnetwork:Dominica">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#NSNetwork"/>
         <rdfs:label xml:lang="en">Dominica</rdfs:label>
