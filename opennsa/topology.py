@@ -294,7 +294,10 @@ def _parseNRMMapping(nrm_mapping_source):
         stp, nrm_port = m.groups()
         stp = stp.strip()
         nrm_port = nrm_port.strip()
-        assert stp.startswith(STP_PREFIX), 'Invalid STP specified in NRM Mapping'
+        if stp.startswith(STP_PREFIX):
+            pass
+        else:
+            stp = STP_PREFIX + stp
 
         triples.add( (stp, str(GLIF_MAPS_TO), nrm_port ) )
 
