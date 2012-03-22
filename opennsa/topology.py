@@ -91,20 +91,6 @@ class Topology:
         raise error.TopologyError('No endpoint named %s for network %s' % (endpoint, network))
 
 
-    def convertSDPRouteToLinks(self, source_ep, dest_ep, route):
-
-        nl_route = []
-        prev_source_ep = source_ep
-
-        for sdp in route:
-            nl_route.append( nsa.Link(prev_source_ep, sdp.stp1) )
-            prev_source_ep = sdp.stp2
-        # last hop
-        nl_route.append( nsa.Link(prev_source_ep, dest_ep) )
-
-        return nl_route
-
-
     def findPaths(self, source_stp, dest_stp, bandwidth=None):
         """
         Find possible paths between two endpoints.
@@ -121,14 +107,12 @@ class Topology:
 
         if snw == dnw:
             # same network, make direct connection and nothing else
-            routes = [ [] ]
+            network_paths = [ [] ]
         else:
-            routes = self.findPathEndpoints(source_stp, dest_stp)
+            network_paths = self.findPathEndpoints(source_stp, dest_stp)
 
         if bandwidth is not None:
-            routes = self.filterBandwidth(routes, bandwidth)
-
-        network_paths = [ self.convertSDPRouteToLinks(sep, dep, route) for route in routes ]
+            network_paths = self.filterBandwidth(network_paths, bandwidth)
 
         # topology cannot represent vlans properly yet
         # this means that all ports can be matched with all ports internally in a network
@@ -197,18 +181,22 @@ class Topology:
                 #print "    Rejecting endpoint due to loop"
                 continue
 
+            source_ep = self.getEndpoint(source_stp.network, source_stp.endpoint)
+
             if ep.dest_stp.network == dest_stp.network:
-                dest_ep = self.getEndpoint(ep.dest_stp.network, ep.dest_stp.endpoint)
-                sp = nsa.SDP(ep, dest_ep)
-                routes.append( [ sp ] )
+                sp = nsa.Link(source_ep, ep)
+                # this means last network, so we add the last hop
+                last_source_ep = self.getEndpoint(ep.dest_stp.network, ep.dest_stp.endpoint)
+                last_dest_ep   = self.getEndpoint(dest_stp.network, dest_stp.endpoint)
+                sp_end = nsa.Link(last_source_ep, last_dest_ep)
+                routes.append( [ sp, sp_end ] )
             else:
                 nvn = visited_networks[:] + [ ep.dest_stp.network ]
                 subroutes = self.findPathEndpoints(ep.dest_stp, dest_stp, nvn)
                 if subroutes:
                     for sr in subroutes:
                         src = sr[:]
-                        dest_ep = self.getEndpoint(ep.dest_stp.network, ep.dest_stp.endpoint)
-                        sp = nsa.SDP(ep, dest_ep)
+                        sp = nsa.Link(source_ep, ep)
                         src.insert(0, sp)
                         routes.append(  src  )
 

@@ -46,26 +46,6 @@ class STP: # Service Termination Point
 
 
 
-class SDP: # service demarcation point
-    # This abstraction is only used in the topology module these days
-    # It is rather backwards to work with except for pathfinding
-
-    def __init__(self, stp1, stp2):
-        self.stp1 = stp1
-        self.stp2 = stp2
-
-
-    def __eq__(self, other):
-        if not isinstance(other, SDP):
-            return False
-        return self.stp1 == other.stp1 and self.stp2 == other.stp2
-
-
-    def __str__(self):
-        return '<SDP %s:%s-%s:%s>' % (self.stp1.network, self.stp1.endpoint, self.stp2.network, self.stp2.endpoint)
-
-
-
 class Link: # intra network link
 
     def __init__(self, stp1, stp2):
