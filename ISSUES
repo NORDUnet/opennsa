@@ -1,9 +1,13 @@
+Need to write something up on error recovery for best practices.
+
+Code:
+
 Long term:
   Documentation :-)
   Persistence for connections
-  Need an easy way to see active/scheduled/future connections
-   - In general: Get information out of OpenNSA in an easily digestable way
+  Easy way of seeing connections in OpenNSA (basic web interface is there)
   Deal with bandwidth in calendar (requires joint resource concept)
+  Ability to generate topology from NRM mapping / internal topology description
 
 
 General:
@@ -12,6 +16,7 @@ General:
   Failing to send reserveConf can keep connection in INITIAL (cannot reproduce)
   Make RPC + callback timeout configurable
   Mailing list
+  Implementation of AutoGOLE topology distribution scheme
 
 
 Client:
@@ -19,10 +24,11 @@ Client:
 
 
 Backends:
-
   Multiple switches support
   NCS backend
   Force10: Should do shutdown when interfaces are not in use
+  Test on Juniper EX switch
+  Test on Juniper virtual router
   JunOS:
     Failure handling is terrible for command sending
     Log success/failure instead of commands (only on debug)
