@@ -65,9 +65,9 @@ def querydetails(client, client_nsa, provider_nsa, connection_ids, global_reserv
 
 def path(topology_file, source_stp, dest_stp):
 
-    from opennsa import topology
+    from opennsa.topology import gole
 
-    topo = topology.parseTopology( [ open(topology_file) ] )
+    topo = gole.parseTopology( [ open(topology_file) ] )
 
     source_network, source_port = source_stp.split(':',1)
     dest_network,   dest_port   = dest_stp.split(':', 1)
@@ -83,9 +83,9 @@ def path(topology_file, source_stp, dest_stp):
 
 def topology(topology_file):
 
-    from opennsa import topology
+    from opennsa.topology import gole
 
-    topo = topology.parseTopology( [ open(topology_file) ] )
+    topo = gole.parseTopology( [ open(topology_file) ] )
 
     for nw in topo.networks:
         ns = '%s (%s)' % (nw.name, ','.join( sorted( [ ep.endpoint for ep in nw.endpoints ] ) ) )
@@ -94,9 +94,9 @@ def topology(topology_file):
 
 def topologyGraph(topology_file, all_links=False):
 
-    from opennsa import topology
+    from opennsa.topology import gole
 
-    topo = topology.parseTopology( [ open(topology_file) ] )
+    topo = gole.parseTopology( [ open(topology_file) ] )
 
     links = []
 

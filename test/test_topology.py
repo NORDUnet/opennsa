@@ -2,7 +2,8 @@ import StringIO
 
 from twisted.trial import unittest
 
-from opennsa import nsa, topology
+from opennsa import nsa
+from opennsa.topology import gole
 
 from . import topology as testtopology
 
@@ -72,5 +73,5 @@ class GOLETopologyTest(GenericTopologyTest, unittest.TestCase):
 
     def setUp(self):
         f = StringIO.StringIO(testtopology.TEST_TOPOLOGY)
-        self.topo = topology.parseTopology( [f] )
+        self.topo = gole.parseTopology( [f] )
 

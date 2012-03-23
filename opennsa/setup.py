@@ -8,7 +8,8 @@ from ConfigParser import NoOptionError
 from twisted.python.log import ILogObserver
 from twisted.application import internet, service as appservice
 
-from opennsa import config, logging, registry, topology, nsiservice, viewresource
+from opennsa import config, logging, registry, nsiservice, viewresource
+from opennsa.topology import gole
 from opennsa.protocols.webservice import client, service, provider, requester, resource
 
 
@@ -41,7 +42,7 @@ def createService(network_name, topology_sources, backend, service_registry, hos
 
     # now provider service
 
-    topo = topology.parseTopology(topology_sources, nrm_map_source)
+    topo = gole.parseTopology(topology_sources, nrm_map_source)
     nsi_service  = nsiservice.NSIService(network_name, backend, service_registry, topo, nsi_requester)
 
     requester_client = client.RequesterClient(wsdl_dir, ctx_factory)
