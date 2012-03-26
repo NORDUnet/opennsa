@@ -110,7 +110,10 @@ def _parseNRMMapping(nrm_mapping_source):
         raise error.TopologyError('Invalid NRM Mapping Source')
 
     # regular expression for matching nrm mapping lines
-    NRM_MAP_RX = re.compile('''\s*(.*)\s*"(.*)"''')
+    # basically we allow two type of lines (with and without backend identifier), i.e.:
+    # stp:stp_name  "nrm_port"
+    # stp:stp_name backend "nrm_port"
+    NRM_MAP_RX = re.compile('''\s*(.+?)\s+(\w+?)?\s*"(.+)"''')
 
     triples = set()
 
@@ -121,7 +124,7 @@ def _parseNRMMapping(nrm_mapping_source):
         m = NRM_MAP_RX.match(line)
         if not m:
             continue
-        stp, nrm_port = m.groups()
+        stp, _, nrm_port = m.groups()
         stp = stp.strip()
         nrm_port = nrm_port.strip()
         if stp.startswith(STP_PREFIX):
