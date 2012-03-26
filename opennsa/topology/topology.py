@@ -57,7 +57,7 @@ class Topology:
 
         if snw == dnw:
             # same network, make direct connection and nothing else
-            network_paths = [ [] ]
+            network_paths = [ [ nsa.Link(sep, dep) ] ]
         else:
             network_paths = self.findPathEndpoints(source_stp, dest_stp)
 
@@ -84,27 +84,22 @@ class Topology:
                 vlan = ord(endpoint[-1])
             else:
                 vlan = int(vlan_id[0])
-            if vlan > 4:
+            if vlan > 3:
                 vlan -= 4
             return vlan
 
-        valid_routes = []
+        def canConnect(source_stp, dest_stp):
+            assert source_stp.network == dest_stp.network, 'Cannot connect-test STPs from different networks'
+            if not source_stp.network.endswith('.ets'):
+                return True # not a vlan capable network, STPs can connect
+            if source_stp.network in ('northernlight.ets', 'netherlight.ets'):
+                return True # these can do vlan rewrite
+            source_vlan = vlan(source_stp.endpoint)
+            dest_vlan   = vlan(dest_stp.endpoint)
+            return source_vlan == dest_vlan
 
-        for np in network_paths:
-
-            for link in np:
-                if not link.stp1.network.endswith('.ets'):
-                    continue # not a vlan capable network, STPs can connect
-                if link.stp1.network in ('northernlight.ets', 'netherlight.ets'):
-                    continue # these can cross-connect
-                source_vlan = vlan(link.stp1.endpoint)
-                dest_vlan   = vlan(link.stp2.endpoint)
-                if source_vlan != dest_vlan:
-                    break
-
-            else: # only choosen if no break occurs in the loop
-                valid_routes.append(np)
-
+        isValidRoute = lambda path : all( [ canConnect(link.stp1, link.stp2) for link in np ] )
+        valid_routes = [ np for np in network_paths if isValidRoute(np) ]
         return valid_routes
 
 
