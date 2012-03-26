@@ -11,8 +11,13 @@ import re
 import StringIO
 from xml.etree import ElementTree as ET
 
+from twisted.python import log
+
 from opennsa import nsa, error
 from opennsa.topology import topology
+
+
+LOG_SYSTEM = 'opennsa.gole'
 
 
 # Constants for parsing GOLE topology format
@@ -49,6 +54,7 @@ GLIF_NETWORK            = DTOX_NS + 'NSNetwork'
 NSNETWORK_PREFIX = 'urn:ogf:network:nsnetwork:'
 NSA_PREFIX       = 'urn:ogf:network:nsa:'
 STP_PREFIX       = 'urn:ogf:network:stp:'
+STP_PLAIN_PREFIX = 'stp:'
 
 
 
@@ -120,7 +126,10 @@ def _parseNRMMapping(nrm_mapping_source):
         nrm_port = nrm_port.strip()
         if stp.startswith(STP_PREFIX):
             pass
+        elif stp.startswith(STP_PLAIN_PREFIX):
+            stp = 'urn:ogf:network:' + stp
         else:
+            log.msg('Specifying STP without prefix is deprecated and support will be removed in a future version (STP %s)' % stp, system=LOG_SYSTEM)
             stp = STP_PREFIX + stp
 
         triples.add( (stp, str(GLIF_MAPS_TO), nrm_port ) )
