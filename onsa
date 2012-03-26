@@ -67,7 +67,7 @@ def doMain():
         if topology_file and network:
             client_nsa      = nsa.NetworkServiceAgent(requester_nsa, requester_url)
 
-            from opennsa import gole
+            from opennsa.topology import gole
             topo = gole.parseTopology( [ open(topology_file) ] )
             provider_nsa  = topo.getNetwork(network).nsa
 
