@@ -55,7 +55,7 @@ setup(name='opennsa',
       author='Henrik Thostrup Jensen',
       author_email='htj@nordu.net',
       url='http://www.nordu.net/',
-      packages=['opennsa', 'opennsa/cli',
+      packages=['opennsa', 'opennsa/cli', 'opennsa/topology',
                 'opennsa/protocols', 'opennsa/protocols/webservice', 'opennsa/protocols/webservice/ext',
                 'opennsa/backends', 'opennsa/backends/common' ],
 
