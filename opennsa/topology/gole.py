@@ -82,13 +82,13 @@ def _parseOWLTopology(topology_source):
         if e.tag == NAMED_INDIVIDUAL:
             resource = e.attrib[RDF_ABOUT]
             for el in e.getchildren():
-                if   el.tag == RDF_TYPE:                triples.add( (resource, str(RDF_TYPE),           el.attrib.values()[0]) )
-                elif el.tag == RDF_LABEL:               triples.add( (resource, str(RDF_LABEL),          el.text) )
-                elif el.tag == GLIF_CONNECTED_TO:       triples.add( (resource, str(GLIF_CONNECTED_TO),  el.attrib.values()[0]) )
-                elif el.tag == GLIF_HAS_STP:            triples.add( (resource, str(GLIF_HAS_STP),       el.attrib.values()[0]) )
-                elif el.tag == GLIF_MAPS_TO:            triples.add( (resource, str(GLIF_MAPS_TO),       el.text or el.attrib.values()[0]) )
-                elif el.tag == GLIF_PROVIDER_ENDPOINT:  triples.add( (resource, str(GLIF_PROVIDER_ENDPOINT), el.text) )
-                elif el.tag == GLIF_MANAGED_BY:         triples.add( (resource, str(GLIF_MANAGED_BY),    el.attrib.values()[0]) )
+                if   el.tag == RDF_TYPE:                triples.add( (resource, RDF_TYPE,           el.attrib.values()[0]) )
+                elif el.tag == RDF_LABEL:               triples.add( (resource, RDF_LABEL,          el.text) )
+                elif el.tag == GLIF_CONNECTED_TO:       triples.add( (resource, GLIF_CONNECTED_TO,  el.attrib.values()[0]) )
+                elif el.tag == GLIF_HAS_STP:            triples.add( (resource, GLIF_HAS_STP,       el.attrib.values()[0]) )
+                elif el.tag == GLIF_MAPS_TO:            triples.add( (resource, GLIF_MAPS_TO,       el.text or el.attrib.values()[0]) )
+                elif el.tag == GLIF_PROVIDER_ENDPOINT:  triples.add( (resource, GLIF_PROVIDER_ENDPOINT, el.text) )
+                elif el.tag == GLIF_MANAGED_BY:         triples.add( (resource, GLIF_MANAGED_BY,    el.attrib.values()[0]) )
                 # We don't care about these
                 elif el.tag in (RDF_COMMENT, GLIF_MANAGING, GLIF_ADMIN_CONTACT, GLIF_LOCATED_AT, GLIF_LATITUDE, GLIF_LONGITUDE):
                     pass
