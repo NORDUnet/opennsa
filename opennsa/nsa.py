@@ -48,20 +48,28 @@ class STP: # Service Termination Point
 
 class Link: # intra network link
 
-    def __init__(self, stp1, stp2):
-        assert stp1.network == stp2.network, 'Refusing to creating STP pair with STPs with different network'
-        self.stp1 = stp1
-        self.stp2 = stp2
+    def __init__(self, network, source, dest):
+        self.network = network
+        self.source = source
+        self.dest = dest
+
+
+    def sourceSTP(self):
+        return STP(self.network, self.source)
+
+
+    def destSTP(self):
+        return STP(self.network, self.dest)
 
 
     def __eq__(self, other):
         if not isinstance(other, Link):
             return False
-        return self.stp1 == other.stp1 and self.stp2 == other.stp2
+        return self.network == other.network and self.source == other.source and self.dest == other.dest
 
 
     def __str__(self):
-        return '<Link %s::%s=%s>' % (self.stp1.network, self.stp1.endpoint, self.stp2.endpoint)
+        return '<Link %s::%s=%s>' % (self.network, self.source, self.dest)
 
 
 
@@ -79,11 +87,11 @@ class Path:
 
 
     def sourceEndpoint(self):
-        return self.network_links[0].stp1
+        return self.network_links[0].sourceSTP()
 
 
     def destEndpoint(self):
-        return self.network_links[-1].stp2
+        return self.network_links[-1].destSTP()
 
 
     def __str__(self):

@@ -57,7 +57,7 @@ class Topology:
 
         if snw == dnw:
             # same network, make direct connection and nothing else
-            network_paths = [ [ nsa.Link(sep, dep) ] ]
+            network_paths = [ [ nsa.Link(sep.network, sep.endpoint, dep.endpoint) ] ]
         else:
             network_paths = self.findPathEndpoints(source_stp, dest_stp)
 
@@ -89,12 +89,12 @@ class Topology:
             return vlan
 
         def canConnect(link):
-            if not link.stp1.network.endswith('.ets'):
+            if not link.network.endswith('.ets'):
                 return True # not a vlan capable network, STPs can connect
-            if link.stp1.network in ('northernlight.ets', 'netherlight.ets'):
+            if link.network in ('northernlight.ets', 'netherlight.ets'):
                 return True # these can do vlan rewrite
-            source_vlan = vlan(link.stp1.endpoint)
-            dest_vlan   = vlan(link.stp2.endpoint)
+            source_vlan = vlan(link.source)
+            dest_vlan   = vlan(link.dest)
             return source_vlan == dest_vlan
 
         isValidRoute = lambda path : all( [ canConnect(link) for link in np ] )
@@ -128,11 +128,11 @@ class Topology:
             source_ep = self.getEndpoint(source_stp.network, source_stp.endpoint)
 
             if ep.dest_stp.network == dest_stp.network:
-                sp = nsa.Link(source_ep, ep)
+                sp = nsa.Link(ep.network, source_ep.endpoint, ep.endpoint)
                 # this means last network, so we add the last hop
                 last_source_ep = self.getEndpoint(ep.dest_stp.network, ep.dest_stp.endpoint)
                 last_dest_ep   = self.getEndpoint(dest_stp.network, dest_stp.endpoint)
-                sp_end = nsa.Link(last_source_ep, last_dest_ep)
+                sp_end = nsa.Link(last_dest_ep.network, last_source_ep.endpoint, last_dest_ep.endpoint)
                 routes.append( [ sp, sp_end ] )
             else:
                 nvn = visited_networks[:] + [ ep.dest_stp.network ]
@@ -140,24 +140,24 @@ class Topology:
                 if subroutes:
                     for sr in subroutes:
                         src = sr[:]
-                        sp = nsa.Link(source_ep, ep)
+                        sp = nsa.Link(ep.network, source_ep.endpoint, ep.endpoint)
                         src.insert(0, sp)
                         routes.append(  src  )
 
         return routes
 
 
-    def filterBandwidth(self, paths_sdps, bandwidths):
+    def filterBandwidth(self, routes, bandwidth):
 
-        def hasBandwidth(route, bandwidths):
-            for sdp in route:
-                if sdp.stp1.available_capacity is not None and bandwidths.minimum is not None and sdp.stp1.available_capacity < bandwidths.minimum:
+        def hasBandwidth(route, bandwidth):
+            for link in route:
+                if link.source.available_capacity is not None and bandwidth.minimum is not None and link.source.available_capacity < bandwidth.minimum:
                     return False
-                if sdp.stp2.available_capacity is not None and bandwidths.minimum is not None and sdp.stp2.available_capacity < bandwidths.minimum:
+                if link.dest.available_capacity is not None and bandwidth.minimum is not None and link.dest.available_capacity < bandwidth.minimum:
                     return False
             return True
 
-        filtered_routes = [ route for route in paths_sdps if hasBandwidth(route, bandwidths) ]
+        filtered_routes = [ route for route in routes if hasBandwidth(route, bandwidth) ]
         return filtered_routes
 
 

@@ -13,7 +13,7 @@ from twisted.python import log
 from twisted.internet import reactor, defer, task
 
 from opennsa.interface import NSIServiceInterface
-from opennsa import error, registry, subscription, connection
+from opennsa import nsa, error, registry, subscription, connection
 
 
 
@@ -56,19 +56,20 @@ class NSIService:
             return conn
 
 
-    def setupSubConnection(self, source_ep, dest_ep, conn, service_parameters):
+    def setupSubConnection(self, link, conn, service_parameters):
 
-        assert source_ep.network == dest_ep.network, 'Source and destination network differ in sub-connection'
-
-        sub_sps = service_parameters.subConnectionClone(source_ep, dest_ep)
+        sub_sps = service_parameters.subConnectionClone(link.sourceSTP(), link.destSTP())
 
         # should check for local network
-        if source_ep.network == self.network:
-            sub_conn = self.backend.createConnection(source_ep.nrmPort(), dest_ep.nrmPort(), sub_sps)
+        if link.network == self.network:
+            # resolve nrm ports from the topology
+            source_port = self.topology.getEndpoint(self.network, link.source).nrmPort()
+            dest_port   = self.topology.getEndpoint(self.network, link.dest).nrmPort()
+            sub_conn = self.backend.createConnection(source_port, dest_port, sub_sps)
         else:
             sub_conn_id = 'urn:uuid:' + str(uuid.uuid1())
-            remote_nsa = self.topology.getNetwork(source_ep.network).nsa
-            sub_conn = connection.SubConnection(self.client, self.nsa, remote_nsa, conn, sub_conn_id, source_ep, dest_ep, sub_sps)
+            remote_nsa = self.topology.getNetwork(link.network).nsa
+            sub_conn = connection.SubConnection(self.client, self.nsa, remote_nsa, conn, sub_conn_id, link.sourceSTP(), link.destSTP(), sub_sps)
 
         conn.sub_connections.append(sub_conn)
 
@@ -103,11 +104,8 @@ class NSIService:
 
         if source_stp.network == self.network and dest_stp.network == self.network:
             log.msg('Connection %s: Simple path creation: %s:%s -> %s:%s (%s)' % path_info, system=LOG_SYSTEM)
-
-            # we need to resolve this from our topology in order to get any local configuration
-            source_ep = self.topology.getEndpoint(self.network, source_stp.endpoint)
-            dest_ep   = self.topology.getEndpoint(self.network, dest_stp.endpoint)
-            self.setupSubConnection(source_ep, dest_ep, conn, service_parameters)
+            link = nsa.Link(source_stp.network, source_stp.endpoint, dest_stp.endpoint)
+            self.setupSubConnection(link, conn, service_parameters)
 
         # This code is for chaining requests and is currently not used, but might be needed sometime in the future
         # Once we get proper a topology service, some chaining will be necessary.
@@ -122,8 +120,8 @@ class NSIService:
         #    log.msg('Attempting to create path %s' % selected_path, system=LOG_SYSTEM)
         #    assert selected_path.source_stp.network == self.network
         #   # setup connection data - does this work with more than one hop?
-        #    setupSubConnection(selected_path.source_stp, selected_path.endpoint_pairs[0].stp1, conn)
-        #    setupSubConnection(selected_path.endpoint_pairs[0].stp2, dest_stp, conn)
+        #    setupSubConnection(selected_path.source_stp, selected_path.endpoint_pairs[0].sourceSTP(), conn)
+        #    setupSubConnection(selected_path.endpoint_pairs[0].destSTP(), dest_stp, conn)
         #elif dest_stp.network == self.network:
         #    # make path and chain on - backwards chaining
         #    log.msg('Backwards chain creation %s: %s:%s -> %s:%s (%s)' % path_info, system=LOG_SYSTEM)
@@ -134,8 +132,8 @@ class NSIService:
         #    log.msg('Attempting to create path %s' % selected_path, system=LOG_SYSTEM)
         #    assert selected_path.dest_stp.network == self.network
         #   # setup connection data
-        #    setupSubConnection(selected_path.source_stp, selected_path.endpoint_pairs[0].stp1, conn)
-        #    setupSubConnection(selected_path.endpoint_pairs[0].stp2, dest_stp, conn)
+        #    setupSubConnection(selected_path.source_stp, selected_path.endpoint_pairs[0].sourceSTP(), conn)
+        #    setupSubConnection(selected_path.endpoint_pairs[0].destSTP(), dest_stp, conn)
         #else:
         #    log.msg('Tree creation %s:  %s:%s -> %s:%s (%s)' % path_info, system=LOG_SYSTEM)
 
@@ -159,7 +157,7 @@ class NSIService:
             log.msg('Attempting to create path %s' % selected_path, system=LOG_SYSTEM)
 
             for link in selected_path.links():
-                self.setupSubConnection(link.stp1, link.stp2, conn, service_parameters)
+                self.setupSubConnection(link, conn, service_parameters)
 
         # now reserve connections needed to create path
         conn.addSubscription(sub)
