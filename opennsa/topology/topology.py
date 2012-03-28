@@ -88,17 +88,16 @@ class Topology:
                 vlan -= 4
             return vlan
 
-        def canConnect(source_stp, dest_stp):
-            assert source_stp.network == dest_stp.network, 'Cannot connect-test STPs from different networks'
-            if not source_stp.network.endswith('.ets'):
+        def canConnect(link):
+            if not link.stp1.network.endswith('.ets'):
                 return True # not a vlan capable network, STPs can connect
-            if source_stp.network in ('northernlight.ets', 'netherlight.ets'):
+            if link.stp1.network in ('northernlight.ets', 'netherlight.ets'):
                 return True # these can do vlan rewrite
-            source_vlan = vlan(source_stp.endpoint)
-            dest_vlan   = vlan(dest_stp.endpoint)
+            source_vlan = vlan(link.stp1.endpoint)
+            dest_vlan   = vlan(link.stp2.endpoint)
             return source_vlan == dest_vlan
 
-        isValidRoute = lambda path : all( [ canConnect(link.stp1, link.stp2) for link in np ] )
+        isValidRoute = lambda path : all( [ canConnect(link) for link in np ] )
         valid_routes = [ np for np in network_paths if isValidRoute(np) ]
         return valid_routes
 
