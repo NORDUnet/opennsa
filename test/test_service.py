@@ -45,7 +45,7 @@ class ServiceTest(unittest.TestCase):
         CLIENT_PORT = 7080
 
         self.client, client_factory  = setup.createClient(HOST, CLIENT_PORT, WSDL_DIR)
-        self.client_nsa = nsa.NetworkServiceAgent('OpenNSA-Test-Client', 'nsa://localhost:%i' % CLIENT_PORT)
+        self.client_nsa = nsa.NetworkServiceAgent('OpenNSA-Test-Client', 'http://localhost:%i/NSI/services/ConnectionService' % CLIENT_PORT)
 
         client_iport = reactor.listenTCP(CLIENT_PORT, client_factory)
         self.iports.append(client_iport)
@@ -63,8 +63,6 @@ class ServiceTest(unittest.TestCase):
 
         source_stp      = nsa.STP('Aruba', 'A1' )
         dest_stp        = nsa.STP('Aruba', 'A2')
-        #dest_stp        = nsa.STP('Bonaire', 'B3')
-        #dest_stp        = nsa.STP('Curacao', 'C3')
 
         start_time = datetime.datetime.utcfromtimestamp(time.time() + 1.5 )
         end_time   = datetime.datetime.utcfromtimestamp(time.time() + 120 )
