@@ -18,7 +18,7 @@ import datetime
 from twisted.python import log
 from twisted.internet import defer
 
-from opennsa import nsa, error, state
+from opennsa import error, state
 from opennsa.backends.common import scheduler
 
 

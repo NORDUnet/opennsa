@@ -1,9 +1,8 @@
 import traceback
 
-from twisted.python import log
 from twisted.internet import defer
 
-from opennsa import error, registry, subscription
+from opennsa import registry, subscription
 
 
 WS_PROTO_EVENT_SYSTEM = 'nsi-1.0-soap'
