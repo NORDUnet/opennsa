@@ -8,46 +8,25 @@ from opennsa.topology import gole
 from . import topology as testtopology
 
 
-STP_A1 = nsa.STP('Aruba', 'A1')
-STP_A2 = nsa.STP('Aruba', 'A2')
-STP_A3 = nsa.STP('Aruba', 'A3')
-STP_A4 = nsa.STP('Aruba', 'A4')
-
-STP_B1 = nsa.STP('Bonaire', 'B1')
-STP_B2 = nsa.STP('Bonaire', 'B2')
-STP_B3 = nsa.STP('Bonaire', 'B3')
-STP_B4 = nsa.STP('Bonaire', 'B4')
-
-STP_C1 = nsa.STP('Curacao', 'C1')
-STP_C2 = nsa.STP('Curacao', 'C2')
-STP_C3 = nsa.STP('Curacao', 'C3')
-STP_C4 = nsa.STP('Curacao', 'C4')
-
-STP_D1 = nsa.STP('Dominica', 'D1')
-STP_D2 = nsa.STP('Dominica', 'D2')
-STP_D3 = nsa.STP('Dominica', 'D3')
-STP_D4 = nsa.STP('Dominica', 'D4')
-
-
 TEST_PATH_1 = {
-    'source_stp' : STP_A2,
-    'dest_stp'   : STP_C3,
+    'source_stp' : nsa.STP('Aruba', 'A2'),
+    'dest_stp'   : nsa.STP('Curacao', 'C3'),
     'paths'      :  [ [ nsa.Link('Aruba', 'A2', 'A4'), nsa.Link('Bonaire', 'B1', 'B4'), nsa.Link('Curacao', 'C1', 'C3') ],
                       [ nsa.Link('Aruba', 'A2', 'A1'), nsa.Link('Dominica', 'D4', 'D1'), nsa.Link('Curacao', 'C4', 'C3') ]
                     ]
 }
 
 TEST_PATH_2 = {
-    'source_stp' : STP_A2,
-    'dest_stp'   : STP_B2,
+    'source_stp' : nsa.STP('Aruba', 'A2'),
+    'dest_stp'   : nsa.STP('Bonaire', 'B2'),
     'paths'      : [ [ nsa.Link('Aruba', 'A2', 'A4'), nsa.Link('Bonaire', 'B1', 'B2') ],
                      [ nsa.Link('Aruba', 'A2', 'A1'), nsa.Link('Dominica', 'D4', 'D1'), nsa.Link('Curacao', 'C4', 'C1'), nsa.Link('Bonaire', 'B4', 'B2') ] ]
 }
 
 # Currently we do not have bandwidth, so this us unused
 TEST_PATH_3 = {
-    'source_stp': STP_A2,
-    'dest_stp'  : STP_B3,
+    'source_stp': nsa.STP('Aruba', 'A2'),
+    'dest_stp'  : nsa.STP('Bonaire', 'B3'),
     'paths'     :  [ [ nsa.Link('Aruba', 'A2', 'A1'), nsa.Link('Dominica', 'D4', 'D1'), nsa.Link('Curacao', 'C4', 'C1'), nsa.Link('Bonaire', 'B4', 'B3') ] ],
     'bandwidth' : nsa.BandwidthParameters(1000, 1000, 1000)
 }

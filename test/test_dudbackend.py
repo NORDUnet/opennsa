@@ -3,7 +3,7 @@ import time, datetime
 from twisted.trial import unittest
 from twisted.internet import defer
 
-from opennsa import error, nsa
+from opennsa import nsa
 from opennsa.backends import dud
 
 
