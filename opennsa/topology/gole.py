@@ -51,10 +51,15 @@ GLIF_PROVIDER_ENDPOINT  = '{%s}csProviderEndpoint' % DTOX_NS
 
 GLIF_NETWORK            = DTOX_NS + 'NSNetwork'
 
-NSNETWORK_PREFIX = 'urn:ogf:network:nsnetwork:'
-NSA_PREFIX       = 'urn:ogf:network:nsa:'
-STP_PREFIX       = 'urn:ogf:network:stp:'
-STP_PLAIN_PREFIX = 'stp:'
+URN_NSNETWORK_PREFIX = 'urn:ogf:network:nsnetwork:'
+URN_NSA_PREFIX       = 'urn:ogf:network:nsa:'
+URN_STP_PREFIX       = 'urn:ogf:network:stp:'
+
+URN_NRM_PORT         = 'urn:ogf:network:nrmport:'
+NRM_PORT_TYPE        = 'http://nordu.net/ns/2012/opennsa#InternalPort'
+
+STP_PREFIX  = 'stp:'
+LINK_PREFIX = 'link:'
 
 
 
@@ -62,6 +67,11 @@ def _stripPrefix(text, prefix):
     assert text.startswith(prefix), 'Text did not start with specified prefix (text: %s, prefix: %s)' % (text, prefix)
     ul = len(prefix)
     return text[ul:]
+
+
+def _createNRMPort(backend, local_port):
+    return URN_NRM_PORT + (backend or '') + ':' + local_port
+
 
 
 
@@ -101,6 +111,46 @@ def _parseOWLTopology(topology_source):
 
 def _parseNRMMapping(nrm_mapping_source):
 
+    # regular expression for matching nrm mapping lines
+    # basically we allow two type of lines (with and without backend identifier), i.e.:
+    # stp:stp_name  "nrm_port"
+    # stp:stp_name backend "nrm_port"
+    STP_MAP_RX = re.compile('''(.+?)\s+(\w+?)?\s*"(.+)"''')
+    # link:link_name backend1 "nrm_port" - backend2 "nrm_port"
+    LINK_RX    = re.compile('''(.+?)\s+(\w+?)\s+"(.+)"\s+-\s+(\w+?)\s+"(.+)"''')
+
+    def parseSTP(entry):
+        m = STP_MAP_RX.match(line)
+        if not m:
+            log.msg('Error parsing stp map %s in NRM description.' % entry, system=LOG_SYSTEM)
+            return
+
+        stp, backend, local_port = m.groups()
+        if stp.startswith(STP_PREFIX):
+            stp = 'urn:ogf:network:' + stp
+
+        nrm_port = _createNRMPort(backend, local_port)
+        triples = [ (stp, GLIF_MAPS_TO, nrm_port ),
+                    (nrm_port, RDF_TYPE, NRM_PORT_TYPE) ]
+        return triples
+
+    def parseLink(entry):
+        m = LINK_RX.match(entry)
+        if not m:
+            log.msg('Error parsing link entry %s in NRM description.' % entry, system=LOG_SYSTEM)
+            return
+
+        _, backend_1, nrm_port_1, backend_2, nrm_port_2 = m.groups()
+
+        nrm_port_1 = _createNRMPort(backend_1, nrm_port_1)
+        nrm_port_2 = _createNRMPort(backend_2, nrm_port_2)
+
+        triples = [ (nrm_port_1, GLIF_CONNECTED_TO, nrm_port_2),
+                    (nrm_port_2, GLIF_CONNECTED_TO, nrm_port_1),
+                    (nrm_port_1, RDF_TYPE, NRM_PORT_TYPE),
+                    (nrm_port_2, RDF_TYPE, NRM_PORT_TYPE) ]
+        return triples
+
     if isinstance(nrm_mapping_source, file) or isinstance(nrm_mapping_source, StringIO.StringIO):
         source = nrm_mapping_source
     elif isinstance(nrm_mapping_source, str):
@@ -109,35 +159,107 @@ def _parseNRMMapping(nrm_mapping_source):
     else:
         raise error.TopologyError('Invalid NRM Mapping Source')
 
-    # regular expression for matching nrm mapping lines
-    # basically we allow two type of lines (with and without backend identifier), i.e.:
-    # stp:stp_name  "nrm_port"
-    # stp:stp_name backend "nrm_port"
-    NRM_MAP_RX = re.compile('''\s*(.+?)\s+(\w+?)?\s*"(.+)"''')
-
     triples = set()
 
     for line in source:
         line = line.strip()
         if line.startswith('#'):
             continue
-        m = NRM_MAP_RX.match(line)
-        if not m:
-            continue
-        stp, _, nrm_port = m.groups()
-        stp = stp.strip()
-        nrm_port = nrm_port.strip()
-        if stp.startswith(STP_PREFIX):
-            pass
-        elif stp.startswith(STP_PLAIN_PREFIX):
-            stp = 'urn:ogf:network:' + stp
-        else:
-            log.msg('Specifying STP without prefix is deprecated and support will be removed in a future version (STP %s)' % stp, system=LOG_SYSTEM)
-            stp = STP_PREFIX + stp
 
-        triples.add( (stp, str(GLIF_MAPS_TO), nrm_port ) )
+        if line.startswith(URN_STP_PREFIX) or line.startswith(STP_PREFIX):
+            stp_triples = parseSTP(line)
+            if stp_triples:
+                triples.update(stp_triples)
+
+        elif line.startswith(LINK_PREFIX):
+            link_triples = parseLink(line)
+            if link_triples:
+                triples.update(link_triples)
+
+        else:
+            log.msg("Invalid NRM entry: %s" % line, system=LOG_SYSTEM)
 
     return triples
+
+
+
+def buildTopology(triples):
+
+    getSubject = lambda pred, obj  : [ t[0] for t in triples if t[1] == pred and t[2] == obj ]
+    getObjects = lambda subj, pred : [ t[2] for t in triples if t[0] == subj and t[1] == pred ]
+
+    topo = topology.Topology()
+
+    networks = getSubject(RDF_TYPE, GLIF_NETWORK)
+
+    for network in networks:
+
+        nsas      = getObjects(network, GLIF_MANAGED_BY)
+        endpoints = getObjects(nsas[0], GLIF_PROVIDER_ENDPOINT)
+
+        t_network_name  = _stripPrefix(network, URN_NSNETWORK_PREFIX)
+        t_nsa_name      = _stripPrefix(nsas[0], URN_NSA_PREFIX)
+        t_nsa_endpoint  = endpoints[0]
+
+        t_network_nsa = nsa.NetworkServiceAgent(t_nsa_name, t_nsa_endpoint)
+        t_network = nsa.Network(t_network_name, t_network_nsa)
+
+        stps = getObjects(network, GLIF_HAS_STP)
+        for stp in stps:
+            t_stp_name = _stripPrefix(stp, URN_STP_PREFIX).split(':')[-1]
+
+            maps_to = getObjects(stp, GLIF_MAPS_TO)
+            t_maps_to = maps_to[0] if maps_to else None
+
+            dest_stps = getObjects(stp, GLIF_CONNECTED_TO)
+            if dest_stps:
+                dest_network, dest_port = _stripPrefix(dest_stps[0], URN_STP_PREFIX).split(':',1)
+                t_dest_stp = nsa.STP(dest_network, dest_port)
+            else:
+                t_dest_stp = None
+
+            ep = nsa.NetworkEndpoint(t_network_name, t_stp_name, t_maps_to, t_dest_stp, None, None)
+            t_network.addEndpoint(ep)
+
+        topo.addNetwork(t_network)
+
+    return topo
+
+
+
+def buildInternalTopology(triples):
+
+    getSubject = lambda pred, obj  : [ t[0] for t in triples if t[1] == pred and t[2] == obj ]
+    getObjects = lambda subj, pred : [ t[2] for t in triples if t[0] == subj and t[1] == pred ]
+
+    node_ports = {}
+
+    urn_internal_ports = getSubject(RDF_TYPE, NRM_PORT_TYPE)
+    for uip in sorted(urn_internal_ports):
+        sp = _stripPrefix(uip, URN_NRM_PORT)
+        node, port = sp.split(':',1)
+        node_ports.setdefault(node, []).append(port)
+
+    internal_topology = topology.Topology()
+
+    for node, ports in node_ports.items():
+        nw = nsa.Network(node, None)
+        for p in ports:
+            dest_ports = getObjects(_createNRMPort(node, p), GLIF_CONNECTED_TO)
+            if dest_ports:
+                dest_port = dest_ports[0] if dest_ports else None
+                dsp = _stripPrefix(dest_port, URN_NRM_PORT)
+                d_node, d_port = dsp.split(':',1)
+                dest_stp = nsa.STP(d_node, d_port)
+            else:
+                dest_stp = None
+
+            ep = nsa.NetworkEndpoint(node, p, dest_stp=dest_stp)
+            nw.addEndpoint(ep)
+
+        internal_topology.addNetwork(nw)
+
+    return internal_topology
 
 
 
@@ -153,48 +275,9 @@ def parseTopology(topology_sources, nrm_mapping_source=None):
         topo_triples = _parseNRMMapping(nrm_mapping_source)
         triples = triples.union(topo_triples)
 
-    # extract topology from triples
+    topo = buildTopology(triples)
 
-    def getSubject(pred, obj):
-        return [ t[0] for t in triples if t[1] == pred and t[2] == obj ]
-
-    def getObjects(subj, pred):
-        return [ t[2] for t in triples if t[0] == subj and t[1] == pred ]
-
-    topo = topology.Topology()
-
-    networks = getSubject(RDF_TYPE, GLIF_NETWORK)
-
-    for network in networks:
-
-        nsas      = getObjects(network, GLIF_MANAGED_BY)
-        endpoints = getObjects(nsas[0], GLIF_PROVIDER_ENDPOINT)
-
-        t_network_name  = _stripPrefix(network, NSNETWORK_PREFIX)
-        t_nsa_name      = _stripPrefix(nsas[0], NSA_PREFIX)
-        t_nsa_endpoint  = endpoints[0]
-
-        t_network_nsa = nsa.NetworkServiceAgent(t_nsa_name, t_nsa_endpoint)
-        t_network = nsa.Network(t_network_name, t_network_nsa)
-
-        stps = getObjects(network, GLIF_HAS_STP)
-        for stp in stps:
-            t_stp_name = _stripPrefix(stp, STP_PREFIX).split(':')[-1]
-
-            maps_to = getObjects(stp, GLIF_MAPS_TO)
-            t_maps_to = maps_to[0] if maps_to else None
-
-            dest_stps = getObjects(stp, GLIF_CONNECTED_TO)
-            if dest_stps:
-                dest_network, dest_port = _stripPrefix(dest_stps[0], STP_PREFIX).split(':',1)
-                t_dest_stp = nsa.STP(dest_network, dest_port)
-            else:
-                t_dest_stp = None
-
-            ep = nsa.NetworkEndpoint(t_network_name, t_stp_name, t_maps_to, t_dest_stp, None, None)
-            t_network.addEndpoint(ep)
-
-        topo.addNetwork(t_network)
+    int_topo = buildInternalTopology(triples)
 
     return topo
 
