@@ -26,11 +26,16 @@ class DUDNSIBackend:
         self.connection_manager = DUDConnectionManager('DUD Connection Manager %s' % network_name)
 
 
-    def createConnection(self, source_port, dest_port, service_parameters):
+    def canAllocateLink(self, source_port, dest_port, service_parameters):
 
-        # probably need a short hand for this
         self.calendar.checkReservation(source_port, service_parameters.start_time, service_parameters.end_time)
         self.calendar.checkReservation(dest_port  , service_parameters.start_time, service_parameters.end_time)
+        return True
+
+
+    def createConnection(self, source_port, dest_port, service_parameters):
+
+        self.canAllocateLink(source_port, dest_port, service_parameters)
 
         self.calendar.addConnection(source_port, service_parameters.start_time, service_parameters.end_time)
         self.calendar.addConnection(dest_port  , service_parameters.start_time, service_parameters.end_time)
