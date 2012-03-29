@@ -113,6 +113,8 @@ class WSDLMarshaller:
         # be one AFAICT). How to get from there and to to a fault body
         # is still open.
 
+        from suds import TypeNotFound
+        from suds.bindings.binding import PartElement
         from suds.xsd.query import TypeQuery, ElementQuery
 
         rtypes = []
