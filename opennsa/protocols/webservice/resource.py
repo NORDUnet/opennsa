@@ -71,7 +71,7 @@ class SOAPResource(resource.Resource):
 
 
 
-def createService():
+def createResourceSite():
 
     # this may seem a bit much, but makes it much simpler to add or change something later
     top_resource = resource.Resource()

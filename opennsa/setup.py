@@ -34,7 +34,7 @@ def createService(network_name, topology_sources, backend, service_registry, hos
     # reminds an awful lot about client setup
 
     service_url = _createServiceURL(host, port, tls)
-    nsi_resource, site = resource.createService()
+    nsi_resource, site = resource.createResourceSite()
 
     provider_client     = client.ProviderClient(service_url, wsdl_dir, ctx_factory=ctx_factory)
     nsi_requester = requester.Requester(provider_client, 30)
@@ -60,7 +60,7 @@ def createService(network_name, topology_sources, backend, service_registry, hos
 def createClient(host, port, wsdl_dir, tls=False, ctx_factory=None):
 
     service_url = _createServiceURL(host, port, tls)
-    nsi_resource, site = resource.createService()
+    nsi_resource, site = resource.createResourceSite()
 
     provider_client     = client.ProviderClient(service_url, wsdl_dir, ctx_factory=ctx_factory)
     nsi_requester = requester.Requester(provider_client, callback_timeout=65)
