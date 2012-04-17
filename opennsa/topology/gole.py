@@ -209,7 +209,7 @@ def buildTopology(triples):
             t_stp_name = _stripPrefix(stp, URN_STP_PREFIX).split(':')[-1]
 
             maps_to = getObjects(stp, GLIF_MAPS_TO)
-            t_maps_to = _stripPrefix(maps_to[0], URN_NRM_PORT) if maps_to else None
+            t_maps_to = _stripPrefix(maps_to[0], URN_NRM_PORT).split(':',1)[-1] if maps_to else None
 
             dest_stps = getObjects(stp, GLIF_CONNECTED_TO)
             if dest_stps:
