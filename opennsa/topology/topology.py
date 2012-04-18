@@ -91,7 +91,7 @@ class Topology:
         def canConnect(link):
             if not link.network.endswith('.ets'):
                 return True # not a vlan capable network, STPs can connect
-            if link.network in ('northernlight.ets', 'netherlight.ets'):
+            if link.network == 'northernlight.ets':
                 return True # these can do vlan rewrite
             source_vlan = vlan(link.source)
             dest_vlan   = vlan(link.dest)
