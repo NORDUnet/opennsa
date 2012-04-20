@@ -163,7 +163,7 @@ def _parseNRMMapping(nrm_mapping_source):
 
     for line in source:
         line = line.strip()
-        if line.startswith('#'):
+        if not line or line.startswith('#'):
             continue
 
         if line.startswith(URN_STP_PREFIX) or line.startswith(STP_PREFIX):
@@ -177,7 +177,8 @@ def _parseNRMMapping(nrm_mapping_source):
                 triples.update(link_triples)
 
         else:
-            log.msg("Invalid NRM entry: %s" % line, system=LOG_SYSTEM)
+            # we don't want to have invalid topology descriptions so just raise error
+            raise error.TopologyError('Invalid entry in NRM file: %s' % line)
 
     return triples
 
