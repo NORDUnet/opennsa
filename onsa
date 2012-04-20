@@ -15,6 +15,7 @@ from opennsa.cli import options, parser, commands, logobserver
 CLI_DEFAULTS            = '.opennsa-cli'
 WSDL_DEFAULT_DIRECTORY  = '/usr/local/share/nsi/wsdl'
 REQUESTER_URL_BASE      = 'http://%s:%i/NSI/services/ConnectionService'
+HELP_MESSAGE            = '%s: Try --help or <command> --help for usage details.'
 
 
 @defer.inlineCallbacks
@@ -24,14 +25,13 @@ def doMain():
         config.parseOptions()
     except usage.UsageError, errortext:
         print '%s: %s' % (sys.argv[0], errortext)
-        print '%s: Try --help for usage details.' % (sys.argv[0])
+        print HELP_MESSAGE % (sys.argv[0])
         return
 
     # User did not enter a command.
     if not hasattr(config, "subOptions"):
-        print '%s: Try --help for usage details.' % (sys.argv[0])
+        print HELP_MESSAGE % (sys.argv[0])
         return
-    
 
     # this import is slighly slow, so we delay it until parsing is successfull
     from opennsa import setup, nsa
