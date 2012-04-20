@@ -114,7 +114,11 @@ class TLSFlag(usage.Options):
     optFlags = [ [ options.TLS, 'x', 'Use TLS for listener port' ] ]
 
 class SkipCertificateVerificationFlag(usage.Options):
-    optFlags = [ [ options.SKIP_CERT_VERIFY, 'z', 'Skip certificate verification' ] ]
+    optFlags = [ [ options.VERIFY_CERT, 'z', 'Skip certificate verification' ] ]
+
+    def postOptions(self):
+        # turn value around so we don't have to compensate other places
+        self[options.VERIFY_CERT] = not bool( self[options.VERIFY_CERT] )
 
 class FullGraphFlag(usage.Options):
     optFlags = [ [ options.FULL_GRAPH, 'l', 'Render full graph with all links.' ] ]
@@ -135,6 +139,8 @@ class NetworkCommandOptions(BaseOptions, WSDLDirectoryOption, HostOption, PortOp
                             TLSFlag, PublicKeyOption, PrivateKeyOption, CertificateDirectoryOption, SkipCertificateVerificationFlag):
 
     def postOptions(self):
+        # technically we should do this for all superclasses, but this is the only one that has anything to do
+        SkipCertificateVerificationFlag.postOptions(self)
         if self[options.SERVICE_URL] and (self[options.TOPOLOGY_FILE] or self[options.NETWORK]):
             raise usage.UsageError('Cannot set both service url while having topology file or network.')
 

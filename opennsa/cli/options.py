@@ -34,7 +34,7 @@ TLS             = 'tls'
 PUBLIC_KEY      = 'publickey'
 PRIVATE_KEY     = 'privatekey'
 CERTIFICATE_DIR = 'certdir'
-SKIP_CERT_VERIFY = 'verify'
+VERIFY_CERT     = 'verify'
 
 FULL_GRAPH      = 'fullgraph'
 
@@ -68,8 +68,8 @@ def readDefaults(file_):
             if option in (PORT, BANDWIDTH):
                 value = int(value)
 
-            if option in (SKIP_CERT_VERIFY): # flags
-                value = True if value.lower in ('true', 'yes', '1') else False
+            if option in (VERIFY_CERT): # flags
+                value = False if value.lower in ('false', 'no', '0') else True
 
             defaults[option] = value
 

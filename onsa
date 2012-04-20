@@ -84,14 +84,19 @@ def doMain():
         public_key          = config.subOptions[options.PUBLIC_KEY]         or defaults.get(options.PUBLIC_KEY)
         private_key         = config.subOptions[options.PRIVATE_KEY]        or defaults.get(options.PRIVATE_KEY)
         certificate_dir     = config.subOptions[options.CERTIFICATE_DIR]    or defaults.get(options.CERTIFICATE_DIR)
-        skip_cert_verify    = config.subOptions[options.SKIP_CERT_VERIFY]   or defaults.get(options.SKIP_CERT_VERIFY)   or False
+        # since this is a boolean where false can be a wanted value we cannot use short-circuting
+        cert_verify         = config.subOptions[options.VERIFY_CERT]
+        if cert_verify is None:
+            cert_verify = defaults.get(options.VERIFY_CERT)
+        if cert_verify is None:
+            cert_verify = True
 
         ctx_factory = None
         if public_key or private_key or certificate_dir:
 
             if public_key and private_key and certificate_dir:
                 from opennsa import ctxfactory
-                ctx_factory = ctxfactory.ContextFactory(private_key, public_key, certificate_dir, not skip_cert_verify)
+                ctx_factory = ctxfactory.ContextFactory(private_key, public_key, certificate_dir, verify_cert)
             elif tls:
                 raise usage.UsageError('Missing options for creating SSL/TLS context. Cannot setup TLS.')
             else:
