@@ -27,6 +27,12 @@ def doMain():
         print '%s: Try --help for usage details.' % (sys.argv[0])
         return
 
+    # User did not enter a command.
+    if not hasattr(config, "subOptions"):
+        print '%s: Try --help for usage details.' % (sys.argv[0])
+        return
+    
+
     # this import is slighly slow, so we delay it until parsing is successfull
     from opennsa import setup, nsa
 
