@@ -13,8 +13,8 @@ import ConfigParser
 DEFAULT_CONFIG_FILE     = '/etc/opennsa.conf'
 DEFAULT_LOG_FILE        = '/var/log/opennsa.log'
 DEFAULT_TLS             = 'true'
-DEFAULT_TOPOLOGY_FILE   = '/usr/share/nsi/topology.owl'
-DEFAULT_WSDL_DIRECTORY  = '/usr/share/nsi/wsdl'
+DEFAULT_TOPOLOGY_FILE   = '/usr/local/share/nsi/topology.owl'
+DEFAULT_WSDL_DIRECTORY  = '/usr/local/share/nsi/wsdl'
 DEFAULT_TCP_PORT        = 9080
 DEFAULT_TLS_PORT        = 9443
 DEFAULT_VERIFY          = 'true'
