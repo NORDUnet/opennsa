@@ -73,7 +73,7 @@ def createClient(host, port, wsdl_dir, tls=False, ctx_factory=None):
 def createApplication(config_file=config.DEFAULT_CONFIG_FILE, debug=False):
 
     try:
-        app = setupApplication(config_file, debug)
+        return setupApplication(config_file, debug)
     except ConfigurationError as e:
         import sys
         sys.stderr.write("Configuration error: %s\n" % e)
