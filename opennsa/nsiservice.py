@@ -86,7 +86,7 @@ class NSIService:
         log.msg('Connection %s. Reserve request from %s.' % (connection_id, requester_nsa), system=LOG_SYSTEM)
 
         if connection_id in self.connections.get(requester_nsa, {}):
-            raise error.ReserveError('Connection with id %s already exists' % connection_id)
+            return defer.fail(error.ReserveError('Connection with id %s already exists' % connection_id))
 
         source_stp = service_parameters.source_stp
         dest_stp   = service_parameters.dest_stp
