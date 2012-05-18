@@ -142,3 +142,28 @@ class ServiceTest(unittest.TestCase):
         except error.ReserveError, e:
             self.failUnlessIn('Could not find a path', str(e))
 
+
+
+    @defer.inlineCallbacks
+    def testStartTimeInPast(self):
+
+        provider = nsa.Network('Aruba', nsa.NetworkServiceAgent('Aruba-OpenNSA', 'http://localhost:9080/NSI/services/ConnectionService'))
+
+        source_stp      = nsa.STP('Aruba', 'A1' )
+        dest_stp        = nsa.STP('Aruba', 'A2')
+
+        start_time = datetime.datetime.utcfromtimestamp(time.time() - 1 )
+        end_time   = datetime.datetime.utcfromtimestamp(time.time() + 120 )
+
+        bwp = nsa.BandwidthParameters(200)
+        service_params  = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, bandwidth=bwp)
+        connection_id         = 'conn-id1'
+
+        try:
+            yield self.client.reserve(self.client_nsa, provider.nsa, None, None, '', connection_id, service_params)
+            self.fail('Reserve call should have failed')
+        except error.ReserveError, e:
+            self.failUnlessIn('Start time in the past', str(e))
+
+
+
