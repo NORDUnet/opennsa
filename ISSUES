@@ -1,23 +1,21 @@
 Long term:
-  Documentation :-)
+  Documentation
   Persistence for connections
+  Mailing list
   Easy way of seeing connections in OpenNSA (basic web interface is there)
   Deal with bandwidth in calendar (requires joint resource concept)
   Ability to generate topology from NRM mapping / internal topology description
 
+
 General:
   Seperate protocol stack from connection (done for provider, client still needs work)
   Profiling of protocol stack / backends
-  Failing to send reserveConf can keep connection in INITIAL (cannot reproduce)
+  Better connection names in client - use UUIDs for global ids
   Make RPC + callback timeout configurable
-  Mailing list
   Implementation of AutoGOLE topology distribution scheme
   Client should be able to breakout request itself
   Security params clean up (see mail from Jeroen)
-  Better error messages for odd topology constructs (connect an SDP to itself)
 
-Client:
-  Better connection names - use UUIDs for global ids
 
 Backends:
   Multiple backends support
