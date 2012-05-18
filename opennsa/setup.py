@@ -28,7 +28,7 @@ def _createServiceURL(host, port, tls=False):
 
 
 
-def createService(network_name, topology_sources, backend, service_registry, host, port, wsdl_dir, tls=False, ctx_factory=None, nrm_map_source=None):
+def createService(network_name, topology, backend, service_registry, host, port, wsdl_dir, tls=False, ctx_factory=None):
 
 
     # reminds an awful lot about client setup
@@ -42,8 +42,7 @@ def createService(network_name, topology_sources, backend, service_registry, hos
 
     # now provider service
 
-    topo = gole.parseTopology(topology_sources, nrm_map_source)
-    nsi_service  = nsiservice.NSIService(network_name, backend, service_registry, topo, nsi_requester)
+    nsi_service  = nsiservice.NSIService(network_name, backend, service_registry, topology, nsi_requester)
 
     requester_client = client.RequesterClient(wsdl_dir, ctx_factory)
     nsi_provider = provider.Provider(service_registry, requester_client)
@@ -111,6 +110,7 @@ def setupApplication(config_file=config.DEFAULT_CONFIG_FILE, debug=False):
     except NoOptionError:
         nrm_map_source = None
 
+    topology, internal_topology = gole.parseTopology(topology_sources, nrm_map_source)
 
     wsdl_dir = cfg.get(config.BLOCK_SERVICE, config.CONFIG_WSDL_DIRECTORY)
     if not os.path.exists(wsdl_dir):
@@ -156,29 +156,70 @@ def setupApplication(config_file=config.DEFAULT_CONFIG_FILE, debug=False):
         if tls:
             raise ConfigurationError('Missing TLS option: %s' % str(e))
 
-    # backend
+    # backends
 
-    if config.BLOCK_DUD in cfg.sections():
-        from opennsa.backends import dud
-        backend = dud.DUDNSIBackend(network_name)
-    elif config.BLOCK_JUNOS in cfg.sections():
-        from opennsa.backends import junos
-        backend = junos.JunOSBackend(network_name, cfg.items(config.BLOCK_JUNOS))
-    elif config.BLOCK_FORCE10 in cfg.sections():
-        from opennsa.backends import force10
-        backend = force10.Force10Backend(network_name, cfg.items(config.BLOCK_FORCE10))
-    elif config.BLOCK_ARGIA in cfg.sections():
-        from opennsa.backends import argia
-        backend = argia.ArgiaBackend(network_name, cfg.items(config.BLOCK_ARGIA))
-    else:
+    backends = {}
+
+    for section in cfg.sections():
+
+        # i invite everyone to find a more elegant scheme for this...
+
+        if section.startswith(config.BLOCK_DUD + ':'):
+            from opennsa.backends import dud
+            _, backend_name = section.split(':', 2)
+            backends[backend_name] = dud.DUDNSIBackend(network_name)
+
+        elif section.startswith(config.BLOCK_DUD):
+            from opennsa.backends import dud
+            if backends: raise ConfigurationError('Cannot use unnamed backend with multiple backends configured.')
+            backends[None] = dud.DUDNSIBackend(network_name)
+
+        elif section.startswith(config.BLOCK_JUNOS + ':'):
+            from opennsa.backends import junos
+            _, backend_name = section.split(':', 2)
+            backends[backend_name] = junos.JunOSBackend(network_name, cfg.items(section))
+
+        elif section.startswith(config.BLOCK_JUNOS):
+            from opennsa.backends import junos
+            if backends: raise ConfigurationError('Cannot use unnamed backend with multiple backends configured.')
+            backends[None] = junos.JunOSBackend(network_name, cfg.items(section))
+
+        elif section.startswith(config.BLOCK_FORCE10 + ':'):
+            from opennsa.backends import force10
+            _, backend_name = section.split(':', 2)
+            backends[backend_name] = junos.JunOSBackend(network_name, cfg.items(section))
+
+        elif section.startswith(config.BLOCK_FORCE10):
+            from opennsa.backends import force10
+            if backends: raise ConfigurationError('Cannot use unnamed backend with multiple backends configured.')
+            backends[None] = force10.Force10Backend(network_name, cfg.items(section))
+
+        elif section.startswith(config.BLOCK_ARGIA + ':'):
+            from opennsa.backends import argia
+            _, backend_name = section.split(':', 2)
+            backends[backend_name] = argia.ArgiaBackend(network_name, cfg.items(section))
+
+        elif section.startswith(config.BLOCK_ARGIA):
+            from opennsa.backends import argia
+            if backends: raise ConfigurationError('Cannot use unnamed backend with multiple backends configured.')
+            backends[None] = argia.ArgiaBackend(network_name, cfg.items(section))
+
+    if not backends:
         raise ConfigurationError('No or invalid backend specified')
+
+    if len(backends) == 1 and None in backends:
+        backend = backends.values()[0]
+    else:
+        from opennsa.backends import multi
+        backend = multi.MultiBackendNSIBackend(network_name, backends, internal_topology)
+
+    # might be good with some sanity checking between backend configuration and topology
 
     # setup application
 
-
     service_registry = registry.ServiceRegistry()
 
-    factory = createService(network_name, topology_sources, backend, service_registry, host, port, wsdl_dir, tls, ctx_factory, nrm_map_source)
+    factory = createService(network_name, topology, backend, service_registry, host, port, wsdl_dir, tls, ctx_factory)
 
     application = appservice.Application("OpenNSA")
     application.setComponent(ILogObserver, logging.DebugLogObserver(log_file, debug).emit)

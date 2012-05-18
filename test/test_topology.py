@@ -52,5 +52,5 @@ class GOLETopologyTest(GenericTopologyTest, unittest.TestCase):
 
     def setUp(self):
         f = StringIO.StringIO(testtopology.TEST_TOPOLOGY)
-        self.topo = gole.parseTopology( [f] )
+        self.topo, _ = gole.parseTopology( [f] )
 

@@ -13,6 +13,7 @@ from twisted.internet import defer, reactor
 
 from opennsa import nsa, error, setup, registry
 from opennsa.backends import dud
+from opennsa.topology import gole
 
 from . import topology as testtopology
 
@@ -35,7 +36,8 @@ class ServiceTest(unittest.TestCase):
             topo_source = StringIO.StringIO(testtopology.TEST_TOPOLOGY)
             backend = dud.DUDNSIBackend(network)
             sr = registry.ServiceRegistry()
-            factory = setup.createService(network, [ topo_source ], backend, sr, HOST, port, WSDL_DIR)
+            topo, _ = gole.parseTopology( [ topo_source ] )
+            factory = setup.createService(network, topo, backend, sr, HOST, port, WSDL_DIR)
 
             iport = reactor.listenTCP(port, factory, interface='localhost')
             self.iports.append(iport)

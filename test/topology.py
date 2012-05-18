@@ -15,7 +15,7 @@ TEST_TOPOLOGY = """<?xml version="1.0"?>
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [347,559]</rdfs:comment>
         <connectedTo rdf:resource="urn:ogf:network:stp:Dominica:D4"/>
-        <dtox:mapsTo>Aruba_A1</dtox:mapsTo>
+        <dtox:mapsTo>urn:ogf:network:nrmport:Aruba_A1</dtox:mapsTo>
     </owl:NamedIndividual>
 
 
@@ -23,7 +23,7 @@ TEST_TOPOLOGY = """<?xml version="1.0"?>
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:Aruba:A2">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [601,561]</rdfs:comment>
-        <dtox:mapsTo>Aruba_A2</dtox:mapsTo>
+        <dtox:mapsTo>urn:ogf:network:nrmport:Aruba_A2</dtox:mapsTo>
     </owl:NamedIndividual>
 
 
@@ -31,7 +31,7 @@ TEST_TOPOLOGY = """<?xml version="1.0"?>
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:Aruba:A3">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [864,558]</rdfs:comment>
-        <dtox:mapsTo>Aruba_A4</dtox:mapsTo>
+        <dtox:mapsTo>urn:ogf:network:nrmport:Aruba_A3</dtox:mapsTo>
     </owl:NamedIndividual>
 
 
@@ -40,7 +40,7 @@ TEST_TOPOLOGY = """<?xml version="1.0"?>
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [1123,557]</rdfs:comment>
         <connectedTo rdf:resource="urn:ogf:network:stp:Bonaire:B1"/>
-        <dtox:mapsTo>Aruba_A4</dtox:mapsTo>
+        <dtox:mapsTo>urn:ogf:network:nrmport:Aruba_A4</dtox:mapsTo>
     </owl:NamedIndividual>
 
 
@@ -72,7 +72,7 @@ TEST_TOPOLOGY = """<?xml version="1.0"?>
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [1826,468]</rdfs:comment>
         <connectedTo rdf:resource="urn:ogf:network:stp:Aruba:A4"/>
-        <dtox:mapsTo>Bonaire_B1</dtox:mapsTo>
+        <dtox:mapsTo>urn:ogf:network:nrmport:Bonaire_B1</dtox:mapsTo>
     </owl:NamedIndividual>
 
 
@@ -80,7 +80,7 @@ TEST_TOPOLOGY = """<?xml version="1.0"?>
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:Bonaire:B2">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [2077,466]</rdfs:comment>
-        <dtox:mapsTo>Bonaire_B2</dtox:mapsTo>
+        <dtox:mapsTo>urn:ogf:network:nrmport:Bonaire_B2</dtox:mapsTo>
     </owl:NamedIndividual>
 
 
@@ -88,7 +88,7 @@ TEST_TOPOLOGY = """<?xml version="1.0"?>
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:Bonaire:B3">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [2333,466]</rdfs:comment>
-        <dtox:mapsTo>Bonaire_B3</dtox:mapsTo>
+        <dtox:mapsTo>urn:ogf:network:nrmport:Bonaire_B3</dtox:mapsTo>
     </owl:NamedIndividual>
 
 
@@ -97,7 +97,7 @@ TEST_TOPOLOGY = """<?xml version="1.0"?>
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [2592,466]</rdfs:comment>
         <connectedTo rdf:resource="urn:ogf:network:stp:Curacao:C1"/>
-        <dtox:mapsTo>Bonaire_B4</dtox:mapsTo>
+        <dtox:mapsTo>urn:ogf:network:nrmport:Bonaire_B4</dtox:mapsTo>
     </owl:NamedIndividual>
 
 
@@ -130,7 +130,7 @@ TEST_TOPOLOGY = """<?xml version="1.0"?>
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [3463,454]</rdfs:comment>
         <connectedTo rdf:resource="urn:ogf:network:stp:Bonaire:B4"/>
-        <dtox:mapsTo>Curacao_C1</dtox:mapsTo>
+        <dtox:mapsTo>urn:ogf:network:nrmport:Curacao_C1</dtox:mapsTo>
     </owl:NamedIndividual>
 
 
@@ -138,7 +138,7 @@ TEST_TOPOLOGY = """<?xml version="1.0"?>
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:Curacao:C2">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [3725,455]</rdfs:comment>
-        <dtox:mapsTo>Curacao_C2</dtox:mapsTo>
+        <dtox:mapsTo>urn:ogf:network:nrmport:Curacao_C2</dtox:mapsTo>
     </owl:NamedIndividual>
 
 
@@ -146,7 +146,7 @@ TEST_TOPOLOGY = """<?xml version="1.0"?>
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:Curacao:C3">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [3981,458]</rdfs:comment>
-        <dtox:mapsTo>Curacao_C3</dtox:mapsTo>
+        <dtox:mapsTo>urn:ogf:network:nrmport:Curacao_C3</dtox:mapsTo>
     </owl:NamedIndividual>
 
 
@@ -155,7 +155,7 @@ TEST_TOPOLOGY = """<?xml version="1.0"?>
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
         <rdfs:comment xml:lang="en">Position : [4239,458]</rdfs:comment>
         <connectedTo rdf:resource="urn:ogf:network:stp:Dominica:D1"/>
-        <dtox:mapsTo>Curacao_C4</dtox:mapsTo>
+        <dtox:mapsTo>urn:ogf:network:nrmport:Curacao_C4</dtox:mapsTo>
     </owl:NamedIndividual>
 
 
@@ -238,7 +238,7 @@ TEST_TOPOLOGY = """<?xml version="1.0"?>
     <!-- urn:ogf:network:stp:Hawaii:H1 -->
     <owl:NamedIndividual rdf:about="urn:ogf:network:stp:Hawaii:H1">
         <rdf:type rdf:resource="http://www.glif.is/working-groups/tech/dtox#STP"/>
-        <dtox:mapsTo>Hawaii_A4</dtox:mapsTo>
+        <dtox:mapsTo>urn:ogf:network:nrmport:Hawaii_A4</dtox:mapsTo>
     </owl:NamedIndividual>
 
     <!-- urn:ogf:network:nsnetwork:Hawaii -->

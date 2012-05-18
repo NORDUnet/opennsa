@@ -74,7 +74,7 @@ def doMain():
             client_nsa      = nsa.NetworkServiceAgent(requester_nsa, requester_url)
 
             from opennsa.topology import gole
-            topo = gole.parseTopology( [ open(topology_file) ] )
+            topo, _ = gole.parseTopology( [ open(topology_file) ] )
             provider_nsa  = topo.getNetwork(network).nsa
 
         elif service_url:

@@ -8,6 +8,7 @@ from twisted.application import internet, service
 
 from opennsa import setup, registry, logging
 from opennsa.backends import dud
+from opennsa.topology import gole
 
 
 DEBUG = False
@@ -32,11 +33,13 @@ logObserver = logging.DebugLogObserver(sys.stdout, DEBUG, PROFILE)
 application = service.Application("OpenNSA")
 application.setComponent(ILogObserver, logObserver.emit)
 
+topo, _ = gole.parseTopology( [ open(TOPOLOGY) ], open(MAPPING))
+
 for network, port in SERVICES:
 
     backend = dud.DUDNSIBackend(network)
     es = registry.ServiceRegistry()
-    factory = setup.createService(network, [ open(TOPOLOGY) ], backend, es, HOST, port, WSDL_DIR, nrm_map_source=open(MAPPING) )
+    factory = setup.createService(network, topo, backend, es, HOST, port, WSDL_DIR)
 
     internet.TCPServer(port, factory, interface='localhost').setServiceParent(application)
 

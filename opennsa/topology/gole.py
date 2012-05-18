@@ -283,5 +283,5 @@ def parseTopology(topology_sources, nrm_mapping_source=None):
 
     int_topo = buildInternalTopology(triples)
 
-    return topo
+    return topo, int_topo
 

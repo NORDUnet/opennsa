@@ -67,7 +67,7 @@ def path(topology_file, source_stp, dest_stp):
 
     from opennsa.topology import gole
 
-    topo = gole.parseTopology( [ open(topology_file) ] )
+    topo,_ = gole.parseTopology( [ open(topology_file) ] )
 
     source_network, source_port = source_stp.split(':',1)
     dest_network,   dest_port   = dest_stp.split(':', 1)
@@ -85,7 +85,7 @@ def topology(topology_file):
 
     from opennsa.topology import gole
 
-    topo = gole.parseTopology( [ open(topology_file) ] )
+    topo,_ = gole.parseTopology( [ open(topology_file) ] )
 
     for nw in topo.networks:
         ns = '%s (%s)' % (nw.name, ','.join( sorted( [ ep.endpoint for ep in nw.endpoints ] ) ) )
@@ -96,7 +96,7 @@ def topologyGraph(topology_file, all_links=False):
 
     from opennsa.topology import gole
 
-    topo = gole.parseTopology( [ open(topology_file) ] )
+    topo,_ = gole.parseTopology( [ open(topology_file) ] )
 
     links = []
 
