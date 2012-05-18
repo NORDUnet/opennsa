@@ -27,6 +27,7 @@ OWL_NS          = 'http://www.w3.org/2002/07/owl#'
 DTOX_NS         = 'http://www.glif.is/working-groups/tech/dtox#'
 
 
+RDF_DESCRIPTION         = '{%s}Description'% RDF_SYNTAX_NS
 RDF_ABOUT               = '{%s}about'      % RDF_SYNTAX_NS
 RDF_TYPE                = '{%s}type'       % RDF_SYNTAX_NS
 RDF_RESOURCE            = '{%s}resource'   % RDF_SYNTAX_NS
@@ -89,7 +90,7 @@ def _parseOWLTopology(topology_source):
     root = doc.getroot()
     for e in root.getchildren():
 
-        if e.tag == NAMED_INDIVIDUAL:
+        if e.tag in (NAMED_INDIVIDUAL, RDF_DESCRIPTION):
             resource = e.attrib[RDF_ABOUT]
             for el in e.getchildren():
                 if   el.tag == RDF_TYPE:                triples.add( (resource, RDF_TYPE,           el.attrib.values()[0]) )
