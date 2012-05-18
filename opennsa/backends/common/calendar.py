@@ -39,13 +39,16 @@ class ReservationCalendar:
 
         # sanity checks
         if start_time > end_time:
-            raise error.InvalidRequestError('Refusing to make reservation with reverse duration')
+            raise error.InvalidRequestError('Invalid request: Reverse duration (end time before start time)')
 
-        if start_time < datetime.datetime.utcnow():
-            raise error.InvalidRequestError('Refusing to make reservation with start time in the past')
+        now = datetime.datetime.utcnow()
+        if start_time < now:
+            delta = now - start_time
+            stamp = str(start_time).rsplit('.')[0]
+            raise error.InvalidRequestError('Invalid request: Start time in the past (Startime: %s Delta: %s)' % (stamp, str(delta)))
 
         if start_time > datetime.datetime(2025, 1, 1):
-            raise error.InvalidRequestError('Refusing to make reservation with start time after 2025')
+            raise error.InvalidRequestError('Invalid request: Start time after year 2025')
 
         for (c_port, c_start_time, c_end_time) in self.connections:
             if port == c_port:
