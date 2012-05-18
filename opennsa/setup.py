@@ -187,7 +187,7 @@ def setupApplication(config_file=config.DEFAULT_CONFIG_FILE, debug=False):
         elif section.startswith(config.BLOCK_FORCE10 + ':'):
             from opennsa.backends import force10
             _, backend_name = section.split(':', 2)
-            backends[backend_name] = junos.JunOSBackend(network_name, cfg.items(section))
+            backends[backend_name] = force10.JunOSBackend(network_name, cfg.items(section))
 
         elif section.startswith(config.BLOCK_FORCE10):
             from opennsa.backends import force10
