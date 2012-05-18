@@ -37,10 +37,10 @@ CONFIG_TOPOLOGY_FILE    = 'topology'
 CONFIG_NRM_MAP_FILE     = 'nrmmap'
 CONFIG_WSDL_DIRECTORY   = 'wsdl'
 
-CONFIG_HOSTKEY          = 'hostkey'     # mandatory, if tls is set
-CONFIG_HOSTCERT         = 'hostcert'    # mandatory, if tls is set
+CONFIG_KEY              = 'key'         # mandatory, if tls is set
+CONFIG_CERTIFICATE      = 'certificate' # mandatory, if tls is set
 CONFIG_CERTIFICATE_DIR  = 'certdir'     # mandatory (but dir can be empty)
-CONFIG_VERIFY           = 'verify'
+CONFIG_VERIFY_CERT      = 'verify'
 
 # generic ssh stuff, don't use directly
 _SSH_HOST               = 'host'

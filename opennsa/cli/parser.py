@@ -28,8 +28,8 @@
 # -e end time
 # -b bandwidth (megabits)
 
-# -l public key
-# -k private key
+# -l certificate (signed public key)
+# -k key (private key)
 # -i certificate directory
 
 # Flags
@@ -100,10 +100,10 @@ class BandwidthOption(usage.Options):
     optParameters = [ [ options.BANDWIDTH, 'b', None, 'Bandwidth (Megabits)'] ]
 
 class PublicKeyOption(usage.Options):
-    optParameters = [ [ options.PUBLIC_KEY, 'l', None, 'Public key path' ] ]
+    optParameters = [ [ options.CERTIFICATE, 'l', None, 'Certificate path' ] ]
 
 class PrivateKeyOption(usage.Options):
-    optParameters = [ [ options.PRIVATE_KEY, 'k', None, 'Private key path' ] ]
+    optParameters = [ [ options.KEY, 'k', None, 'Private key path' ] ]
 
 class CertificateDirectoryOption(usage.Options):
     optParameters = [ [ options.CERTIFICATE_DIR, 'i', None, 'Certificate directory' ] ]

@@ -87,15 +87,15 @@ def doMain():
         tls = config.subOptions[options.TLS] or defaults.get(options.TLS) or False
 
         # setup ssl context
-        public_key          = config.subOptions[options.PUBLIC_KEY]         or defaults.get(options.PUBLIC_KEY)
-        private_key         = config.subOptions[options.PRIVATE_KEY]        or defaults.get(options.PRIVATE_KEY)
+        public_key          = config.subOptions[options.CERTIFICATE]        or defaults.get(options.CERTIFICATE)
+        private_key         = config.subOptions[options.KEY]                or defaults.get(options.KEY)
         certificate_dir     = config.subOptions[options.CERTIFICATE_DIR]    or defaults.get(options.CERTIFICATE_DIR)
         # since this is a boolean where false can be a wanted value we cannot use short-circuting
-        cert_verify         = config.subOptions[options.VERIFY_CERT]
-        if cert_verify is None:
-            cert_verify = defaults.get(options.VERIFY_CERT)
-        if cert_verify is None:
-            cert_verify = True
+        verify_cert         = config.subOptions[options.VERIFY]
+        if verify_cert is None:
+            verify_cert = defaults.get(options.VERIFY)
+        if verify_cert is None:
+            verify_cert = True
 
         ctx_factory = None
         if public_key or private_key or certificate_dir:

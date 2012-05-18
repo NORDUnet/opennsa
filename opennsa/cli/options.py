@@ -7,6 +7,8 @@ import datetime
 
 from twisted.python import log
 
+from opennsa import config
+
 
 # option names, as constants so we don't use strings in other modules
 VERBOSE         = 'verbose'
@@ -30,11 +32,11 @@ BANDWIDTH       = 'bandwidth'
 START_TIME      = 'starttime'
 END_TIME        = 'endtime'
 
-TLS             = 'tls'
-PUBLIC_KEY      = 'publickey'
-PRIVATE_KEY     = 'privatekey'
-CERTIFICATE_DIR = 'certdir'
-VERIFY_CERT     = 'verify'
+TLS             = config.CONFIG_TLS
+KEY             = config.CONFIG_KEY
+CERTIFICATE     = config.CONFIG_CERTIFICATE
+CERTIFICATE_DIR = config.CONFIG_CERTIFICATE_DIR
+VERIFY_CERT     = config.CONFIG_VERIFY_CERT
 
 FULL_GRAPH      = 'fullgraph'
 

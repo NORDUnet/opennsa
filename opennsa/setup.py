@@ -134,11 +134,11 @@ def setupApplication(config_file=config.DEFAULT_CONFIG_FILE, debug=False):
 
     ctx_factory = None
     try:
-        hostkey  = cfg.get(config.BLOCK_SERVICE, config.CONFIG_HOSTKEY)
-        hostcert = cfg.get(config.BLOCK_SERVICE, config.CONFIG_HOSTCERT)
+        hostkey  = cfg.get(config.BLOCK_SERVICE, config.CONFIG_KEY)
+        hostcert = cfg.get(config.BLOCK_SERVICE, config.CONFIG_CERTIFICATE)
         certdir  = cfg.get(config.BLOCK_SERVICE, config.CONFIG_CERTIFICATE_DIR)
         try:
-            verify = cfg.getboolean(config.BLOCK_SERVICE, config.CONFIG_VERIFY)
+            verify = cfg.getboolean(config.BLOCK_SERVICE, config.CONFIG_VERIFY_CERT)
         except NoOptionError, e:
             verify = config.DEFAULT_VERIFY
 
