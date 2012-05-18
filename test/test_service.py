@@ -168,4 +168,24 @@ class ServiceTest(unittest.TestCase):
             self.failUnlessIn('Start time in the past', str(e))
 
 
+    @defer.inlineCallbacks
+    def testConnectSTPToItself(self):
+
+        provider = nsa.Network('Aruba', nsa.NetworkServiceAgent('Aruba-OpenNSA', 'http://localhost:9080/NSI/services/ConnectionService'))
+
+        source_stp      = nsa.STP('Aruba', 'A1' )
+        dest_stp        = nsa.STP('Aruba', 'A1')
+
+        start_time = datetime.datetime.utcfromtimestamp(time.time() + 2 )
+        end_time   = datetime.datetime.utcfromtimestamp(time.time() + 40 )
+
+        bwp = nsa.BandwidthParameters(200)
+        service_params  = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, bandwidth=bwp)
+        connection_id         = 'conn-id1'
+
+        try:
+            yield self.client.reserve(self.client_nsa, provider.nsa, None, None, '', connection_id, service_params)
+            self.fail('Reserve call should have failed')
+        except error.ReserveError, e:
+            self.failUnlessIn('Cannot connect <STP Aruba:A1> to itself', str(e))
 

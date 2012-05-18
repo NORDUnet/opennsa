@@ -87,7 +87,9 @@ class ProviderService:
 
     def _createFault(self, err, method):
 
-        error_text = err.getErrorMessage()
+        from xml.sax.saxutils import escape as xml_escape
+
+        error_text = xml_escape( err.getErrorMessage() )
 
         log.msg('Error during service invocation: %s' % error_text)
 
