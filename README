@@ -1,5 +1,4 @@
-OpenNSA is a reference implementation of the Network Service Agent, which
-includes an NSI interface.
+OpenNSA is an implementation of the Network Service Interface (NSI).
 
 NSI (Network Service Interface) is (or should be) a protocol agnostic interface
 for provisioning network links, i.e., providing networking as a service.
