@@ -1,14 +1,9 @@
-Need to write something up on error recovery for best practices.
-
-Code:
-
 Long term:
   Documentation :-)
   Persistence for connections
   Easy way of seeing connections in OpenNSA (basic web interface is there)
   Deal with bandwidth in calendar (requires joint resource concept)
   Ability to generate topology from NRM mapping / internal topology description
-
 
 General:
   Seperate protocol stack from connection (done for provider, client still needs work)
@@ -17,14 +12,18 @@ General:
   Make RPC + callback timeout configurable
   Mailing list
   Implementation of AutoGOLE topology distribution scheme
-
+  The NRM port code in gole is quite terrible
+  Client should be able to breakout request itself
+  The NRM parser/mapping in the gole module is brittle.
+  Security params clean up (see mail from Jeroen)
+  Better error messages for reservations with time in the past
+  Better error messages for odd topology constructs (connect an SDP to itself)
 
 Client:
   Better connection names - use UUIDs for global ids
 
-
 Backends:
-  Multiple switches support
+  Multiple backends support
   NCS backend
   Force10: Should do shutdown when interfaces are not in use
   Test on Juniper EX switch
@@ -32,4 +31,5 @@ Backends:
   JunOS:
     Failure handling is terrible for command sending
     Log success/failure instead of commands (only on debug)
+  SSH module does not notifiy login timeouts
 
