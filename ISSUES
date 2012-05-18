@@ -16,7 +16,6 @@ General:
   Client should be able to breakout request itself
   The NRM parser/mapping in the gole module is brittle.
   Security params clean up (see mail from Jeroen)
-  Better error messages for reservations with time in the past
   Better error messages for odd topology constructs (connect an SDP to itself)
 
 Client:
