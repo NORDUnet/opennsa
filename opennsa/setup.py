@@ -204,6 +204,16 @@ def setupApplication(config_file=config.DEFAULT_CONFIG_FILE, debug=False):
             if backends: raise ConfigurationError('Cannot use unnamed backend with multiple backends configured.')
             backends[None] = argia.ArgiaBackend(network_name, cfg.items(section))
 
+        elif section.startswith(config.BLOCK_BROCADE + ':'):
+            from opennsa.backends import brocade
+            _, backend_name = section.split(':', 2)
+            backends[backend_name] = brocade.BrocadeBackend(network_name, cfg.items(section))
+
+        elif section.startswith(config.BLOCK_BROCADE):
+            from opennsa.backends import brocade
+            if backends: raise ConfigurationError('Cannot use unnamed backend with multiple backends configured.')
+            backends[None] = brocade.BrocadeBackend(network_name, cfg.items(section))
+
     if not backends:
         raise ConfigurationError('No or invalid backend specified')
 

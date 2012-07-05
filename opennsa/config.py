@@ -26,6 +26,7 @@ BLOCK_DUD        = 'dud'
 BLOCK_JUNOS      = 'junos'
 BLOCK_FORCE10    = 'force10'
 BLOCK_ARGIA      = 'argia'
+BLOCK_BROCADE    = 'brocade'
 
 # service block
 CONFIG_NETWORK_NAME     = 'network'     # mandatory
@@ -69,6 +70,14 @@ FORCE10_SSH_PRIVATE_KEY = _SSH_PRIVATE_KEY
 # argia block
 ARGIA_COMMAND_DIR       = 'commanddir'
 ARGIA_COMMAND_BIN       = 'commandbin'
+
+# Brocade block
+BROCADE_HOST              = _SSH_HOST
+BROCADE_PORT              = _SSH_PORT
+BROCADE_HOST_FINGERPRINT  = _SSH_HOST_FINGERPRINT
+BROCADE_USER              = _SSH_USER
+BROCADE_SSH_PUBLIC_KEY    = _SSH_PUBLIC_KEY
+BROCADE_SSH_PRIVATE_KEY   = _SSH_PRIVATE_KEY
 
 
 
