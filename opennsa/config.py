@@ -30,19 +30,19 @@ BLOCK_ARGIA      = 'argia'
 BLOCK_BROCADE    = 'brocade'
 
 # service block
-CONFIG_NETWORK_NAME     = 'network'     # mandatory
-CONFIG_LOG_FILE         = 'logfile'
-CONFIG_HOST             = 'host'
-CONFIG_PORT             = 'port'
-CONFIG_TLS              = 'tls'
-CONFIG_TOPOLOGY_FILE    = 'topology'
-CONFIG_NRM_MAP_FILE     = 'nrmmap'
-CONFIG_WSDL_DIRECTORY   = 'wsdl'
+NETWORK_NAME     = 'network'     # mandatory
+LOG_FILE         = 'logfile'
+HOST             = 'host'
+PORT             = 'port'
+TLS              = 'tls'
+TOPOLOGY_FILE    = 'topology'
+NRM_MAP_FILE     = 'nrmmap'
+WSDL_DIRECTORY   = 'wsdl'
 
-CONFIG_KEY              = 'key'         # mandatory, if tls is set
-CONFIG_CERTIFICATE      = 'certificate' # mandatory, if tls is set
-CONFIG_CERTIFICATE_DIR  = 'certdir'     # mandatory (but dir can be empty)
-CONFIG_VERIFY_CERT      = 'verify'
+KEY              = 'key'         # mandatory, if tls is set
+CERTIFICATE      = 'certificate' # mandatory, if tls is set
+CERTIFICATE_DIR  = 'certdir'     # mandatory (but dir can be empty)
+VERIFY_CERT      = 'verify'
 
 # generic ssh stuff, don't use directly
 _SSH_HOST               = 'host'
@@ -114,65 +114,65 @@ def readVerifyConfig(cfg):
     vc = {}
 
     try:
-        vc[CONFIG_NETWORK_NAME] = cfg.get(BLOCK_SERVICE, CONFIG_NETWORK_NAME)
+        vc[NETWORK_NAME] = cfg.get(BLOCK_SERVICE, NETWORK_NAME)
     except ConfigParser.NoOptionError:
         raise ConfigurationError('No network name specified in configuration file (mandatory)')
 
     try:
-        vc[CONFIG_LOG_FILE] = cfg.get(BLOCK_SERVICE, CONFIG_LOG_FILE)
+        vc[LOG_FILE] = cfg.get(BLOCK_SERVICE, LOG_FILE)
     except ConfigParser.NoOptionError:
-        vc[CONFIG_LOG_FILE] = DEFAULT_LOG_FILE
+        vc[LOG_FILE] = DEFAULT_LOG_FILE
 
     try:
-        topology_list = cfg.get(BLOCK_SERVICE, CONFIG_TOPOLOGY_FILE)
+        topology_list = cfg.get(BLOCK_SERVICE, TOPOLOGY_FILE)
     except ConfigParser.NoOptionError:
         topology_list = DEFAULT_TOPOLOGY_FILE
     topology_files = topology_list.split(',')
     for topology_file in topology_files:
         if not os.path.exists(topology_file):
             raise ConfigurationError('Specified (or default) topology file does not exist (%s)' % topology_file)
-    vc[CONFIG_TOPOLOGY_FILE] = topology_files
+    vc[TOPOLOGY_FILE] = topology_files
 
     try:
-        nrm_map_file = cfg.get(BLOCK_SERVICE, CONFIG_NRM_MAP_FILE)
+        nrm_map_file = cfg.get(BLOCK_SERVICE, NRM_MAP_FILE)
         if not os.path.exists(nrm_map_file):
             raise ConfigurationError('Specified NRM mapping file does not exist (%s)' % nrm_map_file)
-        vc[CONFIG_NRM_MAP_FILE] = nrm_map_file
+        vc[NRM_MAP_FILE] = nrm_map_file
     except ConfigParser.NoOptionError:
-        vc[CONFIG_NRM_MAP_FILE] = None
+        vc[NRM_MAP_FILE] = None
 
     try:
-        wsdl_dir = cfg.get(BLOCK_SERVICE, CONFIG_WSDL_DIRECTORY)
+        wsdl_dir = cfg.get(BLOCK_SERVICE, WSDL_DIRECTORY)
         if not os.path.exists(wsdl_dir):
             raise ConfigurationError('Specified (or default) WSDL directory does not exist (%s)' % wsdl_dir)
-        vc[CONFIG_WSDL_DIRECTORY] = wsdl_dir
+        vc[WSDL_DIRECTORY] = wsdl_dir
     except ConfigParser.NoOtionError:
-        vc[CONFIG_WSDL_DIRECTORY] = DEFAULT_WSDL_DIRECTORY
+        vc[WSDL_DIRECTORY] = DEFAULT_WSDL_DIRECTORY
 
     try:
-        vc[CONFIG_HOST] = cfg.get(BLOCK_SERVICE, CONFIG_HOST)
+        vc[HOST] = cfg.get(BLOCK_SERVICE, HOST)
     except ConfigParser.NoOptionError:
-        vc[CONFIG_HOST] = None
+        vc[HOST] = None
 
     try:
-        vc[CONFIG_TLS] = cfg.getboolean(BLOCK_SERVICE, CONFIG_TLS)
+        vc[TLS] = cfg.getboolean(BLOCK_SERVICE, TLS)
     except ConfigParser.NoOptionError:
-        vc[CONFIG_TLS] = DEFAULT_TLS
+        vc[TLS] = DEFAULT_TLS
 
     try:
-        vc[CONFIG_PORT] = cfg.getint(BLOCK_SERVICE, CONFIG_PORT)
+        vc[PORT] = cfg.getint(BLOCK_SERVICE, PORT)
     except ConfigParser.NoOptionError:
-        vc[CONFIG_PORT] = DEFAULT_TLS_PORT if vc[CONFIG_TLS] else DEFAULT_TCP_PORT
+        vc[PORT] = DEFAULT_TLS_PORT if vc[TLS] else DEFAULT_TCP_PORT
 
-    if vc[CONFIG_TLS]:
+    if vc[TLS]:
         try:
-            hostkey  = cfg.get(BLOCK_SERVICE, CONFIG_KEY)
-            hostcert = cfg.get(BLOCK_SERVICE, CONFIG_CERTIFICATE)
-            certdir  = cfg.get(BLOCK_SERVICE, CONFIG_CERTIFICATE_DIR)
+            hostkey  = cfg.get(BLOCK_SERVICE, KEY)
+            hostcert = cfg.get(BLOCK_SERVICE, CERTIFICATE)
+            certdir  = cfg.get(BLOCK_SERVICE, CERTIFICATE_DIR)
             try:
-                vc[CONFIG_VERIFY_CERT] = cfg.getboolean(BLOCK_SERVICE, CONFIG_VERIFY_CERT)
+                vc[VERIFY_CERT] = cfg.getboolean(BLOCK_SERVICE, VERIFY_CERT)
             except ConfigParser.NoOptionError:
-                vc[CONFIG_VERIFY_CERT] = DEFAULT_VERIFY
+                vc[VERIFY_CERT] = DEFAULT_VERIFY
 
             if not os.path.exists(hostkey):
                 raise ConfigurationError('Specified hostkey does not exist (%s)' % hostkey)
@@ -181,9 +181,9 @@ def readVerifyConfig(cfg):
             if not os.path.exists(certdir):
                 raise ConfigurationError('Specified certdir does not exist (%s)' % certdir)
 
-            vc[CONFIG_KEY] = hostkey
-            vc[CONFIG_CERTIFICATE] = hostkey
-            vc[CONFIG_CERTIFICATE_DIR] = certdir
+            vc[KEY] = hostkey
+            vc[CERTIFICATE] = hostkey
+            vc[CERTIFICATE_DIR] = certdir
 
         except ConfigParser.NoOptionError, e:
             # Not enough options for configuring tls context

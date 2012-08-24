@@ -112,27 +112,27 @@ class OpenNSAService(twistedservice.MultiService):
 
         vc = self.vc
 
-        topology_sources = [ open(tf) for tf in vc[config.CONFIG_TOPOLOGY_FILE] ]
+        topology_sources = [ open(tf) for tf in vc[config.TOPOLOGY_FILE] ]
 
-        topology, internal_topology = gole.parseTopology(topology_sources, open(vc[config.CONFIG_NRM_MAP_FILE]) if vc[config.CONFIG_NRM_MAP_FILE] else None )
+        topology, internal_topology = gole.parseTopology(topology_sources, open(vc[config.NRM_MAP_FILE]) if vc[config.NRM_MAP_FILE] else None )
 
-        if vc[config.CONFIG_HOST] is None:
+        if vc[config.HOST] is None:
             import socket
-            vc[config.CONFIG_HOST] = socket.getfqdn()
+            vc[config.HOST] = socket.getfqdn()
 
         ctx_factory = None
-        if vc[config.CONFIG_TLS]:
+        if vc[config.TLS]:
             from opennsa import ctxfactory
-            ctx_factory = ctxfactory.ContextFactory(vc[config.CONFIG_HOSTKEY], vc[config.CONFIG_HOSTCERT], vc[config.CONFIG_CERT_DIR], vc[config.VERIFY])
+            ctx_factory = ctxfactory.ContextFactory(vc[config.HOSTKEY], vc[config.HOSTCERT], vc[config.CERT_DIR], vc[config.VERIFY])
 
-        backend = setupBackend(vc['backend'], vc[config.CONFIG_NETWORK_NAME], internal_topology)
+        backend = setupBackend(vc['backend'], vc[config.NETWORK_NAME], internal_topology)
 
-        factory = createService(vc[config.CONFIG_NETWORK_NAME], topology, backend, vc[config.CONFIG_HOST], vc[config.CONFIG_PORT], vc[config.CONFIG_WSDL_DIRECTORY])
+        factory = createService(vc[config.NETWORK_NAME], topology, backend, vc[config.HOST], vc[config.PORT], vc[config.WSDL_DIRECTORY])
 
-        if vc[config.CONFIG_TLS]:
-            internet.SSLServer(vc[config.CONFIG_PORT], factory, ctx_factory).setServiceParent(self)
+        if vc[config.TLS]:
+            internet.SSLServer(vc[config.PORT], factory, ctx_factory).setServiceParent(self)
         else:
-            internet.TCPServer(vc[config.CONFIG_PORT], factory).setServiceParent(self)
+            internet.TCPServer(vc[config.PORT], factory).setServiceParent(self)
 
         # do not start sub-services until we have started this one
         yield twistedservice.Service.startService(self)
@@ -154,8 +154,8 @@ def createApplication(config_file=config.DEFAULT_CONFIG_FILE, debug=False):
         cfg = config.readConfig(config_file)
         vc = config.readVerifyConfig(cfg)
 
-        if vc[config.CONFIG_LOG_FILE]:
-            log_file = open(vc[config.CONFIG_LOG_FILE], 'a')
+        if vc[config.LOG_FILE]:
+            log_file = open(vc[config.LOG_FILE], 'a')
         else:
             import sys
             log_file = sys.stdout
