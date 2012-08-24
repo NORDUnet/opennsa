@@ -37,7 +37,7 @@ def createClient(host, port, wsdl_dir, tls=False, ctx_factory=None):
 
 
 
-def createService(network_name, topology, backend, host, port, wsdl_dir, tls=False, ctx_factory=None):
+def createService(network_name, backend, topology, host, port, wsdl_dir, tls=False, ctx_factory=None):
 
     nsi_resource, nsi_requester, site = createClientResource(host, port, wsdl_dir, tls, ctx_factory)
 
@@ -127,7 +127,7 @@ class OpenNSAService(twistedservice.MultiService):
 
         backend = setupBackend(vc['backend'], vc[config.NETWORK_NAME], internal_topology)
 
-        factory = createService(vc[config.NETWORK_NAME], topology, backend, vc[config.HOST], vc[config.PORT], vc[config.WSDL_DIRECTORY])
+        factory = createService(vc[config.NETWORK_NAME], backend, topology, vc[config.HOST], vc[config.PORT], vc[config.WSDL_DIRECTORY])
 
         if vc[config.TLS]:
             internet.SSLServer(vc[config.PORT], factory, ctx_factory).setServiceParent(self)

@@ -37,7 +37,7 @@ class ServiceTest(unittest.TestCase):
             backend = dud.DUDNSIBackend(network)
             topo, _ = gole.parseTopology( [ topo_source ] )
 
-            factory = setup.createService(network, topo, backend, HOST, port, WSDL_DIR)
+            factory = setup.createService(network, backend, topo, HOST, port, WSDL_DIR)
 
             iport = reactor.listenTCP(port, factory, interface='localhost')
             self.iports.append(iport)
