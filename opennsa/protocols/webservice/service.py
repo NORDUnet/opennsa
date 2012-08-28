@@ -92,6 +92,7 @@ class ProviderService:
         error_text = xml_escape( err.getErrorMessage() )
 
         log.msg('Error during service invocation: %s' % error_text)
+        log.err(err)
 
         # need to do error type -> error id mapping
         reply = SERVICE_FAULT % {'error_id': 'N/A', 'error_text': error_text }
