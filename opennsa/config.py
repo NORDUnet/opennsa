@@ -146,7 +146,7 @@ def readVerifyConfig(cfg):
         if not os.path.exists(wsdl_dir):
             raise ConfigurationError('Specified (or default) WSDL directory does not exist (%s)' % wsdl_dir)
         vc[WSDL_DIRECTORY] = wsdl_dir
-    except ConfigParser.NoOtionError:
+    except ConfigParser.NoOptionError:
         vc[WSDL_DIRECTORY] = DEFAULT_WSDL_DIRECTORY
 
     try:
