@@ -108,7 +108,7 @@ class OpenNSAService(twistedservice.MultiService):
         This sets up the OpenNSA service and ties together everything in the initialization.
         There are a lot of things going on, but none of it it particular deep.
         """
-        log.msg('OpenNSA service initializing')
+        log.msg('OpenNSA service initializing', system='opennsa.setup')
 
         vc = self.vc
 
