@@ -57,13 +57,14 @@ def createService(network_name, backend, topology, host, port, wsdl_dir, tls=Fal
 
 
 
-def setupBackend(backends, network_name, internal_topology):
+def setupBackend(backend_conf, network_name, internal_topology):
 
     backends = {}
 
-    for backend_name, config in backends.items():
-        backend_type = config['_backend_type']
-        del config['_backend_type']
+    for backend_name, cfg in backend_conf.items():
+        backend_type = cfg['_backend_type']
+        bc = cfg.copy()
+        del bc['_backend_type']
 
         if backend_type == config.BLOCK_DUD:
             from opennsa.backends import dud
@@ -71,21 +72,21 @@ def setupBackend(backends, network_name, internal_topology):
 
         elif backend_type == config.BLOCK_JUNOS:
             from opennsa.backends import junos
-            backends[backend_name] = junos.JunOSBackend(network_name, config.items())
+            backends[backend_name] = junos.JunOSBackend(network_name, bc.items())
 
         elif backend_type == config.BLOCK_FORCE10:
             from opennsa.backends import force10
-            backends[backend_name] = force10.Force10Backend(network_name, config.items())
+            backends[backend_name] = force10.Force10Backend(network_name, bc.items())
 
         elif backend_type == config.BLOCK_ARGIA:
             from opennsa.backends import argia
-            backends[backend_name] = argia.ArgiaBackend(network_name, config.items())
+            backends[backend_name] = argia.ArgiaBackend(network_name, bc.items())
 
         elif backend_type == config.BLOCK_BROCADE:
             from opennsa.backends import brocade
-            backends[backend_name] = brocade.BrocadeBackend(network_name, config.items())
+            backends[backend_name] = brocade.BrocadeBackend(network_name, bc.items())
 
-    if len(backends) == 1 and None in backends:
+    if len(backends) == 1:
         backend = backends.values()[0]
     else:
         from opennsa.backends import multi
