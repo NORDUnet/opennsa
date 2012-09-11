@@ -91,9 +91,9 @@ def doMain():
         private_key         = config.subOptions[options.KEY]                or defaults.get(options.KEY)
         certificate_dir     = config.subOptions[options.CERTIFICATE_DIR]    or defaults.get(options.CERTIFICATE_DIR)
         # since this is a boolean where false can be a wanted value we cannot use short-circuting
-        verify_cert         = config.subOptions[options.VERIFY]
+        verify_cert         = config.subOptions[options.VERIFY_CERT]
         if verify_cert is None:
-            verify_cert = defaults.get(options.VERIFY)
+            verify_cert = defaults.get(options.VERIFY_CERT)
         if verify_cert is None:
             verify_cert = True
 
