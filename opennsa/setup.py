@@ -102,7 +102,6 @@ class OpenNSAService(twistedservice.MultiService):
         self.vc = vc
 
 
-    @defer.inlineCallbacks
     def startService(self):
         """
         This sets up the OpenNSA service and ties together everything in the initialization.
@@ -135,7 +134,7 @@ class OpenNSAService(twistedservice.MultiService):
             internet.TCPServer(vc[config.PORT], factory).setServiceParent(self)
 
         # do not start sub-services until we have started this one
-        yield twistedservice.Service.startService(self)
+        twistedservice.MultiService.startService(self)
 
         log.msg('OpenNSA service started')
 
