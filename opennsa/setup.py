@@ -153,6 +153,7 @@ def createApplication(config_file=config.DEFAULT_CONFIG_FILE, debug=False):
         cfg = config.readConfig(config_file)
         vc = config.readVerifyConfig(cfg)
 
+        # if log file is empty string use stdout
         if vc[config.LOG_FILE]:
             log_file = open(vc[config.LOG_FILE], 'a')
         else:
