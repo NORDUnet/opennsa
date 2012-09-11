@@ -38,8 +38,7 @@ topo, _ = gole.parseTopology( [ open(TOPOLOGY) ], open(MAPPING))
 for network, port in SERVICES:
 
     backend = dud.DUDNSIBackend(network)
-    es = registry.ServiceRegistry()
-    factory = setup.createService(network, topo, backend, es, HOST, port, WSDL_DIR)
+    factory = setup.createService(network, backend, topo, HOST, port, WSDL_DIR)
 
     internet.TCPServer(port, factory, interface='localhost').setServiceParent(application)
 

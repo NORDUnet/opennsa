@@ -92,6 +92,7 @@ class ProviderService:
         error_text = xml_escape( err.getErrorMessage() )
 
         log.msg('Error during service invocation: %s' % error_text)
+        log.err(err)
 
         # need to do error type -> error id mapping
         reply = SERVICE_FAULT % {'error_id': 'N/A', 'error_text': error_text }
@@ -201,7 +202,7 @@ class ProviderService:
             global_reservation_ids = qf.globalReservationId
 
         d = self.provider.query(correlation_id, reply_to, requester_nsa, provider_nsa, None, operation, connection_ids, global_reservation_ids)
-        d.addCallbacks(self._createReply, self._createFault, callbackArgs=(method,correlation_id))
+        d.addCallbacks(self._createReply, self._createFault, callbackArgs=(method,correlation_id), errbackArgs=(method,))
         return d
 
 
