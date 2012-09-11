@@ -25,7 +25,7 @@ class ServiceTest(unittest.TestCase):
         self.iports = []
 
         HOST = 'localhost'
-        WSDL_DIR = os.path.join(os.getcwd(), '..', 'wsdl')
+        WSDL_DIR = os.path.realpath(os.path.normpath(os.path.join(os.path.dirname(__file__), '../wsdl')))
 
         # service
 
@@ -119,8 +119,10 @@ class ServiceTest(unittest.TestCase):
         try:
             yield self.client.reserve(self.client_nsa, provider.nsa, None, None, '', connection_id, service_params)
             self.fail('Reserve call should have failed')
-        except error.ReserveError, e:
+        except error.ReserveError as e:
             self.failUnlessIn('No network named NoSuchNetwork', str(e))
+        errors = self.flushLoggedErrors(error.TopologyError)
+        self.assertEqual(len(errors), 1)
 
 
     @defer.inlineCallbacks
@@ -141,9 +143,10 @@ class ServiceTest(unittest.TestCase):
         try:
             yield self.client.reserve(self.client_nsa, provider.nsa, None, None, '', connection_id, service_params)
             self.fail('Reserve call should have failed')
-        except error.ReserveError, e:
+        except error.ReserveError as e:
             self.failUnlessIn('Could not find a path', str(e))
-
+        errors = self.flushLoggedErrors(error.TopologyError)
+        self.assertEqual(len(errors), 1)
 
 
     @defer.inlineCallbacks
@@ -164,8 +167,10 @@ class ServiceTest(unittest.TestCase):
         try:
             yield self.client.reserve(self.client_nsa, provider.nsa, None, None, '', connection_id, service_params)
             self.fail('Reserve call should have failed')
-        except error.ReserveError, e:
+        except error.ReserveError as e:
             self.failUnlessIn('Start time in the past', str(e))
+        errors = self.flushLoggedErrors(error.InvalidRequestError)
+        self.assertEqual(len(errors), 1)
 
 
     @defer.inlineCallbacks
@@ -186,6 +191,7 @@ class ServiceTest(unittest.TestCase):
         try:
             yield self.client.reserve(self.client_nsa, provider.nsa, None, None, '', connection_id, service_params)
             self.fail('Reserve call should have failed')
-        except error.ReserveError, e:
+        except error.ReserveError as e:
             self.failUnlessIn('Cannot connect <STP Aruba:A1> to itself', str(e))
-
+        errors = self.flushLoggedErrors(error.ReserveError)
+        self.assertEqual(len(errors), 1)
