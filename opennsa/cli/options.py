@@ -32,11 +32,11 @@ BANDWIDTH       = 'bandwidth'
 START_TIME      = 'starttime'
 END_TIME        = 'endtime'
 
-TLS             = config.CONFIG_TLS
-KEY             = config.CONFIG_KEY
-CERTIFICATE     = config.CONFIG_CERTIFICATE
-CERTIFICATE_DIR = config.CONFIG_CERTIFICATE_DIR
-VERIFY_CERT     = config.CONFIG_VERIFY_CERT
+TLS             = config.TLS
+KEY             = config.KEY
+CERTIFICATE     = config.CERTIFICATE
+CERTIFICATE_DIR = config.CERTIFICATE_DIR
+VERIFY_CERT     = config.VERIFY_CERT
 
 FULL_GRAPH      = 'fullgraph'
 
