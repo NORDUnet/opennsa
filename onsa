@@ -90,13 +90,13 @@ def doMain():
         public_key          = config.subOptions[options.CERTIFICATE]        or defaults.get(options.CERTIFICATE)
         private_key         = config.subOptions[options.KEY]                or defaults.get(options.KEY)
         certificate_dir     = config.subOptions[options.CERTIFICATE_DIR]    or defaults.get(options.CERTIFICATE_DIR)
-        # since this is a boolean where false can be a wanted value we cannot use short-circuting
         verify_cert         = config.subOptions[options.VERIFY_CERT]
-        if verify_cert is None:
+        if verify_cert is 1: # -z was passed on the command line, so we skip verify
+            verify_cert = False
+        if verify_cert is 0: # If not found on command line, use configured value
             verify_cert = defaults.get(options.VERIFY_CERT)
-        if verify_cert is None:
+        if verify_cert is 0: # If that is not found, we default to True.
             verify_cert = True
-
         ctx_factory = None
         if public_key or private_key or certificate_dir:
 

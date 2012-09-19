@@ -18,7 +18,7 @@ DEFAULT_TOPOLOGY_FILE   = '/usr/local/share/nsi/topology.owl'
 DEFAULT_WSDL_DIRECTORY  = '/usr/local/share/nsi/wsdl'
 DEFAULT_TCP_PORT        = 9080
 DEFAULT_TLS_PORT        = 9443
-DEFAULT_VERIFY          = 'true'
+DEFAULT_VERIFY          = True
 
 
 # config blocks and options

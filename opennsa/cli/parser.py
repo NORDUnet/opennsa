@@ -116,9 +116,9 @@ class TLSFlag(usage.Options):
 class SkipCertificateVerificationFlag(usage.Options):
     optFlags = [ [ options.VERIFY_CERT, 'z', 'Skip certificate verification' ] ]
 
-    def postOptions(self):
-        # turn value around so we don't have to compensate other places
-        self[options.VERIFY_CERT] = not bool( self[options.VERIFY_CERT] )
+    # def postOptions(self):
+    #     # turn value around so we don't have to compensate other places
+    #     self[options.VERIFY_CERT] = not bool( self[options.VERIFY_CERT] )
 
 class FullGraphFlag(usage.Options):
     optFlags = [ [ options.FULL_GRAPH, 'l', 'Render full graph with all links.' ] ]
