@@ -123,7 +123,7 @@ class OpenNSAService(twistedservice.MultiService):
         ctx_factory = None
         if vc[config.TLS]:
             from opennsa import ctxfactory
-            ctx_factory = ctxfactory.ContextFactory(vc[config.HOSTKEY], vc[config.HOSTCERT], vc[config.CERT_DIR], vc[config.VERIFY])
+            ctx_factory = ctxfactory.ContextFactory(vc[config.KEY], vc[config.CERTIFICATE], vc[config.CERTIFICATE_DIR], vc[config.VERIFY_CERT])
 
         backend = setupBackend(vc['backend'], vc[config.NETWORK_NAME], internal_topology)
 
