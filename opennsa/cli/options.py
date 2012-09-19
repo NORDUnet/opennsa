@@ -71,7 +71,7 @@ def readDefaults(file_):
                 value = int(value)
 
             if option in (VERIFY_CERT): # flags
-                value = False if value.lower in ('false', 'no', '0') else True
+                value = False if value.lower() in ('false', 'no', '0') else True
 
             defaults[option] = value
 
