@@ -92,9 +92,15 @@ class GlobalIDOption(usage.Options):
 
 class StartTimeOption(usage.Options):
     optParameters = [ [ options.START_TIME, 'a', None, 'Start time'] ]
+    def postOptions(self):
+        if self[options.START_TIME] is not None:
+            self[options.START_TIME] = options.parseTimestamp( self[options.START_TIME] )
 
 class EndTimeOption(usage.Options):
     optParameters = [ [ options.END_TIME, 'e', None, 'End time'] ]
+    def postOptions(self):
+        if self[options.END_TIME] is not None:
+            self[options.END_TIME] = options.parseTimestamp( self[options.END_TIME] )
 
 class BandwidthOption(usage.Options):
     optParameters = [ [ options.BANDWIDTH, 'b', None, 'Bandwidth (Megabits)'] ]
@@ -116,10 +122,6 @@ class TLSFlag(usage.Options):
 class SkipCertificateVerificationFlag(usage.Options):
     optFlags = [ [ options.VERIFY_CERT, 'z', 'Skip certificate verification' ] ]
 
-    # def postOptions(self):
-    #     # turn value around so we don't have to compensate other places
-    #     self[options.VERIFY_CERT] = not bool( self[options.VERIFY_CERT] )
-
 class FullGraphFlag(usage.Options):
     optFlags = [ [ options.FULL_GRAPH, 'l', 'Render full graph with all links.' ] ]
 
@@ -140,13 +142,16 @@ class NetworkCommandOptions(BaseOptions, WSDLDirectoryOption, HostOption, PortOp
 
     def postOptions(self):
         # technically we should do this for all superclasses, but this is the only one that has anything to do
-        SkipCertificateVerificationFlag.postOptions(self)
         if self[options.SERVICE_URL] and (self[options.TOPOLOGY_FILE] or self[options.NETWORK]):
             raise usage.UsageError('Cannot set both service url while having topology file or network.')
 
 
 class ReserveOptions(NetworkCommandOptions, SourceSTPOption, DestSTPOption, StartTimeOption, EndTimeOption, BandwidthOption):
-    pass
+
+    def postOptions(self):
+        NetworkCommandOptions.postOptions(self)
+        StartTimeOption.postOptions(self)
+        EndTimeOption.postOptions(self)
 
 
 class PathOptions(BaseOptions, SourceSTPOption, DestSTPOption, TopologyFileOption):

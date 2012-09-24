@@ -45,6 +45,17 @@ XSD_DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S"
 
 
 
+def parseTimestamp(value):
+
+    if value.startswith('+'):
+        offset = int(value[1:])
+        ts = datetime.datetime.utcfromtimestamp(time.time() + offset)
+    else:
+        ts = datetime.datetime.strptime(value, XSD_DATETIME_FORMAT)
+    return ts
+
+
+
 def readDefaults(file_):
 
     defaults = {}
@@ -61,11 +72,7 @@ def readDefaults(file_):
 
             # parse datetimes
             if option in (START_TIME, END_TIME):
-                if value.startswith('+'):
-                    offset = int(value[1:])
-                    value = datetime.datetime.utcfromtimestamp(time.time() + offset)
-                else:
-                    value = datetime.datetime.strptime(value, XSD_DATETIME_FORMAT)
+                value = parseTimestamp(value)
 
             if option in (PORT, BANDWIDTH):
                 value = int(value)
