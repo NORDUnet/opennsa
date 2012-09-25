@@ -90,13 +90,15 @@ def doMain():
         public_key          = config.subOptions[options.CERTIFICATE]        or defaults.get(options.CERTIFICATE)
         private_key         = config.subOptions[options.KEY]                or defaults.get(options.KEY)
         certificate_dir     = config.subOptions[options.CERTIFICATE_DIR]    or defaults.get(options.CERTIFICATE_DIR)
-        verify_cert         = config.subOptions[options.VERIFY_CERT]
-        if verify_cert == 1: # -z was passed on the command line, so we skip verify
+        # verify cert is a flag, if it is set, it means it should be skipped
+        if config.subOptions[options.VERIFY_CERT]:
             verify_cert = False
-        if verify_cert == 0: # If not found on command line, use configured value
+        else:
             verify_cert = defaults.get(options.VERIFY_CERT)
-        if verify_cert == 0: # If that is not found, we default to True.
-            verify_cert = True
+            # if we don't get a value from defaults set it to true (default)
+            if verify_cert is None:
+                verify_cert = True
+
         ctx_factory = None
         if public_key or private_key or certificate_dir:
 
