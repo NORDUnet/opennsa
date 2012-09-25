@@ -131,7 +131,7 @@ class NetworkServiceAgent:
 
 
     def getHostPort(self):
-        url = urlparse.urlparse(self.address)
+        url = urlparse.urlparse(self.endpoint)
         host, port = url.netloc.split(':',2)
         port = int(port)
         return host, port

@@ -17,6 +17,18 @@ WSDL_DEFAULT_DIRECTORY  = '/usr/local/share/nsi/wsdl'
 REQUESTER_URL_BASE      = 'http://%s:%i/NSI/services/ConnectionService'
 HELP_MESSAGE            = '%s: Try --help or <command> --help for usage details.'
 
+def getHostname(dst_nsa):
+    """Figure out the hostname of this machine
+    
+    Unfortunately socket.getfqdn() is not a reliable way of getting the actual fqdn used for the destination we are
+    trying to reach. The best way to do that is to open a socket towards the destination and then request the fqdn. 
+    """
+    dsthost,dstport = dst_nsa.getHostPort()
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect((dsthost,dstport))
+    hostname = s.getsockname()[0]
+    s.close()
+    return hostname
 
 @defer.inlineCallbacks
 def doMain():
@@ -56,9 +68,6 @@ def doMain():
     if config.subCommand in ['reserve', 'reserveprovision', 'provision', 'release', 'terminate', 'querysummary', 'querydetails']:
 
         wsdl_dir        = config.subOptions[options.WSDL_DIRECTORY] or defaults.get(options.WSDL_DIRECTORY) or WSDL_DEFAULT_DIRECTORY
-        host            = config.subOptions[options.HOST]           or defaults.get(options.HOST)           or socket.getfqdn()
-        port            = config.subOptions[options.PORT]           or defaults.get(options.PORT)           or 7080
-        requester_url   = REQUESTER_URL_BASE % (host, port)
 
         topology_file   = config.subOptions[options.TOPOLOGY_FILE]  or defaults.get(options.TOPOLOGY_FILE)
         network         = config.subOptions[options.NETWORK]        or defaults.get(options.NETWORK)
@@ -71,18 +80,21 @@ def doMain():
         global_id       = config.subOptions[options.GLOBAL_ID]      or defaults.get(options.GLOBAL_ID)
 
         if topology_file and network:
-            client_nsa      = nsa.NetworkServiceAgent(requester_nsa, requester_url)
-
             from opennsa.topology import gole
             topo, _ = gole.parseTopology( [ open(topology_file) ] )
             provider_nsa  = topo.getNetwork(network).nsa
-
         elif service_url:
-            client_nsa      = nsa.NetworkServiceAgent(requester_nsa, requester_url)
             provider_nsa    = nsa.NetworkServiceAgent(provider_nsa, service_url)
 
         else:
             raise usage.UsageError('Neither topology file+network or service URL defined')
+
+        host            = config.subOptions[options.HOST]           or getHostname(provider_nsa)
+        port            = config.subOptions[options.PORT]           or defaults.get(options.PORT)           or 7080
+        requester_url   = REQUESTER_URL_BASE % (host, port)
+        client_nsa      = nsa.NetworkServiceAgent(requester_nsa, requester_url)
+
+        print "Using requester_url: %s" % requester_url
 
         tls = config.subOptions[options.TLS] or defaults.get(options.TLS) or False
 
