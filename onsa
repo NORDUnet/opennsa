@@ -17,11 +17,14 @@ WSDL_DEFAULT_DIRECTORY  = '/usr/local/share/nsi/wsdl'
 REQUESTER_URL_BASE      = 'http://%s:%i/NSI/services/ConnectionService'
 HELP_MESSAGE            = '%s: Try --help or <command> --help for usage details.'
 
+
 def getHostname(dst_nsa):
-    """Figure out the hostname of this machine
-    
-    Unfortunately socket.getfqdn() is not a reliable way of getting the actual fqdn used for the destination we are
-    trying to reach. The best way to do that is to open a socket towards the destination and then request the fqdn. 
+    """
+    Figure out the hostname of this machine
+
+    Unfortunately socket.getfqdn() is not a reliable way of getting the actual
+    fqdn used for the destination we are trying to reach. The best way to do
+    that is to open a socket towards the destination and then request the fqdn. 
     """
     dsthost,dstport = dst_nsa.getHostPort()
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -29,6 +32,7 @@ def getHostname(dst_nsa):
     hostname = s.getsockname()[0]
     s.close()
     return hostname
+
 
 @defer.inlineCallbacks
 def doMain():
@@ -94,7 +98,7 @@ def doMain():
         requester_url   = REQUESTER_URL_BASE % (host, port)
         client_nsa      = nsa.NetworkServiceAgent(requester_nsa, requester_url)
 
-        print "Using requester_url: %s" % requester_url
+        log.msg("Requester URL: %s" % requester_url)
 
         tls = config.subOptions[options.TLS] or defaults.get(options.TLS) or False
 
