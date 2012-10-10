@@ -31,7 +31,6 @@ DEFAULT_TIMEOUT = 30 # seconds
 class RequestError(Exception):
     """
     Raised when a request could not be made or failed in an unexpected way.
-    Not rased for 5xx responses.
     """
 
 
@@ -177,5 +176,5 @@ class TwistedSUDSClient:
             return result
 
         else:
-            raise NotImplementedError('non-200 error handling not implemented')
+            raise RequestError('Got a non-200 response from the service. Message:\n----\n' + response + '\n----\n')
 
