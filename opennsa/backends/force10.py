@@ -94,7 +94,7 @@ def _createSetupCommands(source_nrm_port, dest_nrm_port):
     cmd_s_intf  = COMMAND_TAGGED            % { 'interface' : s_interface }
     cmd_d_intf  = COMMAND_TAGGED            % { 'interface' : d_interface }
 
-    commands = [ cmd_vlan, cmd_name, cmd_s_intf, cmd_d_intf, COMMAND_NO_SHUTDOWN, COMMAND_END, COMMAND_EXIT ]
+    commands = [ cmd_vlan, cmd_name, cmd_s_intf, cmd_d_intf, COMMAND_NO_SHUTDOWN, COMMAND_END ]
     return commands
 
 
@@ -107,7 +107,7 @@ def _createTeardownCommands(source_nrm_port, dest_nrm_port):
 
     cmd_no_intf = COMMAND_NO_INTERFACE % { 'vlan' : s_vlan }
 
-    commands = [ cmd_no_intf, COMMAND_END, COMMAND_EXIT ]
+    commands = [ cmd_no_intf, COMMAND_END ]
     return commands
 
 
@@ -153,6 +153,11 @@ class SSHChannel(ssh.SSHChannel):
             log.msg('Configuration done, writing configuration.', debug=True, system=LOG_SYSTEM)
             d = self.waitForData('#')
             self.write(COMMAND_WRITE + LT)
+            yield d
+
+        log.msg('Configuration written. Exiting.', debug=True, system=LOG_SYSTEM)
+            d = self.waitForData('#')
+            self.write(COMMAND_EXIT + LT)
             yield d
 
         except Exception, e:
