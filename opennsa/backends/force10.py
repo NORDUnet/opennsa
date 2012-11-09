@@ -155,7 +155,7 @@ class SSHChannel(ssh.SSHChannel):
             self.write(COMMAND_WRITE + LT)
             yield d
 
-        log.msg('Configuration written. Exiting.', debug=True, system=LOG_SYSTEM)
+            log.msg('Configuration written. Exiting.', debug=True, system=LOG_SYSTEM)
             d = self.waitForData('#')
             self.write(COMMAND_EXIT + LT)
             yield d
