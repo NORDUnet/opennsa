@@ -122,7 +122,12 @@ def doMain():
                 from opennsa import ctxfactory
                 ctx_factory = ctxfactory.ContextFactory(private_key, public_key, certificate_dir, verify_cert)
             elif tls:
-                raise usage.UsageError('Missing options for creating SSL/TLS context. Cannot setup TLS.')
+                if not public_key:
+                    raise usage.UsageError('Cannot setup TLS. No public key defined')
+                if not private_key:
+                    raise usage.UsageError('Cannot setup TLS. No private key defined')
+                if not certificate_dir:
+                    raise usage.UsageError('Cannot setup TLS. No certificate directory defined')
             else:
                 log.msg('Missing options for creating SSL/TLS context: Cannot create SSL/TLS context.')
 
