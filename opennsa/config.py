@@ -182,7 +182,7 @@ def readVerifyConfig(cfg):
                 raise ConfigurationError('Specified certdir does not exist (%s)' % certdir)
 
             vc[KEY] = hostkey
-            vc[CERTIFICATE] = hostkey
+            vc[CERTIFICATE] = hostcert
             vc[CERTIFICATE_DIR] = certdir
 
         except ConfigParser.NoOptionError, e:
