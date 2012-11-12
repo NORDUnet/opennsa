@@ -1,3 +1,7 @@
+
+Log rotation
+Better handling of non-200 responses
+
 Long term:
   Documentation
   Persistence for connections
