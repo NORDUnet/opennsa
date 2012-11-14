@@ -157,10 +157,10 @@ class TwistedSUDSClient:
 
     def _getMethod(self, method_name):
         # one service and port should be enough for everybody
-        assert len(self.wsdl.services) == 1
+        assert len(self.wsdl.services) == 1, 'Twistedsuds can only handle one service'
         service = self.wsdl.services[0]
 
-        assert len(service.ports) == 1
+        assert len(service.ports) == 1, 'Twistedsuds can only handle port'
         port = service.ports[0]
 
         # print port.methods.keys()
