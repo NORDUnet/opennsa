@@ -172,7 +172,7 @@ class TwistedSUDSClient:
 
         log.msg('Received SOAP response for %s' % short_action, debug=True, system='TwistedSUDSClient')
         if factory.status == '200':
-            # this should probably be wrapped in maybeDeferred / try+except to handle and propage WebFault properly
+            # Note: This can raise suds.WebFault, but it is the responsibility of the caller to handle that
             _, result = method.binding.input.get_reply(method, response)
             return result
 
