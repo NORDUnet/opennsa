@@ -127,7 +127,7 @@ class NetworkServiceAgent:
         assert type(identity) is str, 'NSA identity type must be string'
         assert type(endpoint) is str, 'NSA endpoint type must be string'
         self.identity = identity
-        self.endpoint = endpoint
+        self.endpoint = endpoint.strip()
 
 
     def getHostPort(self):
