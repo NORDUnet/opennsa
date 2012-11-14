@@ -56,7 +56,7 @@ class Requester:
             return
 
         ract, d, call = acd
-        assert ract == action, "%s != %s" % (ract, action)
+        assert ract == action, "Mismatching actions for corrolation id %s. Expected: %s. Received: %s" % (correlation_id, ract, action)
 
         # cancel the timeout call if it is still scheduled
         if call.active():
