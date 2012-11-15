@@ -133,9 +133,10 @@ class TwistedSUDSClient:
             if isinstance(err.value, ConnectionDone):
                 pass # these are pretty common when the remote shuts down
             else:
+                # response body is in err.value.response
                 action = soap_action[1:-1].split('/')[-1]
-                log.msg('SOAP method invocation failed: %s, URL: %s, Action: %s' % (err.getErrorMessage(), url, action), system='TwistedSUDSClient')
-                log.err(err)
+                log.msg('SOAP method invocation failed: %s. Message: %s. URL: %s. Action: %s' % \
+                        (err.getErrorMessage(), err.value.response, url, action), system='TwistedSUDSClient')
             return err
 
         method = self._getMethod(method_name)
