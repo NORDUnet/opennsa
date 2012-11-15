@@ -26,6 +26,8 @@ from suds.client import Factory
 
 DEFAULT_TIMEOUT = 30 # seconds
 
+LOG_SYSTEM = 'TwistedSUDS'
+
 
 
 class RequestError(Exception):
@@ -42,6 +44,8 @@ def _httpRequest(url, soap_action, soap_envelope, timeout=DEFAULT_TIMEOUT, ctx_f
     if type(url) is not str:
         e = RequestError('URL must be string, not %s' % type(url))
         return defer.fail(e), None
+
+    log.msg(" -- Sending payload --\n%s\n -- End of payload --" % soap_envelope, system=LOG_SYSTEM, payload=True)
 
     scheme, host, port, _ = twclient._parse(url)
 
@@ -136,7 +140,7 @@ class TwistedSUDSClient:
                 # response body is in err.value.response
                 action = soap_action[1:-1].split('/')[-1]
                 log.msg('SOAP method invocation failed: %s. Message: %s. URL: %s. Action: %s' % \
-                        (err.getErrorMessage(), err.value.response, url, action), system='TwistedSUDSClient')
+                        (err.getErrorMessage(), err.value.response, url, action), system=LOG_SYSTEM)
             return err
 
         method = self._getMethod(method_name)
@@ -147,7 +151,7 @@ class TwistedSUDSClient:
         soap_action = str(method.soap.action)
 
         short_action = soap_action[1:-1].split('/')[-1]
-        log.msg('SOAP Dispatch: URL: %s. Action: %s. Length %s' % (url, short_action, len(soap_envelope)), system='TwistedSUDSClient', debug=True)
+        log.msg('SOAP Dispatch: URL: %s. Action: %s. Length %s' % (url, short_action, len(soap_envelope)), system=LOG_SYSTEM, debug=True)
 
         # dispatch
         d, factory = _httpRequest(url, soap_action, soap_envelope, timeout=self.timeout, ctx_factory=self.ctx_factory)
@@ -171,7 +175,7 @@ class TwistedSUDSClient:
 
     def _parseResponse(self, response, factory, method, short_action):
 
-        log.msg('Received SOAP response for %s' % short_action, debug=True, system='TwistedSUDSClient')
+        log.msg('Received SOAP response for %s' % short_action, debug=True, system=LOG_SYSTEM)
         if factory.status == '200':
             # Note: This can raise suds.WebFault, but it is the responsibility of the caller to handle that
             _, result = method.binding.input.get_reply(method, response)

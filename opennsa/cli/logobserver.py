@@ -9,14 +9,17 @@ from twisted.python import log
 class SimpleObserver(log.FileLogObserver):
 
     debug = False
+    dump_payload = False
 
     def emit(self, eventDict):
 
-        if 'debug' in eventDict:
-            if eventDict['debug'] and self.debug:
-                pass # want debug
-            else:
-                return # do not want debug
+        if 'debug' in eventDict and eventDict['debug']:
+            if not self.debug:
+                return # skip this message if we do not want debug
+
+        if 'payload' in eventDict and eventDict['payload']:
+            if not self.dump_payload:
+                return # skip this message if we do not want debug
 
         text = log.textFromEventDict(eventDict)
 

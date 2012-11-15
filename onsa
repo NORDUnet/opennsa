@@ -57,6 +57,8 @@ def doMain():
 
     if config.subOptions[options.VERBOSE]:
         observer.debug = True
+    if config.subOptions[options.DUMP_PAYLOAD]:
+        observer.dump_payload = True
 
     # read defaults
     defaults_file = config.subOptions[options.DEFAULTS_FILE] or os.path.join( os.path.expanduser('~'), CLI_DEFAULTS )

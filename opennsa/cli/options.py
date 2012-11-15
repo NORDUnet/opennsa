@@ -13,6 +13,7 @@ from opennsa import config
 # option names, as constants so we don't use strings in other modules
 VERBOSE         = 'verbose'
 DEFAULTS_FILE   = 'defaults-file'
+DUMP_PAYLOAD    = 'dump-payload'
 WSDL_DIRECTORY  = 'wsdl'
 HOST            = 'host'
 PORT            = 'port'

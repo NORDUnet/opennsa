@@ -4,7 +4,6 @@
 #
 # Options:
 
-# -v verbose
 # -f defaults file
 # -w wsdl directory
 
@@ -33,11 +32,13 @@
 # -i certificate directory
 
 # Flags
+# -v verbose
+# -q dump soap payloads
 # -x Use TLS for callback port
 # -z (skip) verify certificate (default is to verify)
 
 # free switches
-# ijmqyz
+# ijmyz
 
 # Not all commands will accept all flags and some flags are mutally exclusive
 
@@ -132,7 +133,8 @@ class FullGraphFlag(usage.Options):
 class BaseOptions(DefaultsFileOption):
 
     optFlags = [
-        [ options.VERBOSE, 'v', 'Print out more information']
+        [ options.VERBOSE, 'v', 'Print out more information'],
+        [ options.DUMP_PAYLOAD, 'q', 'Dump message payloads'],
     ]
 
 class NetworkCommandOptions(BaseOptions, WSDLDirectoryOption, HostOption, PortOption,

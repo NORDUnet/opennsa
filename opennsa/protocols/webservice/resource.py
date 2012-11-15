@@ -12,6 +12,8 @@ from twisted.web import resource, server
 
 # URL for service is http://HOST:PORT/NSI/services/ConnectionService
 
+LOG_SYSTEM = 'protocol.SOAPResource'
+
 
 class SOAPResource(resource.Resource):
 
@@ -34,36 +36,37 @@ class SOAPResource(resource.Resource):
             cert = request.transport.getPeerCertificate()
             if cert:
                 subject = '/' + '/'.join([ '='.join(c) for c in cert.get_subject().get_components() ])
-                log.msg('Certificate subject: %s' % subject, system='opennsa.SOAPResource')
+                log.msg('Certificate subject: %s' % subject, system=LOG_SYSTEM)
 
         soap_action = request.requestHeaders.getRawHeaders('soapaction',[None])[0]
 
+        soap_data = request.content.read()
+        log.msg(" -- Received payload --\n%s\n -- End of payload --" % soap_data, system=LOG_SYSTEM, payload=True)
+
         if not soap_action in self.soap_actions:
-            log.msg('Got request with unknown SOAP action: %s' % soap_action, system='opennsa.SOAPResource')
+            log.msg('Got request with unknown SOAP action: %s' % soap_action, system=LOG_SYSTEM)
             request.setResponseCode(406) # Not acceptable
             return 'Invalid SOAP Action for this resource'
 
-        decoder = self.soap_actions[soap_action]
-        soap_data = request.content.read()
-
-        log.msg('Received SOAP request. Action: %s. Length: %i' % (soap_action, len(soap_data)), system='opennsa.ConnectionServiceResource', debug=True)
+        log.msg('Received SOAP request. Action: %s. Length: %i' % (soap_action, len(soap_data)), system=LOG_SYSTEM, debug=True)
 
         def reply(reply_data):
             if reply_data is None or len(reply_data) == 0:
-                log.msg('None/empty reply data supplied for SOAPResource. This is probably wrong', system='opennsa.SOAPResource')
+                log.msg('None/empty reply data supplied for SOAPResource. This is probably wrong', system=LOG_SYSTEM)
             request.setHeader('Content-Type', 'text/xml') # Keeps some SOAP implementations happy
             request.write(reply_data)
             request.finish()
 
         def decodeError(err):
             error_msg = err.getErrorMessage()
-            log.msg('Failure during SOAP decoding/dispatch: %s' % error_msg)
+            log.msg('Failure during SOAP decoding/dispatch: %s' % error_msg, system=LOG_SYSTEM)
             log.err(err)
             request.setResponseCode(500) # Internal server error
             request.setHeader('Content-Type', 'text/plain') # This will make some SOAP implementation sad, but there isn't alot that can be done at this point
             request.write(error_msg)
             request.finish()
 
+        decoder = self.soap_actions[soap_action]
         d = defer.maybeDeferred(decoder, soap_action, soap_data)
         d.addCallbacks(reply, decodeError)
 
