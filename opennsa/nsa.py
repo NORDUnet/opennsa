@@ -124,8 +124,8 @@ class NetworkEndpoint(STP):
 class NetworkServiceAgent:
 
     def __init__(self, identity, endpoint): #, service_attributes=None):
-        assert type(identity) is str, 'NSA identity type must be string'
-        assert type(endpoint) is str, 'NSA endpoint type must be string'
+        assert type(identity) is str, 'NSA identity type must be string (type: %s, value %s)' % (type(identity), identity)
+        assert type(endpoint) is str, 'NSA endpoint type must be string (type: %s, value %s)' % (type(endpoint), endpoint)
         self.identity = identity
         self.endpoint = endpoint.strip()
 
