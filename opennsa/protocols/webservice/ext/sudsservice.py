@@ -7,7 +7,7 @@ Modified by Henrik Thostrup Jensen to not be tied into Zope and be a bit more
 generic and support for soap action and custom types.
 
 Copyright (C) 2010 by Dr. Dieter Maurer <dieter@handshake.de>
-Copyright (C) 2011-2012 by Henrik Thostrup Jensen <htj@nordu.net>
+Copyright (C) 2011-2012 by NORDUnet (Author: Henrik Thostrup Jensen <htj@nordu.net>)
 
 License: BSD
 """
