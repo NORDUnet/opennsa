@@ -26,6 +26,7 @@ class ServiceTest(unittest.TestCase):
 
         HOST = 'localhost'
         WSDL_DIR = os.path.realpath(os.path.normpath(os.path.join(os.path.dirname(__file__), '../wsdl')))
+        #WSDL_DIR = os.path.join(os.getcwd(), '..', 'wsdl')
 
         # service
 
