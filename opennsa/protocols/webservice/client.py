@@ -7,7 +7,7 @@ Copyright: NORDUnet (2011)
 
 import uuid
 
-from opennsa.protocols.webservice.ext import twistedsuds
+from opennsa.protocols.shared import twistedsuds
 
 
 WSDL_PROVIDER   = 'file://%s/ogf_nsi_connection_provider_v1_0.wsdl'

@@ -10,7 +10,7 @@ import datetime
 from twisted.python import log
 
 from opennsa import nsa
-from opennsa.protocols.webservice.ext import sudsservice
+from opennsa.protocols.shared import sudsservice
 
 from suds.sax import date as sudsdate
 
