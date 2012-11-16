@@ -19,15 +19,11 @@ Requirements:
 
 * Twisted, http://twistedmatrix.com/trac/
 
-* SUDS
-  Important: SUDS 0.4 has issues with namespaces and a DST/Timezone issues.
-  The easy solution is to grab the version at https://github.com/htj/suds-htj,
-  which has relevant patches attached.
-  Alternatively, you can use the original: https://fedorahosted.org/suds/
-  See the following bugs:
-  - https://fedorahosted.org/suds/ticket/292
-  - https://fedorahosted.org/suds/ticket/353
-  There are patches for these in the patches directory.
+* SUDS, https://github.com/htj/suds-htj
+  The SUDS homepage is https://fedorahosted.org/suds/, but is unmaintained.
+  The last SUDS release (0.4) has several bugs regarding namespaces, and
+  timezone issues and will not work with OpenNSA. The version from github
+  is hence recommended.
 
 Python and Twisted should be included in the package system in most recent
 Linux distributions.
