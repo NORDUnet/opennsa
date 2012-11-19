@@ -11,9 +11,10 @@ import StringIO
 from twisted.trial import unittest
 from twisted.internet import defer, reactor
 
-from opennsa import nsa, error, setup, registry
+from opennsa import nsa, error, registry, nsiservice
 from opennsa.backends import dud
 from opennsa.topology import gole
+from opennsa.protocols import nsi1
 
 from . import topology as testtopology
 
@@ -38,7 +39,11 @@ class ServiceTest(unittest.TestCase):
             backend = dud.DUDNSIBackend(network)
             topo, _ = gole.parseTopology( [ topo_source ] )
 
-            factory = setup.createService(network, backend, topo, HOST, port, WSDL_DIR)
+            service_registry = registry.ServiceRegistry()
+
+            nsi_service = nsiservice.NSIService(network, backend, service_registry, topo)
+
+            factory = nsi1.createService(nsi_service, service_registry, HOST, port, WSDL_DIR)
 
             iport = reactor.listenTCP(port, factory, interface='localhost')
             self.iports.append(iport)
@@ -47,7 +52,7 @@ class ServiceTest(unittest.TestCase):
 
         CLIENT_PORT = 7080
 
-        self.client, client_factory  = setup.createClient(HOST, CLIENT_PORT, WSDL_DIR)
+        self.client, client_factory  = nsi1.createClient(HOST, CLIENT_PORT, WSDL_DIR)
         self.client_nsa = nsa.NetworkServiceAgent('OpenNSA-Test-Client', 'http://localhost:%i/NSI/services/ConnectionService' % CLIENT_PORT)
 
         client_iport = reactor.listenTCP(CLIENT_PORT, client_factory)
