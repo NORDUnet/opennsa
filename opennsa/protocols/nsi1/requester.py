@@ -7,7 +7,7 @@ from twisted.internet import reactor, defer
 
 from opennsa import error
 from opennsa.interface import NSIInterface
-from opennsa.protocols.webservice import client
+from opennsa.protocols.nsi1 import client
 
 
 

@@ -15,7 +15,7 @@ from opennsa.protocols.shared import sudsservice
 from suds.sax import date as sudsdate
 
 
-LOG_SYSTEM = 'webservice.Service'
+LOG_SYSTEM = 'protocol.nsi1.Service'
 
 WSDL_PROVIDER   = 'file://%s/ogf_nsi_connection_provider_v1_0.wsdl'
 WSDL_REQUESTER  = 'file://%s/ogf_nsi_connection_requester_v1_0.wsdl'

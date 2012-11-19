@@ -8,7 +8,7 @@ from twisted.application import internet, service as twistedservice
 
 from opennsa import config, logging, registry, nsiservice, viewresource
 from opennsa.topology import gole
-from opennsa.protocols.webservice import client, service, provider, requester, resource
+from opennsa.protocols.nsi1 import client, service, provider, requester, resource
 
 
 
