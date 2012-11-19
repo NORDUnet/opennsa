@@ -30,8 +30,8 @@ def connPath(conn):
 
 class SubConnection:
 
-    def __init__(self, client, requester_nsa, provider_nsa, parent_connection, connection_id, source_stp, dest_stp, service_parameters):
-        self.client             = client
+    def __init__(self, service_registry, requester_nsa, provider_nsa, parent_connection, connection_id, source_stp, dest_stp, service_parameters):
+        self.service_registry   = service_registry
         self.requester_nsa      = requester_nsa # this the identity of the current nsa
         self.provider_nsa       = provider_nsa
 
@@ -42,6 +42,7 @@ class SubConnection:
         self.service_parameters = service_parameters
 
         self.session_security_attr = None
+        self.client_system = registry.NSI1_CLIENT # this one is temporary
 
 
     def curator(self):
@@ -65,8 +66,9 @@ class SubConnection:
                                                     directionality=self.service_parameters.directionality,
                                                     bandwidth=self.service_parameters.bandwidth)
 
-        d = self.client.reserve(self.requester_nsa, self.provider_nsa, self.session_security_attr,
-                                self.parent_connection.global_reservation_id, self.parent_connection.description, self.connection_id, sub_service_params)
+        reserve = self.service_registry.getHandler(registry.RESERVE, self.client_system)
+        d = reserve(self.requester_nsa, self.provider_nsa, self.session_security_attr,
+                    self.parent_connection.global_reservation_id, self.parent_connection.description, self.connection_id, sub_service_params)
         d.addCallback(reserveDone)
         return d
 
@@ -77,7 +79,8 @@ class SubConnection:
             log.msg('Remote connection %s via %s terminated' % (connPath(self), self.provider_nsa), debug=True, system=LOG_SYSTEM)
             return self
 
-        d = self.client.terminate(self.requester_nsa, self.provider_nsa, self.session_security_attr, self.connection_id)
+        terminate = self.service_registry.getHandler(registry.TERMINATE, self.client_system)
+        d = terminate(self.requester_nsa, self.provider_nsa, self.session_security_attr, self.connection_id)
         d.addCallback(terminateDone)
         return d
 
@@ -88,7 +91,8 @@ class SubConnection:
             log.msg('Remote connection %s via %s provisioned' % (connPath(self), self.provider_nsa), debug=True, system=LOG_SYSTEM)
             return self
 
-        d = self.client.provision(self.requester_nsa, self.provider_nsa, self.session_security_attr, self.connection_id)
+        provision = self.service_registry.getHandler(registry.PROVISION, self.client_system)
+        d = provision(self.requester_nsa, self.provider_nsa, self.session_security_attr, self.connection_id)
         d.addCallback(provisionDone)
         return defer.succeed(None), d
 
@@ -99,7 +103,8 @@ class SubConnection:
             log.msg('Remote connection %s via %s released' % (connPath(self), self.provider_nsa), debug=True, system=LOG_SYSTEM)
             return self
 
-        d = self.client.release(self.requester_nsa, self.provider_nsa, self.session_security_attr, self.connection_id)
+        release = self.service_registry.getHandler(registry.RELEASE, self.client_system)
+        d = release(self.requester_nsa, self.provider_nsa, self.session_security_attr, self.connection_id)
         d.addCallback(releaseDone)
         return d
 

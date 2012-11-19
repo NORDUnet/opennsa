@@ -136,7 +136,8 @@ def doMain():
         if tls and not ctx_factory:
             raise usage.UsageError('Options for TLS/SSL context not defined. Cannot setup TLS.')
 
-        client, factory = setup.createClient(host, port, wsdl_dir, tls, ctx_factory)
+        from opennsa.protocols import nsi1
+        client, factory = nsi1.createClient(host, port, wsdl_dir, tls, ctx_factory)
         if tls:
             iport = reactor.listenSSL(port, factory, ctx_factory)
         else:

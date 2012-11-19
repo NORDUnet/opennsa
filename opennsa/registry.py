@@ -19,6 +19,7 @@ QUERY_RESPONSE        = 'query_response'
 FORCED_END            = 'forced_end'
 
 SYSTEM_SERVICE        = 'service'
+NSI1_CLIENT           = 'nsi1-client'
 
 
 

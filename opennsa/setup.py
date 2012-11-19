@@ -8,52 +8,7 @@ from twisted.application import internet, service as twistedservice
 
 from opennsa import config, logging, registry, nsiservice, viewresource
 from opennsa.topology import gole
-from opennsa.protocols.nsi1 import client, service, provider, requester, resource
-
-
-
-def createClientResource(host, port, wsdl_dir, tls=False, ctx_factory=None):
-
-    def _createServiceURL(host, port, tls=False):
-        proto_scheme = 'https://' if tls else 'http://'
-        service_url = proto_scheme + '%s:%i/NSI/services/ConnectionService' % (host,port)
-        return service_url
-
-    service_url = _createServiceURL(host, port, tls)
-    nsi_resource, site = resource.createResourceSite()
-
-    provider_client     = client.ProviderClient(service_url, wsdl_dir, ctx_factory=ctx_factory)
-    nsi_requester = requester.Requester(provider_client, callback_timeout=65)
-    service.RequesterService(nsi_resource, nsi_requester, wsdl_dir)
-
-    return nsi_resource, nsi_requester, site
-
-
-
-def createClient(host, port, wsdl_dir, tls=False, ctx_factory=None):
-
-    _, nsi_requester, site = createClientResource(host, port, wsdl_dir, tls, ctx_factory)
-    return nsi_requester, site
-
-
-
-def createService(network_name, backend, topology, host, port, wsdl_dir, tls=False, ctx_factory=None):
-
-    nsi_resource, nsi_requester, site = createClientResource(host, port, wsdl_dir, tls, ctx_factory)
-
-    service_registry = registry.ServiceRegistry()
-
-    nsi_service  = nsiservice.NSIService(network_name, backend, service_registry, topology, nsi_requester)
-
-    requester_client = client.RequesterClient(wsdl_dir, ctx_factory)
-    nsi_provider = provider.Provider(service_registry, requester_client)
-    service.ProviderService(nsi_resource, nsi_provider, wsdl_dir)
-
-    # add connection list resource in a slightly hacky way
-    vr = viewresource.ConnectionListResource(nsi_service)
-    site.resource.children['NSI'].putChild('connections', vr)
-
-    return site
+from opennsa.protocols import nsi1
 
 
 
@@ -127,7 +82,10 @@ class OpenNSAService(twistedservice.MultiService):
 
         backend = setupBackend(vc['backend'], vc[config.NETWORK_NAME], internal_topology)
 
-        factory = createService(vc[config.NETWORK_NAME], backend, topology, vc[config.HOST], vc[config.PORT], vc[config.WSDL_DIRECTORY])
+        service_registry = registry.ServiceRegistry()
+        nsi_service  = nsiservice.NSIService(vc[config.NETWORK_NAME], backend, service_registry, topology)
+
+        factory = nsi1.createService(nsi_service, service_registry, vc[config.HOST], vc[config.PORT], vc[config.WSDL_DIRECTORY])
 
         if vc[config.TLS]:
             internet.SSLServer(vc[config.PORT], factory, ctx_factory).setServiceParent(self)

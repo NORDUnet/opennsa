@@ -25,7 +25,7 @@ class NSIService:
 
     implements(NSIServiceInterface)
 
-    def __init__(self, network, backend, service_registry, topology, client):
+    def __init__(self, network, backend, service_registry, topology):
         self.network = network
         self.backend = backend
         self.service_registry = service_registry
@@ -33,7 +33,6 @@ class NSIService:
         self.topology = topology
 
         # get own nsa from topology
-        self.client = client
         self.nsa = self.topology.getNetwork(self.network).nsa
 
         self.connections = {} # persistence, ha!
@@ -69,7 +68,7 @@ class NSIService:
         else:
             sub_conn_id = 'urn:uuid:' + str(uuid.uuid1())
             remote_nsa = self.topology.getNetwork(link.network).nsa
-            sub_conn = connection.SubConnection(self.client, self.nsa, remote_nsa, conn, sub_conn_id, link.sourceSTP(), link.destSTP(), sub_sps)
+            sub_conn = connection.SubConnection(self.service_registry, self.nsa, remote_nsa, conn, sub_conn_id, link.sourceSTP(), link.destSTP(), sub_sps)
 
         conn.sub_connections.append(sub_conn)
 

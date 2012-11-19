@@ -6,9 +6,10 @@ from twisted.python import log
 from twisted.python.log import ILogObserver
 from twisted.application import internet, service
 
-from opennsa import setup, registry, logging
+from opennsa import setup, registry, logging, nsiservice
 from opennsa.backends import dud
 from opennsa.topology import gole
+from opennsa.protocols import nsi1
 
 
 DEBUG = False
@@ -37,8 +38,11 @@ topo, _ = gole.parseTopology( [ open(TOPOLOGY) ], open(MAPPING))
 
 for network, port in SERVICES:
 
+    service_registry = registry.ServiceRegistry()
     backend = dud.DUDNSIBackend(network)
-    factory = setup.createService(network, backend, topo, HOST, port, WSDL_DIR)
+    nsi_service = nsiservice.NSIService(network, backend, service_registry, topo)
+
+    factory = nsi1.createService(nsi_service, service_registry, HOST, port, WSDL_DIR)
 
     internet.TCPServer(port, factory, interface='localhost').setServiceParent(application)
 
