@@ -29,10 +29,11 @@ class DebugLogObserver(log.FileLogObserver):
 
     implements(log.ILogObserver)
 
-    def __init__(self, file_, debug=False, profile=False):
+    def __init__(self, file_, debug=False, profile=False, payload=False):
         log.FileLogObserver.__init__(self, file_)
         self.debug = debug
         self.profile = profile
+        self.payload = payload
 
 
     def emit(self, eventDict):
@@ -41,6 +42,8 @@ class DebugLogObserver(log.FileLogObserver):
             pass # don't print debug messages if we didn't ask for it
         elif self.profile is False and eventDict.get('profile', False):
             pass # don't print profile messages if we didn't ask for it
+        elif self.payload is False and eventDict.get('payload', False):
+            pass # don't print payload message if we didn't ask for it
         else:
             log.FileLogObserver.emit(self, eventDict)
 
