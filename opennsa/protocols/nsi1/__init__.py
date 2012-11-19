@@ -7,8 +7,6 @@ Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2011-2012)
 """
 
-from twisted.python import log
-from twisted.internet import defer
 from twisted.web import resource, server
 
 from opennsa import registry
