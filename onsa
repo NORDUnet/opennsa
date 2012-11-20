@@ -9,6 +9,7 @@ import random
 from twisted.python import log, usage
 from twisted.internet import reactor, defer
 
+from opennsa import nsa
 from opennsa.cli import options, parser, commands, logobserver
 
 
@@ -48,9 +49,6 @@ def doMain():
     if not hasattr(config, "subOptions"):
         print HELP_MESSAGE % (sys.argv[0])
         return
-
-    # this import is slighly slow, so we delay it until parsing is successfull
-    from opennsa import setup, nsa
 
     observer = logobserver.SimpleObserver(sys.stdout)
     log.startLoggingWithObserver(observer.emit)

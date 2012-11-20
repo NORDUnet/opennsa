@@ -3,7 +3,6 @@ High-level functionality for creating clients and services in OpenNSA.
 """
 
 from twisted.python import log
-from twisted.internet import defer
 from twisted.web import resource, server
 from twisted.application import internet, service as twistedservice
 
