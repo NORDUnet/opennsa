@@ -51,7 +51,7 @@ from opennsa.cli import options
 # parameters used for all commands
 
 class DefaultsFileOption(usage.Options):
-    optParameters = [ [ options.DEFAULTS_FILE, 'f', None, 'Service URL'] ]
+    optParameters = [ [ options.DEFAULTS_FILE, 'f', None, 'Defaults file'] ]
 
 class WSDLDirectoryOption(usage.Options):
     optParameters = [ [ options.WSDL_DIRECTORY, 'w', None, 'Service URL'] ]
