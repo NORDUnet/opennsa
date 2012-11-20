@@ -4,6 +4,7 @@ High-level functionality for creating clients and services in OpenNSA.
 
 from twisted.python import log
 from twisted.internet import defer
+from twisted.web import resource, server
 from twisted.application import internet, service as twistedservice
 
 from opennsa import config, logging, registry, nsiservice, viewresource
@@ -82,10 +83,17 @@ class OpenNSAService(twistedservice.MultiService):
 
         backend = setupBackend(vc['backend'], vc[config.NETWORK_NAME], internal_topology)
 
+        top_resource = resource.Resource()
         service_registry = registry.ServiceRegistry()
         nsi_service  = nsiservice.NSIService(vc[config.NETWORK_NAME], backend, service_registry, topology)
 
-        factory = nsi1.createService(nsi_service, service_registry, vc[config.HOST], vc[config.PORT], vc[config.WSDL_DIRECTORY])
+        nsi1.setupProvider(nsi_service, top_resource, service_registry, vc[config.HOST], vc[config.PORT], vc[config.WSDL_DIRECTORY])
+
+        vr = viewresource.ConnectionListResource(nsi_service)
+        top_resource.putChild('admin', vr)
+
+        factory = server.Site(top_resource, logPath='/dev/null')
+
 
         if vc[config.TLS]:
             internet.SSLServer(vc[config.PORT], factory, ctx_factory).setServiceParent(self)

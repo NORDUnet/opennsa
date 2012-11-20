@@ -15,27 +15,24 @@ from opennsa.protocols.nsi1 import client, service, provider, requester
 
 
 
-
-def createResourceSite():
+def setupResource(top_resource):
 
     # Service path: /NSI/services/ConnectionService
 
-    top_resource = resource.Resource()
     nsi_resource = resource.Resource()
-    services_resource = resource.Resource()
+    cs_resource = resource.Resource()
 
     soap_resource = soapresource.SOAPResource()
 
     top_resource.putChild('NSI', nsi_resource)
-    nsi_resource.putChild('services', services_resource)
-    services_resource.putChild('ConnectionService', soap_resource)
+    nsi_resource.putChild('services', cs_resource)
+    cs_resource.putChild('ConnectionService', soap_resource)
 
-    site = server.Site(top_resource, logPath='/dev/null')
-    return soap_resource, site
-
+    return soap_resource
 
 
-def createClientResource(host, port, wsdl_dir, tls=False, ctx_factory=None):
+
+def createClientResource(top_resource, host, port, wsdl_dir, tls=False, ctx_factory=None):
 
     def _createServiceURL(host, port, tls=False):
         proto_scheme = 'https://' if tls else 'http://'
@@ -43,26 +40,30 @@ def createClientResource(host, port, wsdl_dir, tls=False, ctx_factory=None):
         return service_url
 
     service_url = _createServiceURL(host, port, tls)
-    nsi_resource, site = createResourceSite()
 
-    provider_client     = client.ProviderClient(service_url, wsdl_dir, ctx_factory=ctx_factory)
-    nsi_requester = requester.Requester(provider_client, callback_timeout=65)
-    service.RequesterService(nsi_resource, nsi_requester, wsdl_dir)
+    soap_resource = setupResource(top_resource)
 
-    return nsi_resource, nsi_requester, site
+    provider_client = client.ProviderClient(service_url, wsdl_dir, ctx_factory=ctx_factory)
+    nsi_requester   = requester.Requester(provider_client, callback_timeout=65)
+
+    service.RequesterService(soap_resource, nsi_requester, wsdl_dir)
+
+    return soap_resource, nsi_requester
 
 
 
 def createClient(host, port, wsdl_dir, tls=False, ctx_factory=None):
 
-    _, nsi_requester, site = createClientResource(host, port, wsdl_dir, tls, ctx_factory)
+    top_resource = resource.Resource()
+    _, nsi_requester = createClientResource(top_resource, host, port, wsdl_dir, tls, ctx_factory)
+    site = server.Site(top_resource, logPath='/dev/null')
     return nsi_requester, site
 
 
 
-def createService(nsi_service, service_registry, host, port, wsdl_dir, tls=False, ctx_factory=None):
+def setupProvider(nsi_service, top_resource, service_registry, host, port, wsdl_dir, tls=False, ctx_factory=None):
 
-    nsi_resource, nsi_requester, site = createClientResource(host, port, wsdl_dir, tls, ctx_factory)
+    soap_resource, nsi_requester = createClientResource(top_resource, host, port, wsdl_dir, tls, ctx_factory)
 
     service_registry.registerEventHandler(registry.RESERVE,   nsi_requester.reserve,    registry.NSI1_CLIENT)
     service_registry.registerEventHandler(registry.PROVISION, nsi_requester.provision,  registry.NSI1_CLIENT)
@@ -72,13 +73,21 @@ def createService(nsi_service, service_registry, host, port, wsdl_dir, tls=False
 
     requester_client = client.RequesterClient(wsdl_dir, ctx_factory)
     nsi_provider = provider.Provider(service_registry, requester_client)
-    service.ProviderService(nsi_resource, nsi_provider, wsdl_dir)
+    service.ProviderService(soap_resource, nsi_provider, wsdl_dir)
 
-    # add connection list resource in a slightly hacky way
-    # this needs to be moved to setup.py and we need to handle our resources better
-    from opennsa import viewresource
-    vr = viewresource.ConnectionListResource(nsi_service)
-    site.resource.children['NSI'].putChild('connections', vr)
 
-    return site
+
+def createService(network, backend, topology, host, port, wsdl_dir, tls=False, ctx_factory=None):
+    # this one is typically only used for testing
+
+    top_resource = resource.Resource()
+    service_registry = registry.ServiceRegistry()
+
+    from opennsa import nsiservice
+    nsi_service = nsiservice.NSIService(network, backend, service_registry, topology)
+
+    setupProvider(nsi_service, top_resource, service_registry, host, port, wsdl_dir, tls, ctx_factory)
+
+    factory = server.Site(top_resource, logPath='/dev/null')
+    return factory
 
