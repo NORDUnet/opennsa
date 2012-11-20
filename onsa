@@ -69,7 +69,32 @@ def doMain():
     for k,v in defaults.items():
         log.msg(' %s : %s' % (k,v), debug=True)
 
-    if config.subCommand in ['reserve', 'reserveprovision', 'provision', 'release', 'terminate', 'querysummary', 'querydetails']:
+    # commands
+
+    if config.subCommand == 'discover':
+
+        wsdl_dir        = config.subOptions[options.WSDL_DIRECTORY] or defaults.get(options.WSDL_DIRECTORY) or WSDL_DEFAULT_DIRECTORY
+
+        topology_file   = config.subOptions[options.TOPOLOGY_FILE]  or defaults.get(options.TOPOLOGY_FILE)
+        network         = config.subOptions[options.NETWORK]        or defaults.get(options.NETWORK)
+        #provider_nsa    = config.subOptions[options.PROVIDER]       or defaults.get(options.PROVIDER)
+
+        service_url     = config.subOptions[options.SERVICE_URL]    or defaults.get(options.SERVICE_URL)
+
+        if topology_file and network:
+            raise NotImplementedError('NSI2 topology not implemented yet')
+        elif service_url:
+            pass
+        else:
+            raise usage.UsageError('Something went wrong specifying service URL for discovery')
+
+        from opennsa.protocols.discovery import client as discoveryclient
+        client = discoveryclient.DiscoveryClient(wsdl_dir)
+        commands.discover(client, service_url)
+        yield client.queryNSA(service_url)
+
+
+    elif config.subCommand in ['reserve', 'reserveprovision', 'provision', 'release', 'terminate', 'querysummary', 'querydetails']:
 
         wsdl_dir        = config.subOptions[options.WSDL_DIRECTORY] or defaults.get(options.WSDL_DIRECTORY) or WSDL_DEFAULT_DIRECTORY
 
@@ -141,9 +166,8 @@ def doMain():
         else:
             iport = reactor.listenTCP(port, factory)
 
-    # commands
 
-    if config.subCommand in ('reserve', 'reserveprovision'):
+    elif config.subCommand in ('reserve', 'reserveprovision'):
 
         source_stp = config.subOptions[options.SOURCE_STP]  or defaults.get(options.SOURCE_STP)
         dest_stp   = config.subOptions[options.DEST_STP]    or defaults.get(options.DEST_STP)
@@ -235,7 +259,6 @@ def doMain():
     else:
         print "Invalid subcommand specified"
         print '%s: Try --help for usage details.' % (sys.argv[0])
-        return
 
 
 

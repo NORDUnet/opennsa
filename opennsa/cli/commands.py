@@ -8,6 +8,15 @@ from opennsa import nsa
 
 
 @defer.inlineCallbacks
+def discover(client, service_url):
+
+    res = yield client.queryNSA(service_url)
+    print "--"
+    print res
+    print "--"
+
+
+@defer.inlineCallbacks
 def reserve(client, client_nsa, provider_nsa, source_stp, dest_stp, start_time, end_time, bandwidth, connection_id, global_id):
 
     source_network, source_port = source_stp.split(':',1)

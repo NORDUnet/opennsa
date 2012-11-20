@@ -137,15 +137,23 @@ class BaseOptions(DefaultsFileOption):
         [ options.DUMP_PAYLOAD, 'q', 'Dump message payloads'],
     ]
 
-class NetworkCommandOptions(BaseOptions, WSDLDirectoryOption, HostOption, PortOption,
-                            ServiceURLOption, TopologyFileOption, NetworkOption,
-                            ProviderNSAOption, RequesterNSAOption, ConnectionIDOption, GlobalIDOption,
-                            TLSFlag, PublicKeyOption, PrivateKeyOption, CertificateDirectoryOption, SkipCertificateVerificationFlag):
+
+class NetworkBaseOptions(BaseOptions, WSDLDirectoryOption, HostOption, PortOption,
+                         ServiceURLOption, TopologyFileOption, NetworkOption,
+                         TLSFlag, PublicKeyOption, PrivateKeyOption, CertificateDirectoryOption, SkipCertificateVerificationFlag):
 
     def postOptions(self):
         # technically we should do this for all superclasses, but this is the only one that has anything to do
         if self[options.SERVICE_URL] and (self[options.TOPOLOGY_FILE] or self[options.NETWORK]):
             raise usage.UsageError('Cannot set both service url while having topology file or network.')
+
+
+class NetworkCommandOptions(NetworkBaseOptions, ProviderNSAOption, RequesterNSAOption, ConnectionIDOption, GlobalIDOption):
+    pass
+
+
+class DiscoveryOptions(NetworkBaseOptions):
+    pass
 
 
 class ReserveOptions(NetworkCommandOptions, SourceSTPOption, DestSTPOption, StartTimeOption, EndTimeOption, BandwidthOption):
@@ -174,7 +182,8 @@ class ProvisionReleaseTerminateOptions(NetworkCommandOptions):
 
 class Options(usage.Options):
     subCommands = [
-        ['reserve',         None,   ReserveOptions,         'Create a reservation'],
+        ['discover',        None,   DiscoveryOptions,       'Discover services at an NSA.'],
+        ['reserve',         None,   ReserveOptions,         'Create a reservation.'],
         ['reserveprovision',None,   ReserveOptions,         'Create a reservation and provision the connection.'],
         ['provision',       None,   NetworkCommandOptions,  'Provision a connection.'],
         ['release',         None,   NetworkCommandOptions,  'Release a connection.'],
