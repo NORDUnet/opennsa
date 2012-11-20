@@ -6,6 +6,7 @@ Copyright: NORDUnet (2012)
 """
 
 
+DISCOVER              = 'discover'
 RESERVE               = 'reserve'
 RESERVE_RESPONSE      = 'reserve_response'
 PROVISION             = 'provision'
