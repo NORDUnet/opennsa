@@ -9,10 +9,12 @@ Copyright: NORDUnet (2011)
 import datetime
 from twisted.python import log
 
+#from suds.sax import date as sudsdate
+
 from opennsa import nsa
 from opennsa.protocols.shared import sudsservice
+from opennsa.protocols.discovery import soap
 
-from suds.sax import date as sudsdate
 
 
 
@@ -82,26 +84,32 @@ class DiscoverService:
 
     def queryServices(self, soap_action, soap_data):
 
-        print "Q NSA", soap_action
+        log.msg('', system='')
+        print
+        #print
+        #print "Q NSA", soap_action
         assert soap_action == QUERY_SERVICES
-
-        #t_start = time.time()
 
         print "SD", soap_data
 
-        soap_data = soap_data.replace("\n            <requestType>Detailed</requestType>\n         ", "Detailed")
-
-        method, req = self.decoder.parse_request('queryNSA', soap_data)
-
-#        print method
-        print req
-
-        request_type = req.requestType
-        print "RT", request_type
+#        method, req = self.decoder.parse_request('queryNSA', soap_data)
+#        print "REQ\n", req
+#        request_type = req.requestType
+#        print "RT", request_type
+#        reply = self.decoder.marshal_result([], method)
 
         # check request type
 
-        reply = self.decoder.marshal_result([], method)
+        iso_now = datetime.datetime.utcnow().isoformat()
+        iso_now = iso_now.rsplit('.',1)[0] + 'Z' # remove microseconds and add zulu designation
+
+        services = [ { 'description' : 'hi there',
+                       'versions'    :  [ { 'name' : 'NSI', 'version': '2', 'endpoint' : 'http://sager/ting' } ]
+                     }
+                   ]
+
+        reply = soap.createQueryNSAResponsePayload('mynsaid', '1.2', iso_now, iso_now, services)
+
         print "REPLY\n", reply
         return reply
 

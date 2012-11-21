@@ -11,7 +11,7 @@ from opennsa import nsa
 def discover(client, service_url):
 
     res = yield client.queryNSA(service_url)
-    print "--"
+    print "-- COMMAND RESULT --"
     print res
     print "--"
 
