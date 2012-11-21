@@ -90,8 +90,7 @@ def doMain():
 
         from opennsa.protocols.discovery import client as discoveryclient
         client = discoveryclient.DiscoveryClient(wsdl_dir)
-        commands.discover(client, service_url)
-        yield client.queryNSA(service_url)
+        yield commands.discover(client, service_url)
 
 
     elif config.subCommand in ['reserve', 'reserveprovision', 'provision', 'release', 'terminate', 'querysummary', 'querydetails']:
