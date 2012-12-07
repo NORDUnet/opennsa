@@ -15,23 +15,6 @@ from opennsa.protocols.nsi1 import client, service, provider, requester
 
 
 
-def setupResource(top_resource):
-
-    # Service path: /NSI/services/ConnectionService
-
-    nsi_resource = resource.Resource()
-    cs_resource = resource.Resource()
-
-    soap_resource = soapresource.SOAPResource()
-
-    top_resource.putChild('NSI', nsi_resource)
-    nsi_resource.putChild('services', cs_resource)
-    cs_resource.putChild('ConnectionService', soap_resource)
-
-    return soap_resource
-
-
-
 def createClientResource(top_resource, host, port, wsdl_dir, tls=False, ctx_factory=None):
 
     def _createServiceURL(host, port, tls=False):
@@ -41,7 +24,7 @@ def createClientResource(top_resource, host, port, wsdl_dir, tls=False, ctx_fact
 
     service_url = _createServiceURL(host, port, tls)
 
-    soap_resource = setupResource(top_resource)
+    soap_resource = soapresource.setupSOAPResource(top_resource, 'ConnectionService')
 
     provider_client = client.ProviderClient(service_url, wsdl_dir, ctx_factory=ctx_factory)
     nsi_requester   = requester.Requester(provider_client, callback_timeout=65)
