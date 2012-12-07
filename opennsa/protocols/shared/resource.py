@@ -70,3 +70,24 @@ class SOAPResource(resource.Resource):
 
         return server.NOT_DONE_YET
 
+
+
+def setupSOAPResource(top_resource, resource_name, subpath=None):
+
+    # Default path: NSI/services/ConnectionService
+    if subpath is None:
+        subpath = ['NSI', 'services' ]
+
+    ir = top_resource
+
+    for path in subpath:
+        if path in ir.children:
+            ir = ir.children[path]
+        else:
+            nr = resource.Resource()
+            ir.putChild(path, nr)
+
+    soap_resource = SOAPResource()
+    ir.putChild(resource_name, soap_resource)
+    return soap_resource
+
