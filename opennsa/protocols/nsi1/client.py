@@ -81,9 +81,9 @@ class ProviderClient:
 
         res_req.reservation.serviceParameters.schedule.startTime    = utcTime(service_parameters.start_time)
         res_req.reservation.serviceParameters.schedule.endTime      = utcTime(service_parameters.end_time)
-        res_req.reservation.serviceParameters.bandwidth.desired     = service_parameters.bandwidth.desired
-        res_req.reservation.serviceParameters.bandwidth.minimum     = service_parameters.bandwidth.minimum
-        res_req.reservation.serviceParameters.bandwidth.maximum     = service_parameters.bandwidth.maximum
+        res_req.reservation.serviceParameters.bandwidth.desired     = service_parameters.bandwidth
+        #res_req.reservation.serviceParameters.bandwidth.minimum     = service_parameters.bandwidth.minimum
+        #res_req.reservation.serviceParameters.bandwidth.maximum     = service_parameters.bandwidth.maximum
         #res_req.reservation.serviceParameters.serviceAttributes.guaranteed = [ '1a' ]
         #res_req.reservation.serviceParameters.serviceAttributes.preferred  = [ '2c', '3d' ]
 
@@ -164,9 +164,9 @@ class RequesterClient:
         res_conf.reservation.serviceParameters.schedule.startTime     = utcTime(service_parameters.start_time)
         res_conf.reservation.serviceParameters.schedule.endTime       = utcTime(service_parameters.end_time)
 
-        res_conf.reservation.serviceParameters.bandwidth.desired      = service_parameters.bandwidth.desired
-        res_conf.reservation.serviceParameters.bandwidth.minimum      = service_parameters.bandwidth.minimum
-        res_conf.reservation.serviceParameters.bandwidth.maximum      = service_parameters.bandwidth.maximum
+        res_conf.reservation.serviceParameters.bandwidth.desired      = service_parameters.bandwidth
+        #res_conf.reservation.serviceParameters.bandwidth.minimum      = service_parameters.bandwidth.minimum
+        #res_conf.reservation.serviceParameters.bandwidth.maximum      = service_parameters.bandwidth.maximum
 
         res_conf.reservation.path.directionality  = service_parameters.directionality
         res_conf.reservation.path.sourceSTP.stpId = service_parameters.source_stp.urn()
@@ -299,9 +299,9 @@ class RequesterClient:
                 qsr.serviceParameters.schedule.startTime = utcTime(conn.service_parameters.start_time)
                 qsr.serviceParameters.schedule.endTime   = utcTime(conn.service_parameters.end_time)
 
-                qsr.serviceParameters.bandwidth.desired  = conn.service_parameters.bandwidth.desired
-                qsr.serviceParameters.bandwidth.minimum  = conn.service_parameters.bandwidth.minimum
-                qsr.serviceParameters.bandwidth.maximum  = conn.service_parameters.bandwidth.maximum
+                qsr.serviceParameters.bandwidth.desired  = conn.service_parameters.bandwidth
+                #qsr.serviceParameters.bandwidth.minimum  = conn.service_parameters.bandwidth.minimum
+                #qsr.serviceParameters.bandwidth.maximum  = conn.service_parameters.bandwidth.maximum
 
                 def createOrderedSTP(stp, rank):
                     ostp = self.client.createType('{http://schemas.ogf.org/nsi/2011/10/connection/types}OrderedServiceTerminationPointType')

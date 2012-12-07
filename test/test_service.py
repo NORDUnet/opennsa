@@ -39,11 +39,7 @@ class ServiceTest(unittest.TestCase):
             backend = dud.DUDNSIBackend(network)
             topo, _ = gole.parseTopology( [ topo_source ] )
 
-            service_registry = registry.ServiceRegistry()
-
-            nsi_service = nsiservice.NSIService(network, backend, service_registry, topo)
-
-            factory = nsi1.createService(nsi_service, service_registry, HOST, port, WSDL_DIR)
+            factory = nsi1.createService(network, backend, topo, HOST, port, WSDL_DIR)
 
             iport = reactor.listenTCP(port, factory, interface='localhost')
             self.iports.append(iport)
@@ -75,8 +71,8 @@ class ServiceTest(unittest.TestCase):
         start_time = datetime.datetime.utcfromtimestamp(time.time() + 1.5 )
         end_time   = datetime.datetime.utcfromtimestamp(time.time() + 120 )
 
-        bwp = nsa.BandwidthParameters(200)
-        service_params  = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, bandwidth=bwp)
+        bandwidth = 200
+        service_params  = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, bandwidth)
         global_reservation_id = 'urn:uuid:' + str(uuid.uuid1())
         connection_id         = 'conn-id1'
 
@@ -118,8 +114,8 @@ class ServiceTest(unittest.TestCase):
         start_time = datetime.datetime.utcfromtimestamp(time.time() + 1.5 )
         end_time   = datetime.datetime.utcfromtimestamp(time.time() + 120 )
 
-        bwp = nsa.BandwidthParameters(200)
-        service_params  = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, bandwidth=bwp)
+        bandwidth = 200
+        service_params  = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, bandwidth)
         connection_id         = 'conn-id1'
 
         try:
@@ -142,8 +138,8 @@ class ServiceTest(unittest.TestCase):
         start_time = datetime.datetime.utcfromtimestamp(time.time() + 1.5 )
         end_time   = datetime.datetime.utcfromtimestamp(time.time() + 120 )
 
-        bwp = nsa.BandwidthParameters(200)
-        service_params  = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, bandwidth=bwp)
+        bandwidth = 200
+        service_params  = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, bandwidth)
         connection_id         = 'conn-id1'
 
         try:
@@ -166,8 +162,8 @@ class ServiceTest(unittest.TestCase):
         start_time = datetime.datetime.utcfromtimestamp(time.time() - 1 )
         end_time   = datetime.datetime.utcfromtimestamp(time.time() + 120 )
 
-        bwp = nsa.BandwidthParameters(200)
-        service_params  = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, bandwidth=bwp)
+        bandwidth = 200
+        service_params  = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, bandwidth)
         connection_id         = 'conn-id1'
 
         try:
@@ -190,8 +186,8 @@ class ServiceTest(unittest.TestCase):
         start_time = datetime.datetime.utcfromtimestamp(time.time() + 2 )
         end_time   = datetime.datetime.utcfromtimestamp(time.time() + 40 )
 
-        bwp = nsa.BandwidthParameters(200)
-        service_params  = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, bandwidth=bwp)
+        bandwidth = 200
+        service_params  = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, bandwidth)
         connection_id         = 'conn-id1'
 
         try:

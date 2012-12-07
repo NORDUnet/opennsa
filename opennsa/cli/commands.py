@@ -25,8 +25,7 @@ def reserve(client, client_nsa, provider_nsa, source_stp, dest_stp, start_time, 
     r_source_stp    = nsa.STP(source_network, source_port)
     r_dest_stp      = nsa.STP(dest_network,   dest_port)
 
-    bwp = nsa.BandwidthParameters(bandwidth)
-    service_params  = nsa.ServiceParameters(start_time, end_time, r_source_stp, r_dest_stp, bandwidth=bwp)
+    service_params  = nsa.ServiceParameters(start_time, end_time, r_source_stp, r_dest_stp, bandwidth)
 
     log.msg("Connection ID: %s" % connection_id)
     log.msg("Global ID: %s" % global_id)

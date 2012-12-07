@@ -28,7 +28,7 @@ TEST_PATH_3 = {
     'source_stp': nsa.STP('Aruba', 'A2'),
     'dest_stp'  : nsa.STP('Bonaire', 'B3'),
     'paths'     :  [ [ nsa.Link('Aruba', 'A2', 'A1'), nsa.Link('Dominica', 'D4', 'D1'), nsa.Link('Curacao', 'C4', 'C1'), nsa.Link('Bonaire', 'B4', 'B3') ] ],
-    'bandwidth' : nsa.BandwidthParameters(1000, 1000, 1000)
+    'bandwidth' : 1000
 }
 
 TEST_PATHS = [ TEST_PATH_1, TEST_PATH_2 ]

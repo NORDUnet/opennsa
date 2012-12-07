@@ -175,18 +175,9 @@ class Network:
 
 
 
-class BandwidthParameters:
-
-    def __init__(self, desired=None, minimum=None, maximum=None):
-        self.desired = desired
-        self.minimum = minimum
-        self.maximum = maximum
-
-
-
 class ServiceParameters:
 
-    def __init__(self, start_time, end_time, source_stp, dest_stp, stps=None, directionality='Bidirectional', bandwidth=None):
+    def __init__(self, start_time, end_time, source_stp, dest_stp, bandwidth, stps=None, directionality='Bidirectional'):
 
         # should probably make path object sometime..
 
@@ -196,15 +187,15 @@ class ServiceParameters:
         # path
         self.source_stp = source_stp
         self.dest_stp   = dest_stp
-        self.stps       = stps
-        assert directionality in ('Unidirectional', 'Bidirectional')
-        self.directionality = directionality
+        self.bandwidth  = bandwidth
 
-        self.bandwidth = bandwidth or BandwidthParameters()
+        self.stps       = stps
+        assert directionality in ('Unidirectional', 'Bidirectional'), 'Invalid directionality: %s' % directionality
+        self.directionality = directionality
 
 
     def subConnectionClone(self, source_stp, dest_stp):
-        return ServiceParameters(self.start_time, self.end_time, source_stp, dest_stp, None, self.directionality, self.bandwidth)
+        return ServiceParameters(self.start_time, self.end_time, source_stp, dest_stp, self.bandwidth, None, self.directionality)
 
 
     def protoSP(self):

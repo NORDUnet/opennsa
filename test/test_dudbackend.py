@@ -18,9 +18,9 @@ class DUDBackendTest(unittest.TestCase):
         dest_stp    = nsa.STP('Aruba', 'A3' )
         start_time = datetime.datetime.utcfromtimestamp(time.time() + 0.1 )
         end_time   = datetime.datetime.utcfromtimestamp(time.time() + 10 )
-        bwp = nsa.BandwidthParameters(200)
+        bandwidth = 200
 
-        self.service_params  = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, bandwidth=bwp)
+        self.service_params  = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, bandwidth)
 
 
     @defer.inlineCallbacks

@@ -64,9 +64,9 @@ def doMain():
     end_time   = datetime.datetime.utcfromtimestamp(time.time() + 120 )
     #start_time, end_time = end_time, start_time
 
-    bwp = nsa.BandwidthParameters(200)
+    bandwidth = 200
     #service_params  = nsa.ServiceParameters('2011-09-01T08:56:00Z', '2011-10-01T08:56:00Z' , source_stp, dest_stp, bwp)
-    service_params  = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, bandwidth=bwp)
+    service_params  = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, bandwidth)
     global_reservation_id = 'urn:uuid:' + str(uuid.uuid1())
     connection_id         = 'urn:uuid:' + str(uuid.uuid1())
 

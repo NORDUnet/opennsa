@@ -63,8 +63,8 @@ class SubConnection:
                                                     self.service_parameters.end_time,
                                                     self.source_stp,
                                                     self.dest_stp,
-                                                    directionality=self.service_parameters.directionality,
-                                                    bandwidth=self.service_parameters.bandwidth)
+                                                    self.service_parameters.bandwidth,
+                                                    directionality=self.service_parameters.directionality)
 
         reserve = self.service_registry.getHandler(registry.RESERVE, self.client_system)
         d = reserve(self.requester_nsa, self.provider_nsa, self.session_security_attr,

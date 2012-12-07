@@ -125,8 +125,7 @@ class ProviderService:
         source_stp  = parseSTPID(path.sourceSTP.stpId)
         dest_stp    = parseSTPID(path.destSTP.stpId)
         # how to check for existence of optional parameters easily  - in / hasattr both works
-        bw = sp.bandwidth
-        bwp = nsa.BandwidthParameters(bw.desired if 'desired' in bw else None, bw.minimum if 'minimum' in bw else None, bw.maximum if 'maximum' in bw else None)
+        bandwidth = sp.bandwidth.desired if 'desired' in sp.bandwidth else None # we only support desired
         start_time = sudsdate.DateTime(sp.schedule.startTime).value
         end_time   = sudsdate.DateTime(sp.schedule.endTime).value
 
@@ -139,7 +138,7 @@ class ProviderService:
         t_delta = time.time() - t_start
         log.msg('Profile: Reserve request parse time: %s' % round(t_delta, 3), profile=True, system=LOG_SYSTEM)
 
-        service_parameters      = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, bandwidth=bwp)
+        service_parameters = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, bandwidth)
 
         d = self.provider.reserve(correlation_id, reply_to, requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters)
         d.addCallbacks(self._createReply, self._createFault, callbackArgs=(method,correlation_id), errbackArgs=(method,))
