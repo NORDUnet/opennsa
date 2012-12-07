@@ -38,7 +38,7 @@
 # -z (skip) verify certificate (default is to verify)
 
 # free switches
-# ijmyz
+# ijmy
 
 # Not all commands will accept all flags and some flags are mutally exclusive
 
@@ -145,7 +145,7 @@ class NetworkBaseOptions(BaseOptions, WSDLDirectoryOption, HostOption, PortOptio
     def postOptions(self):
         # technically we should do this for all superclasses, but this is the only one that has anything to do
         if self[options.SERVICE_URL] and (self[options.TOPOLOGY_FILE] or self[options.NETWORK]):
-            raise usage.UsageError('Cannot set both service url while having topology file or network.')
+            raise usage.UsageError('Cannot set service url while having topology file or network.')
 
 
 class NetworkCommandOptions(NetworkBaseOptions, ProviderNSAOption, RequesterNSAOption, ConnectionIDOption, GlobalIDOption):
