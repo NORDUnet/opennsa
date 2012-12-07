@@ -1,4 +1,8 @@
 
+NSI2 Support!
+
+Registry, they are not necessarely events or service. Just a registry. (just some renaming)
+
 Log rotation
 Better handling of non-200 responses
 
@@ -9,6 +13,9 @@ Long term:
   Easy way of seeing connections in OpenNSA (basic web interface is there)
   Deal with bandwidth in calendar (requires joint resource concept)
   Ability to generate topology from NRM mapping / internal topology description
+
+  Think about AAI and Ports, Probably want private ports
+   - How do we represent port access?
 
 
 General:
