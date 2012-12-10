@@ -110,7 +110,7 @@ class Requester:
             self.triggerCall(provider_nsa.urn(), correlation_id, 'provision', error.ProvisionError(err.getErrorMessage()))
 
         rd = self.addCall(provider_nsa, correlation_id, 'provision')
-        cd = self.provider_client.provision(correlation_id, requester_nsa, provider_nsa, session_security_attr, connection_id)
+        cd = self.requester_client.provision(correlation_id, requester_nsa, provider_nsa, session_security_attr, connection_id)
         cd.addErrback(provisionRequestFailed)
         return rd
 

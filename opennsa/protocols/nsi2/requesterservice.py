@@ -23,6 +23,8 @@ LOG_SYSTEM = 'protocol.nsi2.RequesterService'
 
 FRAMEWORK_TYPES_NS  = "http://schemas.ogf.org/nsi/2012/03/framework/types"
 
+PROTO = 'urn:org.ogf.schema.NSIv2'
+
 
 # Hack on!
 # Getting SUDS to throw service faults is more or less impossible as it is a client library
@@ -60,9 +62,9 @@ class RequesterService:
         self.requester = requester
         self.datetime_parser = parser.parser()
 
-#        self.decoder = sudsservice.WSDLMarshaller(WSDL_REQUESTER % wsdl_dir)
-
-        soap_resource.registerDecoder(actions.RESERVE_CONFIRMED, self.reserveConfirmed)
+        # consider moving this to __init__ (soap_resource only used in setup)
+        soap_resource.registerDecoder(actions.RESERVE_CONFIRMED,   self.reserveConfirmed)
+        soap_resource.registerDecoder(actions.PROVISION_CONFIRMED, self.provisionConfirmed)
 
 ##        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/10/connection/service/reserveConfirmed"',      self.reserveConfirmed)
 ##        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/10/connection/service/reserveFailed"',         self.reserveFailed)
@@ -99,9 +101,9 @@ class RequesterService:
 ##        return requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_id, error_message
 
 
-    def _createGenericAcknowledgement(self, _, correlation_id, requester_nsa, provider_nsa):
+    def _createGenericAcknowledgement(self, protocol_version, correlation_id, requester_nsa, provider_nsa):
 
-        header = HT.CommonHeaderType(None, correlation_id, requester_nsa, provider_nsa)
+        header = HT.CommonHeaderType(protocol_version, correlation_id, requester_nsa, provider_nsa)
 
         f1 = StringIO.StringIO()
         header.export(f1,0, namespacedef_='xmlns:tns="%s"' % FRAMEWORK_TYPES_NS)
@@ -146,7 +148,7 @@ class RequesterService:
         self.requester.reserveConfirmed(header.correlationId, header.requesterNSA, header.providerNSA, session_security_attr,
                                         reservation.globalReservationId, reservation.description, reservation.connectionId, service_parameters)
 
-        return self._createGenericAcknowledgement(None, reservation.globalReservationId, reservation.description, reservation.connectionId)
+        return self._createGenericAcknowledgement(PROTO, header.correlationId, header.requesterNSA, header.providerNSA)
 
 
 ##    def reserveFailed(self, soap_action, soap_data):
@@ -162,22 +164,22 @@ class RequesterService:
 ##        reply = self.decoder.marshal_result(correlation_id, method)
 ##        return reply
 ##
-##
-##    def provisionConfirmed(self, soap_action, soap_data):
-##
-##        assert soap_action == '"http://schemas.ogf.org/nsi/2011/10/connection/service/provisionConfirmed"'
-##        method, req = self.decoder.parse_request('provisionConfirmed', soap_data)
-##
-##        requester_nsa, provider_nsa = _decodeNSAs(req.provisionConfirmed)
-##        correlation_id  = str(req.correlationId)
-##        connection_id   = str(req.provisionConfirmed.connectionId)
-##
-##        d = self.requester.provisionConfirmed(correlation_id, requester_nsa, provider_nsa, None, connection_id)
-##
-##        reply = self.decoder.marshal_result(correlation_id, method)
-##        return reply
-##
-##
+
+    def provisionConfirmed(self, soap_action, soap_data):
+
+        headers, bodies = minisoap.parseSoapPayload(soap_data)
+
+        header = HT.parseString( ET.tostring( headers[0] ) )
+        generic_confirm = CT.parseString( ET.tostring( bodies[0] ) )
+
+        session_security_attr = None
+
+        self.requester.provisionConfirmed(header.correlationId, header.requesterNSA, header.providerNSA, session_security_attr,
+                                          generic_confirm.connectionId)
+
+        return self._createGenericAcknowledgement(PROTO, header.correlationId, header.requesterNSA, header.providerNSA)
+
+
 ##    def provisionFailed(self, soap_action, soap_data):
 ##
 ##        assert soap_action == '"http://schemas.ogf.org/nsi/2011/10/connection/service/provisionFailed"'

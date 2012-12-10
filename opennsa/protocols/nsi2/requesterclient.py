@@ -13,7 +13,6 @@ from opennsa.protocols.nsi2 import connectiontypes as CT, headertypes as HT, act
 
 
 
-#URN_UUID_PREFIX = 'urn:uuid:'
 FRAMEWORK_TYPES_NS  = "http://schemas.ogf.org/nsi/2012/03/framework/types"
 CONNECTION_TYPES_NS = "http://schemas.ogf.org/nsi/2012/03/connection/types"
 
@@ -22,9 +21,6 @@ CONNECTION_TYPES_NS = "http://schemas.ogf.org/nsi/2012/03/connection/types"
 def utcTime(dt):
     return dt.isoformat().rsplit('.',1)[0] + 'Z'
 
-
-#def createCorrelationId():
-#    return URN_UUID_PREFIX + str(uuid.uuid1())
 
 
 class RequesterClient:
@@ -84,20 +80,30 @@ class RequesterClient:
             log.msg(' -- Received Response Payload --\n' + data + '\n -- END. Received Response Payload --', payload=True)
 
         #print "--\n", service_url
-        f = minisoap.httpRequest(service_url, actions.RESERVE, payload, ctx_factory=self.ctx_factory)
+        #f = minisoap.httpRequest(service_url, actions.RESERVE, payload, ctx_factory=self.ctx_factory)
+        f = minisoap.httpRequest(provider_nsa.url(), actions.RESERVE, payload, ctx_factory=self.ctx_factory)
         f.deferred.addCallbacks(gotReply) #, errReply)
         return f.deferred
 
 
-#        d = self.client.invoke(provider_nsa.url(), 'reserve', correlation_id, self.reply_to, res_req)
-#        return d
-
-
     def provision(self, correlation_id, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
-        req = self._createGenericRequestType(requester_nsa, provider_nsa, connection_id)
-        d = self.client.invoke(provider_nsa.url(), 'provision', correlation_id, self.reply_to, req)
-        return d
+        # this needs be more compact
+        header = HT.CommonHeaderType(None, correlation_id, requester_nsa.urn(), provider_nsa.urn(), self.reply_to)
+
+        request = CT.GenericRequestType(connection_id)
+
+        header_payload = minisoap.serializeType(header,  'xmlns:tns="%s"' % FRAMEWORK_TYPES_NS)
+        body_payload   = minisoap.serializeType(request, 'xmlns:tns="%s"' % CONNECTION_TYPES_NS)
+
+        payload = minisoap.createSoapPayload(body_payload, header_payload)
+
+        def gotReply(data):
+            log.msg(' -- START: Provision Response --\n' + data + '\n -- END. Provision Response --', payload=True)
+
+        f = minisoap.httpRequest(provider_nsa.url(), actions.PROVISION, payload, ctx_factory=self.ctx_factory)
+        f.deferred.addCallbacks(gotReply) #, errReply)
+        return f.deferred
 
 
     def release(self, correlation_id, requester_nsa, provider_nsa, session_security_attr, connection_id):

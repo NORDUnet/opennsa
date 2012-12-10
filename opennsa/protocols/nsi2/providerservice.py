@@ -60,7 +60,8 @@ class ProviderService:
 
         self.provider = provider
 
-        soap_resource.registerDecoder(actions.RESERVE, self.reserve)
+        soap_resource.registerDecoder(actions.RESERVE,   self.reserve)
+        soap_resource.registerDecoder(actions.PROVISION, self.provision)
 
         self.datetime_parser = parser.parser()
 
@@ -75,23 +76,6 @@ class ProviderService:
 #        "http://schemas.ogf.org/nsi/2012/03/connection/service/queryConfirmed"
 #        "http://schemas.ogf.org/nsi/2012/03/connection/service/queryFailed"
 
-
-#    def _getGRTParameters(self, grt):
-#        # GRT = Generic Request Type
-#        requester_nsa, provider_nsa = _decodeNSAs(grt)
-#        connection_id               = str(grt.connectionId)
-#        return requester_nsa, provider_nsa, connection_id
-
-
-#    def _getRequestParameters(self, grt):
-#        correlation_id  = str(grt.correlationId)
-#        reply_to        = str(grt.replyTo)
-#        return correlation_id, reply_to
-
-
-#    def _createReply(self, _, method, correlation_id):
-#        reply = self.decoder.marshal_result(correlation_id, method)
-#        return reply
 
     def _createGenericAcknowledgement(self, _, correlation_id, requester_nsa, provider_nsa):
 
@@ -120,8 +104,6 @@ class ProviderService:
 
 
     def reserve(self, soap_action, soap_data):
-
-        assert soap_action == actions.RESERVE, 'Invalid SOAP action for CS2.ProviderService.reserve'
 
         t_start = time.time()
 
@@ -190,18 +172,25 @@ class ProviderService:
         return d
 
 
-#    def provision(self, soap_action, soap_data):
-#
-#        method, req = self.decoder.parse_request('provision', soap_data)
-#
-#        correlation_id, reply_to, = self._getRequestParameters(req)
-#        requester_nsa, provider_nsa, connection_id = self._getGRTParameters(req.provision)
-#
-#        d = self.provider.provision(correlation_id, reply_to, requester_nsa, provider_nsa, None, connection_id)
-#        d.addCallbacks(self._createReply, self._createFault, callbackArgs=(method,correlation_id), errbackArgs=(method,))
-#        return d
-#
-#
+    def provision(self, soap_action, soap_data):
+
+        headers, bodies = minisoap.parseSoapPayload(soap_data)
+
+        # do some checking here
+
+        header = HT.parseString( ET.tostring( headers[0] ) )
+        generic_request = CT.parseString( ET.tostring( bodies[0] ) )
+
+        session_security_attr = None
+
+        d = self.provider.provision(header.correlationId, header.replyTo, header.requesterNSA, header.providerNSA, session_security_attr,
+                                    generic_request.connectionId)
+
+        d.addCallbacks(self._createGenericAcknowledgement, self._createFault,
+                       callbackArgs=(header.correlationId, header.requesterNSA, header.providerNSA))
+        return d
+
+
 #    def release(self, soap_action, soap_data):
 #
 #        method, req = self.decoder.parse_request('release', soap_data)

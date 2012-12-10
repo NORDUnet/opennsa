@@ -11,16 +11,16 @@ from opennsa.protocols.shared import minisoap
 from opennsa.protocols.nsi2 import actions, connectiontypes as CT, headertypes as HT
 
 
+# these exist several place, move them together some time
+FRAMEWORK_TYPES_NS  = "http://schemas.ogf.org/nsi/2012/03/framework/types"
+CONNECTION_TYPES_NS = "http://schemas.ogf.org/nsi/2012/03/connection/types"
+PROTO = 'urn:org.ogf.schema.NSIv2'
 
-#URN_UUID_PREFIX = 'urn:uuid:'
 
 
 def utcTime(dt):
     return dt.isoformat().rsplit('.',1)[0] + 'Z'
 
-
-#def createCorrelationId():
-#    return URN_UUID_PREFIX + str(uuid.uuid1())
 
 
 class ProviderClient:
@@ -41,9 +41,6 @@ class ProviderClient:
 
 
     def reserveConfirmed(self, requester_uri, correlation_id, requester_nsa, provider_nsa, global_reservation_id, description, connection_id, service_parameters):
-
-        FRAMEWORK_TYPES_NS  = "http://schemas.ogf.org/nsi/2012/03/framework/types"
-        CONNECTION_TYPES_NS = "http://schemas.ogf.org/nsi/2012/03/connection/types"
 
         sp = service_parameters
         s_stp = sp.source_stp
@@ -126,14 +123,35 @@ class ProviderClient:
 #        d = self.client.invoke(requester_uri, 'reserveFailed', correlation_id, res_fail)
 #        return d
 #
-#
-#    def provisionConfirmed(self, requester_uri, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id):
-#
+
+    def provisionConfirmed(self, requester_uri, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id):
+
+        header = HT.CommonHeaderType(PROTO, correlation_id, requester_nsa, provider_nsa)
+        generic_confirm = CT.GenericConfirmedType(connection_id)
+
+        header_payload = minisoap.serializeType(header,          'xmlns:tns="%s"' % FRAMEWORK_TYPES_NS)
+        body_payload   = minisoap.serializeType(generic_confirm, 'xmlns:tns="%s"' % CONNECTION_TYPES_NS)
+
+        payload = minisoap.createSoapPayload(body_payload, header_payload)
+
+        print "PC PAYLOAD\n", payload, "\n"
+
+        def gotReply(data):
+            print "PC REPLY\n", data
+#            return ""
+
+#        print "--\n", requester_uri
+        f = minisoap.httpRequest(requester_uri, actions.PROVISION_CONFIRMED, payload, ctx_factory=self.ctx_factory)
+        f.deferred.addCallbacks(gotReply) #, errReply)
+        return f.deferred
+
+
+
 #        conf = self._createGenericConfirmType(requester_nsa, provider_nsa, global_reservation_id, connection_id)
 #        d = self.client.invoke(requester_uri, 'provisionConfirmed', correlation_id, conf)
 #        return d
-#
-#
+
+
 #    def provisionFailed(self, requester_uri, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_msg):
 #
 #        gft = self.client.createType('{http://schemas.ogf.org/nsi/2011/10/connection/types}GenericFailedType')
