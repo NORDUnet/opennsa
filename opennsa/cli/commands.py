@@ -31,7 +31,7 @@ def reserve(client, client_nsa, provider_nsa, source_stp, dest_stp, start_time, 
     log.msg("Global ID: %s" % global_id)
 
     _ = yield client.reserve(client_nsa, provider_nsa, None, global_id, 'Test Connection', connection_id, service_params)
-    print "Reservation created at %s" % provider_nsa
+    log.msg("Reservation created at %s" % provider_nsa)
 
 
 @defer.inlineCallbacks
