@@ -38,7 +38,7 @@
 # -z (skip) verify certificate (default is to verify)
 
 # free switches
-# ijmy
+# ijmy + 0-9
 
 # Not all commands will accept all flags and some flags are mutally exclusive
 
