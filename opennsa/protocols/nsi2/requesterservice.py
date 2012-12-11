@@ -64,10 +64,12 @@ class RequesterService:
 
         # consider moving this to __init__ (soap_resource only used in setup)
         soap_resource.registerDecoder(actions.RESERVE_CONFIRMED,   self.reserveConfirmed)
+
         soap_resource.registerDecoder(actions.PROVISION_CONFIRMED, self.provisionConfirmed)
 
-        soap_resource.registerDecoder(actions.TERMINATE_CONFIRMED, self.terminateConfirmed)
+        soap_resource.registerDecoder(actions.RELEASE_CONFIRMED,   self.releaseConfirmed)
 
+        soap_resource.registerDecoder(actions.TERMINATE_CONFIRMED, self.terminateConfirmed)
 
 ##        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/10/connection/service/reserveConfirmed"',      self.reserveConfirmed)
 ##        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/10/connection/service/reserveFailed"',         self.reserveFailed)
@@ -194,22 +196,19 @@ class RequesterService:
 ##        reply = self.decoder.marshal_result(correlation_id, method)
 ##        return reply
 ##
-##
-##    def releaseConfirmed(self, soap_action, soap_data):
-##
-##        assert soap_action == '"http://schemas.ogf.org/nsi/2011/10/connection/service/releaseConfirmed"'
-##        method, req = self.decoder.parse_request('releaseConfirmed', soap_data)
-##
-##        requester_nsa, provider_nsa = _decodeNSAs(req.releaseConfirmed)
-##        correlation_id  = str(req.correlationId)
-##        connection_id   = str(req.releaseConfirmed.connectionId)
-##
-##        d = self.requester.releaseConfirmed(correlation_id, requester_nsa, provider_nsa, None, connection_id)
-##
-##        reply = self.decoder.marshal_result(correlation_id, method)
-##        return reply
-##
-##
+
+    def releaseConfirmed(self, soap_action, soap_data):
+
+        header, generic_confirm = self._parseGenericConfirm(soap_data)
+
+        session_security_attr = None
+
+        self.requester.releaseConfirmed(header.correlationId, header.requesterNSA, header.providerNSA, session_security_attr,
+                                        generic_confirm.connectionId)
+
+        return self._createGenericAcknowledgement(PROTO, header.correlationId, header.requesterNSA, header.providerNSA)
+
+
 ##    def releaseFailed(self, soap_action, soap_data):
 ##
 ##        assert soap_action == '"http://schemas.ogf.org/nsi/2011/10/connection/service/releaseFailed"'

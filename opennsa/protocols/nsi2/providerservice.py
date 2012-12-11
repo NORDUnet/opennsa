@@ -214,8 +214,8 @@ class ProviderService:
 #
         session_security_attr = None
 
-        d = self.provider.provision(header.correlationId, header.replyTo, header.requesterNSA, header.providerNSA, session_security_attr,
-                                    generic_request.connectionId)
+        d = self.provider.release(header.correlationId, header.replyTo, header.requesterNSA, header.providerNSA, session_security_attr,
+                                  generic_request.connectionId)
 
         d.addCallbacks(self._createGenericAcknowledgement, self._createFault,
                        callbackArgs=(header.correlationId, header.requesterNSA, header.providerNSA))
