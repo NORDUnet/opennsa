@@ -93,6 +93,7 @@ def doMain():
         yield commands.discover(client, service_url)
 
 
+    # network commands, listener port created in this block
     elif config.subCommand in ['reserve', 'reserveprovision', 'provision', 'release', 'terminate', 'querysummary', 'querydetails']:
 
         wsdl_dir        = config.subOptions[options.WSDL_DIRECTORY] or defaults.get(options.WSDL_DIRECTORY) or WSDL_DEFAULT_DIRECTORY
@@ -158,40 +159,52 @@ def doMain():
         if tls and not ctx_factory:
             raise usage.UsageError('Options for TLS/SSL context not defined. Cannot setup TLS.')
 
-        from opennsa.protocols import nsi1
-        client, factory = nsi1.createClient(host, port, wsdl_dir, tls, ctx_factory)
+        # options only required for reserve
+        elif config.subCommand in ('reserve', 'reserveprovision'):
+
+            source_stp = config.subOptions[options.SOURCE_STP]  or defaults.get(options.SOURCE_STP)
+            dest_stp   = config.subOptions[options.DEST_STP]    or defaults.get(options.DEST_STP)
+            if source_stp is None:
+                raise usage.UsageError('Source STP is not defined')
+            if dest_stp is None:
+                raise usage.UsageError('Dest STP is not defined')
+
+            start_time  = config.subOptions[options.START_TIME] or defaults.get(options.START_TIME)
+            end_time    = config.subOptions[options.END_TIME]   or defaults.get(options.END_TIME)
+            if start_time is None:
+                raise usage.UsageError('Start time is not defined')
+            if end_time is None:
+                raise usage.UsageError('End time is not defined')
+
+            bandwidth = config.subOptions[options.BANDWIDTH] or defaults.get(options.BANDWIDTH)
+            if bandwidth is None:
+                raise usage.UsageError('Bandwidth is not defined')
+
+            bandwidth = config.subOptions[options.BANDWIDTH] or defaults.get(options.BANDWIDTH)
+
+            if connection_id is None:
+                connection_id = uuid.uuid1()
+            if global_id is None:
+                global_id = 'conn-%i' % random.randrange(1000,9999)
+
+
+        # setup listener port
+#        from opennsa.protocols import nsi1
+#        client, factory = nsi1.createClient(host, port, wsdl_dir, tls, ctx_factory)
+
+        from opennsa.protocols import nsi2
+        client, factory = nsi2.createRequesterClient(host, port, tls, ctx_factory, 12)
+
+
         if tls:
             iport = reactor.listenSSL(port, factory, ctx_factory)
         else:
             iport = reactor.listenTCP(port, factory)
 
 
-    elif config.subCommand in ('reserve', 'reserveprovision'):
+    # start over on commands, now we do the actual dispatch
 
-        source_stp = config.subOptions[options.SOURCE_STP]  or defaults.get(options.SOURCE_STP)
-        dest_stp   = config.subOptions[options.DEST_STP]    or defaults.get(options.DEST_STP)
-        if source_stp is None:
-            raise usage.UsageError('Source STP is not defined')
-        if dest_stp is None:
-            raise usage.UsageError('Dest STP is not defined')
-
-        start_time  = config.subOptions[options.START_TIME] or defaults.get(options.START_TIME)
-        end_time    = config.subOptions[options.END_TIME]   or defaults.get(options.END_TIME)
-        if start_time is None:
-            raise usage.UsageError('Start time is not defined')
-        if end_time is None:
-            raise usage.UsageError('End time is not defined')
-
-        bandwidth = config.subOptions[options.BANDWIDTH] or defaults.get(options.BANDWIDTH)
-        if bandwidth is None:
-            raise usage.UsageError('Bandwidth is not defined')
-
-        bandwidth = config.subOptions[options.BANDWIDTH] or defaults.get(options.BANDWIDTH)
-
-        if connection_id is None:
-            connection_id = uuid.uuid1()
-        if global_id is None:
-            global_id = 'conn-%i' % random.randrange(1000,9999)
+    if config.subCommand in ('reserve', 'reserveprovision'):
 
         yield commands.reserve(client, client_nsa, provider_nsa, source_stp, dest_stp, start_time, end_time, bandwidth, connection_id, global_id)
         if config.subCommand == 'reserveprovision':
