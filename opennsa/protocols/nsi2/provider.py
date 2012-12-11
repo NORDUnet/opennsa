@@ -34,9 +34,8 @@ class Provider:
 
         event_registry.registerEventHandler(registry.RESERVE_RESPONSE,   self.notifyReserveResult,   WS_PROTO_EVENT_SYSTEM)
         event_registry.registerEventHandler(registry.PROVISION_RESPONSE, self.notifyProvisionResult, WS_PROTO_EVENT_SYSTEM)
-
-#        event_registry.registerEventHandler(registry.RELEASE_RESPONSE,   self.notifyReleaseResult,   WS_PROTO_EVENT_SYSTEM)
-#        event_registry.registerEventHandler(registry.TERMINATE_RESPONSE, self.notifyTerminateResult, WS_PROTO_EVENT_SYSTEM)
+        event_registry.registerEventHandler(registry.RELEASE_RESPONSE,   self.notifyReleaseResult,   WS_PROTO_EVENT_SYSTEM)
+        event_registry.registerEventHandler(registry.TERMINATE_RESPONSE, self.notifyTerminateResult, WS_PROTO_EVENT_SYSTEM)
 #        event_registry.registerEventHandler(registry.QUERY_RESPONSE,     self.notifyQueryResult,     WS_PROTO_EVENT_SYSTEM)
 
 
@@ -102,60 +101,60 @@ class Provider:
             return d
         else:
             error_msg = _createErrorMessage(result)
-            d = self.requester_client.provisionFailed(reply_to, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, 'TERMINATED', error_msg)
+            d = self.provider_client.provisionFailed(reply_to, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, 'TERMINATED', error_msg)
             return d
 
 
-#    def release(self, correlation_id, reply_to, requester_nsa, provider_nsa, session_security_attr, connection_id):
-#
-#        data = { 'reply_to'      : reply_to,      'correlation_id'        : correlation_id,
-#                 'requester_nsa' : requester_nsa, 'provider_nsa'          : provider_nsa,
-#                 'connection_id' : connection_id, 'global_reservation_id' : None }
-#        sub = subscription.Subscription(registry.RELEASE_RESPONSE, WS_PROTO_EVENT_SYSTEM, data)
-#
-#        handler = self.event_registry.getHandler(registry.RELEASE, registry.SYSTEM_SERVICE)
-#        d = defer.maybeDeferred(handler, requester_nsa, provider_nsa, session_security_attr, connection_id, sub)
-#        return d
-#
-#
-#    def notifyReleaseResult(self, success, result, data):
-#
-#        reply_to, correlation_id, requester_nsa, provider_nsa, connection_id, global_reservation_id = self._extractData(data)
-#
-#        if success:
-#            d = self.requester_client.releaseConfirmed(reply_to, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id)
-#            return d
-#        else:
-#            error_msg = _createErrorMessage(result)
-#            d = self.requester_client.releaseFailed(reply_to, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, 'TERMINATED', error_msg)
-#            return d
-#
-#
-#    def terminate(self, correlation_id, reply_to, requester_nsa, provider_nsa, session_security_attr, connection_id):
-#
-#        data = { 'reply_to'      : reply_to,      'correlation_id'        : correlation_id,
-#                 'requester_nsa' : requester_nsa, 'provider_nsa'          : provider_nsa,
-#                 'connection_id' : connection_id, 'global_reservation_id' : None }
-#        sub = subscription.Subscription(registry.TERMINATE_RESPONSE, WS_PROTO_EVENT_SYSTEM, data)
-#
-#        handler = self.event_registry.getHandler(registry.TERMINATE, registry.SYSTEM_SERVICE)
-#        d = defer.maybeDeferred(handler, requester_nsa, provider_nsa, session_security_attr, connection_id, sub)
-#        return d
-#
-#
-#    def notifyTerminateResult(self, success, result, data):
-#
-#        reply_to, correlation_id, requester_nsa, provider_nsa, connection_id, global_reservation_id = self._extractData(data)
-#
-#        if success:
-#            d = self.requester_client.terminateConfirmed(reply_to, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id)
-#            return d
-#        else:
-#            error_msg = _createErrorMessage(result)
-#            d = self.requester_client.terminateFailed(reply_to, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, 'TERMINATED', error_msg)
-#            return d
-#
-#
+    def release(self, correlation_id, reply_to, requester_nsa, provider_nsa, session_security_attr, connection_id):
+
+        data = { 'reply_to'      : reply_to,      'correlation_id'        : correlation_id,
+                 'requester_nsa' : requester_nsa, 'provider_nsa'          : provider_nsa,
+                 'connection_id' : connection_id, 'global_reservation_id' : None }
+        sub = subscription.Subscription(registry.RELEASE_RESPONSE, WS_PROTO_EVENT_SYSTEM, data)
+
+        handler = self.event_registry.getHandler(registry.RELEASE, registry.SYSTEM_SERVICE)
+        d = defer.maybeDeferred(handler, requester_nsa, provider_nsa, session_security_attr, connection_id, sub)
+        return d
+
+
+    def notifyReleaseResult(self, success, result, data):
+
+        reply_to, correlation_id, requester_nsa, provider_nsa, connection_id, global_reservation_id = self._extractData(data)
+
+        if success:
+            d = self.provider_client.releaseConfirmed(reply_to, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id)
+            return d
+        else:
+            error_msg = _createErrorMessage(result)
+            d = self.provider_client.releaseFailed(reply_to, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, 'TERMINATED', error_msg)
+            return d
+
+
+    def terminate(self, correlation_id, reply_to, requester_nsa, provider_nsa, session_security_attr, connection_id):
+
+        data = { 'reply_to'      : reply_to,      'correlation_id'        : correlation_id,
+                 'requester_nsa' : requester_nsa, 'provider_nsa'          : provider_nsa,
+                 'connection_id' : connection_id, 'global_reservation_id' : None }
+        sub = subscription.Subscription(registry.TERMINATE_RESPONSE, WS_PROTO_EVENT_SYSTEM, data)
+
+        handler = self.event_registry.getHandler(registry.TERMINATE, registry.SYSTEM_SERVICE)
+        d = defer.maybeDeferred(handler, requester_nsa, provider_nsa, session_security_attr, connection_id, sub)
+        return d
+
+
+    def notifyTerminateResult(self, success, result, data):
+
+        reply_to, correlation_id, requester_nsa, provider_nsa, connection_id, global_reservation_id = self._extractData(data)
+
+        if success:
+            d = self.provider_client.terminateConfirmed(reply_to, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id)
+            return d
+        else:
+            error_msg = _createErrorMessage(result)
+            d = self.provider_client.terminateFailed(reply_to, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, 'TERMINATED', error_msg)
+            return d
+
+
 #    def query(self, correlation_id, reply_to, requester_nsa, provider_nsa, session_security_attr, operation, connection_ids, global_reservation_ids):
 #
 #        data = { 'reply_to'      : reply_to,      'correlation_id'        : correlation_id,
@@ -179,10 +178,10 @@ class Provider:
 #        operation               = data['operation']
 #
 #        if success:
-#            d = self.requester_client.queryConfirmed(reply_to, correlation_id, requester_nsa, provider_nsa, operation, result)
+#            d = self.provider_client.queryConfirmed(reply_to, correlation_id, requester_nsa, provider_nsa, operation, result)
 #            return d
 #        else:
 #            error_msg = _createErrorMessage(result)
-#            d = self.requester_client.queryFailed(reply_to, correlation_id, requester_nsa, provider_nsa, error_msg)
+#            d = self.provider_client.queryFailed(reply_to, correlation_id, requester_nsa, provider_nsa, error_msg)
 #            return d
 #

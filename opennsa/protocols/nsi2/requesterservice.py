@@ -66,6 +66,9 @@ class RequesterService:
         soap_resource.registerDecoder(actions.RESERVE_CONFIRMED,   self.reserveConfirmed)
         soap_resource.registerDecoder(actions.PROVISION_CONFIRMED, self.provisionConfirmed)
 
+        soap_resource.registerDecoder(actions.TERMINATE_CONFIRMED, self.terminateConfirmed)
+
+
 ##        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/10/connection/service/reserveConfirmed"',      self.reserveConfirmed)
 ##        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/10/connection/service/reserveFailed"',         self.reserveFailed)
 ##
@@ -85,20 +88,14 @@ class RequesterService:
 ##        #"http://schemas.ogf.org/nsi/2011/10/connection/service/query"
 
 
-##    def _getGFTParameters(self, gft):
-##        # GFT = GenericFailedType
-##
-##        requester_nsa, provider_nsa = _decodeNSAs(gft)
-##        global_reservation_id       = str(gft.globalReservationId) if 'globalReservationId' in gft else None
-##        connection_id               = str(gft.connectionId)
-##        connection_state            = str(gft.connectionState)
-##        error_id                    = None
-##        error_message               = None
-##        if 'serviceException' in gft:
-##            error_id                = str(gft.serviceException.messageId) if 'messageId' in gft.serviceException else None
-##            error_message           = str(gft.serviceException.text)      if 'text' in gft.serviceException else None
-##
-##        return requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_id, error_message
+    def _parseGenericConfirm(self, soap_data):
+
+        headers, bodies = minisoap.parseSoapPayload(soap_data)
+
+        header = HT.parseString( ET.tostring( headers[0] ) )
+        generic_confirm = CT.parseString( ET.tostring( bodies[0] ) )
+
+        return header, generic_confirm
 
 
     def _createGenericAcknowledgement(self, protocol_version, correlation_id, requester_nsa, provider_nsa):
@@ -167,10 +164,14 @@ class RequesterService:
 
     def provisionConfirmed(self, soap_action, soap_data):
 
-        headers, bodies = minisoap.parseSoapPayload(soap_data)
+        # def _parseGenericConfirm(self, soap_data):
 
-        header = HT.parseString( ET.tostring( headers[0] ) )
-        generic_confirm = CT.parseString( ET.tostring( bodies[0] ) )
+#        headers, bodies = minisoap.parseSoapPayload(soap_data)
+#
+#        header = HT.parseString( ET.tostring( headers[0] ) )
+#        generic_confirm = CT.parseString( ET.tostring( bodies[0] ) )
+
+        header, generic_confirm = self._parseGenericConfirm(soap_data)
 
         session_security_attr = None
 
@@ -222,22 +223,19 @@ class RequesterService:
 ##        reply = self.decoder.marshal_result(correlation_id, method)
 ##        return reply
 ##
-##
-##    def terminateConfirmed(self, soap_action, soap_data):
-##
-##        assert soap_action == '"http://schemas.ogf.org/nsi/2011/10/connection/service/terminateConfirmed"'
-##        method, req = self.decoder.parse_request('terminateConfirmed', soap_data)
-##
-##        requester_nsa, provider_nsa = _decodeNSAs(req.terminateConfirmed)
-##        correlation_id  = str(req.correlationId)
-##        connection_id   = str(req.terminateConfirmed.connectionId)
-##
-##        d = self.requester.terminateConfirmed(correlation_id, requester_nsa, provider_nsa, None, connection_id)
-##
-##        reply = self.decoder.marshal_result(correlation_id, method)
-##        return reply
-##
-##
+
+    def terminateConfirmed(self, soap_action, soap_data):
+
+        header, generic_confirm = self._parseGenericConfirm(soap_data)
+
+        session_security_attr = None
+
+        self.requester.terminateConfirmed(header.correlationId, header.requesterNSA, header.providerNSA, session_security_attr,
+                                          generic_confirm.connectionId)
+
+        return self._createGenericAcknowledgement(PROTO, header.correlationId, header.requesterNSA, header.providerNSA)
+
+
 ##    def terminateFailed(self, soap_action, soap_data):
 ##
 ##        assert soap_action == '"http://schemas.ogf.org/nsi/2011/10/connection/service/terminateFailed"'

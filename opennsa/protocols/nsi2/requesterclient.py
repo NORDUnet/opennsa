@@ -31,13 +31,19 @@ class RequesterClient:
         self.ctx_factory = ctx_factory
 
 
-#    def _createGenericRequestType(self, requester_nsa, provider_nsa, connection_id):
-#
-#        req = self.client.createType('{http://schemas.ogf.org/nsi/2011/10/connection/types}GenericRequestType')
-#        req.requesterNSA = requester_nsa.urn()
-#        req.providerNSA  = provider_nsa.urn()
-#        req.connectionId = connection_id
-#        return req
+    def _createGenericRequestType(self, correlation_id, requester_nsa, provider_nsa, connection_id):
+
+        # this could be more compact
+        header = HT.CommonHeaderType(None, correlation_id, requester_nsa.urn(), provider_nsa.urn(), self.reply_to)
+
+        request = CT.GenericRequestType(connection_id)
+
+        header_payload = minisoap.serializeType(header,  'xmlns:tns="%s"' % FRAMEWORK_TYPES_NS)
+        body_payload   = minisoap.serializeType(request, 'xmlns:tns="%s"' % CONNECTION_TYPES_NS)
+
+        payload = minisoap.createSoapPayload(body_payload, header_payload)
+
+        return payload
 
 
     def reserve(self, service_url, correlation_id, requester_nsa, provider_nsa, session_security_attr,
@@ -88,15 +94,7 @@ class RequesterClient:
 
     def provision(self, correlation_id, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
-        # this needs be more compact
-        header = HT.CommonHeaderType(None, correlation_id, requester_nsa.urn(), provider_nsa.urn(), self.reply_to)
-
-        request = CT.GenericRequestType(connection_id)
-
-        header_payload = minisoap.serializeType(header,  'xmlns:tns="%s"' % FRAMEWORK_TYPES_NS)
-        body_payload   = minisoap.serializeType(request, 'xmlns:tns="%s"' % CONNECTION_TYPES_NS)
-
-        payload = minisoap.createSoapPayload(body_payload, header_payload)
+        payload = self._createGenericRequestType(correlation_id, requester_nsa, provider_nsa, connection_id)
 
         def gotReply(data):
             log.msg(' -- START: Provision Response --\n' + data + '\n -- END. Provision Response --', payload=True)
@@ -108,16 +106,24 @@ class RequesterClient:
 
     def release(self, correlation_id, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
-        req = self._createGenericRequestType(requester_nsa, provider_nsa, connection_id)
-        d = self.client.invoke(provider_nsa.url(), 'release', correlation_id, self.reply_to, req)
-        return d
+        def gotReply(data):
+            log.msg(' -- START: Release Response --\n' + data + '\n -- END. Release Response --', payload=True)
+
+        payload = self._createGenericRequestType(correlation_id, requester_nsa, provider_nsa, connection_id)
+        f = minisoap.httpRequest(provider_nsa.url(), actions.RELEASE, payload, ctx_factory=self.ctx_factory)
+        f.deferred.addCallbacks(gotReply) #, errReply)
+        return f.deferred
 
 
     def terminate(self, correlation_id, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
-        req = self._createGenericRequestType(requester_nsa, provider_nsa, connection_id)
-        d = self.client.invoke(provider_nsa.url(), 'terminate', correlation_id, self.reply_to, req)
-        return d
+        def gotReply(data):
+            log.msg(' -- START: Terminate Response --\n' + data + '\n -- END. Terminate Response --', payload=True)
+
+        payload = self._createGenericRequestType(correlation_id, requester_nsa, provider_nsa, connection_id)
+        f = minisoap.httpRequest(provider_nsa.url(), actions.TERMINATE, payload, ctx_factory=self.ctx_factory)
+        f.deferred.addCallbacks(gotReply) #, errReply)
+        return f.deferred
 
 
     def query(self, correlation_id, requester_nsa, provider_nsa, session_security_attr, operation="Summary", connection_ids=None, global_reservation_ids=None):

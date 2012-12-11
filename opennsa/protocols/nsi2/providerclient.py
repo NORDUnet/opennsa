@@ -39,8 +39,25 @@ class ProviderClient:
 #        conf.connectionId        = connection_id
 #        return conf
 
+    def _genericConfirm(self, requester_url, action, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id):
 
-    def reserveConfirmed(self, requester_uri, correlation_id, requester_nsa, provider_nsa, global_reservation_id, description, connection_id, service_parameters):
+        header = HT.CommonHeaderType(PROTO, correlation_id, requester_nsa, provider_nsa)
+        generic_confirm = CT.GenericConfirmedType(global_reservation_id, connection_id)
+
+        header_payload = minisoap.serializeType(header,          'xmlns:tns="%s"' % FRAMEWORK_TYPES_NS)
+        body_payload   = minisoap.serializeType(generic_confirm, 'xmlns:tns="%s"' % CONNECTION_TYPES_NS)
+
+        payload = minisoap.createSoapPayload(body_payload, header_payload)
+
+        def gotReply(data):
+            print "GC REPLY\n", data
+
+        f = minisoap.httpRequest(requester_url, action, payload, ctx_factory=self.ctx_factory)
+        f.deferred.addCallbacks(gotReply) #, errReply)
+        return f.deferred
+
+
+    def reserveConfirmed(self, requester_url, correlation_id, requester_nsa, provider_nsa, global_reservation_id, description, connection_id, service_parameters):
 
         sp = service_parameters
         s_stp = sp.source_stp
@@ -74,8 +91,8 @@ class ProviderClient:
             print "REPLY\n", data
             return ""
 
-        print "--\n", requester_uri
-        f = minisoap.httpRequest(requester_uri, actions.RESERVE_CONFIRMED, payload, ctx_factory=self.ctx_factory)
+        print "--\n", requester_url
+        f = minisoap.httpRequest(requester_url, actions.RESERVE_CONFIRMED, payload, ctx_factory=self.ctx_factory)
         f.deferred.addCallbacks(gotReply) #, errReply)
         return f.deferred
 
@@ -100,11 +117,11 @@ class ProviderClient:
 #        res_conf.reservation.path.sourceSTP.stpId = service_parameters.source_stp.urn()
 #        res_conf.reservation.path.destSTP.stpId   = service_parameters.dest_stp.urn()
 #
-#        d = self.client.invoke(requester_uri, 'reserveConfirmed', correlation_id, res_conf)
+#        d = self.client.invoke(requester_url, 'reserveConfirmed', correlation_id, res_conf)
 #        return d
 #
 #
-#    def reserveFailed(self, requester_uri, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_msg):
+#    def reserveFailed(self, requester_url, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_msg):
 #
 #        res_fail = self.client.createType('{http://schemas.ogf.org/nsi/2011/10/connection/types}GenericFailedType')
 #        nsi_ex   = self.client.createType('{http://schemas.ogf.org/nsi/2011/10/connection/types}ServiceExceptionType')
@@ -120,39 +137,16 @@ class ProviderClient:
 #        nsi_ex.text = error_msg
 #        res_fail.serviceException = nsi_ex
 #
-#        d = self.client.invoke(requester_uri, 'reserveFailed', correlation_id, res_fail)
+#        d = self.client.invoke(requester_url, 'reserveFailed', correlation_id, res_fail)
 #        return d
 #
 
-    def provisionConfirmed(self, requester_uri, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id):
+    def provisionConfirmed(self, requester_url, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id):
 
-        header = HT.CommonHeaderType(PROTO, correlation_id, requester_nsa, provider_nsa)
-        generic_confirm = CT.GenericConfirmedType(connection_id)
-
-        header_payload = minisoap.serializeType(header,          'xmlns:tns="%s"' % FRAMEWORK_TYPES_NS)
-        body_payload   = minisoap.serializeType(generic_confirm, 'xmlns:tns="%s"' % CONNECTION_TYPES_NS)
-
-        payload = minisoap.createSoapPayload(body_payload, header_payload)
-
-        print "PC PAYLOAD\n", payload, "\n"
-
-        def gotReply(data):
-            print "PC REPLY\n", data
-#            return ""
-
-#        print "--\n", requester_uri
-        f = minisoap.httpRequest(requester_uri, actions.PROVISION_CONFIRMED, payload, ctx_factory=self.ctx_factory)
-        f.deferred.addCallbacks(gotReply) #, errReply)
-        return f.deferred
+        return self._genericConfirm(requester_url, actions.PROVISION_CONFIRMED, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id)
 
 
-
-#        conf = self._createGenericConfirmType(requester_nsa, provider_nsa, global_reservation_id, connection_id)
-#        d = self.client.invoke(requester_uri, 'provisionConfirmed', correlation_id, conf)
-#        return d
-
-
-#    def provisionFailed(self, requester_uri, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_msg):
+#    def provisionFailed(self, requester_url, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_msg):
 #
 #        gft = self.client.createType('{http://schemas.ogf.org/nsi/2011/10/connection/types}GenericFailedType')
 #        net = self.client.createType('{http://schemas.ogf.org/nsi/2011/10/connection/types}ServiceExceptionType')
@@ -168,18 +162,21 @@ class ProviderClient:
 #        net.text = error_msg
 #        gft.serviceException = net
 #
-#        d = self.client.invoke(requester_uri, 'provisionFailed', correlation_id, gft)
+#        d = self.client.invoke(requester_url, 'provisionFailed', correlation_id, gft)
 #        return d
-#
-#
-#    def releaseConfirmed(self, requester_uri, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id):
-#
+
+
+    def releaseConfirmed(self, requester_url, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id):
+
+        return self._genericConfirm(requester_url, actions.RELEASE_CONFIRMED, correlation_id, requester_nsa, provider_nsa,
+                                    global_reservation_id, connection_id)
+
 #        conf = self._createGenericConfirmType(requester_nsa, provider_nsa, global_reservation_id, connection_id)
-#        d = self.client.invoke(requester_uri, 'releaseConfirmed', correlation_id, conf)
+#        d = self.client.invoke(requester_url, 'releaseConfirmed', correlation_id, conf)
 #        return d
 #
 #
-#    def releaseFailed(self, requester_uri, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_msg):
+#    def releaseFailed(self, requester_url, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_msg):
 #
 #        gft = self.client.createType('{http://schemas.ogf.org/nsi/2011/10/connection/types}GenericFailedType')
 #        net = self.client.createType('{http://schemas.ogf.org/nsi/2011/10/connection/types}ServiceExceptionType')
@@ -195,18 +192,21 @@ class ProviderClient:
 #        net.text = error_msg
 #        gft.serviceException = net
 #
-#        d = self.client.invoke(requester_uri, 'releaseFailed', correlation_id, gft)
+#        d = self.client.invoke(requester_url, 'releaseFailed', correlation_id, gft)
 #        return d
 #
-#
-#    def terminateConfirmed(self, requester_uri, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id):
-#
+
+    def terminateConfirmed(self, requester_url, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id):
+
+        return self._genericConfirm(requester_url, actions.TERMINATE_CONFIRMED, correlation_id, requester_nsa, provider_nsa,
+                                    global_reservation_id, connection_id)
+
 #        conf = self._createGenericConfirmType(requester_nsa, provider_nsa, global_reservation_id, connection_id)
-#        d = self.client.invoke(requester_uri, 'terminateConfirmed', correlation_id, conf)
+#        d = self.client.invoke(requester_url, 'terminateConfirmed', correlation_id, conf)
 #        return d
 #
 #
-#    def terminateFailed(self, requester_uri, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_msg):
+#    def terminateFailed(self, requester_url, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_msg):
 #
 #        gft = self.client.createType('{http://schemas.ogf.org/nsi/2011/10/connection/types}GenericFailedType')
 #        net = self.client.createType('{http://schemas.ogf.org/nsi/2011/10/connection/types}ServiceExceptionType')
@@ -222,11 +222,11 @@ class ProviderClient:
 #        net.text = error_msg
 #        gft.serviceException = net
 #
-#        d = self.client.invoke(requester_uri, 'terminateFailed', correlation_id, gft)
+#        d = self.client.invoke(requester_url, 'terminateFailed', correlation_id, gft)
 #        return d
 #
 #
-#    def queryConfirmed(self, requester_uri, correlation_id, requester_nsa, provider_nsa, operation, connections):
+#    def queryConfirmed(self, requester_url, correlation_id, requester_nsa, provider_nsa, operation, connections):
 #
 #        res = self.client.createType('{http://schemas.ogf.org/nsi/2011/10/connection/types}QueryConfirmedType')
 #        res.requesterNSA = requester_nsa
@@ -276,11 +276,11 @@ class ProviderClient:
 #        else:
 #            raise ValueError('Invalid query operation type')
 #
-#        d = self.client.invoke(requester_uri, 'queryConfirmed', correlation_id, res)
+#        d = self.client.invoke(requester_url, 'queryConfirmed', correlation_id, res)
 #        return d
 #
 #
-#    def queryFailed(self, requester_uri, correlation_id, requester_nsa, provider_nsa, error_msg):
+#    def queryFailed(self, requester_url, correlation_id, requester_nsa, provider_nsa, error_msg):
 #
 #        print "CLIENT QUERY FAILED"
 #        qft = self.client.createType('{http://schemas.ogf.org/nsi/2011/10/connection/types}QueryFailedType')
@@ -293,6 +293,6 @@ class ProviderClient:
 #        net.text = error_msg
 #        qft.serviceException = net
 #
-#        d = self.client.invoke(requester_uri, 'queryFailed', correlation_id, qft)
+#        d = self.client.invoke(requester_url, 'queryFailed', correlation_id, qft)
 #        return d
 
