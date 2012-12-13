@@ -28,8 +28,8 @@ Copyright: NORDUnet (2011-2012)
 #   VLANID_INTERCANGE_NOT_SUPPORTED 00404
 # INTERNAL_ERROR            00500
 #   INTERNAL_NRM_ERROR        00501
-#   RESOURCE_UNAVAILABLE      00600
-# STP_UNAVALABLE            00601
+# RESOURCE_UNAVAILABLE      00600
+#   STP_UNAVALABLE            00601
 #   BANDWIDTH_UNAVAILABLE     00602
 
 
@@ -87,6 +87,52 @@ class ConnectionExistsError(ConnectionError):
 
     errorId = '00202'
 
+
+class SecurityError(NSIError):
+
+    errorId = '00300'
+
+
+class TopologyError(NSIError):
+
+    errorId = '00400'
+
+
+class InternalServerError(NSIError):
+
+    errorId = '00500'
+
+
+class ResourceUnavailableError(NSIError):
+
+    errorId = '00600'
+
+
+
+NSI_ERROR_CODE_TABLE = {
+    '00100' : PayloadError,
+    '00200' : ConnectionError,
+    '00202' : ConnectionExistsError,
+    '00300' : SecurityError,
+    '00400' : TopologyError,
+    '00500' : InternalServerError,
+    '00600' : ResourceUnavailableError,
+}
+
+
+def lookup(error_code):
+
+    assert type(error_code) is str and len(error_code) == 5, 'Invalid Error Code (type or length is wrong'
+
+    ex = NSI_ERROR_CODE_TABLE.get(error_code)
+    if ex is None:
+        error_code = error_code[0:2] + '  '
+        ex = NSI_ERROR_CODE_TABLE.get(error_code)
+
+    if ex is None:
+        raise ValueError('Could not find error type. Invalid error code: %s' % error_code)
+
+    return ex
 
 
 # These should really be replaced with proper errors
