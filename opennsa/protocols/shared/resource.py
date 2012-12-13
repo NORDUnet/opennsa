@@ -21,7 +21,7 @@ SERVICE_FAULT = """<?xml version='1.0' encoding='UTF-8'?>
    <SOAP-ENV:Body>
        <SOAP-ENV:Fault>
            <faultcode>SOAP-ENV:Server</faultcode>
-           <faultstring>%(fault_string)</faultstring>
+           <faultstring>%(fault_string)s</faultstring>
        </SOAP-ENV:Fault>
    </SOAP-ENV:Body>
 </SOAP-ENV:Envelope>
@@ -32,7 +32,7 @@ SERVICE_FAULT_DETAILED = """<?xml version='1.0' encoding='UTF-8'?>
    <SOAP-ENV:Body>
        <SOAP-ENV:Fault>
            <faultcode>SOAP-ENV:Server</faultcode>
-           <faultstring>%(fault_string)</faultstring>
+           <faultstring>%(fault_string)s</faultstring>
             <detail>
                 %(detail)s
             </detail>
