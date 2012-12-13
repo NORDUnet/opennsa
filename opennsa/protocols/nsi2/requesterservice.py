@@ -77,7 +77,7 @@ class RequesterService:
         return payload
 
 
-    def reserveConfirmed(self, soap_action, soap_data):
+    def reserveConfirmed(self, soap_data):
 
         headers, bodies = minisoap.parseSoapPayload(soap_data)
 
@@ -115,9 +115,8 @@ class RequesterService:
         return self._createGenericAcknowledgement(helper.PROTO, header.correlationId, header.requesterNSA, header.providerNSA)
 
 
-##    def reserveFailed(self, soap_action, soap_data):
+##    def reserveFailed(self, soap_data):
 ##
-##        assert soap_action == '"http://schemas.ogf.org/nsi/2011/10/connection/service/reserveFailed"'
 ##        method, req = self.decoder.parse_request('reserveFailed', soap_data)
 ##
 ##        correlation_id = str(req.correlationId)
@@ -129,7 +128,7 @@ class RequesterService:
 ##        return reply
 ##
 
-    def provisionConfirmed(self, soap_action, soap_data):
+    def provisionConfirmed(self, soap_data):
 
         header, generic_confirm = self._parseGenericConfirm(soap_data)
 
@@ -141,9 +140,8 @@ class RequesterService:
         return self._createGenericAcknowledgement(helper.PROTO, header.correlationId, header.requesterNSA, header.providerNSA)
 
 
-##    def provisionFailed(self, soap_action, soap_data):
+##    def provisionFailed(self, soap_data):
 ##
-##        assert soap_action == '"http://schemas.ogf.org/nsi/2011/10/connection/service/provisionFailed"'
 ##        method, req = self.decoder.parse_request('provisionFailed', soap_data)
 ##
 ##        correlation_id = str(req.correlationId)
@@ -155,7 +153,7 @@ class RequesterService:
 ##        return reply
 ##
 
-    def releaseConfirmed(self, soap_action, soap_data):
+    def releaseConfirmed(self, soap_data):
 
         header, generic_confirm = self._parseGenericConfirm(soap_data)
 
@@ -167,9 +165,8 @@ class RequesterService:
         return self._createGenericAcknowledgement(helper.PROTO, header.correlationId, header.requesterNSA, header.providerNSA)
 
 
-##    def releaseFailed(self, soap_action, soap_data):
+##    def releaseFailed(self, soap_data):
 ##
-##        assert soap_action == '"http://schemas.ogf.org/nsi/2011/10/connection/service/releaseFailed"'
 ##        method, req = self.decoder.parse_request('releaseFailed', soap_data)
 ##
 ##        correlation_id = str(req.correlationId)
@@ -181,7 +178,7 @@ class RequesterService:
 ##        return reply
 ##
 
-    def terminateConfirmed(self, soap_action, soap_data):
+    def terminateConfirmed(self, soap_data):
 
         header, generic_confirm = self._parseGenericConfirm(soap_data)
 
@@ -193,9 +190,8 @@ class RequesterService:
         return self._createGenericAcknowledgement(helper.PROTO, header.correlationId, header.requesterNSA, header.providerNSA)
 
 
-##    def terminateFailed(self, soap_action, soap_data):
+##    def terminateFailed(self, soap_data):
 ##
-##        assert soap_action == '"http://schemas.ogf.org/nsi/2011/10/connection/service/terminateFailed"'
 ##        method, req = self.decoder.parse_request('terminateFailed', soap_data)
 ##
 ##        correlation_id = str(req.correlationId)
@@ -207,9 +203,8 @@ class RequesterService:
 ##        return reply
 ##
 ##
-##    def queryConfirmed(self, soap_action, soap_data):
+##    def queryConfirmed(self, soap_data):
 ##
-##        assert soap_action == '"http://schemas.ogf.org/nsi/2011/10/connection/service/queryConfirmed"'
 ##        method, req = self.decoder.parse_request('queryConfirmed', soap_data)
 ##
 ##        requester_nsa, provider_nsa = _decodeNSAs(req.queryConfirmed)
@@ -228,9 +223,8 @@ class RequesterService:
 ##        return reply
 ##
 ##
-##    def queryFailed(self, soap_action, soap_data):
+##    def queryFailed(self, soap_data):
 ##
-##        assert soap_action == '"http://schemas.ogf.org/nsi/2011/10/connection/service/queryFailed"'
 ##        method, req = self.decoder.parse_request('queryFailed', soap_data)
 ##
 ##        correlation_id          = str(req.correlationId)

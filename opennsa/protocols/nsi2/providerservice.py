@@ -86,7 +86,7 @@ class ProviderService:
         return failure.Failure(soap_fault)
 
 
-    def reserve(self, soap_action, soap_data):
+    def reserve(self, soap_data):
 
         t_start = time.time()
 
@@ -156,7 +156,7 @@ class ProviderService:
         return d
 
 
-    def provision(self, soap_action, soap_data):
+    def provision(self, soap_data):
 
         header, generic_request = self._parseGenericRequest(soap_data)
 
@@ -170,7 +170,7 @@ class ProviderService:
         return d
 
 
-    def release(self, soap_action, soap_data):
+    def release(self, soap_data):
 
         header, generic_request = self._parseGenericRequest(soap_data)
 
@@ -184,7 +184,7 @@ class ProviderService:
         return d
 
 
-    def terminate(self, soap_action, soap_data):
+    def terminate(self, soap_data):
 
         header, generic_request = self._parseGenericRequest(soap_data)
 
@@ -198,7 +198,7 @@ class ProviderService:
         return d
 
 #
-#    def query(self, soap_action, soap_data):
+#    def query(self, soap_data):
 #
 #        method, req = self.decoder.parse_request('query', soap_data)
 #

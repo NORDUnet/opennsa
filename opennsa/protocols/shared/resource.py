@@ -124,7 +124,7 @@ class SOAPResource(resource.Resource):
             request.finish()
 
         decoder = self.soap_actions[soap_action]
-        d = defer.maybeDeferred(decoder, soap_action, soap_data)
+        d = defer.maybeDeferred(decoder, soap_data)
         d.addCallbacks(reply, errorReply)
 
         return server.NOT_DONE_YET
