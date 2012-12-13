@@ -15,6 +15,7 @@ SOAP_ENVELOPE_NS        = "http://schemas.xmlsoap.org/soap/envelope/"
 SOAP_ENV                = ET.QName("{%s}Envelope"   % SOAP_ENVELOPE_NS)
 SOAP_HEADER             = ET.QName("{%s}Header"     % SOAP_ENVELOPE_NS)
 SOAP_BODY               = ET.QName("{%s}Body"       % SOAP_ENVELOPE_NS)
+SOAP_FAULT              = ET.QName("{%s}Fault"      % SOAP_ENVELOPE_NS)
 
 
 
@@ -85,4 +86,44 @@ def parseSoapPayload(payload):
             raise ValueError('Invalid entry in SOAP payload: %s' % (ec.tag))
 
     raise ValueError('SOAP Payload does not have a body')
+
+
+def parseFault(payload):
+
+    envelope = ET.fromstring(payload)
+
+    if envelope.tag != SOAP_ENV:
+        raise ValueError('Top element in soap payload is not SOAP:Envelope')
+
+    # no header parsing for now
+
+    body = envelope.find( str(SOAP_BODY) )
+    if body is None:
+        raise ValueError('Fault payload has no SOAP:Body element in SOAP:Envelope')
+
+    fault = body.find( str(SOAP_FAULT) )
+    if fault is None:
+        raise ValueError('Fault payload has no SOAP:Fault element in SOAP:Body')
+
+    # only SOAP 1.1 for now
+    fault_code = fault.find('faultcode')
+    if fault_code is None:
+        raise ValueError('Fault payload has no faultcode element in SOAP:Fault')
+
+    fault_string = fault.find('faultstring')
+    if fault_string is None:
+        raise ValueError('Fault payload has no faultstring element in SOAP:Fault')
+
+    detail = None
+
+    dt = fault.find('detail')
+    if dt is not None:
+        dc = dt.getchildren()[0]
+        if dc is not None:
+            detail = ET.tostring(dc)
+
+    return fault_code.text, fault_string.text, detail
+
+
+
 

@@ -5,9 +5,10 @@ Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2011)
 """
 
-from twisted.python import log
+from twisted.python import log, failure
 from twisted.web.error import Error as WebError
 
+from opennsa import error
 from opennsa.protocols.shared import minisoap, httpclient
 
 from opennsa.protocols.nsi2 import connectiontypes as CT, headertypes as HT, actions, helper
@@ -55,18 +56,20 @@ class RequesterClient:
 
         payload = err.value.response
 
-        from xml.etree import cElementTree as ET
+        fault_code, fault_string, detail = minisoap.parseFault(payload)
 
-        fault_tree = ET.fromstring(payload)
+        service_exception = None
+        if detail:
+            service_exception = CT.parseString(detail)
 
-        print "FT", fault_tree
+        if service_exception is None:
+            # this is not entirely correct, but it isn't really wrong either
+            ex = error.InternalServerError(fault_string)
+        else:
+            ext = error.lookup(service_exception.errorId)
+            ex = ext(service_exception.text)
 
-        body = fault_tree.getchildren()[0]
-        print "BD", body
-        fault = body.getchildren()[0]
-        print "FT", fault
-
-        # extract faultString and errorId
+        err = failure.Failure(ex)
 
         return err
 
