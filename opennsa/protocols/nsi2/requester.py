@@ -107,7 +107,7 @@ class Requester:
 
         def provisionRequestFailed(err):
             # invocation failed, so we error out immediately
-            self.triggerCall(provider_nsa.urn(), correlation_id, 'provision', error.ProvisionError(err.getErrorMessage()))
+            self.triggerCall(provider_nsa.urn(), correlation_id, 'provision', err.value)
 
         rd = self.addCall(provider_nsa, correlation_id, 'provision')
         cd = self.requester_client.provision(correlation_id, requester_nsa, provider_nsa, session_security_attr, connection_id)
@@ -131,7 +131,7 @@ class Requester:
 
         def releaseRequestFailed(err):
             # invocation failed, so we error out immediately
-            self.triggerCall(provider_nsa.urn(), correlation_id, 'release', error.ReleaseError(err.getErrorMessage()))
+            self.triggerCall(provider_nsa.urn(), correlation_id, 'release', err.value)
 
         rd = self.addCall(provider_nsa, correlation_id, 'release')
         cd = self.requester_client.release(correlation_id, requester_nsa, provider_nsa, session_security_attr, connection_id)
@@ -154,7 +154,7 @@ class Requester:
 
         def terminateRequestFailed(err):
             # invocation failed, so we error out immediately
-            self.triggerCall(provider_nsa.urn(), correlation_id, 'terminate', error.TerminateError(err.getErrorMessage()))
+            self.triggerCall(provider_nsa.urn(), correlation_id, 'terminate', err.value)
 
         rd = self.addCall(provider_nsa, correlation_id, 'terminate')
         cd = self.requester_client.terminate(correlation_id, requester_nsa, provider_nsa, session_security_attr, connection_id)
@@ -178,7 +178,7 @@ class Requester:
 
         def queryRequestFailed(err):
             # invocation failed, so we error out immediately
-            self.triggerCall(provider_nsa.urn(), correlation_id, 'query', error.QueryError(err.getErrorMessage()))
+            self.triggerCall(provider_nsa.urn(), correlation_id, 'query', err.value)
 
         rd = self.addCall(provider_nsa, correlation_id, 'query')
         cd = self.requester_client.query(correlation_id, requester_nsa, provider_nsa, session_security_attr, operation, connection_ids, global_reservation_ids)

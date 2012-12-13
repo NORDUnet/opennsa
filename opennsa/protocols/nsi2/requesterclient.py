@@ -105,7 +105,6 @@ class RequesterClient:
         def gotReply(data):
             log.msg(' -- Received Response Payload --\n' + data + '\n -- END. Received Response Payload --', payload=True)
 
-        #print "--\n", service_url
         f = httpclient.httpRequest(provider_nsa.url(), actions.RESERVE, payload, ctx_factory=self.ctx_factory)
         f.deferred.addCallbacks(gotReply, self._handleErrorReply)
         return f.deferred
@@ -119,7 +118,7 @@ class RequesterClient:
             log.msg(' -- START: Provision Response --\n' + data + '\n -- END. Provision Response --', payload=True)
 
         f = httpclient.httpRequest(provider_nsa.url(), actions.PROVISION, payload, ctx_factory=self.ctx_factory)
-        f.deferred.addCallbacks(gotReply) #, errReply)
+        f.deferred.addCallbacks(gotReply, self._handleErrorReply)
         return f.deferred
 
 
@@ -130,7 +129,7 @@ class RequesterClient:
 
         payload = self._createGenericRequestType(correlation_id, requester_nsa, provider_nsa, connection_id)
         f = httpclient.httpRequest(provider_nsa.url(), actions.RELEASE, payload, ctx_factory=self.ctx_factory)
-        f.deferred.addCallbacks(gotReply) #, errReply)
+        f.deferred.addCallbacks(gotReply, self._handleErrorReply)
         return f.deferred
 
 
@@ -141,7 +140,7 @@ class RequesterClient:
 
         payload = self._createGenericRequestType(correlation_id, requester_nsa, provider_nsa, connection_id)
         f = httpclient.httpRequest(provider_nsa.url(), actions.TERMINATE, payload, ctx_factory=self.ctx_factory)
-        f.deferred.addCallbacks(gotReply) #, errReply)
+        f.deferred.addCallbacks(gotReply, self._handleErrorReply)
         return f.deferred
 
 
@@ -159,5 +158,4 @@ class RequesterClient:
 
         d = self.client.invoke(provider_nsa.url(), 'query', correlation_id, self.reply_to, req)
         return d
-
 
