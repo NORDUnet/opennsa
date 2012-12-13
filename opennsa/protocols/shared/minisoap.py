@@ -50,16 +50,6 @@ def _indent(elem, level=0):
 
 
 
-def serializeType(type_value, namespace_def=None):
-
-    f = StringIO.StringIO()
-    # type_value.export(f, 0, namespacedef_='xmlns:tns="%s"' % FRAMEWORK_TYPES_NS)
-    type_value.export(f, 0, namespacedef_=namespace_def)
-
-    return f.getvalue()
-
-
-
 def createSoapEnvelope():
 
     envelope = ET.Element(SOAP_ENV)
