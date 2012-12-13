@@ -51,10 +51,6 @@ class TopologyError(Exception):
     pass
 
 
-class NoSuchConnectionError(Exception):
-    pass
-
-
 class StateTransitionError(Exception):
     pass
 
@@ -88,6 +84,11 @@ class ConnectionExistsError(ConnectionError):
     errorId = '00202'
 
 
+class ConnectionNonExistentError(ConnectionError):
+
+    errorId = '00203'
+
+
 class SecurityError(NSIError):
 
     errorId = '00300'
@@ -113,6 +114,7 @@ NSI_ERROR_CODE_TABLE = {
     '00100' : PayloadError,
     '00200' : ConnectionError,
     '00202' : ConnectionExistsError,
+    '00203' : ConnectionNonExistentError,
     '00300' : SecurityError,
     '00400' : TopologyError,
     '00500' : InternalServerError,

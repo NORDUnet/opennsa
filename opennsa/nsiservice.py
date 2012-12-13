@@ -50,7 +50,7 @@ class NSIService:
 
         conn = self.connections.get(requester_nsa, {}).get(connection_id, None)
         if conn is None:
-            raise error.NoSuchConnectionError('No connection with id %s for NSA with address %s' % (connection_id, requester_nsa))
+            raise error.ConnectionNonExistentError('No connection with id %s for NSA with address %s' % (connection_id, requester_nsa))
         else:
             return conn
 
@@ -176,7 +176,7 @@ class NSIService:
             d = task.deferLater(reactor, 0, conn.provision)
             d.addErrback(log.err)
             return defer.succeed(None)
-        except error.NoSuchConnectionError, e:
+        except error.error.ConnectionNonExistentError, e:
             log.msg('NSA %s requested non-existing connection %s' % (requester_nsa, connection_id), system=LOG_SYSTEM)
             return defer.fail(e)
 
@@ -192,7 +192,7 @@ class NSIService:
             d = task.deferLater(reactor, 0, conn.release)
             d.addErrback(log.err)
             return defer.succeed(None)
-        except error.NoSuchConnectionError, e:
+        except error.ConnectionNonExistentError, e:
             log.msg('NSA %s requested non-existing connection %s' % (requester_nsa, connection_id), system=LOG_SYSTEM)
             return defer.fail(e)
 
@@ -208,7 +208,7 @@ class NSIService:
             d = task.deferLater(reactor, 0, conn.terminate)
             d.addErrback(log.err)
             return defer.succeed(None)
-        except error.NoSuchConnectionError, e:
+        except error.ConnectionNonExistentError, e:
             log.msg('NSA %s requested non-existing connection %s' % (requester_nsa, connection_id), system=LOG_SYSTEM)
             return defer.fail(e)
 
