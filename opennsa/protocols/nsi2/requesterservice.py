@@ -15,43 +15,11 @@ from twisted.python import log
 from opennsa import nsa
 
 from opennsa.protocols.shared import minisoap
-from opennsa.protocols.nsi2 import actions, headertypes as HT, connectiontypes as CT
+from opennsa.protocols.nsi2 import actions, headertypes as HT, connectiontypes as CT, helper
 
 
 
 LOG_SYSTEM = 'protocol.nsi2.RequesterService'
-
-FRAMEWORK_TYPES_NS  = "http://schemas.ogf.org/nsi/2012/03/framework/types"
-
-PROTO = 'urn:org.ogf.schema.NSIv2'
-
-
-# Hack on!
-# Getting SUDS to throw service faults is more or less impossible as it is a client library
-# We do this instead
-SERVICE_FAULT = """<?xml version='1.0' encoding='UTF-8'?>
-<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-    <soap:Body>
-        <soap:Fault xmlns:envelope="http://www.w3.org/2003/05/soap-envelope">
-            <faultcode>soap:Server</faultcode>
-            <faultstring>%(error_text)s</faultstring>
-            <detail>
-                <nsi:serviceException xmlns:nsi="http://schemas.ogf.org/nsi/2011/10/connection/interface">
-                    <errorId>%(error_id)s</errorId>
-                    <text>%(error_text)s</text>
-                </nsi:serviceException>
-            </detail>
-        </soap:Fault>
-    </soap:Body>
-</soap:Envelope>
-"""
-
-
-
-##def _decodeNSAs(subreq):
-##    requester_nsa = str(subreq.requesterNSA)
-##    provider_nsa  = str(subreq.providerNSA)
-##    return requester_nsa, provider_nsa
 
 
 
@@ -103,10 +71,7 @@ class RequesterService:
     def _createGenericAcknowledgement(self, protocol_version, correlation_id, requester_nsa, provider_nsa):
 
         header = HT.CommonHeaderType(protocol_version, correlation_id, requester_nsa, provider_nsa)
-
-        f1 = StringIO.StringIO()
-        header.export(f1,0, namespacedef_='xmlns:tns="%s"' % FRAMEWORK_TYPES_NS)
-        header_payload = f1.getvalue()
+        header_payload = helper.export(header, helper.FRAMEWORK_TYPES_NS)
 
         payload = minisoap.createSoapPayload(None, header_payload)
         return payload
@@ -147,7 +112,7 @@ class RequesterService:
         self.requester.reserveConfirmed(header.correlationId, header.requesterNSA, header.providerNSA, session_security_attr,
                                         reservation.globalReservationId, reservation.description, reservation.connectionId, service_parameters)
 
-        return self._createGenericAcknowledgement(PROTO, header.correlationId, header.requesterNSA, header.providerNSA)
+        return self._createGenericAcknowledgement(helper.PROTO, header.correlationId, header.requesterNSA, header.providerNSA)
 
 
 ##    def reserveFailed(self, soap_action, soap_data):
@@ -166,13 +131,6 @@ class RequesterService:
 
     def provisionConfirmed(self, soap_action, soap_data):
 
-        # def _parseGenericConfirm(self, soap_data):
-
-#        headers, bodies = minisoap.parseSoapPayload(soap_data)
-#
-#        header = HT.parseString( ET.tostring( headers[0] ) )
-#        generic_confirm = CT.parseString( ET.tostring( bodies[0] ) )
-
         header, generic_confirm = self._parseGenericConfirm(soap_data)
 
         session_security_attr = None
@@ -180,7 +138,7 @@ class RequesterService:
         self.requester.provisionConfirmed(header.correlationId, header.requesterNSA, header.providerNSA, session_security_attr,
                                           generic_confirm.connectionId)
 
-        return self._createGenericAcknowledgement(PROTO, header.correlationId, header.requesterNSA, header.providerNSA)
+        return self._createGenericAcknowledgement(helper.PROTO, header.correlationId, header.requesterNSA, header.providerNSA)
 
 
 ##    def provisionFailed(self, soap_action, soap_data):
@@ -206,7 +164,7 @@ class RequesterService:
         self.requester.releaseConfirmed(header.correlationId, header.requesterNSA, header.providerNSA, session_security_attr,
                                         generic_confirm.connectionId)
 
-        return self._createGenericAcknowledgement(PROTO, header.correlationId, header.requesterNSA, header.providerNSA)
+        return self._createGenericAcknowledgement(helper.PROTO, header.correlationId, header.requesterNSA, header.providerNSA)
 
 
 ##    def releaseFailed(self, soap_action, soap_data):
@@ -232,7 +190,7 @@ class RequesterService:
         self.requester.terminateConfirmed(header.correlationId, header.requesterNSA, header.providerNSA, session_security_attr,
                                           generic_confirm.connectionId)
 
-        return self._createGenericAcknowledgement(PROTO, header.correlationId, header.requesterNSA, header.providerNSA)
+        return self._createGenericAcknowledgement(helper.PROTO, header.correlationId, header.requesterNSA, header.providerNSA)
 
 
 ##    def terminateFailed(self, soap_action, soap_data):

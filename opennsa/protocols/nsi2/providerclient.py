@@ -5,16 +5,8 @@ Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2011)
 """
 
-#import uuid
-
 from opennsa.protocols.shared import minisoap
-from opennsa.protocols.nsi2 import actions, connectiontypes as CT, headertypes as HT
-
-
-# these exist several place, move them together some time
-FRAMEWORK_TYPES_NS  = "http://schemas.ogf.org/nsi/2012/03/framework/types"
-CONNECTION_TYPES_NS = "http://schemas.ogf.org/nsi/2012/03/connection/types"
-PROTO = 'urn:org.ogf.schema.NSIv2'
+from opennsa.protocols.nsi2 import actions, connectiontypes as CT, headertypes as HT, helper
 
 
 
@@ -30,22 +22,13 @@ class ProviderClient:
         self.ctx_factory = ctx_factory
 
 
-#    def _createGenericConfirmType(self, requester_nsa, provider_nsa, global_reservation_id, connection_id):
-#
-#        conf = self.client.createType('{http://schemas.ogf.org/nsi/2011/10/connection/types}GenericConfirmedType')
-#        conf.requesterNSA        = requester_nsa
-#        conf.providerNSA         = provider_nsa
-#        conf.globalReservationId = global_reservation_id
-#        conf.connectionId        = connection_id
-#        return conf
-
     def _genericConfirm(self, requester_url, action, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id):
 
         header = HT.CommonHeaderType(PROTO, correlation_id, requester_nsa, provider_nsa)
         generic_confirm = CT.GenericConfirmedType(global_reservation_id, connection_id)
 
-        header_payload = minisoap.serializeType(header,          'xmlns:tns="%s"' % FRAMEWORK_TYPES_NS)
-        body_payload   = minisoap.serializeType(generic_confirm, 'xmlns:tns="%s"' % CONNECTION_TYPES_NS)
+        header_payload = helper.serializeType(header,          helper.FRAMEWORK_TYPES_NS)
+        body_payload   = helper.serializeType(generic_confirm, helper.CONNECTION_TYPES_NS)
 
         payload = minisoap.createSoapPayload(body_payload, header_payload)
 
@@ -80,8 +63,8 @@ class ProviderClient:
 
         reserve_conf = CT.ReserveConfirmedType(global_reservation_id, description, connection_id, [ criteria ] )
 
-        header_payload = minisoap.serializeType(header,       'xmlns:tns="%s"' % FRAMEWORK_TYPES_NS)
-        body_payload   = minisoap.serializeType(reserve_conf, 'xmlns:tns="%s"' % CONNECTION_TYPES_NS)
+        header_payload = helper.export(header,       helper.FRAMEWORK_TYPES_NS)
+        body_payload   = helper.export(reserve_conf, helper.CONNECTION_TYPES_NS)
 
         payload = minisoap.createSoapPayload(body_payload, header_payload)
 
@@ -96,30 +79,6 @@ class ProviderClient:
         f.deferred.addCallbacks(gotReply) #, errReply)
         return f.deferred
 
-
-
-#        res_conf.requesterNSA   = requester_nsa
-#        res_conf.providerNSA    = provider_nsa
-#
-#        res_conf.reservation.globalReservationId    = global_reservation_id
-#        res_conf.reservation.description            = description
-#        res_conf.reservation.connectionId           = connection_id
-#        #res_conf.reservation.connectionState        = 'Reserved' # not sure why this doesn't work
-#
-#        res_conf.reservation.serviceParameters.schedule.startTime     = utcTime(service_parameters.start_time)
-#        res_conf.reservation.serviceParameters.schedule.endTime       = utcTime(service_parameters.end_time)
-#
-#        res_conf.reservation.serviceParameters.bandwidth.desired      = service_parameters.bandwidth.desired
-#        res_conf.reservation.serviceParameters.bandwidth.minimum      = service_parameters.bandwidth.minimum
-#        res_conf.reservation.serviceParameters.bandwidth.maximum      = service_parameters.bandwidth.maximum
-#
-#        res_conf.reservation.path.directionality  = service_parameters.directionality
-#        res_conf.reservation.path.sourceSTP.stpId = service_parameters.source_stp.urn()
-#        res_conf.reservation.path.destSTP.stpId   = service_parameters.dest_stp.urn()
-#
-#        d = self.client.invoke(requester_url, 'reserveConfirmed', correlation_id, res_conf)
-#        return d
-#
 #
 #    def reserveFailed(self, requester_url, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_msg):
 #
@@ -171,11 +130,6 @@ class ProviderClient:
         return self._genericConfirm(requester_url, actions.RELEASE_CONFIRMED, correlation_id, requester_nsa, provider_nsa,
                                     global_reservation_id, connection_id)
 
-#        conf = self._createGenericConfirmType(requester_nsa, provider_nsa, global_reservation_id, connection_id)
-#        d = self.client.invoke(requester_url, 'releaseConfirmed', correlation_id, conf)
-#        return d
-#
-#
 #    def releaseFailed(self, requester_url, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_msg):
 #
 #        gft = self.client.createType('{http://schemas.ogf.org/nsi/2011/10/connection/types}GenericFailedType')
@@ -201,11 +155,7 @@ class ProviderClient:
         return self._genericConfirm(requester_url, actions.TERMINATE_CONFIRMED, correlation_id, requester_nsa, provider_nsa,
                                     global_reservation_id, connection_id)
 
-#        conf = self._createGenericConfirmType(requester_nsa, provider_nsa, global_reservation_id, connection_id)
-#        d = self.client.invoke(requester_url, 'terminateConfirmed', correlation_id, conf)
-#        return d
-#
-#
+
 #    def terminateFailed(self, requester_url, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_msg):
 #
 #        gft = self.client.createType('{http://schemas.ogf.org/nsi/2011/10/connection/types}GenericFailedType')

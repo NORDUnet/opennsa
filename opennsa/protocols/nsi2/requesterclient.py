@@ -9,12 +9,8 @@ from twisted.python import log
 
 from opennsa.protocols.shared import minisoap
 
-from opennsa.protocols.nsi2 import connectiontypes as CT, headertypes as HT, actions
+from opennsa.protocols.nsi2 import connectiontypes as CT, headertypes as HT, actions, helper
 
-
-
-FRAMEWORK_TYPES_NS  = "http://schemas.ogf.org/nsi/2012/03/framework/types"
-CONNECTION_TYPES_NS = "http://schemas.ogf.org/nsi/2012/03/connection/types"
 
 
 
@@ -38,12 +34,36 @@ class RequesterClient:
 
         request = CT.GenericRequestType(connection_id)
 
-        header_payload = minisoap.serializeType(header,  'xmlns:tns="%s"' % FRAMEWORK_TYPES_NS)
-        body_payload   = minisoap.serializeType(request, 'xmlns:tns="%s"' % CONNECTION_TYPES_NS)
+        header_payload = helper.export(header,  helper.FRAMEWORK_TYPES_NS)
+        body_payload   = helper.export(request, helper.CONNECTION_TYPES_NS)
 
         payload = minisoap.createSoapPayload(body_payload, header_payload)
 
         return payload
+
+
+    def _handleErrorReply(self, err):
+
+        if err.value.status != '500':
+            log.msg("Got error with non-500 status. Message: %s" % err.getErrorMessage())
+            return err
+
+        payload = err.value.response
+
+        from xml.etree import cElementTree as ET
+
+        fault_tree = ET.fromstring(payload)
+
+        print "FT", fault_tree
+
+        body = fault_tree.getchildren()[0]
+        print "BD", body
+        fault = body.getchildren()[0]
+        print "FT", fault
+
+        # extract faultString and errorId
+
+        return err
 
 
     def reserve(self, service_url, correlation_id, requester_nsa, provider_nsa, session_security_attr,
@@ -69,16 +89,8 @@ class RequesterClient:
 
         # create payloads
 
-#        f1 = StringIO.StringIO()
-#        header.export(f1,0, namespacedef_='xmlns:tns="%s"' % FRAMEWORK_TYPES_NS)
-#        header_payload = f1.getvalue()
-#
-#        f2 = StringIO.StringIO()
-#        reservation.export(f2,0, namespacedef_='xmlns:tns="%s"' % CONNECTION_TYPES_NS)
-#        body_payload = f2.getvalue()
-
-        header_payload = minisoap.serializeType(header,      'xmlns:tns="%s"' % FRAMEWORK_TYPES_NS)
-        body_payload   = minisoap.serializeType(reservation, 'xmlns:tns="%s"' % CONNECTION_TYPES_NS)
+        header_payload = helper.export(header,      helper.FRAMEWORK_TYPES_NS)
+        body_payload   = helper.export(reservation, helper.CONNECTION_TYPES_NS)
 
         payload = minisoap.createSoapPayload(body_payload, header_payload)
 
@@ -86,9 +98,8 @@ class RequesterClient:
             log.msg(' -- Received Response Payload --\n' + data + '\n -- END. Received Response Payload --', payload=True)
 
         #print "--\n", service_url
-        #f = minisoap.httpRequest(service_url, actions.RESERVE, payload, ctx_factory=self.ctx_factory)
         f = minisoap.httpRequest(provider_nsa.url(), actions.RESERVE, payload, ctx_factory=self.ctx_factory)
-        f.deferred.addCallbacks(gotReply) #, errReply)
+        f.deferred.addCallbacks(gotReply, self._handleErrorReply)
         return f.deferred
 
 

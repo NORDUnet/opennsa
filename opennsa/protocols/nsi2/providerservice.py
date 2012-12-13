@@ -11,39 +11,15 @@ from xml.etree import cElementTree as ET
 
 from dateutil import parser
 
-from twisted.python import log
+from twisted.python import log, failure
 
-from opennsa import nsa
-from opennsa.protocols.shared import minisoap
-from opennsa.protocols.nsi2 import actions, connectiontypes as CT, headertypes as HT
+from opennsa import nsa, error
+from opennsa.protocols.shared import minisoap, resource
+from opennsa.protocols.nsi2 import actions, connectiontypes as CT, headertypes as HT, helper
 
 
 
 LOG_SYSTEM = 'protocols.CS2.ProviderService'
-
-
-FRAMEWORK_TYPES_NS  = "http://schemas.ogf.org/nsi/2012/03/framework/types"
-
-
-# Hack on!
-# Getting SUDS to throw service faults is more or less impossible as it is a client library
-# We do this instead
-SERVICE_FAULT = """<?xml version='1.0' encoding='UTF-8'?>
-<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-    <soap:Body>
-        <soap:Fault xmlns:envelope="http://www.w3.org/2003/05/soap-envelope">
-            <faultcode>soap:Server</faultcode>
-            <faultstring>%(error_text)s</faultstring>
-            <detail>
-                <nsi:serviceException xmlns:nsi="http://schemas.ogf.org/nsi/2011/10/connection/interface">
-                    <errorId>%(error_id)s</errorId>
-                    <text>%(error_text)s</text>
-                </nsi:serviceException>
-            </detail>
-        </soap:Fault>
-    </soap:Body>
-</soap:Envelope>
-"""
 
 
 
@@ -83,32 +59,31 @@ class ProviderService:
         generic_request = CT.parseString( ET.tostring( bodies[0] ) )
 
         return header, generic_request
- 
+
 
     def _createGenericAcknowledgement(self, _, correlation_id, requester_nsa, provider_nsa):
 
         header = HT.CommonHeaderType(None, correlation_id, requester_nsa, provider_nsa)
-
-        f1 = StringIO.StringIO()
-        header.export(f1,0, namespacedef_='xmlns:tns="%s"' % FRAMEWORK_TYPES_NS)
-        header_payload = f1.getvalue()
+        header_payload = helper.export(header, helper.FRAMEWORK_TYPES_NS)
 
         payload = minisoap.createSoapPayload(None, header_payload)
         return payload
 
 
-    def _createFault(self, err):
+    def _wrapError(self, err, provider_nsa):
 
-        from xml.sax.saxutils import escape as xml_escape
+        if err.check(error.NSIError):
+            variables = None
+            se = CT.ServiceExceptionType(provider_nsa, err.value.errorId, err.getErrorMessage(), variables)
+            detail = helper.export(se, helper.FRAMEWORK_TYPES_NS)
+            print "FAULT DETAIL", detail
+        else:
+            log.msg('Got a non NSIError exception, cannot create detailed fault', system=LOG_SYSTEM)
+            detail = None
 
-        error_text = xml_escape( err.getErrorMessage() )
+        soap_fault = resource.SOAPFault( err.getErrorMessage(), detail )
 
-        log.msg('Error during service invocation: %s' % error_text)
-        log.err(err)
-
-        # need to do error type -> error id mapping
-        reply = SERVICE_FAULT % {'error_id': 'N/A', 'error_text': error_text }
-        return reply
+        return failure.Failure(soap_fault)
 
 
     def reserve(self, soap_action, soap_data):
@@ -175,21 +150,15 @@ class ProviderService:
         d = self.provider.reserve(header.correlationId, header.replyTo, header.requesterNSA, header.providerNSA, session_security_attr,
                                   reservation.globalReservationId, reservation.description, reservation.connectionId, service_parameters)
 
-        d.addCallbacks(self._createGenericAcknowledgement, self._createFault,
-                       callbackArgs=(header.correlationId, header.requesterNSA, header.providerNSA))
+        d.addCallbacks(self._createGenericAcknowledgement, self._wrapError,
+                       callbackArgs=(header.correlationId, header.requesterNSA, header.providerNSA),
+                       errbackArgs=(header.providerNSA,))
         return d
 
 
     def provision(self, soap_action, soap_data):
 
         header, generic_request = self._parseGenericRequest(soap_data)
-
-#        headers, bodies = minisoap.parseSoapPayload(soap_data)
-#
-#        # do some checking here
-#
-#        header = HT.parseString( ET.tostring( headers[0] ) )
-#        generic_request = CT.parseString( ET.tostring( bodies[0] ) )
 
         session_security_attr = None
 
@@ -205,13 +174,6 @@ class ProviderService:
 
         header, generic_request = self._parseGenericRequest(soap_data)
 
-#        headers, bodies = minisoap.parseSoapPayload(soap_data)
-#
-#        # do some checking here
-#
-#        header = HT.parseString( ET.tostring( headers[0] ) )
-#        generic_request = CT.parseString( ET.tostring( bodies[0] ) )
-#
         session_security_attr = None
 
         d = self.provider.release(header.correlationId, header.replyTo, header.requesterNSA, header.providerNSA, session_security_attr,
@@ -222,28 +184,10 @@ class ProviderService:
         return d
 
 
-
-#        method, req = self.decoder.parse_request('release', soap_data)
-#
-#        correlation_id, reply_to, = self._getRequestParameters(req)
-#        requester_nsa, provider_nsa, connection_id = self._getGRTParameters(req.release)
-#
-#        d = self.provider.release(correlation_id, reply_to, requester_nsa, provider_nsa, None, connection_id)
-#        d.addCallbacks(self._createReply, self._createFault, callbackArgs=(method,correlation_id), errbackArgs=(method,))
-#        return d
-
-
     def terminate(self, soap_action, soap_data):
 
         header, generic_request = self._parseGenericRequest(soap_data)
 
-#        headers, bodies = minisoap.parseSoapPayload(soap_data)
-#
-#        # do some checking here
-#
-#        header = HT.parseString( ET.tostring( headers[0] ) )
-#        generic_request = CT.parseString( ET.tostring( bodies[0] ) )
-#
         session_security_attr = None
 
         d = self.provider.terminate(header.correlationId, header.replyTo, header.requesterNSA, header.providerNSA, session_security_attr,
@@ -253,16 +197,6 @@ class ProviderService:
                        callbackArgs=(header.correlationId, header.requesterNSA, header.providerNSA))
         return d
 
-#
-#        method, req = self.decoder.parse_request('terminate', soap_data)
-#
-#        correlation_id, reply_to, = self._getRequestParameters(req)
-#        requester_nsa, provider_nsa, connection_id = self._getGRTParameters(req.terminate)
-#
-#        d = self.provider.terminate(correlation_id, reply_to, requester_nsa, provider_nsa, None, connection_id)
-#        d.addCallbacks(self._createReply, self._createFault, callbackArgs=(method,correlation_id), errbackArgs=(method,))
-#        return d
-#
 #
 #    def query(self, soap_action, soap_data):
 #
