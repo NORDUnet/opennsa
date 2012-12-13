@@ -5,7 +5,7 @@ Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2011)
 """
 
-from opennsa.protocols.shared import minisoap
+from opennsa.protocols.shared import minisoap, httpclient
 from opennsa.protocols.nsi2 import actions, connectiontypes as CT, headertypes as HT, helper
 
 
@@ -35,7 +35,7 @@ class ProviderClient:
         def gotReply(data):
             print "GC REPLY\n", data
 
-        f = minisoap.httpRequest(requester_url, action, payload, ctx_factory=self.ctx_factory)
+        f = httpclient.httpRequest(requester_url, action, payload, ctx_factory=self.ctx_factory)
         f.deferred.addCallbacks(gotReply) #, errReply)
         return f.deferred
 
@@ -75,7 +75,7 @@ class ProviderClient:
             return ""
 
         print "--\n", requester_url
-        f = minisoap.httpRequest(requester_url, actions.RESERVE_CONFIRMED, payload, ctx_factory=self.ctx_factory)
+        f = httpclient.httpRequest(requester_url, actions.RESERVE_CONFIRMED, payload, ctx_factory=self.ctx_factory)
         f.deferred.addCallbacks(gotReply) #, errReply)
         return f.deferred
 

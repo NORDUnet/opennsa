@@ -8,7 +8,7 @@ Copyright: NORDUnet (2011)
 from twisted.python import log
 from twisted.web.error import Error as WebError
 
-from opennsa.protocols.shared import minisoap
+from opennsa.protocols.shared import minisoap, httpclient
 
 from opennsa.protocols.nsi2 import connectiontypes as CT, headertypes as HT, actions, helper
 
@@ -103,7 +103,7 @@ class RequesterClient:
             log.msg(' -- Received Response Payload --\n' + data + '\n -- END. Received Response Payload --', payload=True)
 
         #print "--\n", service_url
-        f = minisoap.httpRequest(provider_nsa.url(), actions.RESERVE, payload, ctx_factory=self.ctx_factory)
+        f = httpclient.httpRequest(provider_nsa.url(), actions.RESERVE, payload, ctx_factory=self.ctx_factory)
         f.deferred.addCallbacks(gotReply, self._handleErrorReply)
         return f.deferred
 
@@ -115,7 +115,7 @@ class RequesterClient:
         def gotReply(data):
             log.msg(' -- START: Provision Response --\n' + data + '\n -- END. Provision Response --', payload=True)
 
-        f = minisoap.httpRequest(provider_nsa.url(), actions.PROVISION, payload, ctx_factory=self.ctx_factory)
+        f = httpclient.httpRequest(provider_nsa.url(), actions.PROVISION, payload, ctx_factory=self.ctx_factory)
         f.deferred.addCallbacks(gotReply) #, errReply)
         return f.deferred
 
@@ -126,7 +126,7 @@ class RequesterClient:
             log.msg(' -- START: Release Response --\n' + data + '\n -- END. Release Response --', payload=True)
 
         payload = self._createGenericRequestType(correlation_id, requester_nsa, provider_nsa, connection_id)
-        f = minisoap.httpRequest(provider_nsa.url(), actions.RELEASE, payload, ctx_factory=self.ctx_factory)
+        f = httpclient.httpRequest(provider_nsa.url(), actions.RELEASE, payload, ctx_factory=self.ctx_factory)
         f.deferred.addCallbacks(gotReply) #, errReply)
         return f.deferred
 
@@ -137,7 +137,7 @@ class RequesterClient:
             log.msg(' -- START: Terminate Response --\n' + data + '\n -- END. Terminate Response --', payload=True)
 
         payload = self._createGenericRequestType(correlation_id, requester_nsa, provider_nsa, connection_id)
-        f = minisoap.httpRequest(provider_nsa.url(), actions.TERMINATE, payload, ctx_factory=self.ctx_factory)
+        f = httpclient.httpRequest(provider_nsa.url(), actions.TERMINATE, payload, ctx_factory=self.ctx_factory)
         f.deferred.addCallbacks(gotReply) #, errReply)
         return f.deferred
 
