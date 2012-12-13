@@ -6,6 +6,7 @@ Copyright: NORDUnet (2011)
 """
 
 from twisted.python import log
+from twisted.web.error import Error as WebError
 
 from opennsa.protocols.shared import minisoap
 
@@ -43,6 +44,10 @@ class RequesterClient:
 
 
     def _handleErrorReply(self, err):
+
+        # is this isn't a web error we cannot do anything about it here
+        if err.check(WebError) is None:
+            return err
 
         if err.value.status != '500':
             log.msg("Got error with non-500 status. Message: %s" % err.getErrorMessage())
