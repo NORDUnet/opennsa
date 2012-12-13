@@ -24,11 +24,11 @@ class ProviderClient:
 
     def _genericConfirm(self, requester_url, action, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id):
 
-        header = HT.CommonHeaderType(PROTO, correlation_id, requester_nsa, provider_nsa)
+        header = HT.CommonHeaderType(helper.PROTO, correlation_id, requester_nsa, provider_nsa)
         generic_confirm = CT.GenericConfirmedType(global_reservation_id, connection_id)
 
-        header_payload = helper.serializeType(header,          helper.FRAMEWORK_TYPES_NS)
-        body_payload   = helper.serializeType(generic_confirm, helper.CONNECTION_TYPES_NS)
+        header_payload = helper.export(header,          helper.FRAMEWORK_TYPES_NS)
+        body_payload   = helper.export(generic_confirm, helper.CONNECTION_TYPES_NS)
 
         payload = minisoap.createSoapPayload(body_payload, header_payload)
 
