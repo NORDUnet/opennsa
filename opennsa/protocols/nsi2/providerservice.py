@@ -78,7 +78,7 @@ class ProviderService:
             detail = helper.export(se, helper.FRAMEWORK_TYPES_NS)
             print "FAULT DETAIL", detail
         else:
-            log.msg('Got a non NSIError exception, cannot create detailed fault', system=LOG_SYSTEM)
+            log.msg('Got a non NSIError exception, cannot create detailed fault (%s)' % type(err.value), system=LOG_SYSTEM)
             detail = None
 
         soap_fault = resource.SOAPFault( err.getErrorMessage(), detail )
