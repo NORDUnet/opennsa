@@ -9,8 +9,61 @@ from twisted.python import log
 from twisted.internet import defer
 from twisted.web import resource, server
 
+from xml.sax.saxutils import escape as xml_escape
+
+
 
 LOG_SYSTEM = 'protocol.SOAPResource'
+
+
+SERVICE_FAULT = """<?xml version='1.0' encoding='UTF-8'?>
+<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">
+   <SOAP-ENV:Body>
+       <SOAP-ENV:Fault>
+           <faultcode>SOAP-ENV:Server</faultcode>
+           <faultstring>%(fault_string)</faultstring>
+       </SOAP-ENV:Fault>
+   </SOAP-ENV:Body>
+</SOAP-ENV:Envelope>
+"""
+
+SERVICE_FAULT_DETAILED = """<?xml version='1.0' encoding='UTF-8'?>
+<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">
+   <SOAP-ENV:Body>
+       <SOAP-ENV:Fault>
+           <faultcode>SOAP-ENV:Server</faultcode>
+           <faultstring>%(fault_string)</faultstring>
+            <detail>
+                %(detail)s
+            </detail>
+       </SOAP-ENV:Fault>
+   </SOAP-ENV:Body>
+</SOAP-ENV:Envelope>
+"""
+
+
+# Consider moving this to minisoap sometime
+class SOAPFault(Exception):
+
+    def __init__(self, fault_string, detail=None):
+        self.fault_string = fault_string
+        self.detail = detail
+
+
+    def createPayload(self):
+
+        # Need to do some escaping
+
+        fault_string = xml_escape( self.fault_string )
+
+        if self.detail is None:
+            payload = SERVICE_FAULT % {'fault_string': fault_string }
+        else:
+            payload = SERVICE_FAULT_DETAILED % {'fault_string': fault_string, 'detail': self.detail }
+
+        print "SERVICE FAULT\n", payload, "\n"
+        return payload
+
 
 
 class SOAPResource(resource.Resource):
@@ -55,18 +108,24 @@ class SOAPResource(resource.Resource):
             request.write(reply_data)
             request.finish()
 
-        def decodeError(err):
-            error_msg = err.getErrorMessage()
-            log.msg('Failure during SOAP decoding/dispatch: %s' % error_msg, system=LOG_SYSTEM)
-            log.err(err)
+        def errorReply(err):
+
+            log.msg('Failure during SOAP decoding/dispatch: %s' % err.getErrorMessage(), system=LOG_SYSTEM)
+
+            if err.check(SOAPFault): # is not None:
+                print "EC MATCH"
+                error_payload = err.value.createPayload()
+            else:
+                error_payload = SOAPFault(err.getErrorMessage()).createPayload()
+
             request.setResponseCode(500) # Internal server error
-            request.setHeader('Content-Type', 'text/plain') # This will make some SOAP implementation sad, but there isn't alot that can be done at this point
-            request.write(error_msg)
+            request.setHeader('Content-Type', 'text/xml')
+            request.write(error_payload)
             request.finish()
 
         decoder = self.soap_actions[soap_action]
         d = defer.maybeDeferred(decoder, soap_action, soap_data)
-        d.addCallbacks(reply, decodeError)
+        d.addCallbacks(reply, errorReply)
 
         return server.NOT_DONE_YET
 
