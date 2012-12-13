@@ -79,8 +79,8 @@ class Requester:
 
         def reserveRequestFailed(err):
             # invocation failed, so we error out immediately
-            log.msg('Reserve invocation failed: %s' % str(err))
-            self.triggerCall(provider_nsa.urn(), correlation_id, 'reserve', error.ReserveError(err.getErrorMessage()))
+            log.msg('Reserve invocation failed: %s' % err.getErrorMessage())
+            self.triggerCall(provider_nsa.urn(), correlation_id, 'reserve', err.value)
 
         rd = self.addCall(provider_nsa, correlation_id, 'reserve')
         cd = self.requester_client.reserve(provider_nsa.endpoint,
