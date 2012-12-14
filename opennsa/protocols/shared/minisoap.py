@@ -18,6 +18,8 @@ SOAP_BODY               = ET.QName("{%s}Body"       % SOAP_ENVELOPE_NS)
 SOAP_FAULT              = ET.QName("{%s}Fault"      % SOAP_ENVELOPE_NS)
 
 
+ET.register_namespace('soap', SOAP_ENVELOPE_NS)
+
 
 def _indent(elem, level=0):
     i = "\n" + level*"   "
