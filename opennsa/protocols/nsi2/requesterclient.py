@@ -29,15 +29,12 @@ class RequesterClient:
         self.ctx_factory = ctx_factory
 
 
-    def _createGenericRequestType(self, correlation_id, requester_nsa, provider_nsa, connection_id):
+    def _createGenericRequestType(self, message_name, correlation_id, requester_nsa, provider_nsa, connection_id):
 
-        # this could be more compact
-        header = HT.CommonHeaderType(None, correlation_id, requester_nsa.urn(), provider_nsa.urn(), self.reply_to)
+        header_payload = helper.createHeader(correlation_id, requester_nsa.urn(), provider_nsa.urn(), self.reply_to)
 
         request = CT.GenericRequestType(connection_id)
-
-        header_payload = helper.export(header,  helper.FRAMEWORK_TYPES_NS)
-        body_payload   = helper.export(request, helper.CONNECTION_TYPES_NS)
+        body_payload = helper.export(request, helper.CONNECTION_TYPES_NS, message_name)
 
         payload = minisoap.createSoapPayload(body_payload, header_payload)
 
@@ -77,7 +74,7 @@ class RequesterClient:
     def reserve(self, service_url, correlation_id, requester_nsa, provider_nsa, session_security_attr,
                 global_reservation_id, description, connection_id, service_parameters):
 
-        header = HT.CommonHeaderType(None, correlation_id, requester_nsa.urn(), provider_nsa.urn(), self.reply_to)
+        header_payload = helper.createHeader(correlation_id, requester_nsa.urn(), provider_nsa.urn(), self.reply_to)
 
         sp = service_parameters
         s_stp = sp.source_stp
@@ -95,11 +92,8 @@ class RequesterClient:
 
         reservation = CT.ReserveType(global_reservation_id, description, connection_id, criteria)
 
-        # create payloads
-
-        header_payload = helper.export(header,      helper.FRAMEWORK_TYPES_NS)
-        body_payload   = helper.export(reservation, helper.CONNECTION_TYPES_NS)
-
+        # create payload
+        body_payload   = helper.export(reservation, helper.CONNECTION_TYPES_NS, 'reserve')
         payload = minisoap.createSoapPayload(body_payload, header_payload)
 
         def gotReply(data):
@@ -112,7 +106,7 @@ class RequesterClient:
 
     def provision(self, correlation_id, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
-        payload = self._createGenericRequestType(correlation_id, requester_nsa, provider_nsa, connection_id)
+        payload = self._createGenericRequestType('provision', correlation_id, requester_nsa, provider_nsa, connection_id)
 
         def gotReply(data):
             log.msg(' -- START: Provision Response --\n' + data + '\n -- END. Provision Response --', payload=True)
@@ -127,7 +121,7 @@ class RequesterClient:
         def gotReply(data):
             log.msg(' -- START: Release Response --\n' + data + '\n -- END. Release Response --', payload=True)
 
-        payload = self._createGenericRequestType(correlation_id, requester_nsa, provider_nsa, connection_id)
+        payload = self._createGenericRequestType('release', correlation_id, requester_nsa, provider_nsa, connection_id)
         f = httpclient.httpRequest(provider_nsa.url(), actions.RELEASE, payload, ctx_factory=self.ctx_factory)
         f.deferred.addCallbacks(gotReply, self._handleErrorReply)
         return f.deferred
@@ -138,7 +132,7 @@ class RequesterClient:
         def gotReply(data):
             log.msg(' -- START: Terminate Response --\n' + data + '\n -- END. Terminate Response --', payload=True)
 
-        payload = self._createGenericRequestType(correlation_id, requester_nsa, provider_nsa, connection_id)
+        payload = self._createGenericRequestType('terminate', correlation_id, requester_nsa, provider_nsa, connection_id)
         f = httpclient.httpRequest(provider_nsa.url(), actions.TERMINATE, payload, ctx_factory=self.ctx_factory)
         f.deferred.addCallbacks(gotReply, self._handleErrorReply)
         return f.deferred

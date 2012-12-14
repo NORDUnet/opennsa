@@ -64,7 +64,7 @@ class ProviderService:
     def _createGenericAcknowledgement(self, _, correlation_id, requester_nsa, provider_nsa):
 
         header = HT.CommonHeaderType(None, correlation_id, requester_nsa, provider_nsa)
-        header_payload = helper.export(header, helper.FRAMEWORK_TYPES_NS)
+        header_payload = helper.export(header, helper.FRAMEWORK_TYPES_NS, 'acknowledgment')
 
         payload = minisoap.createSoapPayload(None, header_payload)
         return payload

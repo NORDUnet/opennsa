@@ -68,10 +68,9 @@ class RequesterService:
         return header, generic_confirm
 
 
-    def _createGenericAcknowledgement(self, protocol_version, correlation_id, requester_nsa, provider_nsa):
+    def _createGenericAcknowledgement(self, correlation_id, requester_nsa, provider_nsa):
 
-        header = HT.CommonHeaderType(protocol_version, correlation_id, requester_nsa, provider_nsa)
-        header_payload = helper.export(header, helper.FRAMEWORK_TYPES_NS)
+        header_payload = helper.createHeader(correlation_id, requester_nsa, provider_nsa)
 
         payload = minisoap.createSoapPayload(None, header_payload)
         return payload
@@ -84,10 +83,12 @@ class RequesterService:
         header = HT.parseString( ET.tostring( headers[0] ) )
         reservation = CT.parseString( ET.tostring( bodies[0] ) )
 
-        if len(reservation.criteria) > 1:
+        if type(reservation.criteria) == list and len(reservation.criteria) > 1:
             print "Multiple reservation criteria!"
+            criteria = reservation.criteria[0]
+        else:
+            criteria = reservation.criteria
 
-        criteria = reservation.criteria[0]
         schedule = criteria.schedule
         path = criteria.path
 
@@ -112,7 +113,7 @@ class RequesterService:
         self.requester.reserveConfirmed(header.correlationId, header.requesterNSA, header.providerNSA, session_security_attr,
                                         reservation.globalReservationId, reservation.description, reservation.connectionId, service_parameters)
 
-        return self._createGenericAcknowledgement(helper.PROTO, header.correlationId, header.requesterNSA, header.providerNSA)
+        return self._createGenericAcknowledgement(header.correlationId, header.requesterNSA, header.providerNSA)
 
 
 ##    def reserveFailed(self, soap_data):
@@ -137,7 +138,7 @@ class RequesterService:
         self.requester.provisionConfirmed(header.correlationId, header.requesterNSA, header.providerNSA, session_security_attr,
                                           generic_confirm.connectionId)
 
-        return self._createGenericAcknowledgement(helper.PROTO, header.correlationId, header.requesterNSA, header.providerNSA)
+        return self._createGenericAcknowledgement(header.correlationId, header.requesterNSA, header.providerNSA)
 
 
 ##    def provisionFailed(self, soap_data):
@@ -162,7 +163,7 @@ class RequesterService:
         self.requester.releaseConfirmed(header.correlationId, header.requesterNSA, header.providerNSA, session_security_attr,
                                         generic_confirm.connectionId)
 
-        return self._createGenericAcknowledgement(helper.PROTO, header.correlationId, header.requesterNSA, header.providerNSA)
+        return self._createGenericAcknowledgement(header.correlationId, header.requesterNSA, header.providerNSA)
 
 
 ##    def releaseFailed(self, soap_data):
@@ -187,7 +188,7 @@ class RequesterService:
         self.requester.terminateConfirmed(header.correlationId, header.requesterNSA, header.providerNSA, session_security_attr,
                                           generic_confirm.connectionId)
 
-        return self._createGenericAcknowledgement(helper.PROTO, header.correlationId, header.requesterNSA, header.providerNSA)
+        return self._createGenericAcknowledgement(header.correlationId, header.requesterNSA, header.providerNSA)
 
 
 ##    def terminateFailed(self, soap_data):

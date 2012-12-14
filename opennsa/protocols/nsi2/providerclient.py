@@ -22,13 +22,12 @@ class ProviderClient:
         self.ctx_factory = ctx_factory
 
 
-    def _genericConfirm(self, requester_url, action, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id):
+    def _genericConfirm(self, message_name, requester_url, action, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id):
 
-        header = HT.CommonHeaderType(helper.PROTO, correlation_id, requester_nsa, provider_nsa)
+        header_payload = helper.createHeader(correlation_id, requester_nsa, provider_nsa)
+
         generic_confirm = CT.GenericConfirmedType(global_reservation_id, connection_id)
-
-        header_payload = helper.export(header,          helper.FRAMEWORK_TYPES_NS)
-        body_payload   = helper.export(generic_confirm, helper.CONNECTION_TYPES_NS)
+        body_payload   = helper.export(generic_confirm, helper.CONNECTION_TYPES_NS, message_name)
 
         payload = minisoap.createSoapPayload(body_payload, header_payload)
 
@@ -42,11 +41,11 @@ class ProviderClient:
 
     def reserveConfirmed(self, requester_url, correlation_id, requester_nsa, provider_nsa, global_reservation_id, description, connection_id, service_parameters):
 
+        header_payload = helper.createHeader(correlation_id, requester_nsa, provider_nsa)
+
         sp = service_parameters
         s_stp = sp.source_stp
         d_stp = sp.dest_stp
-
-        header = HT.CommonHeaderType(None, correlation_id, requester_nsa, provider_nsa)
 
         version = 0
         schedule = CT.ScheduleType( sp.start_time.isoformat(), sp.end_time.isoformat() )
@@ -63,8 +62,7 @@ class ProviderClient:
 
         reserve_conf = CT.ReserveConfirmedType(global_reservation_id, description, connection_id, [ criteria ] )
 
-        header_payload = helper.export(header,       helper.FRAMEWORK_TYPES_NS)
-        body_payload   = helper.export(reserve_conf, helper.CONNECTION_TYPES_NS)
+        body_payload   = helper.export(reserve_conf, helper.CONNECTION_TYPES_NS, 'reserveConfirmed')
 
         payload = minisoap.createSoapPayload(body_payload, header_payload)
 
@@ -102,7 +100,9 @@ class ProviderClient:
 
     def provisionConfirmed(self, requester_url, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id):
 
-        return self._genericConfirm(requester_url, actions.PROVISION_CONFIRMED, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id)
+        return self._genericConfirm('provisionConfirmed', requester_url, actions.PROVISION_CONFIRMED,
+                                    correlation_id, requester_nsa, provider_nsa,
+                                    global_reservation_id, connection_id)
 
 
 #    def provisionFailed(self, requester_url, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_msg):
@@ -127,7 +127,8 @@ class ProviderClient:
 
     def releaseConfirmed(self, requester_url, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id):
 
-        return self._genericConfirm(requester_url, actions.RELEASE_CONFIRMED, correlation_id, requester_nsa, provider_nsa,
+        return self._genericConfirm('releaseConfirmed', requester_url, actions.RELEASE_CONFIRMED,
+                                    correlation_id, requester_nsa, provider_nsa,
                                     global_reservation_id, connection_id)
 
 #    def releaseFailed(self, requester_url, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_msg):
@@ -152,7 +153,8 @@ class ProviderClient:
 
     def terminateConfirmed(self, requester_url, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id):
 
-        return self._genericConfirm(requester_url, actions.TERMINATE_CONFIRMED, correlation_id, requester_nsa, provider_nsa,
+        return self._genericConfirm('terminateConfirmed', requester_url, actions.TERMINATE_CONFIRMED,
+                                    correlation_id, requester_nsa, provider_nsa,
                                     global_reservation_id, connection_id)
 
 
