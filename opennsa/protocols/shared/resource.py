@@ -113,9 +113,10 @@ class SOAPResource(resource.Resource):
             log.msg('Failure during SOAP decoding/dispatch: %s' % err.getErrorMessage(), system=LOG_SYSTEM)
 
             if err.check(SOAPFault): # is not None:
-                print "EC MATCH"
                 error_payload = err.value.createPayload()
             else:
+                # non SOAPFault error, we should log this
+                log.err(err)
                 error_payload = SOAPFault(err.getErrorMessage()).createPayload()
 
             request.setResponseCode(500) # Internal server error
