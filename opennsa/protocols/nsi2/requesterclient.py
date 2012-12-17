@@ -57,7 +57,7 @@ class RequesterClient:
 
         service_exception = None
         if detail:
-            service_exception = CT.parseString(detail)
+            service_exception = CT.parseString(detail, CT.ServiceExceptionType)
 
         if service_exception is None:
             # this is not entirely correct, but it isn't really wrong either
