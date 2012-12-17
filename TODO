@@ -1,11 +1,7 @@
 
 NSI2 Support!
 
-- Better error handling in soap stuff
-
-- Remove soap_action in decoder call
 - Rename shared.resource to shared.soapresource
-- Split out http client from shared.minisoap to shared.httpclient
 - Have twistedsuds use the shared.httpclient
 
 
