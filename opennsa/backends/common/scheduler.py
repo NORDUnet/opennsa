@@ -7,6 +7,8 @@ Copyright: NORDUnet (2011)
 
 import datetime
 
+from dateutil.tz import tzutc
+
 from twisted.python import log
 from twisted.internet import reactor, defer, task
 
@@ -35,7 +37,7 @@ class TransitionScheduler:
 
         assert self.scheduled_transition_call is None or self.scheduled_transition_call.called is True, 'Scheduling transition while other transition is scheduled'
 
-        dt_now = datetime.datetime.utcnow()
+        dt_now = datetime.datetime.now(tzutc())
 
         # allow a bit leeway in transition to avoid odd race conditions
         assert transition_time >= (dt_now - datetime.timedelta(seconds=1)), 'Scheduled transition is not in the future (%s >= %s is False)' % (transition_time, dt_now)

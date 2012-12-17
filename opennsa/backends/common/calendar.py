@@ -11,6 +11,8 @@ Copyright: NORDUnet (2011)
 
 import datetime
 
+from dateutil.tz import tzutc
+
 from opennsa import error
 
 
@@ -41,13 +43,13 @@ class ReservationCalendar:
         if start_time > end_time:
             raise error.InvalidRequestError('Invalid request: Reverse duration (end time before start time)')
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now(tzutc())
         if start_time < now:
             delta = now - start_time
             stamp = str(start_time).rsplit('.')[0]
             raise error.InvalidRequestError('Invalid request: Start time in the past (Startime: %s Delta: %s)' % (stamp, str(delta)))
 
-        if start_time > datetime.datetime(2025, 1, 1):
+        if start_time > datetime.datetime(2025, 1, 1, tzinfo=tzutc()):
             raise error.InvalidRequestError('Invalid request: Start time after year 2025')
 
         for (c_port, c_start_time, c_end_time) in self.connections:
