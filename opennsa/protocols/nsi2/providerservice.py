@@ -79,7 +79,7 @@ class ProviderService:
         if err.check(error.NSIError):
             variables = None
             se = CT.ServiceExceptionType(provider_nsa, err.value.errorId, err.getErrorMessage(), variables)
-            detail = helper.export(se, 'serviceException')
+            detail = helper.export(se, 'serviceException', level=4)
             print "FAULT DETAIL", detail
         else:
             log.msg('Got a non NSIError exception, cannot create detailed fault (%s)' % type(err.value), system=LOG_SYSTEM)
