@@ -2,7 +2,6 @@
 NSI2 Support!
 
 - Rename shared.resource to shared.soapresource
-- Have twistedsuds use the shared.httpclient
 
 
 Registry, they are not necessarely events or service. Just a registry. (just some renaming)
