@@ -15,6 +15,8 @@ Copyright: NORDUnet (2011-2012)
 
 import datetime
 
+from dateutil.tz import tzutc
+
 from twisted.python import log
 from twisted.internet import defer
 
@@ -96,7 +98,7 @@ class GenericConnection:
             return d
 
 
-        dt_now = datetime.datetime.utcnow()
+        dt_now = datetime.datetime.now(tzutc())
         if self.service_parameters.end_time <= dt_now:
             return defer.fail(error.ProvisionError('Cannot provision connection after end time (end time: %s, current time: %s).' % (self.service_parameters.end_time, dt_now)))
 

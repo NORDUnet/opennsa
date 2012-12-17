@@ -7,6 +7,8 @@ Copyright: NORDUnet (2011-2012)
 
 import datetime
 
+from dateutil.tz import tzutc
+
 from twisted.python import log, failure
 from twisted.internet import defer
 
@@ -260,7 +262,7 @@ class Connection:
         # --
 
         # initial state switch (this validates if the transition is possible)
-        if self.service_parameters.start_time > datetime.datetime.utcnow():
+        if self.service_parameters.start_time > datetime.datetime.now(tzutc()):
             self.state.switchState(state.AUTO_PROVISION)
         else:
             self.state.switchState(state.PROVISIONING)

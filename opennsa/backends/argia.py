@@ -14,6 +14,8 @@ import StringIO
 
 from xml.etree import ElementTree as ET
 
+from dateutil.tz import tzutc
+
 from twisted.python import log
 from twisted.internet import reactor, protocol, defer
 
@@ -84,7 +86,7 @@ class ArgiaBackend:
         if res_start > res_end:
             raise error.InvalidRequestError('Refusing to make reservation with reverse duration')
 
-        if res_start < datetime.datetime.utcnow():
+        if res_start < datetime.datetime.now(tzutc()):
             raise error.InvalidRequestError('Refusing to make reservation with start time in the past')
 
         if res_start > datetime.datetime(2025, 1, 1):
@@ -246,7 +248,7 @@ class ArgiaConnection:
 
     def provision(self):
 
-        dt_now = datetime.datetime.utcnow()
+        dt_now = datetime.datetime.now(tzutc())
 
         if self.service_parameters.end_time <= dt_now:
             return defer.fail(error.ProvisionError('Cannot provision connection after end time. End time: %s, Current time: %s.' % (self.service_parameters.end_time, dt_now)))
