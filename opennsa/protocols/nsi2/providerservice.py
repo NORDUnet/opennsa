@@ -140,7 +140,14 @@ class ProviderService:
         dest_stp   = nsa.STP(ds.networkId, ds.localId)
 
         start_time = self.datetime_parser.parse(schedule.startTime)
+        if start_time.utcoffset() is None:
+            err = failure.Failure ( error.PayloadError('Start time has no time zone information') )
+            return self._createSOAPFault(err, header.providerNSA)
+
         end_time   = self.datetime_parser.parse(schedule.endTime)
+        if end_time.utcoffset() is None:
+            err = failure.Failure ( error.PayloadError('End time has no time zone information') )
+            return self._createSOAPFault(err, header.providerNSA)
 
         service_parameters = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp,
                                                   directionality=path.directionality, bandwidth=criteria.bandwidth)
