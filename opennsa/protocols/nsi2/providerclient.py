@@ -32,7 +32,8 @@ class ProviderClient:
         payload = minisoap.createSoapPayload(body_payload, header_payload)
 
         def gotReply(data):
-            print "GC REPLY\n", data
+            # for now we just ignore this, as long as we get an okay
+            return
 
         f = httpclient.httpRequest(requester_url, action, payload, ctx_factory=self.ctx_factory)
         f.deferred.addCallbacks(gotReply) #, errReply)
