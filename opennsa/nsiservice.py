@@ -176,7 +176,7 @@ class NSIService:
             d = task.deferLater(reactor, 0, conn.provision)
             d.addErrback(log.err)
             return defer.succeed(None)
-        except error.error.ConnectionNonExistentError, e:
+        except error.ConnectionNonExistentError, e:
             log.msg('NSA %s requested non-existing connection %s' % (requester_nsa, connection_id), system=LOG_SYSTEM)
             return defer.fail(e)
 
