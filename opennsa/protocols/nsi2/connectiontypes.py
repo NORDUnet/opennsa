@@ -11523,14 +11523,14 @@ def parse(inFileName):
     return rootObj
 
 
-def parseString(inString):
+def parseString(inString, rootClass=None):
     from StringIO import StringIO
     doc = parsexml_(StringIO(inString))
     rootNode = doc.getroot()
-    rootTag, rootClass = get_root_tag(rootNode)
     if rootClass is None:
-        rootTag = 'reserve'
-        rootClass = ReserveType
+        rootTag, rootClass = get_root_tag(rootNode)
+        if rootClass is None:
+            rootClass = ReserveType
     rootObj = rootClass.factory()
     rootObj.build(rootNode)
     return rootObj
