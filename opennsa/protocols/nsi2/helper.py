@@ -22,10 +22,10 @@ ET.register_namespace('cs', CONNECTION_TYPES_NS)
 
 
 
-def export(type_binding, name):
+def export(type_binding, name, level=0):
 
     f = StringIO.StringIO()
-    type_binding.export(f, 0, name_=name)
+    type_binding.export(f, level, name_=name)
     return f.getvalue()
 
 
