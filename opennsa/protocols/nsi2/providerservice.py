@@ -155,7 +155,7 @@ class ProviderService:
         # change core classes in a way that nsi1 protocol can still handle it
 
         t_delta = time.time() - t_start
-        log.msg('Profile: Reserve2 request parse time: %s' % round(t_delta, 3), profile=True, system=LOG_SYSTEM)
+        log.msg('Profile: Reserve request parse time: %s' % round(t_delta, 3), profile=True, system=LOG_SYSTEM)
 
         d = self.provider.reserve(header.correlationId, header.replyTo, header.requesterNSA, header.providerNSA, session_security_attr,
                                   reservation.globalReservationId, reservation.description, reservation.connectionId, service_parameters)
