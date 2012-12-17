@@ -52,6 +52,7 @@ class RequesterClient:
             return err
 
         payload = err.value.response
+        log.msg(' -- Received Fault Payload --\n' + payload + '\n -- END. Received Fault Payload --', payload=True)
 
         fault_code, fault_string, detail = minisoap.parseFault(payload)
 
