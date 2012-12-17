@@ -34,7 +34,7 @@ SERVICE_FAULT_DETAILED = """<?xml version='1.0' encoding='UTF-8'?>
            <faultcode>SOAP-ENV:Server</faultcode>
            <faultstring>%(fault_string)s</faultstring>
             <detail>
-                %(detail)s
+%(detail)s
             </detail>
        </SOAP-ENV:Fault>
    </SOAP-ENV:Body>
