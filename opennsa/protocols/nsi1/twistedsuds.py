@@ -12,9 +12,9 @@ import urlparse
 import StringIO
 
 from twisted.python import log
-from twisted.internet import reactor, defer
-from twisted.web import client as twclient
 from twisted.internet.error import ConnectionDone
+
+from opennsa.protocol.shared import httpclient
 
 from suds.transport import Transport, TransportError
 from suds.options import Options
@@ -27,47 +27,6 @@ from suds.client import Factory
 DEFAULT_TIMEOUT = 30 # seconds
 
 LOG_SYSTEM = 'TwistedSUDS'
-
-
-
-class RequestError(Exception):
-    """
-    Raised when a request could not be made or failed in an unexpected way.
-    """
-
-
-
-def _httpRequest(url, soap_action, soap_envelope, timeout=DEFAULT_TIMEOUT, ctx_factory=None):
-    # copied from twisted.web.client in order to get access to the
-    # factory (which contains response codes, headers, etc)
-
-    if type(url) is not str:
-        e = RequestError('URL must be string, not %s' % type(url))
-        return defer.fail(e), None
-
-    log.msg(" -- Sending payload --\n%s\n -- End of payload --" % soap_envelope, system=LOG_SYSTEM, payload=True)
-
-    scheme, host, port, _ = twclient._parse(url)
-
-    factory = twclient.HTTPClientFactory(url, method='POST', postdata=soap_envelope, timeout=timeout)
-    factory.noisy = False # stop spewing about factory start/stop
-
-    # fix missing port in header (bug in twisted.web.client)
-    if port:
-        factory.headers['host'] = host + ':' + str(port)
-
-    factory.headers['Content-Type'] = 'text/xml' # CXF will complain if this is not set
-    factory.headers['soapaction'] = soap_action
-    factory.headers['Authorization'] = 'Basic bnNpZGVtbzpSaW9QbHVnLUZlc3QyMDExIQ==' # base64.b64encode('nsidemo:RioPlug-Fest2011!')
-
-    if scheme == 'https':
-        if ctx_factory is None:
-            return defer.fail(RequestError('Cannot perform https request without context factory')), None
-        reactor.connectSSL(host, port, factory, ctx_factory)
-    else:
-        reactor.connectTCP(host, port, factory)
-
-    return factory.deferred, factory
 
 
 
@@ -154,10 +113,10 @@ class TwistedSUDSClient:
         log.msg('SOAP Dispatch: URL: %s. Action: %s. Length %s' % (url, short_action, len(soap_envelope)), system=LOG_SYSTEM, debug=True)
 
         # dispatch
-        d, factory = _httpRequest(url, soap_action, soap_envelope, timeout=self.timeout, ctx_factory=self.ctx_factory)
-        d.addCallbacks(self._parseResponse, invokeError,
-                       callbackArgs=(factory, method, short_action), errbackArgs=(url, soap_action))
-        return d
+        factory = httpclient.httpRequest(url, soap_action, soap_envelope, timeout=self.timeout, ctx_factory=self.ctx_factory)
+        factory.deferred.addCallbacks(self._parseResponse, invokeError,
+                         callbackArgs=(factory, method, short_action), errbackArgs=(url, soap_action))
+        return factory.deferred
 
 
     def _getMethod(self, method_name):
@@ -182,5 +141,5 @@ class TwistedSUDSClient:
             return result
 
         else:
-            raise RequestError('Got a non-200 response from the service. Message:\n----\n' + response + '\n----\n')
+            raise httpclient.HTTPRequestError('Got a non-200 response from the service. Message:\n----\n' + response + '\n----\n')
 
