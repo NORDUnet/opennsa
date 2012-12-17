@@ -80,7 +80,12 @@ class RequesterClient:
         s_stp = sp.source_stp
         d_stp = sp.dest_stp
 
-        schedule = CT.ScheduleType(sp.start_time, sp.end_time)
+        if sp.start_time.utcoffset() is None:
+            raise ValueError('Start time has no time zone info')
+        if sp.end_time.utcoffset() is None:
+            raise ValueError('End time has no time zone info')
+
+        schedule = CT.ScheduleType(sp.start_time.isoformat(), sp.end_time.isoformat())
         service_attributes = None
 
         # EROs not supported, need to use TypeValuePairListType for labels
