@@ -14,7 +14,7 @@ import StringIO
 from twisted.python import log
 from twisted.internet.error import ConnectionDone
 
-from opennsa.protocol.shared import httpclient
+from opennsa.protocols.shared import httpclient
 
 from suds.transport import Transport, TransportError
 from suds.options import Options
