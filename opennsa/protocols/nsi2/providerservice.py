@@ -49,16 +49,20 @@ class ProviderService:
 #        "http://schemas.ogf.org/nsi/2012/03/connection/service/queryFailed"
 
 
-    def _parseGenericRequest(self, soap_data):
+    def _parseRequest(self, soap_data):
 
         headers, bodies = minisoap.parseSoapPayload(soap_data)
 
-        # do some checking here
+        if headers is None:
+            raise ValueError('No header specified in payload')
+            #raise resource.SOAPFault('No header specified in payload')
+
+        # more checking here...
 
         header = HT.parseString( ET.tostring( headers[0] ) )
-        generic_request = CT.parseString( ET.tostring( bodies[0] ) )
+        body   = CT.parseString( ET.tostring( bodies[0] ) ) # only one body element supported for now
 
-        return header, generic_request
+        return header, body
 
 
     def _createGenericAcknowledgement(self, _, correlation_id, requester_nsa, provider_nsa):
@@ -91,12 +95,10 @@ class ProviderService:
 
         t_start = time.time()
 
-        headers, bodies = minisoap.parseSoapPayload(soap_data)
+        header, reservation = self._parseRequest(soap_data)
 
         # do some checking here
 
-        header = HT.parseString( ET.tostring( headers[0] ) )
-        reservation = CT.parseString( ET.tostring( bodies[0] ) )
 
         print "--"
 
@@ -159,7 +161,7 @@ class ProviderService:
 
     def provision(self, soap_data):
 
-        header, generic_request = self._parseGenericRequest(soap_data)
+        header, generic_request = self._parseRequest(soap_data)
 
         session_security_attr = None
 
@@ -174,7 +176,7 @@ class ProviderService:
 
     def release(self, soap_data):
 
-        header, generic_request = self._parseGenericRequest(soap_data)
+        header, generic_request = self._parseRequest(soap_data)
 
         session_security_attr = None
 
@@ -189,7 +191,7 @@ class ProviderService:
 
     def terminate(self, soap_data):
 
-        header, generic_request = self._parseGenericRequest(soap_data)
+        header, generic_request = self._parseRequest(soap_data)
 
         session_security_attr = None
 
