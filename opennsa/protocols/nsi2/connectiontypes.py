@@ -37,6 +37,9 @@ except ImportError:
         except ImportError:
             raise ImportError("Failed to import ElementTree from any known place")
 
+CT_NS = 'xmlns:ct="http://schemas.ogf.org/nsi/2012/03/connection/types"'
+
+
 def parsexml_(*args, **kwargs):
     if (XMLParser_import_library == XMLParser_import_lxml and
         'parser' not in kwargs):
@@ -391,7 +394,7 @@ class ReserveType(GeneratedsSuper):
         pass
     def get_criteria(self): return self.criteria
     def set_criteria(self, criteria): self.criteria = criteria
-    def export(self, outfile, level, namespace_='tns:', name_='ReserveType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespace_='ct:', name_='ReserveType', namespacedef_=CT_NS, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -402,7 +405,7 @@ class ReserveType(GeneratedsSuper):
         self.exportAttributes(outfile, level, already_processed, namespace_, name_='ReserveType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_, name_, pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, '', '', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
         else:
@@ -525,7 +528,7 @@ class ReserveConfirmedType(GeneratedsSuper):
     def set_criteria(self, criteria): self.criteria = criteria
     def add_criteria(self, value): self.criteria.append(value)
     def insert_criteria(self, index, value): self.criteria[index] = value
-    def export(self, outfile, level, namespace_='tns:', name_='ReserveConfirmedType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespace_='ct:', name_='ReserveConfirmedType', namespacedef_=CT_NS, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -536,7 +539,7 @@ class ReserveConfirmedType(GeneratedsSuper):
         self.exportAttributes(outfile, level, already_processed, namespace_, name_='ReserveConfirmedType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_, name_, pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, '', '', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
         else:
@@ -1193,7 +1196,7 @@ class GenericRequestType(GeneratedsSuper):
     def validate_ConnectionIdType(self, value):
         # Validate type ConnectionIdType, a restriction on xsd:string.
         pass
-    def export(self, outfile, level, namespace_='tns:', name_='GenericRequestType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespace_='ct:', name_='GenericRequestType', namespacedef_=CT_NS, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -1204,7 +1207,7 @@ class GenericRequestType(GeneratedsSuper):
         self.exportAttributes(outfile, level, already_processed, namespace_, name_='GenericRequestType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_, name_, pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, '', '', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
         else:
@@ -1282,7 +1285,7 @@ class GenericConfirmedType(GeneratedsSuper):
     def validate_ConnectionIdType(self, value):
         # Validate type ConnectionIdType, a restriction on xsd:string.
         pass
-    def export(self, outfile, level, namespace_='tns:', name_='GenericConfirmedType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespace_='ct:', name_='GenericConfirmedType', namespacedef_=CT_NS, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -1293,7 +1296,7 @@ class GenericConfirmedType(GeneratedsSuper):
         self.exportAttributes(outfile, level, already_processed, namespace_, name_='GenericConfirmedType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_, name_, pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, '', '', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
         else:
@@ -11012,7 +11015,7 @@ class ServiceExceptionType(GeneratedsSuper):
     def set_childException(self, childException): self.childException = childException
     def add_childException(self, value): self.childException.append(value)
     def insert_childException(self, index, value): self.childException[index] = value
-    def export(self, outfile, level, namespace_='tns:', name_='ServiceExceptionType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespace_='ct:', name_='ServiceExceptionType', namespacedef_=CT_NS, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -11023,7 +11026,7 @@ class ServiceExceptionType(GeneratedsSuper):
         self.exportAttributes(outfile, level, already_processed, namespace_, name_='ServiceExceptionType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_, name_, pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, '', '', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
         else:

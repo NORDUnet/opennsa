@@ -68,7 +68,7 @@ class ProviderService:
     def _createGenericAcknowledgement(self, _, correlation_id, requester_nsa, provider_nsa):
 
         header = HT.CommonHeaderType(None, correlation_id, requester_nsa, provider_nsa)
-        header_payload = helper.export(header, helper.FRAMEWORK_TYPES_NS, 'acknowledgment')
+        header_payload = helper.export(header, 'acknowledgment')
 
         payload = minisoap.createSoapPayload(None, header_payload)
         return payload
@@ -79,7 +79,7 @@ class ProviderService:
         if err.check(error.NSIError):
             variables = None
             se = CT.ServiceExceptionType(provider_nsa, err.value.errorId, err.getErrorMessage(), variables)
-            detail = helper.export(se, helper.FRAMEWORK_TYPES_NS, 'serviceException')
+            detail = helper.export(se, 'serviceException')
             print "FAULT DETAIL", detail
         else:
             log.msg('Got a non NSIError exception, cannot create detailed fault (%s)' % type(err.value), system=LOG_SYSTEM)

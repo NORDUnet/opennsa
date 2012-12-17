@@ -27,7 +27,7 @@ class ProviderClient:
         header_payload = helper.createHeader(correlation_id, requester_nsa, provider_nsa)
 
         generic_confirm = CT.GenericConfirmedType(global_reservation_id, connection_id)
-        body_payload   = helper.export(generic_confirm, helper.CONNECTION_TYPES_NS, message_name)
+        body_payload   = helper.export(generic_confirm, message_name)
 
         payload = minisoap.createSoapPayload(body_payload, header_payload)
 
@@ -62,7 +62,7 @@ class ProviderClient:
 
         reserve_conf = CT.ReserveConfirmedType(global_reservation_id, description, connection_id, [ criteria ] )
 
-        body_payload   = helper.export(reserve_conf, helper.CONNECTION_TYPES_NS, 'reserveConfirmed')
+        body_payload   = helper.export(reserve_conf, 'reserveConfirmed')
 
         payload = minisoap.createSoapPayload(body_payload, header_payload)
 

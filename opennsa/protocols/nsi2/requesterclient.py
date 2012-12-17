@@ -34,7 +34,7 @@ class RequesterClient:
         header_payload = helper.createHeader(correlation_id, requester_nsa.urn(), provider_nsa.urn(), self.reply_to)
 
         request = CT.GenericRequestType(connection_id)
-        body_payload = helper.export(request, helper.CONNECTION_TYPES_NS, message_name)
+        body_payload = helper.export(request, message_name)
 
         payload = minisoap.createSoapPayload(body_payload, header_payload)
 
@@ -93,7 +93,7 @@ class RequesterClient:
         reservation = CT.ReserveType(global_reservation_id, description, connection_id, criteria)
 
         # create payload
-        body_payload   = helper.export(reservation, helper.CONNECTION_TYPES_NS, 'reserve')
+        body_payload   = helper.export(reservation, 'reserve')
         payload = minisoap.createSoapPayload(body_payload, header_payload)
 
         def gotReply(data):

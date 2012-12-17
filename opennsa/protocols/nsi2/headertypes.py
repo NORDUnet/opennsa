@@ -444,7 +444,7 @@ class CommonHeaderType(GeneratedsSuper):
     def insert_anytypeobjs_(self, index, value): self._anytypeobjs_[index] = value
     def get_anyAttributes_(self): return self.anyAttributes_
     def set_anyAttributes_(self, anyAttributes_): self.anyAttributes_ = anyAttributes_
-    def export(self, outfile, level, namespace_='tns:', name_='CommonHeaderType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespace_='fw:', name_='CommonHeaderType', namespacedef_='xmlns:fw="http://schemas.ogf.org/nsi/2012/03/framework/types"', pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -455,7 +455,7 @@ class CommonHeaderType(GeneratedsSuper):
         self.exportAttributes(outfile, level, already_processed, namespace_, name_='CommonHeaderType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_, name_, pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, '', '', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
         else:
