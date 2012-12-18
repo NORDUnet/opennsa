@@ -444,7 +444,7 @@ class CommonHeaderType(GeneratedsSuper):
     def insert_anytypeobjs_(self, index, value): self._anytypeobjs_[index] = value
     def get_anyAttributes_(self): return self.anyAttributes_
     def set_anyAttributes_(self, anyAttributes_): self.anyAttributes_ = anyAttributes_
-    def export(self, outfile, level, namespace_='fw:', name_='CommonHeaderType', namespacedef_='xmlns:fw="http://schemas.ogf.org/nsi/2012/03/framework/types"', pretty_print=True):
+    def export(self, outfile, level, namespace_='fw:', name_='CommonHeaderType', namespacedef_='xmlns:fw="http://schemas.ogf.org/nsi/2012/03/framework/headers"', pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:

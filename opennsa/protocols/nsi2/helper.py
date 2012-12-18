@@ -12,13 +12,13 @@ from opennsa.protocols.nsi2 import headertypes as HT
 
 
 # don't really fit anywhere, consider cramming them into the bindings
-FRAMEWORK_TYPES_NS  = "http://schemas.ogf.org/nsi/2012/03/framework/types"
-CONNECTION_TYPES_NS = "http://schemas.ogf.org/nsi/2012/03/connection/types"
+FRAMEWORK_HEADERS_NS = "http://schemas.ogf.org/nsi/2012/03/framework/headers"
+CONNECTION_TYPES_NS  = "http://schemas.ogf.org/nsi/2012/03/connection/types"
 PROTO = 'urn:org.ogf.schema.NSIv2'
 
 
-ET.register_namespace('fw', FRAMEWORK_TYPES_NS)
-ET.register_namespace('cs', CONNECTION_TYPES_NS)
+ET.register_namespace('ftypes', FRAMEWORK_HEADERS_NS)
+ET.register_namespace('ctytes', CONNECTION_TYPES_NS)
 
 
 
