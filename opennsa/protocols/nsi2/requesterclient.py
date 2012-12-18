@@ -87,7 +87,7 @@ class RequesterClient:
             raise ValueError('End time has no time zone info')
 
         schedule = CT.ScheduleType(sp.start_time.isoformat(), sp.end_time.isoformat())
-        service_attributes = None
+        service_attributes = CT.TypeValuePairListType()
 
         # EROs not supported, need to use TypeValuePairListType for labels
         source_stp = CT.StpType(s_stp.network, s_stp.endpoint, None, 'Ingress')

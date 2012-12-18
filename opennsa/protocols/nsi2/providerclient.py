@@ -52,14 +52,14 @@ class ProviderClient:
         schedule = CT.ScheduleType( sp.start_time.isoformat(), sp.end_time.isoformat() )
         bandwidth = sp.bandwidth
 
-        service_attrs = None
+        service_attributes = CT.TypeValuePairListType()
 
         source_stp = CT.StpType(s_stp.network, s_stp.endpoint, None, 'Ingress')
         dest_stp   = CT.StpType(d_stp.network, d_stp.endpoint, None, 'Egress')
 
         path = CT.PathType(sp.directionality, False, source_stp, dest_stp)
 
-        criteria = CT.ReservationConfirmCriteriaType(version, schedule, bandwidth, service_attrs, path)
+        criteria = CT.ReservationConfirmCriteriaType(version, schedule, bandwidth, service_attributes, path)
 
         reserve_conf = CT.ReserveConfirmedType(global_reservation_id, description, connection_id, [ criteria ] )
 
