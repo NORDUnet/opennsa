@@ -14,6 +14,7 @@ from opennsa.protocols.shared import minisoap, httpclient
 from opennsa.protocols.nsi2 import connectiontypes as CT, headertypes as HT, actions, helper
 
 
+URN_NETWORK = 'urn:ogf:network:'
 
 
 def utcTime(dt):
@@ -90,8 +91,8 @@ class RequesterClient:
         service_attributes = CT.TypeValuePairListType()
 
         # EROs not supported, need to use TypeValuePairListType for labels
-        source_stp = CT.StpType(s_stp.network, s_stp.endpoint, None, 'Ingress')
-        dest_stp   = CT.StpType(d_stp.network, d_stp.endpoint, None, 'Egress')
+        source_stp = CT.StpType(URN_NETWORK + s_stp.network, s_stp.endpoint, None, 'Ingress')
+        dest_stp   = CT.StpType(URN_NETWORK + d_stp.network, d_stp.endpoint, None, 'Egress')
         path = CT.PathType(sp.directionality, None, source_stp, dest_stp)
 
         criteria = CT.ReservationRequestCriteriaType(schedule, sp.bandwidth, service_attributes, path)
