@@ -66,13 +66,10 @@ class ProviderClient:
 
         payload = minisoap.createSoapPayload(body_payload, header_payload)
 
-        print "PAYLOAD\n", payload
-
         def gotReply(data):
-            print "REPLY\n", data
+            # we don't really do anything about these
             return ""
 
-        print "--\n", requester_url
         f = httpclient.httpRequest(requester_url, actions.RESERVE_CONFIRMED, payload, ctx_factory=self.ctx_factory)
         f.deferred.addCallbacks(gotReply) #, errReply)
         return f.deferred
