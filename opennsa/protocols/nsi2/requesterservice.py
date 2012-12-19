@@ -19,7 +19,7 @@ from opennsa.protocols.nsi2 import actions, headertypes as HT, connectiontypes a
 
 
 
-LOG_SYSTEM = 'protocol.nsi2.RequesterService'
+LOG_SYSTEM = 'NSI2.RequesterService'
 
 
 

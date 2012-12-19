@@ -19,7 +19,7 @@ from opennsa.protocols.nsi2 import actions, connectiontypes as CT, headertypes a
 
 
 
-LOG_SYSTEM = 'protocols.CS2.ProviderService'
+LOG_SYSTEM = 'NSI2.ProviderService'
 
 
 

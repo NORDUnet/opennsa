@@ -17,7 +17,7 @@ from opennsa import nsa, error, registry, subscription, connection
 
 
 
-LOG_SYSTEM = 'opennsa.NSIService'
+LOG_SYSTEM = 'NSIService'
 
 
 
