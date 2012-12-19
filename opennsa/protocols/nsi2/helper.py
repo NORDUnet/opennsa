@@ -65,7 +65,7 @@ def createSTPType(stp, directionality):
 
     labels = None
     if stp.labels not in (None, []):
-        attributes = [ CT.TypeValuePairType(NML_ETHERNET_NS, label.type_, label.value) for label in stp.labels ]
+        attributes = [ CT.TypeValuePairType(NML_ETHERNET_NS, label.type_, [ label.value ] ) for label in stp.labels ]
         labels = CT.TypeValuePairListType(attributes)
 
     network = URN_NETWORK + stp.network
