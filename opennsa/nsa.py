@@ -20,15 +20,40 @@ NSA_PREFIX = 'urn:ogf:network:nsa:'
 
 LOG_SYSTEM = 'opennsa.nsa'
 
+INGRESS = 'Ingress'
+EGRESS  = 'Egress'
+BIDIRECTIONAL = 'Bidirectional' # NSI1 compat
+
+
+
+class Label:
+
+    def __init__(self, type_, value):
+        self.type_ = type_
+        self.value = value
+
+
+    def __eq__(self, other):
+        if not isinstance(other, Label):
+            return False
+        return self.type_ == other.type_ and self.value == other.value
+
+
+    def __repr__(self):
+        return '<Label %s:%s>' % (self.type_, self.value)
+
 
 
 class STP: # Service Termination Point
 
-    def __init__(self, network, endpoint):
-        assert type(network) is str, 'Invalid network type provided for STP initialization'
-        assert type(endpoint) is str, 'Invalid endpoint type provided for STP initialization'
+    def __init__(self, network, endpoint, orientation=BIDIRECTIONAL, labels=None):
+        assert type(network) is str, 'Invalid network type provided for STP'
+        assert type(endpoint) is str, 'Invalid endpoint type provided for STP'
+        assert orientation in (INGRESS, EGRESS, BIDIRECTIONAL), 'Invalid orientation provided for STP'
         self.network = network
         self.endpoint = endpoint
+        self.orientation = orientation
+        self.labels = labels or []
 
 
     def urn(self):
@@ -38,7 +63,7 @@ class STP: # Service Termination Point
     def __eq__(self, other):
         if not isinstance(other, STP):
             return False
-        return self.network == other.network and self.endpoint == other.endpoint
+        return self.network == other.network and self.endpoint == other.endpoint and self.labels == other.labels
 
 
     def __str__(self):

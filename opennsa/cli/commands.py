@@ -17,15 +17,24 @@ def discover(client, service_url):
 
 
 @defer.inlineCallbacks
-def reserve(client, client_nsa, provider_nsa, source_stp, dest_stp, start_time, end_time, bandwidth, connection_id, global_id):
+def reserve(client, client_nsa, provider_nsa, src, dst, start_time, end_time, bandwidth, connection_id, global_id):
 
-    source_network, source_port = source_stp.split(':',1)
-    dest_network,   dest_port   = dest_stp.split(':', 1)
+    # this parser should perhaps be somewhere else
+    def createSTP(stp_desc, directionality):
+        network, local_part = stp_desc.split(':',1)
+        if '#' in local_part:
+            port, label_part = local_part.split('#',1)
+            labels = [ nsa.Label(*tvl.split('=')) for tvl in label_part.split(',') if '=' in tvl ]
+        else:
+            port = local_part
+            labels = None
 
-    r_source_stp    = nsa.STP(source_network, source_port)
-    r_dest_stp      = nsa.STP(dest_network,   dest_port)
+        return nsa.STP(network, port, directionality, labels)
 
-    service_params  = nsa.ServiceParameters(start_time, end_time, r_source_stp, r_dest_stp, bandwidth)
+    src_stp = createSTP(src, nsa.EGRESS)
+    dst_stp = createSTP(dst, nsa.INGRESS)
+
+    service_params  = nsa.ServiceParameters(start_time, end_time, src_stp, dst_stp, bandwidth)
 
     log.msg("Connection ID: %s" % connection_id)
     log.msg("Global ID: %s" % global_id)
