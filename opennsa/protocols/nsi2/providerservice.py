@@ -98,9 +98,6 @@ class ProviderService:
 
         # do some checking here
 
-
-        print "--"
-
 #        print header.protocolVersion
 #        print header.correlationId
 #        print header.requesterNSA
