@@ -45,8 +45,6 @@ class ProviderClient:
         header_payload = helper.createHeader(correlation_id, requester_nsa, provider_nsa)
 
         sp = service_parameters
-        s_stp = sp.source_stp
-        d_stp = sp.dest_stp
 
         version = 0
         schedule = CT.ScheduleType( sp.start_time.isoformat(), sp.end_time.isoformat() )
@@ -54,10 +52,10 @@ class ProviderClient:
 
         service_attributes = CT.TypeValuePairListType()
 
-        source_stp = CT.StpType(s_stp.network, s_stp.endpoint, None, 'Ingress')
-        dest_stp   = CT.StpType(d_stp.network, d_stp.endpoint, None, 'Egress')
+        src_stp = helper.createSTPType(sp.source_stp, nsa.INGRESS)
+        dst_stp = helper.createSTPType(sp.dest_stp,   nsa.EGRESS)
 
-        path = CT.PathType(sp.directionality, False, source_stp, dest_stp)
+        path = CT.PathType(sp.directionality, False, src_stp, dst_stp)
 
         criteria = CT.ReservationConfirmCriteriaType(version, schedule, bandwidth, service_attributes, path)
 

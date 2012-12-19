@@ -79,8 +79,6 @@ class RequesterClient:
         header_payload = helper.createHeader(correlation_id, requester_nsa.urn(), provider_nsa.urn(), self.reply_to)
 
         sp = service_parameters
-        s_stp = sp.source_stp
-        d_stp = sp.dest_stp
 
         if sp.start_time.utcoffset() is None:
             raise ValueError('Start time has no time zone info')
@@ -90,10 +88,10 @@ class RequesterClient:
         schedule = CT.ScheduleType(sp.start_time.isoformat(), sp.end_time.isoformat())
         service_attributes = CT.TypeValuePairListType()
 
-        # EROs not supported, need to use TypeValuePairListType for labels
-        source_stp = CT.StpType(URN_NETWORK + s_stp.network, s_stp.endpoint, None, 'Ingress')
-        dest_stp   = CT.StpType(URN_NETWORK + d_stp.network, d_stp.endpoint, None, 'Egress')
-        path = CT.PathType(sp.directionality, None, source_stp, dest_stp)
+        src_stp = helper.createSTPType(sp.source_stp, 'Ingress')
+        dst_stp = helper.createSTPType(sp.dest_stp,   'Egress')
+
+        path = CT.PathType(sp.directionality, None, src_stp, dst_stp)
 
         criteria = CT.ReservationRequestCriteriaType(schedule, sp.bandwidth, service_attributes, path)
 

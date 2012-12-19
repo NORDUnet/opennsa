@@ -132,11 +132,8 @@ class ProviderService:
 
         session_security_attr = None
 
-        ss = path.sourceSTP
-        ds = path.destSTP
-
-        source_stp = nsa.STP(ss.networkId, ss.localId)
-        dest_stp   = nsa.STP(ds.networkId, ds.localId)
+        src_stp = helper.createSTP(path.sourceSTP)
+        dst_stp = helper.createSTP(path.destSTP)
 
         start_time = self.datetime_parser.parse(schedule.startTime)
         if start_time.utcoffset() is None:
@@ -148,7 +145,7 @@ class ProviderService:
             err = failure.Failure ( error.PayloadError('End time has no time zone information') )
             return self._createSOAPFault(err, header.providerNSA)
 
-        service_parameters = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp,
+        service_parameters = nsa.ServiceParameters(start_time, end_time, src_stp, dst_stp,
                                                   directionality=path.directionality, bandwidth=criteria.bandwidth)
 
         # change core classes in a way that nsi1 protocol can still handle it
