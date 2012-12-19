@@ -68,8 +68,8 @@ class GenericConnection:
         except error.StateTransitionError:
             return defer.fail(error.ReserveError('Cannot reserve connection in state %s' % self.state()))
 
-        self.scheduler.scheduleTransition(self.service_parameters.start_time, scheduled, state.SCHEDULED)
         self.logStateUpdate('RESERVED')
+        self.scheduler.scheduleTransition(self.service_parameters.start_time, scheduled, state.SCHEDULED)
         return defer.succeed(self)
 
 
