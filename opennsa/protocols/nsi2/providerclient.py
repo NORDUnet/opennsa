@@ -5,6 +5,7 @@ Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2011)
 """
 
+from opennsa import nsa
 from opennsa.protocols.shared import minisoap, httpclient
 from opennsa.protocols.nsi2 import actions, connectiontypes as CT, headertypes as HT, helper
 
