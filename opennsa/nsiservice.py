@@ -81,7 +81,7 @@ class NSIService:
 
         # --
 
-        log.msg('', system='opennsa')
+        log.msg('', system=LOG_SYSTEM)
         log.msg('Connection %s. Reserve request from %s.' % (connection_id, requester_nsa), system=LOG_SYSTEM)
 
         if connection_id in self.connections.get(requester_nsa, {}):
