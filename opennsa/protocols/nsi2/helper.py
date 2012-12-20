@@ -56,7 +56,7 @@ def createSTP(stp_type):
 
     local_id = stp_type.localId.replace(stp_type.networkId + ':', '')
 
-    labels = []
+    labels = [ nsa.Label(tvp.type_, tvp.value[0]) for tvp in stp_type.labels.attribute ]
 
     return nsa.STP(network, local_id, stp_type.orientation, labels)
 
