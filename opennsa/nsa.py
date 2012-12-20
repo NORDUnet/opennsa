@@ -30,7 +30,12 @@ class Label:
 
     def __init__(self, type_, value):
         self.type_ = type_
-        self.value = value
+        if '-' in value:
+            raise error.TopologyError('Label range not yet supported. Sorry')
+        try:
+            self.value = int(value)
+        except ValueError:
+            raise error.TopologyError('Label %s is not an integer.')
 
 
     def __eq__(self, other):
