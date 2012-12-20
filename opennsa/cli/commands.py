@@ -24,7 +24,12 @@ def reserve(client, client_nsa, provider_nsa, src, dst, start_time, end_time, ba
         network, local_part = stp_desc.split(':',1)
         if '#' in local_part:
             port, label_part = local_part.split('#',1)
-            labels = [ nsa.Label(*tvl.split('=')) for tvl in label_part.split(',') if '=' in tvl ]
+            labels = []
+            for tvl in label_part.split(';'):
+                if not '=' in tvl:
+                    raise ValueError('Invalid label type-value: %s' % tvl)
+                type_, values = tvl.split('=')
+                labels.append( nsa.Label( type_, values.split(',') ) )
         else:
             port = local_part
             labels = None

@@ -28,24 +28,35 @@ BIDIRECTIONAL = 'Bidirectional' # NSI1 compat
 
 class Label:
 
-    def __init__(self, type_, value):
+    def __init__(self, type_, values=None):
+
+        def createValue(value):
+            if '-' in value:
+                v1, v2 = value.split('-', 1)
+                return int(v1), int(v2)
+                # raise error.TopologyError('Label range not yet supported. Sorry')
+            try:
+                v = int(value)
+                return v, v
+            except ValueError:
+                raise error.TopologyError('Label %s is not an integer an integer range.' % value)
+
+        assert type(values) in (list, None), 'Label values must be a list, was given %s' % values
+
         self.type_ = type_
-        if '-' in value:
-            raise error.TopologyError('Label range not yet supported. Sorry')
-        try:
-            self.value = int(value)
-        except ValueError:
-            raise error.TopologyError('Label %s is not an integer.')
+        if values is not None:
+            self.values = [ createValue(value) for value in values ]
 
 
     def __eq__(self, other):
         if not isinstance(other, Label):
             return False
-        return self.type_ == other.type_ and self.value == other.value
+        return self.type_ == other.type_ and sorted(self.values) == sorted(other.values)
 
 
     def __repr__(self):
-        return '<Label %s:%s>' % (self.type_, self.value)
+        vs = [ str(v1) if v1 == v1 else str(v1) + '-' + str(v2) for v1,v2 in self.values ]
+        return '<Label %s:%s>' % (self.type_, ','.join( vs ) )
 
 
 

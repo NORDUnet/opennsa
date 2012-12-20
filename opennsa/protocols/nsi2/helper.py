@@ -56,16 +56,22 @@ def createSTP(stp_type):
 
     local_id = stp_type.localId.replace(stp_type.networkId + ':', '')
 
-    labels = [ nsa.Label(tvp.type_, tvp.value[0]) for tvp in stp_type.labels.attribute ]
+    labels = [ nsa.Label(tvp.type_, tvp.value) for tvp in stp_type.labels.attribute ]
 
     return nsa.STP(network, local_id, stp_type.orientation, labels)
 
 
 def createSTPType(stp, directionality):
 
+    def createValue(v1, v2):
+        if v1 == v2:
+            return v1
+        else:
+            return str(v1) + '-' + str(v2)
+
     labels = None
     if stp.labels not in (None, []):
-        attributes = [ CT.TypeValuePairType(NML_ETHERNET_NS, label.type_, [ label.value ] ) for label in stp.labels ]
+        attributes = [ CT.TypeValuePairType(NML_ETHERNET_NS, label.type_, [ createValue(*v) for v in label.values ] ) for label in stp.labels ]
         labels = CT.TypeValuePairListType(attributes)
 
     network = URN_NETWORK + stp.network

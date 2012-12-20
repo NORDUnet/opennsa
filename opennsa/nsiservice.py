@@ -61,10 +61,13 @@ class NSIService:
 
         # should check for local network
         if link.network == self.network:
+            # nsi2 hack
+            src_port = link.src_port + str(link.src_labels[0].values[0][0]) if link.src_labels else link.src_port
+            dst_port = link.dst_port + str(link.dst_labels[0].values[0][0]) if link.dst_labels else link.dst_port
             # resolve nrm ports from the topology
-            source_port = self.topology.getEndpoint(self.network, link.source).nrmPort()
-            dest_port   = self.topology.getEndpoint(self.network, link.dest).nrmPort()
-            sub_conn = self.backend.createConnection(source_port, dest_port, sub_sps)
+            nrm_src_port = self.topology.getEndpoint(self.network, src_port).nrmPort()
+            nrm_dst_port = self.topology.getEndpoint(self.network, dst_port).nrmPort()
+            sub_conn = self.backend.createConnection(nrm_src_port, nrm_dst_port, sub_sps)
         else:
             sub_conn_id = 'urn:uuid:' + str(uuid.uuid1())
             remote_nsa = self.topology.getNetwork(link.network).nsa
