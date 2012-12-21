@@ -84,6 +84,11 @@ class ConnectionError(NSIError):
     errorId = '00200'
 
 
+class InvalidTransitionError(ConnectionError):
+
+    errorId = '00201'
+
+
 class ConnectionExistsError(ConnectionError):
 
     errorId = '00202'
@@ -92,6 +97,11 @@ class ConnectionExistsError(ConnectionError):
 class ConnectionNonExistentError(ConnectionError):
 
     errorId = '00203'
+
+
+class ConnectionGone(ConnectionError):
+
+    errorId = '00204'
 
 
 class SecurityError(NSIError):
@@ -123,8 +133,10 @@ class STPUnavailableError(NSIError):
 NSI_ERROR_CODE_TABLE = {
     '00100' : PayloadError,
     '00200' : ConnectionError,
+    '00201' : InvalidTransitionError,
     '00202' : ConnectionExistsError,
     '00203' : ConnectionNonExistentError,
+    '00204' : ConnectionGone,
     '00300' : SecurityError,
     '00400' : TopologyError,
     '00500' : InternalServerError,
