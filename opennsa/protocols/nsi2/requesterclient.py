@@ -11,7 +11,7 @@ from twisted.web.error import Error as WebError
 from opennsa import error
 from opennsa.protocols.shared import minisoap, httpclient
 
-from opennsa.protocols.nsi2 import connectiontypes as CT, headertypes as HT, actions, helper
+from opennsa.protocols.nsi2 import connectiontypes as CT, actions, helper
 
 
 URN_NETWORK = 'urn:ogf:network:'

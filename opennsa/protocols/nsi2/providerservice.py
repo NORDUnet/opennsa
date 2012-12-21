@@ -6,7 +6,6 @@ Copyright: NORDUnet (2011)
 """
 
 import time
-import StringIO
 from xml.etree import cElementTree as ET
 
 from dateutil import parser

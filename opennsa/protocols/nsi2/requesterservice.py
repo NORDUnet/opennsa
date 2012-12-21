@@ -5,8 +5,6 @@ Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2011)
 """
 
-import time
-import StringIO
 from dateutil import parser
 from xml.etree import cElementTree as ET
 
