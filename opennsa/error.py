@@ -114,6 +114,11 @@ class ResourceUnavailableError(NSIError):
     errorId = '00600'
 
 
+class STPUnavailableError(NSIError):
+
+    errorId = '00601'
+
+
 
 NSI_ERROR_CODE_TABLE = {
     '00100' : PayloadError,
@@ -124,6 +129,7 @@ NSI_ERROR_CODE_TABLE = {
     '00400' : TopologyError,
     '00500' : InternalServerError,
     '00600' : ResourceUnavailableError,
+    '00601' : STPUnavailableError
 }
 
 

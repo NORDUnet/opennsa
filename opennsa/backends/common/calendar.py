@@ -37,25 +37,25 @@ class ReservationCalendar:
     def checkReservation(self, port, start_time, end_time):
         # check types
         if not type(start_time) is datetime.datetime and type(end_time) is datetime.datetime:
-            raise error.InvalidRequestError('Reservation start and end types must be datetime types')
+            raise ValueError('Reservation start and end types must be datetime types')
 
         # sanity checks
         if start_time > end_time:
-            raise error.InvalidRequestError('Invalid request: Reverse duration (end time before start time)')
+            raise error.PayloadError('Invalid request: Reverse duration (end time before start time)')
 
         now = datetime.datetime.now(tzutc())
         if start_time < now:
             delta = now - start_time
             stamp = str(start_time).rsplit('.')[0]
-            raise error.InvalidRequestError('Invalid request: Start time in the past (Startime: %s Delta: %s)' % (stamp, str(delta)))
+            raise error.PayloadError('Invalid request: Start time in the past (Startime: %s Delta: %s)' % (stamp, str(delta)))
 
         if start_time > datetime.datetime(2025, 1, 1, tzinfo=tzutc()):
-            raise error.InvalidRequestError('Invalid request: Start time after year 2025')
+            raise error.PayloadError('Invalid request: Start time after year 2025')
 
         for (c_port, c_start_time, c_end_time) in self.connections:
             if port == c_port:
                 if self._portOverlap(c_start_time, c_end_time, start_time, end_time):
-                    raise error.InvalidRequestError('Port %s not available in specified time span' % port)
+                    raise error.STPUnavailableError('Port %s not available in specified time span' % port)
 
         # all good
 
