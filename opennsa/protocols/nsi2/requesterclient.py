@@ -144,16 +144,19 @@ class RequesterClient:
 
     def query(self, correlation_id, requester_nsa, provider_nsa, session_security_attr, operation="Summary", connection_ids=None, global_reservation_ids=None):
 
-        req = self.client.createType('{http://schemas.ogf.org/nsi/2011/10/connection/types}QueryType')
-        #print req
+        header_payload = helper.createHeader(correlation_id, requester_nsa.urn(), provider_nsa.urn(), self.reply_to)
 
-        req.requesterNSA = requester_nsa.urn()
-        req.providerNSA  = provider_nsa.urn()
-        req.operation = operation
-        req.queryFilter.connectionId = connection_ids or []
-        req.queryFilter.globalReservationId = global_reservation_ids or []
-        #print req
+        filter_ = CT.QueryFilterType(connection_ids, global_reservation_ids)
+        query = CT.QueryType(operation, filter_)
 
-        d = self.client.invoke(provider_nsa.url(), 'query', correlation_id, self.reply_to, req)
-        return d
+        # create payload
+        body_payload   = helper.export(query, 'query')
+        payload = minisoap.createSoapPayload(body_payload, header_payload)
+
+        def gotReply(data):
+            pass
+
+        f = httpclient.httpRequest(provider_nsa.url(), actions.QUERY, payload, ctx_factory=self.ctx_factory)
+        f.deferred.addCallbacks(gotReply, self._handleErrorReply)
+        return f.deferred
 

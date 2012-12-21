@@ -900,7 +900,7 @@ class QueryType(GeneratedsSuper):
         pass
     def get_queryFilter(self): return self.queryFilter
     def set_queryFilter(self, queryFilter): self.queryFilter = queryFilter
-    def export(self, outfile, level, namespace_='tns:', name_='QueryType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespace_='ct:', name_='QueryType', namespacedef_=CT_NS, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -911,7 +911,7 @@ class QueryType(GeneratedsSuper):
         self.exportAttributes(outfile, level, already_processed, namespace_, name_='QueryType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_, name_, pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, '', '', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
         else:
