@@ -36,7 +36,7 @@ class Provider:
         event_registry.registerEventHandler(registry.PROVISION_RESPONSE, self.notifyProvisionResult, WS_PROTO_EVENT_SYSTEM)
         event_registry.registerEventHandler(registry.RELEASE_RESPONSE,   self.notifyReleaseResult,   WS_PROTO_EVENT_SYSTEM)
         event_registry.registerEventHandler(registry.TERMINATE_RESPONSE, self.notifyTerminateResult, WS_PROTO_EVENT_SYSTEM)
-#        event_registry.registerEventHandler(registry.QUERY_RESPONSE,     self.notifyQueryResult,     WS_PROTO_EVENT_SYSTEM)
+        event_registry.registerEventHandler(registry.QUERY_RESPONSE,     self.notifyQueryResult,     WS_PROTO_EVENT_SYSTEM)
 
 
     def _extractData(self, data):
@@ -155,33 +155,33 @@ class Provider:
             return d
 
 
-#    def query(self, correlation_id, reply_to, requester_nsa, provider_nsa, session_security_attr, operation, connection_ids, global_reservation_ids):
-#
-#        data = { 'reply_to'      : reply_to,      'correlation_id'        : correlation_id,
-#                 'requester_nsa' : requester_nsa, 'provider_nsa'          : provider_nsa,
-#                 'operation'     : operation,     'connection_ids'        : connection_ids,
-#                 'global_reservation_ids' : global_reservation_ids }
-#
-#        sub = subscription.Subscription(registry.QUERY_RESPONSE, WS_PROTO_EVENT_SYSTEM, data)
-#
-#        handler = self.event_registry.getHandler(registry.QUERY, registry.SYSTEM_SERVICE)
-#        d = defer.maybeDeferred(handler, requester_nsa, provider_nsa, session_security_attr, operation, connection_ids, global_reservation_ids, sub)
-#        return d
-#
-#
-#    def notifyQueryResult(self, success, result, data):
-#
-#        reply_to                = data['reply_to']
-#        correlation_id          = data['correlation_id']
-#        requester_nsa           = data['requester_nsa']
-#        provider_nsa            = data['provider_nsa']
-#        operation               = data['operation']
-#
-#        if success:
-#            d = self.provider_client.queryConfirmed(reply_to, correlation_id, requester_nsa, provider_nsa, operation, result)
-#            return d
-#        else:
-#            error_msg = _createErrorMessage(result)
-#            d = self.provider_client.queryFailed(reply_to, correlation_id, requester_nsa, provider_nsa, error_msg)
-#            return d
-#
+    def query(self, correlation_id, reply_to, requester_nsa, provider_nsa, session_security_attr, operation, connection_ids, global_reservation_ids):
+
+        data = { 'reply_to'      : reply_to,      'correlation_id'        : correlation_id,
+                 'requester_nsa' : requester_nsa, 'provider_nsa'          : provider_nsa,
+                 'operation'     : operation,     'connection_ids'        : connection_ids,
+                 'global_reservation_ids' : global_reservation_ids }
+
+        sub = subscription.Subscription(registry.QUERY_RESPONSE, WS_PROTO_EVENT_SYSTEM, data)
+
+        handler = self.event_registry.getHandler(registry.QUERY, registry.SYSTEM_SERVICE)
+        d = defer.maybeDeferred(handler, requester_nsa, provider_nsa, session_security_attr, operation, connection_ids, global_reservation_ids, sub)
+        return d
+
+
+    def notifyQueryResult(self, success, result, data):
+
+        reply_to                = data['reply_to']
+        correlation_id          = data['correlation_id']
+        requester_nsa           = data['requester_nsa']
+        provider_nsa            = data['provider_nsa']
+        operation               = data['operation']
+
+        if success:
+            d = self.provider_client.queryConfirmed(reply_to, correlation_id, requester_nsa, provider_nsa, operation, result)
+            return d
+        else:
+            error_msg = _createErrorMessage(result)
+            d = self.provider_client.queryFailed(reply_to, correlation_id, requester_nsa, provider_nsa, error_msg)
+            return d
+

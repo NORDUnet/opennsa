@@ -174,13 +174,36 @@ class ProviderClient:
 #        d = self.client.invoke(requester_url, 'terminateFailed', correlation_id, gft)
 #        return d
 #
-#
-#    def queryConfirmed(self, requester_url, correlation_id, requester_nsa, provider_nsa, operation, connections):
-#
-#        res = self.client.createType('{http://schemas.ogf.org/nsi/2011/10/connection/types}QueryConfirmedType')
-#        res.requesterNSA = requester_nsa
-#        res.providerNSA  = provider_nsa
-#
+
+    def queryConfirmed(self, requester_url, correlation_id, requester_nsa, provider_nsa, operation, connections):
+
+        assert operation == 'Summary', 'Only Summary operation supported in nsi2.queryConfirmed'
+
+        conns = []
+        for conn in connections:
+            # need to create criteria here sometime
+            criteria = None
+            children = None
+            conns.append( CT.QuerySummaryResultType(conn.global_reservation_id, conn.description, conn.connection_id,
+                                                    criteria, conn.state(), children) )
+
+        query_confirmed = CT.QueryConfirmedType(reservationSummary=conns)
+
+        # --
+
+        header_payload = helper.createHeader(correlation_id, requester_nsa, provider_nsa)
+        body_payload   = helper.export(query_confirmed, 'queryConfirmed')
+
+        payload = minisoap.createSoapPayload(body_payload, header_payload)
+
+        def gotReply(data):
+            # we don't really do anything about these
+            return ""
+
+        f = httpclient.httpRequest(requester_url, actions.QUERY_CONFIRMED, payload, ctx_factory=self.ctx_factory)
+        f.deferred.addCallbacks(gotReply) #, errReply)
+        return f.deferred
+
 #        if operation == "Summary":
 #            qsrs = []
 #            for conn in connections:

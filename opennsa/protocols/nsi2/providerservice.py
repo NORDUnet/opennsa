@@ -33,23 +33,20 @@ class ProviderService:
         soap_resource.registerDecoder(actions.PROVISION, self.provision)
         soap_resource.registerDecoder(actions.RELEASE,   self.release)
         soap_resource.registerDecoder(actions.TERMINATE, self.terminate)
-#        soap_resource.registerDecoder(actions.QUERY,     self.query)
+        soap_resource.registerDecoder(actions.QUERY,     self.query)
 
         self.datetime_parser = parser.parser()
 
-#        "http://schemas.ogf.org/nsi/2012/03/connection/service/reserve"
+#       Actions we don't support yet.
+#       The SOAPResource will respond with a 406 Not Acceptable, until they are added
 #        "http://schemas.ogf.org/nsi/2012/03/connection/service/modifyCheck"
 #        "http://schemas.ogf.org/nsi/2012/03/connection/service/modify"
 #        "http://schemas.ogf.org/nsi/2012/03/connection/service/modifyCancel"
-#        "http://schemas.ogf.org/nsi/2012/03/connection/service/provision"
-#        "http://schemas.ogf.org/nsi/2012/03/connection/service/release"
-#        "http://schemas.ogf.org/nsi/2012/03/connection/service/terminate"
-#        "http://schemas.ogf.org/nsi/2012/03/connection/service/query"
 #        "http://schemas.ogf.org/nsi/2012/03/connection/service/queryConfirmed"
 #        "http://schemas.ogf.org/nsi/2012/03/connection/service/queryFailed"
 
 
-    def _parseRequest(self, soap_data):
+    def _parseRequest(self, soap_data, rootClass=None):
 
         headers, bodies = minisoap.parseSoapPayload(soap_data)
 
@@ -60,7 +57,7 @@ class ProviderService:
         # more checking here...
 
         header = HT.parseString( ET.tostring( headers[0] ) )
-        body   = CT.parseString( ET.tostring( bodies[0] ) ) # only one body element supported for now
+        body   = CT.parseString( ET.tostring( bodies[0] ), rootClass=rootClass ) # only one body element supported for now
 
         return header, body
 
@@ -203,27 +200,20 @@ class ProviderService:
                        errbackArgs=(header.providerNSA,))
         return d
 
-#
-#    def query(self, soap_data):
-#
-#        method, req = self.decoder.parse_request('query', soap_data)
-#
-#        requester_nsa, provider_nsa = _decodeNSAs(req.query)
-#        correlation_id = str(req.correlationId)
-#        reply_to       = str(req.replyTo)
-#
-#        operation = req.query.operation
-#        qf = req.query.queryFilter
-#
-#        connection_ids = None
-#        global_reservation_ids = None
-#
-#        if 'connectionId' in qf:
-#            connection_ids = qf.connectionId
-#        if 'globalReservationId' in qf:
-#            global_reservation_ids = qf.globalReservationId
-#
-#        d = self.provider.query(correlation_id, reply_to, requester_nsa, provider_nsa, None, operation, connection_ids, global_reservation_ids)
-#        d.addCallbacks(self._createReply, self._createSOAPFault, callbackArgs=(method,correlation_id), errbackArgs=(method,))
-#        return d
-#
+
+    def query(self, soap_data):
+
+        #t_start = time.time()
+
+        header, query = self._parseRequest(soap_data, CT.QueryType)
+
+        session_security_attr = None
+        filter_ = query.queryFilter
+
+        d = self.provider.query(header.correlationId, header.replyTo, header.requesterNSA, header.providerNSA, session_security_attr,
+                                query.operation, filter_.connectionId, filter_.globalReservationId)
+        d.addCallbacks(self._createGenericAcknowledgement, self._createSOAPFault,
+                       callbackArgs=(header.correlationId, header.requesterNSA, header.providerNSA),
+                       errbackArgs=(header.providerNSA,))
+        return d
+
