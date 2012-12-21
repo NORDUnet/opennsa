@@ -55,14 +55,19 @@ def httpRequest(url, soap_action, soap_envelope, timeout=DEFAULT_TIMEOUT, ctx_fa
     else:
         reactor.connectTCP(host, port, factory)
 
-    def invokeError(err):
+    def invocationError(err):
         if isinstance(err.value, ConnectionDone):
             pass # these are pretty common when the remote shuts down
         else:
+            data = err.value.response
+            log.msg(' -- Received Reply (fault) --\n%s\n -- END. Received Reply (fault) --' % data, system=LOG_SYSTEM, payload=True)
             return err
 
+    def logReply(data):
+        log.msg(" -- Received Reply --\n%s\n -- END. Received Reply --" % data, system=LOG_SYSTEM, payload=True)
+        return data
 
-    factory.deferred.addErrback(invokeError)
+    factory.deferred.addCallbacks(logReply, invocationError)
 
     return factory
 

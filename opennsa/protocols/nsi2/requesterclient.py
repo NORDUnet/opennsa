@@ -52,9 +52,6 @@ class RequesterClient:
             log.msg("Got error with non-500 status. Message: %s" % err.getErrorMessage())
             return err
 
-        payload = err.value.response
-        log.msg(' -- Received Fault Payload --\n' + payload + '\n -- END. Received Fault Payload --', payload=True)
-
         fault_code, fault_string, detail = minisoap.parseFault(payload)
 
         service_exception = None
@@ -104,7 +101,7 @@ class RequesterClient:
         payload = minisoap.createSoapPayload(body_payload, header_payload)
 
         def gotReply(data):
-            log.msg(' -- Received Response Payload --\n' + data + '\n -- END. Received Response Payload --', payload=True)
+            pass
 
         f = httpclient.httpRequest(provider_nsa.url(), actions.RESERVE, payload, ctx_factory=self.ctx_factory)
         f.deferred.addCallbacks(gotReply, self._handleErrorReply)
@@ -116,7 +113,7 @@ class RequesterClient:
         payload = self._createGenericRequestType('provision', correlation_id, requester_nsa, provider_nsa, connection_id)
 
         def gotReply(data):
-            log.msg(' -- START: Provision Response --\n' + data + '\n -- END. Provision Response --', payload=True)
+            pass
 
         f = httpclient.httpRequest(provider_nsa.url(), actions.PROVISION, payload, ctx_factory=self.ctx_factory)
         f.deferred.addCallbacks(gotReply, self._handleErrorReply)
@@ -126,7 +123,7 @@ class RequesterClient:
     def release(self, correlation_id, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
         def gotReply(data):
-            log.msg(' -- START: Release Response --\n' + data + '\n -- END. Release Response --', payload=True)
+            pass
 
         payload = self._createGenericRequestType('release', correlation_id, requester_nsa, provider_nsa, connection_id)
         f = httpclient.httpRequest(provider_nsa.url(), actions.RELEASE, payload, ctx_factory=self.ctx_factory)
@@ -137,7 +134,7 @@ class RequesterClient:
     def terminate(self, correlation_id, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
         def gotReply(data):
-            log.msg(' -- START: Terminate Response --\n' + data + '\n -- END. Terminate Response --', payload=True)
+            pass
 
         payload = self._createGenericRequestType('terminate', correlation_id, requester_nsa, provider_nsa, connection_id)
         f = httpclient.httpRequest(provider_nsa.url(), actions.TERMINATE, payload, ctx_factory=self.ctx_factory)

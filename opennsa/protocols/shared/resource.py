@@ -92,7 +92,7 @@ class SOAPResource(resource.Resource):
         soap_action = request.requestHeaders.getRawHeaders('soapaction',[None])[0]
 
         soap_data = request.content.read()
-        log.msg(" -- Received payload --\n%s\n -- End of payload --" % soap_data, system=LOG_SYSTEM, payload=True)
+        log.msg(" -- Received payload --\n%s\n -- END. Received payload --" % soap_data, system=LOG_SYSTEM, payload=True)
 
         if not soap_action in self.soap_actions:
             log.msg('Got request with unknown SOAP action: %s' % soap_action, system=LOG_SYSTEM)
@@ -104,6 +104,8 @@ class SOAPResource(resource.Resource):
         def reply(reply_data):
             if reply_data is None or len(reply_data) == 0:
                 log.msg('None/empty reply data supplied for SOAPResource. This is probably wrong', system=LOG_SYSTEM)
+            else:
+                log.msg(" -- Sending response --\n%s\n -- END: Sending response --" % reply_data, system=LOG_SYSTEM, payload=True)
             request.setHeader('Content-Type', 'text/xml') # Keeps some SOAP implementations happy
             request.write(reply_data)
             request.finish()
@@ -118,6 +120,8 @@ class SOAPResource(resource.Resource):
                 # non SOAPFault error, we should log this
                 log.err(err)
                 error_payload = SOAPFault(err.getErrorMessage()).createPayload()
+
+            log.msg(" -- Sending response (fault) --\n%s\n -- END: Sending response (fault) --" % error_payload, system=LOG_SYSTEM, payload=True)
 
             request.setResponseCode(500) # Internal server error
             request.setHeader('Content-Type', 'text/xml')
