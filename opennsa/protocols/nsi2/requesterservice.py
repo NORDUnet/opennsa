@@ -39,6 +39,8 @@ class RequesterService:
 
         soap_resource.registerDecoder(actions.TERMINATE_CONFIRMED, self.terminateConfirmed)
 
+        soap_resource.registerDecoder(actions.QUERY_CONFIRMED,     self.queryConfirmed)
+
 ##        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/10/connection/service/reserveConfirmed"',      self.reserveConfirmed)
 ##        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/10/connection/service/reserveFailed"',         self.reserveFailed)
 ##
@@ -203,27 +205,23 @@ class RequesterService:
 ##        reply = self.decoder.marshal_result(correlation_id, method)
 ##        return reply
 ##
-##
-##    def queryConfirmed(self, soap_data):
-##
-##        method, req = self.decoder.parse_request('queryConfirmed', soap_data)
-##
-##        requester_nsa, provider_nsa = _decodeNSAs(req.queryConfirmed)
-##
-##        correlation_id          = str(req.correlationId)
-##        #reservation_summary     = req.queryConfirmed
-##        #connection_id           = str(req.terminateConfirmed.connectionId)
-##
-##        # should really translate this to something generic
-##        # need to know if summary or details parameters was given though :-/
-##        query_result = req.queryConfirmed
-##
-##        d = self.requester.queryConfirmed(correlation_id, requester_nsa, provider_nsa, query_result)
-##
-##        reply = self.decoder.marshal_result(correlation_id, method)
-##        return reply
-##
-##
+
+
+    def queryConfirmed(self, soap_data):
+
+        headers, bodies = minisoap.parseSoapPayload(soap_data)
+
+        header          = HT.parseString( ET.tostring( headers[0] ) )
+        query_confirmed = CT.parseString( ET.tostring( bodies[0]  ), rootClass=CT.QueryConfirmedType )
+
+        query_result = query_confirmed.reservationSummary + query_confirmed.reservationDetails
+        # should really do something more here...
+
+        d = self.requester.queryConfirmed(header.correlationId, header.requesterNSA, header.providerNSA, query_result)
+
+        return self._createGenericAcknowledgement(header.correlationId, header.requesterNSA, header.providerNSA)
+
+
 ##    def queryFailed(self, soap_data):
 ##
 ##        method, req = self.decoder.parse_request('queryFailed', soap_data)
