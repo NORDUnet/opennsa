@@ -88,10 +88,12 @@ class RequesterClient:
         schedule = CT.ScheduleType(sp.start_time.isoformat(), sp.end_time.isoformat())
         service_attributes = CT.TypeValuePairListType()
 
+        symmetric = False
+
         src_stp = helper.createSTPType(sp.source_stp, 'Ingress')
         dst_stp = helper.createSTPType(sp.dest_stp,   'Egress')
 
-        path = CT.PathType(sp.directionality, None, src_stp, dst_stp)
+        path = CT.PathType(sp.directionality, symmetric, src_stp, dst_stp)
 
         criteria = CT.ReservationRequestCriteriaType(schedule, sp.bandwidth, service_attributes, path)
 
