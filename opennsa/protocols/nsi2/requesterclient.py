@@ -52,7 +52,7 @@ class RequesterClient:
             log.msg("Got error with non-500 status. Message: %s" % err.getErrorMessage())
             return err
 
-        fault_code, fault_string, detail = minisoap.parseFault(payload)
+        fault_code, fault_string, detail = minisoap.parseFault(err.value.response)
 
         service_exception = None
         if detail:
