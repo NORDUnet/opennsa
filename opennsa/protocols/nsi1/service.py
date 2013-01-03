@@ -99,9 +99,7 @@ class ProviderService:
         return reply
 
 
-    def reserve(self, soap_action, soap_data):
-
-        assert soap_action == '"http://schemas.ogf.org/nsi/2011/10/connection/service/reserve"'
+    def reserve(self, soap_data):
 
         t_start = time.time()
 
@@ -145,7 +143,7 @@ class ProviderService:
         return d
 
 
-    def provision(self, soap_action, soap_data):
+    def provision(self, soap_data):
 
         method, req = self.decoder.parse_request('provision', soap_data)
 
@@ -157,7 +155,7 @@ class ProviderService:
         return d
 
 
-    def release(self, soap_action, soap_data):
+    def release(self, soap_data):
 
         method, req = self.decoder.parse_request('release', soap_data)
 
@@ -169,7 +167,7 @@ class ProviderService:
         return d
 
 
-    def terminate(self, soap_action, soap_data):
+    def terminate(self, soap_data):
 
         method, req = self.decoder.parse_request('terminate', soap_data)
 
@@ -181,7 +179,7 @@ class ProviderService:
         return d
 
 
-    def query(self, soap_action, soap_data):
+    def query(self, soap_data):
 
         method, req = self.decoder.parse_request('query', soap_data)
 
@@ -249,9 +247,8 @@ class RequesterService:
         return requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_id, error_message
 
 
-    def reserveConfirmed(self, soap_action, soap_data):
+    def reserveConfirmed(self, soap_data):
 
-        assert soap_action == '"http://schemas.ogf.org/nsi/2011/10/connection/service/reserveConfirmed"'
         method, req = self.decoder.parse_request('reserveConfirmed', soap_data)
 
         requester_nsa, provider_nsa = _decodeNSAs(req.reserveConfirmed)
@@ -268,9 +265,8 @@ class RequesterService:
         return reply
 
 
-    def reserveFailed(self, soap_action, soap_data):
+    def reserveFailed(self, soap_data):
 
-        assert soap_action == '"http://schemas.ogf.org/nsi/2011/10/connection/service/reserveFailed"'
         method, req = self.decoder.parse_request('reserveFailed', soap_data)
 
         correlation_id = str(req.correlationId)
@@ -282,9 +278,8 @@ class RequesterService:
         return reply
 
 
-    def provisionConfirmed(self, soap_action, soap_data):
+    def provisionConfirmed(self, soap_data):
 
-        assert soap_action == '"http://schemas.ogf.org/nsi/2011/10/connection/service/provisionConfirmed"'
         method, req = self.decoder.parse_request('provisionConfirmed', soap_data)
 
         requester_nsa, provider_nsa = _decodeNSAs(req.provisionConfirmed)
@@ -297,9 +292,8 @@ class RequesterService:
         return reply
 
 
-    def provisionFailed(self, soap_action, soap_data):
+    def provisionFailed(self, soap_data):
 
-        assert soap_action == '"http://schemas.ogf.org/nsi/2011/10/connection/service/provisionFailed"'
         method, req = self.decoder.parse_request('provisionFailed', soap_data)
 
         correlation_id = str(req.correlationId)
@@ -311,9 +305,8 @@ class RequesterService:
         return reply
 
 
-    def releaseConfirmed(self, soap_action, soap_data):
+    def releaseConfirmed(self, soap_data):
 
-        assert soap_action == '"http://schemas.ogf.org/nsi/2011/10/connection/service/releaseConfirmed"'
         method, req = self.decoder.parse_request('releaseConfirmed', soap_data)
 
         requester_nsa, provider_nsa = _decodeNSAs(req.releaseConfirmed)
@@ -326,9 +319,8 @@ class RequesterService:
         return reply
 
 
-    def releaseFailed(self, soap_action, soap_data):
+    def releaseFailed(self, soap_data):
 
-        assert soap_action == '"http://schemas.ogf.org/nsi/2011/10/connection/service/releaseFailed"'
         method, req = self.decoder.parse_request('releaseFailed', soap_data)
 
         correlation_id = str(req.correlationId)
@@ -340,9 +332,8 @@ class RequesterService:
         return reply
 
 
-    def terminateConfirmed(self, soap_action, soap_data):
+    def terminateConfirmed(self, soap_data):
 
-        assert soap_action == '"http://schemas.ogf.org/nsi/2011/10/connection/service/terminateConfirmed"'
         method, req = self.decoder.parse_request('terminateConfirmed', soap_data)
 
         requester_nsa, provider_nsa = _decodeNSAs(req.terminateConfirmed)
@@ -355,9 +346,8 @@ class RequesterService:
         return reply
 
 
-    def terminateFailed(self, soap_action, soap_data):
+    def terminateFailed(self, soap_data):
 
-        assert soap_action == '"http://schemas.ogf.org/nsi/2011/10/connection/service/terminateFailed"'
         method, req = self.decoder.parse_request('terminateFailed', soap_data)
 
         correlation_id = str(req.correlationId)
@@ -369,9 +359,8 @@ class RequesterService:
         return reply
 
 
-    def queryConfirmed(self, soap_action, soap_data):
+    def queryConfirmed(self, soap_data):
 
-        assert soap_action == '"http://schemas.ogf.org/nsi/2011/10/connection/service/queryConfirmed"'
         method, req = self.decoder.parse_request('queryConfirmed', soap_data)
 
         requester_nsa, provider_nsa = _decodeNSAs(req.queryConfirmed)
@@ -390,9 +379,8 @@ class RequesterService:
         return reply
 
 
-    def queryFailed(self, soap_action, soap_data):
+    def queryFailed(self, soap_data):
 
-        assert soap_action == '"http://schemas.ogf.org/nsi/2011/10/connection/service/queryFailed"'
         method, req = self.decoder.parse_request('queryFailed', soap_data)
 
         correlation_id          = str(req.correlationId)
