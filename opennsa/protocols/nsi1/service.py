@@ -7,6 +7,7 @@ Copyright: NORDUnet (2011)
 
 import time
 import datetime
+
 from twisted.python import log
 
 from opennsa import nsa
@@ -124,14 +125,11 @@ class ProviderService:
         dest_stp    = parseSTPID(path.destSTP.stpId)
         # how to check for existence of optional parameters easily  - in / hasattr both works
         bandwidth = sp.bandwidth.desired if 'desired' in sp.bandwidth else None # we only support desired
-        start_time = sudsdate.DateTime(sp.schedule.startTime).value
-        end_time   = sudsdate.DateTime(sp.schedule.endTime).value
+        st        = sudsdate.DateTime(sp.schedule.startTime).value
+        et        = sudsdate.DateTime(sp.schedule.endTime).value
 
-        st = start_time.utctimetuple()
-        start_time = datetime.datetime(st.tm_year, st.tm_mon, st.tm_mday, st.tm_hour, st.tm_min, st.tm_sec)
-
-        et = end_time.utctimetuple()
-        end_time = datetime.datetime(et.tm_year, et.tm_mon, et.tm_mday, et.tm_hour, et.tm_min, et.tm_sec)
+        start_time = datetime.datetime(st.year, st.month, st.day, st.hour, st.minute, st.second, st.microsecond, st.tzinfo)
+        end_time   = datetime.datetime(et.year, et.month, et.day, et.hour, et.minute, et.second, et.microsecond, et.tzinfo)
 
         t_delta = time.time() - t_start
         log.msg('Profile: Reserve request parse time: %s' % round(t_delta, 3), profile=True, system=LOG_SYSTEM)

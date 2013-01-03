@@ -11,6 +11,8 @@ import StringIO
 from twisted.trial import unittest
 from twisted.internet import defer, reactor
 
+from dateutil.tz import tzutc
+
 from opennsa import nsa, error, registry, nsiservice
 from opennsa.backends import dud
 from opennsa.topology import gole
@@ -159,8 +161,9 @@ class ServiceTest(unittest.TestCase):
         source_stp      = nsa.STP('Aruba', 'A1' )
         dest_stp        = nsa.STP('Aruba', 'A2')
 
-        start_time = datetime.datetime.utcfromtimestamp(time.time() - 1 )
-        end_time   = datetime.datetime.utcfromtimestamp(time.time() + 120 )
+        tn = time.time()
+        start_time = datetime.datetime.fromtimestamp(tn - 1   , tzutc() )
+        end_time   = datetime.datetime.fromtimestamp(tn + 120 , tzutc() )
 
         bandwidth = 200
         service_params  = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, bandwidth)
@@ -171,7 +174,7 @@ class ServiceTest(unittest.TestCase):
             self.fail('Reserve call should have failed')
         except error.ReserveError as e:
             self.failUnlessIn('Start time in the past', str(e))
-        errors = self.flushLoggedErrors(error.InvalidRequestError)
+        errors = self.flushLoggedErrors(error.PayloadError)
         self.assertEqual(len(errors), 1)
 
 
