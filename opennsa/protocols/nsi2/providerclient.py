@@ -102,24 +102,31 @@ class ProviderClient:
                                     global_reservation_id, connection_id)
 
 
-#    def provisionFailed(self, requester_url, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_msg):
-#
-#        gft = self.client.createType('{http://schemas.ogf.org/nsi/2011/10/connection/types}GenericFailedType')
-#        net = self.client.createType('{http://schemas.ogf.org/nsi/2011/10/connection/types}ServiceExceptionType')
-#
-#        gft.requesterNSA   = requester_nsa
-#        gft.providerNSA    = provider_nsa
-#
-#        gft.globalReservationId    = global_reservation_id
-#        gft.connectionId           = connection_id
-#        gft.connectionState        = connection_state
-#
-#        net.errorId = 'PROVISION_FAILURE'
-#        net.text = error_msg
-#        gft.serviceException = net
-#
-#        d = self.client.invoke(requester_url, 'provisionFailed', correlation_id, gft)
-#        return d
+    def provisionFailed(self, requester_url, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, err):
+
+        header_payload = helper.createHeader(correlation_id, requester_nsa, provider_nsa)
+
+        connection_states = CT.ConnectionStatesType(CT.ReservationStateType(0, 'TerminateFailed'),
+                                                    CT.ProvisionStateType(0,   'TerminateFailed'),
+                                                    CT.ActivationStateType(0,  'Inactive'))
+
+        se = helper.createServiceException(err, provider_nsa)
+
+        generic_failed = CT.GenericFailedType(global_reservation_id, connection_id, connection_states, se)
+
+        body_payload   = helper.export(generic_failed, 'provisionFailed')
+
+        payload = minisoap.createSoapPayload(body_payload, header_payload)
+
+        print "PL\n", payload, "\n--"
+
+        def gotReply(data):
+            # for now we just ignore this, as long as we get an okay
+            return
+
+        f = httpclient.httpRequest(requester_url, actions.PROVISION_FAILED, payload, ctx_factory=self.ctx_factory)
+        f.deferred.addCallbacks(gotReply) #, errReply)
+        return f.deferred
 
 
     def releaseConfirmed(self, requester_url, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id):

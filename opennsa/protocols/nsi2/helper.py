@@ -8,9 +8,13 @@ Copyright: NORDUnet (2012)
 import StringIO
 from xml.etree import cElementTree as ET
 
-from opennsa import nsa
+from twisted.python import log
+
+from opennsa import nsa, error
 from opennsa.protocols.nsi2 import headertypes as HT, connectiontypes as CT
 
+
+LOG_SYSTEM = 'NSI2.Helper'
 
 # don't really fit anywhere, consider cramming them into the bindings
 FRAMEWORK_HEADERS_NS = "http://schemas.ogf.org/nsi/2012/03/framework/headers"
@@ -42,6 +46,19 @@ def createHeader(correlation_id, requester_nsa_urn, provider_nsa_urn, reply_to=N
     header_payload = export(header, 'nsiHeader')
     return header_payload
 
+
+def createServiceException(err, provider_nsa):
+
+    variables = None
+
+    if err.check(error.NSIError):
+        se = CT.ServiceExceptionType(provider_nsa, err.value.errorId, err.getErrorMessage(), variables)
+    else:
+        log.msg('Got a non NSIError exception, cannot create detailed service exception (%s)' % type(err.value), system=LOG_SYSTEM)
+        log.err(err)
+        se = CT.ServiceExceptionType(provider_nsa, error.InternalServerError.errorId, err.getErrorMessage(), variables)
+
+    return se
 
 
 def createSTP(stp_type):

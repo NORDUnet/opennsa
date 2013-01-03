@@ -72,15 +72,8 @@ class ProviderService:
 
     def _createSOAPFault(self, err, provider_nsa):
 
-        if err.check(error.NSIError):
-            variables = None
-            se = CT.ServiceExceptionType(provider_nsa, err.value.errorId, err.getErrorMessage(), variables)
-            detail = helper.export(se, 'serviceException', level=4)
-        else:
-            log.msg('Got a non NSIError exception, cannot create detailed fault (%s)' % type(err.value), system=LOG_SYSTEM)
-            log.err(err)
-            detail = None
-
+        se = helper.createServiceException(err, provider_nsa)
+        detail = helper.export(se, 'serviceException', level=4)
         soap_fault = resource.SOAPFault( err.getErrorMessage(), detail )
 
         return failure.Failure(soap_fault)

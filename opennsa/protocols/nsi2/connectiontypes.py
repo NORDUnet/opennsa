@@ -1395,7 +1395,7 @@ class GenericFailedType(GeneratedsSuper):
     def set_connectionStates(self, connectionStates): self.connectionStates = connectionStates
     def get_serviceException(self): return self.serviceException
     def set_serviceException(self, serviceException): self.serviceException = serviceException
-    def export(self, outfile, level, namespace_='tns:', name_='GenericFailedType', namespacedef_='', pretty_print=True):
+    def export(self, outfile, level, namespace_='ct:', name_='GenericFailedType', namespacedef_=CT_NS, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -1406,7 +1406,7 @@ class GenericFailedType(GeneratedsSuper):
         self.exportAttributes(outfile, level, already_processed, namespace_, name_='GenericFailedType')
         if self.hasContent_():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespace_, name_, pretty_print=pretty_print)
+            self.exportChildren(outfile, level + 1, '', name_, pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
         else:

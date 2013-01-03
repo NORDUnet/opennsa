@@ -100,8 +100,7 @@ class Provider:
             d = self.provider_client.provisionConfirmed(reply_to, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id)
             return d
         else:
-            error_msg = _createErrorMessage(result)
-            d = self.provider_client.provisionFailed(reply_to, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, 'TERMINATED', error_msg)
+            d = self.provider_client.provisionFailed(reply_to, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, 'TERMINATED', result)
             return d
 
 
