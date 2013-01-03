@@ -94,7 +94,7 @@ class NSIService:
         dest_stp   = service_parameters.dest_stp
 
         if source_stp == dest_stp:
-            return defer.fail(error.ReserveError('Cannot connect %s to itself.' % source_stp))
+            return defer.fail(error.TopologyError('Cannot connect %s to itself.' % source_stp))
 
         conn = connection.Connection(self.service_registry, requester_nsa, connection_id, source_stp, dest_stp, service_parameters, global_reservation_id, description)
 

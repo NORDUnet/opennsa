@@ -104,6 +104,11 @@ class ConnectionGone(ConnectionError):
     errorId = '00204'
 
 
+class ConnectionCreateError(ConnectionError):
+
+    errorId = '00205'
+
+
 class SecurityError(NSIError):
 
     errorId = '00300'
@@ -117,6 +122,11 @@ class TopologyError(NSIError):
 class InternalServerError(NSIError):
 
     errorId = '00500'
+
+
+class InternalNRMError(InternalServerError):
+
+    errorId = '00501'
 
 
 class ResourceUnavailableError(NSIError):

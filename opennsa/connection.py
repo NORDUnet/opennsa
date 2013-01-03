@@ -206,7 +206,7 @@ class Connection:
                 dl = defer.DeferredList(defs)
                 dl.addCallback(lambda _ : self.state.switchState(state.TERMINATED) )
 
-                err = failure.Failure(error.ReserveError(error_msg))
+                err = failure.Failure(error.ConnectionCreateError(error_msg))
                 self.eventDispatch(registry.RESERVE_RESPONSE, False, err)
 
 
