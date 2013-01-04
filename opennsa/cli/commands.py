@@ -115,7 +115,7 @@ def querysummary(client, client_nsa, provider_nsa, connection_ids, global_reserv
         log.msg('Query results:')
         log.msg( str(qc) )
     except error.NSIError, e:
-        log.msg('Error querying %s, %s : %s' % (connection_id, e.__class__.__name__, str(e)))
+        log.msg('Error querying %s, %s : %s' % (connection_ids, e.__class__.__name__, str(e)))
 
 
 @defer.inlineCallbacks
@@ -126,7 +126,7 @@ def querydetails(client, client_nsa, provider_nsa, connection_ids, global_reserv
         log.msg('Query results:')
         log.msg( str(qc) )
     except error.NSIError, e:
-        log.msg('Error querying %s, %s : %s' % (connection_id, e.__class__.__name__, str(e)))
+        log.msg('Error querying %s, %s : %s' % (connection_ids, e.__class__.__name__, str(e)))
 
 
 def path(topology_file, source_stp, dest_stp):
