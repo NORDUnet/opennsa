@@ -58,16 +58,6 @@ class RequesterService:
 ##        #"http://schemas.ogf.org/nsi/2011/10/connection/service/query"
 
 
-    def _parseGenericConfirm(self, soap_data):
-
-        headers, bodies = minisoap.parseSoapPayload(soap_data)
-
-        header = HT.parseString( ET.tostring( headers[0] ) )
-        generic_confirm = CT.parseString( ET.tostring( bodies[0] ) )
-
-        return header, generic_confirm
-
-
     def _createGenericAcknowledgement(self, correlation_id, requester_nsa, provider_nsa):
 
         header_payload = helper.createHeader(correlation_id, requester_nsa, provider_nsa)
@@ -131,7 +121,7 @@ class RequesterService:
 
     def provisionConfirmed(self, soap_data):
 
-        header, generic_confirm = self._parseGenericConfirm(soap_data)
+        header, generic_confirm = helper.parseGenericConfirm(soap_data)
 
         session_security_attr = None
 
@@ -156,7 +146,7 @@ class RequesterService:
 
     def releaseConfirmed(self, soap_data):
 
-        header, generic_confirm = self._parseGenericConfirm(soap_data)
+        header, generic_confirm = helper.parseGenericConfirm(soap_data)
 
         session_security_attr = None
 
@@ -181,7 +171,7 @@ class RequesterService:
 
     def terminateConfirmed(self, soap_data):
 
-        header, generic_confirm = self._parseGenericConfirm(soap_data)
+        header, generic_confirm = helper.parseGenericConfirm(soap_data)
 
         session_security_attr = None
 

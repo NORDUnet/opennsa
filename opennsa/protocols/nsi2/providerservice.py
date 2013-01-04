@@ -45,22 +45,6 @@ class ProviderService:
 #        "http://schemas.ogf.org/nsi/2012/03/connection/service/queryFailed"
 
 
-    def _parseRequest(self, soap_data, rootClass=None):
-
-        headers, bodies = minisoap.parseSoapPayload(soap_data)
-
-        if headers is None:
-            raise ValueError('No header specified in payload')
-            #raise resource.SOAPFault('No header specified in payload')
-
-        # more checking here...
-
-        header = HT.parseString( ET.tostring( headers[0] ) )
-        body   = CT.parseString( ET.tostring( bodies[0] ), rootClass=rootClass ) # only one body element supported for now
-
-        return header, body
-
-
     def _createGenericAcknowledgement(self, _, correlation_id, requester_nsa, provider_nsa):
 
         header = HT.CommonHeaderType(None, correlation_id, requester_nsa, provider_nsa)
@@ -83,7 +67,7 @@ class ProviderService:
 
         t_start = time.time()
 
-        header, reservation = self._parseRequest(soap_data)
+        header, reservation = helper.parseRequest(soap_data)
 
         # do some checking here
 
@@ -150,7 +134,7 @@ class ProviderService:
 
     def provision(self, soap_data):
 
-        header, generic_request = self._parseRequest(soap_data)
+        header, generic_request = helper.parseRequest(soap_data)
 
         session_security_attr = None
 
@@ -165,7 +149,7 @@ class ProviderService:
 
     def release(self, soap_data):
 
-        header, generic_request = self._parseRequest(soap_data)
+        header, generic_request = helper.parseRequest(soap_data)
 
         session_security_attr = None
 
@@ -180,7 +164,7 @@ class ProviderService:
 
     def terminate(self, soap_data):
 
-        header, generic_request = self._parseRequest(soap_data)
+        header, generic_request = helper.parseRequest(soap_data)
 
         session_security_attr = None
 
@@ -197,7 +181,7 @@ class ProviderService:
 
         #t_start = time.time()
 
-        header, query = self._parseRequest(soap_data, CT.QueryType)
+        header, query = helper.parseRequest(soap_data, CT.QueryType)
 
         session_security_attr = None
         filter_ = query.queryFilter

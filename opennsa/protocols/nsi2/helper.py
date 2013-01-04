@@ -11,6 +11,7 @@ from xml.etree import cElementTree as ET
 from twisted.python import log
 
 from opennsa import nsa, error
+from opennsa.protocols.shared import minisoap
 from opennsa.protocols.nsi2 import headertypes as HT, connectiontypes as CT
 
 
@@ -59,6 +60,22 @@ def createServiceException(err, provider_nsa):
         se = CT.ServiceExceptionType(provider_nsa, error.InternalServerError.errorId, err.getErrorMessage(), variables)
 
     return se
+
+
+def parseRequest(soap_data, rootClass=None):
+
+    headers, bodies = minisoap.parseSoapPayload(soap_data)
+
+    if headers is None:
+        raise ValueError('No header specified in payload')
+        #raise resource.SOAPFault('No header specified in payload')
+
+    # more checking here...
+
+    header = HT.parseString( ET.tostring( headers[0] ) )
+    body   = CT.parseString( ET.tostring( bodies[0] ), rootClass=rootClass ) # only one body element supported for now
+
+    return header, body
 
 
 def createSTP(stp_type):
