@@ -10,7 +10,7 @@ from xml.etree import cElementTree as ET
 
 from twisted.python import log
 
-from opennsa import nsa
+from opennsa import nsa, error
 
 from opennsa.protocols.shared import minisoap
 from opennsa.protocols.nsi2 import actions, headertypes as HT, connectiontypes as CT, helper
@@ -32,6 +32,7 @@ class RequesterService:
         soap_resource.registerDecoder(actions.RESERVE_CONFIRMED,   self.reserveConfirmed)
 
         soap_resource.registerDecoder(actions.PROVISION_CONFIRMED, self.provisionConfirmed)
+        soap_resource.registerDecoder(actions.PROVISION_FAILED,    self.provisionFailed)
 
         soap_resource.registerDecoder(actions.RELEASE_CONFIRMED,   self.releaseConfirmed)
 
@@ -129,18 +130,22 @@ class RequesterService:
         return self._createGenericAcknowledgement(header.correlationId, header.requesterNSA, header.providerNSA)
 
 
-##    def provisionFailed(self, soap_data):
-##
-##        method, req = self.decoder.parse_request('provisionFailed', soap_data)
-##
-##        correlation_id = str(req.correlationId)
-##        requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_id, error_message = self._getGFTParameters(req.provisionFailed)
-##
-##        d = self.requester.provisionFailed(correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_message)
-##
-##        reply = self.decoder.marshal_result(correlation_id, method)
-##        return reply
-##
+    def provisionFailed(self, soap_data):
+
+        header, generic_failure = helper.parseRequest(soap_data, CT.GenericFailedType)
+
+        service_exception = generic_failure.serviceException
+
+        session_security_attr = None
+
+        exception_type = error.lookup(service_exception.errorId)
+        err = exception_type(service_exception.text)
+
+        self.requester.provisionFailed(header.correlationId, header.requesterNSA, header.providerNSA, session_security_attr,
+                                       generic_failure.connectionId, err)
+
+        return self._createGenericAcknowledgement(header.correlationId, header.requesterNSA, header.providerNSA)
+
 
     def releaseConfirmed(self, soap_data):
 

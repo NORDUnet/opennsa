@@ -115,14 +115,14 @@ class Requester:
         return rd
 
 
-    def provisionConfirmed(self, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id):
+    def provisionConfirmed(self, correlation_id, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
         self.triggerCall(provider_nsa, correlation_id, 'provision', connection_id)
 
 
-    def provisionFailed(self, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_message):
+    def provisionFailed(self, correlation_id, requester_nsa, provider_nsa, session_security_attr, connection_id, err):
 
-        self.triggerCall(provider_nsa, correlation_id, 'provision', error.ProvisionError(error_message))
+        self.triggerCall(provider_nsa, correlation_id, 'provision', err)
 
 
     def release(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
