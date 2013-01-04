@@ -254,8 +254,15 @@ class Connection:
                 dl.addCallback(lambda _ : self.state.switchState(state.SCHEDULED) )
 
                 def releaseDone(_):
-                    err = failure.Failure(error.ProvisionError(error_msg))
-                    self.eventDispatch(registry.PROVISION_RESPONSE, False, err)
+                    failures = [ conn for success,conn in results if not success ]
+
+                    if len(results) == 1 and len(failures) == 1:
+                        self.eventDispatch(registry.PROVISION_RESPONSE, False, failures[0])
+                    else:
+                        # multiple errors or downstream scenario, this is currently wrong
+                        #err = failure.Failure(error.ProvisionError(error_msg))
+                        err = failure.Failure(error.InternalSererError(error_msg))
+                        self.eventDispatch(registry.PROVISION_RESPONSE, False, err)
 
                 dl.addCallback(releaseDone)
 
