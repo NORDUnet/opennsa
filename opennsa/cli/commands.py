@@ -3,7 +3,7 @@
 from twisted.python import log
 from twisted.internet import defer
 
-from opennsa import nsa
+from opennsa import nsa, error
 
 
 
@@ -44,45 +44,62 @@ def reserve(client, client_nsa, provider_nsa, src, dst, start_time, end_time, ba
     log.msg("Connection ID: %s" % connection_id)
     log.msg("Global ID: %s" % global_id)
 
-    _ = yield client.reserve(client_nsa, provider_nsa, None, global_id, 'Test Connection', connection_id, service_params)
-    log.msg("Reservation created at %s" % provider_nsa)
+    try:
+        yield client.reserve(client_nsa, provider_nsa, None, global_id, 'Test Connection', connection_id, service_params)
+        log.msg("Reservation created at %s" % provider_nsa)
+    except error.NSIError, e:
+        log.msg('Error reserving %s, %s : %s' % (connection_id, e.__class__.__name__, str(e)))
 
 
 @defer.inlineCallbacks
 def provision(client, client_nsa, provider_nsa, connection_id):
 
-    _ = yield client.provision(client_nsa, provider_nsa, None, connection_id)
-    log.msg('Connection %s provisioned' % connection_id)
+    try:
+        yield client.provision(client_nsa, provider_nsa, None, connection_id)
+        log.msg('Connection %s provisioned' % connection_id)
+    except error.NSIError, e:
+        log.msg('Error provisioning %s, %s : %s' % (connection_id, e.__class__.__name__, str(e)))
 
 
 @defer.inlineCallbacks
 def release(client, client_nsa, provider_nsa, connection_id):
 
-    _ = yield client.release(client_nsa, provider_nsa, None, connection_id)
-    log.msg('Connection %s released' % connection_id)
+    try:
+        yield client.release(client_nsa, provider_nsa, None, connection_id)
+        log.msg('Connection %s released' % connection_id)
+    except error.NSIError, e:
+        log.msg('Error releasing %s, %s : %s' % (connection_id, e.__class__.__name__, str(e)))
 
 
 @defer.inlineCallbacks
 def terminate(client, client_nsa, provider_nsa, connection_id):
 
-    _ = yield client.terminate(client_nsa, provider_nsa, None, connection_id)
-    log.msg('Connection %s terminated' % connection_id)
-
+    try:
+        yield client.terminate(client_nsa, provider_nsa, None, connection_id)
+        log.msg('Connection %s terminated' % connection_id)
+    except error.NSIError, e:
+        log.msg('Error terminating %s, %s : %s' % (connection_id, e.__class__.__name__, str(e)))
 
 @defer.inlineCallbacks
 def querysummary(client, client_nsa, provider_nsa, connection_ids, global_reservation_ids):
 
-    qc = yield client.query(client_nsa, provider_nsa, None, "Summary", connection_ids, global_reservation_ids)
-    log.msg('Query results:')
-    log.msg( str(qc) )
+    try:
+        qc = yield client.query(client_nsa, provider_nsa, None, "Summary", connection_ids, global_reservation_ids)
+        log.msg('Query results:')
+        log.msg( str(qc) )
+    except error.NSIError, e:
+        log.msg('Error querying %s, %s : %s' % (connection_id, e.__class__.__name__, str(e)))
 
 
 @defer.inlineCallbacks
 def querydetails(client, client_nsa, provider_nsa, connection_ids, global_reservation_ids):
 
-    qc = yield client.query(client_nsa, provider_nsa, None, "Details", connection_ids, global_reservation_ids)
-    log.msg('Query results:')
-    log.msg( str(qc) )
+    try:
+        qc = yield client.query(client_nsa, provider_nsa, None, "Details", connection_ids, global_reservation_ids)
+        log.msg('Query results:')
+        log.msg( str(qc) )
+    except error.NSIError, e:
+        log.msg('Error querying %s, %s : %s' % (connection_id, e.__class__.__name__, str(e)))
 
 
 def path(topology_file, source_stp, dest_stp):
