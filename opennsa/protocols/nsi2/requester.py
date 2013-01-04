@@ -143,9 +143,9 @@ class Requester:
         self.triggerCall(provider_nsa, correlation_id, 'release', connection_id)
 
 
-    def releaseFailed(self, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_message):
+    def releaseFailed(self, correlation_id, requester_nsa, provider_nsa, session_security_attr, connection_id, err):
 
-        self.triggerCall(provider_nsa, correlation_id, 'release', error.ReleaseError(error_message))
+        self.triggerCall(provider_nsa, correlation_id, 'release', err)
 
 
     def terminate(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
@@ -167,9 +167,9 @@ class Requester:
         self.triggerCall(provider_nsa, correlation_id, 'terminate', connection_id)
 
 
-    def terminateFailed(self, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_message):
+    def terminateFailed(self, correlation_id, requester_nsa, provider_nsa, session_security_attr connection_id, err):
 
-        self.triggerCall(provider_nsa, correlation_id, 'terminate', error.TerminateError(error_message))
+        self.triggerCall(provider_nsa, correlation_id, 'terminate', err)
 
 
     def query(self, requester_nsa, provider_nsa, session_security_attr, operation='Summary', connection_ids=None, global_reservation_ids=None):
