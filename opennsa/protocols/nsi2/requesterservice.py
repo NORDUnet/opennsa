@@ -30,28 +30,19 @@ class RequesterService:
 
         # consider moving this to __init__ (soap_resource only used in setup)
         soap_resource.registerDecoder(actions.RESERVE_CONFIRMED,   self.reserveConfirmed)
+        soap_resource.registerDecoder(actions.RESERVE_FAILED,      self.reserveFailed)
 
         soap_resource.registerDecoder(actions.PROVISION_CONFIRMED, self.provisionConfirmed)
         soap_resource.registerDecoder(actions.PROVISION_FAILED,    self.provisionFailed)
 
         soap_resource.registerDecoder(actions.RELEASE_CONFIRMED,   self.releaseConfirmed)
+        soap_resource.registerDecoder(actions.RELEASE_FAILED,      self.releaseFailed)
 
         soap_resource.registerDecoder(actions.TERMINATE_CONFIRMED, self.terminateConfirmed)
+        soap_resource.registerDecoder(actions.TERMINATE_FAILED,    self.terminateFailed)
 
         soap_resource.registerDecoder(actions.QUERY_CONFIRMED,     self.queryConfirmed)
 
-##        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/10/connection/service/reserveConfirmed"',      self.reserveConfirmed)
-##        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/10/connection/service/reserveFailed"',         self.reserveFailed)
-##
-##        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/10/connection/service/provisionConfirmed"',    self.provisionConfirmed)
-##        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/10/connection/service/provisionFailed"',       self.provisionFailed)
-##
-##        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/10/connection/service/releaseConfirmed"',      self.releaseConfirmed)
-##        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/10/connection/service/releaseFailed"',         self.releaseFailed)
-##
-##        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/10/connection/service/terminateConfirmed"',    self.terminateConfirmed)
-##        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/10/connection/service/terminateFailed"',       self.terminateFailed)
-##
 ##        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/10/connection/service/queryConfirmed"',        self.queryConfirmed)
 ##        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/10/connection/service/queryFailed"',           self.queryFailed)
 ##
@@ -65,6 +56,19 @@ class RequesterService:
 
         payload = minisoap.createSoapPayload(None, header_payload)
         return payload
+
+
+    def _parseGenericFailure(self, soap_data):
+
+        header, generic_failure = helper.parseRequest(soap_data, CT.GenericFailedType)
+
+        service_exception = generic_failure.serviceException
+
+        exception_type = error.lookup(service_exception.errorId)
+        err = exception_type(service_exception.text)
+
+        return header, generic_failure, err
+
 
 
     def reserveConfirmed(self, soap_data):
@@ -105,23 +109,20 @@ class RequesterService:
         return self._createGenericAcknowledgement(header.correlationId, header.requesterNSA, header.providerNSA)
 
 
-##    def reserveFailed(self, soap_data):
-##
-##        method, req = self.decoder.parse_request('reserveFailed', soap_data)
-##
-##        correlation_id = str(req.correlationId)
-##        requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_id, error_message = self._getGFTParameters(req.reserveFailed)
-##
-##        self.requester.reserveFailed(correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_message)
-##
-##        reply = self.decoder.marshal_result(correlation_id, method)
-##        return reply
-##
+    def reserveFailed(self, soap_data):
+
+        header, generic_failure, err = self._parseGenericFailure(soap_data)
+        session_security_attr = None
+
+        self.requester.reserveFailed(header.correlationId, header.requesterNSA, header.providerNSA, session_security_attr,
+                                       generic_failure.connectionId, err)
+
+        return self._createGenericAcknowledgement(header.correlationId, header.requesterNSA, header.providerNSA)
+
 
     def provisionConfirmed(self, soap_data):
 
         header, generic_confirm = helper.parseRequest(soap_data)
-
         session_security_attr = None
 
         self.requester.provisionConfirmed(header.correlationId, header.requesterNSA, header.providerNSA, session_security_attr,
@@ -132,14 +133,8 @@ class RequesterService:
 
     def provisionFailed(self, soap_data):
 
-        header, generic_failure = helper.parseRequest(soap_data, CT.GenericFailedType)
-
-        service_exception = generic_failure.serviceException
-
+        header, generic_failure, err = self._parseGenericFailure(soap_data)
         session_security_attr = None
-
-        exception_type = error.lookup(service_exception.errorId)
-        err = exception_type(service_exception.text)
 
         self.requester.provisionFailed(header.correlationId, header.requesterNSA, header.providerNSA, session_security_attr,
                                        generic_failure.connectionId, err)
@@ -159,18 +154,16 @@ class RequesterService:
         return self._createGenericAcknowledgement(header.correlationId, header.requesterNSA, header.providerNSA)
 
 
-##    def releaseFailed(self, soap_data):
-##
-##        method, req = self.decoder.parse_request('releaseFailed', soap_data)
-##
-##        correlation_id = str(req.correlationId)
-##        requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_id, error_message = self._getGFTParameters(req.releaseFailed)
-##
-##        d = self.requester.releaseFailed(correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_message)
-##
-##        reply = self.decoder.marshal_result(correlation_id, method)
-##        return reply
-##
+    def releaseFailed(self, soap_data):
+
+        header, generic_failure, err = self._parseGenericFailure(soap_data)
+        session_security_attr = None
+
+        self.requester.releaseFailed(header.correlationId, header.requesterNSA, header.providerNSA, session_security_attr,
+                                     generic_failure.connectionId, err)
+
+        return self._createGenericAcknowledgement(header.correlationId, header.requesterNSA, header.providerNSA)
+
 
     def terminateConfirmed(self, soap_data):
 
@@ -184,18 +177,15 @@ class RequesterService:
         return self._createGenericAcknowledgement(header.correlationId, header.requesterNSA, header.providerNSA)
 
 
-##    def terminateFailed(self, soap_data):
-##
-##        method, req = self.decoder.parse_request('terminateFailed', soap_data)
-##
-##        correlation_id = str(req.correlationId)
-##        requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_id, error_message = self._getGFTParameters(req.terminateFailed)
-##
-##        d = self.requester.terminateFailed(correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_message)
-##
-##        reply = self.decoder.marshal_result(correlation_id, method)
-##        return reply
-##
+    def terminateFailed(self, soap_data):
+
+        header, generic_failure, err = self._parseGenericFailure(soap_data)
+        session_security_attr = None
+
+        self.requester.terminateFailed(header.correlationId, header.requesterNSA, header.providerNSA, session_security_attr,
+                                       generic_failure.connectionId, err)
+
+        return self._createGenericAcknowledgement(header.correlationId, header.requesterNSA, header.providerNSA)
 
 
     def queryConfirmed(self, soap_data):

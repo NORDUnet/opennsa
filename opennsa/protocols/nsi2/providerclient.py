@@ -41,6 +41,31 @@ class ProviderClient:
         return f.deferred
 
 
+    def _genericFailure(self, requester_url, action, message_name, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, err):
+
+        header_payload = helper.createHeader(correlation_id, requester_nsa, provider_nsa)
+
+        connection_states = CT.ConnectionStatesType(CT.ReservationStateType(0, 'TerminateFailed'),
+                                                    CT.ProvisionStateType(0,   'TerminateFailed'),
+                                                    CT.ActivationStateType(0,  'Inactive'))
+
+        se = helper.createServiceException(err, provider_nsa)
+
+        generic_failed = CT.GenericFailedType(global_reservation_id, connection_id, connection_states, se)
+
+        body_payload   = helper.export(generic_failed, message_name)
+
+        payload = minisoap.createSoapPayload(body_payload, header_payload)
+
+        def gotReply(data):
+            # for now we just ignore this, as long as we get an okay
+            return
+
+        f = httpclient.httpRequest(requester_url, action, payload, ctx_factory=self.ctx_factory)
+        f.deferred.addCallbacks(gotReply) #, errReply)
+        return f.deferred
+
+
     def reserveConfirmed(self, requester_url, correlation_id, requester_nsa, provider_nsa, global_reservation_id, description, connection_id, service_parameters):
 
         header_payload = helper.createHeader(correlation_id, requester_nsa, provider_nsa)
@@ -74,113 +99,47 @@ class ProviderClient:
         f.deferred.addCallbacks(gotReply) #, errReply)
         return f.deferred
 
-#
-#    def reserveFailed(self, requester_url, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_msg):
-#
-#        res_fail = self.client.createType('{http://schemas.ogf.org/nsi/2011/10/connection/types}GenericFailedType')
-#        nsi_ex   = self.client.createType('{http://schemas.ogf.org/nsi/2011/10/connection/types}ServiceExceptionType')
-#
-#        res_fail.requesterNSA   = requester_nsa
-#        res_fail.providerNSA    = provider_nsa
-#
-#        res_fail.globalReservationId    = global_reservation_id
-#        res_fail.connectionId           = connection_id
-#        res_fail.connectionState        = connection_state
-#
-#        nsi_ex.errorId = 'RESERVATION_FAILURE'
-#        nsi_ex.text = error_msg
-#        res_fail.serviceException = nsi_ex
-#
-#        d = self.client.invoke(requester_url, 'reserveFailed', correlation_id, res_fail)
-#        return d
-#
+
+    def reserveFailed(self, requester_url, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, err):
+
+        return self._genericFailure(requester_url, actions.RESERVE_FAILED, 'reserveFailed',
+                                    correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, err)
+
 
     def provisionConfirmed(self, requester_url, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id):
 
         return self._genericConfirm('provisionConfirmed', requester_url, actions.PROVISION_CONFIRMED,
-                                    correlation_id, requester_nsa, provider_nsa,
-                                    global_reservation_id, connection_id)
+                                    correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id)
 
 
     def provisionFailed(self, requester_url, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, err):
 
-        header_payload = helper.createHeader(correlation_id, requester_nsa, provider_nsa)
-
-        connection_states = CT.ConnectionStatesType(CT.ReservationStateType(0, 'TerminateFailed'),
-                                                    CT.ProvisionStateType(0,   'TerminateFailed'),
-                                                    CT.ActivationStateType(0,  'Inactive'))
-
-        se = helper.createServiceException(err, provider_nsa)
-
-        generic_failed = CT.GenericFailedType(global_reservation_id, connection_id, connection_states, se)
-
-        body_payload   = helper.export(generic_failed, 'provisionFailed')
-
-        payload = minisoap.createSoapPayload(body_payload, header_payload)
-
-        print "PL\n", payload, "\n--"
-
-        def gotReply(data):
-            # for now we just ignore this, as long as we get an okay
-            return
-
-        f = httpclient.httpRequest(requester_url, actions.PROVISION_FAILED, payload, ctx_factory=self.ctx_factory)
-        f.deferred.addCallbacks(gotReply) #, errReply)
-        return f.deferred
+        return self._genericFailure(requester_url, actions.PROVISION_FAILED, 'provisionFailed',
+                                    correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, err)
 
 
     def releaseConfirmed(self, requester_url, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id):
 
         return self._genericConfirm('releaseConfirmed', requester_url, actions.RELEASE_CONFIRMED,
-                                    correlation_id, requester_nsa, provider_nsa,
-                                    global_reservation_id, connection_id)
+                                    correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id)
 
-#    def releaseFailed(self, requester_url, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_msg):
-#
-#        gft = self.client.createType('{http://schemas.ogf.org/nsi/2011/10/connection/types}GenericFailedType')
-#        net = self.client.createType('{http://schemas.ogf.org/nsi/2011/10/connection/types}ServiceExceptionType')
-#
-#        gft.requesterNSA   = requester_nsa
-#        gft.providerNSA    = provider_nsa
-#
-#        gft.globalReservationId    = global_reservation_id
-#        gft.connectionId           = connection_id
-#        gft.connectionState        = connection_state
-#
-#        net.errorId = 'RELEASE_FAILURE'
-#        net.text = error_msg
-#        gft.serviceException = net
-#
-#        d = self.client.invoke(requester_url, 'releaseFailed', correlation_id, gft)
-#        return d
-#
+    def releaseFailed(self, requester_url, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, err):
+
+        return self._genericFailure(requester_url, actions.RELEASE_FAILED, 'releaseFailed',
+                                    correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, err)
+
 
     def terminateConfirmed(self, requester_url, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id):
 
         return self._genericConfirm('terminateConfirmed', requester_url, actions.TERMINATE_CONFIRMED,
-                                    correlation_id, requester_nsa, provider_nsa,
-                                    global_reservation_id, connection_id)
+                                    correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id)
 
 
-#    def terminateFailed(self, requester_url, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, error_msg):
-#
-#        gft = self.client.createType('{http://schemas.ogf.org/nsi/2011/10/connection/types}GenericFailedType')
-#        net = self.client.createType('{http://schemas.ogf.org/nsi/2011/10/connection/types}ServiceExceptionType')
-#
-#        gft.requesterNSA   = requester_nsa
-#        gft.providerNSA    = provider_nsa
-#
-#        gft.globalReservationId    = global_reservation_id
-#        gft.connectionId           = connection_id
-#        gft.connectionState        = connection_state
-#
-#        net.errorId = 'TERMINATE_FAILURE'
-#        net.text = error_msg
-#        gft.serviceException = net
-#
-#        d = self.client.invoke(requester_url, 'terminateFailed', correlation_id, gft)
-#        return d
-#
+    def terminateFailed(self, requester_url, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, err):
+
+        return self._genericFailure(requester_url, actions.TERMINATE_FAILED, 'terminateFailed',
+                                    correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, err)
+
 
     def queryConfirmed(self, requester_url, correlation_id, requester_nsa, provider_nsa, operation, connections):
 

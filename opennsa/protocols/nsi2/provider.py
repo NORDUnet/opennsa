@@ -75,8 +75,8 @@ class Provider:
             d = self.provider_client.reserveConfirmed(reply_to, correlation_id, requester_nsa, provider_nsa, global_reservation_id, description, connection_id, service_parameters)
             return d
         else:
-            error_msg = _createErrorMessage(result)
-            d = self.provider_client.reserveFailed(reply_to, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, 'TERMINATED', error_msg)
+            connection_states = None
+            d = self.provider_client.reserveFailed(reply_to, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_states, result)
             return d
 
 
@@ -100,7 +100,8 @@ class Provider:
             d = self.provider_client.provisionConfirmed(reply_to, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id)
             return d
         else:
-            d = self.provider_client.provisionFailed(reply_to, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, 'TERMINATED', result)
+            connection_states = None
+            d = self.provider_client.provisionFailed(reply_to, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_states, result)
             return d
 
 
@@ -124,8 +125,8 @@ class Provider:
             d = self.provider_client.releaseConfirmed(reply_to, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id)
             return d
         else:
-            error_msg = _createErrorMessage(result)
-            d = self.provider_client.releaseFailed(reply_to, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, 'TERMINATED', error_msg)
+            connection_states = None
+            d = self.provider_client.releaseFailed(reply_to, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_states, result)
             return d
 
 
@@ -149,8 +150,8 @@ class Provider:
             d = self.provider_client.terminateConfirmed(reply_to, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id)
             return d
         else:
-            error_msg = _createErrorMessage(result)
-            d = self.provider_client.terminateFailed(reply_to, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, 'TERMINATED', error_msg)
+            connection_states = None
+            d = self.provider_client.terminateFailed(reply_to, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_states, result)
             return d
 
 
