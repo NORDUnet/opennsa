@@ -7,6 +7,32 @@ from opennsa import nsa, error
 
 
 
+# this parser should perhaps be somewhere else
+def _createSTP(stp_desc, directionality):
+    network, local_part = stp_desc.split(':',1)
+    if '#' in local_part:
+        port, label_part = local_part.split('#',1)
+        labels = []
+        for tvl in label_part.split(';'):
+            if not '=' in tvl:
+                raise ValueError('Invalid label type-value: %s' % tvl)
+            type_, values = tvl.split('=')
+            labels.append( nsa.Label( type_, values.split(',') ) )
+    else:
+        port = local_part
+        labels = None
+
+    return nsa.STP(network, port, directionality, labels)
+
+
+def _createServiceParams(start_time, end_time, src, dst, bandwidth):
+
+    src_stp = _createSTP(src, nsa.EGRESS)
+    dst_stp = _createSTP(dst, nsa.INGRESS)
+
+    return nsa.ServiceParameters(start_time, end_time, src_stp, dst_stp, bandwidth)
+
+
 @defer.inlineCallbacks
 def discover(client, service_url):
 
@@ -19,36 +45,37 @@ def discover(client, service_url):
 @defer.inlineCallbacks
 def reserve(client, client_nsa, provider_nsa, src, dst, start_time, end_time, bandwidth, connection_id, global_id):
 
-    # this parser should perhaps be somewhere else
-    def createSTP(stp_desc, directionality):
-        network, local_part = stp_desc.split(':',1)
-        if '#' in local_part:
-            port, label_part = local_part.split('#',1)
-            labels = []
-            for tvl in label_part.split(';'):
-                if not '=' in tvl:
-                    raise ValueError('Invalid label type-value: %s' % tvl)
-                type_, values = tvl.split('=')
-                labels.append( nsa.Label( type_, values.split(',') ) )
-        else:
-            port = local_part
-            labels = None
+    service_params = _createServiceParams(start_time, end_time, src, dst, bandwidth)
 
-        return nsa.STP(network, port, directionality, labels)
-
-    src_stp = createSTP(src, nsa.EGRESS)
-    dst_stp = createSTP(dst, nsa.INGRESS)
-
-    service_params  = nsa.ServiceParameters(start_time, end_time, src_stp, dst_stp, bandwidth)
-
-    log.msg("Connection ID: %s" % connection_id)
-    log.msg("Global ID: %s" % global_id)
+    log.msg("Connection id: %s  Global id: %s" % (connection_id, global_id))
 
     try:
         yield client.reserve(client_nsa, provider_nsa, None, global_id, 'Test Connection', connection_id, service_params)
         log.msg("Reservation created at %s" % provider_nsa)
     except error.NSIError, e:
         log.msg('Error reserving %s, %s : %s' % (connection_id, e.__class__.__name__, str(e)))
+
+
+
+@defer.inlineCallbacks
+def reserveprovision(client, client_nsa, provider_nsa, src, dst, start_time, end_time, bandwidth, connection_id, global_id):
+
+    service_params = _createServiceParams(start_time, end_time, src, dst, bandwidth)
+
+    log.msg("Connection id: %s  Global id: %s" % (connection_id, global_id))
+
+    try:
+        yield client.reserve(client_nsa, provider_nsa, None, global_id, 'Test Connection', connection_id, service_params)
+        log.msg("Connection reserved at %s" % provider_nsa)
+    except error.NSIError, e:
+        log.msg('Error reserving %s, %s : %s' % (connection_id, e.__class__.__name__, str(e)))
+        defer.returnValue(None)
+
+    try:
+        yield client.provision(client_nsa, provider_nsa, None, connection_id)
+        log.msg('Connection %s provisioned' % connection_id)
+    except error.NSIError, e:
+        log.msg('Error provisioning %s, %s : %s' % (connection_id, e.__class__.__name__, str(e)))
 
 
 @defer.inlineCallbacks

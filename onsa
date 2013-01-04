@@ -69,6 +69,8 @@ def doMain():
     for k,v in defaults.items():
         log.msg(' %s : %s' % (k,v), debug=True)
 
+    iport = None
+
     # commands
 
     if config.subCommand == 'discover':
@@ -160,7 +162,7 @@ def doMain():
             raise usage.UsageError('Options for TLS/SSL context not defined. Cannot setup TLS.')
 
         # options only required for reserve
-        elif config.subCommand in ('reserve', 'reserveprovision'):
+        if config.subCommand in ('reserve', 'reserveprovision'):
 
             source_stp = config.subOptions[options.SOURCE_STP]  or defaults.get(options.SOURCE_STP)
             dest_stp   = config.subOptions[options.DEST_STP]    or defaults.get(options.DEST_STP)
@@ -187,6 +189,10 @@ def doMain():
             if global_id is None:
                 global_id = 'conn-%i' % random.randrange(1000,9999)
 
+        if config.subCommand in ('provision', 'release', 'terminate'):
+
+            if connection_id is None:
+                raise usage.UsageError('Connection ID is not defined')
 
         # setup listener port
 #        from opennsa.protocols import nsi1
@@ -194,7 +200,6 @@ def doMain():
 
         from opennsa.protocols import nsi2
         client, factory = nsi2.createRequesterClient(host, port, tls, ctx_factory, 12)
-
 
         if tls:
             iport = reactor.listenSSL(port, factory, ctx_factory)
@@ -204,50 +209,37 @@ def doMain():
 
     # start over on commands, now we do the actual dispatch
 
-    if config.subCommand in ('reserve', 'reserveprovision'):
+    if config.subCommand == 'reserve':
 
         yield commands.reserve(client, client_nsa, provider_nsa, source_stp, dest_stp, start_time, end_time, bandwidth, connection_id, global_id)
-        if config.subCommand == 'reserveprovision':
-            yield commands.provision(client, client_nsa, provider_nsa, connection_id)
-        yield iport.stopListening()
+
+    elif config.subCommand == 'reserveprovision':
+
+        yield commands.reserveprovision(client, client_nsa, provider_nsa, source_stp, dest_stp, start_time, end_time, bandwidth, connection_id, global_id)
 
     elif config.subCommand == 'provision':
 
-        if connection_id is None:
-            raise usage.UsageError('Connection ID is not defined')
-
         yield commands.provision(client, client_nsa, provider_nsa, connection_id)
-        yield iport.stopListening()
 
     elif config.subCommand == 'release':
 
-        if connection_id is None:
-            raise usage.UsageError('Connection ID is not defined')
-
         yield commands.release(client, client_nsa, provider_nsa, connection_id)
-        yield iport.stopListening()
 
     elif config.subCommand == 'terminate':
 
-        if connection_id is None:
-            raise usage.UsageError('Connection ID is not defined')
-
         yield commands.terminate(client, client_nsa, provider_nsa, connection_id)
-        yield iport.stopListening()
 
     elif config.subCommand == 'querysummary':
 
         connection_ids  = [ connection_id   ] if connection_id  else None
         global_ids      = [ global_id       ] if global_id      else None
         yield commands.querysummary(client, client_nsa, provider_nsa, connection_ids, global_ids)
-        yield iport.stopListening()
 
     elif config.subCommand == 'querydetails':
 
         connection_ids  = [ connection_id   ] if connection_id  else None
         global_ids      = [ global_id       ] if global_id      else None
         yield commands.querydetails(client, client_nsa, provider_nsa, connection_ids, global_ids)
-        yield iport.stopListening()
 
     elif config.subCommand == 'path':
 
@@ -271,6 +263,10 @@ def doMain():
     else:
         print "Invalid subcommand specified"
         print '%s: Try --help for usage details.' % (sys.argv[0])
+
+
+    if iport:
+        yield iport.stopListening()
 
 
 
