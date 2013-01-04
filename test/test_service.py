@@ -198,5 +198,6 @@ class ServiceTest(unittest.TestCase):
             self.fail('Reserve call should have failed')
         except error.ReserveError as e:
             self.failUnlessIn('Cannot connect <STP Aruba:A1> to itself', str(e))
-        errors = self.flushLoggedErrors(error.ReserveError)
+        errors = self.flushLoggedErrors(error.TopologyError)
         self.assertEqual(len(errors), 1)
+
