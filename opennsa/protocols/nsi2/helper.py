@@ -55,7 +55,8 @@ def createServiceException(err, provider_nsa):
     if err.check(error.NSIError):
         se = CT.ServiceExceptionType(provider_nsa, err.value.errorId, err.getErrorMessage(), variables)
     else:
-        log.msg('Got a non NSIError exception, cannot create detailed service exception (%s)' % type(err.value), system=LOG_SYSTEM)
+        log.msg('Got a non NSIError exception: %s : %s' % (err.value.__class__.__name__, err.getErrorMessage()), system=LOG_SYSTEM)
+        log.msg('Cannot create detailed service exception, defaulting to NSI InternalServerError (00500)', system=LOG_SYSTEM)
         log.err(err)
         se = CT.ServiceExceptionType(provider_nsa, error.InternalServerError.errorId, err.getErrorMessage(), variables)
 
