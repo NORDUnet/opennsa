@@ -54,8 +54,8 @@ class MultiBackendNSIBackend:
                     return False
                 try:
                     return backend.canAllocateLink(link.source, link.dest, service_parameters)
-                except error.InvalidRequestError:
-                    log.msg('Rejecting internal link candidate: %s' % str(link))
+                except error.NSIError as e:
+                    log.msg('Rejecting internal link candidate: %s. Reason %s' % (link, e))
                     return False
 
         pruned_paths = [ path for path in paths if isPathReservable(path) ]

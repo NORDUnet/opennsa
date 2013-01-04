@@ -73,24 +73,24 @@ class ArgiaBackend:
         source_vlan = source_port.split('=',1)[1]
         dest_vlan = dest_port.split('=',1)[1]
         if source_vlan != dest_vlan:
-            raise error.InvalidRequestError('Cannot create connection between different VLANs.')
+            raise error.VLANInterchangeNotSupportedError('Cannot create connection between different VLANs.')
 
 
     # this could be generic
     def _checkTiming(self, res_start, res_end):
         # check that ports are available in the specified schedule
         if res_start in [ None, '' ] or res_end in [ None, '' ]:
-            raise error.InvalidRequestError('Reservation must specify start and end time (was either None or '')')
+            raise error.MissingParameterError('Reservation must specify start and end time (was either None or '')')
 
         # sanity checks
         if res_start > res_end:
-            raise error.InvalidRequestError('Refusing to make reservation with reverse duration')
+            raise error.PayloadError('Refusing to make reservation with reverse duration')
 
         if res_start < datetime.datetime.now(tzutc()):
-            raise error.InvalidRequestError('Refusing to make reservation with start time in the past')
+            raise error.PayloadError('Refusing to make reservation with start time in the past')
 
         if res_start > datetime.datetime(2025, 1, 1):
-            raise error.InvalidRequestError('Refusing to make reservation with start time after 2025')
+            raise error.PayloadError('Refusing to make reservation with start time after 2025')
 
 
 

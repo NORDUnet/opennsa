@@ -275,5 +275,5 @@ class Force10Backend:
         source_vlan = source_nrm_port.split('.')[-1]
         dest_vlan = dest_nrm_port.split('.')[-1]
         if source_vlan != dest_vlan:
-            raise error.InvalidRequestError('Cannot create connection between different VLANs (%s/%s).' % (source_vlan, dest_vlan) )
+            raise error.VLANInterchangeNotSupportedError('Cannot create connection between different VLANs (%s/%s).' % (source_vlan, dest_vlan) )
 

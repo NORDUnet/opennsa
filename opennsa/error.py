@@ -44,11 +44,6 @@ class CallbackTimeoutError(Exception):
     pass
 
 
-class InvalidRequestError(Exception):
-    # this should be phased out with specific errors, otherwise 00100
-    pass
-
-
 ## NSI Errors
 
 
@@ -66,6 +61,11 @@ class NSIError(Exception):
 class PayloadError(NSIError):
 
     errorId = '00100'
+
+
+class MissingParameterError(PayloadError):
+
+    errorId = '00101'
 
 
 class ConnectionError(NSIError):
@@ -108,6 +108,11 @@ class TopologyError(NSIError):
     errorId = '00400'
 
 
+class VLANInterchangeNotSupportedError(TopologyError):
+
+    errorId = '00404'
+
+
 class InternalServerError(NSIError):
 
     errorId = '00500'
@@ -131,6 +136,7 @@ class STPUnavailableError(NSIError):
 
 NSI_ERROR_CODE_TABLE = {
     '00100' : PayloadError,
+    '00101' : MissingParameterError,
     '00200' : ConnectionError,
     '00201' : InvalidTransitionError,
     '00202' : ConnectionExistsError,
@@ -139,6 +145,7 @@ NSI_ERROR_CODE_TABLE = {
     '00205' : ConnectionCreateError,
     '00300' : SecurityError,
     '00400' : TopologyError,
+    '00404' : VLANInterchangeNotSupportedError,
     '00500' : InternalServerError,
     '00501' : InternalNRMError,
     '00600' : ResourceUnavailableError,
