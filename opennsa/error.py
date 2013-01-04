@@ -150,6 +150,7 @@ NSI_ERROR_CODE_TABLE = {
     '00300' : SecurityError,
     '00400' : TopologyError,
     '00500' : InternalServerError,
+    '00501' : InternalNRMError,
     '00600' : ResourceUnavailableError,
     '00601' : STPUnavailableError
 }
