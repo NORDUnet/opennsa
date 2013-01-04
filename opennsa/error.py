@@ -49,11 +49,6 @@ class InvalidRequestError(Exception):
     pass
 
 
-class StateTransitionError(Exception):
-    # this should be phased out with 00201
-    pass
-
-
 ## NSI Errors
 
 

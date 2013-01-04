@@ -196,8 +196,8 @@ class ArgiaConnection:
 
         try:
             self.state.switchState(state.RESERVING)
-        except error.StateTransitionError:
-            return defer.fail(error.ReserveError('Cannot reserve connection in state %s' % self.state()))
+        except error.InvalidTransitionError as e:
+            return defer.fail(e)
 
         payload =  self._constructReservationPayload() #self.source_port, self.dest_port, self.service_parameters)
         process_proto = ArgiaProcessProtocol(payload)
@@ -257,8 +257,8 @@ class ArgiaConnection:
 
         try:
             self.state.switchState(state.PROVISIONING)
-        except error.StateTransitionError:
-            return defer.fail(error.ProvisionError('Cannot reserve connection in state %s' % self.state()))
+        except error.InvalidTransitionError as e:
+            return defer.fail(e)
 
         self.scheduler.cancelTransition() # cancel potential automatic state transition to scheduled
         d = defer.Deferred()
@@ -320,8 +320,8 @@ class ArgiaConnection:
 
         try:
             self.state.switchState(state.RELEASING)
-        except error.StateTransitionError:
-            return defer.fail(error.ProvisionError('Cannot release connection in state %s' % self.state()))
+        except error.InvalidTransitionError as e:
+            return defer.fail(e)
 
         self.scheduler.cancelTransition() # cancel scheduled switch to terminate+release
         d = defer.Deferred()
@@ -382,8 +382,8 @@ class ArgiaConnection:
 
         try:
             self.state.switchState(state.TERMINATING)
-        except error.StateTransitionError:
-            return defer.fail(error.TerminateError('Cannot terminate connection in state %s' % self.state()))
+        except error.InvalidTransitionError as e:
+            return defer.fail(e)
 
         self.scheduler.cancelTransition()
         d = defer.Deferred()

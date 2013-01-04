@@ -65,8 +65,8 @@ class GenericConnection:
             self.state.switchState(state.RESERVING)
             self.logStateUpdate('RESERVING')
             self.state.switchState(state.RESERVED)
-        except error.StateTransitionError:
-            return defer.fail(error.InvalidTransitionError('Cannot reserve connection in state %s' % self.state()))
+        except error.InvalidTransitionError as e:
+            return defer.fail(e)
 
         self.logStateUpdate('RESERVED')
         self.scheduler.scheduleTransition(self.service_parameters.start_time, scheduled, state.SCHEDULED)
@@ -90,8 +90,8 @@ class GenericConnection:
             try:
                 self.state.switchState(state.PROVISIONING)
                 self.logStateUpdate('PROVISIONING')
-            except error.StateTransitionError:
-                return defer.fail(error.InvalidTransitionError('Cannot provision connection in state %s' % self.state()))
+            except error.InvalidTransitionError as e:
+                return defer.fail(e)
 
             d = self.connection_manager.setupLink(self.source_port, self.dest_port)
             d.addCallbacks(provisionSuccess, provisionFailure)
@@ -133,8 +133,8 @@ class GenericConnection:
         try:
             self.state.switchState(state.RELEASING)
             self.logStateUpdate('RELEASING')
-        except error.StateTransitionError:
-            return defer.fail(error.InvalidTransitionError('Cannot release connection in state %s' % self.state()))
+        except error.InvalidTransitionError as e:
+            return defer.fail(e)
 
         self.scheduler.cancelTransition() # cancel any pending scheduled switch
 
