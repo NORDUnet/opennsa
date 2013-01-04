@@ -32,7 +32,7 @@ RELEASE_CONFIRMED       = '"http://schemas.ogf.org/nsi/2012/03/connection/servic
 RELEASE_FAILED          = '"http://schemas.ogf.org/nsi/2012/03/connection/service/releaseFailed"'
 
 TERMINATE_CONFIRMED     = '"http://schemas.ogf.org/nsi/2012/03/connection/service/terminateConfirmed"'
-TERMIANTE_FAILED        = '"http://schemas.ogf.org/nsi/2012/03/connection/service/terminateFailed"'
+TERMINATE_FAILED        = '"http://schemas.ogf.org/nsi/2012/03/connection/service/terminateFailed"'
 
 QUERY_CONFIRMED         = '"http://schemas.ogf.org/nsi/2012/03/connection/service/queryConfirmed"'
 QUERY_FAILED            = '"http://schemas.ogf.org/nsi/2012/03/connection/service/queryFailed"'
