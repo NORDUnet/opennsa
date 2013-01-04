@@ -29,7 +29,7 @@ URN_NETWORK = 'urn:ogf:network:'
 
 
 ET.register_namespace('ftypes', FRAMEWORK_HEADERS_NS)
-ET.register_namespace('ctytes', CONNECTION_TYPES_NS)
+ET.register_namespace('ctypes', CONNECTION_TYPES_NS)
 
 
 
