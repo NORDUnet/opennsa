@@ -56,11 +56,13 @@ class DUDConnectionManager:
     def setupLink(self, source_port, dest_port):
         log.msg('Link %s -> %s up' % (source_port, dest_port), system=self.log_system)
         return defer.succeed(None)
-        #return defer.fail(NotImplementedError('Link setup failed'))
+        #from opennsa import error
+        #return defer.fail(error.InternalNRMError('Link setup failed'))
 
 
     def teardownLink(self, source_port, dest_port):
         log.msg('Link %s -> %s down' % (source_port, dest_port), system=self.log_system)
         return defer.succeed(None)
-        #return defer.fail(NotImplementedError('Link teardown failed'))
+        #from opennsa import error
+        #return defer.fail(error.InternalNRMError('Link teardown failed'))
 
