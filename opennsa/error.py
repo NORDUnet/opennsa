@@ -45,18 +45,12 @@ class CallbackTimeoutError(Exception):
 
 
 class InvalidRequestError(Exception):
-    pass
-
-
-class ResourceNotAvailableError(Exception):
-    pass
-
-
-class TopologyError(Exception):
+    # this should be phased out with specific errors, otherwise 00100
     pass
 
 
 class StateTransitionError(Exception):
+    # this should be phased out with 00201
     pass
 
 
