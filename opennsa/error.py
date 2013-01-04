@@ -147,6 +147,7 @@ NSI_ERROR_CODE_TABLE = {
     '00202' : ConnectionExistsError,
     '00203' : ConnectionNonExistentError,
     '00204' : ConnectionGone,
+    '00205' : ConnectionCreateError,
     '00300' : SecurityError,
     '00400' : TopologyError,
     '00500' : InternalServerError,
@@ -162,8 +163,8 @@ def lookup(error_code):
 
     ex = NSI_ERROR_CODE_TABLE.get(error_code)
     if ex is None:
-        error_code = error_code[0:2] + '  '
-        ex = NSI_ERROR_CODE_TABLE.get(error_code)
+        generic_error_code = error_code[0:3] + '00'
+        ex = NSI_ERROR_CODE_TABLE.get(generic_error_code)
 
     if ex is None:
         raise ValueError('Could not find error type. Invalid error code: %s' % error_code)
