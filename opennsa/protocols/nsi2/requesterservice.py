@@ -68,10 +68,8 @@ class RequesterService:
 
     def reserveConfirmed(self, soap_data):
 
-        headers, bodies = minisoap.parseSoapPayload(soap_data)
-
-        header = HT.parseString( ET.tostring( headers[0] ) )
-        reservation = CT.parseString( ET.tostring( bodies[0] ) )
+        # reservation should perhaps be called reserve_confirm
+        header, reservation = helper.parseRequest(soap_data)
 
         if type(reservation.criteria) == list and len(reservation.criteria) > 1:
             print "Multiple reservation criteria!"
@@ -121,7 +119,7 @@ class RequesterService:
 
     def provisionConfirmed(self, soap_data):
 
-        header, generic_confirm = helper.parseGenericConfirm(soap_data)
+        header, generic_confirm = helper.parseRequest(soap_data)
 
         session_security_attr = None
 
@@ -146,7 +144,7 @@ class RequesterService:
 
     def releaseConfirmed(self, soap_data):
 
-        header, generic_confirm = helper.parseGenericConfirm(soap_data)
+        header, generic_confirm = helper.parseRequest(soap_data)
 
         session_security_attr = None
 
@@ -171,7 +169,7 @@ class RequesterService:
 
     def terminateConfirmed(self, soap_data):
 
-        header, generic_confirm = helper.parseGenericConfirm(soap_data)
+        header, generic_confirm = helper.parseRequest(soap_data)
 
         session_security_attr = None
 
