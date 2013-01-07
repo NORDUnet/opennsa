@@ -12,9 +12,7 @@ from opennsa.protocols import nsi1, nsi2, discovery
 
 
 
-def setupBackend(backend_conf, network_name, internal_topology):
-
-    backends = {}
+def setupBackend(backend_conf, network_name):
 
     for backend_name, cfg in backend_conf.items():
         backend_type = cfg['_backend_type']
@@ -23,31 +21,23 @@ def setupBackend(backend_conf, network_name, internal_topology):
 
         if backend_type == config.BLOCK_DUD:
             from opennsa.backends import dud
-            backends[backend_name] = dud.DUDNSIBackend(network_name)
+            return dud.DUDNSIBackend(network_name)
 
         elif backend_type == config.BLOCK_JUNOS:
             from opennsa.backends import junos
-            backends[backend_name] = junos.JunOSBackend(network_name, bc.items())
+            return junos.JunOSBackend(network_name, bc.items())
 
         elif backend_type == config.BLOCK_FORCE10:
             from opennsa.backends import force10
-            backends[backend_name] = force10.Force10Backend(network_name, bc.items())
+            return force10.Force10Backend(network_name, bc.items())
 
         elif backend_type == config.BLOCK_ARGIA:
             from opennsa.backends import argia
-            backends[backend_name] = argia.ArgiaBackend(network_name, bc.items())
+            return argia.ArgiaBackend(network_name, bc.items())
 
         elif backend_type == config.BLOCK_BROCADE:
             from opennsa.backends import brocade
-            backends[backend_name] = brocade.BrocadeBackend(network_name, bc.items())
-
-    if len(backends) == 1:
-        backend = backends.values()[0]
-    else:
-        from opennsa.backends import multi
-        backend = multi.MultiBackendNSIBackend(network_name, backends, internal_topology)
-
-    return backend
+            return brocade.BrocadeBackend(network_name, bc.items())
 
 
 
@@ -69,7 +59,7 @@ class OpenNSAService(twistedservice.MultiService):
 
         topology_sources = [ open(tf) for tf in vc[config.TOPOLOGY_FILE] ]
 
-        topology, internal_topology = gole.parseTopology(topology_sources, open(vc[config.NRM_MAP_FILE]) if vc[config.NRM_MAP_FILE] else None )
+        topology, _ = gole.parseTopology(topology_sources, open(vc[config.NRM_MAP_FILE]) if vc[config.NRM_MAP_FILE] else None )
 
         if vc[config.HOST] is None:
             import socket
@@ -80,7 +70,7 @@ class OpenNSAService(twistedservice.MultiService):
             from opennsa import ctxfactory
             ctx_factory = ctxfactory.ContextFactory(vc[config.KEY], vc[config.CERTIFICATE], vc[config.CERTIFICATE_DIR], vc[config.VERIFY_CERT])
 
-        backend = setupBackend(vc['backend'], vc[config.NETWORK_NAME], internal_topology)
+        backend = setupBackend(vc['backend'], vc[config.NETWORK_NAME])
 
         top_resource = resource.Resource()
         service_registry = registry.ServiceRegistry()

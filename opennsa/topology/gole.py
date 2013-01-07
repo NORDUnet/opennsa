@@ -70,8 +70,8 @@ def _stripPrefix(text, prefix):
     return text[ul:]
 
 
-def _createNRMPort(backend, local_port):
-    return URN_NRM_PORT + (backend or '') + ':' + local_port
+def _createNRMPort(local_port):
+    return URN_NRM_PORT + ':' + local_port
 
 
 
@@ -113,12 +113,8 @@ def _parseOWLTopology(topology_source):
 def _parseNRMMapping(nrm_mapping_source):
 
     # regular expression for matching nrm mapping lines
-    # basically we allow two type of lines (with and without backend identifier), i.e.:
     # stp:stp_name  "nrm_port"
-    # stp:stp_name backend "nrm_port"
-    STP_MAP_RX = re.compile('''(.+?)\s+(\w+?)?\s*"(.+)"''')
-    # link:link_name backend1 "nrm_port" - backend2 "nrm_port"
-    LINK_RX    = re.compile('''(.+?)\s+(\w+?)\s+"(.+)"\s+-\s+(\w+?)\s+"(.+)"''')
+    STP_MAP_RX = re.compile('''(.+?)\s+"(.+)"''')
 
     def parseSTP(entry):
         m = STP_MAP_RX.match(line)
@@ -126,31 +122,15 @@ def _parseNRMMapping(nrm_mapping_source):
             log.msg('Error parsing stp map %s in NRM description.' % entry, system=LOG_SYSTEM)
             return
 
-        stp, backend, local_port = m.groups()
+        stp, local_port = m.groups()
         if stp.startswith(STP_PREFIX):
             stp = 'urn:ogf:network:' + stp
 
-        nrm_port = _createNRMPort(backend, local_port)
+        nrm_port = _createNRMPort(local_port)
         triples = [ (stp, GLIF_MAPS_TO, nrm_port ),
                     (nrm_port, RDF_TYPE, NRM_PORT_TYPE) ]
         return triples
 
-    def parseLink(entry):
-        m = LINK_RX.match(entry)
-        if not m:
-            log.msg('Error parsing link entry %s in NRM description.' % entry, system=LOG_SYSTEM)
-            return
-
-        _, backend_1, nrm_port_1, backend_2, nrm_port_2 = m.groups()
-
-        nrm_port_1 = _createNRMPort(backend_1, nrm_port_1)
-        nrm_port_2 = _createNRMPort(backend_2, nrm_port_2)
-
-        triples = [ (nrm_port_1, GLIF_CONNECTED_TO, nrm_port_2),
-                    (nrm_port_2, GLIF_CONNECTED_TO, nrm_port_1),
-                    (nrm_port_1, RDF_TYPE, NRM_PORT_TYPE),
-                    (nrm_port_2, RDF_TYPE, NRM_PORT_TYPE) ]
-        return triples
 
     if isinstance(nrm_mapping_source, file) or isinstance(nrm_mapping_source, StringIO.StringIO):
         source = nrm_mapping_source
@@ -171,11 +151,6 @@ def _parseNRMMapping(nrm_mapping_source):
             stp_triples = parseSTP(line)
             if stp_triples:
                 triples.update(stp_triples)
-
-        elif line.startswith(LINK_PREFIX):
-            link_triples = parseLink(line)
-            if link_triples:
-                triples.update(link_triples)
 
         else:
             # we don't want to have invalid topology descriptions so just raise error
@@ -232,42 +207,6 @@ def buildTopology(triples):
 
 
 
-def buildInternalTopology(triples):
-
-    getSubject = lambda pred, obj  : [ t[0] for t in triples if t[1] == pred and t[2] == obj ]
-    getObjects = lambda subj, pred : [ t[2] for t in triples if t[0] == subj and t[1] == pred ]
-
-    node_ports = {}
-
-    urn_internal_ports = getSubject(RDF_TYPE, NRM_PORT_TYPE)
-    for uip in sorted(urn_internal_ports):
-        sp = _stripPrefix(uip, URN_NRM_PORT)
-        node, port = sp.split(':',1)
-        node_ports.setdefault(node, []).append(port)
-
-    internal_topology = topology.Topology()
-
-    for node, ports in node_ports.items():
-        nw = nsa.Network(node, None)
-        for p in ports:
-            dest_ports = getObjects(_createNRMPort(node, p), GLIF_CONNECTED_TO)
-            if dest_ports:
-                dest_port = dest_ports[0] if dest_ports else None
-                dsp = _stripPrefix(dest_port, URN_NRM_PORT)
-                d_node, d_port = dsp.split(':',1)
-                dest_stp = nsa.STP(d_node, d_port)
-            else:
-                dest_stp = None
-
-            ep = nsa.NetworkEndpoint(node, p, dest_stp=dest_stp)
-            nw.addEndpoint(ep)
-
-        internal_topology.addNetwork(nw)
-
-    return internal_topology
-
-
-
 def parseTopology(topology_sources, nrm_mapping_source=None):
 
     triples = set()
@@ -281,8 +220,7 @@ def parseTopology(topology_sources, nrm_mapping_source=None):
         triples = triples.union(topo_triples)
 
     topo = buildTopology(triples)
-
-    int_topo = buildInternalTopology(triples)
+    int_topo = None
 
     return topo, int_topo
 
