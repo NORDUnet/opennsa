@@ -89,24 +89,29 @@ class STP: # Service Termination Point
 
 class Link: # intra network link
 
-    def __init__(self, network, source, dest):
+    def __init__(self, network, src_port, dst_port, src_orientation, dst_orientation, src_labels=None, dst_labels=None):
         self.network = network
-        self.source = source
-        self.dest = dest
+        self.src_port = src_port
+        self.dst_port = dst_port
+        self.src_orientation = src_orientation
+        self.dst_orientation = dst_orientation
+        self.src_labels = src_labels
+        self.dst_labels = dst_labels
 
 
     def sourceSTP(self):
-        return STP(self.network, self.source)
+        return STP(self.network, self.src_port, self.src_orientation, self.src_labels)
 
 
     def destSTP(self):
-        return STP(self.network, self.dest)
+        return STP(self.network, self.dst_port, self.dst_orientation, self.dst_labels)
 
 
     def __eq__(self, other):
         if not isinstance(other, Link):
             return False
-        return self.network == other.network and self.source == other.source and self.dest == other.dest
+        return (self.network, self.src_port, self.dst_port, self.src_orientation, self.dst_orientation, self.src_labels, self.dst_labels) == \
+               (other.network, other.src_port, other.dst_port, other.src_orientation, other.dst_orientation, other.src_labels, other.dst_labels)
 
 
     def __str__(self):
