@@ -17,6 +17,8 @@ Requirements:
 
 * Python 2.6 or newer (Python 3 will not work)
 
+* Python Dateutil (http://labix.org/python-dateutil)
+
 * Twisted, http://twistedmatrix.com/trac/
 
 * SUDS, https://github.com/htj/suds-htj
@@ -24,6 +26,7 @@ Requirements:
   The last SUDS release (0.4) has several bugs regarding namespaces, and
   timezone issues and will not work with OpenNSA. The version from github
   is hence recommended.
+  Note: For NSI2, SUDS isn't used, and should in the future not be needed.
 
 Python and Twisted should be included in the package system in most recent
 Linux distributions.
