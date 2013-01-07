@@ -173,6 +173,23 @@ class Connection:
         return error_msg
 
 
+    def _createAggregateFailure(self, results, action, default_error=error.InternalServerError):
+
+        # need to handle multi-errors better, but infrastructure isn't there yet
+        failures = [ conn for success,conn in results if not success ]
+        if len(failures) == 0:
+            # not supposed to happen
+            err = failure.Failure( error.InternalServerError('_createAggregateFailure called with no failures') )
+            log.err(err)
+        if len(results) == 1 and len(failures) == 1:
+            err = failures[0]
+        else:
+            error_msg = self._buildErrorMessage(results, action)
+            err = failure.Failure( default_error(error_msg) )
+
+        return err
+
+
     def reserve(self):
 
         def scheduled(st):
@@ -190,8 +207,6 @@ class Connection:
                 self.eventDispatch(registry.RESERVE_RESPONSE, True, self)
 
             else:
-                error_msg = self._buildErrorMessage(results, 'reservations')
-
                 # terminate non-failed connections
                 # currently we don't try and be too clever about cleaning, just do it, and switch state
                 defs = []
@@ -206,7 +221,7 @@ class Connection:
                 dl = defer.DeferredList(defs)
                 dl.addCallback(lambda _ : self.state.switchState(state.TERMINATED) )
 
-                err = failure.Failure(error.ConnectionCreateError(error_msg))
+                err = self._createAggregateFailure(results, 'reservations', error.ConnectionCreateError)
                 self.eventDispatch(registry.RESERVE_RESPONSE, False, err)
 
 
@@ -235,8 +250,6 @@ class Connection:
 
             else:
                 # at least one provision failed, provisioned connections should be released
-                error_msg = self._buildErrorMessage(results, 'provisions')
-
                 if self.state() == state.AUTO_PROVISION:
                     self.state.switchState(state.PROVISIONING) # state machine isn't quite clear on what we should be here
 
@@ -254,15 +267,8 @@ class Connection:
                 dl.addCallback(lambda _ : self.state.switchState(state.SCHEDULED) )
 
                 def releaseDone(_):
-                    failures = [ conn for success,conn in results if not success ]
-
-                    if len(results) == 1 and len(failures) == 1:
-                        self.eventDispatch(registry.PROVISION_RESPONSE, False, failures[0])
-                    else:
-                        # multiple errors or downstream scenario, this is currently wrong
-                        #err = failure.Failure(error.ProvisionError(error_msg))
-                        err = failure.Failure(error.InternalSererError(error_msg))
-                        self.eventDispatch(registry.PROVISION_RESPONSE, False, err)
+                    err = self._createAggregateFailure(results, 'provisions', error.ProvisionError)
+                    self.eventDispatch(registry.PROVISION_RESPONSE, False, err)
 
                 dl.addCallback(releaseDone)
 
@@ -278,10 +284,8 @@ class Connection:
 
         defs = [ sc.provision() for sc in self.connections() ]
         prov_confirmed_defs , provision_done_defs = zip(*defs) # first is for confirmation, second is for link up
-        #defs = [ sc.provision() for sc in self.connections() ]
 
         dl = defer.DeferredList(provision_done_defs, consumeErrors=True)
-        #dl = defer.DeferredList(defs, consumeErrors=True)
         dl.addCallback(provisionComplete)
         return dl
 
@@ -298,10 +302,9 @@ class Connection:
                 self.eventDispatch(registry.RELEASE_RESPONSE, True, self)
 
             else:
-                error_msg = self._buildErrorMessage(results, 'releases')
-                err = error.ReleaseError(error_msg)
-                f = failure.Failure(err)
-                self.eventDispatch(registry.RELEASE_RESPONSE, False, f)
+                err = self._createAggregateFailure(results, 'releases', error.ReleaseError)
+                self.eventDispatch(registry.RELEASE_RESPONSE, False, err)
+
 
         self.state.switchState(state.RELEASING)
         self.scheduler.cancelTransition() # cancel any pending scheduled switch
@@ -327,10 +330,9 @@ class Connection:
                 self.eventDispatch(registry.TERMINATE_RESPONSE, True, self)
 
             else:
-                error_msg = self._buildErrorMessage(results, 'terminates')
-                err = error.TerminateError(error_msg)
-                f = failure.Failure(err)
-                self.eventDispatch(registry.TERMINATE_RESPONSE, False, f)
+                err = self._createAggregateFailure(results, 'terminates', error.TerminateError)
+                self.eventDispatch(registry.TERMINATE_RESPONSE, False, err)
+
 
         if self.state() == state.TERMINATED:
             self.eventDispatch(registry.TERMINATE_RESPONSE, True, self)
