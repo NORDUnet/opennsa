@@ -56,6 +56,8 @@ class GenericConnection:
 
     def reserve(self):
 
+        # return defer.fail( error.InternalNRMError('test reservation failure') )
+
         def scheduled(st):
             self.state.switchState(state.SCHEDULED)
             self.scheduler.scheduleTransition(self.service_parameters.end_time, lambda _ : self.terminate(), state.TERMINATING)
@@ -144,6 +146,8 @@ class GenericConnection:
 
 
     def terminate(self):
+
+        # return defer.fail( error.InternalNRMError('test termination failure') )
 
         def removeCalendarEntry():
             self.calendar.removeConnection(self.source_port, self.service_parameters.start_time, self.service_parameters.end_time)
