@@ -1,5 +1,6 @@
-Post-vacation start-up ideas:
- - Error infrastructure
+
+ - Better aggregate error handling
+ - Better logging in aggregation failures
  - Remove multi backend (put in sandbox)
 
 NSI2 Support!
@@ -7,7 +8,6 @@ NSI2 Support!
  - Query could do with some work
 
 - Rework core and topology to support labels
-- Remove the multi backend, it is nasty
 - Rename shared.resource to shared.soapresource
 - Rework all error throwing handling to new error infrastructure
 
