@@ -8,7 +8,8 @@ Copyright: NORDUnet (2011-2012)
 from twisted.python import log
 from twisted.internet import reactor, defer
 from twisted.web import client as twclient
-from twisted.internet.error import ConnectionDone
+from twisted.web.error import Error as WebError
+from twisted.internet.error import ConnectionClosed
 
 
 LOG_SYSTEM = 'opennsa.protocols.httpclient'
@@ -56,11 +57,13 @@ def httpRequest(url, soap_action, soap_envelope, timeout=DEFAULT_TIMEOUT, ctx_fa
         reactor.connectTCP(host, port, factory)
 
     def invocationError(err):
-        if isinstance(err.value, ConnectionDone):
+        if isinstance(err.value, ConnectionClosed): # note: this also includes ConnectionDone and ConnectionLost
             pass # these are pretty common when the remote shuts down
-        else:
+        elif isinstance(err.value, WebError):
             data = err.value.response
             log.msg(' -- Received Reply (fault) --\n%s\n -- END. Received Reply (fault) --' % data, system=LOG_SYSTEM, payload=True)
+            return err
+        else:
             return err
 
     def logReply(data):
