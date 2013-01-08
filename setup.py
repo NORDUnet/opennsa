@@ -56,7 +56,7 @@ setup(name='opennsa',
       author_email='htj@nordu.net',
       url='http://www.nordu.net/',
       packages=['opennsa', 'opennsa/cli', 'opennsa/topology',
-                'opennsa/protocols', 'opennsa/protocols/webservice', 'opennsa/protocols/webservice/ext',
+                'opennsa/protocols', 'opennsa/protocols/discovery', 'opennsa/protocols/nsi1', 'opennsa/protocols/nsi2', 'opennsa/protocols/shared',
                 'opennsa/backends', 'opennsa/backends/common' ],
 
       cmdclass = cmdclasses,
