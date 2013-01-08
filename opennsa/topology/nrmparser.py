@@ -114,3 +114,37 @@ def parseTopologySpec(source):
 
     return entries
 
+
+
+def createNetwork(network_name, ns_agent, nrm_entries):
+
+    # could consider merging this one with the parser
+
+    port_interface_map = {}
+    ports = []
+
+    bandwidth = 1000 # until we get in the NRM spec
+
+    for ne in nrm_entries:
+
+        if ne.port_type == BIDRECTIONAL_ETHERNET:
+
+            inbound_port  = nml.Port(ne.port_name + '-in',  nml.INBOUND,  ne.labels, bandwidth, ne.remote_port)
+            outbound_port = nml.Port(ne.port_name + '-out', nml.OUTBOUND, ne.labels, bandwidth, ne.remote_port)
+            port = nml.BidirectionalPort(inbound_port, outbound_port)
+
+            ports += [ inbound_port, outbound_port, port ]
+
+            port_interface_map[ne.port_name] = ne.interface
+
+        elif ne.port_type == UNIDIRECTIONAL_ETHERNET:
+
+            raise NotImplementedError('Unidirectional ethernet ports not supported')
+
+        else:
+            raise error.TopologyError('Invalid port type: %s' % port_type)
+
+    network = nml.Network(network_name, ns_agent, ports, port_interface_map)
+
+    return network
+

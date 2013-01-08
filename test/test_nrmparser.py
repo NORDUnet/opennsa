@@ -2,6 +2,7 @@ import StringIO
 
 from twisted.trial import unittest
 
+from opennsa import nsa, error
 from opennsa.topology import nrmparser
 
 
@@ -30,4 +31,25 @@ class NRMParserTest(unittest.TestCase):
 
         interfaces = [ ne.interface for ne in entries ]
         self.failUnlessEqual(interfaces, [ 'em0', 'em1', 'em 8', 'em2' ])
+
+
+    def testNMLNetworkCreation(self):
+
+        source = StringIO.StringIO(NRM_ENTRY)
+
+        entries = nrmparser.parseTopologySpec(source)
+
+        network_name = 'dud'
+        ns_agent = nsa.NetworkServiceAgent('dudnsa', 'http://example.org/fake_nsa_url')
+
+        network = nrmparser.createNetwork(network_name, ns_agent, entries)
+
+        self.assertEquals( network.getInterface('ps'),          'em0')
+        self.assertEquals( network.getInterface('netherlight'), 'em1')
+        self.assertEquals( network.getInterface('somelight'),   'em 8')
+        self.assertEquals( network.getInterface('uvalight'),    'em2')
+
+        self.assertRaises( error.TopologyError, network.getInterface, 'na')
+
+        # should test alias as well
 
