@@ -1,11 +1,9 @@
+Current issues:
 
- - Better aggregate error handling
- - Better logging in aggregation failures
- - Remove multi backend (put in sandbox)
-
-NSI2 Support!
- - Most seems to work, reserve - AIST is problematic
- - Query could do with some work
+- Test NSI2 interoperability (AIST is problematic)
+- Better aggregate error handling
+- Better logging in aggregation failures
+- NSI2 Query
 
 - Rework core and topology to support labels
 - Rename shared.resource to shared.soapresource
