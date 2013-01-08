@@ -11,7 +11,7 @@ import StringIO
 
 from twisted.python import log
 
-from opennsa import error
+from opennsa import nsa, error
 
 
 LOG_SYSTEM = 'topology.nrmparser'
@@ -22,23 +22,12 @@ UNIDIRECTIONAL_ETHERNET = 'uni-ethernet'
 
 PORT_TYPES = [ BIDRECTIONAL_ETHERNET, UNIDIRECTIONAL_ETHERNET ]
 
+NML_ETHERNET = 'http://schemas.ogf.org/nml/2012/10/ethernet'
+NML_ETHERNET_VLAN = NML_ETHERNET + '#vlan'
 
-
-class Label:
-
-    def __init__(self, label):
-        if '-' in label:
-            self.start, self.stop = label.split('-',1)
-        else:
-            self.start, self.stop = label, label
-
-
-    def __str__(self):
-        return '<Label %s>' % ('%s-%s' % (self.start, self.stop) if self.start != self.stop else self.start)
-
-
-    def __repr__(self):
-        return str(self)
+LABEL_TYPES = {
+    'vlan'  : 'http://schemas.ogf.org/nml/2012/10/ethernet#vlans'
+}
 
 
 
@@ -48,7 +37,7 @@ class NRMEntry:
         # port_type     : string
         # port_name     : string
         # remote_port   : (string, string)
-        # labels        : {string: (label|label-range)}
+        # labels        : [ nsa.Label ]
         # interface     : string
 
         self.port_type  = port_type
@@ -88,10 +77,10 @@ def parseTopologySpec(source):
 
         match = TOPO_RX.match(line)
         if not match:
-            print "No match for entry: ", line
+            print "No match for entry: ", line # parsing is typically done on startup, so print is probably ok
 
         else:
-            port_type, port_name, remote_port, labels, interface = match.groups()
+            port_type, port_name, remote_port, label_spec, interface = match.groups()
 
             if not port_type in PORT_TYPES:
                 raise error.TopologyError('Port type %s is not a valid port type' % port_type)
@@ -99,37 +88,31 @@ def parseTopologySpec(source):
             if remote_port == '-':
                 remote_port = None
 
-            label_entries = {}
-            for l_entry in labels.split(','):
+            labels = []
+
+            for l_entry in label_spec.split(','):
                 if not ':' in l_entry:
                     raise error.TopologyError('Invalid label description: %s' % l_entry)
-                label_type, label_range = l_entry.split(':')
-                if label_type in label_entries:
+
+                label_type_alias, label_range = l_entry.split(':', 1)
+                try:
+                    label_type = LABEL_TYPES[label_type_alias]
+                except KeyError:
+                    raise error.TopologyError('Label type %s does not map to proper label.' % label_type_alias)
+
+                if label_type in [ label.type_ for label in labels ]:
                     raise error.TopologyError('Multiple labels for type %s' % label_type)
-                label_entries[label_type] = Label(label_range)
+
+                labels.append( nsa.Label(label_type, label_range) ) # range is parsed in nsa.Label
+
 
             if interface.startswith('"') and interface.endswith('"'):
                 interface = interface[1:-1]
 
-            ne = NRMEntry(port_type, port_name, remote_port, label_entries, interface)
+            ne = NRMEntry(port_type, port_name, remote_port, labels, interface)
             entries.append(ne)
 
     # check for no entries?
 
     return entries
-
-
-
-if __name__ == '__main__':
-
-    entry = """bi-ethernet     ps              -                               vlan:1780-1783      em0
-               bi-ethernet     netherlight     netherlight:ndn-netherlight     vlan:1780-1783      em1
-               bi-ethernet     netherlight     netherlight:ndn-netherlight     vlan:1780-1783      "em 8"
-               bi-ethernet     uvalight        uvalight:ndn-uvalight           vlan:1780-1783      em2"""
-
-    source = StringIO.StringIO(entry)
-
-    entries = parseTopologySpec(source)
-    for e in entries:
-        print e
 
