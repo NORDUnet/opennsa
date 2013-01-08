@@ -151,9 +151,9 @@ class Topology:
 
         def hasBandwidth(route, bandwidth):
             for link in route:
-                if link.source.available_capacity is not None and bandwidth.minimum is not None and link.source.available_capacity < bandwidth:
+                if link.source.bandwidth < bandwidth:
                     return False
-                if link.dest.available_capacity is not None and bandwidth.minimum is not None and link.dest.available_capacity < bandwidth:
+                if link.dest.bandwidth < bandwidth:
                     return False
             return True
 

@@ -150,14 +150,13 @@ class Path:
 
 class NetworkEndpoint(STP):
 
-    def __init__(self, network, endpoint, nrm_port=None, dest_stp=None, max_capacity=None, available_capacity=None):
+    def __init__(self, network, endpoint, nrm_port=None, dest_stp=None, max_capacity=None):
         STP.__init__(self, network, endpoint)
         if nrm_port is not None:
             assert type(nrm_port) is str, 'Invalid nrm_port type provided for NetworkEndpoint initialization'
         self.nrm_port = nrm_port
         self.dest_stp = dest_stp
         self.max_capacity = max_capacity
-        self.available_capacity = available_capacity
 
 
     def nrmPort(self):
