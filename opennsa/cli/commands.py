@@ -17,7 +17,7 @@ def _createSTP(stp_desc, directionality):
             if not '=' in tvl:
                 raise ValueError('Invalid label type-value: %s' % tvl)
             type_, values = tvl.split('=')
-            labels.append( nsa.Label( type_, values.split(',') ) )
+            labels.append( nsa.Label( type_, values ) )
     else:
         port = local_part
         labels = None

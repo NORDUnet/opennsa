@@ -34,17 +34,19 @@ class Label:
             if '-' in value:
                 v1, v2 = value.split('-', 1)
                 return int(v1), int(v2)
-                # raise error.TopologyError('Label range not yet supported. Sorry')
             try:
                 v = int(value)
                 return v, v
             except ValueError:
                 raise error.TopologyError('Label %s is not an integer an integer range.' % value)
 
-        assert type(values) in (list, None), 'Label values must be a list, was given %s' % values
+        assert type(values) in (None, str, list), 'Label values must be a list, was given %s' % values
 
         self.type_ = type_
+
         if values is not None:
+            if type(values) is str:
+                values = values.split(',')
             self.values = [ createValue(value) for value in values ]
 
 
@@ -55,7 +57,7 @@ class Label:
 
 
     def __repr__(self):
-        vs = [ str(v1) if v1 == v1 else str(v1) + '-' + str(v2) for v1,v2 in self.values ]
+        vs = [ str(v1) if v1 == v2 else str(v1) + '-' + str(v2) for v1,v2 in self.values ]
         return '<Label %s:%s>' % (self.type_, ','.join( vs ) )
 
 
