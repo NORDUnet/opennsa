@@ -45,13 +45,13 @@ class BidirectionalPort:
 
 class Network:
 
-    def __init__(self, name, nsa, ports, port_interface_map):
+    def __init__(self, name, ns_agent, ports, port_interface_map):
 
         # we should perhaps check for no ports with the same name, or build a dict
 
-        self.name  = name   # String  ; just base name, no prefix or URI stuff
-        self.nsa   = nsa    # nsa.NSA
-        self.ports = ports  # [ Port | BidirectionalPort ]
+        self.name       = name      # String  ; just base name, no prefix or URI stuff
+        self.ns_agent   = ns_agent  # nsa.NSA
+        self.ports      = ports     # [ Port | BidirectionalPort ]
         self.port_interface_map = port_interface_map # { port_name : interface }
 
 
