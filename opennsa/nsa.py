@@ -5,7 +5,7 @@ In design pattern terms, these would be Data Transfer Objects (DTOs).
 Though some of them do actually have some functionality methods.
 
 Author: Henrik Thostrup Jensen <htj@nordu.net>
-Copyright: NORDUnet (2011)
+Copyright: NORDUnet (2011-2013)
 """
 
 
@@ -20,6 +20,7 @@ NSA_PREFIX = 'urn:ogf:network:nsa:'
 
 LOG_SYSTEM = 'opennsa.nsa'
 
+# STP orientations
 INGRESS = 'Ingress'
 EGRESS  = 'Egress'
 BIDIRECTIONAL = 'Bidirectional' # NSI1 compat
