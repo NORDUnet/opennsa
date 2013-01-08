@@ -12,6 +12,7 @@ import StringIO
 from twisted.python import log
 
 from opennsa import nsa, error
+from opennsa.topology import nml
 
 
 LOG_SYSTEM = 'topology.nrmparser'
@@ -22,11 +23,8 @@ UNIDIRECTIONAL_ETHERNET = 'uni-ethernet'
 
 PORT_TYPES = [ BIDRECTIONAL_ETHERNET, UNIDIRECTIONAL_ETHERNET ]
 
-NML_ETHERNET = 'http://schemas.ogf.org/nml/2012/10/ethernet'
-NML_ETHERNET_VLAN = NML_ETHERNET + '#vlan'
-
 LABEL_TYPES = {
-    'vlan'  : 'http://schemas.ogf.org/nml/2012/10/ethernet#vlans'
+    'vlan'  : nml.ETHERNET_VLAN
 }
 
 
