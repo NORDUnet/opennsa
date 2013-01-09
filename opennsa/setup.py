@@ -8,7 +8,7 @@ from twisted.application import internet, service as twistedservice
 
 from opennsa import config, logging, registry, nsiservice, viewresource
 from opennsa.topology import gole
-from opennsa.protocols import nsi1, nsi2, discovery
+from opennsa.protocols import nsi2, discovery
 
 
 
@@ -78,6 +78,8 @@ class OpenNSAService(twistedservice.MultiService):
 
         discovery.setupDiscoveryService(None, top_resource)
 
+        # comment these two out to remove nsi1 support
+        from opennsa.protocols import nsi1
         nsi1.setupProvider(nsi_service, top_resource, service_registry, vc[config.HOST], vc[config.PORT], vc[config.WSDL_DIRECTORY])
 
         nsi2.setupProvider(nsi_service, top_resource, service_registry, vc[config.HOST], vc[config.PORT])
