@@ -51,6 +51,13 @@ class Label:
             self.values = [ createValue(value) for value in values ]
 
 
+    def enumerate(self):
+        vals = set()
+        for v1,v2 in self.values:
+            vals.update( range(v1,v2+1) )
+        return sorted(vals)
+
+
     def __eq__(self, other):
         if not isinstance(other, Label):
             return False
