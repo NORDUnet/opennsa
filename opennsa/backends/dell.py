@@ -220,9 +220,17 @@ class DellBackend:
 
     def createConnection(self, source_nrm_port, dest_nrm_port, service_parameters):
 
-        # probably need a short hand for this
+        src_port, src_vlan = portToInterfaceVLAN(source_nrm_port)
+        dst_port, dst_vlan = portToInterfaceVLAN(dest_nrm_port)
+
+        if src_vlan != dst_vlan:
+            raise error.VLANInterchangeNotSupportedError('VLAN rewrite not supported on this ancient dell switch')
+
         self.calendar.checkReservation(source_nrm_port, service_parameters.start_time, service_parameters.end_time)
         self.calendar.checkReservation(dest_nrm_port  , service_parameters.start_time, service_parameters.end_time)
+        # since vlan are a global switching domain we also need to do a reservation for the vlan in the time period
+        vlan_resource = 'vlan#' + src_vlan
+        self.calendar.checkReservation(vlan_resource  , service_parameters.start_time, service_parameters.end_time)
 
         self.calendar.addConnection(source_nrm_port, service_parameters.start_time, service_parameters.end_time)
         self.calendar.addConnection(dest_nrm_port  , service_parameters.start_time, service_parameters.end_time)
