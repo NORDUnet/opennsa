@@ -1,36 +1,19 @@
 """
-OpenNSA JunOS backend.
-User Name:admin
-Password:*******
+Backend for Dell Powerswitch 5324 Switch. May work with similar equipment.
 
-# configure snippet:
-
-eth-sw4# configure <return>
-eth-sw4(config)# switchport mode 
-
-# opennsa@cph> configure <return>
-# Entering configuration mode
-
-#
-#[edit]
-#
-#opennsa@cph# set protocols connections interface-switch ps-to-netherlight-1780 interface ge-1/0/5.1780
-#
-#[edit]
-#
-#opennsa@cph# set interfaces ge-1/0/5 unit 1780 vlan-id 1780 encapsulation vlan-ccc
-#
-#[edit]
-#opennsa@cph# delete interfaces ge-1/0/5 unit 1780
-#
-#[edit]
-#opennsa@cph# delete protocols connections interface-switch ps-to-netherlight-1780
-#
-#[edit]
-#
-# Basically stuff should end with [edit] :-)
-#
+Author: Jeroen van der Ham
+Copyright: NORDUnet (2012-2013)
 """
+
+# OpenNSA JunOS backend.
+# User Name:admin
+# Password:*******
+#
+## configure snippet:
+#
+# eth-sw4# configure <return>
+# eth-sw4(config)# switchport mode 
+
 
 from twisted.python import log
 from twisted.internet import defer
@@ -38,16 +21,6 @@ from twisted.internet import defer
 from opennsa import config
 from opennsa.backends.common import calendar as reservationcalendar, simplebackend, ssh
 
-
-# Example commands used:
-#> set protocols connections interface-switch ps-to-netherlight-1780 interface ge-1/0/5.1780
-#> set protocols connections interface-switch ps-to-netherlight-1780 interface ge-1/1/9.1780
-#> set interfaces ge-1/0/5 unit 1780 vlan-id 1780 encapsulation vlan-ccc
-#> set interfaces ge-1/1/9 unit 1780 vlan-id 1780 encapsulation vlan-ccc
-
-# VLAN swapping
-#> set interfaces ge-1/1/9 unit 1780 vlan-id 1780 encapsulation vlan-ccc input-vlan-map swap vlan-id 1781
-#> set interfaces ge-1/1/9 unit 1781 vlan-id 1781 encapsulation vlan-ccc input-vlan-map swap vlan-id 1780
 
 # parameterized commands
 USERNAME = "admin"
