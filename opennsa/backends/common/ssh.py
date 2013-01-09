@@ -47,7 +47,7 @@ class SSHClientFactory(protocol.ClientFactory):
 
 
 
-class ClientUserAuth(userauth.SSHUserAuthClient):
+class KeyUserAuthClient(userauth.SSHUserAuthClient):
 
     def __init__(self, user, connection, public_key_path, private_key_path):
         userauth.SSHUserAuthClient.__init__(self, user, connection)
@@ -62,6 +62,17 @@ class ClientUserAuth(userauth.SSHUserAuthClient):
 
     def getPrivateKey(self):
         return defer.succeed( keys.Key.fromFile(self.private_key_path) )
+
+
+
+class PasswordUserAuthClient(userauth.SSHUserAuthClient):
+
+    def __init__(self, user, connection, password):
+        userauth.SSHUserAuthClient.__init__(self, user, connection)
+        self.password = password
+
+    def getPassword(self, prompt=None):
+        return self.password
 
 
 
@@ -112,13 +123,14 @@ class SSHChannel(channel.SSHChannel):
 
 class SSHConnectionCreator:
 
-    def __init__(self, host, port, fingerprints, username, public_key_path, private_key_path):
+    def __init__(self, host, port, fingerprints, username, public_key_path=None, private_key_path=None, password=None):
         self.host = host
         self.port = port
         self.fingerprints     = fingerprints
         self.username         = username
         self.public_key_path  = public_key_path
         self.private_key_path = private_key_path
+        self.password         = password
 
 
     def createTCPConnection(self):
@@ -143,7 +155,13 @@ class SSHConnectionCreator:
 
         def gotTCPConnection(proto):
             ssh_connection = SSHConnection()
-            proto.requestService(ClientUserAuth(self.username, ssh_connection, self.public_key_path, self.private_key_path))
+            if self.public_key_path and self.private_key_path:
+                proto.requestService(KeyUserAuthClient(self.username, ssh_connection, self.public_key_path, self.private_key_path))
+            elif self.password:
+                proto.requestService(PasswordUserAuthClient(self.username, ssh_connection, self.public_key_path, self.private_key_path))
+            else:
+                raise AssertionError('No ssh keys or password supplied')
+
 #            ssh_connection.ssh_connection_established_d.addCallback(gotSSHConnection)
             return ssh_connection.ssh_connection_established_d
 
