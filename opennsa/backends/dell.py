@@ -1,5 +1,5 @@
 """
-Backend for Dell Powerswitch 5324 Switch. May work with similar equipment.
+Backend for Dell PowerConnect 5324 Switch. May work with similar equipment.
 
 Author: Jeroen van der Ham
 Copyright: NORDUnet (2012-2013)
