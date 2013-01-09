@@ -28,6 +28,7 @@ BLOCK_JUNOS      = 'junos'
 BLOCK_FORCE10    = 'force10'
 BLOCK_ARGIA      = 'argia'
 BLOCK_BROCADE    = 'brocade'
+BLOCK_DELL       = 'dell'
 
 # service block
 NETWORK_NAME     = 'network'     # mandatory
@@ -49,6 +50,7 @@ _SSH_HOST               = 'host'
 _SSH_PORT               = 'port'
 _SSH_HOST_FINGERPRINT   = 'fingerprint'
 _SSH_USER               = 'user'
+_SSH_PASSWORD           = 'password'
 _SSH_PUBLIC_KEY         = 'publickey'
 _SSH_PRIVATE_KEY        = 'privatekey'
 
@@ -79,6 +81,13 @@ BROCADE_HOST_FINGERPRINT  = _SSH_HOST_FINGERPRINT
 BROCADE_USER              = _SSH_USER
 BROCADE_SSH_PUBLIC_KEY    = _SSH_PUBLIC_KEY
 BROCADE_SSH_PRIVATE_KEY   = _SSH_PRIVATE_KEY
+
+# Dell PowerConnect
+DELL_HOST               = _SSH_HOST
+DELL_PORT               = _SSH_PORT
+DELL_HOST_FINGERPRINT   = _SSH_HOST_FINGERPRINT
+DELL_USER               = _SSH_USER
+DELL_PASSWORD           = _SSH_PASSWORD
 
 
 
@@ -204,7 +213,7 @@ def readVerifyConfig(cfg):
         if name in backends:
             raise ConfigurationError('Can only have one backend named "%s"' % name)
 
-        if backend_type in (BLOCK_DUD, BLOCK_JUNOS, BLOCK_FORCE10, BLOCK_BROCADE):
+        if backend_type in (BLOCK_DUD, BLOCK_JUNOS, BLOCK_FORCE10, BLOCK_BROCADE, BLOCK_DELL):
             backend_conf = dict( cfg.items(section) )
             backend_conf['_backend_type'] = backend_type
             backends[name] = backend_conf
