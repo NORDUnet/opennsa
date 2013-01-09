@@ -39,6 +39,12 @@ def setupBackend(backend_conf, network_name):
             from opennsa.backends import brocade
             return brocade.BrocadeBackend(network_name, bc.items())
 
+        elif backend_type == config.BLOCK_DELL:
+            from opennsa.backends import dell
+            return dell.DellBackend(network_name, bc.items())
+
+        else:
+            raise config.ConfigurationError('No backend specified')
 
 
 class OpenNSAService(twistedservice.MultiService):
