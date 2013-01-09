@@ -140,11 +140,9 @@ class SSHChannel(ssh.SSHChannel):
 class DellCommandSender:
 
 
-    def __init__(self, host, port, ssh_host_fingerprint, user, ssh_public_key_path, ssh_private_key_path):
+    def __init__(self, host, port, ssh_host_fingerprint, user, password):
 
-        self.ssh_connection_creator = \
-             ssh.SSHConnectionCreator(host, port, [ ssh_host_fingerprint ], user, ssh_public_key_path, ssh_private_key_path)
-
+        self.ssh_connection_creator = ssh.SSHConnectionCreator(host, port, [ ssh_host_fingerprint ], user, password=password)
         self.ssh_connection = None # cached connection
 
 
@@ -212,10 +210,9 @@ class DellBackend:
         port             = cfg_dict.get(config.DELL_PORT, 22)
         host_fingerprint = cfg_dict[config.DELL_HOST_FINGERPRINT]
         user             = cfg_dict[config.DELL_USER]
-        ssh_public_key   = cfg_dict[config.DELL_SSH_PUBLIC_KEY]
-        ssh_private_key  = cfg_dict[config.DELL_SSH_PRIVATE_KEY]
+        password         = cfg_dict[config.DELL_PASSWORD]
 
-        self.command_sender = DellCommandSender(host, port, host_fingerprint, user, ssh_public_key, ssh_private_key)
+        self.command_sender = DellCommandSender(host, port, host_fingerprint, user, password)
 
 
     def createConnection(self, source_nrm_port, dest_nrm_port, service_parameters):
