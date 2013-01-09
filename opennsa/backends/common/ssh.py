@@ -158,7 +158,7 @@ class SSHConnectionCreator:
             if self.public_key_path and self.private_key_path:
                 proto.requestService(KeyUserAuthClient(self.username, ssh_connection, self.public_key_path, self.private_key_path))
             elif self.password:
-                proto.requestService(PasswordUserAuthClient(self.username, ssh_connection, self.public_key_path, self.private_key_path))
+                proto.requestService(PasswordUserAuthClient(self.username, ssh_connection, self.password))
             else:
                 raise AssertionError('No ssh keys or password supplied')
 
