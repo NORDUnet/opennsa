@@ -6,6 +6,7 @@ Copyright: NORDUnet (2011)
 """
 
 import uuid
+import random
 
 from zope.interface import implements
 
@@ -61,21 +62,39 @@ class NSIService:
 
         # should check for local network
         if link.network == self.network:
-            # nsi2 hack
-            src_port = link.src_port + str(link.src_labels[0].values[0][0]) if link.src_labels else link.src_port
-            dst_port = link.dst_port + str(link.dst_labels[0].values[0][0]) if link.dst_labels else link.dst_port
             # resolve nrm ports from the topology
-            nrm_src_port = self.topology.getEndpoint(self.network, src_port).nrmPort()
-            nrm_dst_port = self.topology.getEndpoint(self.network, dst_port).nrmPort()
+
+            # nsi2, at some point we need to move label selection into backend for now we keep it here
+            if len(link.src_labels) == 0:
+                raise error.TopologyError('Source STP must specify a label')
+            if len(link.dst_labels) == 0:
+                raise error.TopologyError('Dest STP must specify a label')
+            if len(link.src_labels) > 1:
+                raise error.TopologyError('Source STP specifies more than one label. Only one label is currently supported')
+            if len(link.dst_labels) > 1:
+                raise error.TopologyError('Dest STP specifies more than one label. Only one label is currently supported')
+
+            src_label = link.src_labels[0]
+            dst_label = link.dst_labels[0]
+            # choose a label to use :-)
+            src_label_value = str( random.choice( src_label.enumerate() ) )
+            dst_label_value = str( random.choice( dst_label.enumerate() ) )
+
+            nrm_src_port = self.topology.getNetwork(self.network).getInterface(link.src_port) + '.' + src_label_value
+            nrm_dst_port = self.topology.getNetwork(self.network).getInterface(link.dst_port) + '.' + dst_label_value
+
+            # update the connection service params to say which label was choosen here
+            sub_sps.source_stp.labels = [ nsa.Label(src_label.type_, src_label_value) ]
+            sub_sps.dest_stp.labels   = [ nsa.Label(dst_label.type_, dst_label_value) ]
+
             sub_conn = self.backend.createConnection(nrm_src_port, nrm_dst_port, sub_sps)
+
         else:
             sub_conn_id = 'urn:uuid:' + str(uuid.uuid1())
             remote_nsa = self.topology.getNetwork(link.network).nsa
             sub_conn = connection.SubConnection(self.service_registry, self.nsa, remote_nsa, conn, sub_conn_id, link.sourceSTP(), link.destSTP(), sub_sps)
 
-        conn.sub_connections.append(sub_conn)
-
-        return conn
+        return sub_conn
 
 
     # command functionality
@@ -106,11 +125,15 @@ class NSIService:
         path_info = ( connection_id, source_stp.network, source_stp.endpoint, dest_stp.network, dest_stp.endpoint, self.network)
 
         if source_stp.network == self.network and dest_stp.network == self.network:
-            local_path_info = ( connection_id, self.network, source_stp.endpoint, dest_stp.endpoint)
-            log.msg('Connection %s: Local link creation: %s %s -> %s' % local_path_info, system=LOG_SYSTEM)
+            local_path_info = ( connection_id, self.network, source_stp.endpoint, source_stp.labels, dest_stp.endpoint, dest_stp.labels)
+            log.msg('Connection %s: Local link creation: %s %s#%s -> %s#%s' % local_path_info, system=LOG_SYSTEM)
             link = nsa.Link(self.network, source_stp.endpoint, dest_stp.endpoint, source_stp.orientation, dest_stp.orientation,
                             source_stp.labels, dest_stp.labels)
-            self.setupSubConnection(link, conn, service_parameters)
+            sc = self.setupSubConnection(link, conn, service_parameters)
+
+            conn.source_stp.labels = sc.service_parameters.source_stp.labels
+            conn.dest_stp.labels   = sc.service_parameters.dest_stp.labels
+            conn.sub_connections.append(sc)
 
         # This code is for chaining requests and is currently not used, but might be needed sometime in the future
         # Once we get proper a topology service, some chaining will be necessary.
@@ -162,7 +185,9 @@ class NSIService:
             log.msg('Attempting to create path %s' % selected_path, system=LOG_SYSTEM)
 
             for link in selected_path.links():
-                self.setupSubConnection(link, conn, service_parameters)
+                # fixme, need to set end labels here
+                sc = self.setupSubConnection(link, conn, service_parameters)
+                conn.sub_connections.append(sc)
 
         # now reserve connections needed to create path
         conn.addSubscription(sub)

@@ -7,7 +7,7 @@ from twisted.web import resource, server
 from twisted.application import internet, service as twistedservice
 
 from opennsa import config, logging, registry, nsiservice, viewresource
-from opennsa.topology import gole
+from opennsa.topology import nrmparser, nml
 from opennsa.protocols import nsi2, discovery
 
 
@@ -57,9 +57,15 @@ class OpenNSAService(twistedservice.MultiService):
 
         vc = self.vc
 
-        topology_sources = [ open(tf) for tf in vc[config.TOPOLOGY_FILE] ]
+        topology = nml.Topology()
 
-        topology, _ = gole.parseTopology(topology_sources, open(vc[config.NRM_MAP_FILE]) if vc[config.NRM_MAP_FILE] else None )
+        # need to add check for nrm file, no longer just nrm really
+        nrm_entries = nrmparser.parseTopologySpec( open( vc[config.NRM_MAP_FILE] ) )
+        ns_agent = None # fixme
+        network = nrmparser.createNetwork(vc[config.NETWORK_NAME], ns_agent, nrm_entries)
+
+        topology.addNetwork(network)
+
 
         if vc[config.HOST] is None:
             import socket
