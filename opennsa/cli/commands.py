@@ -9,7 +9,7 @@ from opennsa import nsa, error
 
 # this parser should perhaps be somewhere else
 def _createSTP(stp_desc, directionality):
-    network, local_part = stp_desc.split(':',1)
+    network, local_part = stp_desc.rsplit(':',1)
     if '#' in local_part:
         port, label_part = local_part.split('#',1)
         labels = []
