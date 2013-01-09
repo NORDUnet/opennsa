@@ -18,7 +18,7 @@ Copyright: NORDUnet (2012-2013)
 from twisted.python import log
 from twisted.internet import defer
 
-from opennsa import config
+from opennsa import error, config
 from opennsa.backends.common import calendar as reservationcalendar, simplebackend, ssh
 
 
