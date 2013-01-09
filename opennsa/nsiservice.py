@@ -112,6 +112,10 @@ class NSIService:
         source_stp = service_parameters.source_stp
         dest_stp   = service_parameters.dest_stp
 
+        # check that we know the networks
+        self.topology.getNetwork(source_stp.network)
+        self.topology.getNetwork(dest_stp.network)
+
         if source_stp == dest_stp:
             return defer.fail(error.TopologyError('Cannot connect %s to itself.' % source_stp))
 
