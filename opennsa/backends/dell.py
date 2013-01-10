@@ -16,22 +16,22 @@ Copyright: NORDUnet (2012-2013)
 
 
 from twisted.python import log
-from twisted.internet import defer
+from twisted.internet import defer, endpoints, reactor
+from twisted.internet.protocol import ClientFactory
+from twisted.conch.telnet import TelnetProtocol
 
 from opennsa import error, config
-from opennsa.backends.common import calendar as reservationcalendar, simplebackend, ssh
+from opennsa.backends.common import calendar as reservationcalendar, simplebackend
 
 
 # parameterized commands
-USERNAME = "admin"
-PASSWORD = "tip2013"
 COMMAND_CONFIGURE        = 'configure'
 COMMAND_CONFIGURE_PORT = 'interface ethernet %(port)s' # port
 COMMAND_ADD_VLAN    = 'switchport general allowed vlan add %(vlan)s' # vlan
 COMMAND_DELETE_VLAN = 'switchport general allowed vlan remove %(vlan)s' # vlan
-COMMAND_END = 'exit'
+COMMAND_EXIT = 'exit'
 
-LOG_SYSTEM = 'opennsa.Dell'
+LOG_SYSTEM = 'Dell'
 
 
 def portToInterfaceVLAN(nrm_port):
@@ -49,7 +49,7 @@ def createConfigureCommands(source_nrm_port, dest_nrm_port):
     cfg_port_dest = COMMAND_CONFIGURE_PORT % {'port': dest_port}
     cfg_port_dest_vlan = COMMAND_ADD_VLAN % {'vlan': dest_vlan}
 
-    commands = [ cfg_port_source, cfg_port_source_vlan, COMMAND_END, cfg_port_dest, cfg_port_dest_vlan ]
+    commands = [ cfg_port_source, cfg_port_source_vlan, COMMAND_EXIT, cfg_port_dest, cfg_port_dest_vlan, COMMAND_EXIT ]
     return commands
 
 
@@ -62,73 +62,91 @@ def createDeleteCommands(source_nrm_port, dest_nrm_port):
     cfg_port_dest = COMMAND_CONFIGURE_PORT % {'port': dest_port}
     cfg_port_dest_vlan = COMMAND_DELETE_VLAN % {'vlan': dest_vlan}
 
-    commands = [ cfg_port_source, cfg_port_source_vlan, COMMAND_END, cfg_port_dest, cfg_port_dest_vlan ]
+    commands = [ cfg_port_source, cfg_port_source_vlan, COMMAND_EXIT, cfg_port_dest, cfg_port_dest_vlan, COMMAND_EXIT ]
     return commands
 
 
 
-class SSHChannel(ssh.SSHChannel):
+class DellTelnetProtocol(TelnetProtocol):
 
-    name = 'session'
+    def __init__(self, username, password):
 
-    def __init__(self, conn):
-        ssh.SSHChannel.__init__(self, conn=conn)
+        self.username = username
+        self.password = password
 
-        self.line = ''
-
+        self.data = ''
         self.wait_defer = None
-        self.wait_line  = None
+        self.wait_data  = None
+
+
+    def connectionMade(self):
+        log.msg('Telnet connection made', system=LOG_SYSTEM)
 
 
     @defer.inlineCallbacks
     def sendCommands(self, commands):
         LT = '\r' # line termination
 
-        try:
-            yield self.conn.sendRequest(self, 'shell', '', wantReply=1)
+        log.msg("Sending commands", system=LOG_SYSTEM)
 
+        try:
             d = self.waitForData('User Name:')
-            self.write(USERNAME + LT)
-            d = self.waitForData('Password:')
-            self.write(PASSWORD + LT)
-            d = self.waitForData('#')
-            self.write(COMMAND_CONFIGURE + LT)
             yield d
+            #log.msg("Got user name request", system=LOG_SYSTEM)
+            self.transport.write(self.username + LT)
+
+            d = self.waitForData('Password:')
+            yield d
+            #log.msg("Got password request", system=LOG_SYSTEM)
+            self.transport.write(self.password + LT)
+
+            d = self.waitForData('#')
+            self.transport.write(COMMAND_CONFIGURE + LT)
+            yield d
+            #log.msg("Got configure shell", system=LOG_SYSTEM)
 
             log.msg('Entered configure mode', debug=True, system=LOG_SYSTEM)
 
             for cmd in commands:
                 log.msg('CMD> %s' % cmd, system=LOG_SYSTEM)
                 d = self.waitForData('#')
-                self.write(cmd + LT)
+                self.transport.write(cmd + LT)
                 yield d
+                # failure handling - i don't think so
 
-            # not quite sure how to handle failure here
-            log.msg('Commands send, sending end command.', debug=True, system=LOG_SYSTEM)
+            log.msg('Commands send, sending exit command.', debug=True, system=LOG_SYSTEM)
+
+            # exit configure mode
             d = self.waitForData('#')
-            self.write(COMMAND_END + LT)
+            self.transport.write(COMMAND_EXIT + LT)
             yield d
 
+            # exit from device, this will make it drop the connection, so we don't wait for anything
+            self.transport.write(COMMAND_EXIT + LT)
+ 
         except Exception, e:
             log.msg('Error sending commands: %s' % str(e))
             raise e
 
         log.msg('Commands successfully send', debug=True, system=LOG_SYSTEM)
-        self.sendEOF()
-        self.closeIt()
+        self.transport.loseConnection()
 
     def waitForData(self, data):
+        #log.msg('WFD: ' + data, system=LOG_SYSTEM)
         self.wait_data  = data
         self.wait_defer = defer.Deferred()
         return self.wait_defer
 
 
     def dataReceived(self, data):
+        #print 'RX: ', data
+
         if len(data) == 0:
             pass
         else:
             self.data += data
             if self.wait_data and self.wait_data in self.data:
+                #print 'Data trigger: ' + self.wait_data
                 d = self.wait_defer
                 self.data       = ''
                 self.wait_data  = None
@@ -137,48 +155,42 @@ class SSHChannel(ssh.SSHChannel):
 
 
 
+class TelnetFactory(ClientFactory):
+
+    def __init__(self, username, password):
+        self.username = username
+        self.password = password
+
+    def buildProtocol(self, addr):
+
+        return DellTelnetProtocol(self.username, self.password)
+
+
 class DellCommandSender:
 
 
-    def __init__(self, host, port, ssh_host_fingerprint, user, password):
+    def __init__(self, host, port, username, password):
 
-        self.ssh_connection_creator = ssh.SSHConnectionCreator(host, port, [ ssh_host_fingerprint ], user, password=password)
-        self.ssh_connection = None # cached connection
-
-
-    def _getSSHChannel(self):
-
-        def setSSHConnectionCache(ssh_connection):
-            log.msg('SSH Connection created and cached', system=LOG_SYSTEM)
-            self.ssh_connection = ssh_connection
-            return ssh_connection
-
-        def gotSSHConnection(ssh_connection):
-            channel = SSHChannel(conn = ssh_connection)
-            ssh_connection.openChannel(channel)
-            return channel.channel_open
-
-        if self.ssh_connection:
-            log.msg('Reusing SSH connection', debug=True, system=LOG_SYSTEM)
-            return gotSSHConnection(self.ssh_connection)
-        else:
-            # since creating a new connection should be uncommon, we log it
-            # this makes it possible to see if something fucks up and creates connections continuously
-            log.msg('Creating new SSH connection', system=LOG_SYSTEM)
-            d = self.ssh_connection_creator.getSSHConnection()
-            d.addCallback(setSSHConnectionCache)
-            d.addCallback(gotSSHConnection)
-            return d
+        self.host = host
+        self.port = port
+        self.username = username
+        self.password = password
 
 
     def _sendCommands(self, commands):
 
-        def gotChannel(channel):
-            d = channel.sendCommands(commands)
+        def gotProtocol(proto):
+            log.msg('Telnet protocol created', debug=True, system=LOG_SYSTEM)
+            d = proto.sendCommands(commands)
             return d
 
-        d = self._getSSHChannel()
-        d.addCallback(gotChannel)
+        log.msg('Creating telnet connection', debug=True, system=LOG_SYSTEM)
+
+        factory = TelnetFactory(self.username, self.password)
+
+        point = endpoints.TCP4ClientEndpoint(reactor, self.host, self.port)
+        d = point.connect(factory)
+        d.addCallback(gotProtocol)
         return d
 
 
@@ -207,12 +219,11 @@ class DellBackend:
         cfg_dict = dict(configuration)
 
         host             = cfg_dict[config.DELL_HOST]
-        port             = cfg_dict.get(config.DELL_PORT, 22)
-        host_fingerprint = cfg_dict[config.DELL_HOST_FINGERPRINT]
+        port             = cfg_dict.get(config.DELL_PORT, 23)
         user             = cfg_dict[config.DELL_USER]
         password         = cfg_dict[config.DELL_PASSWORD]
 
-        self.command_sender = DellCommandSender(host, port, host_fingerprint, user, password)
+        self.command_sender = DellCommandSender(host, port, user, password)
 
 
     def createConnection(self, source_nrm_port, dest_nrm_port, service_parameters):
