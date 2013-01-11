@@ -118,7 +118,7 @@ class OpenNSAService(twistedservice.MultiService):
 
 
 
-def createApplication(config_file=config.DEFAULT_CONFIG_FILE, debug=False):
+def createApplication(config_file=config.DEFAULT_CONFIG_FILE, debug=False, payload=False):
 
     application = twistedservice.Application('OpenNSA')
 
@@ -137,7 +137,7 @@ def createApplication(config_file=config.DEFAULT_CONFIG_FILE, debug=False):
         nsa_service = OpenNSAService(vc)
         nsa_service.setServiceParent(application)
 
-        application.setComponent(log.ILogObserver, logging.DebugLogObserver(log_file, debug).emit)
+        application.setComponent(log.ILogObserver, logging.DebugLogObserver(log_file, debug, payload=payload).emit)
         return application
 
     except config.ConfigurationError as e:
