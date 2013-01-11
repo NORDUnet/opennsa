@@ -82,12 +82,12 @@ def parseRequest(soap_data, rootClass=None):
 def createSTP(stp_type):
 
     if not stp_type.networkId.startswith(URN_NETWORK):
-        raise ValueError('STP networkId (%s) did not start with %s' % (stp_type.networkId, URN_NETWORK))
+        raise error.PayloadError('STP networkId (%s) did not start with %s' % (stp_type.networkId, URN_NETWORK))
 
     network = stp_type.networkId.replace(URN_NETWORK, '')
 
     if not stp_type.localId.startswith(stp_type.networkId + ':'):
-        raise ValueError('STP localId (%s) is not within specified network %s' % (stp_type.localId, stp_type.networkId))
+        raise error.PayloadError('STP localId (%s) is not within specified network %s' % (stp_type.localId, stp_type.networkId))
 
     local_id = stp_type.localId.replace(stp_type.networkId + ':', '')
 
