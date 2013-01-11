@@ -72,10 +72,10 @@ class Label:
 
 class STP: # Service Termination Point
 
-    def __init__(self, network, endpoint, orientation=BIDIRECTIONAL, labels=None):
+    def __init__(self, network, endpoint, orientation=None, labels=None):
         assert type(network) is str, 'Invalid network type provided for STP'
         assert type(endpoint) is str, 'Invalid endpoint type provided for STP'
-        assert orientation in (INGRESS, EGRESS, BIDIRECTIONAL), 'Invalid orientation provided for STP'
+        assert orientation in (None, INGRESS, EGRESS, BIDIRECTIONAL), 'Invalid orientation (%s) provided for STP' % (orientation)
         self.network = network
         self.endpoint = endpoint
         self.orientation = orientation
