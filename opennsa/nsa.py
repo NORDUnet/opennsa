@@ -31,25 +31,55 @@ class Label:
 
     def __init__(self, type_, values=None):
 
-        def createValue(value):
-            if '-' in value:
-                v1, v2 = value.split('-', 1)
-                return int(v1), int(v2)
-            try:
-                v = int(value)
-                return v, v
-            except ValueError:
-                raise error.TopologyError('Label %s is not an integer an integer range.' % value)
-
-        assert type(values) in (None, str, list), 'Label values must be a list, was given %s' % values
+        assert type(values) in (None, str, list), 'Type of Label values must be a None, str, or list. Was given %s' % type(values)
 
         self.type_ = type_
+        self.values = self._parseLabelValues(values) if values is not None else None
 
-        if values is not None:
-            if type(values) is str:
-                values = values.split(',')
-            self.values = [ createValue(value) for value in values ]
 
+    def _parseLabelValues(self, values):
+
+        def createValue(value):
+            try:
+                if '-' in value:
+                    v1, v2 = value.split('-', 1)
+                    i1, i2 = int(v1), int(v2)
+                    if i1 > i2:
+                        raise error.PayloadError('Label value %s is in descending order, which is not allowed.' % value)
+                else:
+                    i1 = int(value)
+                    i2 = i1
+                return i1, i2
+            except ValueError:
+                raise error.PayloadError('Label %s is not an integer or an integer range.' % value)
+
+        if type(values) is str:
+            values = values.split(',')
+
+        parsed_values = sorted( [ createValue(value) for value in values ] )
+
+        # detect any overlap and remove it - remember that the list is sorted
+
+        nv = [] # normalized values
+        for v1, v2 in parsed_values:
+            if len(nv) == 0:
+                nv.append( (v1,v2) )
+                continue
+
+            l = nv[-1] # last
+            if v1 <= l[1] + 1: # merge
+                nv = nv[:-1] + [ (l[0], max(l[1],v2)) ]
+            else:
+                nv.append( (v1,v2) )
+
+        return nv
+
+
+    def labelSet(self):
+        vals = set()
+        for v1,v2 in self.values:
+            vals.update( range(v1,v2+1) )
+ 
 
     def enumerate(self):
         vals = set()
@@ -89,7 +119,8 @@ class STP: # Service Termination Point
     def __eq__(self, other):
         if not isinstance(other, STP):
             return False
-        return self.network == other.network and self.endpoint == other.endpoint and self.labels == other.labels
+        return self.network == other.network and self.endpoint == other.endpoint and \
+               self.orientation == other.orientation and self.labels == other.labels
 
 
     def __str__(self):
