@@ -9,6 +9,7 @@ Copyright: NORDUnet (2011-2013)
 """
 
 
+import random
 import urlparse
 
 from opennsa import error
@@ -75,17 +76,10 @@ class Label:
         return nv
 
 
-    def labelSet(self):
-        vals = set()
-        for v1,v2 in self.values:
-            vals.update( range(v1,v2+1) )
- 
-
-    def enumerate(self):
-        vals = set()
-        for v1,v2 in self.values:
-            vals.update( range(v1,v2+1) )
-        return sorted(vals)
+    def randomLabel(self):
+        # not evenly distributed, but that isn't promised anyway
+        label_range = random.choice(self.values)
+        return random.randint(label_range[0], label_range[1])
 
 
     def __eq__(self, other):

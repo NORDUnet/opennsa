@@ -6,7 +6,6 @@ Copyright: NORDUnet (2011)
 """
 
 import uuid
-import random
 
 from zope.interface import implements
 
@@ -77,8 +76,8 @@ class NSIService:
             src_label = link.src_labels[0]
             dst_label = link.dst_labels[0]
             # choose a label to use :-)
-            src_label_value = str( random.choice( src_label.enumerate() ) )
-            dst_label_value = str( random.choice( dst_label.enumerate() ) )
+            src_label_value = str( src_label.randomLabel() )
+            dst_label_value = str( dst_label.randomLabel() )
 
             nrm_src_port = self.topology.getNetwork(self.network).getInterface(link.src_port) + '.' + src_label_value
             nrm_dst_port = self.topology.getNetwork(self.network).getInterface(link.dst_port) + '.' + dst_label_value
