@@ -76,6 +76,10 @@ class Label:
         return nv
 
 
+    def singleValue():
+        return len(self.values) == 1 and self.values[0] == self.values[1]
+
+
     def randomLabel(self):
         # not evenly distributed, but that isn't promised anyway
         label_range = random.choice(self.values)
