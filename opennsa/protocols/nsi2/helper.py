@@ -82,7 +82,7 @@ def parseRequest(soap_data, rootClass=None):
 def createSTP(stp_type):
 
     if not stp_type.networkId.startswith(URN_NETWORK):
-        raise ValueError('STP networkId did not start with %s' % URN_NETWORK)
+        raise ValueError('STP networkId (%s) did not start with %s' % (stp_type.networkId, URN_NETWORK))
 
     network = stp_type.networkId.replace(URN_NETWORK, '')
 
