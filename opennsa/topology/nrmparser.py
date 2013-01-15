@@ -152,7 +152,7 @@ def createNetwork(network_name, ns_agent, nrm_entries):
             raise NotImplementedError('Unidirectional ethernet ports not supported')
 
         else:
-            raise error.TopologyError('Invalid port type: %s' % port_type)
+            raise error.TopologyError('Invalid port type: %s' % ne.port_type)
 
     network = nml.Network(network_name, ns_agent, ports, port_interface_map)
 
