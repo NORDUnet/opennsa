@@ -110,7 +110,7 @@ class SOAPResource(resource.Resource):
             request.write(reply_data)
             request.finish()
 
-        def errorReply(err):
+        def errorReply(err, soap_data):
 
             log.msg('Failure during SOAP decoding/dispatch: %s' % err.getErrorMessage(), system=LOG_SYSTEM)
 
@@ -119,6 +119,7 @@ class SOAPResource(resource.Resource):
             else:
                 # non SOAPFault error, we should log this
                 log.err(err)
+                log.msg('SOAP Payload that caused error:\n%s\n' % soap_data)
                 error_payload = SOAPFault(err.getErrorMessage()).createPayload()
 
             log.msg(" -- Sending response (fault) --\n%s\n -- END: Sending response (fault) --" % error_payload, system=LOG_SYSTEM, payload=True)
@@ -130,7 +131,7 @@ class SOAPResource(resource.Resource):
 
         decoder = self.soap_actions[soap_action]
         d = defer.maybeDeferred(decoder, soap_data)
-        d.addCallbacks(reply, errorReply)
+        d.addCallbacks(reply, errorReply, errbackArgs=(soap_data,))
 
         return server.NOT_DONE_YET
 
