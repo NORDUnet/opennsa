@@ -110,6 +110,8 @@ def doMain():
             topo, _ = gole.parseTopology( [ open(topology_file) ] )
             provider_nsa  = topo.getNetwork(network).nsa
         elif service_url:
+            if provider_nsa is None:
+                raise usage.UsageError('ProviderNSA not defined')
             provider_nsa    = nsa.NetworkServiceAgent(provider_nsa, service_url)
 
         else:
