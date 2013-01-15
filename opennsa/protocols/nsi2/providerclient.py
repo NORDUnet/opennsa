@@ -143,15 +143,18 @@ class ProviderClient:
 
     def queryConfirmed(self, requester_url, correlation_id, requester_nsa, provider_nsa, operation, connections):
 
-        assert operation == 'Summary', 'Only Summary operation supported in nsi2.queryConfirmed'
+        assert operation == 'Summary', 'Only Summary operation supported in nsi2.queryConfirmed so far'
 
         conns = []
         for conn in connections:
             # need to create criteria here sometime
-            criteria = None
-            children = None
+            criteria      = None
+            states        = CT.ConnectionStatesType( CT.ReservationStateType(0, conn.state()),
+                                                     CT.ProvisionStateType(  0, conn.state()),
+                                                     CT.ActivationStateType( 0, conn.state()))
+            children      = None
             conns.append( CT.QuerySummaryResultType(conn.global_reservation_id, conn.description, conn.connection_id,
-                                                    criteria, conn.state(), children) )
+                                                    criteria, conn.requester_nsa, states, children) )
 
         query_confirmed = CT.QueryConfirmedType(reservationSummary=conns)
 

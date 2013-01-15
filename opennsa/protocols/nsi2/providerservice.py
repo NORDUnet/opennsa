@@ -179,8 +179,6 @@ class ProviderService:
 
     def query(self, soap_data):
 
-        #t_start = time.time()
-
         header, query = helper.parseRequest(soap_data, CT.QueryType)
 
         session_security_attr = None

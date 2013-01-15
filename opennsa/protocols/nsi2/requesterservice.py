@@ -42,12 +42,9 @@ class RequesterService:
         soap_resource.registerDecoder(actions.TERMINATE_FAILED,    self.terminateFailed)
 
         soap_resource.registerDecoder(actions.QUERY_CONFIRMED,     self.queryConfirmed)
+        soap_resource.registerDecoder(actions.QUERY_FAILED,        self.queryFailed)
 
-##        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/10/connection/service/queryConfirmed"',        self.queryConfirmed)
-##        self.soap_resource.registerDecoder('"http://schemas.ogf.org/nsi/2011/10/connection/service/queryFailed"',           self.queryFailed)
-##
 ##        #"http://schemas.ogf.org/nsi/2011/10/connection/service/forcedEnd"
-##        #"http://schemas.ogf.org/nsi/2011/10/connection/service/query"
 
 
     def _createGenericAcknowledgement(self, correlation_id, requester_nsa, provider_nsa):
@@ -203,20 +200,13 @@ class RequesterService:
         return self._createGenericAcknowledgement(header.correlationId, header.requesterNSA, header.providerNSA)
 
 
-##    def queryFailed(self, soap_data):
-##
-##        method, req = self.decoder.parse_request('queryFailed', soap_data)
-##
-##        correlation_id          = str(req.correlationId)
-##
-##        requester_nsa, provider_nsa = _decodeNSAs(req.queryFailed)
-##
-##        qf = req.queryFailed
-##        #error_id                = str(qf.serviceException.messageId) if 'messageId' in qf.serviceException else None
-##        error_message           = str(qf.serviceException.text)      if 'text' in qf.serviceException else None
-##
-##        d = self.requester.queryFailed(correlation_id, requester_nsa, provider_nsa, error_message)
-##
-##        reply = self.decoder.marshal_result(correlation_id, method)
-##        return reply
-##
+    def queryFailed(self, soap_data):
+
+        header, generic_failure, err = self._parseGenericFailure(soap_data)
+        session_security_attr = None
+
+        self.requester.queryFailed(header.correlationId, header.requesterNSA, header.providerNSA, session_security_attr,
+                                       generic_failure.connectionId, err)
+
+        return self._createGenericAcknowledgement(header.correlationId, header.requesterNSA, header.providerNSA)
+

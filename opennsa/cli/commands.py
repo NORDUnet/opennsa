@@ -113,7 +113,18 @@ def querysummary(client, client_nsa, provider_nsa, connection_ids, global_reserv
     try:
         qc = yield client.query(client_nsa, provider_nsa, None, "Summary", connection_ids, global_reservation_ids)
         log.msg('Query results:')
-        log.msg( str(qc) )
+        for qr in qc:
+            log.msg('Connection    : %s' % qr.connectionId)
+            if qr.globalReservationId:
+                log.msg('  Global ID   : %s' % qr.globalReservationId)
+            if qr.description:
+                log.msg('  Description : %s' % qr.description)
+
+            log.msg('  Reservation state : %s' % qr.connectionStates.reservationState.state)
+            log.msg('  Provision   state : %s' % qr.connectionStates.provisionState.state)
+            log.msg('  Activaction state : %s' % qr.connectionStates.activationState.state)
+            if qr.children:
+                log.msg('  Children    : %s' % qr.children)
     except error.NSIError, e:
         log.msg('Error querying %s, %s : %s' % (connection_ids, e.__class__.__name__, str(e)))
 
@@ -124,7 +135,9 @@ def querydetails(client, client_nsa, provider_nsa, connection_ids, global_reserv
     try:
         qc = yield client.query(client_nsa, provider_nsa, None, "Details", connection_ids, global_reservation_ids)
         log.msg('Query results:')
-        log.msg( str(qc) )
+        for qr in qc:
+            log.msg('Connection: %s' % qr.connectionId)
+            log.msg('  States: %s' % qr.connectionStates)
     except error.NSIError, e:
         log.msg('Error querying %s, %s : %s' % (connection_ids, e.__class__.__name__, str(e)))
 
