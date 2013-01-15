@@ -90,10 +90,6 @@ class OpenNSAService(twistedservice.MultiService):
 
         discovery.setupDiscoveryService(None, top_resource)
 
-        # comment these in have nsi1 support (probably won't work properly)
-        #from opennsa.protocols import nsi1
-        #nsi1.setupProvider(nsi_service, top_resource, service_registry, vc[config.HOST], vc[config.PORT], vc[config.WSDL_DIRECTORY])
-
         nsi2.setupProvider(nsi_service, top_resource, service_registry, vc[config.HOST], vc[config.PORT])
 
         vr = viewresource.ConnectionListResource(nsi_service)

@@ -194,13 +194,10 @@ def doMain():
             if connection_id is None:
                 raise usage.UsageError('Connection ID is not defined')
 
-        # setup listener port
-#        from opennsa.protocols import nsi1
-#        client, factory = nsi1.createClient(host, port, wsdl_dir, tls, ctx_factory)
-
         from opennsa.protocols import nsi2
         client, factory = nsi2.createRequesterClient(host, port, tls, ctx_factory, 12)
 
+        # setup listener port
         if tls:
             iport = reactor.listenSSL(port, factory, ctx_factory)
         else:
