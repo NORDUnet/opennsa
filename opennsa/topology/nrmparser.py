@@ -31,22 +31,25 @@ LABEL_TYPES = {
 
 class NRMEntry:
 
-    def __init__(self, port_type, port_name, remote_port, labels, interface):
-        # port_type     : string
-        # port_name     : string
-        # remote_port   : (string, string, string, string)
-        # labels        : [ nsa.Label ]
-        # interface     : string
+    def __init__(self, port_type, port_name, remote_network, remote_port, labels, interface):
+        # port_type       : string
+        # port_name       : string
+        # remote_network  : string
+        # remote_port     : string | (string, string) # string for unidirectional, tuple for bidirectional
+        # labels          : [ nsa.Label ]
+        # interface       : string
 
-        self.port_type  = port_type
-        self.port_name  = port_name
-        self.remote_port = remote_port
-        self.labels     = labels
-        self.interface  = interface
+        self.port_type      = port_type
+        self.port_name      = port_name
+        self.remote_network = remote_network
+        self.remote_port    = remote_port
+        self.labels         = labels
+        self.interface      = interface
 
 
     def __str__(self):
-        return '<NRMEntry: %s, %s, %s, %s, %s>' % (self.port_type, self.port_name, self.remote_port, self.labels, self.interface)
+        return '<NRMEntry: %s, %s, %s, %s, %s, %s>' % \
+               (self.port_type, self.port_name, self.remote_network, self.remote_port, self.labels, self.interface)
 
 
 
@@ -54,18 +57,19 @@ def parseTopologySpec(source):
 
     # Parse the entries like the following:
 
-    ## type          name            remote                          labels              interface
+    ## type          name            remote                         labels              interface
     #
-    #bi-ethernet     ps              -                               vlan:1780-1783      em0
-    #bi-ethernet     netherlight     netherlight:nordu-netherlight   vlan:1780-1783      em1
-    #bi-ethernet     uvalight        uvalight:uvalight               vlan:1780-1783      em2
+    #bi-ethernet     ps              -                              vlan:1780-1783      em0
+    #bi-ethernet     netherlight     netherlight#nordunet-(in|out)  vlan:1780-1783      em1
+    #bi-ethernet     uvalight        uvalight#nordunet-(in|out)     vlan:1780-1783      em2
 
     # Line starting with # and blank lines should be ignored
 
     assert isinstance(source, file) or isinstance(source, StringIO.StringIO), 'Topology source must be file or StringIO instance'
 
     TOPO_RX = re.compile('''(.+?)\s+(.+?)\s+(.+?)\s+(.+?)\s+(.+)''')
-    PORT_RX = re.compile("(.+?)\((.+?)\|(.+?)\)@(.+?)")
+    # format: network#port-(in|out)
+    PORT_RX = re.compile('(.+?)#(.+?)\((.+?)\|(.+?)\)')
     entries = []
 
     for line in source:
@@ -84,12 +88,14 @@ def parseTopologySpec(source):
                 raise error.TopologyError('Port type %s is not a valid port type' % port_type)
 
             if remote_port == '-':
+                remote_network = None
                 remote_port = None
             else:
                 match = PORT_RX.match(remote_port)
                 if not match:
                     raise error.TopologyError('Remote %s is not valid: either "-" or "base(-insuffix|-outsuffix)@domain"' % remote_port)
-                remote_port = match.groups()
+                remote_network, port_base, in_suffix, out_suffix = match.groups()
+                remote_port = (port_base + in_suffix, port_base + out_suffix)
 
             labels = []
 
@@ -112,7 +118,7 @@ def parseTopologySpec(source):
             if interface.startswith('"') and interface.endswith('"'):
                 interface = interface[1:-1]
 
-            ne = NRMEntry(port_type, port_name, remote_port, labels, interface)
+            ne = NRMEntry(port_type, port_name, remote_network, remote_port, labels, interface)
             entries.append(ne)
 
     # check for no entries?
@@ -133,9 +139,8 @@ def createNetwork(network_name, ns_agent, nrm_entries):
     for ne in nrm_entries:
 
         if ne.port_type == BIDRECTIONAL_ETHERNET:
-            base_name, in_suffix, out_suffix, domain = ne.remote_port
-            inbound_port  = nml.Port(ne.port_name + '-in',  nml.INBOUND,  ne.labels, bandwidth, (domain, base_name+out_suffix))
-            outbound_port = nml.Port(ne.port_name + '-out', nml.OUTBOUND, ne.labels, bandwidth, (domain, base_name+in_suffix))
+            inbound_port  = nml.Port(ne.port_name + '-in',  nml.INBOUND,  ne.labels, bandwidth, (ne.remote_network, ne.remote_port[1] if ne.remote_port else None))
+            outbound_port = nml.Port(ne.port_name + '-out', nml.OUTBOUND, ne.labels, bandwidth, (ne.remote_network, ne.remote_port[0] if ne.remote_port else None))
             port = nml.BidirectionalPort(inbound_port, outbound_port)
 
             ports += [ inbound_port, outbound_port, port ]
