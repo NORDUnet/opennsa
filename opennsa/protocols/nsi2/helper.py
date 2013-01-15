@@ -86,8 +86,8 @@ def createSTP(stp_type):
 
     network = stp_type.networkId.replace(URN_NETWORK, '')
 
-    if not stp_type.localId.startswith(stp_type.networkId + ':'):
-        raise error.PayloadError('STP localId (%s) is not within specified network %s' % (stp_type.localId, stp_type.networkId))
+    if not stp_type.localId.startswith(URN_NETWORK):
+        raise error.PayloadError('STP localId (%s) did not start with %s' % (stp_type.localId, URN_NETWORK))
 
     local_id = stp_type.localId.replace(stp_type.networkId + ':', '')
 
