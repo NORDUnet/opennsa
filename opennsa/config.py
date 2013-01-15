@@ -15,7 +15,6 @@ DEFAULT_CONFIG_FILE     = '/etc/opennsa.conf'
 DEFAULT_LOG_FILE        = '/var/log/opennsa.log'
 DEFAULT_TLS             = 'true'
 DEFAULT_TOPOLOGY_FILE   = '/usr/local/share/nsi/topology.owl'
-DEFAULT_WSDL_DIRECTORY  = '/usr/local/share/nsi/wsdl'
 DEFAULT_TCP_PORT        = 9080
 DEFAULT_TLS_PORT        = 9443
 DEFAULT_VERIFY          = True
@@ -38,7 +37,6 @@ PORT             = 'port'
 TLS              = 'tls'
 TOPOLOGY_FILE    = 'topology'
 NRM_MAP_FILE     = 'nrmmap'
-WSDL_DIRECTORY   = 'wsdl'
 
 KEY              = 'key'         # mandatory, if tls is set
 CERTIFICATE      = 'certificate' # mandatory, if tls is set
@@ -149,14 +147,6 @@ def readVerifyConfig(cfg):
         vc[NRM_MAP_FILE] = nrm_map_file
     except ConfigParser.NoOptionError:
         vc[NRM_MAP_FILE] = None
-
-    try:
-        wsdl_dir = cfg.get(BLOCK_SERVICE, WSDL_DIRECTORY)
-        if not os.path.exists(wsdl_dir):
-            raise ConfigurationError('Specified (or default) WSDL directory does not exist (%s)' % wsdl_dir)
-        vc[WSDL_DIRECTORY] = wsdl_dir
-    except ConfigParser.NoOptionError:
-        vc[WSDL_DIRECTORY] = DEFAULT_WSDL_DIRECTORY
 
     try:
         vc[HOST] = cfg.get(BLOCK_SERVICE, HOST)

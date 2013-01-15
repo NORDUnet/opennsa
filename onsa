@@ -14,7 +14,6 @@ from opennsa.cli import options, parser, commands, logobserver
 
 
 CLI_DEFAULTS            = '.opennsa-cli'
-WSDL_DEFAULT_DIRECTORY  = '/usr/local/share/nsi/wsdl'
 REQUESTER_URL_BASE      = 'http://%s:%i/NSI/services/ConnectionService'
 HELP_MESSAGE            = '%s: Try --help or <command> --help for usage details.'
 
@@ -75,8 +74,6 @@ def doMain():
 
     if config.subCommand == 'discover':
 
-        wsdl_dir        = config.subOptions[options.WSDL_DIRECTORY] or defaults.get(options.WSDL_DIRECTORY) or WSDL_DEFAULT_DIRECTORY
-
         topology_file   = config.subOptions[options.TOPOLOGY_FILE]  or defaults.get(options.TOPOLOGY_FILE)
         network         = config.subOptions[options.NETWORK]        or defaults.get(options.NETWORK)
         #provider_nsa    = config.subOptions[options.PROVIDER]       or defaults.get(options.PROVIDER)
@@ -91,14 +88,12 @@ def doMain():
             raise usage.UsageError('Something went wrong specifying service URL for discovery')
 
         from opennsa.protocols.discovery import client as discoveryclient
-        client = discoveryclient.DiscoveryClient(wsdl_dir)
+        client = discoveryclient.DiscoveryClient()
         yield commands.discover(client, service_url)
 
 
     # network commands, listener port created in this block
     elif config.subCommand in ['reserve', 'reserveprovision', 'provision', 'release', 'terminate', 'querysummary', 'querydetails']:
-
-        wsdl_dir        = config.subOptions[options.WSDL_DIRECTORY] or defaults.get(options.WSDL_DIRECTORY) or WSDL_DEFAULT_DIRECTORY
 
         topology_file   = config.subOptions[options.TOPOLOGY_FILE]  or defaults.get(options.TOPOLOGY_FILE)
         network         = config.subOptions[options.NETWORK]        or defaults.get(options.NETWORK)

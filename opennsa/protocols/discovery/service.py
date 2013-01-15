@@ -22,7 +22,6 @@ from opennsa.protocols.discovery import soap, bindings as DT
 
 LOG_SYSTEM = 'protocol.discover.service'
 
-WSDL_DISCOVERY = 'file://%s/ogf_nsi_discovery_provider_v1_0.wsdl'
 DISCOVERY_TYPES_NS = "http://schemas.ogf.org/nsi/2012/03/discovery/types"
 
 QUERY_SERVICES = '"http://schemas.ogf.org/nsi/2012/03/discovery/service/queryServices"'

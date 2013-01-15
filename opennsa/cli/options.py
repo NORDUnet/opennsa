@@ -16,7 +16,6 @@ from opennsa import config
 VERBOSE         = 'verbose'
 DEFAULTS_FILE   = 'defaults-file'
 DUMP_PAYLOAD    = 'dump-payload'
-WSDL_DIRECTORY  = 'wsdl'
 HOST            = 'host'
 PORT            = 'port'
 

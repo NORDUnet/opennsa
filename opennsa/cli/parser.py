@@ -5,7 +5,6 @@
 # Options:
 
 # -f defaults file
-# -w wsdl directory
 
 # -h host (for callback)
 # -o port (for callback)
@@ -52,9 +51,6 @@ from opennsa.cli import options
 
 class DefaultsFileOption(usage.Options):
     optParameters = [ [ options.DEFAULTS_FILE, 'f', None, 'Defaults file'] ]
-
-class WSDLDirectoryOption(usage.Options):
-    optParameters = [ [ options.WSDL_DIRECTORY, 'w', None, 'Service URL'] ]
 
 class HostOption(usage.Options):
     optParameters = [ [ options.HOST, 'h', None, 'Host (for callback)'] ]
@@ -138,7 +134,7 @@ class BaseOptions(DefaultsFileOption):
     ]
 
 
-class NetworkBaseOptions(BaseOptions, WSDLDirectoryOption, HostOption, PortOption,
+class NetworkBaseOptions(BaseOptions, HostOption, PortOption,
                          ServiceURLOption, TopologyFileOption, NetworkOption,
                          TLSFlag, PublicKeyOption, PrivateKeyOption, CertificateDirectoryOption, SkipCertificateVerificationFlag):
 

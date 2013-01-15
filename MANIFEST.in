@@ -8,6 +8,5 @@ include opennsa.tac
 include opennsa-abc.tac
 include opennsa-northernlight.tac
 include opennsa-starlight.tac
-recursive-include wsdl *
 recursive-include docs *
 recursive-include patches *
