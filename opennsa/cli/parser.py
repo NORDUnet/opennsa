@@ -181,6 +181,7 @@ class Options(usage.Options):
         ['discover',        None,   DiscoveryOptions,       'Discover services at an NSA.'],
         ['reserve',         None,   ReserveOptions,         'Create a reservation.'],
         ['reserveprovision',None,   ReserveOptions,         'Create a reservation and provision the connection.'],
+        ['rprt',            None,   ReserveOptions,         'Create a reservation and provision, release and terminate the connection.'],
         ['provision',       None,   NetworkCommandOptions,  'Provision a connection.'],
         ['release',         None,   NetworkCommandOptions,  'Release a connection.'],
         ['terminate',       None,   NetworkCommandOptions,  'Terminate a connection.'],

@@ -79,6 +79,39 @@ def reserveprovision(client, client_nsa, provider_nsa, src, dst, start_time, end
 
 
 @defer.inlineCallbacks
+def rprt(client, client_nsa, provider_nsa, src, dst, start_time, end_time, bandwidth, connection_id, global_id):
+    # reserve, provision, release,  terminate
+    service_params = _createServiceParams(start_time, end_time, src, dst, bandwidth)
+
+    log.msg("Connection id: %s  Global id: %s" % (connection_id, global_id))
+
+    try:
+        yield client.reserve(client_nsa, provider_nsa, None, global_id, 'Test Connection', connection_id, service_params)
+        log.msg("Connection reserved at %s" % provider_nsa)
+    except error.NSIError, e:
+        log.msg('Error reserving %s, %s : %s' % (connection_id, e.__class__.__name__, str(e)))
+        defer.returnValue(None)
+
+    try:
+        yield client.provision(client_nsa, provider_nsa, None, connection_id)
+        log.msg('Connection %s provisioned' % connection_id)
+    except error.NSIError, e:
+        log.msg('Error provisioning %s, %s : %s' % (connection_id, e.__class__.__name__, str(e)))
+
+    try:
+        yield client.release(client_nsa, provider_nsa, None, connection_id)
+        log.msg('Connection %s released' % connection_id)
+    except error.NSIError, e:
+        log.msg('Error releasing %s, %s : %s' % (connection_id, e.__class__.__name__, str(e)))
+
+    try:
+        yield client.terminate(client_nsa, provider_nsa, None, connection_id)
+        log.msg('Connection %s terminated' % connection_id)
+    except error.NSIError, e:
+        log.msg('Error terminating %s, %s : %s' % (connection_id, e.__class__.__name__, str(e)))
+
+
+@defer.inlineCallbacks
 def provision(client, client_nsa, provider_nsa, connection_id):
 
     try:

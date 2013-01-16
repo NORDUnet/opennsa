@@ -93,7 +93,7 @@ def doMain():
 
 
     # network commands, listener port created in this block
-    elif config.subCommand in ['reserve', 'reserveprovision', 'provision', 'release', 'terminate', 'querysummary', 'querydetails']:
+    elif config.subCommand in ['reserve', 'reserveprovision', 'rprt', 'provision', 'release', 'terminate', 'querysummary', 'querydetails']:
 
         topology_file   = config.subOptions[options.TOPOLOGY_FILE]  or defaults.get(options.TOPOLOGY_FILE)
         network         = config.subOptions[options.NETWORK]        or defaults.get(options.NETWORK)
@@ -159,7 +159,7 @@ def doMain():
             raise usage.UsageError('Options for TLS/SSL context not defined. Cannot setup TLS.')
 
         # options only required for reserve
-        if config.subCommand in ('reserve', 'reserveprovision'):
+        if config.subCommand in ('reserve', 'reserveprovision', 'rprt'):
 
             source_stp = config.subOptions[options.SOURCE_STP]  or defaults.get(options.SOURCE_STP)
             dest_stp   = config.subOptions[options.DEST_STP]    or defaults.get(options.DEST_STP)
@@ -210,6 +210,10 @@ def doMain():
     elif config.subCommand == 'reserveprovision':
 
         yield commands.reserveprovision(client, client_nsa, provider_nsa, source_stp, dest_stp, start_time, end_time, bandwidth, connection_id, global_id)
+
+    elif config.subCommand == 'rprt':
+
+        yield commands.rprt(client, client_nsa, provider_nsa, source_stp, dest_stp, start_time, end_time, bandwidth, connection_id, global_id)
 
     elif config.subCommand == 'provision':
 
