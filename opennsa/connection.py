@@ -12,7 +12,7 @@ from dateutil.tz import tzutc
 from twisted.python import log, failure
 from twisted.internet import defer
 
-from opennsa import error, nsa, state, registry, subscription
+from opennsa import error, nsa, state, registry
 from opennsa.backends.common import scheduler
 
 
@@ -115,7 +115,7 @@ class SubConnection:
 class Connection:
 
     def __init__(self, service_registry, requester_nsa, connection_id, source_stp, dest_stp, service_parameters=None, global_reservation_id=None, description=None):
-        self.state = state.ConnectionState()
+        self.state                      = state.NSI2StateMachine()
         self.requester_nsa              = requester_nsa
         self.connection_id              = connection_id
         self.source_stp                 = source_stp
@@ -132,25 +132,6 @@ class Connection:
 
     def connections(self):
         return self.sub_connections
-
-
-    def addSubscription(self, sub):
-        self.subscriptions.append(sub)
-
-
-    def eventDispatch(self, event, success, result):
-        defs = []
-        for sub in reversed(self.subscriptions):
-            if sub.match(event):
-                d = subscription.dispatchNotification(success, result, sub, self.service_registry)
-                defs.append(d)
-                self.subscriptions.remove(sub)
-
-        if defs:
-            return defer.DeferredList(defs)
-        else:
-            log.msg('No subscriptions for event %s (possible bug / warning)' % event, system=LOG_SYSTEM)
-            return defer.succeed(None)
 
 
     def _buildErrorMessage(self, results, action):
@@ -193,18 +174,19 @@ class Connection:
     def reserve(self):
 
         def scheduled(st):
-            self.state.switchState(state.SCHEDULED)
-            self.scheduler.scheduleTransition(self.service_parameters.end_time, self.state.switchState, state.TERMINATED)
+            self.state.scheduled()
+            # not sure if something (or what) should be scheduled here
+            #self.scheduler.scheduleTransition(self.service_parameters.end_time, self.state.terminatedEndtime, state.TERMINATED_ENDTIME)
             return self
 
 
         def reserveRequestsDone(results):
             successes = [ r[0] for r in results ]
             if all(successes):
-                self.state.switchState(state.RESERVED)
+                self.state.reserved()
                 log.msg('Connection %s: Reserve succeeded' % self.connection_id, system=LOG_SYSTEM)
                 self.scheduler.scheduleTransition(self.service_parameters.start_time, scheduled, state.SCHEDULED)
-                self.eventDispatch(registry.RESERVE_RESPONSE, True, self)
+                return self
 
             else:
                 # terminate non-failed connections
@@ -219,15 +201,15 @@ class Connection:
                     )
                     defs.append(d)
                 dl = defer.DeferredList(defs)
-                dl.addCallback(lambda _ : self.state.switchState(state.TERMINATED) )
+                dl.addCallback( self.state.terminatedFailed )
 
                 err = self._createAggregateFailure(results, 'reservations', error.ConnectionCreateError)
-                self.eventDispatch(registry.RESERVE_RESPONSE, False, err)
+                return err
 
 
-        self.state.switchState(state.RESERVING)
+        self.state.reserving()
 
-        defs = [ sc.reserve() for sc in self.connections() ]
+        defs = [ defer.maybeDeferred(sc.reserve) for sc in self.connections() ]
 
         dl = defer.DeferredList(defs, consumeErrors=True)
         dl.addCallback(reserveRequestsDone) # never errbacks
@@ -239,21 +221,13 @@ class Connection:
         def provisionComplete(results):
             successes = [ r[0] for r in results ]
             if all(successes):
-                if self.state() == state.AUTO_PROVISION:
-                    # cannot switch directly from auto-provision to provisioned,
-                    self.state.switchState(state.PROVISIONING)
-
-                self.state.switchState(state.PROVISIONED)
-                self.scheduler.scheduleTransition(self.service_parameters.end_time, lambda _ : self.state.switchState(state.TERMINATED), state.TERMINATED)
-
-                self.eventDispatch(registry.PROVISION_RESPONSE, True, self)
+                self.state.provisioned()
+                # not sure if we should really schedule anything here
+                #self.scheduler.scheduleTransition(self.service_parameters.end_time, self.state.terminatedEndtime, state.TERMINATED_ENDTIME)
+                return self
 
             else:
                 # at least one provision failed, provisioned connections should be released
-                if self.state() == state.AUTO_PROVISION:
-                    self.state.switchState(state.PROVISIONING) # state machine isn't quite clear on what we should be here
-
-                # release provisioned connections
                 defs = []
                 provisioned_connections = [ conn for success,conn in results if success ]
                 for pc in provisioned_connections:
@@ -264,28 +238,19 @@ class Connection:
                     )
                     defs.append(d)
                 dl = defer.DeferredList(defs)
-                dl.addCallback(lambda _ : self.state.switchState(state.SCHEDULED) )
+                dl.addCallback( self.state.scheduled )
 
                 def releaseDone(_):
                     err = self._createAggregateFailure(results, 'provisions', error.ProvisionError)
-                    self.eventDispatch(registry.PROVISION_RESPONSE, False, err)
+                    return err
 
                 dl.addCallback(releaseDone)
 
         # --
-
-        # initial state switch (this validates if the transition is possible)
-        if self.service_parameters.start_time > datetime.datetime.now(tzutc()):
-            self.state.switchState(state.AUTO_PROVISION)
-        else:
-            self.state.switchState(state.PROVISIONING)
-
-        self.scheduler.cancelTransition() # cancel any pending scheduled switch
-
-        defs = [ sc.provision() for sc in self.connections() ]
-        prov_confirmed_defs , provision_done_defs = zip(*defs) # first is for confirmation, second is for link up
-
-        dl = defer.DeferredList(provision_done_defs, consumeErrors=True)
+        self.state.provisioning()
+        self.scheduler.cancelTransition()
+        defs = [ defer.maybeDeferred(sc.provision) for sc in self.connections() ]
+        dl = defer.DeferredList(defs, consumeErrors=True)
         dl.addCallback(provisionComplete)
         return dl
 
@@ -295,25 +260,21 @@ class Connection:
         def connectionReleased(results):
             successes = [ r[0] for r in results ]
             if all(successes):
-                self.state.switchState(state.SCHEDULED)
+                self.state.scheduled()
                 if len(results) > 1:
                     log.msg('Connection %s and all sub connections(%i) released' % (self.connection_id, len(results)-1), system=LOG_SYSTEM)
-                self.scheduler.scheduleTransition(self.service_parameters.end_time, lambda s : self.state.switchState(state.TERMINATED), state.TERMINATED)
-                self.eventDispatch(registry.RELEASE_RESPONSE, True, self)
+                # unsure, if anything should be scheduled here
+                #self.scheduler.scheduleTransition(self.service_parameters.end_time, self.state.terminatedEndtime, state.TERMINATED_ENDTIME)
+                return self
 
             else:
                 err = self._createAggregateFailure(results, 'releases', error.ReleaseError)
-                self.eventDispatch(registry.RELEASE_RESPONSE, False, err)
+                return err
 
+        self.state.releasing()
+        self.scheduler.cancelTransition()
 
-        self.state.switchState(state.RELEASING)
-        self.scheduler.cancelTransition() # cancel any pending scheduled switch
-
-        defs = []
-        for sc in self.connections():
-            d = sc.release()
-            defs.append(d)
-
+        defs = [ defer.maybeDeferred(sc.release) for sc in self.connections() ]
         dl = defer.DeferredList(defs, consumeErrors=True)
         dl.addCallback(connectionReleased)
         return dl
@@ -324,28 +285,23 @@ class Connection:
         def connectionTerminated(results):
             successes = [ r[0] for r in results ]
             if all(successes):
-                self.state.switchState(state.TERMINATED)
-                if len(successes) > 1:
-                    log.msg('Connection %s and all sub connections(%i) terminated' % (self.connection_id, len(results)-1), system=LOG_SYSTEM)
-                self.eventDispatch(registry.TERMINATE_RESPONSE, True, self)
-
+                self.state.terminatedRequest()
+                if len(successes) == len(results):
+                    log.msg('Connection %s: All sub connections(%i) terminated' % (self.connection_id, len(results)-1), system=LOG_SYSTEM)
+                else:
+                    log.msg('Connection %s. Only %i of %i connections successfully terminated' % (self.connection_id, len(successes), len(results)), system=LOG_SYSTEM)
+                return self
             else:
                 err = self._createAggregateFailure(results, 'terminates', error.TerminateError)
-                self.eventDispatch(registry.TERMINATE_RESPONSE, False, err)
+                return err
 
+        if self.state.isTerminated():
+            return self
 
-        if self.state() == state.TERMINATED:
-            self.eventDispatch(registry.TERMINATE_RESPONSE, True, self)
-            return
+        self.state.terminating()
+        self.scheduler.cancelTransition()
 
-        self.state.switchState(state.TERMINATING)
-        self.scheduler.cancelTransition() # cancel any pending scheduled switch
-
-        defs = []
-        for sc in self.connections():
-            d = sc.terminate()
-            defs.append(d)
-
+        defs = [ defer.maybeDeferred(sc.terminate) for sc in self.connections() ]
         dl = defer.DeferredList(defs, consumeErrors=True)
         dl.addCallback(connectionTerminated)
         return dl

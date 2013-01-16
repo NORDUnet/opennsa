@@ -39,7 +39,7 @@ class GenericConnection:
         self.connection_manager = connection_manager
 
         self.scheduler = scheduler.TransitionScheduler()
-        self.state = state.ConnectionState()
+        self.state = state.NSI2StateMachine()
 
 
     def curator(self):
@@ -58,18 +58,14 @@ class GenericConnection:
 
         # return defer.fail( error.InternalNRMError('test reservation failure') )
 
-        def scheduled(st):
-            self.state.switchState(state.SCHEDULED)
-            self.scheduler.scheduleTransition(self.service_parameters.end_time, lambda _ : self.terminate(), state.TERMINATING)
+        def scheduled():
+            self.state.scheduled()
+            self.scheduler.scheduleTransition(self.service_parameters.end_time, self.terminate, state.TERMINATING)
             self.logStateUpdate('SCHEDULED')
 
-        try:
-            self.state.switchState(state.RESERVING)
-            self.logStateUpdate('RESERVING')
-            self.state.switchState(state.RESERVED)
-        except error.InvalidTransitionError as e:
-            return defer.fail(e)
-
+        self.state.reserving()
+        self.logStateUpdate('RESERVING')
+        self.state.reserved()
         self.logStateUpdate('RESERVED')
         self.scheduler.scheduleTransition(self.service_parameters.start_time, scheduled, state.SCHEDULED)
         return defer.succeed(self)
@@ -77,71 +73,73 @@ class GenericConnection:
 
     def provision(self):
 
-        def provisionSuccess(_):
-            self.scheduler.scheduleTransition(self.service_parameters.end_time, lambda _ : self.terminate(), state.TERMINATING)
-            self.state.switchState(state.PROVISIONED)
-            self.logStateUpdate('PROVISIONED')
+        def activationSuccess(_):
+            self.scheduler.scheduleTransition(self.service_parameters.end_time, self.terminate, state.TERMINATING)
+            self.state.active()
+            self.logStateUpdate('ACTIVE')
 
-        def provisionFailure(err):
+        def activationFailure(err):
             log.msg('Error setting up connection: %s' % err.getErrorMessage())
-            self.state.switchState(state.TERMINATED)
-            self.logStateUpdate('TERMINATED')
+            self.state.inactive()
+            self.logStateUpdate('INACTIVE')
             return err
 
-        def doProvision(_):
-            try:
-                self.state.switchState(state.PROVISIONING)
-                self.logStateUpdate('PROVISIONING')
-            except error.InvalidTransitionError as e:
-                return defer.fail(e)
+        def doActivate():
+            self.state.activating()
+            self.logStateUpdate('ACTIVATING')
 
             d = self.connection_manager.setupLink(self.source_port, self.dest_port)
-            d.addCallbacks(provisionSuccess, provisionFailure)
+            d.addCallbacks(activationSuccess, activationFailure)
             return d
-
 
         dt_now = datetime.datetime.now(tzutc())
         if self.service_parameters.end_time <= dt_now:
             return defer.fail(error.ConnectionGone('Cannot provision connection after end time (end time: %s, current time: %s).' % (self.service_parameters.end_time, dt_now)))
 
-        self.state.switchState(state.AUTO_PROVISION) # This checks if we can switch into provision
-
+        self.state.provisioning()
         self.scheduler.cancelTransition() # cancel any pending scheduled switch
 
         if self.service_parameters.start_time <= dt_now:
-            defer_provision = doProvision(None)
+            defer_provision = doActivate()
         else:
-            defer_provision = self.scheduler.scheduleTransition(self.service_parameters.start_time, doProvision, state.PROVISIONING)
-            self.logStateUpdate('PROVISION SCHEDULED')
+            defer_provision = self.scheduler.scheduleTransition(self.service_parameters.start_time, doActivate, state.ACTIVATING)
 
-        return defer.succeed(self), defer_provision
+        self.state.provisioned()
+        self.logStateUpdate('PROVISIONED')
+        return defer.succeed(self)
 
 
 
     def release(self):
 
-        def releaseSuccess(_):
-            self.scheduler.scheduleTransition(self.service_parameters.end_time, lambda _ : self.terminate(), state.TERMINATING)
-            self.state.switchState(state.SCHEDULED)
-            self.logStateUpdate('SCHEDULED')
+        def deactivateSuccess(_):
+            self.scheduler.scheduleTransition(self.service_parameters.end_time, self.terminating, state.TERMINATING)
+            self.state.inactive()
+            self.logStateUpdate('INACTIVE')
+            self.state.released()
+            self.logStateUpdate('RELEASED')
             return self
 
-        def releaseFailure(err):
-            log.msg('Error releasing connection: %s' % err.getErrorMessage())
-            self.state.switchState(state.TERMINATED)
-            self.logStateUpdate('TERMINATED')
+        def deactivateFailure(err):
+            log.msg('Error deactivating connection: %s' % err.getErrorMessage())
+            self.state.terminatedFailure()
+            self.logStateUpdate('TERMINATED FAILURE')
             return err
 
-        try:
-            self.state.switchState(state.RELEASING)
-            self.logStateUpdate('RELEASING')
-        except error.InvalidTransitionError as e:
-            return defer.fail(e)
+        self.state.releasing()
+        self.logStateUpdate('RELEASING')
+        self.scheduler.cancelTransition()
 
-        self.scheduler.cancelTransition() # cancel any pending scheduled switch
+        # we need to handle activating somehow...
+        if self.state.isActive():
+            self.state.deactivating()
+            self.logStateUpdate('DEACTIVATING')
+            d = self.connection_manager.teardownLink(self.source_port, self.dest_port)
+            d.addCallbacks(deactivateSuccess, deactivateFailure)
+        else:
+            self.state.released()
+            d = defer.succeed(self)
 
-        d = self.connection_manager.teardownLink(self.source_port, self.dest_port)
-        d.addCallbacks(releaseSuccess, releaseFailure)
         return d
 
 
@@ -155,29 +153,27 @@ class GenericConnection:
 
         def terminateSuccess(_):
             removeCalendarEntry()
-            self.state.switchState(state.TERMINATED)
-            self.logStateUpdate(state.TERMINATED)
+            self.state.terminatedEndtime()
+            self.logStateUpdate('TERMINATED ENDTIME')
             return defer.succeed(self)
 
         def terminateFailure(err):
             log.msg('Error terminating connection: %s' % err.getErrorMessage())
             removeCalendarEntry() # This might be wrong :-/
-            self.state.switchState(state.TERMINATED)
-            self.logStateUpdate(state.TERMINATED)
+            self.state.terminatedFailure()
+            self.logStateUpdate('TERMINATED FAILURE')
             return err
 
-        if self.state() == state.TERMINATED:
+        if self.state.isTerminated():
             return defer.succeed(self)
 
-        teardown = True if self.state() == state.PROVISIONED else False
-
-        self.state.switchState(state.TERMINATING) # we can (almost) always switch to this
+        self.state.terminating()
         self.logStateUpdate(state.TERMINATING)
-        self.scheduler.cancelTransition() # cancel any pending scheduled switch
+        self.scheduler.cancelTransition()
 
-        if teardown:
-            self.state.switchState(state.CLEANING)
-            self.logStateUpdate(state.CLEANING)
+        if self.state.isActive():
+            self.state.deactivating()
+            self.logStateUpdate(state.DEACTIVATING)
             d = self.connection_manager.teardownLink(self.source_port, self.dest_port)
             d.addCallbacks(terminateSuccess, terminateFailure)
             return d

@@ -46,7 +46,7 @@ class TransitionScheduler:
         transition_delta_seconds = (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6.0
         transition_delta_seconds = max(transition_delta_seconds, 0) # if dt_now is passed during calculation
 
-        d = task.deferLater(reactor, transition_delta_seconds, call, state)
+        d = task.deferLater(reactor, transition_delta_seconds, call)
         d.addErrback(deferTaskFailed)
         self.scheduled_transition_call = d
         log.msg('State transition scheduled: In %i seconds to state %s' % (transition_delta_seconds, state), system=LOG_SYSTEM)

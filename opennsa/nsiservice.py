@@ -9,7 +9,7 @@ import uuid
 
 from zope.interface import implements
 
-from twisted.python import log
+from twisted.python import log, failure
 from twisted.internet import reactor, defer, task
 
 from opennsa.interface import NSIServiceInterface
@@ -192,59 +192,69 @@ class NSIService:
                 sc = self.setupSubConnection(link, conn, service_parameters)
                 conn.sub_connections.append(sc)
 
+
+        def reserveResponse(result):
+            success = False if isinstance(result, failure.Failure) else True
+            if not success:
+                log.msg('Error reserving: %s' % result.getErrorMessage(), system=LOG_SYSTEM)
+            d = subscription.dispatchNotification(success, result, sub, self.service_registry)
+
+
         # now reserve connections needed to create path
-        conn.addSubscription(sub)
         d = task.deferLater(reactor, 0, conn.reserve)
-        d.addErrback(log.err)
+        d.addBoth(reserveResponse)
         return defer.succeed(None)
 
 
     def provision(self, requester_nsa, provider_nsa, session_security_attr, connection_id, sub):
 
+        def provisionResponse(result):
+            success = False if isinstance(result, failure.Failure) else True
+            if not success:
+                log.msg('Error provisioning: %s' % result.getErrorMessage(), system=LOG_SYSTEM)
+            d = subscription.dispatchNotification(success, result, sub, self.service_registry)
+
         log.msg('', system=LOG_SYSTEM)
         # security check here
 
-        try:
-            conn = self.getConnection(requester_nsa, connection_id)
-            conn.addSubscription(sub)
-            d = task.deferLater(reactor, 0, conn.provision)
-            d.addErrback(log.err)
-            return defer.succeed(None)
-        except error.ConnectionNonExistentError, e:
-            log.msg('NSA %s requested non-existing connection %s' % (requester_nsa, connection_id), system=LOG_SYSTEM)
-            return defer.fail(e)
+        conn = self.getConnection(requester_nsa, connection_id)
+        d = task.deferLater(reactor, 0, conn.provision)
+        d.addBoth(provisionResponse)
+        return defer.succeed(None)
 
 
     def release(self, requester_nsa, provider_nsa, session_security_attr, connection_id, sub):
 
+        def releaseResponse(result):
+            success = False if isinstance(result, failure.Failure) else True
+            if not success:
+                log.msg('Error releasing: %s' % result.getErrorMessage(), system=LOG_SYSTEM)
+            d = subscription.dispatchNotification(success, result, sub, self.service_registry)
+
         log.msg('', system=LOG_SYSTEM)
         # security check here
 
-        try:
-            conn = self.getConnection(requester_nsa, connection_id)
-            conn.addSubscription(sub)
-            d = task.deferLater(reactor, 0, conn.release)
-            d.addErrback(log.err)
-            return defer.succeed(None)
-        except error.ConnectionNonExistentError, e:
-            log.msg('NSA %s requested non-existing connection %s' % (requester_nsa, connection_id), system=LOG_SYSTEM)
-            return defer.fail(e)
+        conn = self.getConnection(requester_nsa, connection_id)
+        d = task.deferLater(reactor, 0, conn.release)
+        d.addBoth(releaseResponse)
+        return defer.succeed(None)
 
 
     def terminate(self, requester_nsa, provider_nsa, session_security_attr, connection_id, sub):
 
+        def terminateResponse(result):
+            success = False if isinstance(result, failure.Failure) else True
+            if not success:
+                log.msg('Error terminating: %s' % result.getErrorMessage(), system=LOG_SYSTEM)
+            d = subscription.dispatchNotification(success, result, sub, self.service_registry)
+
         log.msg('', system=LOG_SYSTEM)
         # security check here
 
-        try:
-            conn = self.getConnection(requester_nsa, connection_id)
-            conn.addSubscription(sub)
-            d = task.deferLater(reactor, 0, conn.terminate)
-            d.addErrback(log.err)
-            return defer.succeed(None)
-        except error.ConnectionNonExistentError, e:
-            log.msg('NSA %s requested non-existing connection %s' % (requester_nsa, connection_id), system=LOG_SYSTEM)
-            return defer.fail(e)
+        conn = self.getConnection(requester_nsa, connection_id)
+        d = task.deferLater(reactor, 0, conn.terminate)
+        d.addBoth(terminateResponse)
+        return defer.succeed(None)
 
 
     def query(self, requester_nsa, provider_nsa, session_security_attr, operation, connection_ids, global_reservation_ids, sub):
