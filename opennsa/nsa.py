@@ -76,7 +76,7 @@ class Label:
         return nv
 
 
-    def singleValue():
+    def singleValue(self):
         return len(self.values) == 1 and self.values[0] == self.values[1]
 
 
