@@ -177,9 +177,8 @@ def querydetails(client, client_nsa, provider_nsa, connection_ids, global_reserv
 
 def path(topology_file, source_stp, dest_stp):
 
-    from opennsa.topology import gole
-
-    topo,_ = gole.parseTopology( [ open(topology_file) ] )
+    raise NotImplementedError('Path computation not available for NML yet')
+    topo = None
 
     source_network, source_port = source_stp.split(':',1)
     dest_network,   dest_port   = dest_stp.split(':', 1)
@@ -195,9 +194,8 @@ def path(topology_file, source_stp, dest_stp):
 
 def topology(topology_file):
 
-    from opennsa.topology import gole
-
-    topo,_ = gole.parseTopology( [ open(topology_file) ] )
+    raise NotImplementedError('Topology dump not available for NML yet')
+    topo = None
 
     for nw in topo.networks:
         ns = '%s (%s)' % (nw.name, ','.join( sorted( [ ep.endpoint for ep in nw.endpoints ] ) ) )
@@ -206,9 +204,8 @@ def topology(topology_file):
 
 def topologyGraph(topology_file, all_links=False):
 
-    from opennsa.topology import gole
-
-    topo,_ = gole.parseTopology( [ open(topology_file) ] )
+    raise NotImplementedError('Topology graph not available for NML yet')
+    topo = None
 
     links = []
 

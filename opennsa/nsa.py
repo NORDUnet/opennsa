@@ -184,27 +184,6 @@ class Path:
 
 
 
-class NetworkEndpoint(STP):
-
-    def __init__(self, network, endpoint, nrm_port=None, dest_stp=None, max_capacity=None):
-        STP.__init__(self, network, endpoint)
-        if nrm_port is not None:
-            assert type(nrm_port) is str, 'Invalid nrm_port type provided for NetworkEndpoint initialization'
-        self.nrm_port = nrm_port
-        self.dest_stp = dest_stp
-        self.max_capacity = max_capacity
-
-
-    def nrmPort(self):
-        assert self.nrm_port is not None, 'No NRM port defined for NetworkEndpoint %s' % str(self)
-        return self.nrm_port
-
-
-    def __str__(self):
-        return '<NetworkEndpoint %s:%s-%s#%s>' % (self.network, self.endpoint, self.dest_stp, self.nrm_port)
-
-
-
 class NetworkServiceAgent:
 
     def __init__(self, identity, endpoint): #, service_attributes=None):
@@ -231,31 +210,6 @@ class NetworkServiceAgent:
 
     def __str__(self):
         return '<NetworkServiceAgent %s>' % self.identity
-
-
-
-class Network:
-
-    def __init__(self, name, nsa):
-        self.name = name
-        self.nsa = nsa
-        self.endpoints = []
-
-
-    def addEndpoint(self, endpoint):
-        self.endpoints.append(endpoint)
-
-
-    def getEndpoint(self, endpoint_name):
-        for ep in self.endpoints:
-            if ep.endpoint == endpoint_name:
-                return ep
-
-        raise error.TopologyError('No such endpoint (%s)' % (endpoint_name))
-
-
-    def __str__(self):
-        return '<Network %s,%i>' % (self.name, len(self.endpoints))
 
 
 
