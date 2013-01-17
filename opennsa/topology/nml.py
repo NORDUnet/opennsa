@@ -21,16 +21,18 @@ ETHERNET_VLAN = ETHERNET + '#vlan'
 
 class Port:
 
-    def __init__(self, name, orientation, labels, bandwidth, alias=None):
+    def __init__(self, name, orientation, labels, bandwidth, remote_network=None, remote_port=None):
 
         assert ':' not in name, 'Invalid port name, must not contain ":"'
         assert orientation in (INBOUND, OUTBOUND), 'Invalid port orientation: %s' % orientation
+        assert (remote_network and remote_port) or not (remote_network and remote_port), 'Must specify remote network and port or none of them'
 
-        self.name        = name         # String  ; Base name, no network name or uri prefix
-        self.orientation = orientation  # Must be INBOUND or OUTBOUND
-        self.labels      = labels       # [ nsa.Label ]  ; can be empty
-        self.bandwidth   = bandwidth    # Integer  ; in Mbps
-        self.alias       = alias        # None | (network, port)  ; port it connects to
+        self.name           = name              # String  ; Base name, no network name or uri prefix
+        self.orientation    = orientation       # Must be INBOUND or OUTBOUND
+        self.labels         = labels            # [ nsa.Label ]  ; can be empty
+        self.bandwidth      = bandwidth         # Integer  ; in Mbps
+        self.remote_network = remote_network    # String
+        self.remote_port    = remote_port       # String
 
 
 

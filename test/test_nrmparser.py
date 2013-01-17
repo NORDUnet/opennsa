@@ -9,40 +9,22 @@ from opennsa.topology import nrmparser
 NRM_ENTRY = \
 """
 # some comment
-bi-ethernet     ps              -                               vlan:1780-1788      em0
-bi-ethernet     netherlight     netherlight:ndn-netherlight     vlan:1780-1783      em1
-bi-ethernet     somelight       netherlight:ndn-somelight       vlan:1780-1780      "em 8"
-bi-ethernet     uvalight        uvalight:ndn-uvalight           vlan:1780-1783      em2
+bi-ethernet     ps              -                               vlan:1780-1788  1000    em0
+bi-ethernet     netherlight     netherlight#nordunet-(in|out)   vlan:1780-1783  1000    em1
+bi-ethernet     somelight       netherlight#somelight-(in|out)  vlan:1780-1780  1000    "em 8"
+bi-ethernet     uvalight        uvalight#uvalight-(in|out)      vlan:1780-1783  1000    em2
 """
 
+# uni-ethernet    test            uvalight:ndn-uvalight           vlan:1780-1783      em2
 
 class NRMParserTest(unittest.TestCase):
 
-    def testBasicParsing(self):
-
-        source = StringIO.StringIO(NRM_ENTRY)
-
-        entries = nrmparser.parseTopologySpec(source)
-
-        self.failUnlessEquals(len(entries), 4)
-
-        port_names = [ ne.port_name for ne in entries ]
-        self.failUnlessEqual(port_names, [ 'ps', 'netherlight', 'somelight', 'uvalight' ])
-
-        interfaces = [ ne.interface for ne in entries ]
-        self.failUnlessEqual(interfaces, [ 'em0', 'em1', 'em 8', 'em2' ])
-
-
     def testNMLNetworkCreation(self):
 
-        source = StringIO.StringIO(NRM_ENTRY)
-
-        entries = nrmparser.parseTopologySpec(source)
-
         network_name = 'dud'
-        ns_agent = nsa.NetworkServiceAgent('dudnsa', 'http://example.org/fake_nsa_url')
-
-        network = nrmparser.createNetwork(network_name, ns_agent, entries)
+        nsi_agent = nsa.NetworkServiceAgent('dudnsa', 'http://example.org/fake_nsa_url')
+        source = StringIO.StringIO(NRM_ENTRY)
+        network = nrmparser.parseTopologySpec(source, network_name, nsi_agent)
 
         self.assertEquals( network.getInterface('ps'),          'em0')
         self.assertEquals( network.getInterface('netherlight'), 'em1')
