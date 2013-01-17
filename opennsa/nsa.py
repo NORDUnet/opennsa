@@ -76,6 +76,35 @@ class Label:
         return nv
 
 
+    def intersect(self, other):
+        # get the common labels between two label set - I hate you nml
+        assert isinstance(other, Label), 'Cannot intersect label with something that is not a label'
+        assert self.type_ == other.type_, 'Cannot insersect label of different types'
+
+        label_values = []
+        i = iter(other.values)
+        o1, o2 = i.next()
+
+        for v1, v2 in self.values:
+            while True:
+                if v2 < o1:
+                    break
+                elif o2 < v1:
+                    o1, o2 = i.next()
+                    continue
+                label_values.append( ( max(v1,o1), min(v2,o2)) )
+                if v2 < o2:
+                    break
+                else:
+                    continue
+
+        # what to do if intersection is the empty set?
+        # hmm.. label does not support the empty set (doesn't really make sense)
+
+        ls = ','.join( [ '%i-%s' % (nv[0], nv[1]) for nv in label_values ] )
+        return Label(self.type_, ls)
+
+
     def singleValue(self):
         return len(self.values) == 1 and self.values[0] == self.values[1]
 
