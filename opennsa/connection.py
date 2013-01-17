@@ -5,10 +5,6 @@ Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2011-2012)
 """
 
-import datetime
-
-from dateutil.tz import tzutc
-
 from twisted.python import log, failure
 from twisted.internet import defer
 
