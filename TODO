@@ -1,14 +1,12 @@
 Current issues:
 
-- Test NSI2 interoperability (AIST is problematic)
 - Better aggregate error handling
 - Better logging in aggregation failures
-- NSI2 Query
+- NSI2 Detail Query
 
-- Rework core and topology to support labels
-- Rename shared.resource to shared.soapresource
+- Label support in topology and backends
 - Rework all error throwing handling to new error infrastructure
-
+- Rename shared.resource to shared.soapresource
 
 Registry, they are not necessarely events or service. Just a registry. (just some renaming)
 
@@ -37,7 +35,6 @@ General:
 
 
 Backends:
-  Multiple backends support
   NCS backend
   Force10: Should do shutdown when interfaces are not in use
   Test on Juniper EX switch
