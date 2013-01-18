@@ -27,16 +27,9 @@ class DUDBackendTest(unittest.TestCase):
 
     @defer.inlineCallbacks
     def testBasicUsage(self):
-
         conn = self.backend.createConnection('A1', 'A3', self.service_params)
-
         yield conn.reserve()
-
-        da, dp = conn.provision()
-        yield da # provision acknowledged
-        yield dp # provision performed
-
+        yield conn.provision()
         yield conn.release()
-
         yield conn.terminate()
 
