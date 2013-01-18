@@ -49,7 +49,9 @@ class Port:
 
 class BidirectionalPort:
 
-    def __init__(self, inbound_port, outbound_port):
+    def __init__(self, name, inbound_port, outbound_port):
+        self.name = name
+        self.orientation = nsa.BIDIRECTIONAL
         self.inbound_port  = inbound_port
         self.outbound_port = outbound_port
 

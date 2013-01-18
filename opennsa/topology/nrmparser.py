@@ -121,7 +121,7 @@ def parseTopologySpec(source, network_name, nsi_agent):
 
             inbound_port  = nml.Port(port_name + '-in',  nml.INBOUND,  labels, bandwidth, remote_network, remote_out)
             outbound_port = nml.Port(port_name + '-out', nml.OUTBOUND, labels, bandwidth, remote_network, remote_in)
-            port = nml.BidirectionalPort(inbound_port, outbound_port)
+            port = nml.BidirectionalPort(port_name, inbound_port, outbound_port)
 
             ports += [ inbound_port, outbound_port, port ]
             port_interface_map[port_name] = interface
