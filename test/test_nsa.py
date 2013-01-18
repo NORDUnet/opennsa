@@ -25,8 +25,8 @@ class LabelParsingTest(unittest.TestCase):
 
         self.assertEquals( l12.intersect(l123).values,  [ (1,2) ] )
         self.assertEquals( l12.intersect(l234).values,  [ (2,2) ] )
-#        self.assertEquals( l12.intersect(l48).values,   [       ] )
         self.assertEquals( l123.intersect(l234).values, [ (2,3) ] )
         self.assertEquals( l234.intersect(l48).values,  [ (4,4) ] )
 
+        self.assertRaises(nsa.EmptyLabelSet, l12.intersect, l48)
 

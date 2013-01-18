@@ -28,6 +28,11 @@ BIDIRECTIONAL = 'Bidirectional' # NSI1 compat
 
 
 
+class EmptyLabelSet(Exception):
+    pass
+
+
+
 class Label:
 
     def __init__(self, type_, values=None):
@@ -98,8 +103,8 @@ class Label:
                 else:
                     continue
 
-        # what to do if intersection is the empty set?
-        # hmm.. label does not support the empty set (doesn't really make sense)
+        if len(label_values) == 0:
+            raise EmptyLabelSet('Label intersection produced empty label set')
 
         ls = ','.join( [ '%i-%s' % (nv[0], nv[1]) for nv in label_values ] )
         return Label(self.type_, ls)
