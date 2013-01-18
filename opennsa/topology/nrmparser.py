@@ -28,7 +28,7 @@ LABEL_TYPES = {
 }
 
 
-TOPO_RX = re.compile('(.+?)\s+(.+?)\s+(.+?)\s+(.+?)\s+(.+)\s+(.+)')
+TOPO_RX = re.compile('(.+?)\s+(.+?)\s+(.+?)\s+(.+?)\s+(.+?)\s+(.+)')
 # format: network#port OR network#port-(in|out)
 PORT_RX = re.compile('([^#]+)#([^\(]+)(?:\((.+?)\|(.+?)\))?')
 
