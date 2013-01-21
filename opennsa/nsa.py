@@ -134,29 +134,34 @@ class Label:
 
 class STP: # Service Termination Point
 
-    def __init__(self, network, endpoint, orientation=None, labels=None):
+    def __init__(self, network, port, orientation=None, labels=None):
         assert type(network) is str, 'Invalid network type provided for STP'
-        assert type(endpoint) is str, 'Invalid endpoint type provided for STP'
+        assert type(port) is str, 'Invalid port type provided for STP'
         assert orientation in (None, INGRESS, EGRESS, BIDIRECTIONAL), 'Invalid orientation (%s) provided for STP' % (orientation)
         self.network = network
-        self.endpoint = endpoint
+        self.port = port
         self.orientation = orientation
         self.labels = labels or []
 
 
     def urn(self):
-        return STP_PREFIX + self.network + ':' + self.endpoint
+        return STP_PREFIX + self.network + ':' + self.port
 
 
     def __eq__(self, other):
         if not isinstance(other, STP):
             return False
-        return self.network == other.network and self.endpoint == other.endpoint and \
+        return self.network == other.network and self.port == other.port and \
                self.orientation == other.orientation and self.labels == other.labels
 
 
     def __str__(self):
-        return '<STP %s:%s>' % (self.network, self.endpoint)
+        base = '<STP %s:%s>' % (self.network, self.port)
+        if self.orientation:
+            base += '/' + self.orientation
+        if self.labels:
+            base += '#' + self.label
+        return base
 
 
 

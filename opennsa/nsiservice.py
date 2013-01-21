@@ -125,12 +125,12 @@ class NSIService:
 
         # figure out nature of request
 
-        path_info = ( connection_id, source_stp.network, source_stp.endpoint, dest_stp.network, dest_stp.endpoint, self.network)
+        path_info = ( connection_id, source_stp.network, source_stp.port, dest_stp.network, dest_stp.port, self.network)
 
         if source_stp.network == self.network and dest_stp.network == self.network:
-            local_path_info = ( connection_id, self.network, source_stp.endpoint, source_stp.labels, dest_stp.endpoint, dest_stp.labels)
+            local_path_info = ( connection_id, self.network, source_stp.port, source_stp.labels, dest_stp.port, dest_stp.labels)
             log.msg('Connection %s: Local link creation: %s %s#%s -> %s#%s' % local_path_info, system=LOG_SYSTEM)
-            link = nsa.Link(self.network, source_stp.endpoint, dest_stp.endpoint, source_stp.orientation, dest_stp.orientation,
+            link = nsa.Link(self.network, source_stp.port, dest_stp.port, source_stp.orientation, dest_stp.orientation,
                             source_stp.labels, dest_stp.labels)
             sc = self.setupSubConnection(link, conn, service_parameters)
 
@@ -178,7 +178,7 @@ class NSIService:
 
             # error out if we could not find a path
             if not paths:
-                error_msg = 'Could not find a path for route %s:%s -> %s:%s' % (source_stp.network, source_stp.endpoint, dest_stp.network, dest_stp.endpoint)
+                error_msg = 'Could not find a path for route %s:%s -> %s:%s' % (source_stp.network, source_stp.port, dest_stp.network, dest_stp.port)
                 log.msg(error_msg, system=LOG_SYSTEM)
                 raise error.TopologyError(error_msg)
 

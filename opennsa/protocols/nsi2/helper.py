@@ -113,7 +113,7 @@ def createSTPType(stp, directionality):
         labels = CT.TypeValuePairListType(attributes)
 
     network = URN_NETWORK + stp.network
-    port = stp.endpoint
+    port = stp.port
 
     return CT.StpType(network, network + ':' + port, labels, directionality)
 
