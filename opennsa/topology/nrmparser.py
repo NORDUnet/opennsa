@@ -65,6 +65,7 @@ def _parseLabelSpec(label_spec):
             raise error.TopologyError('Multiple labels for type %s' % label_type)
 
         labels.append( nsa.Label(label_type, label_range) ) # range is parsed in nsa.Label
+    return labels
 
 
 def parseTopologySpec(source, network_name, nsi_agent):
