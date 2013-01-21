@@ -35,11 +35,27 @@ class Port:
         self.remote_port    = remote_port       # String
 
 
-    def canMatchLabels(self, stp):
-        if stp.labels is None and self.labels is None:
+    def canMatchLabels(self, labels):
+        if self.labels is None and labels is None:
             return True
+        elif self.labels is None or labels is None:
+            return False
+        elif len(self.labels) != len(labels):
+            return False
+        elif len(self.labels) == 1: # len(labels) is identical
+            if self.labels[0].type_ != labels[0].type_:
+                return False
+            try:
+                self.labels[0].intersect(labels[0])
+                return True
+            except nsa.EmptyLabelSet:
+                return False
         else:
-            return [ l.type_ for l in stp.labels ] == [ l.type_ for l in self.labels ]
+            raise NotImplementedError('Multi-label matching not yet implemented')
+
+
+    def hasRemote(self):
+        return self.remote_network != None
 
 
     def canProvideBandwidth(self, desired_bandwidth):
@@ -56,8 +72,19 @@ class BidirectionalPort:
         self.outbound_port = outbound_port
 
 
-    def canMatchLabels(self, stp):
-        return self.inbound_port.canMatchLabel(stp) and self.outbound_port.canMatchLabel(stp)
+    def canMatchLabels(self, labels):
+        return self.inbound_port.canMatchLabels(labels) and self.outbound_port.canMatchLabels(labels)
+
+
+    def hasRemote(self):
+        return self.inbound_port.hasRemote() and self.outbound_port.hasRemote()
+
+
+    def canProvideBandwidth(self, desired_bandwidth):
+        return self.inbound_port.canProvideBandwidth(desired_bandwidth) and self.outbound_port.canProvideBandwidth(desired_bandwidth)
+
+    def __repr__(self):
+        return '<BidirectionalPort %s : %s/%s>' % (self.name, self.inbound_port.name, self.outbound_port.name)
 
 
 
@@ -86,6 +113,16 @@ class Network:
         except KeyError:
             # we probably want to change the error type sometime
             raise error.TopologyError('No interface mapping for port %s' % port_name)
+
+
+    def findPorts(self, orientation, labels, exclude=None):
+        matching_ports = []
+        for port in self.ports:
+            if port.orientation == orientation and port.canMatchLabels(labels):
+                if exclude and port.name == exclude:
+                    continue
+                matching_ports.append(port)
+        return matching_ports
 
 
     def canSwapLabel(self, label_type):
@@ -148,7 +185,7 @@ class Topology:
                 if source_network.canSwapLabels():
                     link = nsa.Link(source_stp.network, source_stp.port, dest_stp.port,
                                     source_stp.orientation, dest_stp.orientation, source_stp.labels, dest_stp.labels)
-                    return [ link ]
+                    return [ [ link ] ]
                 else:
                     # in theory we could route to a network with label-swapping capability and route back
                     # but we don't support such crazyness (yet)
@@ -156,7 +193,7 @@ class Topology:
                         is_labels = [ sl.intersect(dl) for sl, dl in zip(source_stp.labels, dest_stp.labels) ]
                         link = nsa.Link(source_stp.network, source_stp.port, dest_stp.port,
                                         source_stp.orientation, dest_stp.orientation, is_labels, is_labels)
-                        return [ link ]
+                        return [ [ link ] ]
                     except nsa.EmptyLabelSet:
                         return [] # no path
             else:
