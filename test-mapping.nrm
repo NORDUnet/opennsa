@@ -1,22 +1,8 @@
-# STP mapping for test topology
+# NRM topology example for NSIv2 NML
 
-urn:ogf:network:stp:Aruba:A1    "Aruba_A1"
-urn:ogf:network:stp:Aruba:A2    "Aruba_A2"
-urn:ogf:network:stp:Aruba:A3    "Aruba_A3"
-urn:ogf:network:stp:Aruba:A4    "Aruba_A4"
+# type          name        remote                      labels              bandwith    interface
 
-urn:ogf:network:stp:Bonaire:B1  "Bonaire_B1"
-urn:ogf:network:stp:Bonaire:B2  "Bonaire_B2"
-urn:ogf:network:stp:Bonaire:B3  "Bonaire_B3"
-urn:ogf:network:stp:Bonaire:B4  "Bonaire_B4"
-
-urn:ogf:network:stp:Curacao:C1  "Curacao_C1"
-urn:ogf:network:stp:Curacao:C2  "Curacao_C2"
-urn:ogf:network:stp:Curacao:C3  "Curacao_C3"
-urn:ogf:network:stp:Curacao:C4  "Curacao_C4"
-
-urn:ogf:network:stp:Dominica:D1 "Dominica_D1"
-urn:ogf:network:stp:Dominica:D2 "Dominica_D2"
-urn:ogf:network:stp:Dominica:D3 "Dominica_D3"
-urn:ogf:network:stp:Dominica:D4 "Dominica_D4"
+bi-ethernet     ps          -                           vlan:1780-1783      1000        em0
+bi-ethernet     bonaire     Bonaire#aruba-(in|out)      vlan:1780-1783      1000        em1
+bi-ethernet     dominica    Dominica#aruba-(in|out)     vlan:1780-1783      1000        em1
 
