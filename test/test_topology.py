@@ -1,56 +1,66 @@
-import StringIO
+from StringIO import StringIO
 
 from twisted.trial import unittest
 
 from opennsa import nsa
-from opennsa.topology import gole
+from opennsa.topology import nml, nrmparser
 
-from . import topology as testtopology
+# Ring topology
 
+ARUBA_TOPOLOGY = """
+bi-ethernet     ps          -                           vlan:1780-1789  1000    em0
+bi-ethernet     boniare     bonaire#aruba-(in|out)      vlan:1780-1789  1000    em1
+bi-ethernet     dominica    dominica#aruba-(in|out)     vlan:1780-1789   500    em2
+"""
 
-TEST_PATH_1 = {
-    'source_stp' : nsa.STP('Aruba', 'A2'),
-    'dest_stp'   : nsa.STP('Curacao', 'C3'),
-    'paths'      :  [ [ nsa.Link('Aruba', 'A2', 'A4'), nsa.Link('Bonaire', 'B1', 'B4'), nsa.Link('Curacao', 'C1', 'C3') ],
-                      [ nsa.Link('Aruba', 'A2', 'A1'), nsa.Link('Dominica', 'D4', 'D1'), nsa.Link('Curacao', 'C4', 'C3') ]
-                    ]
-}
+BONAIRE_TOPOLOGY = """
+bi-ethernet     ps          -                           vlan:1780-1789  1000    em0
+bi-ethernet     aruba       aruba#bonaire-(in|out)      vlan:1780-1789  1000    em1
+bi-ethernet     curacao     curacao#bonaire-(in|out)    vlan:1780-1789  1000    em2
+"""
 
-TEST_PATH_2 = {
-    'source_stp' : nsa.STP('Aruba', 'A2'),
-    'dest_stp'   : nsa.STP('Bonaire', 'B2'),
-    'paths'      : [ [ nsa.Link('Aruba', 'A2', 'A4'), nsa.Link('Bonaire', 'B1', 'B2') ],
-                     [ nsa.Link('Aruba', 'A2', 'A1'), nsa.Link('Dominica', 'D4', 'D1'), nsa.Link('Curacao', 'C4', 'C1'), nsa.Link('Bonaire', 'B4', 'B2') ] ]
-}
+CURACAO_TOPOLOGY = """
+bi-ethernet     ps          -                           vlan:1780-1789  1000    em0
+bi-ethernet     boniare     bonaire#curacao-(in|out)    vlan:1780-1789  1000    em1
+bi-ethernet     dominica    dominica#curacao-(in|out)   vlan:1780-1789  1000    em2
+"""
 
-# Currently we do not have bandwidth, so this us unused
-TEST_PATH_3 = {
-    'source_stp': nsa.STP('Aruba', 'A2'),
-    'dest_stp'  : nsa.STP('Bonaire', 'B3'),
-    'paths'     :  [ [ nsa.Link('Aruba', 'A2', 'A1'), nsa.Link('Dominica', 'D4', 'D1'), nsa.Link('Curacao', 'C4', 'C1'), nsa.Link('Bonaire', 'B4', 'B3') ] ],
-    'bandwidth' : 1000
-}
-
-TEST_PATHS = [ TEST_PATH_1, TEST_PATH_2 ]
+DOMINICA_TOPOLOGY = """
+bi-ethernet     ps          -                           vlan:1780-1789  1000    em0
+bi-ethernet     curaco      curacao#dominica-(in|out)   vlan:1780-1789  1000    em1
+bi-ethernet     aruba       aruba#dominica-(in|out)     vlan:1780-1789  500     em2
+"""
 
 
+LABEL = nsa.Label(nml.ETHERNET_VLAN, '1780-1789')
 
-class GenericTopologyTest:
-
-    def testParseAndFindPath(self):
-
-        for tp in TEST_PATHS:
-
-            paths = self.topo.findPaths(tp['source_stp'], tp['dest_stp'], tp.get('bandwidth'))
-            for path in paths:
-                self.assertIn(path.network_links, tp['paths'])
-            self.assertEquals(len(paths), len(tp['paths']))
+ARUBA_PS   = nsa.STP('aruba',   'ps', nsa.BIDIRECTIONAL, [LABEL])
+BONAIRE_PS = nsa.STP('bonaire', 'ps', nsa.BIDIRECTIONAL, [LABEL])
+CURACAO_PS = nsa.STP('curacao', 'ps', nsa.BIDIRECTIONAL, [LABEL])
 
 
-
-class GOLETopologyTest(GenericTopologyTest, unittest.TestCase):
+class TopologyTest(unittest.TestCase):
 
     def setUp(self):
-        f = StringIO.StringIO(testtopology.TEST_TOPOLOGY)
-        self.topo, _ = gole.parseTopology( [f] )
+        an = nrmparser.parseTopologySpec(StringIO(ARUBA_TOPOLOGY),    'aruba', None)
+        bn = nrmparser.parseTopologySpec(StringIO(BONAIRE_TOPOLOGY),  'bonaire', None)
+        cn = nrmparser.parseTopologySpec(StringIO(CURACAO_TOPOLOGY),  'curacao', None)
+        dn = nrmparser.parseTopologySpec(StringIO(DOMINICA_TOPOLOGY), 'dominica', None)
+
+        self.topology = nml.Topology()
+        for n in [ an, bn, cn, dn ]:
+            self.topology.addNetwork(n)
+
+
+    def testPathfinding(self):
+
+        paths = self.topology.findPaths(ARUBA_PS, BONAIRE_PS, 100)
+#        for p in paths:
+#            print "P", p
+        self.assertEquals(len(paths), 2)
+
+        lengths = [ len(path) for path in paths ]
+        self.assertEquals(lengths, [2,4])
+
+        # to lazy to do structural tests
 

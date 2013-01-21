@@ -126,7 +126,7 @@ class Network:
 
 
     def canSwapLabel(self, label_type):
-        return self.label_type == ETHERNET_VLAN and self.name.statswith('urn:ogf:network:nordu.net:')
+        return label_type == ETHERNET_VLAN and self.name.startswith('urn:ogf:network:nordu.net:')
 
 
 
@@ -147,6 +147,24 @@ class Topology:
             if network.name == network_name:
                 return network
         raise error.TopologyError('No network named %s' % network_name)
+
+
+    def findDemarcationPort(self, network_name, port_name):
+        # finds - if it exists - the demarcation port of a bidirectional port - have to go through unidirectional model
+        port = self.getNetwork(network_name).getPort(port_name)
+        assert isinstance(port, BidirectionalPort), 'Specified port for demarcation find is not bidirectional'
+        if not port.hasRemote():
+            return None
+        if port.inbound_port.remote_network != port.outbound_port.remote_network:
+            log.msg('Bidirectional port leads to multiple networks. Topology screwup?')
+            return None
+        remote_network  = self.getNetwork(port.inbound_port.remote_network)
+        inbound_remote  = port.inbound_port.remote_port
+        outbound_remote = port.outbound_port.remote_port
+        for rp in remote_network.ports:
+            if isinstance(rp, BidirectionalPort) and rp.inbound_port.name == outbound_remote and rp.outbound_port.name == inbound_remote:
+                return remote_network.name, rp.name
+        return None
 
 
     def findPaths(self, source_stp, dest_stp, bandwidth):
@@ -182,7 +200,7 @@ class Topology:
             if source_stp.network == dest_stp.network:
                 # while it possible to cross other network in order to connect to intra-network STPs
                 # it is not something we really want to do in the real world
-                if source_network.canSwapLabels():
+                if source_network.canSwapLabel(source_stp.labels[0].type_):
                     link = nsa.Link(source_stp.network, source_stp.port, dest_stp.port,
                                     source_stp.orientation, dest_stp.orientation, source_stp.labels, dest_stp.labels)
                     return [ [ link ] ]
@@ -197,8 +215,24 @@ class Topology:
                     except nsa.EmptyLabelSet:
                         return [] # no path
             else:
-                pass
+                # ok, time for real pathfinding
+                link_ports = source_network.findPorts(nsa.BIDIRECTIONAL, source_stp.labels, source_stp.port)
+                link_ports = [ port for port in link_ports if port.hasRemote() ] # filter out termination ports
+                links = []
+                for lp in link_ports:
+                    demarcation = self.findDemarcationPort(source_stp.network, lp.name)
+                    if demarcation is None:
+                        continue
+                    d_stp = nsa.STP(demarcation[0], demarcation[1], nsa.BIDIRECTIONAL, source_stp.labels)
+                    sub_links = self.findPaths(d_stp, dest_stp, bandwidth)
+                    if not sub_links:
+                        continue
+                    first_link = nsa.Link(source_stp.network, source_stp.port, lp.name, nsa.BIDIRECTIONAL, nsa.BIDIRECTIONAL, source_stp.labels, source_stp.labels)
+                    for sl in sub_links:
+                        path = [ first_link ] + sl
+                        links.append(path)
 
+                return sorted(links, key=lambda p : len(p)) # sort by length, shortest first
 
         else:
             raise error.TopologyError('Unidirectional path-finding not implemented yet')
