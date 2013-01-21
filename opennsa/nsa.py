@@ -192,8 +192,8 @@ class Link: # intra network link
                (other.network, other.src_port, other.dst_port, other.src_orientation, other.dst_orientation, other.src_labels, other.dst_labels)
 
 
-    def __str__(self):
-        return '<Link %s::%s=%s>' % (self.network, self.source, self.dest)
+    def __repr__(self):
+        return '<Link %s::%s=%s>' % (self.network, self.src_port, self.dst_port)
 
 
 
