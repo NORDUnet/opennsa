@@ -98,7 +98,7 @@ class Label:
                     o1, o2 = i.next()
                     continue
                 label_values.append( ( max(v1,o1), min(v2,o2)) )
-                if v2 < o2:
+                if v2 <= o2:
                     break
                 else:
                     continue

@@ -23,6 +23,7 @@ class LabelParsingTest(unittest.TestCase):
         l234 = nsa.Label('', '2-4')
         l48  = nsa.Label('', '4-8')
 
+        self.assertEquals( l12.intersect(l12).values,   [ (1,2) ] )
         self.assertEquals( l12.intersect(l123).values,  [ (1,2) ] )
         self.assertEquals( l12.intersect(l234).values,  [ (2,2) ] )
         self.assertEquals( l123.intersect(l234).values, [ (2,3) ] )
