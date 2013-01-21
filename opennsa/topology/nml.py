@@ -6,8 +6,12 @@ Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2011-2013)
 """
 
+from twisted.python import log
+
 from opennsa import nsa, error
 
+
+LOG_SYSTEM = 'opennsa.topology'
 
 # Port orientations
 INBOUND  = 'Inbound'
@@ -156,7 +160,7 @@ class Topology:
         if not port.hasRemote():
             return None
         if port.inbound_port.remote_network != port.outbound_port.remote_network:
-            log.msg('Bidirectional port leads to multiple networks. Topology screwup?')
+            log.msg('Bidirectional port leads to multiple networks. Topology screwup?', system=LOG_SYSTEM)
             return None
         remote_network  = self.getNetwork(port.inbound_port.remote_network)
         inbound_remote  = port.inbound_port.remote_port
