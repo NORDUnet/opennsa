@@ -231,8 +231,12 @@ class Topology:
                     demarcation = self.findDemarcationPort(source_stp.network, lp.name)
                     if demarcation is None:
                         continue
-                    d_stp = nsa.STP(demarcation[0], demarcation[1], nsa.BIDIRECTIONAL, source_stp.labels)
-                    sub_links = self.findPaths(d_stp, dest_stp, bandwidth)
+                    if exclude_networks is not None and demarcation[0] in exclude_networks:
+                        continue # don't do loops in path finding
+                    demarcation_stp = nsa.STP(demarcation[0], demarcation[1], nsa.BIDIRECTIONAL, source_stp.labels)
+                    sub_exclude_networks = [ source_network ] if exclude_networks is None else [ source_network ] + exclude_networks
+                    sub_links = self.findPaths(demarcation_stp, dest_stp, bandwidth, sub_exclude_networks)
+                    # if we didn't find any sub paths, just continue
                     if not sub_links:
                         continue
                     first_link = nsa.Link(source_stp.network, source_stp.port, lp.name, nsa.BIDIRECTIONAL, nsa.BIDIRECTIONAL, source_stp.labels, source_stp.labels)
