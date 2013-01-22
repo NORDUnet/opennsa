@@ -214,7 +214,7 @@ class Topology:
                     return [ [ link ] ]
                 else:
                     # in theory we could route to a network with label-swapping capability and route back
-                    # but we don't support such crazyness (yet)
+                    # but we don't support such crazyness
                     try:
                         is_labels = [ sl.intersect(dl) for sl, dl in zip(source_stp.labels, dest_stp.labels) ]
                         link = nsa.Link(source_stp.network, source_stp.port, dest_stp.port,
