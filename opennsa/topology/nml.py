@@ -234,7 +234,7 @@ class Topology:
                     if exclude_networks is not None and demarcation[0] in exclude_networks:
                         continue # don't do loops in path finding
                     demarcation_stp = nsa.STP(demarcation[0], demarcation[1], nsa.BIDIRECTIONAL, source_stp.labels)
-                    sub_exclude_networks = [ source_network ] if exclude_networks is None else [ source_network ] + exclude_networks
+                    sub_exclude_networks = [ source_network.name ] + (exclude_networks or [])
                     sub_links = self.findPaths(demarcation_stp, dest_stp, bandwidth, sub_exclude_networks)
                     # if we didn't find any sub paths, just continue
                     if not sub_links:

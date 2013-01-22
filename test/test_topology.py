@@ -17,6 +17,7 @@ BONAIRE_TOPOLOGY = """
 bi-ethernet     ps          -                           vlan:1780-1789  1000    em0
 bi-ethernet     aruba       aruba#bonaire-(in|out)      vlan:1780-1789  1000    em1
 bi-ethernet     curacao     curacao#bonaire-(in|out)    vlan:1780-1789  1000    em2
+bi-ethernet     dominica    dominica#bonaire-(in|out)   vlan:1780-1789   100    em3
 """
 
 CURACAO_TOPOLOGY = """
@@ -27,8 +28,9 @@ bi-ethernet     dominica    dominica#curacao-(in|out)   vlan:1780-1789  1000    
 
 DOMINICA_TOPOLOGY = """
 bi-ethernet     ps          -                           vlan:1780-1789  1000    em0
-bi-ethernet     curaco      curacao#dominica-(in|out)   vlan:1780-1789  1000    em1
-bi-ethernet     aruba       aruba#dominica-(in|out)     vlan:1780-1789  500     em2
+bi-ethernet     aruba       aruba#dominica-(in|out)     vlan:1780-1789  500     em1
+bi-ethernet     bonaire     bonaire#dominica-(in|out)   vlan:1780-1789  100     em2
+bi-ethernet     curaco      curacao#dominica-(in|out)   vlan:1780-1789  1000    em3
 """
 
 
@@ -57,10 +59,10 @@ class TopologyTest(unittest.TestCase):
         paths = self.topology.findPaths(ARUBA_PS, BONAIRE_PS, 100)
 #        for p in paths:
 #            print "P", p
-        self.assertEquals(len(paths), 2)
+        self.assertEquals(len(paths), 3)
 
         lengths = [ len(path) for path in paths ]
-        self.assertEquals(lengths, [2,4])
+        self.assertEquals(lengths, [2,3,4])
 
         # to lazy to do structural tests
 
