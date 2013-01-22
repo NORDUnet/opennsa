@@ -171,8 +171,7 @@ class Topology:
         return None
 
 
-    def findPaths(self, source_stp, dest_stp, bandwidth):
-        # sanity checks
+    def _checkSTPPairing(self, source_stp, dest_stp):
         if source_stp.orientation is None:
             raise error.TopologyError('Cannot perform path finding, source stp has no orientation')
         if dest_stp.orientation is None:
@@ -184,6 +183,11 @@ class Topology:
             raise error.TopologyError('Cannot connect bidirectional destination with unidirectional source')
         if source_stp.orientation == dest_stp.orientation and source_stp.orientation != nsa.BIDIRECTIONAL:
             raise error.TopologyError('Cannot connect STPs of same unidirectional direction')
+
+
+    def findPaths(self, source_stp, dest_stp, bandwidth, exclude_networks=None):
+
+        self._checkSTPPairing(source_stp, dest_stp)
 
         source_network = self.getNetwork(source_stp.network)
         dest_network   = self.getNetwork(dest_stp.network)
