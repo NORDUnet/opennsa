@@ -78,8 +78,8 @@ class ProviderClient:
 
         service_attributes = CT.TypeValuePairListType()
 
-        src_stp = helper.createSTPType(sp.source_stp, nsa.INGRESS)
-        dst_stp = helper.createSTPType(sp.dest_stp,   nsa.EGRESS)
+        src_stp = helper.createSTPType(sp.source_stp)
+        dst_stp = helper.createSTPType(sp.dest_stp)
 
         path = CT.PathType(sp.directionality, False, src_stp, dst_stp)
 

@@ -24,7 +24,6 @@ LOG_SYSTEM = 'opennsa.nsa'
 # STP orientations
 INGRESS = 'Ingress'
 EGRESS  = 'Egress'
-BIDIRECTIONAL = 'Bidirectional' # NSI1 compat
 
 
 
@@ -134,10 +133,11 @@ class Label:
 
 class STP: # Service Termination Point
 
+    # switch orientation and labels sometime
     def __init__(self, network, port, orientation=None, labels=None):
         assert type(network) is str, 'Invalid network type provided for STP'
         assert type(port) is str, 'Invalid port type provided for STP'
-        assert orientation in (None, INGRESS, EGRESS, BIDIRECTIONAL), 'Invalid orientation (%s) provided for STP' % (orientation)
+        assert orientation in (None, INGRESS, EGRESS), 'Invalid orientation (%s) provided for STP' % (orientation)
         self.network = network
         self.port = port
         self.orientation = orientation
@@ -168,29 +168,27 @@ class STP: # Service Termination Point
 
 class Link: # intra network link
 
-    def __init__(self, network, src_port, dst_port, src_orientation, dst_orientation, src_labels=None, dst_labels=None):
+    def __init__(self, network, src_port, dst_port, src_labels=None, dst_labels=None):
         self.network = network
         self.src_port = src_port
         self.dst_port = dst_port
-        self.src_orientation = src_orientation
-        self.dst_orientation = dst_orientation
         self.src_labels = src_labels
         self.dst_labels = dst_labels
 
 
     def sourceSTP(self):
-        return STP(self.network, self.src_port, self.src_orientation, self.src_labels)
+        return STP(self.network, self.src_port, None, self.src_labels)
 
 
     def destSTP(self):
-        return STP(self.network, self.dst_port, self.dst_orientation, self.dst_labels)
+        return STP(self.network, self.dst_port, None, self.dst_labels)
 
 
     def __eq__(self, other):
         if not isinstance(other, Link):
             return False
-        return (self.network, self.src_port, self.dst_port, self.src_orientation, self.dst_orientation, self.src_labels, self.dst_labels) == \
-               (other.network, other.src_port, other.dst_port, other.src_orientation, other.dst_orientation, other.src_labels, other.dst_labels)
+        return (self.network, self.src_port, self.dst_port, self.src_labels, self.dst_labels) == \
+               (other.network, other.src_port, other.dst_port, other.src_labels, other.dst_labels)
 
 
     def __repr__(self):

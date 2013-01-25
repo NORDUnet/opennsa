@@ -130,8 +130,7 @@ class NSIService:
         if source_stp.network == self.network and dest_stp.network == self.network:
             local_path_info = ( connection_id, self.network, source_stp.port, source_stp.labels, dest_stp.port, dest_stp.labels)
             log.msg('Connection %s: Local link creation: %s %s#%s -> %s#%s' % local_path_info, system=LOG_SYSTEM)
-            link = nsa.Link(self.network, source_stp.port, dest_stp.port, source_stp.orientation, dest_stp.orientation,
-                            source_stp.labels, dest_stp.labels)
+            link = nsa.Link(self.network, source_stp.port, dest_stp.port, source_stp.labels, dest_stp.labels)
             sc = self.setupSubConnection(link, conn, service_parameters)
 
             conn.source_stp.labels = sc.service_parameters.source_stp.labels

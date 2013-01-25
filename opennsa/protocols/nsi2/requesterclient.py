@@ -87,8 +87,8 @@ class RequesterClient:
 
         symmetric = False
 
-        src_stp = helper.createSTPType(sp.source_stp, 'Ingress')
-        dst_stp = helper.createSTPType(sp.dest_stp,   'Egress')
+        src_stp = helper.createSTPType(sp.source_stp)
+        dst_stp = helper.createSTPType(sp.dest_stp)
 
         path = CT.PathType(sp.directionality, symmetric, src_stp, dst_stp)
 
