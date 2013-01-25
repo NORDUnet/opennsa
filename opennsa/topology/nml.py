@@ -13,10 +13,6 @@ from opennsa import nsa, error
 
 LOG_SYSTEM = 'opennsa.topology'
 
-# Port orientations
-INBOUND  = 'Inbound'
-OUTBOUND = 'Outbound'
-
 # Label types
 ETHERNET = 'http://schemas.ogf.org/nml/2012/10/ethernet'
 ETHERNET_VLAN = ETHERNET + '#vlan'
@@ -28,7 +24,7 @@ class Port:
     def __init__(self, name, orientation, labels, bandwidth, remote_network=None, remote_port=None):
 
         assert ':' not in name, 'Invalid port name, must not contain ":"'
-        assert orientation in (INBOUND, OUTBOUND), 'Invalid port orientation: %s' % orientation
+        assert orientation in (nsa.INGRESS, nsa.EGRESS), 'Invalid port orientation: %s' % orientation
         assert (remote_network and remote_port) or not (remote_network and remote_port), 'Must specify remote network and port or none of them'
 
         self.name           = name              # String  ; Base name, no network name or uri prefix
@@ -58,6 +54,10 @@ class Port:
             raise NotImplementedError('Multi-label matching not yet implemented')
 
 
+    def isBidirectional(self):
+        return False
+
+
     def hasRemote(self):
         return self.remote_network != None
 
@@ -71,9 +71,12 @@ class BidirectionalPort:
 
     def __init__(self, name, inbound_port, outbound_port):
         self.name = name
-        self.orientation = nsa.BIDIRECTIONAL
         self.inbound_port  = inbound_port
         self.outbound_port = outbound_port
+
+
+    def isBidirectional(self):
+        return True
 
 
     def canMatchLabels(self, labels):
@@ -119,10 +122,10 @@ class Network:
             raise error.TopologyError('No interface mapping for port %s' % port_name)
 
 
-    def findPorts(self, orientation, labels, exclude=None):
+    def findPorts(self, bidirectionality, labels, exclude=None):
         matching_ports = []
         for port in self.ports:
-            if port.orientation == orientation and port.canMatchLabels(labels):
+            if port.isBidirectional() == bidirectionality and port.canMatchLabels(labels):
                 if exclude and port.name == exclude:
                     continue
                 matching_ports.append(port)
@@ -171,29 +174,27 @@ class Topology:
         return None
 
 
-    def _checkSTPPairing(self, source_stp, dest_stp):
-        if source_stp.orientation is None:
-            raise error.TopologyError('Cannot perform path finding, source stp has no orientation')
-        if dest_stp.orientation is None:
-            raise error.TopologyError('Cannot perform path finding, source stp has no orientation')
-        # consider changing these to something like in (egrees, ingress), (ingress,egress), (bidirectional, bidirectional)
-        if source_stp.orientation == nsa.BIDIRECTIONAL and dest_stp.orientation != nsa.BIDIRECTIONAL:
-            raise error.TopologyError('Cannot connect bidirectional source with unidirectional destination')
-        if dest_stp.orientation == nsa.BIDIRECTIONAL and source_stp.orientation != nsa.BIDIRECTIONAL:
-            raise error.TopologyError('Cannot connect bidirectional destination with unidirectional source')
-        if source_stp.orientation == dest_stp.orientation and source_stp.orientation != nsa.BIDIRECTIONAL:
-            raise error.TopologyError('Cannot connect STPs of same unidirectional direction')
-
-
     def findPaths(self, source_stp, dest_stp, bandwidth, exclude_networks=None):
 
-        self._checkSTPPairing(source_stp, dest_stp)
+        source_port = self.getNetwork(source_stp.network).getPort(source_stp.port)
+        dest_port   = self.getNetwork(dest_stp.network).getPort(dest_stp.port)
 
-        source_network = self.getNetwork(source_stp.network)
-        dest_network   = self.getNetwork(dest_stp.network)
-        source_port    = source_network.getPort(source_stp.port)
-        dest_port      = dest_network.getPort(dest_stp.port)
+        if source_port.isBidirectional() or dest_port.isBidirectional():
+            # at least one of the stps are bidirectional
+            if source_stp.orientation is None:
+                raise error.TopologyError('Cannot perform path finding, source port is bidirectional and source stp has no orientation')
+            if dest_stp.orientation is None:
+                raise error.TopologyError('Cannot perform path finding, destination port is bidirectional and destination port has no orientation')
+            if not source_port.isBidirectional():
+                raise error.TopologyError('Cannot connect bidirectional source with unidirectional destination')
+            if not dest_port.isBidirectional():
+                raise error.TopologyError('Cannot connect bidirectional destination with unidirectional source')
+        else:
+            # both ports are unidirectional
+            if not (source_port.orientation, dest_port.orientation) in ( (nsa.INGRESS, nsa.EGRESS), (nsa.EGRESS, nsa.INGRESS) ):
+                raise error.TopologyError('Cannot connect STPs of same unidirectional direction (%s -> %s)' % (source_port.orientation, dest_port.orientation))
 
+        # these are only really interesting for the initial call, afterwards they just prune
         if not source_port.canMatchLabels(source_stp.labels):
             raise error.TopologyError('Source port cannot match labels for source STP')
         if not dest_port.canMatchLabels(dest_stp.labels):
@@ -203,28 +204,40 @@ class Topology:
         if not dest_port.canProvideBandwidth(bandwidth):
             raise error.TopologyError('Destination port cannot provide enough bandwidth (%i)' % bandwidth)
 
-        if source_stp.orientation == nsa.BIDIRECTIONAL and dest_stp.orientation == nsa.BIDIRECTIONAL:
+        return self._findPathsRecurse(source_stp, dest_stp, bandwidth)
+
+
+    def _findPathsRecurse(self, source_stp, dest_stp, bandwidth, exclude_networks=None):
+
+        source_network = self.getNetwork(source_stp.network)
+        dest_network   = self.getNetwork(dest_stp.network)
+        source_port    = source_network.getPort(source_stp.port)
+        dest_port      = dest_network.getPort(dest_stp.port)
+
+        if not (source_port.canMatchLabels(source_stp.labels) or dest_port.canMatchLabels(dest_stp.labels)):
+            return []
+        if not (source_port.canProvideBandwidth(bandwidth) or dest_port.canProvideBandwidth(bandwidth)):
+            return []
+
+        if source_port.isBidirectional() and dest_port.isBidirectional():
             # bidirectional path finding, easy case first
             if source_stp.network == dest_stp.network:
                 # while it possible to cross other network in order to connect to intra-network STPs
                 # it is not something we really want to do in the real world
-                if source_network.canSwapLabel(source_stp.labels[0].type_):
-                    link = nsa.Link(source_stp.network, source_stp.port, dest_stp.port,
-                                    source_stp.orientation, dest_stp.orientation, source_stp.labels, dest_stp.labels)
+                try:
+                    if source_network.canSwapLabel(source_stp.labels[0].type_):
+                        source_labels = source_port.labels[0].intersect(source_stp.labels)
+                        dest_labels   = dest_port.labels[0].intersect(dest_stp.labels)
+                    else:
+                        source_labels = [ sl.intersect(dl) for sl, dl in zip(source_stp.labels, dest_stp.labels) ]
+                        dest_labels   = source_labels
+                    link = nsa.Link(source_stp.network, source_stp.port, dest_stp.port, source_labels, dest_labels)
                     return [ [ link ] ]
-                else:
-                    # in theory we could route to a network with label-swapping capability and route back
-                    # but we don't support such crazyness
-                    try:
-                        is_labels = [ sl.intersect(dl) for sl, dl in zip(source_stp.labels, dest_stp.labels) ]
-                        link = nsa.Link(source_stp.network, source_stp.port, dest_stp.port,
-                                        source_stp.orientation, dest_stp.orientation, is_labels, is_labels)
-                        return [ [ link ] ]
-                    except nsa.EmptyLabelSet:
-                        return [] # no path
+                except nsa.EmptyLabelSet:
+                    return [] # no path
             else:
                 # ok, time for real pathfinding
-                link_ports = source_network.findPorts(nsa.BIDIRECTIONAL, source_stp.labels, source_stp.port)
+                link_ports = source_network.findPorts(True, source_stp.labels, source_stp.port)
                 link_ports = [ port for port in link_ports if port.hasRemote() ] # filter out termination ports
                 links = []
                 for lp in link_ports:
@@ -233,13 +246,13 @@ class Topology:
                         continue
                     if exclude_networks is not None and demarcation[0] in exclude_networks:
                         continue # don't do loops in path finding
-                    demarcation_stp = nsa.STP(demarcation[0], demarcation[1], nsa.BIDIRECTIONAL, source_stp.labels)
+                    demarcation_stp = nsa.STP(demarcation[0], demarcation[1], nsa.INGRESS, source_stp.labels)
                     sub_exclude_networks = [ source_network.name ] + (exclude_networks or [])
-                    sub_links = self.findPaths(demarcation_stp, dest_stp, bandwidth, sub_exclude_networks)
+                    sub_links = self._findPathsRecurse(demarcation_stp, dest_stp, bandwidth, sub_exclude_networks)
                     # if we didn't find any sub paths, just continue
                     if not sub_links:
                         continue
-                    first_link = nsa.Link(source_stp.network, source_stp.port, lp.name, nsa.BIDIRECTIONAL, nsa.BIDIRECTIONAL, source_stp.labels, source_stp.labels)
+                    first_link = nsa.Link(source_stp.network, source_stp.port, lp.name, source_stp.labels, source_stp.labels)
                     for sl in sub_links:
                         path = [ first_link ] + sl
                         links.append(path)
