@@ -128,9 +128,14 @@ class ResourceUnavailableError(NSIError):
     errorId = '00600'
 
 
-class STPUnavailableError(NSIError):
+class STPUnavailableError(ResourceUnavailableError):
 
     errorId = '00601'
+
+
+class BandwidthUnavailableError(ResourceUnavailableError):
+
+    errorId = '00602'
 
 
 
@@ -149,7 +154,8 @@ NSI_ERROR_CODE_TABLE = {
     '00500' : InternalServerError,
     '00501' : InternalNRMError,
     '00600' : ResourceUnavailableError,
-    '00601' : STPUnavailableError
+    '00601' : STPUnavailableError,
+    '00602' : BandwidthUnavailableError
 }
 
 
