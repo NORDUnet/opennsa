@@ -2,7 +2,7 @@ from StringIO import StringIO
 
 from twisted.trial import unittest
 
-from opennsa import nsa
+from opennsa import nsa, error
 from opennsa.topology import nml, nrmparser
 
 # Ring topology
@@ -36,9 +36,9 @@ bi-ethernet     curaco      curacao#dominica-(in|out)   vlan:1780-1789  1000    
 
 LABEL = nsa.Label(nml.ETHERNET_VLAN, '1780-1789')
 
-ARUBA_PS   = nsa.STP('aruba',   'ps', nsa.BIDIRECTIONAL, [LABEL])
-BONAIRE_PS = nsa.STP('bonaire', 'ps', nsa.BIDIRECTIONAL, [LABEL])
-CURACAO_PS = nsa.STP('curacao', 'ps', nsa.BIDIRECTIONAL, [LABEL])
+ARUBA_PS   = nsa.STP('aruba',   'ps', nsa.INGRESS, [LABEL])
+BONAIRE_PS = nsa.STP('bonaire', 'ps', nsa.INGRESS, [LABEL])
+CURACAO_PS = nsa.STP('curacao', 'ps', nsa.INGRESS, [LABEL])
 
 
 class TopologyTest(unittest.TestCase):
@@ -63,6 +63,17 @@ class TopologyTest(unittest.TestCase):
 
         lengths = [ len(path) for path in paths ]
         self.assertEquals(lengths, [2,3,4])
-
         # to lazy to do structural tests
+
+
+        # test bandwidth
+        paths = self.topology.findPaths(ARUBA_PS, BONAIRE_PS, 300)
+        self.assertEquals(len(paths), 2)
+
+        paths = self.topology.findPaths(ARUBA_PS, BONAIRE_PS, 800)
+        self.assertEquals(len(paths), 1)
+
+
+    def testNoAvailableBandwidth(self):
+        self.failUnlessRaises(error.BandwidthUnavailableError, self.topology.findPaths, ARUBA_PS, BONAIRE_PS, 1200)
 
