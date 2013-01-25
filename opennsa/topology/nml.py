@@ -200,9 +200,9 @@ class Topology:
         if not dest_port.canMatchLabels(dest_stp.labels):
             raise error.TopologyError('Desitination port cannot match labels for destination STP')
         if not source_port.canProvideBandwidth(bandwidth):
-            raise error.TopologyError('Source port cannot provide enough bandwidth (%i)' % bandwidth)
+            raise error.BandwidthUnavailableError('Source port cannot provide enough bandwidth (%i)' % bandwidth)
         if not dest_port.canProvideBandwidth(bandwidth):
-            raise error.TopologyError('Destination port cannot provide enough bandwidth (%i)' % bandwidth)
+            raise error.BandwidthUnavailableError('Destination port cannot provide enough bandwidth (%i)' % bandwidth)
 
         return self._findPathsRecurse(source_stp, dest_stp, bandwidth)
 
