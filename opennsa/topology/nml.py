@@ -216,7 +216,7 @@ class Topology:
 
         if not (source_port.canMatchLabels(source_stp.labels) or dest_port.canMatchLabels(dest_stp.labels)):
             return []
-        if not (source_port.canProvideBandwidth(bandwidth) or dest_port.canProvideBandwidth(bandwidth)):
+        if not (source_port.canProvideBandwidth(bandwidth) and dest_port.canProvideBandwidth(bandwidth)):
             return []
 
         if source_port.isBidirectional() and dest_port.isBidirectional():
