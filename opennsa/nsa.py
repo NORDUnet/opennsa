@@ -160,7 +160,8 @@ class STP: # Service Termination Point
         if self.orientation:
             base += '/' + self.orientation
         if self.labels:
-            base += '#' + self.label
+            print self.labels
+            base += '#' + ','.join( [ str(label) for label in self.labels ] )
         return base
 
 
