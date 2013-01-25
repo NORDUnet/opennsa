@@ -1,5 +1,7 @@
 Current issues:
 
+- Make replyTo optional (assuming sync. query)
+
 - Better aggregate error handling
 - Better logging in aggregation failures
 - NSI2 Detail Query
