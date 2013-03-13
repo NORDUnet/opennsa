@@ -109,6 +109,10 @@ class Label:
         return Label(self.type_, ls)
 
 
+    def labelValue(self):
+        vs = [ str(v1) if v1 == v2 else str(v1) + '-' + str(v2) for v1,v2 in self.values ]
+        return ','.join(vs)
+
     def singleValue(self):
         return len(self.values) == 1 and self.values[0] == self.values[1]
 
@@ -126,8 +130,7 @@ class Label:
 
 
     def __repr__(self):
-        vs = [ str(v1) if v1 == v2 else str(v1) + '-' + str(v2) for v1,v2 in self.values ]
-        return '<Label %s:%s>' % (self.type_, ','.join( vs ) )
+        return '<Label %s:%s>' % (self.type_, self.labelValue())
 
 
 
