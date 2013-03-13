@@ -28,7 +28,7 @@ class Port:
         assert (remote_network and remote_port) or not (remote_network and remote_port), 'Must specify remote network and port or none of them'
 
         self.name           = name              # String  ; Base name, no network name or uri prefix
-        self.orientation    = orientation       # Must be INBOUND or OUTBOUND
+        self.orientation    = orientation       # Must be INGRESS or EGRESS
         self.labels         = labels            # [ nsa.Label ]  ; can be empty
         self.bandwidth      = bandwidth         # Integer  ; in Mbps
         self.remote_network = remote_network    # String
