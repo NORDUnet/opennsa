@@ -69,8 +69,9 @@ class Port:
 
 class BidirectionalPort:
 
-    def __init__(self, name, inbound_port, outbound_port):
+    def __init__(self, name, labels, inbound_port, outbound_port):
         self.name = name
+        self.labels = labels
         self.inbound_port  = inbound_port
         self.outbound_port = outbound_port
 
@@ -219,6 +220,8 @@ class Topology:
         if not (source_port.canProvideBandwidth(bandwidth) and dest_port.canProvideBandwidth(bandwidth)):
             return []
 
+        # this code heavily relies on the assumption that ports only have one label
+
         if source_port.isBidirectional() and dest_port.isBidirectional():
             # bidirectional path finding, easy case first
             if source_stp.network == dest_stp.network:
@@ -229,7 +232,7 @@ class Topology:
                         source_labels = source_port.labels[0].intersect(source_stp.labels)
                         dest_labels   = dest_port.labels[0].intersect(dest_stp.labels)
                     else:
-                        source_labels = [ sl.intersect(dl) for sl, dl in zip(source_stp.labels, dest_stp.labels) ]
+                        source_labels = source_port.labels[0].intersect(dest_port.labels[0]).intersect(source_port.labels[0]).intersect(dest_port.labels[0])
                         dest_labels   = source_labels
                     link = nsa.Link(source_stp.network, source_stp.port, dest_stp.port, source_labels, dest_labels)
                     return [ [ link ] ]
