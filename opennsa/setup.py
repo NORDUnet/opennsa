@@ -6,7 +6,7 @@ from twisted.python import log
 from twisted.web import resource, server
 from twisted.application import internet, service as twistedservice
 
-from opennsa import config, logging, registry, nsiservice, viewresource
+from opennsa import config, logging, registry, database, nsiservice, viewresource
 from opennsa.topology import nrmparser, nml
 from opennsa.protocols import nsi2, discovery
 
@@ -63,8 +63,11 @@ class OpenNSAService(twistedservice.MultiService):
 
         vc = self.vc
 
-        topology = nml.Topology()
+        # database
+        database.setupDatabase(vc[config.DATABASE], vc[config.DATABASE_USER], vc[config.DATABASE_PASSWORD])
 
+        # topology
+        topology = nml.Topology()
         # need to add check for nrm file, no longer just nrm really
         ns_agent = None # fixme
         network = nrmparser.parseTopologySpec( open( vc[config.NRM_MAP_FILE] ), vc[config.NETWORK_NAME], ns_agent)

@@ -39,7 +39,7 @@ class LabelComposite(CompositeCaster):
 
 # setup
 
-def setupDatabase(user, password, database):
+def setupDatabase(database, user, password=None):
 
     # hack on, use psycopg2 connection to register postgres label -> nsa label adaptation
     import psycopg2

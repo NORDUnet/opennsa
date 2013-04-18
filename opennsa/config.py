@@ -38,10 +38,16 @@ TLS              = 'tls'
 TOPOLOGY_FILE    = 'topology'
 NRM_MAP_FILE     = 'nrmmap'
 
-KEY              = 'key'         # mandatory, if tls is set
-CERTIFICATE      = 'certificate' # mandatory, if tls is set
-CERTIFICATE_DIR  = 'certdir'     # mandatory (but dir can be empty)
-VERIFY_CERT      = 'verify'
+# database
+DATABASE                = 'database'    # mandatory
+DATABASE_USER           = 'dbuser'        # mandatory
+DATABASE_PASSWORD       = 'dbpassword'    # can be none (os auth)
+
+# tls
+KEY                     = 'key'         # mandatory, if tls is set
+CERTIFICATE             = 'certificate' # mandatory, if tls is set
+CERTIFICATE_DIR         = 'certdir'     # mandatory (but dir can be empty)
+VERIFY_CERT             = 'verify'
 
 # generic ssh stuff, don't use directly
 _SSH_HOST               = 'host'
@@ -163,6 +169,23 @@ def readVerifyConfig(cfg):
     except ConfigParser.NoOptionError:
         vc[PORT] = DEFAULT_TLS_PORT if vc[TLS] else DEFAULT_TCP_PORT
 
+    # database
+    try:
+        vc[DATABASE] = cfg.get(BLOCK_SERVICE, DATABASE)
+    except ConfigParser.NoOptionError:
+        raise ConfigurationError('No database specified in configuration file (mandatory)')
+
+    try:
+        vc[DATABASE_USER] = cfg.get(BLOCK_SERVICE, DATABASE_USER)
+    except ConfigParser.NoOptionError:
+        raise ConfigurationError('No database user specified in configuration file (mandatory)')
+
+    try:
+        vc[DATABASE_PASSWORD] = cfg.get(BLOCK_SERVICE, DATABASE_PASSWORD)
+    except ConfigParser.NoOptionError:
+        vc[DATABASE_PASSWORD] = None
+
+    # tls
     if vc[TLS]:
         try:
             hostkey  = cfg.get(BLOCK_SERVICE, KEY)
