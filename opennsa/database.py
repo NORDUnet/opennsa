@@ -12,6 +12,8 @@ Copyright: NORDUnet (2011-2013)
 from twisted.enterprise import adbapi
 
 from psycopg2.extensions import adapt, register_adapter, AsIs
+from psycopg2.extras import CompositeCaster, register_composite
+
 from twistar.registry import Registry
 from twistar.dbobject import DBObject
 
@@ -29,10 +31,22 @@ def adaptLabel(label):
 register_adapter(nsa.Label, adaptLabel)
 
 
+class LabelComposite(CompositeCaster):
+    def make(self, values):
+        return nsa.Label(*values)
+
+
 
 # setup
 
 def setupDatabase(user, password, database):
+
+    # hack on, use psycopg2 connection to register postgres label -> nsa label adaptation
+    import psycopg2
+    conn = psycopg2.connect(user=user, password=password, database=database)
+    cur = conn.cursor()
+    register_composite('label', cur, globally=True, factory=LabelComposite)
+    conn.close()
 
     Registry.DBPOOL = adbapi.ConnectionPool('psycopg2', user=user, password=password, database=database)
 
