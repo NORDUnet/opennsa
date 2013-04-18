@@ -282,7 +282,9 @@ class ServiceParameters:
                  'end_time'   : self.end_time,
                  'source_stp' : self.source_stp.urn(),
                  'dest_stp'   : self.dest_stp.urn(),
-                 'stps'       : self.stps        }
+                 'stps'       : self.stps,
+                 'bandwidth'  : self.bandwidth
+                }
 
 
     def __str__(self):
