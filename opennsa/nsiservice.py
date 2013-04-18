@@ -13,7 +13,7 @@ from twisted.python import log, failure
 from twisted.internet import reactor, defer, task
 
 from opennsa.interface import NSIServiceInterface
-from opennsa import nsa, error, registry, subscription, connection
+from opennsa import nsa, error, registry, subscription, database, state, connection
 
 
 
@@ -35,8 +35,6 @@ class NSIService:
         # get own nsa from topology
         self.nsa = self.topology.getNetwork(self.network).nsa
 
-        self.connections = {} # persistence, ha!
-
         self.service_registry.registerEventHandler(registry.RESERVE,   self.reserve,   registry.SYSTEM_SERVICE)
         self.service_registry.registerEventHandler(registry.PROVISION, self.provision, registry.SYSTEM_SERVICE)
         self.service_registry.registerEventHandler(registry.RELEASE,   self.release,   registry.SYSTEM_SERVICE)
@@ -48,11 +46,23 @@ class NSIService:
 
     def getConnection(self, requester_nsa, connection_id):
 
-        conn = self.connections.get(requester_nsa, {}).get(connection_id, None)
-        if conn is None:
-            raise error.ConnectionNonExistentError('No connection with id %s for NSA with address %s' % (connection_id, requester_nsa))
-        else:
-            return conn
+        def gotResult(connections):
+            # we should get 0 or 1 here since connection id is unique
+            if len(connections) == 1:
+                return connections[0]
+            elif len(connections) == 0:
+                return defer.fail( error.ConnectionNonExistentError('No connection with id %s' % connection_id) )
+            else:
+                raise AssertionError('Got multiple connections for a single connection id')
+
+        d = database.findBy(connection_id=connection_id)
+        d.addCallback(gotResult)
+        return d
+
+#        if conn is None:
+#            raise error.ConnectionNonExistentError('No connection with id %s for NSA with address %s' % (connection_id, requester_nsa))
+#        else:
+#            return conn
 
 
     def setupSubConnection(self, link, conn, service_parameters):
@@ -98,15 +108,16 @@ class NSIService:
 
     # command functionality
 
+    @defer.inlineCallbacks
     def reserve(self, requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters, sub):
 
-        # --
-
         log.msg('', system=LOG_SYSTEM)
-        log.msg('Connection %s. Reserve request from %s.' % (connection_id, requester_nsa), system=LOG_SYSTEM)
+        log.msg('Reserve request. NSA: %s. Connection ID: %s' % (requester_nsa, connection_id), system=LOG_SYSTEM)
 
-        if connection_id in self.connections.get(requester_nsa, {}):
-            return defer.fail(error.ConnectionExistsError('Connection with id %s already exists' % connection_id))
+        # rethink with modify...
+        connection_exists = yield database.Connection.exists(['connection_id = ?', connection_id])
+        if connection_exists:
+            raise error.ConnectionExistsError('Connection with id %s already exists' % connection_id)
 
         source_stp = service_parameters.source_stp
         dest_stp   = service_parameters.dest_stp
@@ -115,13 +126,24 @@ class NSIService:
         self.topology.getNetwork(source_stp.network)
         self.topology.getNetwork(dest_stp.network)
 
+        # if (partial) local link, ensure that ports exists
+        if source_stp.network == self.network:
+            source_port = self.topology.getNetwork(self.network).getPort(source_stp.port)
+        if dest_stp.network == self.network:
+            dest_port = self.topology.getNetwork(self.network).getPort(dest_stp.port)
+
         if source_stp == dest_stp:
-            return defer.fail(error.TopologyError('Cannot connect %s to itself.' % source_stp))
+            raise error.TopologyError('Cannot connect %s to itself.' % source_stp)
+
+        conn = database.Connection(connection_id=connection_id, revision=0, global_reservation_id=global_reservation_id, description=description,
+                                   state=state.INITIAL, nsa=requester_nsa,
+                                   source_network=source_stp.network, source_port=source_stp.port, source_labels=source_stp.labels,
+                                   dest_network=dest_stp.network, dest_port=dest_stp.port, dest_labels=dest_stp.labels,
+                                   start_time=service_parameters.start_time.isoformat(), end_time=service_parameters.end_time.isoformat(),
+                                   bandwidth=service_parameters.bandwidth)
+        yield conn.save()
 
         # since STPs are candidates here, we need to change these later on
-        conn = connection.Connection(self.service_registry, requester_nsa, connection_id, source_stp, dest_stp, service_parameters, global_reservation_id, description)
-
-        self.connections.setdefault(requester_nsa, {})[conn.connection_id] = conn
 
         # figure out nature of request
 
@@ -202,7 +224,7 @@ class NSIService:
         # now reserve connections needed to create path
         d = task.deferLater(reactor, 0, conn.reserve)
         d.addBoth(reserveResponse)
-        return defer.succeed(None)
+        yield d
 
 
     def provision(self, requester_nsa, provider_nsa, session_security_attr, connection_id, sub):
