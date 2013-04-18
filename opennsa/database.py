@@ -26,7 +26,7 @@ LOG_SYSTEM = 'opennsa.Database'
 
 # psycopg2 plumming to get automatic adaption
 def adaptLabel(label):
-    return AsIs("(%s, %s)::label" % (adapt(label.type_), adapt(label.labelValue)))
+    return AsIs("(%s, %s)::label" % (adapt(label.type_), adapt(label.labelValue())))
 
 register_adapter(nsa.Label, adaptLabel)
 
