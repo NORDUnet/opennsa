@@ -32,7 +32,7 @@ class EmptyLabelSet(Exception):
 
 
 
-class Label:
+class Label(object):
 
     def __init__(self, type_, values=None):
 
