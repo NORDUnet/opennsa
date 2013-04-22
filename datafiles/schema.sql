@@ -1,4 +1,5 @@
 -- OpenNSA SQL Schema (PostgreSQL)
+-- consider some generic key-value thing for future usage
 
 CREATE TYPE label AS (
     label_type      text,
@@ -12,8 +13,10 @@ CREATE TABLE connections (
     revision                integer                     NOT NULL,
     global_reservation_id   text,
     description             text,
-    state                   text                        NOT NULL,
     nsa                     text                        NOT NULL,
+    reservation_state       text                        NOT NULL,
+    provision_state         text                        NOT NULL,
+    activation_state        text                        NOT NULL,
     source_network          text                        NOT NULL,
     source_port             text                        NOT NULL,
     source_labels           label[],
