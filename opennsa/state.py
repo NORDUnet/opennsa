@@ -26,6 +26,7 @@ MODIFY_CANCEL_FAILED    = 'ModifyCancelFailed'  # R
 MODIFYING               = 'Modifying'           # R
 MODIFY_FAILED           = 'ModifyFailed'        # R
 
+# Provisio
 SCHEDULED               = 'Scheduled'           #   P
 PROVISIONING            = 'Provisioning'        #   P
 PROVISIONED             = 'Provisioned'         #   P
@@ -80,6 +81,12 @@ ACTIVATION_TRANSITIONS = {
     DEACTIVATING    : [ INACTIVE                ]
 }
 
+LIFECYCLE_TRANSITIONS = {
+    INITIAL         : [ TERMINATING ],
+    TERMINATING     : [ TERMINATED  ],
+    TERMINATED      : []
+}
+
 
 class AbstractStateMachine:
 
@@ -129,6 +136,85 @@ class ActivationState(AbstractStateMachine):
     def __init__(self, state=INACTIVE):
         self._state = state
 
+
+# -- new stuff
+
+def _switchState(transition_schema, old_state, new_state):
+    if new_state in transition_schema[old_state]:
+        return
+    else:
+        raise error.InternalServerError('Transition from state %s to %s not allowed' % (old_state, new_state))
+
+def reserving(conn):
+    _switchState(RESERVE_TRANSITIONS, conn.reservation_state, RESERVING)
+    conn.reservation_state = RESERVING
+    return conn.save()
+
+
+def reserved(conn):
+    _switchState(RESERVE_TRANSITIONS, conn.reservation_state, RESERVED)
+    conn.reservation_state = RESERVED
+    return conn.save()
+
+
+def provisioning(conn):
+    _switchState(PROVISION_TRANSITIONS, conn.provision_state, PROVISIONING)
+    conn.provision_state = PROVISIONING
+    return conn.save()
+
+def provisioned(conn):
+    _switchState(PROVISION_TRANSITIONS, conn.provision_state, PROVISIONED)
+    conn.provision_state = PROVISIONED
+    return conn.save()
+
+def releasing(conn):
+    _switchState(PROVISION_TRANSITIONS, conn.provision_state, RELEASING)
+    conn.provision_state = RELEASING
+    return conn.save()
+
+def scheduled(conn):
+    _switchState(PROVISION_TRANSITIONS, conn.provision_state, SCHEDULED)
+    conn.provision_state = SCHEDULED
+    return conn.save()
+
+
+
+def activating(conn):
+    _switchState(ACTIVATION_TRANSITIONS, conn.activation_state, ACTIVATING)
+    conn.activation_state = ACTIVATING
+    return conn.save()
+
+def activate(conn):
+    _switchState(ACTIVATION_TRANSITIONS, conn.activation_state, ACTIVATE)
+    conn.activation_state = ACTIVATE
+    return conn.save()
+
+def deactivating(conn):
+    _switchState(ACTIVATION_TRANSITIONS, conn.activating_state, DEACTIVATING)
+    conn.activation_state = DEACTIVATING
+    return conn.save()
+
+def inactive(conn):
+    _switchState(ACTIVATION_TRANSITIONS, conn.activating_state, INACTIVE)
+    conn.activation_state = INACTIVE
+    return conn.save()
+
+
+
+# --
+
+def terminating(conn):
+    _switchState(LIFECYCLE_TRANSITIONS, conn.lifecycle_state, TERMINATING)
+    conn.lifecycle_state = TERMINATING
+    return conn.save()
+
+def terminated(conn):
+    _switchState(LIFECYCLE_TRANSITIONS, conn.lifecycle_state, TERMINATED)
+    conn.lifecycle_state = TERMINATED
+    return conn.save()
+
+
+# --
 
 
 class NSI2StateMachine:

@@ -13,6 +13,8 @@ Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2011-2012)
 """
 
+#import uuid
+import random
 import datetime
 
 from dateutil.tz import tzutc
@@ -20,165 +22,233 @@ from dateutil.tz import tzutc
 from twisted.python import log
 from twisted.internet import defer
 
-from opennsa import error, state
+from opennsa import error, state, nsa, database
 from opennsa.backends.common import scheduler
 
+from twistar.dbobject import DBObject
 
 
-class GenericConnection:
 
-    def __init__(self, source_port, dest_port, service_parameters, network_name, calendar, curator, log_system, connection_manager):
-        self.source_port = source_port
-        self.dest_port  = dest_port
-        self.service_parameters = service_parameters
-        self.network_name = network_name
-        self.calendar = calendar
+class Simplebackendconnection(DBObject):
+    pass
 
-        self._curator = curator
+
+
+class SimpleBackend:
+
+#    def __init__(self, source_port, dest_port, service_parameters, network_name, calendar, curator, log_system, connection_manager):
+    def __init__(self, network, connection_manager, log_system):
+#        self.source_port = source_port
+#        self.dest_port  = dest_port
+#        self.service_parameters = service_parameters
+#        self.network_name = network_name
+#        self.calendar = calendar
+#
+#        self._curator = curator
         self.log_system = log_system
+#        self.connection_manager = connection_manager
+#
+#        self.scheduler = scheduler.TransitionScheduler()
+#        self.state = state.NSI2StateMachine()
+
+        self.network = network
         self.connection_manager = connection_manager
 
-        self.scheduler = scheduler.TransitionScheduler()
-        self.state = state.NSI2StateMachine()
+        self.schedulers = {}
 
 
-    def curator(self):
-        return self._curator
+#    def curator(self):
+#        return self._curator
 
 
-    def stps(self):
-        return self.service_parameters.source_stp, self.service_parameters.dest_stp
+#    def stps(self):
+#        return self.service_parameters.source_stp, self.service_parameters.dest_stp
+
+        # need to build schedule here
 
 
-    def logStateUpdate(self, state_msg):
-        log.msg('Link: %s, %s -> %s : %s.' % (id(self), self.source_port, self.dest_port, state_msg), system=self.log_system)
+    @defer.inlineCallbacks
+    def _getConnection(self, connection_id, requester_nsa):
+        # add security check sometime
+        conns = yield Simplebackendconnection.findBy(connection_id=connection_id)
+        if len(conns) == 0:
+            raise error.ConnectionNonExistentError('No connection with id %s' % connection_id)
+        defer.returnValue( conns[0] ) # we only get one, unique in db
 
 
-    def reserve(self):
+    def logStateUpdate(self, conn, state_msg):
+        log.msg('Link: %s, %s -> %s : %s.' % (conn.connection_id, conn.source_port, conn.dest_port, state_msg), system=self.log_system)
+
+
+    @defer.inlineCallbacks
+    def reserve(self, requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_params):
+
+        # should perhaps verify nsa, but not that important
 
         # return defer.fail( error.InternalNRMError('test reservation failure') )
 
-        def scheduled():
-            self.state.scheduled()
-            self.scheduler.scheduleTransition(self.service_parameters.end_time, self.terminate, state.TERMINATING)
-            self.logStateUpdate('SCHEDULED')
+        if connection_id:
+            raise ValueError('Cannot handle cases with existing connection id')
+            #conns = yield Simplebackendconnection.findBy(connection_id=connection_id)
 
-        self.state.reserving()
-        self.logStateUpdate('RESERVING')
-        self.state.reserved()
-        self.logStateUpdate('RESERVED')
-        self.scheduler.scheduleTransition(self.service_parameters.start_time, scheduled, state.SCHEDULED)
-        return defer.succeed(self)
+        # need to check schedule
+
+        #connection_id = str(uuid.uuid1())
+        connection_id = str(random.randint(10000,99999))
+
+        source_stp = service_params.source_stp
+        dest_stp   = service_params.dest_stp
+
+        # resolve nrm ports from the topology
+
+        if len(source_stp.labels) == 0:
+            raise error.TopologyError('Source STP must specify a label')
+        if len(dest_stp.labels) == 0:
+            raise error.TopologyError('Destination STP must specify a label')
+
+        if len(source_stp.labels) > 1:
+            raise error.TopologyError('Source STP specifies more than one label. Only one label is currently supported')
+        if len(dest_stp.labels) > 1:
+            raise error.TopologyError('Destination STP specifies more than one label. Only one label is currently supported')
+
+        # choose a label to use :-)
+        src_label_value = str( source_stp.labels[0].randomLabel() )
+        dst_label_value = str( dest_stp.labels[0].randomLabel() )
+
+#        nrm_src_port = self.topology.getNetwork(self.network).getInterface(link.src_port) + '.' + src_label_value
+#        nrm_dst_port = self.topology.getNetwork(self.network).getInterface(link.dst_port) + '.' + dst_label_value
+
+        # update the connection service params to say which label was choosen here
+        src_labels = [ nsa.Label(source_stp.labels[0].type_, src_label_value) ]
+        dst_labels = [ nsa.Label(dest_stp.labels[0].type_, dst_label_value) ]
+
+        conn = Simplebackendconnection(connection_id=connection_id, revision=0, global_reservation_id=global_reservation_id, description=description, nsa=provider_nsa,
+                                       reserve_time=datetime.datetime.utcnow(),
+                                       reservation_state=state.INITIAL, provision_state=state.SCHEDULED, activation_state=state.INACTIVE, lifecycle_state=state.INITIAL,
+                                       source_network=source_stp.network, source_port=source_stp.port, source_labels=src_labels,
+                                       dest_network=dest_stp.network, dest_port=dest_stp.port, dest_labels=dst_labels,
+                                       start_time=service_params.start_time, end_time=service_params.end_time,
+                                       bandwidth=service_params.bandwidth)
+        yield conn.save()
 
 
-    def provision(self):
+        state.reserving(conn)
+        self.logStateUpdate(conn, 'RESERVING')
+        state.reserved(conn)
+        self.logStateUpdate(conn, 'RESERVED')
+        # need to schedule 2PC timeout
+
+        self.schedulers[connection_id] = scheduler.TransitionScheduler()
+        self.schedulers[connection_id].scheduleTransition(conn.end_time, self.terminate, state.TERMINATING)
+
+        sc_source_stp = nsa.STP(source_stp.network, source_stp.port, labels=src_labels)
+        sc_dest_stp   = nsa.STP(dest_stp.network,   dest_stp.port,   labels=dst_labels)
+        sp = nsa.ServiceParameters(service_params.start_time, service_params.end_time, sc_source_stp, sc_dest_stp, service_params.bandwidth)
+        rig = (global_reservation_id, description, connection_id, sp)
+        defer.returnValue(rig)
+
+
+    @defer.inlineCallbacks
+    def provision(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
         def activationSuccess(_):
             self.scheduler.scheduleTransition(self.service_parameters.end_time, self.terminate, state.TERMINATING)
             self.state.active()
-            self.logStateUpdate('ACTIVE')
+            self.logStateUpdate(conn, 'ACTIVE')
 
         def activationFailure(err):
             log.msg('Error setting up connection: %s' % err.getErrorMessage())
             self.state.inactive()
-            self.logStateUpdate('INACTIVE')
+            self.logStateUpdate(conn, 'INACTIVE')
             return err
 
-        def doActivate():
-            self.state.activating()
-            self.logStateUpdate('ACTIVATING')
+        def doActivate(conn):
+            #self.state.activating()
+            state.activating(conn)
+            self.logStateUpdate(conn, 'ACTIVATING')
 
-            d = self.connection_manager.setupLink(self.source_port, self.dest_port)
+            d = self.connection_manager.setupLink(conn.source_port, conn.dest_port)
             d.addCallbacks(activationSuccess, activationFailure)
             return d
 
+
+        conn = yield self._getConnection(connection_id, requester_nsa)
+
         dt_now = datetime.datetime.now(tzutc())
-        if self.service_parameters.end_time <= dt_now:
-            return defer.fail(error.ConnectionGone('Cannot provision connection after end time (end time: %s, current time: %s).' % (self.service_parameters.end_time, dt_now)))
+        if conn.end_time <= dt_now:
+            raise error.ConnectionGone('Cannot provision connection after end time (end time: %s, current time: %s).' % (conn.end_time, dt_now))
 
-        self.state.provisioning()
-        self.scheduler.cancelTransition() # cancel any pending scheduled switch
+        yield state.provisioning(conn)
+        self.logStateUpdate(conn, 'PROVISIONED')
 
-        if self.service_parameters.start_time <= dt_now:
-            defer_provision = doActivate()
+        self.schedulers[connection_id].cancelTransition()
+
+        if conn.start_time <= dt_now:
+            d = doActivate(conn)
         else:
-            defer_provision = self.scheduler.scheduleTransition(self.service_parameters.start_time, doActivate, state.ACTIVATING)
+            self.schedulers[connection_id].scheduleTransition(conn.start_time, lambda : doActivate(conn), state.ACTIVATING)
 
-        self.state.provisioned()
-        self.logStateUpdate('PROVISIONED')
-        return defer.succeed(self)
-
-
-
-    def release(self):
-
-        def deactivateSuccess(_):
-            self.scheduler.scheduleTransition(self.service_parameters.end_time, self.terminating, state.TERMINATING)
-            self.state.inactive()
-            self.logStateUpdate('INACTIVE')
-            self.state.released()
-            self.logStateUpdate('RELEASED')
-            return self
-
-        def deactivateFailure(err):
-            log.msg('Error deactivating connection: %s' % err.getErrorMessage())
-            self.state.terminatedFailure()
-            self.logStateUpdate('TERMINATED FAILURE')
-            return err
-
-        self.state.releasing()
-        self.logStateUpdate('RELEASING')
-        self.scheduler.cancelTransition()
-
-        # we need to handle activating somehow...
-        if self.state.isActive():
-            self.state.deactivating()
-            self.logStateUpdate('DEACTIVATING')
-            d = self.connection_manager.teardownLink(self.source_port, self.dest_port)
-            d.addCallbacks(deactivateSuccess, deactivateFailure)
-        else:
-            self.state.released()
-            d = defer.succeed(self)
-
-        return d
+        yield state.provisioned(conn)
+        self.logStateUpdate(conn, 'PROVISIONED')
+        defer.returnValue(conn.connection_id)
 
 
-    def terminate(self):
+    @defer.inlineCallbacks
+    def release(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
+        conn = yield self._getConnection(connection_id, requester_nsa)
+
+        state.releasing(conn)
+        self.logStateUpdate(conn, 'RELEASING')
+
+        self.schedulers[connection_id].cancelTransition()
+
+        if conn.activation_state == state.ACTIVE:
+            yield state.deactivating(conn)
+            self.logStateUpdate(conn, state.DEACTIVATING)
+            try:
+                yield self.connection_manager.teardownLink(self.source_port, self.dest_port)
+                yield state.inactive(conn)
+            except Exception as e:
+                log.msg('Error terminating connection: %s' % r.getErrorMessage())
+
+        self.schedulers[connection_id].scheduleTransition(conn.end_time, self.terminate, state.TERMINATING)
+
+        state.scheduled(conn)
+        self.logStateUpdate(conn, 'RELEASED')
+        defer.returnValue(conn.connection_id)
+
+
+    @defer.inlineCallbacks
+    def terminate(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
         # return defer.fail( error.InternalNRMError('test termination failure') )
 
-        def removeCalendarEntry():
-            self.calendar.removeConnection(self.source_port, self.service_parameters.start_time, self.service_parameters.end_time)
-            self.calendar.removeConnection(self.dest_port  , self.service_parameters.start_time, self.service_parameters.end_time)
+        conn = yield self._getConnection(connection_id, requester_nsa)
 
-        def terminateSuccess(_):
-            removeCalendarEntry()
-            self.state.terminatedEndtime()
-            self.logStateUpdate('TERMINATED ENDTIME')
-            return defer.succeed(self)
+        if conn.lifecycle_state == state.TERMINATED:
+            defer.returnValue(conn.cid)
 
-        def terminateFailure(err):
-            log.msg('Error terminating connection: %s' % err.getErrorMessage())
-            removeCalendarEntry() # This might be wrong :-/
-            self.state.terminatedFailure()
-            self.logStateUpdate('TERMINATED FAILURE')
-            return err
+        yield state.terminating(conn)
+        self.logStateUpdate(conn, state.TERMINATING)
 
-        if self.state.isTerminated():
-            return defer.succeed(self)
+        self.schedulers[connection_id].cancelTransition()
 
-        self.state.terminating()
-        self.logStateUpdate(state.TERMINATING)
-        self.scheduler.cancelTransition()
+        if conn.activation_state == state.ACTIVE:
+            yield state.deactivating(conn)
+            self.logStateUpdate(conn, state.DEACTIVATING)
+            try:
+                yield self.connection_manager.teardownLink(self.source_port, self.dest_port)
+                yield state.inactive(conn)
+                # we can only remove resource reservation entry if we succesfully shut down the link :-(
+                self.calendar.removeConnection(self.source_port, self.service_parameters.start_time, self.service_parameters.end_time)
+                self.calendar.removeConnection(self.dest_port  , self.service_parameters.start_time, self.service_parameters.end_time)
+            except Exception as e:
+                log.msg('Error terminating connection: %s' % r.getErrorMessage())
 
-        if self.state.isActive():
-            self.state.deactivating()
-            self.logStateUpdate(state.DEACTIVATING)
-            d = self.connection_manager.teardownLink(self.source_port, self.dest_port)
-            d.addCallbacks(terminateSuccess, terminateFailure)
-            return d
-        else:
-            return terminateSuccess(None)
+        yield state.terminated(conn)
+        self.logStateUpdate(conn, 'TERMINATED')
+        defer.returnValue(conn.connection_id)
+
 
 
     def query(self, query_filter):
