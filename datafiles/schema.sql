@@ -7,16 +7,19 @@ CREATE TYPE label AS (
 );
 
 
-CREATE TABLE connections (
+-- publically reachable connections
+CREATE TABLE service_connections (
     id                      serial                      PRIMARY KEY,
     connection_id           text                        NOT NULL UNIQUE,
     revision                integer                     NOT NULL,
     global_reservation_id   text,
     description             text,
     nsa                     text                        NOT NULL,
+    reserve_time            timestamp with time zone    NOT NULL,
     reservation_state       text                        NOT NULL,
     provision_state         text                        NOT NULL,
     activation_state        text                        NOT NULL,
+    lifecycle_state         text                        NOT NULL,
     source_network          text                        NOT NULL,
     source_port             text                        NOT NULL,
     source_labels           label[],
@@ -28,13 +31,15 @@ CREATE TABLE connections (
     bandwidth               integer                     NOT NULL -- mbps
 );
 
-
+-- internal references to connections that are part of a service connection
 CREATE TABLE subconnections (
     id                      serial                      PRIMARY KEY,
+    service_connection_id   integer                     NOT NULL REFERENCES service_connections(id),
+    connection_id           text                        NOT NULL,
     provider_nsa            text                        NOT NULL,
-    connection_id           integer                     NOT NULL ,
+    local_link              boolean                     NOT NULL,
     revision                integer                     NOT NULL,
-    parent_connection_id    integer                     NOT NULL REFERENCES connections(id),
+    order_id                integer                     NOT NULL,
     source_network          text                        NOT NULL,
     source_port             text                        NOT NULL,
     source_labels           label[],
@@ -42,5 +47,30 @@ CREATE TABLE subconnections (
     dest_port               text                        NOT NULL,
     dest_labels             label[],
     UNIQUE (provider_nsa, connection_id)
+);
+
+
+-- move this into the backend sometime
+CREATE TABLE simplebackendconnections (
+    id                      serial                      PRIMARY KEY,
+    connection_id           text                        NOT NULL UNIQUE,
+    revision                integer                     NOT NULL,
+    global_reservation_id   text,
+    description             text,
+    nsa                     text                        NOT NULL,
+    reserve_time            timestamp with time zone    NOT NULL,
+    reservation_state       text                        NOT NULL,
+    provision_state         text                        NOT NULL,
+    activation_state        text                        NOT NULL,
+    lifecycle_state         text                        NOT NULL,
+    source_network          text                        NOT NULL,
+    source_port             text                        NOT NULL,
+    source_labels           label[],
+    dest_network            text                        NOT NULL,
+    dest_port               text                        NOT NULL,
+    dest_labels             label[],
+    start_time              timestamp with time zone    NOT NULL,
+    end_time                timestamp with time zone    NOT NULL,
+    bandwidth               integer                     NOT NULL -- mbps
 );
 
