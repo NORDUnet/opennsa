@@ -12,7 +12,7 @@ from zope.interface import implements
 
 from opennsa import interface as nsainterface, registry
 #from opennsa.backends.common import calendar as reservationcalendar, simplebackend
-from opennsa.backends.common import simpleconnection
+from opennsa.backends.common import simplebackend
 
 
 
@@ -28,7 +28,7 @@ class DUDNSIBackend:
 
         cm = connection_manager = DUDConnectionManager('DUD Connection Manager %s' % network_name)
 
-        sc = simpleconnection.SimpleBackend(network_name, cm, 'DUD NRM')
+        sc = simplebackend.SimpleBackend(network_name, cm, 'DUD NRM')
 
         service_registry.registerEventHandler(registry.RESERVE,   sc.reserve,   registry.NSI2_LOCAL)
         service_registry.registerEventHandler(registry.PROVISION, sc.provision, registry.NSI2_LOCAL)
