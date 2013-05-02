@@ -21,7 +21,8 @@ FORCED_END            = 'forced_end'
 
 SYSTEM_SERVICE        = 'service'
 NSI1_CLIENT           = 'nsi1-client'
-NSI2_CLIENT           = 'nsi2-client'
+NSI2_REMOTE           = 'nsi2-remote'
+NSI2_LOCAL            = 'nsi2-local'
 
 
 
