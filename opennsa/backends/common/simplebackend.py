@@ -36,33 +36,13 @@ class Simplebackendconnection(DBObject):
 
 class SimpleBackend:
 
-#    def __init__(self, source_port, dest_port, service_parameters, network_name, calendar, curator, log_system, connection_manager):
     def __init__(self, network, connection_manager, log_system):
-#        self.source_port = source_port
-#        self.dest_port  = dest_port
-#        self.service_parameters = service_parameters
-#        self.network_name = network_name
-#        self.calendar = calendar
-#
-#        self._curator = curator
-        self.log_system = log_system
-#        self.connection_manager = connection_manager
-#
-#        self.scheduler = scheduler.TransitionScheduler()
-#        self.state = state.NSI2StateMachine()
 
         self.network = network
         self.connection_manager = connection_manager
+        self.log_system = log_system
 
         self.schedulers = {}
-
-
-#    def curator(self):
-#        return self._curator
-
-
-#    def stps(self):
-#        return self.service_parameters.source_stp, self.service_parameters.dest_stp
 
         # need to build schedule here
 
@@ -83,12 +63,12 @@ class SimpleBackend:
     @defer.inlineCallbacks
     def reserve(self, requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_params):
 
-        # should perhaps verify nsa, but not that important
-
         # return defer.fail( error.InternalNRMError('test reservation failure') )
 
+        # should perhaps verify nsa, but not that important
+
         if connection_id:
-            raise ValueError('Cannot handle cases with existing connection id')
+            raise ValueError('Cannot handle cases with existing connection id (yet)')
             #conns = yield Simplebackendconnection.findBy(connection_id=connection_id)
 
         # need to check schedule
