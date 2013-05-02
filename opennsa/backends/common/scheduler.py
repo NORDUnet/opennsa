@@ -1,5 +1,5 @@
 """
-Connection state scheduler
+Call scheduler. Handles one future call per connection.
 
 Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2011)
@@ -27,15 +27,20 @@ def deferTaskFailed(err):
 
 
 
-class TransitionScheduler:
+class CallScheduler:
 
     def __init__(self):
-        self.scheduled_transition_call = None
+        self.scheduled_calls = {}
 
 
-    def scheduleTransition(self, transition_time, call, state):
+    def scheduleCall(self, connection_id, transition_time, call, *args):
+        assert callable(call), 'call argument is not a callable'
 
-        assert self.scheduled_transition_call is None or self.scheduled_transition_call.called is True, 'Scheduling transition while other transition is scheduled'
+        try:
+            sched_call = self.scheduled_calls[connection_id]
+            assert sched_call.called is True, 'Scheduling transition while other transition is scheduled'
+        except KeyError:
+            pass # no scheduled call
 
         dt_now = datetime.datetime.now(tzutc())
 
@@ -46,16 +51,16 @@ class TransitionScheduler:
         transition_delta_seconds = (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6.0
         transition_delta_seconds = max(transition_delta_seconds, 0) # if dt_now is passed during calculation
 
-        d = task.deferLater(reactor, transition_delta_seconds, call)
+        d = task.deferLater(reactor, transition_delta_seconds, call, args)
         d.addErrback(deferTaskFailed)
-        self.scheduled_transition_call = d
-        log.msg('State transition scheduled: In %i seconds to state %s' % (transition_delta_seconds, state), system=LOG_SYSTEM)
+        self.scheduled_calls[connection_id] = d
         return d
 
 
-    def cancelTransition(self):
-
-        if self.scheduled_transition_call:
-            self.scheduled_transition_call.cancel()
-            self.scheduled_transition_call = None
+    def cancelCall(self, connection_id):
+        try:
+            sched_call = self.scheduled_calls.pop(connection_id)
+            sched_call.cancel()
+        except KeyError:
+            pass
 
