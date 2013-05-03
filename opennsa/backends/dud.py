@@ -58,6 +58,19 @@ class DUDConnectionManager:
         self.log_system = log_system
 
 
+    def getResource(self, port, label_type, label_value):
+        return port
+
+
+    def getTarget(self, port, label_type, label_value):
+        return port + '#' + label_value
+
+
+    def canSwapLabel(self, label_type):
+        #return True
+        return False
+
+
     def setupLink(self, source_port, dest_port):
         log.msg('Link %s -> %s up' % (source_port, dest_port), system=self.log_system)
         return defer.succeed(None)
