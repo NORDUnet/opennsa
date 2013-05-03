@@ -6,7 +6,7 @@ from opennsa import nsa
 class LabelParsingTest(unittest.TestCase):
 
 
-    def testParseLabel(self):
+    def testLabelParsing(self):
 
         self.assertEquals(nsa.Label('', '1,2').values,          [ (1,2) ] )
         self.assertEquals(nsa.Label('', '1,2,3').values,        [ (1,3) ] )
@@ -30,4 +30,13 @@ class LabelParsingTest(unittest.TestCase):
         self.assertEquals( l234.intersect(l48).values,  [ (4,4) ] )
 
         self.assertRaises(nsa.EmptyLabelSet, l12.intersect, l48)
+
+
+    def testLabelValueEnumeration(self):
+
+        self.assertEquals(nsa.Label('', '1-2,3').enumerateValues(),        [ 1,2,3 ] )
+        self.assertEquals(nsa.Label('', '1-3,2').enumerateValues(),        [ 1,2,3 ] )
+        self.assertEquals(nsa.Label('', '1-3,3,1-2').enumerateValues(),    [ 1,2,3 ] )
+        self.assertEquals(nsa.Label('', '2-4,8,1-3').enumerateValues(),    [ 1,2,3,4,8 ] )
+
 

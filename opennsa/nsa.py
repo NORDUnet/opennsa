@@ -11,6 +11,7 @@ Copyright: NORDUnet (2011-2013)
 
 import random
 import urlparse
+import itertools
 
 from opennsa import error
 
@@ -116,11 +117,14 @@ class Label(object):
     def singleValue(self):
         return len(self.values) == 1 and self.values[0] == self.values[1]
 
+    def enumerateValues(self):
+        lv = [ range(lr[0], lr[1]+1) for lr in self.values ]
+        return list(itertools.chain.from_iterable( lv ) )
 
     def randomLabel(self):
         # not evenly distributed, but that isn't promised anyway
         label_range = random.choice(self.values)
-        return random.randint(label_range[0], label_range[1])
+        return random.randint(label_range[0], label_range[1]+1)
 
 
     def __eq__(self, other):
