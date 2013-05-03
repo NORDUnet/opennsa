@@ -23,7 +23,7 @@ from twisted.internet import reactor, defer
 from twisted.application import service
 
 from opennsa import error, state, nsa, database
-from opennsa.backends.common import scheduler
+from opennsa.backends.common import scheduler, calendar
 
 from twistar.dbobject import DBObject
 
@@ -43,6 +43,9 @@ class SimpleBackend(service.Service):
         self.log_system = log_system
 
         self.scheduler = scheduler.CallScheduler()
+        self.calendar  = calendar.ReservationCalendar()
+        # need to build the calendar as well
+
         # the connection cache is a work-around for a race condition in mmm... something
         self.connection_cache = {}
 
@@ -145,22 +148,65 @@ class SimpleBackend(service.Service):
         if len(dest_stp.labels) > 1:
             raise error.TopologyError('Destination STP specifies more than one label. Only one label is currently supported')
 
-        # choose a label to use :-)
-        src_label_value = str( source_stp.labels[0].randomLabel() )
-        dst_label_value = str( dest_stp.labels[0].randomLabel() )
+#        # choose a label to use :-)
+#        src_label_value = str( source_stp.labels[0].randomLabel() )
+#        dst_label_value = str( dest_stp.labels[0].randomLabel() )
+
+        src_label_candidate = source_stp.labels[0]
+        dst_label_candidate = dest_stp.labels[0]
+        assert src_label_candidate.type_ == dst_label_candidate.type_, 'Cannot connect ports with different label types'
+
+        # do the: lets find the labels danace
+        if self.connection_manager.canSwapLabel(src_label_candidate.type_):
+            for lv in src_label_candidate.enumerateValues():
+                src_resource = self.connection_manager.getResource(source_stp.port, src_label_candidate.type_, lv)
+                try:
+                    self.calendar.checkReservation(src_resource, service_params.start_time, service_params.end_time)
+                    self.calendar.addConnection(   src_resource, service_params.start_time, service_params.end_time)
+                    src_label = nsa.Label(src_label_candidate.type_, str(lv))
+                    break
+                except error.STPUnavailableError:
+                    continue
+                raise error.STPUnavailableError('STP %s not available in specified time span' % source_stp)
+
+
+            for lv in dst_label_candidate.enumerateValues():
+                dst_resource = self.connection_manager.getResource(dest_stp.port, dst_label_candidate.type_, lv)
+                try:
+                    self.calendar.checkReservation(dst_resource, service_params.start_time, service_params.end_time)
+                    self.calendar.addConnection(   dst_resource, service_params.start_time, service_params.end_time)
+                    dst_label = nsa.Label(dst_label_candidate.type_, str(lv))
+                    break
+                except error.STPUnavailableError:
+                    continue
+                raise error.STPUnavailableError('STP %s not available in specified time span' % dest_stp)
+
+        else:
+            label_candidate = src_label_candidate.intersect(dst_label_candidate)
+
+            for lv in label_candidate.enumerateValues():
+                src_resource = self.connection_manager.getResource(source_stp.port, label_candidate.type_, lv)
+                dst_resource = self.connection_manager.getResource(dest_stp.port,   label_candidate.type_, lv)
+                try:
+                    self.calendar.checkReservation(src_resource, service_params.start_time, service_params.end_time)
+                    self.calendar.checkReservation(dst_resource, service_params.start_time, service_params.end_time)
+                    self.calendar.addConnection(   src_resource, service_params.start_time, service_params.end_time)
+                    self.calendar.addConnection(   dst_resource, service_params.start_time, service_params.end_time)
+                    src_label = nsa.Label(label_candidate.type_, str(lv))
+                    dst_label = nsa.Label(label_candidate.type_, str(lv))
+                    break
+                except error.STPUnavailableError:
+                    continue
+                raise error.STPUnavailableError('STP combination %s and %s not available in specified time span' % dest_stp)
 
 #        nrm_src_port = self.topology.getNetwork(self.network).getInterface(link.src_port) + '.' + src_label_value
 #        nrm_dst_port = self.topology.getNetwork(self.network).getInterface(link.dst_port) + '.' + dst_label_value
 
-        # update the connection service params to say which label was choosen here
-        src_labels = [ nsa.Label(source_stp.labels[0].type_, src_label_value) ]
-        dst_labels = [ nsa.Label(dest_stp.labels[0].type_, dst_label_value) ]
-
         conn = Simplebackendconnection(connection_id=connection_id, revision=0, global_reservation_id=global_reservation_id, description=description, nsa=provider_nsa,
                                        reserve_time=datetime.datetime.utcnow(),
                                        reservation_state=state.INITIAL, provision_state=state.SCHEDULED, activation_state=state.INACTIVE, lifecycle_state=state.INITIAL,
-                                       source_network=source_stp.network, source_port=source_stp.port, source_labels=src_labels,
-                                       dest_network=dest_stp.network, dest_port=dest_stp.port, dest_labels=dst_labels,
+                                       source_network=source_stp.network, source_port=source_stp.port, source_labels=[src_label],
+                                       dest_network=dest_stp.network, dest_port=dest_stp.port, dest_labels=[dst_label],
                                        start_time=service_params.start_time, end_time=service_params.end_time,
                                        bandwidth=service_params.bandwidth)
         yield conn.save()
@@ -176,8 +222,8 @@ class SimpleBackend(service.Service):
         log.msg('Transition scheduled for %s: terminate at %s.' % (connection_id, conn.end_time), system=self.log_system)
 
 
-        sc_source_stp = nsa.STP(source_stp.network, source_stp.port, labels=src_labels)
-        sc_dest_stp   = nsa.STP(dest_stp.network,   dest_stp.port,   labels=dst_labels)
+        sc_source_stp = nsa.STP(source_stp.network, source_stp.port, labels=[src_label])
+        sc_dest_stp   = nsa.STP(dest_stp.network,   dest_stp.port,   labels=[dst_label])
         sp = nsa.ServiceParameters(service_params.start_time, service_params.end_time, sc_source_stp, sc_dest_stp, service_params.bandwidth)
         rig = (global_reservation_id, description, connection_id, sp)
         defer.returnValue(rig)
