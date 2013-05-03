@@ -8,32 +8,27 @@ Copyright: NORDUnet (2011)
 from twisted.python import log
 from twisted.internet import defer
 
-from zope.interface import implements
-
-from opennsa import interface as nsainterface, registry
-#from opennsa.backends.common import calendar as reservationcalendar, simplebackend
+from opennsa import registry
 from opennsa.backends.common import simplebackend
 
 
 
-class DUDNSIBackend:
-
-    implements(nsainterface.NSIBackendInterface)
+class DUDNSIBackend(simplebackend.SimpleBackend):
 
     def __init__(self, network_name, service_registry):
-#        self.network_name = network_name
-#        self.calendar = reservationcalendar.ReservationCalendar()
-#        self.connections = []
-#        self.connection_manager = DUDConnectionManager('DUD Connection Manager %s' % network_name)
 
         cm = connection_manager = DUDConnectionManager('DUD Connection Manager %s' % network_name)
+        simplebackend.SimpleBackend.__init__(self, network_name, cm, 'DUD NRM')
+        self.service_registry = service_registry
 
-        sc = simplebackend.SimpleBackend(network_name, cm, 'DUD NRM')
+    def startService(self):
 
-        service_registry.registerEventHandler(registry.RESERVE,   sc.reserve,   registry.NSI2_LOCAL)
-        service_registry.registerEventHandler(registry.PROVISION, sc.provision, registry.NSI2_LOCAL)
-        service_registry.registerEventHandler(registry.RELEASE,   sc.release,   registry.NSI2_LOCAL)
-        service_registry.registerEventHandler(registry.TERMINATE, sc.terminate, registry.NSI2_LOCAL)
+        simplebackend.SimpleBackend.startService(self)
+
+        self.service_registry.registerEventHandler(registry.RESERVE,   self.reserve,   registry.NSI2_LOCAL)
+        self.service_registry.registerEventHandler(registry.PROVISION, self.provision, registry.NSI2_LOCAL)
+        self.service_registry.registerEventHandler(registry.RELEASE,   self.release,   registry.NSI2_LOCAL)
+        self.service_registry.registerEventHandler(registry.TERMINATE, self.terminate, registry.NSI2_LOCAL)
 
 
 #    def canAllocateLink(self, source_port, dest_port, service_parameters):

@@ -38,11 +38,11 @@ class CallScheduler:
 
         try:
             sched_call = self.scheduled_calls[connection_id]
-            assert sched_call.called is True, 'Scheduling transition while other transition is scheduled'
+            assert sched_call.called is True, 'Connection %s: Attempt to schedule transition with existing schedule transition' % connection_id
         except KeyError:
             pass # no scheduled call
 
-        dt_now = datetime.datetime.now(tzutc())
+        dt_now = datetime.datetime.utcnow()
 
         # allow a bit leeway in transition to avoid odd race conditions
         assert transition_time >= (dt_now - datetime.timedelta(seconds=1)), 'Scheduled transition is not in the future (%s >= %s is False)' % (transition_time, dt_now)
@@ -57,10 +57,19 @@ class CallScheduler:
         return d
 
 
+    def hasScheduledCall(self, connection_id):
+        return connection_id in self.scheduled_calls
+
+
     def cancelCall(self, connection_id):
         try:
             sched_call = self.scheduled_calls.pop(connection_id)
             sched_call.cancel()
         except KeyError:
             pass
+
+
+    def cancelAllCalls(self):
+        for k in self.scheduled_calls.keys():
+            self.scheduled_calls.pop(k).cancel()
 

@@ -13,14 +13,14 @@ Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2011-2012)
 """
 
-#import uuid
 import random
 import datetime
 
 from dateutil.tz import tzutc
 
 from twisted.python import log
-from twisted.internet import defer
+from twisted.internet import reactor, defer
+from twisted.application import service
 
 from opennsa import error, state, nsa, database
 from opennsa.backends.common import scheduler
@@ -34,7 +34,7 @@ class Simplebackendconnection(DBObject):
 
 
 
-class SimpleBackend:
+class SimpleBackend(service.Service):
 
     def __init__(self, network, connection_manager, log_system):
 
@@ -43,11 +43,57 @@ class SimpleBackend:
         self.log_system = log_system
 
         self.scheduler = scheduler.CallScheduler()
-
         # the connection cache is a work-around for a race condition in mmm... something
         self.connection_cache = {}
 
         # need to build schedule here
+        self.restore_defer = defer.Deferred()
+        reactor.callWhenRunning(self.buildSchedule)
+
+
+    def stopService(self):
+        service.Service.stopService(self)
+        return self.restore_defer.addCallback( lambda _ : self.scheduler.cancelAllCalls() )
+
+
+    @defer.inlineCallbacks
+    def buildSchedule(self):
+
+        conns = yield Simplebackendconnection.find(where=['lifecycle_state <> ?', state.TERMINATED])
+        for conn in conns:
+            # avoid race with newly created connections
+            if self.scheduler.hasScheduledCall(conn.connection_id):
+                continue
+
+            now = datetime.datetime.utcnow()
+
+            if conn.end_time < now and conn.lifecycle_state != state.TERMINATED:
+                yield self._doTerminate(conn)
+
+            elif conn.start_time < now:
+                if conn.provision_state == state.PROVISIONED:
+                    self.scheduler.scheduleCall(conn.connection_id, conn.end_time, self._doActivate, conn)
+                    log.msg('Transition scheduled for %s: terminate at %s.' % (conn.connection_id, conn.end_time), system=self.log_system)
+                elif conn.provision_state == state.SCHEDULED:
+                    self.scheduler.scheduleCall(conn.connection_id, conn.end_time, self._doTerminate, conn)
+                    log.msg('Transition scheduled for %s: terminate at %s.' % (conn.connection_id, conn.end_time), system=self.log_system)
+                else:
+                    log.msg('Unhandled provision state %s for connection %s in scheduler building' % (conn.provision_state, conn.connection_id))
+
+            elif conn.start_time > now:
+                if conn.provision_state == state.PROVISIONED:
+                    yield self._doActivate(conn)
+                elif conn.provision_state == state.SCHEDULED:
+                    self.scheduler.scheduleCall(conn.connection_id, conn.end_time, self._doTerminate, conn)
+                    log.msg('Transition scheduled for %s: terminate at %s.' % (conn.connection_id, conn.end_time), system=self.log_system)
+                else:
+                    log.msg('Unhandled provision state %s for connection %s in scheduler building' % (conn.provision_state, conn.connection_id))
+
+            else:
+                log.msg('Unhandled start/end time configuration for connection %s' % conn.connection_id)
+
+        self.restore_defer.callback(None)
+
 
 
     @defer.inlineCallbacks
@@ -126,7 +172,7 @@ class SimpleBackend:
         self.logStateUpdate(conn, 'RESERVED')
         # need to schedule 2PC timeout
 
-        self.scheduler.scheduleCall(connection_id, conn.end_time, self.doTerminate, conn)
+        self.scheduler.scheduleCall(connection_id, conn.end_time, self._doTerminate, conn)
         log.msg('Transition scheduled for %s: terminate at %s.' % (connection_id, conn.end_time), system=self.log_system)
 
 
@@ -140,37 +186,22 @@ class SimpleBackend:
     @defer.inlineCallbacks
     def provision(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
-        def doActivate(conn):
-            yield state.activating(conn)
-            self.logStateUpdate(conn, 'ACTIVATING')
-            try:
-                yield self.connection_manager.setupLink(conn.source_port, conn.dest_port)
-                self.scheduler.scheduleCall(connection_id, conn.end_time, doTerminate, conn)
-                log.msg('Transition scheduled for %s: activating at %s.' % (connection_id, conn.start_time), system=self.log_system)
-                yield state.active(conn)
-                self.logStateUpdate(conn, 'ACTIVE')
-            except Exception, e:
-                log.msg('Error setting up connection: %s' % e)
-                yield state.inactive(conn)
-                self.logStateUpdate(conn, 'INACTIVE')
-                raise e
-
 
         conn = yield self._getConnection(connection_id, requester_nsa)
 
-        dt_now = datetime.datetime.now(tzutc())
-        if conn.end_time <= dt_now:
-            raise error.ConnectionGone('Cannot provision connection after end time (end time: %s, current time: %s).' % (conn.end_time, dt_now))
+        now = datetime.datetime.utcnow()
+        if conn.end_time <= now:
+            raise error.ConnectionGone('Cannot provision connection after end time (end time: %s, current time: %s).' % (conn.end_time, now))
 
         yield state.provisioning(conn)
         self.logStateUpdate(conn, 'PROVISIONING')
 
         self.scheduler.cancelCall(connection_id)
 
-        if conn.start_time <= dt_now:
-            d = doActivate(conn)
+        if conn.start_time <= now:
+            d = _doActivate(conn)
         else:
-            self.scheduler.scheduleCall(connection_id, conn.start_time, doActivate, conn)
+            self.scheduler.scheduleCall(connection_id, conn.start_time, self._doActivate, conn)
             log.msg('Transition scheduled for %s: activate at %s.' % (connection_id, conn.start_time), system=self.log_system)
 
         yield state.provisioned(conn)
@@ -197,7 +228,7 @@ class SimpleBackend:
             except Exception as e:
                 log.msg('Error terminating connection: %s' % r.getErrorMessage())
 
-        self.scheduler.scheduleCall(connection_id, conn.end_time, self.doTerminate, conn)
+        self.scheduler.scheduleCall(connection_id, conn.end_time, self._doTerminate, conn)
         log.msg('Transition scheduled for %s: terminating at %s.' % (connection_id, conn.end_time), system=self.log_system)
 
         yield state.scheduled(conn)
@@ -210,11 +241,33 @@ class SimpleBackend:
         # return defer.fail( error.InternalNRMError('test termination failure') )
 
         conn = yield self._getConnection(connection_id, requester_nsa)
-        yield self.doTerminate(conn)
+        yield self._doTerminate(conn)
+
+
+    def query(self, query_filter):
+        pass
+
 
 
     @defer.inlineCallbacks
-    def doTerminate(self, conn):
+    def _doActivate(conn):
+        yield state.activating(conn)
+        self.logStateUpdate(conn, 'ACTIVATING')
+        try:
+            yield self.connection_manager.setupLink(conn.source_port, conn.dest_port)
+            self.scheduler.scheduleCall(connection_id, conn.end_time, self._doTerminate, conn)
+            log.msg('Transition scheduled for %s: activating at %s.' % (connection_id, conn.start_time), system=self.log_system)
+            yield state.active(conn)
+            self.logStateUpdate(conn, 'ACTIVE')
+        except Exception, e:
+            log.msg('Error setting up connection: %s' % e)
+            yield state.inactive(conn)
+            self.logStateUpdate(conn, 'INACTIVE')
+            raise e
+
+
+    @defer.inlineCallbacks
+    def _doTerminate(self, conn):
 
         if conn.lifecycle_state == state.TERMINATED:
             defer.returnValue(conn.cid)
@@ -239,9 +292,4 @@ class SimpleBackend:
         yield state.terminated(conn)
         self.logStateUpdate(conn, 'TERMINATED')
         defer.returnValue(conn.connection_id)
-
-
-    def query(self, query_filter):
-        pass
-
 
