@@ -1,5 +1,6 @@
 -- OpenNSA SQL Schema (PostgreSQL)
 -- consider some generic key-value thing for future usage
+-- ALL timestamps must be in utc
 
 CREATE TYPE label AS (
     label_type      text,
@@ -15,7 +16,7 @@ CREATE TABLE service_connections (
     global_reservation_id   text,
     description             text,
     nsa                     text                        NOT NULL,
-    reserve_time            timestamp with time zone    NOT NULL,
+    reserve_time            timestamp                   NOT NULL,
     reservation_state       text                        NOT NULL,
     provision_state         text                        NOT NULL,
     activation_state        text                        NOT NULL,
@@ -26,8 +27,8 @@ CREATE TABLE service_connections (
     dest_network            text                        NOT NULL,
     dest_port               text                        NOT NULL,
     dest_labels             label[],
-    start_time              timestamp with time zone    NOT NULL,
-    end_time                timestamp with time zone    NOT NULL,
+    start_time              timestamp                   NOT NULL,
+    end_time                timestamp                   NOT NULL,
     bandwidth               integer                     NOT NULL -- mbps
 );
 
@@ -58,7 +59,7 @@ CREATE TABLE simplebackendconnections (
     global_reservation_id   text,
     description             text,
     nsa                     text                        NOT NULL,
-    reserve_time            timestamp with time zone    NOT NULL,
+    reserve_time            timestamp                   NOT NULL,
     reservation_state       text                        NOT NULL,
     provision_state         text                        NOT NULL,
     activation_state        text                        NOT NULL,
@@ -69,8 +70,8 @@ CREATE TABLE simplebackendconnections (
     dest_network            text                        NOT NULL,
     dest_port               text                        NOT NULL,
     dest_labels             label[],
-    start_time              timestamp with time zone    NOT NULL,
-    end_time                timestamp with time zone    NOT NULL,
+    start_time              timestamp                   NOT NULL,
+    end_time                timestamp                   NOT NULL,
     bandwidth               integer                     NOT NULL -- mbps
 );
 
