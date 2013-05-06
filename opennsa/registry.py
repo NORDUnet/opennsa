@@ -17,7 +17,7 @@ TERMINATE             = 'terminate'
 TERMINATE_RESPONSE    = 'terminate_response'
 QUERY                 = 'query'
 QUERY_RESPONSE        = 'query_response'
-FORCED_END            = 'forced_end'
+DATA_PLANE_CHANGE     = 'data_plane_change'
 
 SYSTEM_SERVICE        = 'service'
 NSI1_CLIENT           = 'nsi1-client'
