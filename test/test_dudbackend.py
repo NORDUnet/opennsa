@@ -84,4 +84,29 @@ class DUDBackendTest(unittest.TestCase):
             self.fail('Should have raised ConnectionNonExistentError')
         except error.ConnectionNonExistentError:
             pass # expected
- 
+
+
+    @defer.inlineCallbacks
+    def testActivation(self):
+
+        d = defer.Deferred()
+
+        def dataPlaneChange(connection_id, active, version_consistent, version, timestamp):
+            values = connection_id, active, version_consistent, version, timestamp
+            d.callback(values)
+
+        self.sr.registerEventHandler(registry.DATA_PLANE_CHANGE,  dataPlaneChange, registry.NSI2_LOCAL)
+
+        _,_,cid,sp = yield self.reserve(None, self.provider_nsa.urn(), None, None, None, None, self.service_params)
+        yield self.provision(None, self.provider_nsa.urn(), None, cid)
+        connection_id, active, version_consistent, version, timestamp = yield d
+        self.failUnlessEqual(cid, connection_id)
+        self.failUnlessEqual(active, True)
+        self.failUnlessEqual(version_consistent, True)
+
+        #yield self.release(  None, self.provider_nsa.urn(), None, cid)
+        yield self.terminate(None, self.provider_nsa.urn(), None, cid)
+
+
+
+
