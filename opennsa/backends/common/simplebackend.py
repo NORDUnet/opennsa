@@ -148,10 +148,6 @@ class SimpleBackend(service.Service):
         if len(dest_stp.labels) > 1:
             raise error.TopologyError('Destination STP specifies more than one label. Only one label is currently supported')
 
-#        # choose a label to use :-)
-#        src_label_value = str( source_stp.labels[0].randomLabel() )
-#        dst_label_value = str( dest_stp.labels[0].randomLabel() )
-
         src_label_candidate = source_stp.labels[0]
         dst_label_candidate = dest_stp.labels[0]
         assert src_label_candidate.type_ == dst_label_candidate.type_, 'Cannot connect ports with different label types'
@@ -199,8 +195,6 @@ class SimpleBackend(service.Service):
                     continue
                 raise error.STPUnavailableError('STP combination %s and %s not available in specified time span' % dest_stp)
 
-#        nrm_src_port = self.topology.getNetwork(self.network).getInterface(link.src_port) + '.' + src_label_value
-#        nrm_dst_port = self.topology.getNetwork(self.network).getInterface(link.dst_port) + '.' + dst_label_value
 
         conn = Simplebackendconnection(connection_id=connection_id, revision=0, global_reservation_id=global_reservation_id, description=description, nsa=provider_nsa,
                                        reserve_time=datetime.datetime.utcnow(),

@@ -31,26 +31,6 @@ class DUDNSIBackend(simplebackend.SimpleBackend):
         self.service_registry.registerEventHandler(registry.TERMINATE, self.terminate, registry.NSI2_LOCAL)
 
 
-#    def canAllocateLink(self, source_port, dest_port, service_parameters):
-#
-#        self.calendar.checkReservation(source_port, service_parameters.start_time, service_parameters.end_time)
-#        self.calendar.checkReservation(dest_port  , service_parameters.start_time, service_parameters.end_time)
-#        return True
-#
-#
-#    def createConnection(self, source_port, dest_port, service_parameters):
-#
-#        self.canAllocateLink(source_port, dest_port, service_parameters)
-#
-#        self.calendar.addConnection(source_port, service_parameters.start_time, service_parameters.end_time)
-#        self.calendar.addConnection(dest_port  , service_parameters.start_time, service_parameters.end_time)
-#
-#        ac = simplebackend.GenericConnection(source_port, dest_port, service_parameters, self.network_name, self.calendar,
-#                                             'DUD NRM', 'DUD Network %s' % self.network_name, self.connection_manager)
-#        self.connections.append(ac)
-#        return ac
-
-
 
 class DUDConnectionManager:
 
