@@ -76,10 +76,12 @@ class SimpleBackend(service.Service):
             elif conn.start_time < now:
                 if conn.provision_state == state.PROVISIONED:
                     self.scheduler.scheduleCall(conn.connection_id, conn.end_time, self._doActivate, conn)
-                    log.msg('Transition scheduled for %s: terminate at %s.' % (conn.connection_id, conn.end_time), system=self.log_system)
+                    td = conn.end_time - now
+                    log.msg('Connection %s: terminate scheduled for %s UTC (%i seconds)' % (conn.connection_id, conn.end_time, td.total_seconds()), system=self.log_system)
                 elif conn.provision_state == state.SCHEDULED:
                     self.scheduler.scheduleCall(conn.connection_id, conn.end_time, self._doTerminate, conn)
-                    log.msg('Transition scheduled for %s: terminate at %s.' % (conn.connection_id, conn.end_time), system=self.log_system)
+                    td = conn.end_time - now
+                    log.msg('Connection %s: terminate scheduled for %s UTC (%i seconds)' % (conn.connection_id, conn.end_time, td.total_seconds()), system=self.log_system)
                 else:
                     log.msg('Unhandled provision state %s for connection %s in scheduler building' % (conn.provision_state, conn.connection_id))
 
@@ -88,7 +90,8 @@ class SimpleBackend(service.Service):
                     yield self._doActivate(conn)
                 elif conn.provision_state == state.SCHEDULED:
                     self.scheduler.scheduleCall(conn.connection_id, conn.end_time, self._doTerminate, conn)
-                    log.msg('Transition scheduled for %s: terminate at %s.' % (conn.connection_id, conn.end_time), system=self.log_system)
+                    td = conn.end_time - now
+                    log.msg('Connection %s: terminate scheduled for %s UTC (%i seconds)' % (conn.connection_id, conn.end_time, td.total_seconds()), system=self.log_system)
                 else:
                     log.msg('Unhandled provision state %s for connection %s in scheduler building' % (conn.provision_state, conn.connection_id))
 
