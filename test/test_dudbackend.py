@@ -23,8 +23,8 @@ class DUDBackendTest(unittest.TestCase):
 
         source_stp  = nsa.STP('Aruba', 'A1', labels=[ nsa.Label(nml.ETHERNET_VLAN, '1-2') ] )
         dest_stp    = nsa.STP('Aruba', 'A3', labels=[ nsa.Label(nml.ETHERNET_VLAN, '2-3') ] )
-        start_time = datetime.datetime.fromtimestamp(time.time() + .5) #, tzutc() )
-        end_time   = datetime.datetime.fromtimestamp(time.time() + 10,) # tzutc() )
+        start_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=.5)
+        end_time   = datetime.datetime.utcnow() + datetime.timedelta(seconds=10)
         bandwidth = 200
 
         self.provider_nsa   = nsa.NetworkServiceAgent('testnsa', 'http://example.org/nsa')
