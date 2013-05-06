@@ -22,7 +22,7 @@ from twisted.python import log
 from twisted.internet import reactor, defer
 from twisted.application import service
 
-from opennsa import error, state, nsa, database
+from opennsa import registry, error, state, nsa, database
 from opennsa.backends.common import scheduler, calendar
 
 from twistar.dbobject import DBObject
@@ -36,10 +36,11 @@ class Simplebackendconnection(DBObject):
 
 class SimpleBackend(service.Service):
 
-    def __init__(self, network, connection_manager, log_system):
+    def __init__(self, network, connection_manager, service_registry, log_system):
 
         self.network = network
         self.connection_manager = connection_manager
+        self.service_registry = service_registry
         self.log_system = log_system
 
         self.scheduler = scheduler.CallScheduler()
@@ -52,6 +53,15 @@ class SimpleBackend(service.Service):
         # need to build schedule here
         self.restore_defer = defer.Deferred()
         reactor.callWhenRunning(self.buildSchedule)
+
+
+    def startService(self):
+        service.Service.startService(self)
+
+        self.service_registry.registerEventHandler(registry.RESERVE,   self.reserve,   registry.NSI2_LOCAL)
+        self.service_registry.registerEventHandler(registry.PROVISION, self.provision, registry.NSI2_LOCAL)
+        self.service_registry.registerEventHandler(registry.RELEASE,   self.release,   registry.NSI2_LOCAL)
+        self.service_registry.registerEventHandler(registry.TERMINATE, self.terminate, registry.NSI2_LOCAL)
 
 
     def stopService(self):
@@ -219,7 +229,8 @@ class SimpleBackend(service.Service):
         # need to schedule 2PC timeout
 
         self.scheduler.scheduleCall(connection_id, conn.end_time, self._doTerminate, conn)
-        log.msg('Transition scheduled for %s: terminate at %s.' % (connection_id, conn.end_time), system=self.log_system)
+        td = conn.end_time - datetime.datetime.utcnow()
+        log.msg('Connection %s: terminate scheduled for %s UTC (%i seconds)' % (conn.connection_id, conn.end_time, td.total_seconds()), system=self.log_system)
 
 
         sc_source_stp = nsa.STP(source_stp.network, source_stp.port, labels=[src_label])
@@ -248,7 +259,8 @@ class SimpleBackend(service.Service):
             d = _doActivate(conn)
         else:
             self.scheduler.scheduleCall(connection_id, conn.start_time, self._doActivate, conn)
-            log.msg('Transition scheduled for %s: activate at %s.' % (connection_id, conn.start_time), system=self.log_system)
+            td = conn.start_time - now
+            log.msg('Connection %s: activate scheduled for %s UTC (%i seconds)' % (conn.connection_id, conn.end_time, td.total_seconds()), system=self.log_system)
 
         yield state.provisioned(conn)
         self.logStateUpdate(conn, 'PROVISIONED')
@@ -266,13 +278,10 @@ class SimpleBackend(service.Service):
         self.scheduler.cancelCall(connection_id)
 
         if conn.activation_state == state.ACTIVE:
-            yield state.deactivating(conn)
-            self.logStateUpdate(conn, state.DEACTIVATING)
             try:
-                yield self.connection_manager.teardownLink(self.source_port, self.dest_port)
-                yield state.inactive(conn)
+                yield self._doTeardown(conn)
             except Exception as e:
-                log.msg('Error terminating connection: %s' % r.getErrorMessage())
+                log.msg('Connection %s: Error tearing down link: %s' % (conn.connection_id, e))
 
         self.scheduler.scheduleCall(connection_id, conn.end_time, self._doTerminate, conn)
         log.msg('Transition scheduled for %s: terminating at %s.' % (connection_id, conn.end_time), system=self.log_system)
@@ -296,20 +305,43 @@ class SimpleBackend(service.Service):
 
 
     @defer.inlineCallbacks
-    def _doActivate(conn):
+    def _doActivate(self, conn):
+
         yield state.activating(conn)
         self.logStateUpdate(conn, 'ACTIVATING')
         try:
-            yield self.connection_manager.setupLink(conn.source_port, conn.dest_port)
-            self.scheduler.scheduleCall(connection_id, conn.end_time, self._doTerminate, conn)
-            log.msg('Transition scheduled for %s: activating at %s.' % (connection_id, conn.start_time), system=self.log_system)
-            yield state.active(conn)
-            self.logStateUpdate(conn, 'ACTIVE')
+            src_target = self.connection_manager.getTarget(conn.source_port, conn.source_labels[0].type_, conn.source_labels[0].labelValue())
+            dst_target = self.connection_manager.getTarget(conn.dest_port,   conn.dest_labels[0].type_,  conn.dest_labels[0].labelValue())
+            yield self.connection_manager.setupLink(src_target, dst_target)
         except Exception, e:
             log.msg('Error setting up connection: %s' % e)
             yield state.inactive(conn)
             self.logStateUpdate(conn, 'INACTIVE')
-            raise e
+            # add notification here
+
+        try:
+            self.scheduler.scheduleCall(conn.connection_id, conn.end_time, self._doTerminate, conn)
+            td = conn.end_time - datetime.datetime.utcnow()
+            log.msg('Connection %s: terminate scheduled for %s UTC (%i seconds)' % (conn.connection_id, conn.end_time, td.total_seconds()), system=self.log_system)
+            yield state.active(conn)
+            self.logStateUpdate(conn, 'ACTIVE')
+            data_plane_change = self.service_registry.getHandler(registry.DATA_PLANE_CHANGE, registry.NSI2_LOCAL)
+            data_plane_change(conn.connection_id, True, True, conn.revision, datetime.datetime.utcnow())
+        except Exception, e:
+            # this really should not happen
+            log.msg('Error in post-activation: %s' % e)
+
+
+    @defer.inlineCallbacks
+    def _doTeardown(self, conn):
+        # this one is not used as a stand-alone, just a utility function
+        yield state.deactivating(conn)
+        self.logStateUpdate(conn, state.DEACTIVATING)
+        src_target = self.connection_manager.getTarget(conn.source_port, conn.source_labels[0].type_, conn.source_labels[0].labelValue())
+        dst_target = self.connection_manager.getTarget(conn.dest_port,   conn.dest_labels[0].type_,   conn.dest_labels[0].labelValue())
+        yield self.connection_manager.teardownLink(src_target, dst_target)
+        yield state.inactive(conn)
+        self.logStateUpdate(conn, state.INACTIVE)
 
 
     @defer.inlineCallbacks
@@ -324,16 +356,16 @@ class SimpleBackend(service.Service):
         self.scheduler.cancelCall(conn.connection_id)
 
         if conn.activation_state == state.ACTIVE:
-            yield state.deactivating(conn)
-            self.logStateUpdate(conn, state.DEACTIVATING)
             try:
-                yield self.connection_manager.teardownLink(self.source_port, self.dest_port)
-                yield state.inactive(conn)
+                yield self._doTeardown(conn)
                 # we can only remove resource reservation entry if we succesfully shut down the link :-(
-                self.calendar.removeConnection(self.source_port, self.service_parameters.start_time, self.service_parameters.end_time)
-                self.calendar.removeConnection(self.dest_port  , self.service_parameters.start_time, self.service_parameters.end_time)
+                src_resource = self.connection_manager.getResource(conn.source_port, conn.source_labels[0].type_, conn.source_labels[0].labelValue())
+                dst_resource = self.connection_manager.getResource(conn.dest_port,   conn.dest_labels[0].type_,   conn.dest_labels[0].labelValue())
+                self.calendar.removeConnection(src_resource, conn.start_time, conn.end_time)
+                self.calendar.removeConnection(dst_resource, conn.start_time, conn.end_time)
             except Exception as e:
-                log.msg('Error terminating connection: %s' % r.getErrorMessage())
+                log.msg('Error terminating connection: %s' % e)
+                raise e
 
         yield state.terminated(conn)
         self.logStateUpdate(conn, 'TERMINATED')
