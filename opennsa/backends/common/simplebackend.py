@@ -162,7 +162,8 @@ class SimpleBackend(service.Service):
                     src_label = nsa.Label(src_label_candidate.type_, str(lv))
                     break
                 except error.STPUnavailableError:
-                    continue
+                    pass
+            else:
                 raise error.STPUnavailableError('STP %s not available in specified time span' % source_stp)
 
 
@@ -174,7 +175,8 @@ class SimpleBackend(service.Service):
                     dst_label = nsa.Label(dst_label_candidate.type_, str(lv))
                     break
                 except error.STPUnavailableError:
-                    continue
+                    pass
+            else:
                 raise error.STPUnavailableError('STP %s not available in specified time span' % dest_stp)
 
         else:
@@ -192,8 +194,9 @@ class SimpleBackend(service.Service):
                     dst_label = nsa.Label(label_candidate.type_, str(lv))
                     break
                 except error.STPUnavailableError:
-                    continue
-                raise error.STPUnavailableError('STP combination %s and %s not available in specified time span' % dest_stp)
+                    pass
+            else:
+                raise error.STPUnavailableError('STP combination %s and %s not available in specified time span' % (source_stp, dest_stp))
 
 
         conn = Simplebackendconnection(connection_id=connection_id, revision=0, global_reservation_id=global_reservation_id, description=description, nsa=provider_nsa,
