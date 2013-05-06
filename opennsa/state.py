@@ -184,18 +184,18 @@ def activating(conn):
     conn.activation_state = ACTIVATING
     return conn.save()
 
-def activate(conn):
-    _switchState(ACTIVATION_TRANSITIONS, conn.activation_state, ACTIVATE)
-    conn.activation_state = ACTIVATE
+def active(conn):
+    _switchState(ACTIVATION_TRANSITIONS, conn.activation_state, ACTIVE)
+    conn.activation_state = ACTIVE
     return conn.save()
 
 def deactivating(conn):
-    _switchState(ACTIVATION_TRANSITIONS, conn.activating_state, DEACTIVATING)
+    _switchState(ACTIVATION_TRANSITIONS, conn.activation_state, DEACTIVATING)
     conn.activation_state = DEACTIVATING
     return conn.save()
 
 def inactive(conn):
-    _switchState(ACTIVATION_TRANSITIONS, conn.activating_state, INACTIVE)
+    _switchState(ACTIVATION_TRANSITIONS, conn.activation_state, INACTIVE)
     conn.activation_state = INACTIVE
     return conn.save()
 
