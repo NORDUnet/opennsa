@@ -12,7 +12,7 @@ from opennsa.protocols import nsi2, discovery
 
 
 
-def setupBackend(backend_conf, network_name):
+def setupBackend(backend_conf, network_name, service_registry):
 
     for backend_name, cfg in backend_conf.items():
         backend_type = cfg['_backend_type']
@@ -21,7 +21,7 @@ def setupBackend(backend_conf, network_name):
 
         if backend_type == config.BLOCK_DUD:
             from opennsa.backends import dud
-            return dud.DUDNSIBackend(network_name)
+            return dud.DUDNSIBackend(network_name, service_registry)
 
         elif backend_type == config.BLOCK_JUNOS:
             from opennsa.backends import junos
@@ -82,11 +82,13 @@ class OpenNSAService(twistedservice.MultiService):
             from opennsa import ctxfactory
             ctx_factory = ctxfactory.ContextFactory(vc[config.KEY], vc[config.CERTIFICATE], vc[config.CERTIFICATE_DIR], vc[config.VERIFY_CERT])
 
-        backend = setupBackend(vc['backend'], vc[config.NETWORK_NAME])
-
         top_resource = resource.Resource()
         service_registry = registry.ServiceRegistry()
-        nsi_service  = nsiservice.NSIService(vc[config.NETWORK_NAME], backend, service_registry, topology)
+
+        backend_service = setupBackend(vc['backend'], vc[config.NETWORK_NAME], service_registry)
+        backend_service.setServiceParent(self)
+
+        nsi_service  = nsiservice.NSIService(vc[config.NETWORK_NAME], backend_service, service_registry, topology)
 
         discovery.setupDiscoveryService(None, top_resource)
 
