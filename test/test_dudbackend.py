@@ -5,7 +5,7 @@ from twisted.internet import defer
 
 from dateutil.tz import tzutc
 
-from opennsa import nsa, registry, database
+from opennsa import nsa, registry, database, error
 from opennsa.topology import nml
 from opennsa.backends import dud
 
@@ -63,4 +63,16 @@ class DUDBackendTest(unittest.TestCase):
         yield self.provision(None, self.provider_nsa.urn(), None, cid)
         yield self.release(  None, self.provider_nsa.urn(), None, cid)
         yield self.terminate(None, self.provider_nsa.urn(), None, cid)
+
+
+    @defer.inlineCallbacks
+    def testDoubleReserve(self):
+
+        _ = yield self.reserve(None, self.provider_nsa.urn(), None, None, None, None, self.service_params)
+        try:
+            _ = yield self.reserve(None, self.provider_nsa.urn(), None, None, None, None, self.service_params)
+            self.fail('Should have raised STPUnavailableError')
+        except error.STPUnavailableError:
+            pass # we expect this
+
 
