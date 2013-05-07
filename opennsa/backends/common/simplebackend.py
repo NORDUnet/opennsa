@@ -416,8 +416,10 @@ class SimpleBackend(service.Service):
         if conn.lifecycle_state == state.TERMINATED:
             defer.returnValue(conn.cid)
 
-        yield state.terminating(conn)
-        self.logStateUpdate(conn, 'TERMINATING')
+        # this allows connections stuck in terminating to terminate
+        if conn.lifecycle_state == state.INITIAL:
+            yield state.terminating(conn)
+            self.logStateUpdate(conn, 'TERMINATING')
 
         self.scheduler.cancelCall(conn.connection_id)
 
