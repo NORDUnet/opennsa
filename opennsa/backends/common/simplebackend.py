@@ -258,6 +258,8 @@ class SimpleBackend(service.Service):
     def reserveCommit(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
         conn = yield self._getConnection(connection_id, requester_nsa)
+        if conn.lifecycle_state in (state.TERMINATING, state.TERMINATED):
+            raise error.ConnectionGoneError('Connection %s has been terminated')
 
         yield state.reserveCommit(conn)
         yield state.reserved(conn)
@@ -267,6 +269,9 @@ class SimpleBackend(service.Service):
     def reserveAbort(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
         conn = yield self._getConnection(connection_id, requester_nsa)
+        if conn.lifecycle_state in (state.TERMINATING, state.TERMINATED):
+            raise error.ConnectionGoneError('Connection %s has been terminated')
+
         yield self._doReserveAbort(conn)
 
 
@@ -274,6 +279,8 @@ class SimpleBackend(service.Service):
     def provision(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
         conn = yield self._getConnection(connection_id, requester_nsa)
+        if conn.lifecycle_state in (state.TERMINATING, state.TERMINATED):
+            raise error.ConnectionGoneError('Connection %s has been terminated')
 
         if conn.reservation_state != state.RESERVED:
             raise error.InvalidTransitionError('Cannot provision connection in a non-reserved state')
@@ -303,6 +310,8 @@ class SimpleBackend(service.Service):
     def release(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
         conn = yield self._getConnection(connection_id, requester_nsa)
+        if conn.lifecycle_state in (state.TERMINATING, state.TERMINATED):
+            raise error.ConnectionGoneError('Connection %s has been terminated')
 
         yield state.releasing(conn)
         self.logStateUpdate(conn, 'RELEASING')
