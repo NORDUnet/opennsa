@@ -40,7 +40,6 @@ class SubConnection:
         self.service_parameters = service_parameters
 
         self.session_security_attr = None
-        self.client_system = registry.NSI1_CLIENT # this one is temporary
 
 
     def curator(self):

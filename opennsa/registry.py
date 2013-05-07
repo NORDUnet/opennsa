@@ -29,7 +29,6 @@ DATA_PLANE_CHANGE       = 'data_plane_change'
 
 
 SYSTEM_SERVICE          = 'service'
-NSI1_CLIENT             = 'nsi1-client'
 NSI2_REMOTE             = 'nsi2-remote'
 NSI2_LOCAL              = 'nsi2-local'
 
