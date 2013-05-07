@@ -1,7 +1,7 @@
 import time, datetime
 
 from twisted.trial import unittest
-from twisted.internet import defer
+from twisted.internet import defer, task
 
 from dateutil.tz import tzutc
 
@@ -15,8 +15,12 @@ class DUDBackendTest(unittest.TestCase):
 
     def setUp(self):
 
+        self.clock = task.Clock()
+
         self.sr = registry.ServiceRegistry()
         self.backend = dud.DUDNSIBackend('Test', self.sr)
+        self.backend.scheduler.clock = self.clock
+
         self.backend.startService()
 
         database.setupDatabase('ontest', 'htj', 'htj')
@@ -25,7 +29,7 @@ class DUDBackendTest(unittest.TestCase):
 
         source_stp  = nsa.STP('Aruba', 'A1', labels=[ nsa.Label(nml.ETHERNET_VLAN, '1-2') ] )
         dest_stp    = nsa.STP('Aruba', 'A3', labels=[ nsa.Label(nml.ETHERNET_VLAN, '2-3') ] )
-        start_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=.35)
+        start_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=2)
         end_time   = datetime.datetime.utcnow() + datetime.timedelta(seconds=10)
         bandwidth = 200
         self.service_params = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, bandwidth)
@@ -104,6 +108,7 @@ class DUDBackendTest(unittest.TestCase):
         _,_,cid,sp = yield self.reserve(None, self.provider_nsa.urn(), None, None, None, None, self.service_params)
         yield self.reserveCommit(None, self.provider_nsa.urn(), None, cid)
         yield self.provision(None, self.provider_nsa.urn(), None, cid)
+        self.clock.advance(3)
         connection_id, active, version_consistent, version, timestamp = yield d
         self.failUnlessEqual(cid, connection_id)
         self.failUnlessEqual(active, True)
