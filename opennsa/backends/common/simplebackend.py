@@ -176,7 +176,7 @@ class SimpleBackend(service.Service):
                 src_resource = self.connection_manager.getResource(source_stp.port, src_label_candidate.type_, lv)
                 try:
                     self.calendar.checkReservation(src_resource, service_params.start_time, service_params.end_time)
-                    self.calendar.addConnection(   src_resource, service_params.start_time, service_params.end_time)
+                    self.calendar.addReservation(   src_resource, service_params.start_time, service_params.end_time)
                     src_label = nsa.Label(src_label_candidate.type_, str(lv))
                     break
                 except error.STPUnavailableError:
@@ -189,7 +189,7 @@ class SimpleBackend(service.Service):
                 dst_resource = self.connection_manager.getResource(dest_stp.port, dst_label_candidate.type_, lv)
                 try:
                     self.calendar.checkReservation(dst_resource, service_params.start_time, service_params.end_time)
-                    self.calendar.addConnection(   dst_resource, service_params.start_time, service_params.end_time)
+                    self.calendar.addReservation(   dst_resource, service_params.start_time, service_params.end_time)
                     dst_label = nsa.Label(dst_label_candidate.type_, str(lv))
                     break
                 except error.STPUnavailableError:
@@ -206,8 +206,8 @@ class SimpleBackend(service.Service):
                 try:
                     self.calendar.checkReservation(src_resource, service_params.start_time, service_params.end_time)
                     self.calendar.checkReservation(dst_resource, service_params.start_time, service_params.end_time)
-                    self.calendar.addConnection(   src_resource, service_params.start_time, service_params.end_time)
-                    self.calendar.addConnection(   dst_resource, service_params.start_time, service_params.end_time)
+                    self.calendar.addReservation(   src_resource, service_params.start_time, service_params.end_time)
+                    self.calendar.addReservation(   dst_resource, service_params.start_time, service_params.end_time)
                     src_label = nsa.Label(label_candidate.type_, str(lv))
                     dst_label = nsa.Label(label_candidate.type_, str(lv))
                     break
@@ -270,8 +270,8 @@ class SimpleBackend(service.Service):
         src_resource = self.connection_manager.getResource(conn.source_port, conn.source_labels[0].type_, conn.source_labels[0].labelValue())
         dst_resource = self.connection_manager.getResource(conn.dest_port,   conn.dest_labels[0].type_,   conn.dest_labels[0].labelValue())
 
-        self.calendar.removeConnection(src_resource, conn.start_time, conn.end_time)
-        self.calendar.removeConnection(dst_resource, conn.start_time, conn.end_time)
+        self.calendar.removeReservation(src_resource, conn.start_time, conn.end_time)
+        self.calendar.removeReservation(dst_resource, conn.start_time, conn.end_time)
 
         yield state.reserved(conn)
 
@@ -401,8 +401,8 @@ class SimpleBackend(service.Service):
                 # we can only remove resource reservation entry if we succesfully shut down the link :-(
                 src_resource = self.connection_manager.getResource(conn.source_port, conn.source_labels[0].type_, conn.source_labels[0].labelValue())
                 dst_resource = self.connection_manager.getResource(conn.dest_port,   conn.dest_labels[0].type_,   conn.dest_labels[0].labelValue())
-                self.calendar.removeConnection(src_resource, conn.start_time, conn.end_time)
-                self.calendar.removeConnection(dst_resource, conn.start_time, conn.end_time)
+                self.calendar.removeReservation(src_resource, conn.start_time, conn.end_time)
+                self.calendar.removeReservation(dst_resource, conn.start_time, conn.end_time)
             except Exception as e:
                 log.msg('Error terminating connection: %s' % e)
                 raise e

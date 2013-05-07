@@ -18,21 +18,21 @@ from opennsa import error
 class ReservationCalendar:
 
     def __init__(self):
-        self.connections = [] # [ ( port, start_time, end_time ) ]
+        self.connections = [] # [ ( resource, start_time, end_time ) ]
 
 
-    def addConnection(self, port, start_time, end_time):
+    def addReservation(self, resource, start_time, end_time):
         # does no checking, assuming checkReservation has been called
-        reservation = (port, start_time, end_time)
+        reservation = (resource, start_time, end_time)
         self.connections.append(reservation)
 
 
-    def removeConnection(self, port, start_time, end_time):
-        reservation = (port, start_time, end_time)
+    def removeReservation(self, resource, start_time, end_time):
+        reservation = (resource, start_time, end_time)
         self.connections.remove(reservation)
 
 
-    def checkReservation(self, port, start_time, end_time):
+    def checkReservation(self, resource, start_time, end_time):
         # check types
         if not type(start_time) is datetime.datetime and type(end_time) is datetime.datetime:
             raise ValueError('Reservation start and end types must be datetime types')
@@ -50,15 +50,15 @@ class ReservationCalendar:
         if start_time > datetime.datetime(2025, 1, 1):
             raise error.PayloadError('Invalid request: Start time after year 2025')
 
-        for (c_port, c_start_time, c_end_time) in self.connections:
-            if port == c_port:
-                if self._portOverlap(c_start_time, c_end_time, start_time, end_time):
-                    raise error.STPUnavailableError('Port %s not available in specified time span' % port)
+        for (c_resource, c_start_time, c_end_time) in self.connections:
+            if resource == c_resource:
+                if self._resourceOverlap(c_start_time, c_end_time, start_time, end_time):
+                    raise error.STPUnavailableError('Resource %s not available in specified time span' % resource)
 
         # all good
 
-    # port temporal availability
-    def _portOverlap(self, res1_start_time, res1_end_time, res2_start_time, res2_end_time):
+    # resourceort temporal availability
+    def _resourceOverlap(self, res1_start_time, res1_end_time, res2_start_time, res2_end_time):
 
         assert res1_start_time < res1_end_time, 'Refusing to detect overlap for backwards reservation (1)'
         assert res2_start_time < res2_end_time, 'Refusing to detect overlap for backwards reservation (2)'
@@ -68,6 +68,6 @@ class ReservationCalendar:
         if res2_start_time > res1_end_time:
             return False # res2 starts after res1 ends so it is ok
 
-        # ports overlap in time
+        # resources overlap in time
         return True
 
