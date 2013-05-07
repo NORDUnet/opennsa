@@ -6,23 +6,32 @@ Copyright: NORDUnet (2012)
 """
 
 
-DISCOVER              = 'discover'
-RESERVE               = 'reserve'
-RESERVE_RESPONSE      = 'reserve_response'
-PROVISION             = 'provision'
-PROVISION_RESPONSE    = 'provision_response'
-RELEASE               = 'release'
-RELEASE_RESPONSE      = 'release_response'
-TERMINATE             = 'terminate'
-TERMINATE_RESPONSE    = 'terminate_response'
-QUERY                 = 'query'
-QUERY_RESPONSE        = 'query_response'
-DATA_PLANE_CHANGE     = 'data_plane_change'
+DISCOVER                = 'discover'
 
-SYSTEM_SERVICE        = 'service'
-NSI1_CLIENT           = 'nsi1-client'
-NSI2_REMOTE           = 'nsi2-remote'
-NSI2_LOCAL            = 'nsi2-local'
+RESERVE                 = 'reserve'
+RESERVE_RESPONSE        = 'reserve_response'
+RESERVE_COMMIT          = 'reserve_commit'
+RESERVE_COMMIT_RESPONSE = 'reserve_commit_response'
+RESERVE_ABORT           = 'reserve_abort'
+RESERVE_ABORT_RESPONSE  = 'reserve_abort_response'
+
+PROVISION               = 'provision'
+PROVISION_RESPONSE      = 'provision_response'
+RELEASE                 = 'release'
+RELEASE_RESPONSE        = 'release_response'
+
+TERMINATE               = 'terminate'
+TERMINATE_RESPONSE      = 'terminate_response'
+
+QUERY                   = 'query'
+QUERY_RESPONSE          = 'query_response'
+DATA_PLANE_CHANGE       = 'data_plane_change'
+
+
+SYSTEM_SERVICE          = 'service'
+NSI1_CLIENT             = 'nsi1-client'
+NSI2_REMOTE             = 'nsi2-remote'
+NSI2_LOCAL              = 'nsi2-local'
 
 
 
