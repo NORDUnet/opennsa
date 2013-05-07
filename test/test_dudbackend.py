@@ -21,20 +21,22 @@ class DUDBackendTest(unittest.TestCase):
 
         database.setupDatabase('ontest', 'htj', 'htj')
 
+        self.provider_nsa   = nsa.NetworkServiceAgent('testnsa', 'http://example.org/nsa')
+
         source_stp  = nsa.STP('Aruba', 'A1', labels=[ nsa.Label(nml.ETHERNET_VLAN, '1-2') ] )
         dest_stp    = nsa.STP('Aruba', 'A3', labels=[ nsa.Label(nml.ETHERNET_VLAN, '2-3') ] )
-        start_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=.5)
+        start_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=.35)
         end_time   = datetime.datetime.utcnow() + datetime.timedelta(seconds=10)
         bandwidth = 200
-
-        self.provider_nsa   = nsa.NetworkServiceAgent('testnsa', 'http://example.org/nsa')
         self.service_params = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, bandwidth)
 
         # just so we don't have to put them in the test code
-        self.reserve   = self.sr.getHandler(registry.RESERVE,   registry.NSI2_LOCAL)
-        self.provision = self.sr.getHandler(registry.PROVISION, registry.NSI2_LOCAL)
-        self.release   = self.sr.getHandler(registry.RELEASE,   registry.NSI2_LOCAL)
-        self.terminate = self.sr.getHandler(registry.TERMINATE, registry.NSI2_LOCAL)
+        self.reserve        = self.sr.getHandler(registry.RESERVE,        registry.NSI2_LOCAL)
+        self.reserveCommit  = self.sr.getHandler(registry.RESERVE_COMMIT, registry.NSI2_LOCAL)
+        self.reserveAbort   = self.sr.getHandler(registry.RESERVE_ABORT,  registry.NSI2_LOCAL)
+        self.provision      = self.sr.getHandler(registry.PROVISION,      registry.NSI2_LOCAL)
+        self.release        = self.sr.getHandler(registry.RELEASE,        registry.NSI2_LOCAL)
+        self.terminate      = self.sr.getHandler(registry.TERMINATE,      registry.NSI2_LOCAL)
 
 
     def tearDown(self):
@@ -52,6 +54,7 @@ class DUDBackendTest(unittest.TestCase):
     def testProvisionUsage(self):
 
         _,_,cid,sp = yield self.reserve(None, self.provider_nsa.urn(), None, None, None, None, self.service_params)
+        yield self.reserveCommit(None, self.provider_nsa.urn(), None, cid)
         yield self.provision(None, self.provider_nsa.urn(), None, cid)
         yield self.terminate(None, self.provider_nsa.urn(), None, cid)
 
@@ -60,6 +63,7 @@ class DUDBackendTest(unittest.TestCase):
     def testProvisionReleaseUsage(self):
 
         _,_,cid,sp = yield self.reserve(None, self.provider_nsa.urn(), None, None, None, None, self.service_params)
+        yield self.reserveCommit(None, self.provider_nsa.urn(), None, cid)
         yield self.provision(None, self.provider_nsa.urn(), None, cid)
         yield self.release(  None, self.provider_nsa.urn(), None, cid)
         yield self.terminate(None, self.provider_nsa.urn(), None, cid)
@@ -98,6 +102,7 @@ class DUDBackendTest(unittest.TestCase):
         self.sr.registerEventHandler(registry.DATA_PLANE_CHANGE,  dataPlaneChange, registry.NSI2_LOCAL)
 
         _,_,cid,sp = yield self.reserve(None, self.provider_nsa.urn(), None, None, None, None, self.service_params)
+        yield self.reserveCommit(None, self.provider_nsa.urn(), None, cid)
         yield self.provision(None, self.provider_nsa.urn(), None, cid)
         connection_id, active, version_consistent, version, timestamp = yield d
         self.failUnlessEqual(cid, connection_id)
@@ -108,5 +113,18 @@ class DUDBackendTest(unittest.TestCase):
         yield self.terminate(None, self.provider_nsa.urn(), None, cid)
 
 
+    @defer.inlineCallbacks
+    def testReserveAbort(self):
 
+        # these need to be constructed such that there is only one label option
+        source_stp  = nsa.STP('Aruba', 'A1', labels=[ nsa.Label(nml.ETHERNET_VLAN, '2') ] )
+        dest_stp    = nsa.STP('Aruba', 'A3', labels=[ nsa.Label(nml.ETHERNET_VLAN, '2') ] )
+        start_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=1)
+        end_time   = datetime.datetime.utcnow() + datetime.timedelta(seconds=10)
+        service_params = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, 200)
+
+        _,_,cid,sp = yield self.reserve(None, self.provider_nsa.urn(), None, None, None, None, self.service_params)
+        yield self.reserveAbort(None, self.provider_nsa.urn(), None, cid)
+        # try to reserve the same resources
+        _,_,cid,sp = yield self.reserve(None, self.provider_nsa.urn(), None, None, None, None, self.service_params)
 
