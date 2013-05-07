@@ -31,6 +31,7 @@ class CallScheduler:
 
     def __init__(self):
         self.scheduled_calls = {}
+        self.clock = reactor # this is needed in order to test scheduled calls
 
 
     def scheduleCall(self, connection_id, transition_time, call, *args):
@@ -51,7 +52,7 @@ class CallScheduler:
         transition_delta_seconds = (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6.0
         transition_delta_seconds = max(transition_delta_seconds, 0) # if dt_now is passed during calculation
 
-        d = task.deferLater(reactor, transition_delta_seconds, call, *args)
+        d = task.deferLater(self.clock, transition_delta_seconds, call, *args)
         d.addErrback(deferTaskFailed)
         self.scheduled_calls[connection_id] = d
         return d
