@@ -37,6 +37,8 @@ class Simplebackendconnection(DBObject):
 
 class SimpleBackend(service.Service):
 
+    TPC_TIMEOUT = 30 # seconds
+
     def __init__(self, network, connection_manager, service_registry, log_system):
 
         self.network = network
@@ -216,9 +218,10 @@ class SimpleBackend(service.Service):
             else:
                 raise error.STPUnavailableError('STP combination %s and %s not available in specified time span' % (source_stp, dest_stp))
 
+        now =  datetime.datetime.utcnow()
 
         conn = Simplebackendconnection(connection_id=connection_id, revision=0, global_reservation_id=global_reservation_id, description=description, nsa=provider_nsa,
-                                       reserve_time=datetime.datetime.utcnow(),
+                                       reserve_time=now,
                                        reservation_state=state.INITIAL, provision_state=state.SCHEDULED, activation_state=state.INACTIVE, lifecycle_state=state.INITIAL,
                                        source_network=source_stp.network, source_port=source_stp.port, source_labels=[src_label],
                                        dest_network=dest_stp.network, dest_port=dest_stp.port, dest_labels=[dst_label],
@@ -233,15 +236,16 @@ class SimpleBackend(service.Service):
         yield state.reserveHeld(conn)
         self.logStateUpdate(conn, 'RESERVE HELD')
 
-        # need to schedule 2PC timeout
+        # schedule 2PC timeout
         if self.scheduler.hasScheduledCall(conn.connection_id):
             # this means that the build scheduler made a call while we yielded
             self.scheduler.cancelCall(connection_id)
 
-        self.scheduler.scheduleCall(connection_id, conn.end_time, self._doTerminate, conn)
-        td = conn.end_time - datetime.datetime.utcnow()
-        log.msg('Connection %s: terminate scheduled for %s UTC (%i seconds)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
+        timeout_time = min(now + datetime.timedelta(seconds=self.TPC_TIMEOUT), conn.end_time)
 
+        self.scheduler.scheduleCall(connection_id, timeout_time, self._doReserveAbort, conn)
+        td = timeout_time - datetime.datetime.utcnow()
+        log.msg('Connection %s: reserve abort scheduled for %s UTC (%i seconds)' % (conn.connection_id, timeout_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
 
         sc_source_stp = nsa.STP(source_stp.network, source_stp.port, labels=[src_label])
         sc_dest_stp   = nsa.STP(dest_stp.network,   dest_stp.port,   labels=[dst_label])
@@ -263,18 +267,7 @@ class SimpleBackend(service.Service):
     def reserveAbort(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
         conn = yield self._getConnection(connection_id, requester_nsa)
-
-        yield state.reserveAbort(conn)
-
-        # release the resources
-        src_resource = self.connection_manager.getResource(conn.source_port, conn.source_labels[0].type_, conn.source_labels[0].labelValue())
-        dst_resource = self.connection_manager.getResource(conn.dest_port,   conn.dest_labels[0].type_,   conn.dest_labels[0].labelValue())
-
-        self.calendar.removeReservation(src_resource, conn.start_time, conn.end_time)
-        self.calendar.removeReservation(dst_resource, conn.start_time, conn.end_time)
-
-        yield state.reserved(conn)
-
+        yield self._doReserveAbort(conn)
 
 
     @defer.inlineCallbacks
@@ -342,6 +335,30 @@ class SimpleBackend(service.Service):
     def query(self, query_filter):
         pass
 
+
+    @defer.inlineCallbacks
+    def _doReserveAbort(self, conn):
+
+        yield state.reserveAbort(conn)
+        self.logStateUpdate(conn, 'RESERVE ABORTING')
+
+        # release the resources
+        src_resource = self.connection_manager.getResource(conn.source_port, conn.source_labels[0].type_, conn.source_labels[0].labelValue())
+        dst_resource = self.connection_manager.getResource(conn.dest_port,   conn.dest_labels[0].type_,   conn.dest_labels[0].labelValue())
+
+        self.calendar.removeReservation(src_resource, conn.start_time, conn.end_time)
+        self.calendar.removeReservation(dst_resource, conn.start_time, conn.end_time)
+
+        yield state.reserved(conn)
+        self.logStateUpdate(conn, 'RESERVE INITIAL')
+
+        now = datetime.datetime.utcnow()
+        if conn.end_time >= now:
+            yield self._doTerminate(conn)
+        else:
+            self.scheduler.scheduleCall(conn.connection_id, conn.end_time, self._doTerminate, conn)
+            td = conn.end_time - datetime.datetime.utcnow()
+            log.msg('Connection %s: terminate scheduled for %s UTC (%i seconds)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
 
 
     @defer.inlineCallbacks
