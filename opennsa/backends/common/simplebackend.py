@@ -87,11 +87,11 @@ class SimpleBackend(service.Service):
                 if conn.provision_state == state.PROVISIONED:
                     self.scheduler.scheduleCall(conn.connection_id, conn.end_time, self._doActivate, conn)
                     td = conn.end_time - now
-                    log.msg('Connection %s: terminate scheduled for %s UTC (%i seconds)' % (conn.connection_id, conn.end_time, td.total_seconds()), system=self.log_system)
+                    log.msg('Connection %s: terminate scheduled for %s UTC (%i seconds)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
                 elif conn.provision_state == state.SCHEDULED:
                     self.scheduler.scheduleCall(conn.connection_id, conn.end_time, self._doTerminate, conn)
                     td = conn.end_time - now
-                    log.msg('Connection %s: terminate scheduled for %s UTC (%i seconds)' % (conn.connection_id, conn.end_time, td.total_seconds()), system=self.log_system)
+                    log.msg('Connection %s: terminate scheduled for %s UTC (%i seconds)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
                 else:
                     log.msg('Unhandled provision state %s for connection %s in scheduler building' % (conn.provision_state, conn.connection_id))
 
@@ -101,7 +101,7 @@ class SimpleBackend(service.Service):
                 elif conn.provision_state == state.SCHEDULED:
                     self.scheduler.scheduleCall(conn.connection_id, conn.end_time, self._doTerminate, conn)
                     td = conn.end_time - now
-                    log.msg('Connection %s: terminate scheduled for %s UTC (%i seconds)' % (conn.connection_id, conn.end_time, td.total_seconds()), system=self.log_system)
+                    log.msg('Connection %s: terminate scheduled for %s UTC (%i seconds)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
                 else:
                     log.msg('Unhandled provision state %s for connection %s in scheduler building' % (conn.provision_state, conn.connection_id))
 
@@ -127,7 +127,9 @@ class SimpleBackend(service.Service):
 
 
     def logStateUpdate(self, conn, state_msg):
-        log.msg('Link: %s, %s -> %s : %s.' % (conn.connection_id, conn.source_port, conn.dest_port, state_msg), system=self.log_system)
+        src_target = self.connection_manager.getTarget(conn.source_port, conn.source_labels[0].type_, conn.source_labels[0].labelValue())
+        dst_target = self.connection_manager.getTarget(conn.dest_port,   conn.dest_labels[0].type_,   conn.dest_labels[0].labelValue())
+        log.msg('Connection %s: %s -> %s %s' % (conn.connection_id, src_target, dst_target, state_msg), system=self.log_system)
 
 
     @defer.inlineCallbacks
@@ -230,7 +232,7 @@ class SimpleBackend(service.Service):
 
         self.scheduler.scheduleCall(connection_id, conn.end_time, self._doTerminate, conn)
         td = conn.end_time - datetime.datetime.utcnow()
-        log.msg('Connection %s: terminate scheduled for %s UTC (%i seconds)' % (conn.connection_id, conn.end_time, td.total_seconds()), system=self.log_system)
+        log.msg('Connection %s: terminate scheduled for %s UTC (%i seconds)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
 
 
         sc_source_stp = nsa.STP(source_stp.network, source_stp.port, labels=[src_label])
@@ -260,7 +262,7 @@ class SimpleBackend(service.Service):
         else:
             self.scheduler.scheduleCall(connection_id, conn.start_time, self._doActivate, conn)
             td = conn.start_time - now
-            log.msg('Connection %s: activate scheduled for %s UTC (%i seconds)' % (conn.connection_id, conn.end_time, td.total_seconds()), system=self.log_system)
+            log.msg('Connection %s: activate scheduled for %s UTC (%i seconds)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
 
         yield state.provisioned(conn)
         self.logStateUpdate(conn, 'PROVISIONED')
@@ -284,7 +286,8 @@ class SimpleBackend(service.Service):
                 log.msg('Connection %s: Error tearing down link: %s' % (conn.connection_id, e))
 
         self.scheduler.scheduleCall(connection_id, conn.end_time, self._doTerminate, conn)
-        log.msg('Transition scheduled for %s: terminating at %s.' % (connection_id, conn.end_time), system=self.log_system)
+        td = conn.start_time - datetime.datetime.utcnow()
+        log.msg('Connection %s: terminating scheduled for %s UTC (%i seconds)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
 
         yield state.scheduled(conn)
         self.logStateUpdate(conn, 'RELEASED')
@@ -320,11 +323,11 @@ class SimpleBackend(service.Service):
             # add notification here
 
         try:
-            self.scheduler.scheduleCall(conn.connection_id, conn.end_time, self._doTerminate, conn)
-            td = conn.end_time - datetime.datetime.utcnow()
-            log.msg('Connection %s: terminate scheduled for %s UTC (%i seconds)' % (conn.connection_id, conn.end_time, td.total_seconds()), system=self.log_system)
             yield state.active(conn)
             self.logStateUpdate(conn, 'ACTIVE')
+            self.scheduler.scheduleCall(conn.connection_id, conn.end_time, self._doTerminate, conn)
+            td = conn.end_time - datetime.datetime.utcnow()
+            log.msg('Connection %s: terminate scheduled for %s UTC (%i seconds)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
             data_plane_change = self.service_registry.getHandler(registry.DATA_PLANE_CHANGE, registry.NSI2_LOCAL)
             data_plane_change(conn.connection_id, True, True, conn.revision, datetime.datetime.utcnow())
         except Exception, e:
@@ -336,12 +339,12 @@ class SimpleBackend(service.Service):
     def _doTeardown(self, conn):
         # this one is not used as a stand-alone, just a utility function
         yield state.deactivating(conn)
-        self.logStateUpdate(conn, state.DEACTIVATING)
+        self.logStateUpdate(conn, 'DEACTIVATING')
         src_target = self.connection_manager.getTarget(conn.source_port, conn.source_labels[0].type_, conn.source_labels[0].labelValue())
         dst_target = self.connection_manager.getTarget(conn.dest_port,   conn.dest_labels[0].type_,   conn.dest_labels[0].labelValue())
         yield self.connection_manager.teardownLink(src_target, dst_target)
         yield state.inactive(conn)
-        self.logStateUpdate(conn, state.INACTIVE)
+        self.logStateUpdate(conn, 'INACTIVE')
 
 
     @defer.inlineCallbacks
@@ -351,7 +354,7 @@ class SimpleBackend(service.Service):
             defer.returnValue(conn.cid)
 
         yield state.terminating(conn)
-        self.logStateUpdate(conn, state.TERMINATING)
+        self.logStateUpdate(conn, 'TERMINATING')
 
         self.scheduler.cancelCall(conn.connection_id)
 
