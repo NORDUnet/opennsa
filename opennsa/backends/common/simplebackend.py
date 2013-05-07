@@ -13,6 +13,7 @@ Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2011-2012)
 """
 
+import string
 import random
 import datetime
 
@@ -58,10 +59,12 @@ class SimpleBackend(service.Service):
     def startService(self):
         service.Service.startService(self)
 
-        self.service_registry.registerEventHandler(registry.RESERVE,   self.reserve,   registry.NSI2_LOCAL)
-        self.service_registry.registerEventHandler(registry.PROVISION, self.provision, registry.NSI2_LOCAL)
-        self.service_registry.registerEventHandler(registry.RELEASE,   self.release,   registry.NSI2_LOCAL)
-        self.service_registry.registerEventHandler(registry.TERMINATE, self.terminate, registry.NSI2_LOCAL)
+        self.service_registry.registerEventHandler(registry.RESERVE,        self.reserve,       registry.NSI2_LOCAL)
+        self.service_registry.registerEventHandler(registry.RESERVE_COMMIT, self.reserveCommit, registry.NSI2_LOCAL)
+        self.service_registry.registerEventHandler(registry.RESERVE_ABORT,  self.reserveAbort,  registry.NSI2_LOCAL)
+        self.service_registry.registerEventHandler(registry.PROVISION,      self.provision,     registry.NSI2_LOCAL)
+        self.service_registry.registerEventHandler(registry.RELEASE,        self.release,       registry.NSI2_LOCAL)
+        self.service_registry.registerEventHandler(registry.TERMINATE,      self.terminate,     registry.NSI2_LOCAL)
 
 
     def stopService(self):
@@ -146,7 +149,7 @@ class SimpleBackend(service.Service):
         # need to check schedule
 
         #connection_id = str(uuid.uuid1())
-        connection_id = str(random.randint(100000,999999))
+        connection_id = ''.join( [ random.choice(string.hexdigits[:16]) for _ in range(8) ] )
 
         source_stp = service_params.source_stp
         dest_stp   = service_params.dest_stp
@@ -223,12 +226,17 @@ class SimpleBackend(service.Service):
                                        bandwidth=service_params.bandwidth)
         yield conn.save()
 
+        # this sould really be much earlier, need to save connection before checking
+        yield state.reserveChecking(conn)
+        self.logStateUpdate(conn, 'RESERVE CHECKING')
 
-        state.reserving(conn)
-        self.logStateUpdate(conn, 'RESERVING')
-        state.reserved(conn)
-        self.logStateUpdate(conn, 'RESERVED')
+        yield state.reserveHeld(conn)
+        self.logStateUpdate(conn, 'RESERVE HELD')
+
         # need to schedule 2PC timeout
+        if self.scheduler.hasScheduledCall(conn.connection_id):
+            # this means that the build scheduler made a call while we yielded
+            self.scheduler.cancelCall(connection_id)
 
         self.scheduler.scheduleCall(connection_id, conn.end_time, self._doTerminate, conn)
         td = conn.end_time - datetime.datetime.utcnow()
@@ -243,10 +251,39 @@ class SimpleBackend(service.Service):
 
 
     @defer.inlineCallbacks
-    def provision(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
-
+    def reserveCommit(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
         conn = yield self._getConnection(connection_id, requester_nsa)
+
+        yield state.reserveCommit(conn)
+        yield state.reserved(conn)
+
+
+    @defer.inlineCallbacks
+    def reserveAbort(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
+
+        conn = yield self._getConnection(connection_id, requester_nsa)
+
+        yield state.reserveAbort(conn)
+
+        # release the resources
+        src_resource = self.connection_manager.getResource(conn.source_port, conn.source_labels[0].type_, conn.source_labels[0].labelValue())
+        dst_resource = self.connection_manager.getResource(conn.dest_port,   conn.dest_labels[0].type_,   conn.dest_labels[0].labelValue())
+
+        self.calendar.removeConnection(src_resource, conn.start_time, conn.end_time)
+        self.calendar.removeConnection(dst_resource, conn.start_time, conn.end_time)
+
+        yield state.reserved(conn)
+
+
+
+    @defer.inlineCallbacks
+    def provision(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
+
+        conn = yield self._getConnection(connection_id, requester_nsa)
+
+        if conn.reservation_state != state.RESERVED:
+            raise error.InvalidTransitionError('Cannot provision connection in a non-reserved state')
 
         now = datetime.datetime.utcnow()
         if conn.end_time <= now:
