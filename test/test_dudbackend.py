@@ -16,7 +16,7 @@ class DUDBackendTest(unittest.TestCase):
     def setUp(self):
 
         self.sr = registry.ServiceRegistry()
-        self.backend = dud.DUDNSIBackend('TestDUD', self.sr)
+        self.backend = dud.DUDNSIBackend('Test', self.sr)
         self.backend.startService()
 
         database.setupDatabase('ontest', 'htj', 'htj')
