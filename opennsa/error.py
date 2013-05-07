@@ -88,7 +88,7 @@ class ConnectionNonExistentError(ConnectionError):
     errorId = '00203'
 
 
-class ConnectionGone(ConnectionError):
+class ConnectionGoneError(ConnectionError):
 
     errorId = '00204'
 
@@ -146,7 +146,7 @@ NSI_ERROR_CODE_TABLE = {
     '00201' : InvalidTransitionError,
     '00202' : ConnectionExistsError,
     '00203' : ConnectionNonExistentError,
-    '00204' : ConnectionGone,
+    '00204' : ConnectionGoneError,
     '00205' : ConnectionCreateError,
     '00300' : SecurityError,
     '00400' : TopologyError,
