@@ -351,6 +351,8 @@ class SimpleBackend(service.Service):
         yield state.reserveAbort(conn)
         self.logStateUpdate(conn, 'RESERVE ABORTING')
 
+        self.scheduler.cancelCall(conn.connection_id) # we only have this for non-timeout calls, but just cancel
+
         # release the resources
         src_resource = self.connection_manager.getResource(conn.source_port, conn.source_labels[0].type_, conn.source_labels[0].labelValue())
         dst_resource = self.connection_manager.getResource(conn.dest_port,   conn.dest_labels[0].type_,   conn.dest_labels[0].labelValue())
