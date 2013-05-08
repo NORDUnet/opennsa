@@ -93,7 +93,7 @@ class SimpleBackend(service.Service):
                 if conn.provision_state == state.PROVISIONED:
                     self.scheduler.scheduleCall(conn.connection_id, conn.end_time, self._doActivate, conn)
                     td = conn.end_time - now
-                    log.msg('Connection %s: terminate scheduled for %s UTC (%i seconds)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
+                    log.msg('Connection %s: activate scheduled for %s UTC (%i seconds)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
                 elif conn.provision_state == state.SCHEDULED:
                     self.scheduler.scheduleCall(conn.connection_id, conn.end_time, self._doTerminate, conn)
                     td = conn.end_time - now
@@ -391,17 +391,26 @@ class SimpleBackend(service.Service):
     @defer.inlineCallbacks
     def _doActivate(self, conn):
 
-        yield state.activating(conn)
-        self.logStateUpdate(conn, 'ACTIVATING')
+        if conn.activation_state != state.ACTIVATING: # We died during a previous activate somehow
+            yield state.activating(conn)
+            self.logStateUpdate(conn, 'ACTIVATING')
+
+        src_target = self.connection_manager.getTarget(conn.source_port, conn.source_labels[0].type_, conn.source_labels[0].labelValue())
+        dst_target = self.connection_manager.getTarget(conn.dest_port,   conn.dest_labels[0].type_,  conn.dest_labels[0].labelValue())
         try:
-            src_target = self.connection_manager.getTarget(conn.source_port, conn.source_labels[0].type_, conn.source_labels[0].labelValue())
-            dst_target = self.connection_manager.getTarget(conn.dest_port,   conn.dest_labels[0].type_,  conn.dest_labels[0].labelValue())
             yield self.connection_manager.setupLink(src_target, dst_target)
         except Exception, e:
-            log.msg('Error setting up connection: %s' % e)
+            # We need to mark failure in state machine here somehow....
+            log.msg('Connection %s: Error setting up connection: %s' % (conn.connection_id, str(e)), system=self.log_system)
             # should include stack trace
             yield state.inactive(conn)
             self.logStateUpdate(conn, 'INACTIVE')
+
+            error_event = self.service_registry.getHandler(registry.ERROR_EVENT, registry.NSI2_LOCAL)
+            connection_states = (conn.reservation_state, conn.provision_state, conn.lifecycle_state, conn.activation_state)
+            service_ex = (None, type(e), str(e), None, None)
+            error_event('activateFailed', None, conn.connection_id, connection_states, datetime.datetime.utcnow(), str(e), service_ex)
+
             # add notification here
             defer.returnValue(None)
 
