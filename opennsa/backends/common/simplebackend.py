@@ -243,7 +243,7 @@ class SimpleBackend(service.Service):
 
         timeout_time = min(now + datetime.timedelta(seconds=self.TPC_TIMEOUT), conn.end_time)
 
-        self.scheduler.scheduleCall(connection_id, timeout_time, self._doReserveAbort, conn)
+        self.scheduler.scheduleCall(connection_id, timeout_time, self._doReserveTimeout, conn)
         td = timeout_time - datetime.datetime.utcnow()
         log.msg('Connection %s: reserve abort scheduled for %s UTC (%i seconds)' % (conn.connection_id, timeout_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
 
@@ -343,6 +343,20 @@ class SimpleBackend(service.Service):
 
     def query(self, query_filter):
         pass
+
+
+    @defer.inlineCallbacks
+    def _doReserveTimeout(self, conn):
+
+        yield state.reserveTimeout(conn)
+        self.logStateUpdate(conn, 'RESERVE TIMEOUT')
+
+        yield self._doReserveAbort(conn)
+
+        connection_states = (conn.reservation_state, conn.provision_state, conn.lifecycle_state, conn.activation_state)
+        reserve_timeout = self.service_registry.getHandler(registry.RESERVE_TIMEOUT, registry.NSI2_LOCAL)
+
+        reserve_timeout(conn.connection_id, connection_states, self.TPC_TIMEOUT, datetime.datetime.utcnow())
 
 
     @defer.inlineCallbacks

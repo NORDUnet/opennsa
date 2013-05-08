@@ -5,7 +5,7 @@ from twisted.internet import defer, task
 
 from dateutil.tz import tzutc
 
-from opennsa import nsa, registry, database, error
+from opennsa import nsa, registry, database, error, state
 from opennsa.topology import nml
 from opennsa.backends import dud
 
@@ -143,6 +143,36 @@ class DUDBackendTest(unittest.TestCase):
 
         _,_,cid,sp = yield self.reserve(None, self.provider_nsa.urn(), None, None, None, None, self.service_params)
         yield self.reserveAbort(None, self.provider_nsa.urn(), None, cid)
+        # try to reserve the same resources
+        _,_,cid,sp = yield self.reserve(None, self.provider_nsa.urn(), None, None, None, None, self.service_params)
+
+
+    @defer.inlineCallbacks
+    def testReserveAbortTimeout(self):
+
+        # these need to be constructed such that there is only one label option
+        source_stp  = nsa.STP('Aruba', 'A1', labels=[ nsa.Label(nml.ETHERNET_VLAN, '2') ] )
+        dest_stp    = nsa.STP('Aruba', 'A3', labels=[ nsa.Label(nml.ETHERNET_VLAN, '2') ] )
+        start_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=1)
+        end_time   = datetime.datetime.utcnow() + datetime.timedelta(seconds=60)
+        service_params = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, 200)
+
+        d = defer.Deferred()
+        def reserveTimeout(connection_id, connection_states, timeout_value, timestamp):
+            values = connection_id, connection_states, timeout_value, timestamp
+            d.callback(values)
+
+        self.sr.registerEventHandler(registry.RESERVE_TIMEOUT,  reserveTimeout, registry.NSI2_LOCAL)
+
+        _,_,cid,sp = yield self.reserve(None, self.provider_nsa.urn(), None, None, None, None, self.service_params)
+
+        self.clock.advance(dud.DUDNSIBackend.TPC_TIMEOUT + 1)
+        connection_id, connection_states, timeout_value, timestamp = yield d
+        rsm, psm, lsm, asm = connection_states
+
+        self.failUnlessEquals(connection_id, cid)
+        self.failUnlessEquals(rsm, state.RESERVED)
+
         # try to reserve the same resources
         _,_,cid,sp = yield self.reserve(None, self.provider_nsa.urn(), None, None, None, None, self.service_params)
 
