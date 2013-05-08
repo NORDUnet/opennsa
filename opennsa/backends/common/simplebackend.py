@@ -397,9 +397,11 @@ class SimpleBackend(service.Service):
             yield self.connection_manager.setupLink(src_target, dst_target)
         except Exception, e:
             log.msg('Error setting up connection: %s' % e)
+            # should include stack trace
             yield state.inactive(conn)
             self.logStateUpdate(conn, 'INACTIVE')
             # add notification here
+            defer.returnValue(None)
 
         try:
             yield state.active(conn)
@@ -407,8 +409,11 @@ class SimpleBackend(service.Service):
             self.scheduler.scheduleCall(conn.connection_id, conn.end_time, self._doTerminate, conn)
             td = conn.end_time - datetime.datetime.utcnow()
             log.msg('Connection %s: terminate scheduled for %s UTC (%i seconds)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
+
             data_plane_change = self.service_registry.getHandler(registry.DATA_PLANE_CHANGE, registry.NSI2_LOCAL)
-            data_plane_change(conn.connection_id, True, True, conn.revision, datetime.datetime.utcnow())
+            active = True
+            version_consistent = True
+            data_plane_change(conn.connection_id, active, version_consistent, conn.revision, datetime.datetime.utcnow())
         except Exception, e:
             # this really should not happen
             log.msg('Error in post-activation: %s' % e)
@@ -419,11 +424,21 @@ class SimpleBackend(service.Service):
         # this one is not used as a stand-alone, just a utility function
         yield state.deactivating(conn)
         self.logStateUpdate(conn, 'DEACTIVATING')
-        src_target = self.connection_manager.getTarget(conn.source_port, conn.source_labels[0].type_, conn.source_labels[0].labelValue())
-        dst_target = self.connection_manager.getTarget(conn.dest_port,   conn.dest_labels[0].type_,   conn.dest_labels[0].labelValue())
-        yield self.connection_manager.teardownLink(src_target, dst_target)
-        yield state.inactive(conn)
-        self.logStateUpdate(conn, 'INACTIVE')
+        try:
+            src_target = self.connection_manager.getTarget(conn.source_port, conn.source_labels[0].type_, conn.source_labels[0].labelValue())
+            dst_target = self.connection_manager.getTarget(conn.dest_port,   conn.dest_labels[0].type_,   conn.dest_labels[0].labelValue())
+            yield self.connection_manager.teardownLink(src_target, dst_target)
+            yield state.inactive(conn)
+            self.logStateUpdate(conn, 'INACTIVE')
+        except Exception, e:
+            log.msg('Error tearing down circuit: %s' % e)
+            # should include stack trace
+            defer.returnValue(None)
+
+        data_plane_change = self.service_registry.getHandler(registry.DATA_PLANE_CHANGE, registry.NSI2_LOCAL)
+        active = False
+        version_consistent = True
+        data_plane_change(conn.connection_id, active, version_consistent, conn.revision, datetime.datetime.utcnow())
 
 
     @defer.inlineCallbacks

@@ -79,10 +79,25 @@ class DUDBackendTest(unittest.TestCase):
     @defer.inlineCallbacks
     def testProvisionReleaseUsage(self):
 
+        d_up   = defer.Deferred()
+        d_down = defer.Deferred()
+
+        def dataPlaneChange(connection_id, active, version_consistent, version, timestamp):
+            if active:
+                d_up.callback(connection_id)
+            else:
+                d_down.callback(connection_id)
+
+        self.sr.registerEventHandler(registry.DATA_PLANE_CHANGE,  dataPlaneChange, registry.NSI2_LOCAL)
+
         _,_,cid,sp = yield self.reserve(None, self.provider_nsa.urn(), None, None, None, None, self.service_params)
         yield self.reserveCommit(None, self.provider_nsa.urn(), None, cid)
+
         yield self.provision(None, self.provider_nsa.urn(), None, cid)
+        self.clock.advance(3)
+        yield d_up
         yield self.release(  None, self.provider_nsa.urn(), None, cid)
+        yield d_down
         yield self.terminate(None, self.provider_nsa.urn(), None, cid)
 
 
@@ -110,11 +125,12 @@ class DUDBackendTest(unittest.TestCase):
     @defer.inlineCallbacks
     def testActivation(self):
 
-        d = defer.Deferred()
+        d_up = defer.Deferred()
 
         def dataPlaneChange(connection_id, active, version_consistent, version, timestamp):
-            values = connection_id, active, version_consistent, version, timestamp
-            d.callback(values)
+            if active:
+                values = connection_id, active, version_consistent, version, timestamp
+                d_up.callback(values)
 
         self.sr.registerEventHandler(registry.DATA_PLANE_CHANGE,  dataPlaneChange, registry.NSI2_LOCAL)
 
@@ -122,7 +138,7 @@ class DUDBackendTest(unittest.TestCase):
         yield self.reserveCommit(None, self.provider_nsa.urn(), None, cid)
         yield self.provision(None, self.provider_nsa.urn(), None, cid)
         self.clock.advance(3)
-        connection_id, active, version_consistent, version, timestamp = yield d
+        connection_id, active, version_consistent, version, timestamp = yield d_up
         self.failUnlessEqual(cid, connection_id)
         self.failUnlessEqual(active, True)
         self.failUnlessEqual(version_consistent, True)
