@@ -26,7 +26,9 @@ TERMINATE_RESPONSE      = 'terminate_response'
 
 QUERY                   = 'query'
 QUERY_RESPONSE          = 'query_response'
+
 DATA_PLANE_CHANGE       = 'data_plane_change'
+ERROR_EVENT             = 'error_event'
 
 
 SYSTEM_SERVICE          = 'service'
