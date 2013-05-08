@@ -98,6 +98,11 @@ def reserveAbort(conn):
     conn.reservation_state = RESERVE_ABORTING
     return conn.save()
 
+def reserveTimeout(conn):
+    _switchState(RESERVE_TRANSITIONS, conn.reservation_state, RESERVE_TIMEOUT)
+    conn.reservation_state = RESERVE_TIMEOUT
+    return conn.save()
+
 def reserved(conn):
     _switchState(RESERVE_TRANSITIONS, conn.reservation_state, RESERVED)
     conn.reservation_state = RESERVED
