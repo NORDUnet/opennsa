@@ -362,7 +362,7 @@ class SimpleBackend(service.Service):
         self.logStateUpdate(conn, 'RESERVE INITIAL')
 
         now = datetime.datetime.utcnow()
-        if conn.end_time >= now:
+        if now > conn.end_time:
             yield self._doTerminate(conn)
         else:
             self.scheduler.scheduleCall(conn.connection_id, conn.end_time, self._doTerminate, conn)
