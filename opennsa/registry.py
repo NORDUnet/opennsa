@@ -14,6 +14,7 @@ RESERVE_COMMIT          = 'reserve_commit'
 RESERVE_COMMIT_RESPONSE = 'reserve_commit_response'
 RESERVE_ABORT           = 'reserve_abort'
 RESERVE_ABORT_RESPONSE  = 'reserve_abort_response'
+RESERVE_TIMEOUT         = 'reserve_timeout'
 
 PROVISION               = 'provision'
 PROVISION_RESPONSE      = 'provision_response'
