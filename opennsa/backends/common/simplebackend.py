@@ -86,6 +86,7 @@ class SimpleBackend(service.Service):
             now = datetime.datetime.utcnow()
 
             if conn.end_time < now and conn.lifecycle_state != state.TERMINATED:
+                log.msg('Connection %s: Immediate terminate during buildSchedule' % conn.connection_id, system=self.log_system)
                 yield self._doTerminate(conn)
 
             elif conn.start_time < now:
@@ -101,7 +102,8 @@ class SimpleBackend(service.Service):
                     log.msg('Unhandled provision state %s for connection %s in scheduler building' % (conn.provision_state, conn.connection_id))
 
             elif conn.start_time > now:
-                if conn.provision_state == state.PROVISIONED:
+                if conn.provision_state == state.PROVISIONED and conn.activation_state != state.ACTIVE:
+                    log.msg('Connection %s: Immediate activate during buildSchedule' % conn.connection_id, system=self.log_system)
                     yield self._doActivate(conn)
                 elif conn.provision_state == state.SCHEDULED:
                     self.scheduler.scheduleCall(conn.connection_id, conn.end_time, self._doTerminate, conn)
