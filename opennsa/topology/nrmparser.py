@@ -68,7 +68,7 @@ def _parseLabelSpec(label_spec):
     return labels
 
 
-def parseTopologySpec(source, network_name, nsi_agent):
+def parseTopologySpec(source, network_name):
 
     # Parse the entries like the following:
 
@@ -131,6 +131,6 @@ def parseTopologySpec(source, network_name, nsi_agent):
             raise NotImplementedError('Unidirectional ethernet ports not implemented yet')
 
     # check for no entries?
-    network = nml.Network(network_name, nsi_agent, ports, port_interface_map)
+    network = nml.Network(network_name, ports, port_interface_map)
     return network
 
