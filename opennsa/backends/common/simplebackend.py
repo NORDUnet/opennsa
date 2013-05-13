@@ -411,7 +411,6 @@ class SimpleBackend(service.Service):
             service_ex = (None, type(e), str(e), None, None)
             error_event('activateFailed', None, conn.connection_id, connection_states, datetime.datetime.utcnow(), str(e), service_ex)
 
-            # add notification here
             defer.returnValue(None)
 
         try:
@@ -435,21 +434,34 @@ class SimpleBackend(service.Service):
         # this one is not used as a stand-alone, just a utility function
         yield state.deactivating(conn)
         self.logStateUpdate(conn, 'DEACTIVATING')
+
+        src_target = self.connection_manager.getTarget(conn.source_port, conn.source_labels[0].type_, conn.source_labels[0].labelValue())
+        dst_target = self.connection_manager.getTarget(conn.dest_port,   conn.dest_labels[0].type_,   conn.dest_labels[0].labelValue())
         try:
-            src_target = self.connection_manager.getTarget(conn.source_port, conn.source_labels[0].type_, conn.source_labels[0].labelValue())
-            dst_target = self.connection_manager.getTarget(conn.dest_port,   conn.dest_labels[0].type_,   conn.dest_labels[0].labelValue())
             yield self.connection_manager.teardownLink(src_target, dst_target)
+        except Exception, e:
+            # We need to mark failure in state machine here somehow....
+            log.msg('Connection %s: Error deactivating connection: %s' % (conn.connection_id, str(e)), system=self.log_system)
+            # should include stack trace
             yield state.inactive(conn)
             self.logStateUpdate(conn, 'INACTIVE')
-        except Exception, e:
-            log.msg('Error tearing down circuit: %s' % e)
-            # should include stack trace
+
+            error_event = self.service_registry.getHandler(registry.ERROR_EVENT, registry.NSI2_LOCAL)
+            connection_states = (conn.reservation_state, conn.provision_state, conn.lifecycle_state, conn.activation_state)
+            service_ex = (None, type(e), str(e), None, None)
+            error_event('deactivateFailed', None, conn.connection_id, connection_states, datetime.datetime.utcnow(), str(e), service_ex)
+
             defer.returnValue(None)
 
-        data_plane_change = self.service_registry.getHandler(registry.DATA_PLANE_CHANGE, registry.NSI2_LOCAL)
-        active = False
-        version_consistent = True
-        data_plane_change(conn.connection_id, active, version_consistent, conn.revision, datetime.datetime.utcnow())
+        try:
+            yield state.inactive(conn)
+            self.logStateUpdate(conn, 'INACTIVE')
+            data_plane_change = self.service_registry.getHandler(registry.DATA_PLANE_CHANGE, registry.NSI2_LOCAL)
+            active = False
+            version_consistent = True
+            data_plane_change(conn.connection_id, active, version_consistent, conn.revision, datetime.datetime.utcnow())
+        except Exception as e:
+            log.msg('Error in post-deactivation: %s' % e)
 
 
     @defer.inlineCallbacks
