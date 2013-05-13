@@ -15,8 +15,8 @@ from dateutil.tz import tzutc
 
 from opennsa import nsa, error, registry, nsiservice
 from opennsa.backends import dud
-from opennsa.topology import gole
-from opennsa.protocols import nsi1
+from opennsa.topology import nrmparser
+from opennsa.protocols import nsi2
 
 from . import topology as testtopology
 
@@ -38,10 +38,12 @@ class ServiceTest(unittest.TestCase):
         for network, port in SERVICES:
 
             topo_source = StringIO.StringIO(testtopology.TEST_TOPOLOGY)
-            backend = dud.DUDNSIBackend(network)
-            topo, _ = gole.parseTopology( [ topo_source ] )
 
-            factory = nsi1.createService(network, backend, topo, HOST, port, WSDL_DIR)
+            sr = registry.ServiceRegistry()
+            backend = dud.DUDNSIBackend(network, sr)
+            topo = nrmparser.parseTopologySpec(topo_source, network)
+
+#            factory = nsi1.createService(network, backend, topo, HOST, port, WSDL_DIR)
 
             iport = reactor.listenTCP(port, factory, interface='localhost')
             self.iports.append(iport)
