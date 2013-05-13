@@ -295,7 +295,7 @@ class SimpleBackend(service.Service):
         self.scheduler.cancelCall(connection_id)
 
         if conn.start_time <= now:
-            d = _doActivate(conn)
+            d = self._doActivate(conn)
         else:
             self.scheduler.scheduleCall(connection_id, conn.start_time, self._doActivate, conn)
             td = conn.start_time - now
