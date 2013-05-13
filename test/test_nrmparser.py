@@ -22,9 +22,8 @@ class NRMParserTest(unittest.TestCase):
     def testNMLNetworkCreation(self):
 
         network_name = 'dud'
-        nsi_agent = nsa.NetworkServiceAgent('dudnsa', 'http://example.org/fake_nsa_url')
         source = StringIO.StringIO(NRM_ENTRY)
-        network = nrmparser.parseTopologySpec(source, network_name, nsi_agent)
+        network = nrmparser.parseTopologySpec(source, network_name)
 
         self.assertEquals( network.getInterface('ps'),          'em0')
         self.assertEquals( network.getInterface('netherlight'), 'em1')

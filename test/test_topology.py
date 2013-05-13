@@ -44,10 +44,10 @@ CURACAO_PS = nsa.STP('curacao', 'ps', nsa.INGRESS, [LABEL])
 class TopologyTest(unittest.TestCase):
 
     def setUp(self):
-        an = nrmparser.parseTopologySpec(StringIO(ARUBA_TOPOLOGY),    'aruba', None)
-        bn = nrmparser.parseTopologySpec(StringIO(BONAIRE_TOPOLOGY),  'bonaire', None)
-        cn = nrmparser.parseTopologySpec(StringIO(CURACAO_TOPOLOGY),  'curacao', None)
-        dn = nrmparser.parseTopologySpec(StringIO(DOMINICA_TOPOLOGY), 'dominica', None)
+        an = nrmparser.parseTopologySpec(StringIO(ARUBA_TOPOLOGY),    'aruba')
+        bn = nrmparser.parseTopologySpec(StringIO(BONAIRE_TOPOLOGY),  'bonaire')
+        cn = nrmparser.parseTopologySpec(StringIO(CURACAO_TOPOLOGY),  'curacao')
+        dn = nrmparser.parseTopologySpec(StringIO(DOMINICA_TOPOLOGY), 'dominica')
 
         self.topology = nml.Topology()
         for n in [ an, bn, cn, dn ]:
