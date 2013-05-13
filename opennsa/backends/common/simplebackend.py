@@ -17,13 +17,11 @@ import string
 import random
 import datetime
 
-from dateutil.tz import tzutc
-
 from twisted.python import log
 from twisted.internet import reactor, defer
 from twisted.application import service
 
-from opennsa import registry, error, state, nsa, database
+from opennsa import registry, error, state, nsa
 from opennsa.backends.common import scheduler, calendar
 
 from twistar.dbobject import DBObject
