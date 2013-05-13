@@ -32,7 +32,8 @@ class NSIService:
         self.service_registry = service_registry
 
         self.topology = topology
-        self.aggregator = aggregator.Aggregator(network, topology, service_registry)
+        nsa_ = None # Fixme later
+        self.aggregator = aggregator.Aggregator(network, nsa_, topology, service_registry)
 
         self.service_registry.registerEventHandler(registry.RESERVE,   self.reserve,   registry.SYSTEM_SERVICE)
         self.service_registry.registerEventHandler(registry.PROVISION, self.provision, registry.SYSTEM_SERVICE)

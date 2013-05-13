@@ -69,8 +69,8 @@ class OpenNSAService(twistedservice.MultiService):
         # topology
         topology = nml.Topology()
         # need to add check for nrm file, no longer just nrm really
-        ns_agent = 'urn:ogf:network:' + vc[config.NETWORK_NAME] + ':nsa' # fixme
-        network = nrmparser.parseTopologySpec( open( vc[config.NRM_MAP_FILE] ), vc[config.NETWORK_NAME], ns_agent)
+        #ns_agent = 'urn:ogf:network:' + vc[config.NETWORK_NAME] + ':nsa' # fixme
+        network = nrmparser.parseTopologySpec( open( vc[config.NRM_MAP_FILE] ), vc[config.NETWORK_NAME])
         topology.addNetwork(network)
 
         if vc[config.HOST] is None:

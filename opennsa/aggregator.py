@@ -185,13 +185,11 @@ def _createAggregateFailure(results, action):
 
 class Aggregator:
 
-    def __init__(self, network, topology, service_registry):
+    def __init__(self, network, nsa_, topology, service_registry):
         self.network = network
-        #self.nsa = nsa_
+        self.nsa_ = nsa_
         self.topology = topology
         self.service_registry = service_registry
-
-        self.nsa = self.topology.getNetwork(self.network).nsa
 
 
     @defer.inlineCallbacks
