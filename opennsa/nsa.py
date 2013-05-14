@@ -83,7 +83,7 @@ class Label(object):
 
     def intersect(self, other):
         # get the common labels between two label set - I hate you nml
-        assert isinstance(other, Label), 'Cannot intersect label with something that is not a label'
+        assert type(other) is Label, 'Cannot intersect label with something that is not a label'
         assert self.type_ == other.type_, 'Cannot insersect label of different types'
 
         label_values = []
@@ -128,7 +128,7 @@ class Label(object):
 
 
     def __eq__(self, other):
-        if not isinstance(other, Label):
+        if not type(other) is Label:
             return False
         return self.type_ == other.type_ and sorted(self.values) == sorted(other.values)
 
@@ -138,7 +138,7 @@ class Label(object):
 
 
 
-class STP: # Service Termination Point
+class STP(object): # Service Termination Point
 
     # switch orientation and labels sometime
     def __init__(self, network, port, orientation=None, labels=None):
@@ -156,7 +156,7 @@ class STP: # Service Termination Point
 
 
     def __eq__(self, other):
-        if not isinstance(other, STP):
+        if not type(other) is STP:
             return False
         return self.network == other.network and self.port == other.port and \
                self.orientation == other.orientation and self.labels == other.labels
@@ -172,7 +172,7 @@ class STP: # Service Termination Point
 
 
 
-class Link: # intra network link
+class Link(object): # intra network link
 
     def __init__(self, network, src_port, dst_port, src_labels=None, dst_labels=None):
         self.network = network
@@ -191,7 +191,7 @@ class Link: # intra network link
 
 
     def __eq__(self, other):
-        if not isinstance(other, Link):
+        if not type(other) is Link:
             return False
         return (self.network, self.src_port, self.dst_port, self.src_labels, self.dst_labels) == \
                (other.network, other.src_port, other.dst_port, other.src_labels, other.dst_labels)
@@ -203,7 +203,7 @@ class Link: # intra network link
 
 
 
-class Path:
+class Path(object):
     """
     Represent a path from a source and destitionation STP, with the endpoint pairs between them.
     """
@@ -228,7 +228,7 @@ class Path:
 
 
 
-class NetworkServiceAgent:
+class NetworkServiceAgent(object):
 
     def __init__(self, identity, endpoint): #, service_attributes=None):
         assert type(identity) is str, 'NSA identity type must be string (type: %s, value %s)' % (type(identity), identity)
@@ -244,7 +244,7 @@ class NetworkServiceAgent:
         return host, port
 
 
-    def url(self):
+    def endpoint(self):
         return self.endpoint
 
 
@@ -257,7 +257,7 @@ class NetworkServiceAgent:
 
 
 
-class ServiceParameters:
+class ServiceParameters(object):
 
     def __init__(self, start_time, end_time, source_stp, dest_stp, bandwidth, stps=None, directionality='Bidirectional'):
 
