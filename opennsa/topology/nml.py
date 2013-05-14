@@ -19,34 +19,38 @@ ETHERNET_VLAN = ETHERNET + '#vlan'
 
 
 
-class Port:
+class Port(object):
 
     def __init__(self, name, orientation, labels, bandwidth, remote_network=None, remote_port=None):
 
         assert ':' not in name, 'Invalid port name, must not contain ":"'
         assert orientation in (nsa.INGRESS, nsa.EGRESS), 'Invalid port orientation: %s' % orientation
+        if labels:
+            assert type(labels) is list, 'labels must be list or None'
+            for label in labels:
+                assert type(label) is nsa.Label
         assert (remote_network and remote_port) or not (remote_network and remote_port), 'Must specify remote network and port or none of them'
 
         self.name           = name              # String  ; Base name, no network name or uri prefix
         self.orientation    = orientation       # Must be INGRESS or EGRESS
-        self.labels         = labels            # [ nsa.Label ]  ; can be empty
+        self._labels        = labels            # [ nsa.Label ]  ; can be empty
         self.bandwidth      = bandwidth         # Integer  ; in Mbps
         self.remote_network = remote_network    # String
         self.remote_port    = remote_port       # String
 
 
     def canMatchLabels(self, labels):
-        if self.labels is None and labels is None:
+        if self._labels is None and labels is None:
             return True
-        elif self.labels is None or labels is None:
+        elif self._labels is None or labels is None:
             return False
-        elif len(self.labels) != len(labels):
+        elif len(self._labels) != len(labels):
             return False
-        elif len(self.labels) == 1: # len(labels) is identical
-            if self.labels[0].type_ != labels[0].type_:
+        elif len(self._labels) == 1: # len(labels) is identical
+            if self._labels[0].type_ != labels[0].type_:
                 return False
             try:
-                self.labels[0].intersect(labels[0])
+                self._labels[0].intersect(labels[0])
                 return True
             except nsa.EmptyLabelSet:
                 return False
@@ -58,6 +62,10 @@ class Port:
         return False
 
 
+    def labels(self):
+        return self._labels
+
+
     def hasRemote(self):
         return self.remote_network != None
 
@@ -67,17 +75,29 @@ class Port:
 
 
 
-class BidirectionalPort:
+class BidirectionalPort(object):
 
-    def __init__(self, name, labels, inbound_port, outbound_port):
+    def __init__(self, name, inbound_port, outbound_port):
+        assert type(name) is str, 'Name must be a string'
+        assert type(inbound_port) is Port, 'Inbound port must be a <Port>'
+        assert type(outbound_port) is Port, 'Outbound port must be a <Port>'
+        assert [ l.type_ for l in inbound_port.labels() ] == [ l.type_ for l in outbound_port.labels() ], 'Port labels must match each other'
+
         self.name = name
-        self.labels = labels
         self.inbound_port  = inbound_port
         self.outbound_port = outbound_port
 
 
     def isBidirectional(self):
         return True
+
+
+    def labels(self):
+        # we only do one label at the moment
+        if self.inbound_port.labels and self.outbound_port.labels:
+            return [ self.inbound_port.labels()[0].intersect(self.outbound_port.labels()[0]) ]
+        else:
+            return []
 
 
     def canMatchLabels(self, labels):
@@ -96,15 +116,19 @@ class BidirectionalPort:
 
 
 
-class Network:
+class Network(object):
 
-    def __init__(self, name, ports, port_interface_map):
+    def __init__(self, name, ports, managing_nsa):
 
-        # we should perhaps check for no ports with the same name, or build a dict
+        assert type(name) is str, 'Network name must be a string'
+        assert type(ports) is list, 'Network ports must be a list'
+        assert type(managing_nsa) is nsa.NetworkServiceAgent, 'Managing NSA must be a <NetworkServiceAgent>'
 
-        self.name       = name      # String  ; just base name, no prefix or URI stuff
-        self.ports      = ports     # [ Port | BidirectionalPort ]
-        self.port_interface_map = port_interface_map # { port_name : interface }
+        # we should perhaps check that no ports has the same name
+
+        self.name           = name          # String  ; just base name, no prefix or URI stuff
+        self.ports          = ports         # [ Port | BidirectionalPort ]
+        self.managing_nsa   = managing_nsa  # nsa.NetworkServiceAgent
 
 
     def getPort(self, port_name):
@@ -112,14 +136,6 @@ class Network:
             if port.name == port_name:
                 return port
         raise error.TopologyError('No port named %s for network %s' %(port_name, self.name))
-
-
-    def getInterface(self, port_name):
-        try:
-            return self.port_interface_map[port_name]
-        except KeyError:
-            # we probably want to change the error type sometime
-            raise error.TopologyError('No interface mapping for port %s' % port_name)
 
 
     def findPorts(self, bidirectionality, labels, exclude=None):
@@ -224,14 +240,14 @@ class Topology:
         if source_port.isBidirectional() and dest_port.isBidirectional():
             # bidirectional path finding, easy case first
             if source_stp.network == dest_stp.network:
-                # while it possible to cross other network in order to connect to intra-network STPs
-                # it is not something we really want to do in the real world
+                # while it is possible to cross other network in order to connect to intra-network STPs
+                # it is not something we really want to do in the real world, so we don't
                 try:
                     if source_network.canSwapLabel(source_stp.labels[0].type_):
-                        source_labels = source_port.labels[0].intersect(source_stp.labels)
-                        dest_labels   = dest_port.labels[0].intersect(dest_stp.labels)
+                        source_labels = source_port.labels()[0].intersect(source_stp.labels)
+                        dest_labels   = dest_port.labels()[0].intersect(dest_stp.labels)
                     else:
-                        source_labels = source_port.labels[0].intersect(dest_port.labels[0]).intersect(source_port.labels[0]).intersect(dest_port.labels[0])
+                        source_labels = source_port.labels()[0].intersect(dest_port.labels()[0])
                         dest_labels   = source_labels
                     link = nsa.Link(source_stp.network, source_stp.port, dest_stp.port, source_labels, dest_labels)
                     return [ [ link ] ]

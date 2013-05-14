@@ -99,7 +99,7 @@ def nmlXML(network):
 
     # nsa
     nsi_agent = ET.SubElement(topology, NSI_NSA, { ID : URN_NETWORK + ':nsa'})
-    ET.SubElement(nsi_agent, NML_RELATION, {TYPE: NSI_CSPROVIDERENDPOINT} ).text = network.nsa.endpoint
+    ET.SubElement(nsi_agent, NML_RELATION, {TYPE: NSI_CSPROVIDERENDPOINT} ).text = network.managing_nsa.endpoint
     vcard = ET.SubElement(nsi_agent, VC_VCARD)
     fn    = ET.SubElement(vcard, VC_FN)
     vtext = ET.SubElement(fn, VC_TEXT).text = "VCard Text goes here"

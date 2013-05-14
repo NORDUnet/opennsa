@@ -23,14 +23,12 @@ class NRMParserTest(unittest.TestCase):
 
         network_name = 'dud'
         source = StringIO.StringIO(NRM_ENTRY)
-        network = nrmparser.parseTopologySpec(source, network_name)
+        network, pim = nrmparser.parseTopologySpec(source, network_name, nsa.NetworkServiceAgent('dud', 'dud_endpoint'))
 
-        self.assertEquals( network.getInterface('ps'),          'em0')
-        self.assertEquals( network.getInterface('netherlight'), 'em1')
-        self.assertEquals( network.getInterface('somelight'),   'em 8')
-        self.assertEquals( network.getInterface('uvalight'),    'em2')
-
-        self.assertRaises( error.TopologyError, network.getInterface, 'na')
+        self.assertEquals( pim.get('ps'),           'em0')
+        self.assertEquals( pim.get('netherlight'),  'em1')
+        self.assertEquals( pim.get('somelight'),    'em 8')
+        self.assertEquals( pim.get('uvalight'),     'em2')
 
         # should test alias as well
 
