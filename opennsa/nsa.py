@@ -83,7 +83,7 @@ class Label(object):
 
     def intersect(self, other):
         # get the common labels between two label set - I hate you nml
-        assert type(other) is Label, 'Cannot intersect label with something that is not a label'
+        assert type(other) is Label, 'Cannot intersect label with something that is not a label (other was %s)' % type(other)
         assert self.type_ == other.type_, 'Cannot insersect label of different types'
 
         label_values = []
@@ -175,6 +175,12 @@ class STP(object): # Service Termination Point
 class Link(object): # intra network link
 
     def __init__(self, network, src_port, dst_port, src_labels=None, dst_labels=None):
+        if src_labels is None:
+            assert dst_labels is None, 'Source and destination labels must either both be None, or both specified'
+        else:
+            assert dst_labels is not None, 'Source and destination labels must either both be None, or both specified'
+            assert type(src_labels) is list, 'Source labels must be a list'
+            assert type(dst_labels) is list, 'Dest labels must be a list'
         self.network = network
         self.src_port = src_port
         self.dst_port = dst_port
