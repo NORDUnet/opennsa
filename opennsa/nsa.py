@@ -100,8 +100,11 @@ class Label(object):
                 label_values.append( ( max(v1,o1), min(v2,o2)) )
                 if v2 <= o2:
                     break
-                else:
-                    continue
+                elif o2 <= v2:
+                    try:
+                        o1, o2 = i.next()
+                    except StopIteration:
+                        break
 
         if len(label_values) == 0:
             raise EmptyLabelSet('Label intersection produced empty label set')

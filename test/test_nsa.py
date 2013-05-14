@@ -3,7 +3,7 @@ from twisted.trial import unittest
 from opennsa import nsa
 
 
-class LabelParsingTest(unittest.TestCase):
+class LabelTest(unittest.TestCase):
 
 
     def testLabelParsing(self):
@@ -38,5 +38,10 @@ class LabelParsingTest(unittest.TestCase):
         self.assertEquals(nsa.Label('', '1-3,2').enumerateValues(),        [ 1,2,3 ] )
         self.assertEquals(nsa.Label('', '1-3,3,1-2').enumerateValues(),    [ 1,2,3 ] )
         self.assertEquals(nsa.Label('', '2-4,8,1-3').enumerateValues(),    [ 1,2,3,4,8 ] )
+
+
+    def testContainedLabelsIntersection(self):
+
+        self.failUnlessEquals(nsa.Label('', '80-89').intersect(nsa.Label('','81-82')).enumerateValues(), [ 81,82] )
 
 
