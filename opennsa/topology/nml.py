@@ -249,7 +249,7 @@ class Topology:
                     else:
                         source_labels = source_port.labels()[0].intersect(dest_port.labels()[0])
                         dest_labels   = source_labels
-                    link = nsa.Link(source_stp.network, source_stp.port, dest_stp.port, source_labels, dest_labels)
+                    link = nsa.Link(source_stp.network, source_stp.port, dest_stp.port, [source_labels], [dest_labels])
                     return [ [ link ] ]
                 except nsa.EmptyLabelSet:
                     return [] # no path
