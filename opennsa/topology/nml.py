@@ -244,8 +244,8 @@ class Topology:
                 # it is not something we really want to do in the real world, so we don't
                 try:
                     if source_network.canSwapLabel(source_stp.labels[0].type_):
-                        source_labels = source_port.labels()[0].intersect(source_stp.labels)
-                        dest_labels   = dest_port.labels()[0].intersect(dest_stp.labels)
+                        source_labels = source_port.labels()[0].intersect(source_stp.labels[0])
+                        dest_labels   = dest_port.labels()[0].intersect(dest_stp.labels[0])
                     else:
                         source_labels = source_port.labels()[0].intersect(dest_port.labels()[0])
                         dest_labels   = source_labels
