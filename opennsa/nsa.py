@@ -204,8 +204,12 @@ class Link(object): # intra network link
 
 
     def __repr__(self):
-        return '<Link %s::%s=%s>' % (self.network, self.src_port, self.dst_port)
-
+        if self.src_labels:
+            src_label_type = self.src_labels[0].type_.split('#')[-1]
+            dst_label_type = self.dst_labels[0].type_.split('#')[-1]
+            return '<Link %s::%s#%s=%s--%s#%s=%s>' % (self.network, self.src_port, src_label_type, self.src_labels[0].labelValue(), self.dst_port, dst_label_type, self.dst_labels[0].labelValue())
+        else:
+            return '<Link %s::%s=%s>' % (self.network, self.src_port, self.dst_port)
 
 
 
