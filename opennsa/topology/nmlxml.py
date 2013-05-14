@@ -65,7 +65,7 @@ def nmlXML(network):
         port_id = URN_NETWORK + ':' + port.name
         if isinstance(port, nml.Port):
             pn = ET.SubElement(topology, NML_PORT, {ID: port_id} )
-            for label in port.labels:
+            for label in port.labels():
                 ln = ET.SubElement(pn, NML_LABEL, { LABEL_TYPE : label.type_} )
                 ln.text = label.labelValue()
             if port.remote_network is not None:
@@ -98,12 +98,11 @@ def nmlXML(network):
     ET.SubElement(managed_by, NSI_NSA, {ID : urn_nsa})
 
     # nsa
-    nsi_agent = ET.SubElement(topology, NSI_NSA, { ID : URN_NETWORK + ':nsa'})
+    nsi_agent = ET.SubElement(topology, NSI_NSA, { ID : network.managing_nsa.urn() })
     ET.SubElement(nsi_agent, NML_RELATION, {TYPE: NSI_CSPROVIDERENDPOINT} ).text = network.managing_nsa.endpoint
-    vcard = ET.SubElement(nsi_agent, VC_VCARD)
-    fn    = ET.SubElement(vcard, VC_FN)
-    vtext = ET.SubElement(fn, VC_TEXT).text = "VCard Text goes here"
-
+    #vcard = ET.SubElement(nsi_agent, VC_VCARD)
+    #fn    = ET.SubElement(vcard, VC_FN)
+    #vtext = ET.SubElement(fn, VC_TEXT).text = "VCard Text goes here"
 
     return topology
 
