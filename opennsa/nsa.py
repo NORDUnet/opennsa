@@ -166,12 +166,10 @@ class STP(object): # Service Termination Point
 
 
     def __str__(self):
-        base = '<STP %s:%s>' % (self.network, self.port)
-        if self.orientation:
-            base += '/' + self.orientation
+        base = '<STP %s:%s' % (self.network, self.port)
         if self.labels:
-            base += '#' + ','.join( [ str(label) for label in self.labels ] )
-        return base
+            base += '#' + ','.join( [ label.type_.split('#')[-1] + '=' + label.labelValue() for label in self.labels ] )
+        return base + '>'
 
 
 
