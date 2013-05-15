@@ -247,7 +247,7 @@ class Topology:
                         source_labels = source_port.labels()[0].intersect(source_stp.labels[0])
                         dest_labels   = dest_port.labels()[0].intersect(dest_stp.labels[0])
                     else:
-                        source_labels = source_port.labels()[0].intersect(dest_port.labels()[0])
+                        source_labels = source_port.labels()[0].intersect(dest_port.labels()[0]).intersect(source_stp.labels[0]).intersect(dest_stp.labels[0])
                         dest_labels   = source_labels
                     link = nsa.Link(source_stp.network, source_stp.port, dest_stp.port, [source_labels], [dest_labels])
                     return [ [ link ] ]
@@ -264,18 +264,29 @@ class Topology:
                         continue
                     if exclude_networks is not None and demarcation[0] in exclude_networks:
                         continue # don't do loops in path finding
-                    demarcation_stp = nsa.STP(demarcation[0], demarcation[1], nsa.INGRESS, source_stp.labels)
+
+                    demarcation_label = lp.labels()[0] if source_network.canSwapLabel(source_stp.labels[0].type_) else source_stp.labels[0].intersect(lp.labels()[0])
+                    demarcation_stp = nsa.STP(demarcation[0], demarcation[1], nsa.INGRESS, [ demarcation_label ] )
                     sub_exclude_networks = [ source_network.name ] + (exclude_networks or [])
                     sub_links = self._findPathsRecurse(demarcation_stp, dest_stp, bandwidth, sub_exclude_networks)
                     # if we didn't find any sub paths, just continue
                     if not sub_links:
                         continue
-                    first_link = nsa.Link(source_stp.network, source_stp.port, lp.name, source_stp.labels, source_stp.labels)
+
                     for sl in sub_links:
+                        # --
+                        if source_network.canSwapLabel(source_stp.labels[0].type_):
+                            source_label = source_port.labels()[0].intersect(source_stp.labels[0])
+                            dest_label   = lp.labels()[0].intersect(sl[0].src_labels[0])
+                        else:
+                            source_label = source_port.labels()[0].intersect(source_stp.labels[0]).intersect(lp.labels()[0]).intersect(sl[0].src_labels[0])
+                            dest_label   = source_label
+
+                        first_link = nsa.Link(source_stp.network, source_stp.port, lp.name, [source_label], [dest_label])
                         path = [ first_link ] + sl
                         links.append(path)
 
-                return sorted(links, key=lambda p : len(p)) # sort by length, shortest first
+                return sorted(links, key=len) # sort by length, shortest first
 
         else:
             raise error.TopologyError('Unidirectional path-finding not implemented yet')
