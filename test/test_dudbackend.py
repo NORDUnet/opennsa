@@ -1,4 +1,4 @@
-import time, datetime
+import os, time, datetime, json
 
 from twisted.trial import unittest
 from twisted.internet import defer, task
@@ -23,7 +23,9 @@ class DUDBackendTest(unittest.TestCase):
 
         self.backend.startService()
 
-        database.setupDatabase('ontest', 'htj', 'htj')
+        tcf = os.path.expanduser('~/.opennsa-test.json')
+        tc = json.load( open(tcf) )
+        database.setupDatabase( tc['database'], tc['database-user'], tc['database-password'])
 
         self.provider_nsa   = nsa.NetworkServiceAgent('testnsa', 'http://example.org/nsa')
 
