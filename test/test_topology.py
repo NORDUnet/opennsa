@@ -4,34 +4,7 @@ from twisted.trial import unittest
 
 from opennsa import nsa, error
 from opennsa.topology import nml, nrmparser
-
-# Ring topology
-
-ARUBA_TOPOLOGY = """
-bi-ethernet     ps      -                       vlan:1780-1789  1000    em0
-bi-ethernet     bon     bonaire#aru-(in|out)    vlan:1780-1789  1000    em1
-bi-ethernet     dom     dominica#aru-(in|out)   vlan:1780-1789   500    em2
-"""
-
-BONAIRE_TOPOLOGY = """
-bi-ethernet     ps      -                       vlan:1780-1789  1000    em0
-bi-ethernet     aru     aruba#bon-(in|out)      vlan:1780-1789  1000    em1
-bi-ethernet     cur     curacao#bon-(in|out)    vlan:1780-1789  1000    em2
-bi-ethernet     dom     dominica#bon-(in|out)   vlan:1781-1782   100    em3
-"""
-
-CURACAO_TOPOLOGY = """
-bi-ethernet     ps      -                       vlan:1780-1789  1000    em0
-bi-ethernet     bon     bonaire#cur-(in|out)    vlan:1780-1789  1000    em1
-bi-ethernet     dom     dominica#cur-(in|out)   vlan:1783-1786  1000    em2
-"""
-
-DOMINICA_TOPOLOGY = """
-bi-ethernet     ps      -                       vlan:1780-1789  1000    em0
-bi-ethernet     aru     aruba#dom-(in|out)      vlan:1780-1789  500     em1
-bi-ethernet     bon     bonaire#dom-(in|out)    vlan:1781-1782  100     em2
-bi-ethernet     cur     curacao#dom-(in|out)    vlan:1783-1786  1000    em3
-"""
+from . import topology
 
 
 LABEL = nsa.Label(nml.ETHERNET_VLAN, '1781-1789')
@@ -44,10 +17,10 @@ CURACAO_PS = nsa.STP('curacao', 'ps', nsa.INGRESS, [LABEL])
 class TopologyTest(unittest.TestCase):
 
     def setUp(self):
-        an,_ = nrmparser.parseTopologySpec(StringIO(ARUBA_TOPOLOGY),    'aruba',    nsa.NetworkServiceAgent('aruba',    'a-endpoint'))
-        bn,_ = nrmparser.parseTopologySpec(StringIO(BONAIRE_TOPOLOGY),  'bonaire',  nsa.NetworkServiceAgent('bonaire',  'b-endpoint'))
-        cn,_ = nrmparser.parseTopologySpec(StringIO(CURACAO_TOPOLOGY),  'curacao',  nsa.NetworkServiceAgent('curacao',  'c-endpoint'))
-        dn,_ = nrmparser.parseTopologySpec(StringIO(DOMINICA_TOPOLOGY), 'dominica', nsa.NetworkServiceAgent('dominica', 'd-endpoint'))
+        an,_ = nrmparser.parseTopologySpec(StringIO(topology.ARUBA_TOPOLOGY),    'aruba',    nsa.NetworkServiceAgent('aruba',    'a-endpoint'))
+        bn,_ = nrmparser.parseTopologySpec(StringIO(topology.BONAIRE_TOPOLOGY),  'bonaire',  nsa.NetworkServiceAgent('bonaire',  'b-endpoint'))
+        cn,_ = nrmparser.parseTopologySpec(StringIO(topology.CURACAO_TOPOLOGY),  'curacao',  nsa.NetworkServiceAgent('curacao',  'c-endpoint'))
+        dn,_ = nrmparser.parseTopologySpec(StringIO(topology.DOMINICA_TOPOLOGY), 'dominica', nsa.NetworkServiceAgent('dominica', 'd-endpoint'))
 
         self.networks = [ an, bn, cn, dn ]
         self.topology = nml.Topology()
