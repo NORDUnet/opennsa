@@ -6,7 +6,7 @@ from twisted.python import log
 from twisted.web import resource, server
 from twisted.application import internet, service as twistedservice
 
-from opennsa import config, logging, registry, database, nsiservice, viewresource
+from opennsa import config, logging, registry, nsa, database, nsiservice, viewresource
 from opennsa.topology import nrmparser, nml
 from opennsa.protocols import nsi2, discovery
 
@@ -63,24 +63,25 @@ class OpenNSAService(twistedservice.MultiService):
 
         vc = self.vc
 
-        # database
-        database.setupDatabase(vc[config.DATABASE], vc[config.DATABASE_USER], vc[config.DATABASE_PASSWORD])
-
-        # topology
-        topology = nml.Topology()
-        # need to add check for nrm file, no longer just nrm really
-        #ns_agent = 'urn:ogf:network:' + vc[config.NETWORK_NAME] + ':nsa' # fixme
-        network = nrmparser.parseTopologySpec( open( vc[config.NRM_MAP_FILE] ), vc[config.NETWORK_NAME])
-        topology.addNetwork(network)
-
         if vc[config.HOST] is None:
             import socket
             vc[config.HOST] = socket.getfqdn()
 
-        ctx_factory = None
-        if vc[config.TLS]:
-            from opennsa import ctxfactory
-            ctx_factory = ctxfactory.ContextFactory(vc[config.KEY], vc[config.CERTIFICATE], vc[config.CERTIFICATE_DIR], vc[config.VERIFY_CERT])
+        # database
+        database.setupDatabase(vc[config.DATABASE], vc[config.DATABASE_USER], vc[config.DATABASE_PASSWORD])
+
+        # setup topology
+
+        nsa_id = 'urn:ogf:network:' + vc[config.NETWORK_NAME] + ':nsa' # is this right?
+        base_protocol = 'https://' if vc[config.TLS] else 'http://'
+        nsa_endpoint = base_protocol + vc[config.HOST] + ':' + str(vc[config.PORT]) + '/NSI/CS2' # hardcode for now
+        ns_agent = nsa.NetworkServiceAgent(nsa_id, nsa_endpoint)
+
+        topo_source = open( vc[config.NRM_MAP_FILE] ) if type(vc[config.NRM_MAP_FILE]) is str else vc[config.NRM_MAP_FILE] # wee bit hackish
+
+        network, pim = nrmparser.parseTopologySpec( topo_source, vc[config.NETWORK_NAME], ns_agent)
+        topology = nml.Topology()
+        topology.addNetwork(network)
 
         top_resource = resource.Resource()
         service_registry = registry.ServiceRegistry()
@@ -101,6 +102,8 @@ class OpenNSAService(twistedservice.MultiService):
 
 
         if vc[config.TLS]:
+            from opennsa import ctxfactory
+            ctx_factory = ctxfactory.ContextFactory(vc[config.KEY], vc[config.CERTIFICATE], vc[config.CERTIFICATE_DIR], vc[config.VERIFY_CERT])
             internet.SSLServer(vc[config.PORT], factory, ctx_factory).setServiceParent(self)
         else:
             internet.TCPServer(vc[config.PORT], factory).setServiceParent(self)
