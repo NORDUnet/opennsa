@@ -4,6 +4,9 @@ Connection abstraction.
 Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2011-2012)
 """
+import string
+import random
+import datetime
 
 from twisted.python import log, failure
 from twisted.internet import defer
@@ -13,16 +16,16 @@ from opennsa.backends.common import scheduler
 
 
 
-LOG_SYSTEM = 'opennsa.Connection'
+LOG_SYSTEM = 'opennsa.Aggregator'
 
 
 
-def connPath(conn):
-    """
-    Utility function for getting a string with the source and dest STP of connection.
-    """
-    source_stp, dest_stp = conn.stps()
-    return '<%s:%s--%s:%s>' % (source_stp.network, source_stp.endpoint, dest_stp.network, dest_stp.endpoint)
+#def connPath(conn):
+#    """
+#    Utility function for getting a string with the source and dest STP of connection.
+#    """
+#    source_stp, dest_stp = conn.stps()
+#    return '<%s:%s--%s:%s>' % (source_stp.network, source_stp.endpoint, dest_stp.network, dest_stp.endpoint)
 
 
 
@@ -191,9 +194,79 @@ class Aggregator:
         self.topology = topology
         self.service_registry = service_registry
 
+        self.service_registry.registerEventHandler(registry.RESERVE,        self.reserve,       registry.NSI2_AGGREGATOR)
+        self.service_registry.registerEventHandler(registry.TERMINATE,      self.terminate,     registry.NSI2_AGGREGATOR)
+
+
+
+    def getConnection(self, requester_nsa, connection_id):
+
+        # need to do authz here
+
+        def gotResult(connections):
+            # we should get 0 or 1 here since connection id is unique
+            if len(connections) == 0:
+                return defer.fail( error.ConnectionNonExistentError('No connection with id %s' % connection_id) )
+            return connections[0]
+
+        d = database.ServiceConnection.findBy(connection_id=connection_id)
+        d.addCallback(gotResult)
+        return d
+
 
     @defer.inlineCallbacks
-    def reserve(self, conn): #, network, nsa_, topology):
+    def reserve(self, requester_nsa, provider_nsa, session_security_attr, connection_id, global_reservation_id, description, service_params):
+
+        log.msg('', system=LOG_SYSTEM)
+        log.msg('Reserve request. NSA: %s. Connection ID: %s' % (requester_nsa, connection_id), system=LOG_SYSTEM)
+
+        # rethink with modify
+        if connection_id != None:
+            connection_exists = yield database.ServiceConnection.exists(['connection_id = ?', connection_id])
+            if connection_exists:
+                raise error.ConnectionExistsError('Connection with id %s already exists' % connection_id)
+            raise NotImplementedError('Cannot handly modification of existing connections yet')
+
+        connection_id = ''.join( [ random.choice(string.hexdigits[:16]) for _ in range(12) ] )
+
+        source_stp = service_params.source_stp
+        dest_stp   = service_params.dest_stp
+
+        # check that we know the networks
+        self.topology.getNetwork(source_stp.network)
+        self.topology.getNetwork(dest_stp.network)
+
+        # if the link terminates at our network, check that ports exists
+        if source_stp.network == self.network:
+            self.topology.getNetwork(self.network).getPort(source_stp.port)
+        if dest_stp.network == self.network:
+            self.topology.getNetwork(self.network).getPort(dest_stp.port)
+
+        if source_stp == dest_stp and source_stp.label.singleValue():
+            raise error.TopologyError('Cannot connect STP %s to itself.' % source_stp)
+
+        conn = database.ServiceConnection(connection_id=connection_id, revision=0, global_reservation_id=global_reservation_id, description=description, nsa=requester_nsa.urn(),
+                            reserve_time=datetime.datetime.utcnow(),
+                            reservation_state=state.INITIAL, provision_state=state.SCHEDULED, activation_state=state.INACTIVE, lifecycle_state=state.INITIAL,
+                            source_network=source_stp.network, source_port=source_stp.port, source_labels=source_stp.labels,
+                            dest_network=dest_stp.network, dest_port=dest_stp.port, dest_labels=dest_stp.labels,
+                            start_time=service_params.start_time, end_time=service_params.end_time, bandwidth=service_params.bandwidth)
+        yield conn.save()
+
+        # As STP Labels are only candidates as this point they will need to be changed later
+
+#        def reserveResponse(result):
+#            success = False if isinstance(result, failure.Failure) else True
+#            if not success:
+#                log.msg('Error reserving: %s' % result.getErrorMessage(), system=LOG_SYSTEM)
+#            d = subscription.dispatchNotification(success, result, sub, self.service_registry)
+
+
+#        # now reserve connections needed to create path
+#        d = task.deferLater(reactor, 0, self.aggregator.reserve, conn)
+#        d.addBoth(reserveResponse)
+#        yield d
+
 
 #        def scheduled(st):
 #            self.state.scheduled()
@@ -227,8 +300,7 @@ class Aggregator:
     #            err = self._createAggregateFailure(results, 'reservations', error.ConnectionCreateError)
     #            return err
 
-        yield state.reserving(conn) # this also acts a lock
-
+        yield state.reserveChecking(conn) # this also acts a lock
 
         if conn.source_network == self.network and conn.dest_network == self.network:
             path_info = ( conn.connection_id, self.network, conn.source_port, conn.source_labels, conn.dest_port, conn.dest_labels )
@@ -268,20 +340,20 @@ class Aggregator:
 
             cs = registry.NSI2_LOCAL if link.network == self.network else registry.NSI2_REMOTE
             reserve = self.service_registry.getHandler(registry.RESERVE, cs)
+            link_provider_nsa = self.topology.getNetwork(self.network).managing_nsa
 
-            provider_nsa = self.topology.getNetwork(self.network).nsa
-
-            d = reserve(self.nsa, provider_nsa, None, conn.global_reservation_id, conn.description, None, ssp)
+            d = reserve(self.nsa_, link_provider_nsa, None, conn.global_reservation_id, conn.description, None, ssp)
 
             # --
             @defer.inlineCallbacks
-            def reserveDone(rig, provider_nsa, order_id):
+            def reserveDone(rig, link_provider_nsa, order_id):
+                # need to collapse the end stps in Connection object
                 global_reservation_id, description, connection_id, service_params = rig
-                log.msg('Sub link %s via %s reserved' % (connection_id, provider_nsa), debug=True, system=LOG_SYSTEM)
+                log.msg('Sub link %s via %s reserved' % (connection_id, link_provider_nsa), debug=True, system=LOG_SYSTEM)
                 # should probably do some sanity checks here
                 sp = service_params
-                local_link = True if provider_nsa == self.nsa else False
-                sc = database.Subconnection(provider_nsa=provider_nsa,
+                local_link = True if link_provider_nsa == self.nsa else False
+                sc = database.Subconnection(provider_nsa=link_provider_nsa.urn(),
                                             connection_id=connection_id, local_link=local_link, revision=0, service_connection_id=conn.id, order_id=order_id,
                                             global_reservation_id=global_reservation_id, description=description,
                                             reservation_state=state.RESERVED, provision_state=state.SCHEDULED, activation_state=state.INACTIVE, lifecycle_state=state.INITIAL,
@@ -292,7 +364,7 @@ class Aggregator:
                 defer.returnValue(sc)
                 #return self
 
-            d.addCallback(reserveDone, provider_nsa, idx)
+            d.addCallback(reserveDone, link_provider_nsa, idx)
 
 #        dl = defer.DeferredList(defs, consumeErrors=True) # doesn't errback
 #        results yield dl
@@ -311,7 +383,7 @@ class Aggregator:
 
         successes = [ r[0] for r in results ]
         if all(successes):
-            state.reserved(conn)
+            state.reserveHeld(conn)
             log.msg('Connection %s: Reserve succeeded' % conn.connection_id, system=LOG_SYSTEM)
     # how to schedule here?
     #        scheduler.scheduleTransition(self.service_parameters.start_time, scheduled, state.SCHEDULED)
@@ -333,6 +405,7 @@ class Aggregator:
             err = _createAggregateFailure(results, 'reservations', error.ConnectionCreateError)
             raise err
 
+        defer.returnValue( (connection_id, global_reservation_id, description, service_params) )
 
 
     @defer.inlineCallbacks
@@ -399,54 +472,55 @@ class Aggregator:
         yield dl
 
 
-def release(self):
+    def release(self):
 
-    def connectionReleased(results):
-        successes = [ r[0] for r in results ]
-        if all(successes):
-            self.state.scheduled()
-            if len(results) > 1:
-                log.msg('Connection %s and all sub connections(%i) released' % (self.connection_id, len(results)-1), system=LOG_SYSTEM)
-            # unsure, if anything should be scheduled here
-            #self.scheduler.scheduleTransition(self.service_parameters.end_time, self.state.terminatedEndtime, state.TERMINATED_ENDTIME)
-            return self
+        def connectionReleased(results):
+            successes = [ r[0] for r in results ]
+            if all(successes):
+                self.state.scheduled()
+                if len(results) > 1:
+                    log.msg('Connection %s and all sub connections(%i) released' % (self.connection_id, len(results)-1), system=LOG_SYSTEM)
+                # unsure, if anything should be scheduled here
+                #self.scheduler.scheduleTransition(self.service_parameters.end_time, self.state.terminatedEndtime, state.TERMINATED_ENDTIME)
+                return self
 
-        else:
-            err = self._createAggregateFailure(results, 'releases', error.ReleaseError)
-            return err
-
-    self.state.releasing()
-    self.scheduler.cancelTransition()
-
-    defs = [ defer.maybeDeferred(sc.release) for sc in self.connections() ]
-    dl = defer.DeferredList(defs, consumeErrors=True)
-    dl.addCallback(connectionReleased)
-    return dl
-
-
-def terminate(self):
-
-    def connectionTerminated(results):
-        successes = [ r[0] for r in results ]
-        if all(successes):
-            self.state.terminatedRequest()
-            if len(successes) == len(results):
-                log.msg('Connection %s: All sub connections(%i) terminated' % (self.connection_id, len(results)-1), system=LOG_SYSTEM)
             else:
-                log.msg('Connection %s. Only %i of %i connections successfully terminated' % (self.connection_id, len(successes), len(results)), system=LOG_SYSTEM)
+                err = self._createAggregateFailure(results, 'releases', error.ReleaseError)
+                return err
+
+        self.state.releasing()
+        self.scheduler.cancelTransition()
+
+        defs = [ defer.maybeDeferred(sc.release) for sc in self.connections() ]
+        dl = defer.DeferredList(defs, consumeErrors=True)
+        dl.addCallback(connectionReleased)
+        return dl
+
+
+    @defer.inlineCallbacks
+    def terminate(self, requester_nsa, provider_nsa, session_security_attr, connection_id, global_reservation_id, description, service_params):
+
+        def connectionTerminated(results):
+            successes = [ r[0] for r in results ]
+            if all(successes):
+                self.state.terminatedRequest()
+                if len(successes) == len(results):
+                    log.msg('Connection %s: All sub connections(%i) terminated' % (self.connection_id, len(results)-1), system=LOG_SYSTEM)
+                else:
+                    log.msg('Connection %s. Only %i of %i connections successfully terminated' % (self.connection_id, len(successes), len(results)), system=LOG_SYSTEM)
+                return self
+            else:
+                err = self._createAggregateFailure(results, 'terminates', error.TerminateError)
+                return err
+
+        if self.state.isTerminated():
             return self
-        else:
-            err = self._createAggregateFailure(results, 'terminates', error.TerminateError)
-            return err
 
-    if self.state.isTerminated():
-        return self
+        self.state.terminating()
+        self.scheduler.cancelTransition()
 
-    self.state.terminating()
-    self.scheduler.cancelTransition()
-
-    defs = [ defer.maybeDeferred(sc.terminate) for sc in self.connections() ]
-    dl = defer.DeferredList(defs, consumeErrors=True)
-    dl.addCallback(connectionTerminated)
-    return dl
+        defs = [ defer.maybeDeferred(sc.terminate) for sc in self.connections() ]
+        dl = defer.DeferredList(defs, consumeErrors=True)
+        dl.addCallback(connectionTerminated)
+        return dl
 
