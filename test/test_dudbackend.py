@@ -1,9 +1,7 @@
-import os, time, datetime, json
+import os, datetime, json
 
 from twisted.trial import unittest
 from twisted.internet import defer, task
-
-from dateutil.tz import tzutc
 
 from opennsa import nsa, registry, database, error, state
 from opennsa.topology import nml
