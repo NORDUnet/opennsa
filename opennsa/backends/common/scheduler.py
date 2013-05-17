@@ -7,8 +7,6 @@ Copyright: NORDUnet (2011)
 
 import datetime
 
-from dateutil.tz import tzutc
-
 from twisted.python import log
 from twisted.internet import reactor, defer, task
 
