@@ -173,11 +173,11 @@ class DUDBackendTest(unittest.TestCase):
         end_time   = datetime.datetime.utcnow() + datetime.timedelta(seconds=10)
         service_params = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, 200)
 
-        _,_,cid,sp = yield self.reserve(None, self.provider_nsa.urn(), None, None, None, None, self.service_params)
+        _,_,cid,sp = yield self.reserve(None, self.provider_nsa.urn(), None, None, None, None, service_params)
         self.connection_ids.append(cid)
         yield self.reserveAbort(None, self.provider_nsa.urn(), None, cid)
         # try to reserve the same resources
-        _,_,cid,sp = yield self.reserve(None, self.provider_nsa.urn(), None, None, None, None, self.service_params)
+        _,_,cid,sp = yield self.reserve(None, self.provider_nsa.urn(), None, None, None, None, service_params)
         self.connection_ids.append(cid)
 
 
@@ -198,7 +198,7 @@ class DUDBackendTest(unittest.TestCase):
 
         self.sr.registerEventHandler(registry.RESERVE_TIMEOUT,  reserveTimeout, registry.NSI2_LOCAL)
 
-        _,_,cid,sp = yield self.reserve(None, self.provider_nsa.urn(), None, None, None, None, self.service_params)
+        _,_,cid,sp = yield self.reserve(None, self.provider_nsa.urn(), None, None, None, None, service_params)
         self.connection_ids.append(cid)
 
         self.clock.advance(dud.DUDNSIBackend.TPC_TIMEOUT + 1)
@@ -209,7 +209,7 @@ class DUDBackendTest(unittest.TestCase):
         self.failUnlessEquals(rsm, state.RESERVED)
 
         # try to reserve the same resources
-        _,_,cid,sp = yield self.reserve(None, self.provider_nsa.urn(), None, None, None, None, self.service_params)
+        _,_,cid,sp = yield self.reserve(None, self.provider_nsa.urn(), None, None, None, None, service_params)
         self.connection_ids.append(cid)
 
 
