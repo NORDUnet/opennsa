@@ -291,16 +291,13 @@ class ServiceParameters(object):
         return ServiceParameters(self.start_time, self.end_time, source_stp, dest_stp, self.bandwidth, None, self.directionality)
 
 
-    def protoSP(self):
-        return { 'start_time' : self.start_time,
-                 'end_time'   : self.end_time,
-                 'source_stp' : self.source_stp.urn(),
-                 'dest_stp'   : self.dest_stp.urn(),
-                 'stps'       : self.stps,
-                 'bandwidth'  : self.bandwidth
-                }
-
-
     def __str__(self):
-        return '<ServiceParameters %s>' % str(self.protoSP())
+        d = { 'start_time' : self.start_time.isoformat().rsplit('.',1)[0],
+              'end_time'   : self.end_time.isoformat().rsplit('.',1)[0],
+              'source_stp' : self.source_stp.urn(),
+              'dest_stp'   : self.dest_stp.urn(),
+              'bandwidth'  : self.bandwidth
+            }
+
+        return '<ServiceParameters %s>' % d
 
