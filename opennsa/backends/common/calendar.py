@@ -18,18 +18,18 @@ from opennsa import error
 class ReservationCalendar:
 
     def __init__(self):
-        self.connections = [] # [ ( resource, start_time, end_time ) ]
+        self.reservations = [] # [ ( resource, start_time, end_time ) ]
 
 
     def addReservation(self, resource, start_time, end_time):
         # does no checking, assuming checkReservation has been called
         reservation = (resource, start_time, end_time)
-        self.connections.append(reservation)
+        self.reservations.append(reservation)
 
 
     def removeReservation(self, resource, start_time, end_time):
         reservation = (resource, start_time, end_time)
-        self.connections.remove(reservation)
+        self.reservations.remove(reservation)
 
 
     def checkReservation(self, resource, start_time, end_time):
@@ -50,7 +50,7 @@ class ReservationCalendar:
         if start_time > datetime.datetime(2025, 1, 1):
             raise error.PayloadError('Invalid request: Start time after year 2025')
 
-        for (c_resource, c_start_time, c_end_time) in self.connections:
+        for (c_resource, c_start_time, c_end_time) in self.reservations:
             if resource == c_resource:
                 if self._resourceOverlap(c_start_time, c_end_time, start_time, end_time):
                     raise error.STPUnavailableError('Resource %s not available in specified time span' % resource)
