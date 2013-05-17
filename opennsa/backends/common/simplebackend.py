@@ -220,7 +220,8 @@ class SimpleBackend(service.Service):
 
         now =  datetime.datetime.utcnow()
 
-        conn = Simplebackendconnection(connection_id=connection_id, revision=0, global_reservation_id=global_reservation_id, description=description, nsa=provider_nsa,
+        # should we save the requester or provider here?
+        conn = Simplebackendconnection(connection_id=connection_id, revision=0, global_reservation_id=global_reservation_id, description=description, nsa=provider_nsa.urn(),
                                        reserve_time=now,
                                        reservation_state=state.INITIAL, provision_state=state.SCHEDULED, activation_state=state.INACTIVE, lifecycle_state=state.INITIAL,
                                        source_network=source_stp.network, source_port=source_stp.port, source_labels=[src_label],
