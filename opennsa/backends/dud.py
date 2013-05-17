@@ -17,7 +17,7 @@ class DUDNSIBackend(simplebackend.SimpleBackend):
     def __init__(self, network_name, service_registry):
 
         name = 'DUD NRM %s' % network_name
-        cm = connection_manager = DUDConnectionManager(name)
+        cm = DUDConnectionManager(name)
         simplebackend.SimpleBackend.__init__(self, network_name, cm, service_registry, name)
 
 
