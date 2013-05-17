@@ -138,7 +138,7 @@ class SimpleBackend(service.Service):
 
 
     @defer.inlineCallbacks
-    def reserve(self, requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_params):
+    def reserve(self, requester_nsa, provider_nsa, session_security_attr, connection_id, global_reservation_id, description, service_params):
 
         # return defer.fail( error.InternalNRMError('test reservation failure') )
 
