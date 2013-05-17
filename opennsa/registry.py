@@ -30,8 +30,8 @@ QUERY_RESPONSE          = 'query_response'
 DATA_PLANE_CHANGE       = 'data_plane_change'
 ERROR_EVENT             = 'error_event'
 
-
 SYSTEM_SERVICE          = 'service'
+NSI2_AGGREGATOR         = 'nsi2-aggregator'
 NSI2_REMOTE             = 'nsi2-remote'
 NSI2_LOCAL              = 'nsi2-local'
 
