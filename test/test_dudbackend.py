@@ -94,7 +94,8 @@ class DUDBackendTest(unittest.TestCase):
         d_up   = defer.Deferred()
         d_down = defer.Deferred()
 
-        def dataPlaneChange(connection_id, active, version_consistent, version, timestamp):
+        def dataPlaneChange(connection_id, dps, timestamp):
+            active, version, version_consistent = dps
             if active:
                 d_up.callback(connection_id)
             else:
@@ -142,7 +143,8 @@ class DUDBackendTest(unittest.TestCase):
 
         d_up = defer.Deferred()
 
-        def dataPlaneChange(connection_id, active, version_consistent, version, timestamp):
+        def dataPlaneChange(connection_id, dps, timestamp):
+            active, version, version_consistent = dps
             if active:
                 values = connection_id, active, version_consistent, version, timestamp
                 d_up.callback(values)
@@ -219,7 +221,7 @@ class DUDBackendTest(unittest.TestCase):
 
         d_err = defer.Deferred()
 
-        def errorEvent(event, gid, connection_id, connection_states, timestamp, info, ex):
+        def errorEvent(connection_id, event, connection_states, timestamp, info, ex):
             d_err.callback( (event, connection_id, connection_states, timestamp, info, ex) )
 
         self.sr.registerEventHandler(registry.ERROR_EVENT, errorEvent, registry.NSI2_LOCAL)
@@ -246,11 +248,12 @@ class DUDBackendTest(unittest.TestCase):
         d_up  = defer.Deferred()
         d_err = defer.Deferred()
 
-        def dataPlaneChange(connection_id, active, version_consistent, version, timestamp):
+        def dataPlaneChange(connection_id, dps, timestamp):
+            active, version, version_consistent = dps
             if active:
                 d_up.callback( ( connection_id, active, version_consistent, version, timestamp ) )
 
-        def errorEvent(event, gid, connection_id, connection_states, timestamp, info, ex):
+        def errorEvent(connection_id, event, connection_states, timestamp, info, ex):
             d_err.callback( (event, connection_id, connection_states, timestamp, info, ex) )
 
         self.sr.registerEventHandler(registry.DATA_PLANE_CHANGE,  dataPlaneChange, registry.NSI2_LOCAL)
