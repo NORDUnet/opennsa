@@ -245,8 +245,8 @@ class Aggregator:
         if source_stp == dest_stp and source_stp.label.singleValue():
             raise error.TopologyError('Cannot connect STP %s to itself.' % source_stp)
 
-        conn = database.ServiceConnection(connection_id=connection_id, revision=0, global_reservation_id=global_reservation_id, description=description, nsa=requester_nsa.urn(),
-                            reserve_time=datetime.datetime.utcnow(),
+        conn = database.ServiceConnection(connection_id=connection_id, revision=0, global_reservation_id=global_reservation_id, description=description,
+                            requester_nsa=requester_nsa.urn(), reserve_time=datetime.datetime.utcnow(),
                             reservation_state=state.INITIAL, provision_state=state.SCHEDULED, activation_state=state.INACTIVE, lifecycle_state=state.INITIAL,
                             source_network=source_stp.network, source_port=source_stp.port, source_labels=source_stp.labels,
                             dest_network=dest_stp.network, dest_port=dest_stp.port, dest_labels=dest_stp.labels,
