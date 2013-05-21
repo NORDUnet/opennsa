@@ -42,15 +42,12 @@ class DUDBackendTest(unittest.TestCase):
         self.release        = self.sr.getHandler(registry.RELEASE,        registry.NSI2_LOCAL)
         self.terminate      = self.sr.getHandler(registry.TERMINATE,      registry.NSI2_LOCAL)
 
-        self.connection_ids = [] # list of connection ids to delete in the database
 
     @defer.inlineCallbacks
     def tearDown(self):
         from opennsa.backends.common import simplebackend
-        # NOT SUITABLE FOR PRODUCTION, TEST ONLY. SQL Injection galore
-        if self.connection_ids:
-            cids = ','.join( [ "'%s'" % cid for cid in self.connection_ids ] )
-            yield simplebackend.Simplebackendconnection.deleteAll(where=['connection_id IN (%s)' % cids])
+        # delete all created connections from test database
+        yield simplebackend.Simplebackendconnection.deleteAll()
         yield self.backend.stopService()
 
 
@@ -58,7 +55,6 @@ class DUDBackendTest(unittest.TestCase):
     def testBasicUsage(self):
 
         _,_,cid,sp = yield self.reserve(None, self.provider_nsa, None, None, None, None, self.service_params)
-        self.connection_ids.append(cid)
         yield self.terminate(None, self.provider_nsa, None, cid)
 
 
@@ -66,7 +62,6 @@ class DUDBackendTest(unittest.TestCase):
     def testProvisionPostTerminate(self):
 
         _,_,cid,sp = yield self.reserve(None, self.provider_nsa, None, None, None, None, self.service_params)
-        self.connection_ids.append(cid)
         yield self.reserveCommit(None, self.provider_nsa, None, cid)
         yield self.terminate(None, self.provider_nsa, None, cid)
         try:
@@ -80,7 +75,6 @@ class DUDBackendTest(unittest.TestCase):
     def testProvisionUsage(self):
 
         _,_,cid,sp = yield self.reserve(None, self.provider_nsa, None, None, None, None, self.service_params)
-        self.connection_ids.append(cid)
         yield self.reserveCommit(None, self.provider_nsa, None, cid)
         yield self.provision(None, self.provider_nsa, None, cid)
         yield self.terminate(None, self.provider_nsa, None, cid)
@@ -102,7 +96,6 @@ class DUDBackendTest(unittest.TestCase):
         self.sr.registerEventHandler(registry.DATA_PLANE_CHANGE,  dataPlaneChange, registry.NSI2_LOCAL)
 
         _,_,cid,sp = yield self.reserve(None, self.provider_nsa, None, None, None, None, self.service_params)
-        self.connection_ids.append(cid)
         yield self.reserveCommit(None, self.provider_nsa, None, cid)
 
         yield self.provision(None, self.provider_nsa, None, cid)
@@ -117,10 +110,8 @@ class DUDBackendTest(unittest.TestCase):
     def testDoubleReserve(self):
 
         _,_,cid,_ = yield self.reserve(None, self.provider_nsa, None, None, None, None, self.service_params)
-        self.connection_ids.append(cid)
         try:
             _,_,cid_ = yield self.reserve(None, self.provider_nsa, None, None, None, None, self.service_params)
-            self.connection_ids.append(cid)
             self.fail('Should have raised STPUnavailableError')
         except error.STPUnavailableError:
             pass # we expect this
@@ -150,7 +141,6 @@ class DUDBackendTest(unittest.TestCase):
         self.sr.registerEventHandler(registry.DATA_PLANE_CHANGE,  dataPlaneChange, registry.NSI2_LOCAL)
 
         _,_,cid,sp = yield self.reserve(None, self.provider_nsa, None, None, None, None, self.service_params)
-        self.connection_ids.append(cid)
         yield self.reserveCommit(None, self.provider_nsa, None, cid)
         yield self.provision(None, self.provider_nsa, None, cid)
         self.clock.advance(3)
@@ -174,11 +164,9 @@ class DUDBackendTest(unittest.TestCase):
         service_params = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, 200)
 
         _,_,cid,sp = yield self.reserve(None, self.provider_nsa, None, None, None, None, service_params)
-        self.connection_ids.append(cid)
         yield self.reserveAbort(None, self.provider_nsa, None, cid)
         # try to reserve the same resources
         _,_,cid,sp = yield self.reserve(None, self.provider_nsa, None, None, None, None, service_params)
-        self.connection_ids.append(cid)
 
 
     @defer.inlineCallbacks
@@ -199,7 +187,6 @@ class DUDBackendTest(unittest.TestCase):
         self.sr.registerEventHandler(registry.RESERVE_TIMEOUT,  reserveTimeout, registry.NSI2_LOCAL)
 
         _,_,cid,sp = yield self.reserve(None, self.provider_nsa, None, None, None, None, service_params)
-        self.connection_ids.append(cid)
 
         self.clock.advance(dud.DUDNSIBackend.TPC_TIMEOUT + 1)
         connection_id, connection_states, timeout_value, timestamp = yield d
@@ -210,7 +197,6 @@ class DUDBackendTest(unittest.TestCase):
 
         # try to reserve the same resources
         _,_,cid,sp = yield self.reserve(None, self.provider_nsa, None, None, None, None, service_params)
-        self.connection_ids.append(cid)
 
 
 
@@ -229,7 +215,6 @@ class DUDBackendTest(unittest.TestCase):
             lambda src, dst : defer.fail(error.InternalNRMError('Link setup failed'))
 
         _,_,cid,sp = yield self.reserve(None, self.provider_nsa, None, None, None, None, self.service_params)
-        self.connection_ids.append(cid)
         yield self.reserveCommit(None, self.provider_nsa, None, cid)
         yield self.provision(None, self.provider_nsa, None, cid)
         self.clock.advance(3)
@@ -262,7 +247,6 @@ class DUDBackendTest(unittest.TestCase):
             lambda src, dst : defer.fail(error.InternalNRMError('Link teardown failed'))
 
         _,_,cid,sp = yield self.reserve(None, self.provider_nsa, None, None, None, None, self.service_params)
-        self.connection_ids.append(cid)
         yield self.reserveCommit(None, self.provider_nsa, None, cid)
         yield self.provision(None, self.provider_nsa, None, cid)
 
