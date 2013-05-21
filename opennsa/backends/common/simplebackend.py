@@ -143,6 +143,7 @@ class SimpleBackend(service.Service):
         # return defer.fail( error.InternalNRMError('test reservation failure') )
 
         # should perhaps verify nsa, but not that important
+        log.msg('Reserve request. Connection ID: %s' % connection_id, system=self.log_system)
 
         if connection_id:
             raise ValueError('Cannot handle cases with existing connection id (yet)')
@@ -258,16 +259,24 @@ class SimpleBackend(service.Service):
     @defer.inlineCallbacks
     def reserveCommit(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
+        log.msg('ReserveCommit request. Connection ID: %s' % connection_id, system=self.log_system)
+
         conn = yield self._getConnection(connection_id, requester_nsa)
         if conn.lifecycle_state in (state.TERMINATING, state.TERMINATED):
             raise error.ConnectionGoneError('Connection %s has been terminated')
 
         yield state.reserveCommit(conn)
+        self.logStateUpdate(conn, 'RESERVE COMMIT')
         yield state.reserved(conn)
+        self.logStateUpdate(conn, 'RESERVED')
+
+        defer.returnValue(connection_id)
 
 
     @defer.inlineCallbacks
     def reserveAbort(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
+
+        log.msg('ReserveAbort request. Connection ID: %s' % connection_id, system=self.log_system)
 
         conn = yield self._getConnection(connection_id, requester_nsa)
         if conn.lifecycle_state in (state.TERMINATING, state.TERMINATED):
