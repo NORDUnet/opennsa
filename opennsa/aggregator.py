@@ -352,7 +352,7 @@ class Aggregator:
                 log.msg('Sub link %s via %s reserved' % (connection_id, link_provider_nsa), debug=True, system=LOG_SYSTEM)
                 # should probably do some sanity checks here
                 sp = service_params
-                local_link = True if link_provider_nsa == self.nsa else False
+                local_link = True if link_provider_nsa == self.nsa_ else False
                 sc = database.Subconnection(provider_nsa=link_provider_nsa.urn(),
                                             connection_id=connection_id, local_link=local_link, revision=0, service_connection_id=conn.id, order_id=order_id,
                                             global_reservation_id=global_reservation_id, description=description,
