@@ -195,6 +195,7 @@ class Aggregator:
         self.service_registry = service_registry
 
         self.service_registry.registerEventHandler(registry.RESERVE,        self.reserve,       registry.NSI2_AGGREGATOR)
+        self.service_registry.registerEventHandler(registry.RESERVE_COMMIT, self.reserveCommit, registry.NSI2_AGGREGATOR)
         self.service_registry.registerEventHandler(registry.TERMINATE,      self.terminate,     registry.NSI2_AGGREGATOR)
 
 
@@ -344,7 +345,6 @@ class Aggregator:
 
             d = reserve(self.nsa_, link_provider_nsa, None, conn.global_reservation_id, conn.description, None, ssp)
 
-            # --
             @defer.inlineCallbacks
             def reserveDone(rig, link_provider_nsa, order_id):
                 # need to collapse the end stps in Connection object
@@ -356,21 +356,17 @@ class Aggregator:
                 sc = database.Subconnection(provider_nsa=link_provider_nsa.urn(),
                                             connection_id=connection_id, local_link=local_link, revision=0, service_connection_id=conn.id, order_id=order_id,
                                             global_reservation_id=global_reservation_id, description=description,
-                                            reservation_state=state.RESERVED, provision_state=state.SCHEDULED, activation_state=state.INACTIVE, lifecycle_state=state.INITIAL,
+                                            reservation_state=state.RESERVE_HELD, provision_state=state.SCHEDULED, activation_state=state.INACTIVE, lifecycle_state=state.INITIAL,
                                             source_network=sp.source_stp.network, source_port=sp.source_stp.port, source_labels=sp.source_stp.labels,
                                             dest_network=sp.dest_stp.network, dest_port=sp.dest_stp.port, dest_labels=sp.dest_stp.labels,
                                             start_time=sp.start_time.isoformat(), end_time=sp.end_time.isoformat(), bandwidth=sp.bandwidth)
                 yield sc.save()
                 defer.returnValue(sc)
-                #return self
 
             d.addCallback(reserveDone, link_provider_nsa, idx)
+            defs.append(d)
 
-#        dl = defer.DeferredList(defs, consumeErrors=True) # doesn't errback
-#        results yield dl
         results = yield defer.DeferredList(defs, consumeErrors=True) # doesn't errback
-#        results yield dl
-
 
     #    defs = [ defer.maybeDeferred(sc.reserve) for sc in self.connections() ]
     #    sub_connections = yield conn.subconnections.get()
@@ -383,13 +379,14 @@ class Aggregator:
 
         successes = [ r[0] for r in results ]
         if all(successes):
-            state.reserveHeld(conn)
+            yield state.reserveHeld(conn)
             log.msg('Connection %s: Reserve succeeded' % conn.connection_id, system=LOG_SYSTEM)
     # how to schedule here?
     #        scheduler.scheduleTransition(self.service_parameters.start_time, scheduled, state.SCHEDULED)
         else:
             # terminate non-failed connections
             # currently we don't try and be too clever about cleaning, just do it, and switch state
+            # FIXME state handlnig
             defs = []
             reserved_connections = [ conn for success,conn in results if success ]
             for rc in reserved_connections:
@@ -408,8 +405,44 @@ class Aggregator:
         defer.returnValue( (connection_id, global_reservation_id, description, service_params) )
 
 
+
     @defer.inlineCallbacks
-    def provision(self, conn):
+    def reserveCommit(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
+
+        log.msg('', system=LOG_SYSTEM)
+        log.msg('ReserveCommit request. NSA: %s. Connection ID: %s' % (requester_nsa, connection_id), system=LOG_SYSTEM)
+
+        conn = yield self.getConnection(requester_nsa, connection_id)
+
+        if conn.lifecycle_state in (state.TERMINATING, state.TERMINATED):
+            raise error.ConnectionGoneError('Connection %s has been terminated')
+
+        yield state.reserveCommit(conn)
+
+        sub_connections = yield conn.subconnections.get()
+
+        defs = []
+        for sc in sub_connections:
+            cs = registry.NSI2_LOCAL if sc.provider_nsa == self.nsa_.urn() else registry.NSI2_REMOTE
+            reserve_commit = self.service_registry.getHandler(registry.RESERVE_COMMIT, cs)
+
+            d = reserve_commit(self.nsa_, sc.provider_nsa, None, sc.connection_id)
+            defs.append(d)
+
+        results = yield defer.DeferredList(defs, consumeErrors=True)
+        successes = [ r[0] for r in results ]
+        if all(successes):
+            log.msg('Connection %s: ReserveCommit succeeded' % conn.connection_id, system=LOG_SYSTEM)
+            yield state.reserved(conn)
+        else:
+            # we are now in an inconsistent state...
+            raise NotImplementedError('Cannot handle failure in reserve commit yet')
+
+        defer.returnValue(connection_id)
+
+
+    @defer.inlineCallbacks
+    def provision(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
         @defer.inlineCallbacks
         def provisionComplete(results, conn):
