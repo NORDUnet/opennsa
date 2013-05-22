@@ -72,7 +72,7 @@ class DUDBackendTest(unittest.TestCase):
         from opennsa.backends.common import simplebackend
         # keep it simple...
         yield simplebackend.Simplebackendconnection.deleteAll()
-        yield database.Subconnection.deleteAll()
+        yield database.SubConnection.deleteAll()
         yield database.ServiceConnection.deleteAll()
 
         yield self.backend.stopService()

@@ -33,7 +33,7 @@ CREATE TABLE service_connections (
 );
 
 -- internal references to connections that are part of a service connection
-CREATE TABLE subconnections (
+CREATE TABLE sub_connections (
     id                      serial                      PRIMARY KEY,
     service_connection_id   integer                     NOT NULL REFERENCES service_connections(id),
     connection_id           text                        NOT NULL,

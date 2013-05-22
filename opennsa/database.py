@@ -74,12 +74,12 @@ def setupDatabase(database, user, password=None):
 # ORM Objects
 
 class ServiceConnection(DBObject):
-    HASMANY = ['subconnections']
+    HASMANY = ['SubConnections']
 
 
-class Subconnection(DBObject):
-    BELONGSTO = ['serviceconnection']
+class SubConnection(DBObject):
+    BELONGSTO = ['ServiceConnection']
 
 
-Registry.register(ServiceConnection, Subconnection)
+Registry.register(ServiceConnection, SubConnection)
 

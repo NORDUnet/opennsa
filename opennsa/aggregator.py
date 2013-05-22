@@ -223,7 +223,7 @@ class Aggregator:
         # only works for calls where handler args is: requester, provider, security_attrs, connection_id
         # this happens to be quite a lot though
 
-        sub_connections = yield conn.subconnections.get()
+        sub_connections = yield conn.SubConnections.get()
 
         defs = []
 
@@ -359,7 +359,7 @@ class Aggregator:
                 # should probably do some sanity checks here
                 sp = service_params
                 local_link = True if link_provider_nsa == self.nsa_ else False
-                sc = database.Subconnection(provider_nsa=link_provider_nsa.urn(),
+                sc = database.SubConnection(provider_nsa=link_provider_nsa.urn(),
                                             connection_id=connection_id, local_link=local_link, revision=0, service_connection_id=conn.id, order_id=order_id,
                                             global_reservation_id=global_reservation_id, description=description,
                                             reservation_state=state.RESERVE_HELD, provision_state=state.SCHEDULED, activation_state=state.INACTIVE, lifecycle_state=state.INITIAL,
