@@ -250,7 +250,7 @@ class Aggregator:
                 raise error.ConnectionExistsError('Connection with id %s already exists' % connection_id)
             raise NotImplementedError('Cannot handly modification of existing connections yet')
 
-        connection_id = ''.join( [ random.choice(string.hexdigits[:16]) for _ in range(12) ] )
+        connection_id = 'NU-T' + ''.join( [ random.choice(string.hexdigits[:16]) for _ in range(12) ] )
 
         source_stp = service_params.source_stp
         dest_stp   = service_params.dest_stp
