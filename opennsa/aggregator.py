@@ -283,18 +283,6 @@ class Aggregator:
 #            d = subscription.dispatchNotification(success, result, sub, self.service_registry)
 
 
-#        # now reserve connections needed to create path
-#        d = task.deferLater(reactor, 0, self.aggregator.reserve, conn)
-#        d.addBoth(reserveResponse)
-#        yield d
-
-
-#        def scheduled(st):
-#            self.state.scheduled()
-#            # not sure if something (or what) should be scheduled here
-#            #self.scheduler.scheduleTransition(self.service_parameters.end_time, self.state.terminatedEndtime, state.TERMINATED_ENDTIME)
-#            return self
-
     #    def reserveRequestsDone(results):
     #        successes = [ r[0] for r in results ]
     #        if all(successes):
@@ -327,8 +315,6 @@ class Aggregator:
             path_info = ( conn.connection_id, self.network, conn.source_port, conn.source_labels, conn.dest_port, conn.dest_labels )
             log.msg('Connection %s: Local link creation: %s %s#%s -> %s#%s' % path_info, system=LOG_SYSTEM)
             paths = [ [ nsa.Link(self.network, conn.source_port, conn.dest_port, conn.source_labels, conn.dest_labels) ] ]
-            #sc = self.setupSubConnection(link, conn, service_parameters)
-            #sc = database.Subconnection(provider_nsa=nsa, 
 
         else:
             # log about creation and the connection type
@@ -348,8 +334,6 @@ class Aggregator:
         selected_path = paths[0] # shortest path
         log.msg('Attempting to create path %s' % selected_path, system=LOG_SYSTEM)
         ## fixme, need to set end labels here
-        #sc = self.setupSubConnection(link, conn, service_parameters)
-        #conn.sub_connections.append(sc)
 
         defs = []
         for idx, link in enumerate(selected_path):
@@ -387,22 +371,13 @@ class Aggregator:
             defs.append(d)
 
         results = yield defer.DeferredList(defs, consumeErrors=True) # doesn't errback
-
-    #    defs = [ defer.maybeDeferred(sc.reserve) for sc in self.connections() ]
-    #    sub_connections = yield conn.subconnections.get()
-    #    defs = [ sc.reserve for sc in sub_connections ]
-    #
-    #    dl = defer.DeferredList(defs, consumeErrors=True)
-    ##    results = yield dl # never errbacks
-    #    dl.addCallback(reserveRequestsDone) # never errbacks
-    #    yield dl
-
         successes = [ r[0] for r in results ]
+
         if all(successes):
             yield state.reserveHeld(conn)
             log.msg('Connection %s: Reserve succeeded' % conn.connection_id, system=LOG_SYSTEM)
-    # how to schedule here?
-    #        scheduler.scheduleTransition(self.service_parameters.start_time, scheduled, state.SCHEDULED)
+            defer.returnValue( (connection_id, global_reservation_id, description, service_params) )
+
         else:
             # terminate non-failed connections
             # currently we don't try and be too clever about cleaning, just do it, and switch state
@@ -423,7 +398,6 @@ class Aggregator:
             err = _createAggregateException(results, 'reservations', error.ConnectionCreateError)
             raise err
 
-        defer.returnValue( (connection_id, global_reservation_id, description, service_params) )
 
 
 
