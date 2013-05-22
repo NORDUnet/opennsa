@@ -438,7 +438,6 @@ class Aggregator:
             raise error.ConnectionGoneError('Connection %s has been terminated')
 
         yield state.reserveCommit(conn)
-#        self.scheduler.cancelTransition()
 
         defs = yield self.forAllSubConnections(conn, registry.RESERVE_COMMIT)
         results = yield defer.DeferredList(defs, consumeErrors=True)
@@ -556,7 +555,6 @@ class Aggregator:
             defer.returnValue(connection_id) # all good
 
         yield state.terminating(conn)
-#        self.scheduler.cancelTransition()
 
         defs = yield self.forAllSubConnections(conn, registry.TERMINATE)
 
