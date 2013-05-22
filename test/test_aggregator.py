@@ -60,7 +60,7 @@ class DUDBackendTest(unittest.TestCase):
         self.reserve        = self.sr.getHandler(registry.RESERVE,        registry.NSI2_AGGREGATOR)
         self.reserveCommit  = self.sr.getHandler(registry.RESERVE_COMMIT, registry.NSI2_AGGREGATOR)
 #        self.reserveAbort   = self.sr.getHandler(registry.RESERVE_ABORT,  registry.NSI2_AGGREGATOR)
-#        self.provision      = self.sr.getHandler(registry.PROVISION,      registry.NSI2_AGGREGATOR)
+        self.provision      = self.sr.getHandler(registry.PROVISION,      registry.NSI2_AGGREGATOR)
 #        self.release        = self.sr.getHandler(registry.RELEASE,        registry.NSI2_AGGREGATOR)
         self.terminate      = self.sr.getHandler(registry.TERMINATE,      registry.NSI2_AGGREGATOR)
 
@@ -79,7 +79,7 @@ class DUDBackendTest(unittest.TestCase):
     @defer.inlineCallbacks
     def testBasicUsage(self):
 
-        cid,_,_,sp = yield self.reserve(self.requester_nsa, self.provider_nsa.urn(), None, None, None, None, self.service_params)
+        cid,_,_,sp = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, self.service_params)
         yield self.reserveCommit(self.requester_nsa, self.provider_nsa.urn(), None, cid)
         yield self.terminate(None, self.provider_nsa.urn(), None, cid)
 
@@ -97,17 +97,16 @@ class DUDBackendTest(unittest.TestCase):
 #        except error.ConnectionGoneError:
 #            pass # expected
 #
-#
-#    @defer.inlineCallbacks
-#    def testProvisionUsage(self):
-#
-#        _,_,cid,sp = yield self.reserve(None, self.provider_nsa.urn(), None, None, None, None, self.service_params)
-#        self.connection_ids.append(cid)
-#        yield self.reserveCommit(None, self.provider_nsa.urn(), None, cid)
-#        yield self.provision(None, self.provider_nsa.urn(), None, cid)
-#        yield self.terminate(None, self.provider_nsa.urn(), None, cid)
-#
-#
+
+    @defer.inlineCallbacks
+    def testProvisionUsage(self):
+
+        cid,_,_,_ = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, self.service_params)
+        yield self.reserveCommit(None, self.provider_nsa.urn(), None, cid)
+        yield self.provision(None, self.provider_nsa.urn(), None, cid)
+        yield self.terminate(None, self.provider_nsa.urn(), None, cid)
+
+
 #    @defer.inlineCallbacks
 #    def testProvisionReleaseUsage(self):
 #

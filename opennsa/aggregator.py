@@ -196,6 +196,7 @@ class Aggregator:
 
         self.service_registry.registerEventHandler(registry.RESERVE,        self.reserve,       registry.NSI2_AGGREGATOR)
         self.service_registry.registerEventHandler(registry.RESERVE_COMMIT, self.reserveCommit, registry.NSI2_AGGREGATOR)
+        self.service_registry.registerEventHandler(registry.PROVISION,      self.provision,     registry.NSI2_AGGREGATOR)
         self.service_registry.registerEventHandler(registry.TERMINATE,      self.terminate,     registry.NSI2_AGGREGATOR)
 
 
@@ -446,44 +447,55 @@ class Aggregator:
         if all(successes):
             log.msg('Connection %s: ReserveCommit succeeded' % conn.connection_id, system=LOG_SYSTEM)
             yield state.reserved(conn)
+            defer.returnValue(connection_id)
+
         else:
             # we are now in an inconsistent state...
             raise NotImplementedError('Cannot handle failure in reserve commit yet')
 
-        defer.returnValue(connection_id)
 
 
     @defer.inlineCallbacks
     def provision(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
-        @defer.inlineCallbacks
-        def provisionComplete(results, conn):
-            print "PCC", conn
-            print "pC", results
-            successes = [ r[0] for r in results ]
-            if all(successes):
-                yield state.provisioned(conn)
-                # not sure if we should really schedule anything here
-                #self.scheduler.scheduleTransition(self.service_parameters.end_time, self.state.terminatedEndtime, state.TERMINATED_ENDTIME)
-                defer.returnValue(conn)
+        log.msg('', system=LOG_SYSTEM)
+        log.msg('ReserveCommit request. NSA: %s. Connection ID: %s' % (requester_nsa, connection_id), system=LOG_SYSTEM)
 
-            else:
-                # at least one provision failed, provisioned connections should be released
-                defs = []
-                provisioned_connections = [ sc for success,sc in results if success ]
-                for pc in provisioned_connections:
-                    d = pc.release()
-                    d.addCallbacks(
-                        lambda c : log.msg('Succesfully released sub-connection after partial provision failure %s %s' % (c.curator(), connPath(c)), system=LOG_SYSTEM),
-                        lambda f : log.msg('Error releasing connection after partial provision failure: %s' % str(f), system=LOG_SYSTEM)
-                    )
-                    defs.append(d)
-                dl = defer.DeferredList(defs)
-                #dl.addCallback( self.state.scheduled )
-                yield dl
-                yield state.scheduled(conn)
+        conn = yield self.getConnection(requester_nsa, connection_id)
 
-                raise self._createAggregateFailure(results, 'provisions', error.ProvisionError)
+        if conn.lifecycle_state == state.TERMINATED:
+            raise error.ConnectionGoneError('Connection %s has been terminated')
+
+        yield state.provisioning(conn)
+
+        defs = yield self.forAllSubConnections(conn, registry.PROVISION)
+        results = yield defer.DeferredList(defs, consumeErrors=True)
+
+        successes = [ r[0] for r in results ]
+        if all(successes):
+            yield state.provisioned(conn)
+            defer.returnValue(connection_id)
+
+        else:
+            n_success = sum( [ 1 for s in successes if s ] )
+            log.msg('Connection %s. Only %i of %i connections successfully provision' % (self.connection_id, len(n_success), len(defs)), system=LOG_SYSTEM)
+
+          # at least one provision failed, provisioned connections should be released
+#            defs = []
+#            provisioned_connections = [ sc for success,sc in results if success ]
+#            for pc in provisioned_connections:
+#                d = pc.release()
+#                d.addCallbacks(
+#                    lambda c : log.msg('Succesfully released sub-connection after partial provision failure %s %s' % (c.curator(), connPath(c)), system=LOG_SYSTEM),
+#                    lambda f : log.msg('Error releasing connection after partial provision failure: %s' % str(f), system=LOG_SYSTEM)
+#                )
+#                defs.append(d)
+#            dl = defer.DeferredList(defs)
+#            #dl.addCallback( self.state.scheduled )
+#            yield dl
+#            yield state.scheduled(conn)
+
+            raise self._createAggregateFailure(results, 'provisions', error.ProvisionError)
 #                return err
 
 #                def releaseDone(_):
@@ -491,30 +503,6 @@ class Aggregator:
 #                    return err
 #
 #                dl.addCallback(releaseDone)
-
-        # --
-        yield state.provisioning(conn)
-
-        @defer.inlineCallbacks
-        def subConnnectionProvisioned(connection_id, sub_conn):
-            print "sub conn", connection_id, "provisioned"
-            yield state.provisioned(sub_conn)
-            defer.returnValue(sub_conn)
-
-        sub_connections = yield conn.subconnections.get()
-        defs = []
-        for sub_conn in sub_connections:
-            print "SC", sub_conn
-            cs = registry.NSI2_LOCAL if sub_conn.local_link else registry.NSI2_REMOTE
-            provision = self.service_registry.getHandler(registry.PROVISION, cs)
-            d = provision(self.nsa, sub_conn.provider_nsa, None, sub_conn.connection_id, )
-            d.addCallback(subConnnectionProvisioned, sub_conn)
-            defs.append(d)
-
-        dl = defer.DeferredList(defs, consumeErrors=True)
-        #dl = defer.DeferredList(defs, consumeErrors=False)
-        dl.addCallback(provisionComplete, conn)
-        yield dl
 
 
     def release(self):
