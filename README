@@ -1,54 +1,32 @@
 OpenNSA is an implementation of the Network Service Interface (NSI).
 
-NSI (Network Service Interface) is (or should be) a protocol agnostic interface
-for provisioning network links, i.e., providing networking as a service.
+NSI (Network Service Interface) is a technology agnostic protocol for
+provisioning network circuits. For more information on NSI, see project page at
+OGF: https://redmine.ogf.org/projects/nsi-wg
 
-There are several documents concerning NSI. See the OGF work group page for the
-latest revisions. http://forge.gridforum.org/sf/projects/nsi-wg
-
-OpenNSA consists of several modules for various functionality. These include
-topology database and parser, protocol handlers, and the core agent itself.
-
-OpenNSA is currently in a state of heavy prototyping and nothing is set in
-stone, and there are probably more temporary constructions in the code than
-final.
-
-Requirements:
-
-* Python 2.6 or newer (Python 3 will not work)
-
-* Python Dateutil (http://labix.org/python-dateutil)
-
-* Twisted, http://twistedmatrix.com/trac/
-
-* SUDS, https://github.com/htj/suds-htj
-  The SUDS homepage is https://fedorahosted.org/suds/, but is unmaintained.
-  The last SUDS release (0.4) has several bugs regarding namespaces, and
-  timezone issues and will not work with OpenNSA. The version from github
-  is hence recommended.
-  Note: For NSI2, SUDS isn't used, and should in the future not be needed.
-
-Python and Twisted should be included in the package system in most recent
-Linux distributions.
-
-If you use a backend which uses SSH (JunOS, Force10), there is a patch to
-remove some of the log statements in the Twisted SSH module, which is rather
-noisy. This makes the log a lot easier to read.
+OpenNSA is currently in a state of heavy development, and many features are
+only partially implemented.
 
 
-Command line tool:
+OpenNSA features:
 
-Start test service:
-twistd -noy opennsa.tac
-
-Make a reservation:
-./onsa reserve -u http://localhost:9080/NSI/services/ConnectionService -p OpenNSA-HTJClient -r Aruba -s Aruba:A1 -d Aruba:A4
-
-Do a ./onsa --help for more information.
+* Open-source NSI implementation
+* Pluggable backends to support different equipment
+  * Support: Junox MX, Force10 switch (etherscale), Dell Powerconnect, Argia
+  * DUD backend for easy testing
+* Easy development of new backends
+* Easy creation of NML topology from short-hand topology specification
+* Topology aggregation and path finding to do multi-domain circuit creation
+* PostgreSQL for database
+* Includes command line tool for basic operations
 
 
 License: NORDUnet License (3-clause BSD). See LICENSE for more details.
 
-Developer contact: htj <at> nordu.net
+Contact:
+
+Developer: Henrik Thostrup Jensen   htj <at> nordu.net
+Project  : Jerry Sobiesky           jerry <at> nordu.net
+
 Copyright: NORDUnet (2011-2013)
 

@@ -1,0 +1,42 @@
+Requirements:
+
+* Python 2.6 or newer (Python 3 not supported yet)
+
+* Python Dateutil (http://labix.org/python-dateutil)
+
+* Twisted, http://twistedmatrix.com/trac/
+
+Python and Twisted should be included in the package system in most recent
+Linux distributions.
+
+If you use a backend which uses SSH (JunOS, Force10), there is a patch to
+remove some of the log statements in the Twisted SSH module, which is rather
+noisy. This makes the log a lot easier to read.
+
+
+Installation:
+
+python setup.py build
+sudo python setup.py install
+
+Edit /etc/opennsa.conf. Configuring the service is relatively straightforward,
+but creating the topology specification is still somewhat tricky.
+
+
+
+Command line tool:
+
+Make a reservation:
+onsa reserve -u http://localhost:9080/NSI/services/ConnectionService -p OpenNSA-HTJClient -r Aruba -s Aruba:A1 -d Aruba:A4
+
+Do a ./onsa --help for more information.
+
+
+Development
+
+To start a test service:
+
+twistd -noy opennsa.tac
+
+Note that opennsa.conf must exists in the source directory for this to work.
+
