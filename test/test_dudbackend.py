@@ -16,7 +16,8 @@ class DUDBackendTest(unittest.TestCase):
         self.clock = task.Clock()
 
         self.sr = registry.ServiceRegistry()
-        self.backend = dud.DUDNSIBackend('Test', self.sr)
+        self.registry_system = 'dud-test'
+        self.backend = dud.DUDNSIBackend('Test', self.sr, self.registry_system)
         self.backend.scheduler.clock = self.clock
 
         self.backend.startService()
@@ -93,7 +94,7 @@ class DUDBackendTest(unittest.TestCase):
             else:
                 d_down.callback(connection_id)
 
-        self.sr.registerEventHandler(registry.DATA_PLANE_CHANGE,  dataPlaneChange, registry.NSI2_LOCAL)
+        self.sr.registerEventHandler(registry.DATA_PLANE_CHANGE,  dataPlaneChange, self.registry_system)
 
         _,_,cid,sp = yield self.reserve(None, self.provider_nsa, None, None, None, None, self.service_params)
         yield self.reserveCommit(None, self.provider_nsa, None, cid)
@@ -138,7 +139,7 @@ class DUDBackendTest(unittest.TestCase):
                 values = connection_id, active, version_consistent, version, timestamp
                 d_up.callback(values)
 
-        self.sr.registerEventHandler(registry.DATA_PLANE_CHANGE,  dataPlaneChange, registry.NSI2_LOCAL)
+        self.sr.registerEventHandler(registry.DATA_PLANE_CHANGE,  dataPlaneChange, self.registry_system)
 
         _,_,cid,sp = yield self.reserve(None, self.provider_nsa, None, None, None, None, self.service_params)
         yield self.reserveCommit(None, self.provider_nsa, None, cid)
@@ -184,7 +185,7 @@ class DUDBackendTest(unittest.TestCase):
             values = connection_id, connection_states, timeout_value, timestamp
             d.callback(values)
 
-        self.sr.registerEventHandler(registry.RESERVE_TIMEOUT,  reserveTimeout, registry.NSI2_LOCAL)
+        self.sr.registerEventHandler(registry.RESERVE_TIMEOUT,  reserveTimeout, self.registry_system)
 
         _,_,cid,sp = yield self.reserve(None, self.provider_nsa, None, None, None, None, service_params)
 
@@ -199,7 +200,6 @@ class DUDBackendTest(unittest.TestCase):
         _,_,cid,sp = yield self.reserve(None, self.provider_nsa, None, None, None, None, service_params)
 
 
-
     @defer.inlineCallbacks
     def testFaultyActivate(self):
 
@@ -208,7 +208,7 @@ class DUDBackendTest(unittest.TestCase):
         def errorEvent(connection_id, event, connection_states, timestamp, info, ex):
             d_err.callback( (event, connection_id, connection_states, timestamp, info, ex) )
 
-        self.sr.registerEventHandler(registry.ERROR_EVENT, errorEvent, registry.NSI2_LOCAL)
+        self.sr.registerEventHandler(registry.ERROR_EVENT, errorEvent, self.registry_system)
 
         # make actication fail via monkey patching
         self.backend.connection_manager.setupLink = \
@@ -239,8 +239,8 @@ class DUDBackendTest(unittest.TestCase):
         def errorEvent(connection_id, event, connection_states, timestamp, info, ex):
             d_err.callback( (event, connection_id, connection_states, timestamp, info, ex) )
 
-        self.sr.registerEventHandler(registry.DATA_PLANE_CHANGE,  dataPlaneChange, registry.NSI2_LOCAL)
-        self.sr.registerEventHandler(registry.ERROR_EVENT, errorEvent, registry.NSI2_LOCAL)
+        self.sr.registerEventHandler(registry.DATA_PLANE_CHANGE,  dataPlaneChange, self.registry_system)
+        self.sr.registerEventHandler(registry.ERROR_EVENT, errorEvent, self.registry_system)
 
         # make actication fail via monkey patching
         self.backend.connection_manager.teardownLink = \
