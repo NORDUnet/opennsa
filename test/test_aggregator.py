@@ -84,19 +84,18 @@ class DUDBackendTest(unittest.TestCase):
         yield self.terminate(None, self.provider_nsa.urn(), None, cid)
 
 
-#    @defer.inlineCallbacks
-#    def testProvisionPostTerminate(self):
-#
-#        _,_,cid,sp = yield self.reserve(None, self.provider_nsa.urn(), None, None, None, None, self.service_params)
-#        self.connection_ids.append(cid)
-#        yield self.reserveCommit(None, self.provider_nsa.urn(), None, cid)
-#        yield self.terminate(None, self.provider_nsa.urn(), None, cid)
-#        try:
-#            yield self.provision(None, self.provider_nsa.urn(), None, cid)
-#            self.fail('Should have raised ConnectionGoneError')
-#        except error.ConnectionGoneError:
-#            pass # expected
-#
+    @defer.inlineCallbacks
+    def testProvisionPostTerminate(self):
+
+        cid,__,_,_ = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, self.service_params)
+        yield self.reserveCommit(self.requester_nsa, self.provider_nsa, None, cid)
+        yield self.terminate(self.requester_nsa, self.provider_nsa, None, cid)
+        try:
+            yield self.provision(self.requester_nsa, self.provider_nsa, None, cid)
+            self.fail('Should have raised ConnectionGoneError')
+        except error.ConnectionGoneError:
+            pass # expected
+
 
     @defer.inlineCallbacks
     def testProvisionUsage(self):
