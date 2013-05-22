@@ -194,12 +194,14 @@ class Aggregator:
         self.service_registry = service_registry
         self.parent_system = parent_system
 
-        self.service_registry.registerEventHandler(registry.RESERVE,        self.reserve,       registry.NSI2_AGGREGATOR)
-        self.service_registry.registerEventHandler(registry.RESERVE_COMMIT, self.reserveCommit, registry.NSI2_AGGREGATOR)
-        self.service_registry.registerEventHandler(registry.RESERVE_ABORT,  self.reserveAbort,  registry.NSI2_AGGREGATOR)
-        self.service_registry.registerEventHandler(registry.PROVISION,      self.provision,     registry.NSI2_AGGREGATOR)
-        self.service_registry.registerEventHandler(registry.TERMINATE,      self.terminate,     registry.NSI2_AGGREGATOR)
+        self.service_registry.registerEventHandler(registry.RESERVE,            self.reserve,           registry.NSI2_AGGREGATOR)
+        self.service_registry.registerEventHandler(registry.RESERVE_COMMIT,     self.reserveCommit,     registry.NSI2_AGGREGATOR)
+        self.service_registry.registerEventHandler(registry.RESERVE_ABORT,      self.reserveAbort,      registry.NSI2_AGGREGATOR)
+        self.service_registry.registerEventHandler(registry.PROVISION,          self.provision,         registry.NSI2_AGGREGATOR)
+        self.service_registry.registerEventHandler(registry.RELEASE,            self.release,           registry.NSI2_AGGREGATOR)
+        self.service_registry.registerEventHandler(registry.TERMINATE,          self.terminate,         registry.NSI2_AGGREGATOR)
 
+        self.service_registry.registerEventHandler(registry.DATA_PLANE_CHANGE,  self.dataPlaneChange,   registry.NSI2_AGGREGATOR)
 
 
     def getConnection(self, requester_nsa, connection_id):
@@ -507,30 +509,45 @@ class Aggregator:
 #                dl.addCallback(releaseDone)
 
 
-    def release(self):
+    @defer.inlineCallbacks
+    def release(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
-        def connectionReleased(results):
-            successes = [ r[0] for r in results ]
-            if all(successes):
-                self.state.scheduled()
-                if len(results) > 1:
-                    log.msg('Connection %s and all sub connections(%i) released' % (self.connection_id, len(results)-1), system=LOG_SYSTEM)
-                # unsure, if anything should be scheduled here
-                #self.scheduler.scheduleTransition(self.service_parameters.end_time, self.state.terminatedEndtime, state.TERMINATED_ENDTIME)
-                return self
+        log.msg('', system=LOG_SYSTEM)
+        log.msg('Release request. NSA: %s. Connection ID: %s' % (requester_nsa, connection_id), system=LOG_SYSTEM)
 
-            else:
-                err = self._createAggregateFailure(results, 'releases', error.ReleaseError)
-                return err
+        conn = yield self.getConnection(requester_nsa, connection_id)
 
-        self.state.releasing()
-        self.scheduler.cancelTransition()
+        if conn.lifecycle_state == state.TERMINATED:
+            raise error.ConnectionGoneError('Connection %s has been terminated')
 
-        defs = [ defer.maybeDeferred(sc.release) for sc in self.connections() ]
-        dl = defer.DeferredList(defs, consumeErrors=True)
-        dl.addCallback(connectionReleased)
-        return dl
+        yield state.releasing(conn)
 
+        defs = yield self.forAllSubConnections(conn, registry.RELEASE)
+        results = yield defer.DeferredList(defs, consumeErrors=True)
+
+        successes = [ r[0] for r in results ]
+        if all(successes):
+            log.msg('Connection %s: Release succeeded' % conn.connection_id, system=LOG_SYSTEM)
+            yield state.scheduled(conn)
+            defer.returnValue(connection_id)
+
+        else:
+            # we are now in an inconsistent state...
+            raise NotImplementedError('Cannot handle failure in release commit yet')
+
+
+#            if all(successes):
+#                self.state.scheduled()
+#                if len(results) > 1:
+#                    log.msg('Connection %s and all sub connections(%i) released' % (self.connection_id, len(results)-1), system=LOG_SYSTEM)
+#                # unsure, if anything should be scheduled here
+#                #self.scheduler.scheduleTransition(self.service_parameters.end_time, self.state.terminatedEndtime, state.TERMINATED_ENDTIME)
+#                return self
+#
+#            else:
+#                err = self._createAggregateFailure(results, 'releases', error.ReleaseError)
+#                return err
+#
 
 
     @defer.inlineCallbacks
@@ -563,4 +580,38 @@ class Aggregator:
 #            return err
 
         defer.returnValue(connection_id)
+
+
+    @defer.inlineCallbacks
+    def dataPlaneChange(self, requester_nsa, provider_nsa, session_security_attr, connection_id, dps, timestamp):
+
+        @defer.inlineCallbacks
+        def doActivate(conn):
+            yield state.activating(conn)
+            yield state.active(conn)
+            data_plane_change = self.service_registry.getHandler(registry.DATA_PLANE_CHANGE, self.parent_system)
+            dps = (True, conn.revision, True) # data plane status - active, version, version consistent
+            data_plane_change(None, None, None, conn.connection_id, dps, datetime.datetime.utcnow())
+
+
+        active, version, version_consistent = dps
+
+        sub_conns_match = yield database.SubConnection.findBy(connection_id=connection_id)
+
+        if len(sub_conns_match) == 0:
+            log.msg('No subconnections with id %s found' % connection_id)
+        elif len(sub_conns_match) == 1:
+
+            conn = yield sub_conns_match[0].ServiceConnection.get()
+            sub_conns = yield conn.SubConnections.get()
+
+            if len(sub_conns) == 1:
+                log.msg("than one sub connection for connection %s, notifying" % conn.connection_id)
+                # assert that data plane came up...
+                yield doActivate(conn)
+            else:
+                log.msg("more than one sub connection for connection %s" % conn.connection_id)
+
+        else:
+            log.msg('More than one subconnection with id %s found. Hmm..' % connection_id)
 
