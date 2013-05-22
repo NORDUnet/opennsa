@@ -145,16 +145,16 @@ class DUDBackendTest(unittest.TestCase):
             pass # expected
 
 
-#    @defer.inlineCallbacks
-#    def testProvisionNonExistentConnection(self):
-#
-#        try:
-#            yield self.provision(None, self.provider_nsa.urn(), None, '1234')
-#            self.fail('Should have raised ConnectionNonExistentError')
-#        except error.ConnectionNonExistentError:
-#            pass # expected
-#
-#
+    @defer.inlineCallbacks
+    def testProvisionNonExistentConnection(self):
+
+        try:
+            yield self.provision(None, self.provider_nsa.urn(), None, '1234')
+            self.fail('Should have raised ConnectionNonExistentError')
+        except error.ConnectionNonExistentError:
+            pass # expected
+
+
 #    @defer.inlineCallbacks
 #    def testActivation(self):
 #
