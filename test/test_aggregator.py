@@ -133,20 +133,18 @@ class DUDBackendTest(unittest.TestCase):
 #        yield d_down
 #        yield self.terminate(None, self.provider_nsa.urn(), None, cid)
 #
-#
-#    @defer.inlineCallbacks
-#    def testDoubleReserve(self):
-#
-#        _,_,cid,_ = yield self.reserve(None, self.provider_nsa.urn(), None, None, None, None, self.service_params)
-#        self.connection_ids.append(cid)
-#        try:
-#            _,_,cid_ = yield self.reserve(None, self.provider_nsa.urn(), None, None, None, None, self.service_params)
-#            self.connection_ids.append(cid)
-#            self.fail('Should have raised STPUnavailableError')
-#        except error.STPUnavailableError:
-#            pass # we expect this
-#
-#
+
+    @defer.inlineCallbacks
+    def testDoubleReserve(self):
+
+        cid,_,_,_ = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, self.service_params)
+        try:
+            cid,_,_,_ = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, self.service_params)
+            self.fail('Should have raised STPUnavailableError')
+        except error.STPUnavailableError, e:
+            pass # expected
+
+
 #    @defer.inlineCallbacks
 #    def testProvisionNonExistentConnection(self):
 #

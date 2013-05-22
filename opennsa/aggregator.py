@@ -157,7 +157,7 @@ def _createAggregateException(results, action, default_error=error.InternalServe
     failures = [ conn for success,conn in results if not success ]
     if len(failures) == 0:
         # not supposed to happen
-        return error.InternalServerError('_createAggregateFailure called with no failures')
+        return error.InternalServerError('_createAggregateException called with no failures')
     if len(results) == 1 and len(failures) == 1:
         return failures[0]
     else:
@@ -406,9 +406,9 @@ class Aggregator:
         else:
             # terminate non-failed connections
             # currently we don't try and be too clever about cleaning, just do it, and switch state
-            # FIXME state handlnig
+            yield state.terminating(conn)
             defs = []
-            reserved_connections = [ conn for success,conn in results if success ]
+            reserved_connections = [ sc for success,sc in results if success ]
             for rc in reserved_connections:
                 d = rc.terminate()
                 d.addCallbacks(
@@ -417,9 +417,10 @@ class Aggregator:
                 )
                 defs.append(d)
             dl = defer.DeferredList(defs)
-            dl.addCallback( state.terminatedFailed )
+            yield dl
+            yield state.terminated(conn)
 
-            err = _createAggregateFailure(results, 'reservations', error.ConnectionCreateError)
+            err = _createAggregateException(results, 'reservations', error.ConnectionCreateError)
             raise err
 
         defer.returnValue( (connection_id, global_reservation_id, description, service_params) )
