@@ -58,31 +58,30 @@ class DUDBackendTest(unittest.TestCase):
 
 #        # just so we don't have to put them in the test code
         self.reserve        = self.sr.getHandler(registry.RESERVE,        registry.NSI2_AGGREGATOR)
-#        self.reserveCommit  = self.sr.getHandler(registry.RESERVE_COMMIT, registry.NSI2_AGGREGATOR)
+        self.reserveCommit  = self.sr.getHandler(registry.RESERVE_COMMIT, registry.NSI2_AGGREGATOR)
 #        self.reserveAbort   = self.sr.getHandler(registry.RESERVE_ABORT,  registry.NSI2_AGGREGATOR)
 #        self.provision      = self.sr.getHandler(registry.PROVISION,      registry.NSI2_AGGREGATOR)
 #        self.release        = self.sr.getHandler(registry.RELEASE,        registry.NSI2_AGGREGATOR)
         self.terminate      = self.sr.getHandler(registry.TERMINATE,      registry.NSI2_AGGREGATOR)
 
-        self.connection_ids = [] # list of connection ids to delete in the database
-
 
     @defer.inlineCallbacks
     def tearDown(self):
         from opennsa.backends.common import simplebackend
-        # NOT SUITABLE FOR PRODUCTION, TEST ONLY. SQL Injection galore
-        if self.connection_ids:
-            cids = ','.join( [ "'%s'" % cid for cid in self.connection_ids ] )
-            yield simplebackend.Simplebackendconnection.deleteAll(where=['connection_id IN (%s)' % cids])
+        # keep it simple...
+        yield simplebackend.Simplebackendconnection.deleteAll()
+        yield database.Subconnection.deleteAll()
+        yield database.ServiceConnection.deleteAll()
+
         yield self.backend.stopService()
 
 
     @defer.inlineCallbacks
     def testBasicUsage(self):
 
-        _,_,cid,sp = yield self.reserve(self.requester_nsa, self.provider_nsa.urn(), None, None, None, None, self.service_params)
-#        self.connection_ids.append(cid)
-#        yield self.terminate(None, self.provider_nsa.urn(), None, cid)
+        cid,_,_,sp = yield self.reserve(self.requester_nsa, self.provider_nsa.urn(), None, None, None, None, self.service_params)
+        yield self.reserveCommit(self.requester_nsa, self.provider_nsa.urn(), None, cid)
+        yield self.terminate(None, self.provider_nsa.urn(), None, cid)
 
 
 #    @defer.inlineCallbacks

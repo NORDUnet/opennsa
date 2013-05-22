@@ -216,6 +216,26 @@ class Aggregator:
 
 
     @defer.inlineCallbacks
+    def forAllSubConnections(self, conn, event):
+        # do a certain event for all sub connection for a connection
+        # only works for calls where handler args is: requester, provider, security_attrs, connection_id
+        # this happens to be quite a lot though
+
+        sub_connections = yield conn.subconnections.get()
+
+        defs = []
+
+        for sc in sub_connections:
+            cs = registry.NSI2_LOCAL if sc.provider_nsa == self.nsa_.urn() else registry.NSI2_REMOTE
+            handler = self.service_registry.getHandler(event, cs)
+
+            d = handler(self.nsa_, sc.provider_nsa, None, sc.connection_id)
+            defs.append(d)
+
+        defer.returnValue(defs)
+
+
+    @defer.inlineCallbacks
     def reserve(self, requester_nsa, provider_nsa, session_security_attr, connection_id, global_reservation_id, description, service_params):
 
         log.msg('', system=LOG_SYSTEM)
@@ -414,22 +434,15 @@ class Aggregator:
 
         conn = yield self.getConnection(requester_nsa, connection_id)
 
-        if conn.lifecycle_state in (state.TERMINATING, state.TERMINATED):
+        if conn.lifecycle_state == state.TERMINATED:
             raise error.ConnectionGoneError('Connection %s has been terminated')
 
         yield state.reserveCommit(conn)
+#        self.scheduler.cancelTransition()
 
-        sub_connections = yield conn.subconnections.get()
-
-        defs = []
-        for sc in sub_connections:
-            cs = registry.NSI2_LOCAL if sc.provider_nsa == self.nsa_.urn() else registry.NSI2_REMOTE
-            reserve_commit = self.service_registry.getHandler(registry.RESERVE_COMMIT, cs)
-
-            d = reserve_commit(self.nsa_, sc.provider_nsa, None, sc.connection_id)
-            defs.append(d)
-
+        defs = yield self.forAllSubConnections(conn, registry.RESERVE_COMMIT)
         results = yield defer.DeferredList(defs, consumeErrors=True)
+
         successes = [ r[0] for r in results ]
         if all(successes):
             log.msg('Connection %s: ReserveCommit succeeded' % conn.connection_id, system=LOG_SYSTEM)
@@ -530,30 +543,36 @@ class Aggregator:
         return dl
 
 
+
     @defer.inlineCallbacks
-    def terminate(self, requester_nsa, provider_nsa, session_security_attr, connection_id, global_reservation_id, description, service_params):
+    def terminate(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
 
-        def connectionTerminated(results):
-            successes = [ r[0] for r in results ]
-            if all(successes):
-                self.state.terminatedRequest()
-                if len(successes) == len(results):
-                    log.msg('Connection %s: All sub connections(%i) terminated' % (self.connection_id, len(results)-1), system=LOG_SYSTEM)
-                else:
-                    log.msg('Connection %s. Only %i of %i connections successfully terminated' % (self.connection_id, len(successes), len(results)), system=LOG_SYSTEM)
-                return self
-            else:
-                err = self._createAggregateFailure(results, 'terminates', error.TerminateError)
-                return err
+        log.msg('', system=LOG_SYSTEM)
+        log.msg('Terminate request. NSA: %s. Connection ID: %s' % (requester_nsa, connection_id), system=LOG_SYSTEM)
 
-        if self.state.isTerminated():
-            return self
+        conn = yield self.getConnection(requester_nsa, connection_id)
 
-        self.state.terminating()
-        self.scheduler.cancelTransition()
+        if conn.lifecycle_state == state.TERMINATED:
+            defer.returnValue(connection_id) # all good
 
-        defs = [ defer.maybeDeferred(sc.terminate) for sc in self.connections() ]
-        dl = defer.DeferredList(defs, consumeErrors=True)
-        dl.addCallback(connectionTerminated)
-        return dl
+        yield state.terminating(conn)
+#        self.scheduler.cancelTransition()
+
+        defs = yield self.forAllSubConnections(conn, registry.TERMINATE)
+
+        results = yield defer.DeferredList(defs, consumeErrors=True)
+        successes = [ r[0] for r in results ]
+        if all(successes):
+            yield state.terminated(conn)
+            log.msg('Connection %s: Terminate succeeded' % conn.connection_id, system=LOG_SYSTEM)
+            log.msg('Connection %s: All sub connections(%i) terminated' % (conn.connection_id, len(defs)), system=LOG_SYSTEM)
+        else:
+            # we are now in an inconsistent state...
+            n_success = sum( [ 1 for s in successes if s ] )
+            log.msg('Connection %s. Only %i of %i connections successfully terminated' % (self.connection_id, len(n_success), len(defs)), system=LOG_SYSTEM)
+            raise NotImplementedError('Cannot handle aggregate failures in terminate yet')
+#            err = self._createAggregateFailure(results, 'terminates', error.TerminateError)
+#            return err
+
+        defer.returnValue(connection_id)
 
