@@ -12,7 +12,6 @@ from twisted.python import log, failure
 from twisted.internet import defer
 
 from opennsa import error, nsa, state, registry, database
-from opennsa.backends.common import scheduler
 
 
 
