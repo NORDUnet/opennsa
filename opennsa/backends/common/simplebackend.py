@@ -367,7 +367,7 @@ class SimpleBackend(service.Service):
         connection_states = (conn.reservation_state, conn.provision_state, conn.lifecycle_state, conn.activation_state)
         reserve_timeout = self.service_registry.getHandler(registry.RESERVE_TIMEOUT, self.parent_system)
 
-        reserve_timeout(conn.connection_id, connection_states, self.TPC_TIMEOUT, datetime.datetime.utcnow())
+        reserve_timeout(None, None, None, conn.connection_id, connection_states, self.TPC_TIMEOUT, datetime.datetime.utcnow())
 
 
     @defer.inlineCallbacks
@@ -418,7 +418,7 @@ class SimpleBackend(service.Service):
             error_event = self.service_registry.getHandler(registry.ERROR_EVENT, self.parent_system)
             connection_states = (conn.reservation_state, conn.provision_state, conn.lifecycle_state, conn.activation_state)
             service_ex = (None, type(e), str(e), None, None)
-            error_event(conn.connection_id, 'activateFailed', connection_states, datetime.datetime.utcnow(), str(e), service_ex)
+            error_event(None, None, None, conn.connection_id, 'activateFailed', connection_states, datetime.datetime.utcnow(), str(e), service_ex)
 
             defer.returnValue(None)
 
@@ -431,7 +431,7 @@ class SimpleBackend(service.Service):
 
             data_plane_change = self.service_registry.getHandler(registry.DATA_PLANE_CHANGE, self.parent_system)
             dps = (True, conn.revision, True) # data plane status - active, version, version consistent
-            data_plane_change(conn.connection_id, dps, datetime.datetime.utcnow())
+            data_plane_change(None, None, None, conn.connection_id, dps, datetime.datetime.utcnow())
         except Exception, e:
             # this really should not happen
             log.msg('Error in post-activation: %s: %s' % (type(e), e), system=self.log_system)
@@ -457,7 +457,7 @@ class SimpleBackend(service.Service):
             error_event = self.service_registry.getHandler(registry.ERROR_EVENT, self.parent_system)
             connection_states = (conn.reservation_state, conn.provision_state, conn.lifecycle_state, conn.activation_state)
             service_ex = (None, type(e), str(e), None, None)
-            error_event(conn.connection_id, 'deactivateFailed', connection_states, datetime.datetime.utcnow(), str(e), service_ex)
+            error_event(None, None, None, conn.connection_id, 'deactivateFailed', connection_states, datetime.datetime.utcnow(), str(e), service_ex)
 
             defer.returnValue(None)
 
@@ -466,7 +466,7 @@ class SimpleBackend(service.Service):
             self.logStateUpdate(conn, 'INACTIVE')
             data_plane_change = self.service_registry.getHandler(registry.DATA_PLANE_CHANGE, self.parent_system)
             dps = (False, conn.revision, True) # data plane status - active, version, version consistent
-            data_plane_change(conn.connection_id, dps, datetime.datetime.utcnow())
+            data_plane_change(None, None, None, conn.connection_id, dps, datetime.datetime.utcnow())
         except Exception as e:
             log.msg('Error in post-deactivation: %s' % e)
 

@@ -87,7 +87,7 @@ class DUDBackendTest(unittest.TestCase):
         d_up   = defer.Deferred()
         d_down = defer.Deferred()
 
-        def dataPlaneChange(connection_id, dps, timestamp):
+        def dataPlaneChange(requester_nsa, provider_nsa, session_security_attr, connection_id, dps, timestamp):
             active, version, version_consistent = dps
             if active:
                 d_up.callback(connection_id)
@@ -133,7 +133,7 @@ class DUDBackendTest(unittest.TestCase):
 
         d_up = defer.Deferred()
 
-        def dataPlaneChange(connection_id, dps, timestamp):
+        def dataPlaneChange(requester_nsa, provider_nsa, session_security_attr, connection_id, dps, timestamp):
             active, version, version_consistent = dps
             if active:
                 values = connection_id, active, version_consistent, version, timestamp
@@ -181,7 +181,7 @@ class DUDBackendTest(unittest.TestCase):
         service_params = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, 200)
 
         d = defer.Deferred()
-        def reserveTimeout(connection_id, connection_states, timeout_value, timestamp):
+        def reserveTimeout(requester_nsa, provider_nsa, session_security_attr, connection_id, connection_states, timeout_value, timestamp):
             values = connection_id, connection_states, timeout_value, timestamp
             d.callback(values)
 
@@ -205,7 +205,7 @@ class DUDBackendTest(unittest.TestCase):
 
         d_err = defer.Deferred()
 
-        def errorEvent(connection_id, event, connection_states, timestamp, info, ex):
+        def errorEvent(requester_nsa, provider_nsa, session_security_attr, connection_id, event, connection_states, timestamp, info, ex):
             d_err.callback( (event, connection_id, connection_states, timestamp, info, ex) )
 
         self.sr.registerEventHandler(registry.ERROR_EVENT, errorEvent, self.registry_system)
@@ -231,12 +231,12 @@ class DUDBackendTest(unittest.TestCase):
         d_up  = defer.Deferred()
         d_err = defer.Deferred()
 
-        def dataPlaneChange(connection_id, dps, timestamp):
+        def dataPlaneChange(requester_nsa, provider_nsa, session_security_attr, connection_id, dps, timestamp):
             active, version, version_consistent = dps
             if active:
                 d_up.callback( ( connection_id, active, version_consistent, version, timestamp ) )
 
-        def errorEvent(connection_id, event, connection_states, timestamp, info, ex):
+        def errorEvent(requester_nsa, provider_nsa, session_security_attr, connection_id, event, connection_states, timestamp, info, ex):
             d_err.callback( (event, connection_id, connection_states, timestamp, info, ex) )
 
         self.sr.registerEventHandler(registry.DATA_PLANE_CHANGE,  dataPlaneChange, self.registry_system)
