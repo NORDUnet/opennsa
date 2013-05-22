@@ -195,6 +195,7 @@ class Aggregator:
 
         self.service_registry.registerEventHandler(registry.RESERVE,        self.reserve,       registry.NSI2_AGGREGATOR)
         self.service_registry.registerEventHandler(registry.RESERVE_COMMIT, self.reserveCommit, registry.NSI2_AGGREGATOR)
+        self.service_registry.registerEventHandler(registry.RESERVE_ABORT,  self.reserveAbort,  registry.NSI2_AGGREGATOR)
         self.service_registry.registerEventHandler(registry.PROVISION,      self.provision,     registry.NSI2_AGGREGATOR)
         self.service_registry.registerEventHandler(registry.TERMINATE,      self.terminate,     registry.NSI2_AGGREGATOR)
 
@@ -427,6 +428,32 @@ class Aggregator:
             # we are now in an inconsistent state...
             raise NotImplementedError('Cannot handle failure in reserve commit yet')
 
+
+    @defer.inlineCallbacks
+    def reserveAbort(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
+
+        log.msg('', system=LOG_SYSTEM)
+        log.msg('ReserveAbort request. NSA: %s. Connection ID: %s' % (requester_nsa, connection_id), system=LOG_SYSTEM)
+
+        conn = yield self.getConnection(requester_nsa, connection_id)
+
+        if conn.lifecycle_state == state.TERMINATED:
+            raise error.ConnectionGoneError('Connection %s has been terminated')
+
+        yield state.reserveAbort(conn)
+
+        defs = yield self.forAllSubConnections(conn, registry.RESERVE_ABORT)
+        results = yield defer.DeferredList(defs, consumeErrors=True)
+
+        successes = [ r[0] for r in results ]
+        if all(successes):
+            log.msg('Connection %s: ReserveAbort succeeded' % conn.connection_id, system=LOG_SYSTEM)
+            yield state.reserved(conn)
+            defer.returnValue(connection_id)
+
+        else:
+            # we are now in an inconsistent state...
+            raise NotImplementedError('Cannot handle failure in reserve commit yet')
 
 
     @defer.inlineCallbacks

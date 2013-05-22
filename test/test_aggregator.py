@@ -59,7 +59,7 @@ class DUDBackendTest(unittest.TestCase):
 #        # just so we don't have to put them in the test code
         self.reserve        = self.sr.getHandler(registry.RESERVE,        registry.NSI2_AGGREGATOR)
         self.reserveCommit  = self.sr.getHandler(registry.RESERVE_COMMIT, registry.NSI2_AGGREGATOR)
-#        self.reserveAbort   = self.sr.getHandler(registry.RESERVE_ABORT,  registry.NSI2_AGGREGATOR)
+        self.reserveAbort   = self.sr.getHandler(registry.RESERVE_ABORT,  registry.NSI2_AGGREGATOR)
         self.provision      = self.sr.getHandler(registry.PROVISION,      registry.NSI2_AGGREGATOR)
 #        self.release        = self.sr.getHandler(registry.RELEASE,        registry.NSI2_AGGREGATOR)
         self.terminate      = self.sr.getHandler(registry.TERMINATE,      registry.NSI2_AGGREGATOR)
@@ -181,25 +181,23 @@ class DUDBackendTest(unittest.TestCase):
 #        #yield self.release(  None, self.provider_nsa.urn(), None, cid)
 #        yield self.terminate(None, self.provider_nsa.urn(), None, cid)
 #
-#
-#    @defer.inlineCallbacks
-#    def testReserveAbort(self):
-#
-#        # these need to be constructed such that there is only one label option
-#        source_stp  = nsa.STP('Aruba', 'A1', labels=[ nsa.Label(nml.ETHERNET_VLAN, '2') ] )
-#        dest_stp    = nsa.STP('Aruba', 'A3', labels=[ nsa.Label(nml.ETHERNET_VLAN, '2') ] )
-#        start_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=1)
-#        end_time   = datetime.datetime.utcnow() + datetime.timedelta(seconds=10)
-#        service_params = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, 200)
-#
-#        _,_,cid,sp = yield self.reserve(None, self.provider_nsa.urn(), None, None, None, None, self.service_params)
-#        self.connection_ids.append(cid)
-#        yield self.reserveAbort(None, self.provider_nsa.urn(), None, cid)
-#        # try to reserve the same resources
-#        _,_,cid,sp = yield self.reserve(None, self.provider_nsa.urn(), None, None, None, None, self.service_params)
-#        self.connection_ids.append(cid)
-#
-#
+
+    @defer.inlineCallbacks
+    def testReserveAbort(self):
+
+        # these need to be constructed such that there is only one label option
+        source_stp  = nsa.STP('Aruba', 'A1', labels=[ nsa.Label(nml.ETHERNET_VLAN, '2') ] )
+        dest_stp    = nsa.STP('Aruba', 'A3', labels=[ nsa.Label(nml.ETHERNET_VLAN, '2') ] )
+        start_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=1)
+        end_time   = datetime.datetime.utcnow() + datetime.timedelta(seconds=10)
+        service_params = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, 200)
+
+        cid,_,_,_ = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, self.service_params)
+        yield self.reserveAbort(self.requester_nsa, self.provider_nsa.urn(), None, cid)
+        # try to reserve the same resources
+        _ = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, self.service_params)
+
+
 #    @defer.inlineCallbacks
 #    def testReserveAbortTimeout(self):
 #
