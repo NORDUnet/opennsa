@@ -16,6 +16,7 @@ from . import topology
 class DUDBackendTest(unittest.TestCase):
 
     network = 'Aruba'
+    aggregator_system = 'aggregator'
 
     def setUp(self):
 
@@ -26,8 +27,9 @@ class DUDBackendTest(unittest.TestCase):
         self.clock = task.Clock()
 
         self.sr = registry.ServiceRegistry()
+        self.registry_system = 'test-system'
 
-        self.backend = dud.DUDNSIBackend(self.network, self.sr)
+        self.backend = dud.DUDNSIBackend(self.network, self.sr, registry.NSI2_AGGREGATOR)
         self.backend.scheduler.clock = self.clock
 
         ns_agent = nsa.NetworkServiceAgent('aruba', 'http://localhost:9080/NSI/CS2')
@@ -38,7 +40,7 @@ class DUDBackendTest(unittest.TestCase):
 
         self.topology.addNetwork(aruba_topo)
 
-        self.aggregator = aggregator.Aggregator(self.network, ns_agent, self.topology, self.sr)
+        self.aggregator = aggregator.Aggregator(self.network, ns_agent, self.topology, self.sr, self.registry_system)
 
 
         self.backend.startService()
