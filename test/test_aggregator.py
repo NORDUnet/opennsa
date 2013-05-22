@@ -13,7 +13,7 @@ from . import topology
 
 
 
-class DUDBackendTest(unittest.TestCase):
+class AggregatorTest(unittest.TestCase):
 
     network = 'Aruba'
     aggregator_system = 'aggregator'
