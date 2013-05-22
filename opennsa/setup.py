@@ -21,7 +21,7 @@ def setupBackend(backend_conf, network_name, service_registry):
 
         if backend_type == config.BLOCK_DUD:
             from opennsa.backends import dud
-            return dud.DUDNSIBackend(network_name, service_registry)
+            return dud.DUDNSIBackend(network_name, service_registry, registry.NSI2_AGGREGATOR)
 
         elif backend_type == config.BLOCK_JUNOS:
             from opennsa.backends import junos

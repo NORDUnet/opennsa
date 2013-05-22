@@ -187,11 +187,12 @@ def _createAggregateFailure(results, action):
 
 class Aggregator:
 
-    def __init__(self, network, nsa_, topology, service_registry):
+    def __init__(self, network, nsa_, topology, service_registry, parent_system):
         self.network = network
         self.nsa_ = nsa_
         self.topology = topology
         self.service_registry = service_registry
+        self.parent_system = parent_system
 
         self.service_registry.registerEventHandler(registry.RESERVE,        self.reserve,       registry.NSI2_AGGREGATOR)
         self.service_registry.registerEventHandler(registry.RESERVE_COMMIT, self.reserveCommit, registry.NSI2_AGGREGATOR)

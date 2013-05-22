@@ -37,11 +37,12 @@ class SimpleBackend(service.Service):
 
     TPC_TIMEOUT = 30 # seconds
 
-    def __init__(self, network, connection_manager, service_registry, log_system):
+    def __init__(self, network, connection_manager, service_registry, parent_system, log_system):
 
         self.network = network
         self.connection_manager = connection_manager
         self.service_registry = service_registry
+        self.parent_system = parent_system
         self.log_system = log_system
 
         self.scheduler = scheduler.CallScheduler()
