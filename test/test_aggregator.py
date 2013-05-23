@@ -229,32 +229,31 @@ class AggregatorTest(unittest.TestCase):
 
 
 
-#    @defer.inlineCallbacks
-#    def testFaultyActivate(self):
-#
-#        d_err = defer.Deferred()
-#
-#        def errorEvent(connection_id, event, connection_states, timestamp, info, ex):
-#            d_err.callback( (event, connection_id, connection_states, timestamp, info, ex) )
-#
-#        self.sr.registerEventHandler(registry.ERROR_EVENT, errorEvent, registry.NSI2_LOCAL)
-#
-#        # make actication fail via monkey patching
-#        self.backend.connection_manager.setupLink = \
-#            lambda src, dst : defer.fail(error.InternalNRMError('Link setup failed'))
-#
-#        _,_,cid,sp = yield self.reserve(None, self.provider_nsa.urn(), None, None, None, None, self.service_params)
-#        self.connection_ids.append(cid)
-#        yield self.reserveCommit(None, self.provider_nsa.urn(), None, cid)
-#        yield self.provision(None, self.provider_nsa.urn(), None, cid)
-#        self.clock.advance(3)
-#        vals = yield d_err
-#
-#        event, connection_id, connection_states, timestamp, info, ex = vals
-#        self.failUnlessEquals(event, 'activateFailed')
-#        self.failUnlessEquals(connection_id, cid)
-#
-#
+    @defer.inlineCallbacks
+    def testFaultyActivate(self):
+
+        d_err = defer.Deferred()
+
+        def errorEvent(requester_nsa, provider_nsa, session_security_attr, connection_id, event, connection_states, timestamp, info, ex):
+            d_err.callback( (event, connection_id, connection_states, timestamp, info, ex) )
+
+        self.sr.registerEventHandler(registry.ERROR_EVENT, errorEvent, self.registry_system)
+
+        # make actication fail via monkey patching
+        self.backend.connection_manager.setupLink = \
+            lambda src, dst : defer.fail(error.InternalNRMError('Link setup failed'))
+
+        cid,_,_,_ = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, self.service_params)
+        yield self.reserveCommit(self.requester_nsa, self.provider_nsa, None, cid)
+        yield self.provision(self.requester_nsa, self.provider_nsa, None, cid)
+        self.clock.advance(3)
+        vals = yield d_err
+
+        event, connection_id, connection_states, timestamp, info, ex = vals
+        self.failUnlessEquals(event, 'activateFailed')
+        self.failUnlessEquals(connection_id, cid)
+
+
 #    @defer.inlineCallbacks
 #    def testFaultyDeactivate(self):
 #

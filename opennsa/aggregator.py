@@ -203,6 +203,7 @@ class Aggregator:
 
         self.service_registry.registerEventHandler(registry.RESERVE_TIMEOUT,    self.reserveTimeout,    registry.NSI2_AGGREGATOR)
         self.service_registry.registerEventHandler(registry.DATA_PLANE_CHANGE,  self.dataPlaneChange,   registry.NSI2_AGGREGATOR)
+        self.service_registry.registerEventHandler(registry.ERROR_EVENT,        self.errorEvent,        registry.NSI2_AGGREGATOR)
 
 
     def getConnection(self, requester_nsa, connection_id):
@@ -565,11 +566,15 @@ class Aggregator:
         dps = (False, conn.revision, True) # data plane status - active, version, version consistent
         data_plane_change(None, None, None, conn.connection_id, dps, datetime.datetime.utcnow())
 
-#    @defer.inlineCallbacks
     def doTimeout(self, conn):
         reserve_timeout = self.service_registry.getHandler(registry.RESERVE_TIMEOUT, self.parent_system)
         connection_states = (None, None, None, None)
         reserve_timeout(None, None, None, conn.connection_id, connection_states, None, datetime.datetime.utcnow())
+
+    def doErrorEvent(self, conn, event, info, service_ex=None):
+        error_event = self.service_registry.getHandler(registry.ERROR_EVENT, self.parent_system)
+        connection_states = (None, None, None, None)
+        error_event(None, None, None, conn.connection_id, event, connection_states, datetime.datetime.utcnow(), info, service_ex)
 
     # --
 
@@ -620,4 +625,17 @@ class Aggregator:
         else:
             log.msg("more than one sub connection for connection %s" % conn.connection_id)
 
+
+    @defer.inlineCallbacks
+    def errorEvent(self, requester_nsa, provider_nsa, session_security_attr, connection_id, event, connection_states, timestamp, info, service_ex):
+
+        sub_conn = yield self.findSubConnection(provider_nsa, connection_id)
+        conn = yield sub_conn.ServiceConnection.get()
+        sub_conns = yield conn.SubConnections.get()
+
+        if len(sub_conns) == 1:
+            log.msg("reserveTimeout: One sub connection for connection %s, notifying" % conn.connection_id)
+            self.doErrorEvent(conn, event, info, service_ex)
+        else:
+            raise NotImplementedError('Cannot handle timeout for connection with more than one sub connection')
 
