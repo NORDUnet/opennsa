@@ -201,6 +201,7 @@ class Aggregator:
         self.service_registry.registerEventHandler(registry.RELEASE,            self.release,           registry.NSI2_AGGREGATOR)
         self.service_registry.registerEventHandler(registry.TERMINATE,          self.terminate,         registry.NSI2_AGGREGATOR)
 
+        self.service_registry.registerEventHandler(registry.RESERVE_TIMEOUT,    self.reserveTimeout,    registry.NSI2_AGGREGATOR)
         self.service_registry.registerEventHandler(registry.DATA_PLANE_CHANGE,  self.dataPlaneChange,   registry.NSI2_AGGREGATOR)
 
 
@@ -564,32 +565,59 @@ class Aggregator:
         dps = (False, conn.revision, True) # data plane status - active, version, version consistent
         data_plane_change(None, None, None, conn.connection_id, dps, datetime.datetime.utcnow())
 
+#    @defer.inlineCallbacks
+    def doTimeout(self, conn):
+        reserve_timeout = self.service_registry.getHandler(registry.RESERVE_TIMEOUT, self.parent_system)
+        connection_states = (None, None, None, None)
+        reserve_timeout(None, None, None, conn.connection_id, connection_states, None, datetime.datetime.utcnow())
+
     # --
+
+    @defer.inlineCallbacks
+    def findSubConnection(self, provider_nsa, connection_id):
+
+        sub_conns_match = yield database.SubConnection.findBy(connection_id=connection_id)
+
+        if len(sub_conns_match) == 0:
+            log.msg('No subconnection with id %s found' % connection_id)
+        elif len(sub_conns_match) == 1:
+            defer.returnValue(sub_conns_match[0])
+        else:
+            log.msg('More than one subconnection with id %s found.' % connection_id)
+            raise NotImplementedError('Cannot handle that situation yet, as there is no matching on NSA yet')
+
+
+    @defer.inlineCallbacks
+    def reserveTimeout(self, requester_nsa, provider_nsa, session_security_attr, connection_id, connection_states, timeout_value, timestamp):
+
+        sub_conn = yield self.findSubConnection(provider_nsa, connection_id)
+        conn = yield sub_conn.ServiceConnection.get()
+        sub_conns = yield conn.SubConnections.get()
+
+        if len(sub_conns) == 1:
+            log.msg("reserveTimeout: One sub connection for connection %s, notifying" % conn.connection_id)
+            self.doTimeout(conn)
+        else:
+            raise NotImplementedError('Cannot handle timeout for connection with more than one sub connection')
+
 
     @defer.inlineCallbacks
     def dataPlaneChange(self, requester_nsa, provider_nsa, session_security_attr, connection_id, dps, timestamp):
 
         active, version, version_consistent = dps
 
-        sub_conns_match = yield database.SubConnection.findBy(connection_id=connection_id)
+        sub_conn = yield database.SubConnection.findBy(connection_id=connection_id)
 
-        if len(sub_conns_match) == 0:
-            log.msg('No subconnections with id %s found' % connection_id)
-        elif len(sub_conns_match) == 1:
+        conn = yield sub_conns_match[0].ServiceConnection.get()
+        sub_conns = yield conn.SubConnections.get()
 
-            conn = yield sub_conns_match[0].ServiceConnection.get()
-            sub_conns = yield conn.SubConnections.get()
-
-            if len(sub_conns) == 1:
-                log.msg("than one sub connection for connection %s, notifying" % conn.connection_id)
-                # assert that data plane came up...
-                if active:
-                    yield self.doActivate(conn)
-                else:
-                    yield self.doTeardown(conn)
+        if len(sub_conns) == 1:
+            log.msg("than one sub connection for connection %s, notifying" % conn.connection_id)
+            if active:
+                yield self.doActivate(conn)
             else:
-                log.msg("more than one sub connection for connection %s" % conn.connection_id)
-
+                yield self.doTeardown(conn)
         else:
-            log.msg('More than one subconnection with id %s found. Hmm..' % connection_id)
+            log.msg("more than one sub connection for connection %s" % conn.connection_id)
+
 

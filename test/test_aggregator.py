@@ -198,39 +198,37 @@ class AggregatorTest(unittest.TestCase):
         _ = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, self.service_params)
 
 
-#    @defer.inlineCallbacks
-#    def testReserveAbortTimeout(self):
-#
-#        # these need to be constructed such that there is only one label option
-#        source_stp  = nsa.STP('Aruba', 'A1', labels=[ nsa.Label(nml.ETHERNET_VLAN, '2') ] )
-#        dest_stp    = nsa.STP('Aruba', 'A3', labels=[ nsa.Label(nml.ETHERNET_VLAN, '2') ] )
-#        start_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=1)
-#        end_time   = datetime.datetime.utcnow() + datetime.timedelta(seconds=60)
-#        service_params = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, 200)
-#
-#        d = defer.Deferred()
-#        def reserveTimeout(connection_id, connection_states, timeout_value, timestamp):
-#            values = connection_id, connection_states, timeout_value, timestamp
-#            d.callback(values)
-#
-#        self.sr.registerEventHandler(registry.RESERVE_TIMEOUT,  reserveTimeout, registry.NSI2_LOCAL)
-#
-#        _,_,cid,sp = yield self.reserve(None, self.provider_nsa.urn(), None, None, None, None, self.service_params)
-#        self.connection_ids.append(cid)
-#
-#        self.clock.advance(dud.DUDNSIBackend.TPC_TIMEOUT + 1)
-#        connection_id, connection_states, timeout_value, timestamp = yield d
-#        rsm, psm, lsm, asm = connection_states
-#
-#        self.failUnlessEquals(connection_id, cid)
-#        self.failUnlessEquals(rsm, state.RESERVED)
-#
-#        # try to reserve the same resources
-#        _,_,cid,sp = yield self.reserve(None, self.provider_nsa.urn(), None, None, None, None, self.service_params)
-#        self.connection_ids.append(cid)
-#
-#
-#
+    @defer.inlineCallbacks
+    def testReserveTimeout(self):
+
+        # these need to be constructed such that there is only one label option
+        source_stp  = nsa.STP('Aruba', 'A1', labels=[ nsa.Label(nml.ETHERNET_VLAN, '2') ] )
+        dest_stp    = nsa.STP('Aruba', 'A3', labels=[ nsa.Label(nml.ETHERNET_VLAN, '2') ] )
+        start_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=1)
+        end_time   = datetime.datetime.utcnow() + datetime.timedelta(seconds=60)
+        service_params = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, 200)
+
+        d = defer.Deferred()
+        def reserveTimeout(requester_nsa, provider_nsa, session_security_attrs, connection_id, connection_states, timeout_value, timestamp):
+            values = connection_id, connection_states, timeout_value, timestamp
+            d.callback(values)
+
+        self.sr.registerEventHandler(registry.RESERVE_TIMEOUT,  reserveTimeout, self.registry_system)
+
+        cid,_,_,_ = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, self.service_params)
+
+        self.clock.advance(dud.DUDNSIBackend.TPC_TIMEOUT + 1)
+        connection_id, connection_states, timeout_value, timestamp = yield d
+        rsm, psm, lsm, asm = connection_states
+
+        self.failUnlessEquals(connection_id, cid)
+        #self.failUnlessEquals(rsm, state.RESERVED) # not sure what the state should be here...
+
+        # try to reserve the same resources
+        _,_,cid,sp = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, self.service_params)
+
+
+
 #    @defer.inlineCallbacks
 #    def testFaultyActivate(self):
 #
