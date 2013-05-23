@@ -156,32 +156,31 @@ class AggregatorTest(unittest.TestCase):
             pass # expected
 
 
-#    @defer.inlineCallbacks
-#    def testActivation(self):
-#
-#        d_up = defer.Deferred()
-#
-#        def dataPlaneChange(connection_id, dps, timestamp):
-#            active, version, version_consistent = dps
-#            if active:
-#                values = connection_id, active, version_consistent, version, timestamp
-#                d_up.callback(values)
-#
-#        self.sr.registerEventHandler(registry.DATA_PLANE_CHANGE,  dataPlaneChange, registry.NSI2_LOCAL)
-#
-#        _,_,cid,sp = yield self.reserve(None, self.provider_nsa.urn(), None, None, None, None, self.service_params)
-#        self.connection_ids.append(cid)
-#        yield self.reserveCommit(None, self.provider_nsa.urn(), None, cid)
-#        yield self.provision(None, self.provider_nsa.urn(), None, cid)
-#        self.clock.advance(3)
-#        connection_id, active, version_consistent, version, timestamp = yield d_up
-#        self.failUnlessEqual(cid, connection_id)
-#        self.failUnlessEqual(active, True)
-#        self.failUnlessEqual(version_consistent, True)
-#
-#        #yield self.release(  None, self.provider_nsa.urn(), None, cid)
-#        yield self.terminate(None, self.provider_nsa.urn(), None, cid)
-#
+    @defer.inlineCallbacks
+    def testActivation(self):
+
+        d_up = defer.Deferred()
+
+        def dataPlaneChange(requester_nsa, provider_nsa, sessesion_security_attrs, connection_id, dps, timestamp):
+            active, version, version_consistent = dps
+            if active:
+                values = connection_id, active, version_consistent, version, timestamp
+                d_up.callback(values)
+
+        self.sr.registerEventHandler(registry.DATA_PLANE_CHANGE,  dataPlaneChange, self.registry_system)
+
+        cid,_,_,_ = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, self.service_params)
+        yield self.reserveCommit(self.requester_nsa, self.provider_nsa, None, cid)
+        yield self.provision(self.requester_nsa, self.provider_nsa, None, cid)
+        self.clock.advance(3)
+        connection_id, active, version_consistent, version, timestamp = yield d_up
+        self.failUnlessEqual(cid, connection_id)
+        self.failUnlessEqual(active, True)
+        self.failUnlessEqual(version_consistent, True)
+
+        #yield self.release(  None, self.provider_nsa.urn(), None, cid)
+        yield self.terminate(self.requester_nsa, self.provider_nsa, None, cid)
+
 
     @defer.inlineCallbacks
     def testReserveAbort(self):
