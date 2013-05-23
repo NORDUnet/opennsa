@@ -606,9 +606,9 @@ class Aggregator:
 
         active, version, version_consistent = dps
 
-        sub_conn = yield database.SubConnection.findBy(connection_id=connection_id)
+        sub_conn = yield self.findSubConnection(provider_nsa, connection_id)
 
-        conn = yield sub_conns_match[0].ServiceConnection.get()
+        conn = yield sub_conn.ServiceConnection.get()
         sub_conns = yield conn.SubConnections.get()
 
         if len(sub_conns) == 1:
