@@ -428,8 +428,9 @@ class Aggregator:
             defer.returnValue(connection_id)
 
         else:
-            # we are now in an inconsistent state...
-            raise NotImplementedError('Cannot handle failure in reserve commit yet')
+            n_success = sum( [ 1 for s in successes if s ] )
+            log.msg('Connection %s. Only %i of %i connections committed' % (self.connection_id, len(n_success), len(defs)), system=LOG_SYSTEM)
+            raise self._createAggregateFailure(results, 'committed', error.ConnectionError)
 
 
     @defer.inlineCallbacks
@@ -455,8 +456,9 @@ class Aggregator:
             defer.returnValue(connection_id)
 
         else:
-            # we are now in an inconsistent state...
-            raise NotImplementedError('Cannot handle failure in reserve commit yet')
+            n_success = sum( [ 1 for s in successes if s ] )
+            log.msg('Connection %s. Only %i of %i connections aborted' % (self.connection_id, len(n_success), len(defs)), system=LOG_SYSTEM)
+            raise self._createAggregateFailure(results, 'aborted', error.ConnectionError)
 
 
     @defer.inlineCallbacks
@@ -483,30 +485,7 @@ class Aggregator:
         else:
             n_success = sum( [ 1 for s in successes if s ] )
             log.msg('Connection %s. Only %i of %i connections successfully provision' % (self.connection_id, len(n_success), len(defs)), system=LOG_SYSTEM)
-
-          # at least one provision failed, provisioned connections should be released
-#            defs = []
-#            provisioned_connections = [ sc for success,sc in results if success ]
-#            for pc in provisioned_connections:
-#                d = pc.release()
-#                d.addCallbacks(
-#                    lambda c : log.msg('Succesfully released sub-connection after partial provision failure %s %s' % (c.curator(), connPath(c)), system=LOG_SYSTEM),
-#                    lambda f : log.msg('Error releasing connection after partial provision failure: %s' % str(f), system=LOG_SYSTEM)
-#                )
-#                defs.append(d)
-#            dl = defer.DeferredList(defs)
-#            #dl.addCallback( self.state.scheduled )
-#            yield dl
-#            yield state.scheduled(conn)
-
-            raise self._createAggregateFailure(results, 'provisions', error.ProvisionError)
-#                return err
-
-#                def releaseDone(_):
-#                    err = self._createAggregateFailure(results, 'provisions', error.ProvisionError)
-#                    return err
-#
-#                dl.addCallback(releaseDone)
+            raise self._createAggregateFailure(results, 'provision', error.ConnectionError)
 
 
     @defer.inlineCallbacks
@@ -532,22 +511,9 @@ class Aggregator:
             defer.returnValue(connection_id)
 
         else:
-            # we are now in an inconsistent state...
-            raise NotImplementedError('Cannot handle failure in release commit yet')
-
-
-#            if all(successes):
-#                self.state.scheduled()
-#                if len(results) > 1:
-#                    log.msg('Connection %s and all sub connections(%i) released' % (self.connection_id, len(results)-1), system=LOG_SYSTEM)
-#                # unsure, if anything should be scheduled here
-#                #self.scheduler.scheduleTransition(self.service_parameters.end_time, self.state.terminatedEndtime, state.TERMINATED_ENDTIME)
-#                return self
-#
-#            else:
-#                err = self._createAggregateFailure(results, 'releases', error.ReleaseError)
-#                return err
-#
+            n_success = sum( [ 1 for s in successes if s ] )
+            log.msg('Connection %s. Only %i of %i connections successfully provision' % (self.connection_id, len(n_success), len(defs)), system=LOG_SYSTEM)
+            raise self._createAggregateFailure(results, 'provision', error.ConnectionError)
 
 
     @defer.inlineCallbacks
@@ -575,9 +541,7 @@ class Aggregator:
             # we are now in an inconsistent state...
             n_success = sum( [ 1 for s in successes if s ] )
             log.msg('Connection %s. Only %i of %i connections successfully terminated' % (self.connection_id, len(n_success), len(defs)), system=LOG_SYSTEM)
-            raise NotImplementedError('Cannot handle aggregate failures in terminate yet')
-#            err = self._createAggregateFailure(results, 'terminates', error.TerminateError)
-#            return err
+            raise self._createAggregateFailure(results, 'terminate', error.ConnectionError)
 
         defer.returnValue(connection_id)
 
