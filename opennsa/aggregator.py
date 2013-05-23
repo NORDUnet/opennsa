@@ -167,19 +167,6 @@ def _createAggregateException(results, action, default_error=error.InternalServe
 
 def _createAggregateFailure(results, action):
 
-#    # need to handle multi-errors better, but infrastructure isn't there yet
-#    failures = [ conn for success,conn in results if not success ]
-#    if len(failures) == 0:
-#        # not supposed to happen
-#        err = failure.Failure( error.InternalServerError('_createAggregateFailure called with no failures') )
-#        log.err(err)
-#    if len(results) == 1 and len(failures) == 1:
-#        err = failures[0]
-#    else:
-#        error_msg = self._buildErrorMessage(results, action)
-#        err = failure.Failure( default_error(error_msg) )
-#
-#    return err
     err = _createAggregateException(results, action)
     return failure.Failure(err)
 
@@ -432,7 +419,7 @@ class Aggregator:
         else:
             n_success = sum( [ 1 for s in successes if s ] )
             log.msg('Connection %s. Only %i of %i connections committed' % (self.connection_id, len(n_success), len(defs)), system=LOG_SYSTEM)
-            raise self._createAggregateFailure(results, 'committed', error.ConnectionError)
+            raise self._createAggregateException(results, 'committed', error.ConnectionError)
 
 
     @defer.inlineCallbacks
@@ -460,7 +447,7 @@ class Aggregator:
         else:
             n_success = sum( [ 1 for s in successes if s ] )
             log.msg('Connection %s. Only %i of %i connections aborted' % (self.connection_id, len(n_success), len(defs)), system=LOG_SYSTEM)
-            raise self._createAggregateFailure(results, 'aborted', error.ConnectionError)
+            raise self._createAggregateException(results, 'aborted', error.ConnectionError)
 
 
     @defer.inlineCallbacks
@@ -487,7 +474,7 @@ class Aggregator:
         else:
             n_success = sum( [ 1 for s in successes if s ] )
             log.msg('Connection %s. Only %i of %i connections successfully provision' % (self.connection_id, len(n_success), len(defs)), system=LOG_SYSTEM)
-            raise self._createAggregateFailure(results, 'provision', error.ConnectionError)
+            raise self._createAggregateException(results, 'provision', error.ConnectionError)
 
 
     @defer.inlineCallbacks
@@ -515,7 +502,7 @@ class Aggregator:
         else:
             n_success = sum( [ 1 for s in successes if s ] )
             log.msg('Connection %s. Only %i of %i connections successfully provision' % (self.connection_id, len(n_success), len(defs)), system=LOG_SYSTEM)
-            raise self._createAggregateFailure(results, 'provision', error.ConnectionError)
+            raise self._createAggregateException(results, 'provision', error.ConnectionError)
 
 
     @defer.inlineCallbacks
@@ -543,7 +530,7 @@ class Aggregator:
             # we are now in an inconsistent state...
             n_success = sum( [ 1 for s in successes if s ] )
             log.msg('Connection %s. Only %i of %i connections successfully terminated' % (self.connection_id, len(n_success), len(defs)), system=LOG_SYSTEM)
-            raise self._createAggregateFailure(results, 'terminate', error.ConnectionError)
+            raise self._createAggregateException(results, 'terminate', error.ConnectionError)
 
         defer.returnValue(connection_id)
 
