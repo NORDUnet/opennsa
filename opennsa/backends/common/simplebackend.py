@@ -359,42 +359,50 @@ class SimpleBackend(service.Service):
     @defer.inlineCallbacks
     def _doReserveTimeout(self, conn):
 
-        yield state.reserveTimeout(conn)
-        self.logStateUpdate(conn, 'RESERVE TIMEOUT')
+        try:
+            yield state.reserveTimeout(conn)
+            self.logStateUpdate(conn, 'RESERVE TIMEOUT')
 
-        yield self._doReserveAbort(conn)
+            yield self._doReserveAbort(conn)
 
-        connection_states = (conn.reservation_state, conn.provision_state, conn.lifecycle_state, conn.activation_state)
-        reserve_timeout = self.service_registry.getHandler(registry.RESERVE_TIMEOUT, self.parent_system)
+            connection_states = (conn.reservation_state, conn.provision_state, conn.lifecycle_state, conn.activation_state)
+            reserve_timeout = self.service_registry.getHandler(registry.RESERVE_TIMEOUT, self.parent_system)
 
-        reserve_timeout(None, None, None, conn.connection_id, connection_states, self.TPC_TIMEOUT, datetime.datetime.utcnow())
+            reserve_timeout(None, None, None, conn.connection_id, connection_states, self.TPC_TIMEOUT, datetime.datetime.utcnow())
+
+        except Exception as e:
+            log.msg('Error in reserveTimeout: %s: %s' % (type(e), e), system=self.log_system)
 
 
     @defer.inlineCallbacks
     def _doReserveAbort(self, conn):
 
-        yield state.reserveAbort(conn)
-        self.logStateUpdate(conn, 'RESERVE ABORTING')
+        try:
+            yield state.reserveAbort(conn)
+            self.logStateUpdate(conn, 'RESERVE ABORTING')
 
-        self.scheduler.cancelCall(conn.connection_id) # we only have this for non-timeout calls, but just cancel
+            self.scheduler.cancelCall(conn.connection_id) # we only have this for non-timeout calls, but just cancel
 
-        # release the resources
-        src_resource = self.connection_manager.getResource(conn.source_port, conn.source_labels[0].type_, conn.source_labels[0].labelValue())
-        dst_resource = self.connection_manager.getResource(conn.dest_port,   conn.dest_labels[0].type_,   conn.dest_labels[0].labelValue())
+            # release the resources
+            src_resource = self.connection_manager.getResource(conn.source_port, conn.source_labels[0].type_, conn.source_labels[0].labelValue())
+            dst_resource = self.connection_manager.getResource(conn.dest_port,   conn.dest_labels[0].type_,   conn.dest_labels[0].labelValue())
 
-        self.calendar.removeReservation(src_resource, conn.start_time, conn.end_time)
-        self.calendar.removeReservation(dst_resource, conn.start_time, conn.end_time)
+            self.calendar.removeReservation(src_resource, conn.start_time, conn.end_time)
+            self.calendar.removeReservation(dst_resource, conn.start_time, conn.end_time)
 
-        yield state.reserved(conn)
-        self.logStateUpdate(conn, 'RESERVE INITIAL')
+            yield state.reserved(conn)
+            self.logStateUpdate(conn, 'RESERVE START')
 
-        now = datetime.datetime.utcnow()
-        if now > conn.end_time:
-            yield self._doTerminate(conn)
-        else:
-            self.scheduler.scheduleCall(conn.connection_id, conn.end_time, self._doTerminate, conn)
-            td = conn.end_time - datetime.datetime.utcnow()
-            log.msg('Connection %s: terminate scheduled for %s UTC (%i seconds)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
+            now = datetime.datetime.utcnow()
+            if now > conn.end_time:
+                yield self._doTerminate(conn)
+            else:
+                self.scheduler.scheduleCall(conn.connection_id, conn.end_time, self._doTerminate, conn)
+                td = conn.end_time - datetime.datetime.utcnow()
+                log.msg('Connection %s: terminate scheduled for %s UTC (%i seconds)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
+
+        except Exception as e:
+            log.msg('Error in reserveAbort: %s: %s' % (type(e), e), system=self.log_system)
 
 
     @defer.inlineCallbacks
@@ -433,7 +441,6 @@ class SimpleBackend(service.Service):
             dps = (True, conn.revision, True) # data plane status - active, version, version consistent
             data_plane_change(None, None, None, conn.connection_id, dps, datetime.datetime.utcnow())
         except Exception, e:
-            # this really should not happen
             log.msg('Error in post-activation: %s: %s' % (type(e), e), system=self.log_system)
 
 
