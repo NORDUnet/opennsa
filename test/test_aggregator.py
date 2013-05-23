@@ -254,35 +254,34 @@ class AggregatorTest(unittest.TestCase):
         self.failUnlessEquals(connection_id, cid)
 
 
-#    @defer.inlineCallbacks
-#    def testFaultyDeactivate(self):
-#
-#        d_up  = defer.Deferred()
-#        d_err = defer.Deferred()
-#
-#        def dataPlaneChange(connection_id, dps, timestamp):
-#            active, version, version_consistent = dps
-#            if active:
-#                d_up.callback( ( connection_id, active, version_consistent, version, timestamp ) )
-#
-#        def errorEvent(connection_id, event, connection_states, timestamp, info, ex):
-#            d_err.callback( (event, connection_id, connection_states, timestamp, info, ex) )
-#
-#        self.sr.registerEventHandler(registry.DATA_PLANE_CHANGE,  dataPlaneChange, registry.NSI2_LOCAL)
-#        self.sr.registerEventHandler(registry.ERROR_EVENT, errorEvent, registry.NSI2_LOCAL)
-#
-#        # make actication fail via monkey patching
-#        self.backend.connection_manager.teardownLink = \
-#            lambda src, dst : defer.fail(error.InternalNRMError('Link teardown failed'))
-#
-#        _,_,cid,sp = yield self.reserve(None, self.provider_nsa.urn(), None, None, None, None, self.service_params)
-#        self.connection_ids.append(cid)
-#        yield self.reserveCommit(None, self.provider_nsa.urn(), None, cid)
-#        yield self.provision(None, self.provider_nsa.urn(), None, cid)
-#
-#        self.clock.advance(3)
-#        yield d_up
-#
-#        self.clock.advance(11)
-#        yield d_err
-#
+    @defer.inlineCallbacks
+    def testFaultyDeactivate(self):
+
+        d_up  = defer.Deferred()
+        d_err = defer.Deferred()
+
+        def dataPlaneChange(requester_nsa, provider_nsa, session_securtiy_attr, connection_id, dps, timestamp):
+            active, version, version_consistent = dps
+            if active:
+                d_up.callback( ( connection_id, active, version_consistent, version, timestamp ) )
+
+        def errorEvent(requester_nsa, provider_nsa, session_securtiy_attr, connection_id, event, connection_states, timestamp, info, ex):
+            d_err.callback( (event, connection_id, connection_states, timestamp, info, ex) )
+
+        self.sr.registerEventHandler(registry.DATA_PLANE_CHANGE,  dataPlaneChange, self.registry_system)
+        self.sr.registerEventHandler(registry.ERROR_EVENT, errorEvent, self.registry_system)
+
+        # make actication fail via monkey patching
+        self.backend.connection_manager.teardownLink = \
+            lambda src, dst : defer.fail(error.InternalNRMError('Link teardown failed'))
+
+        cid,_,_,_ = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, self.service_params)
+        yield self.reserveCommit(self.requester_nsa, self.provider_nsa, None, cid)
+        yield self.provision(self.requester_nsa, self.provider_nsa, None, cid)
+
+        self.clock.advance(3)
+        yield d_up
+
+        self.clock.advance(11)
+        yield d_err
+
