@@ -63,7 +63,7 @@ class AggregatorTest(unittest.TestCase):
         self.reserveCommit  = self.sr.getHandler(registry.RESERVE_COMMIT, registry.NSI2_AGGREGATOR)
         self.reserveAbort   = self.sr.getHandler(registry.RESERVE_ABORT,  registry.NSI2_AGGREGATOR)
         self.provision      = self.sr.getHandler(registry.PROVISION,      registry.NSI2_AGGREGATOR)
-#        self.release        = self.sr.getHandler(registry.RELEASE,        registry.NSI2_AGGREGATOR)
+        self.release        = self.sr.getHandler(registry.RELEASE,        registry.NSI2_AGGREGATOR)
         self.terminate      = self.sr.getHandler(registry.TERMINATE,      registry.NSI2_AGGREGATOR)
 
 
@@ -103,37 +103,37 @@ class AggregatorTest(unittest.TestCase):
     def testProvisionUsage(self):
 
         cid,_,_,_ = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, self.service_params)
-        yield self.reserveCommit(None, self.provider_nsa.urn(), None, cid)
-        yield self.provision(None, self.provider_nsa.urn(), None, cid)
-        yield self.terminate(None, self.provider_nsa.urn(), None, cid)
+        yield self.reserveCommit(self.requester_nsa, self.provider_nsa, None, cid)
+        yield self.provision(self.requester_nsa, self.provider_nsa, None, cid)
+        yield self.terminate(self.requester_nsa, self.provider_nsa, None, cid)
 
 
-#    @defer.inlineCallbacks
-#    def testProvisionReleaseUsage(self):
-#
-#        d_up   = defer.Deferred()
-#        d_down = defer.Deferred()
-#
-#        def dataPlaneChange(connection_id, dps, timestamp):
-#            active, version, version_consistent = dps
-#            if active:
-#                d_up.callback(connection_id)
-#            else:
-#                d_down.callback(connection_id)
-#
-#        self.sr.registerEventHandler(registry.DATA_PLANE_CHANGE,  dataPlaneChange, registry.NSI2_LOCAL)
-#
-#        _,_,cid,sp = yield self.reserve(None, self.provider_nsa.urn(), None, None, None, None, self.service_params)
-#        self.connection_ids.append(cid)
-#        yield self.reserveCommit(None, self.provider_nsa.urn(), None, cid)
-#
-#        yield self.provision(None, self.provider_nsa.urn(), None, cid)
-#        self.clock.advance(3)
-#        yield d_up
-#        yield self.release(  None, self.provider_nsa.urn(), None, cid)
-#        yield d_down
-#        yield self.terminate(None, self.provider_nsa.urn(), None, cid)
-#
+    @defer.inlineCallbacks
+    def testProvisionReleaseUsage(self):
+
+        d_up   = defer.Deferred()
+        d_down = defer.Deferred()
+
+        def dataPlaneChange(requester_nsa, provider_nsa, session_security_attr, connection_id, dps, timestamp):
+            active, version, version_consistent = dps
+            if active:
+                d_up.callback(connection_id)
+            else:
+                d_down.callback(connection_id)
+
+        self.sr.registerEventHandler(registry.DATA_PLANE_CHANGE,  dataPlaneChange, self.registry_system)
+
+        cid,_,_,_ = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, self.service_params)
+
+        yield self.reserveCommit(None, self.provider_nsa, None, cid)
+
+        yield self.provision(self.requester_nsa, self.provider_nsa, None, cid)
+        self.clock.advance(3)
+        yield d_up
+        yield self.release(  self.requester_nsa, self.provider_nsa, None, cid)
+        yield d_down
+        yield self.terminate(self.requester_nsa, self.provider_nsa, None, cid)
+
 
     @defer.inlineCallbacks
     def testDoubleReserve(self):

@@ -545,18 +545,29 @@ class Aggregator:
 
         defer.returnValue(connection_id)
 
+    # --
+
+    @defer.inlineCallbacks
+    def doActivate(self, conn):
+        yield state.activating(conn)
+        yield state.active(conn)
+        data_plane_change = self.service_registry.getHandler(registry.DATA_PLANE_CHANGE, self.parent_system)
+        dps = (True, conn.revision, True) # data plane status - active, version, version consistent
+        data_plane_change(None, None, None, conn.connection_id, dps, datetime.datetime.utcnow())
+
+
+    @defer.inlineCallbacks
+    def doTeardown(self, conn):
+        yield state.deactivating(conn)
+        yield state.inactive(conn)
+        data_plane_change = self.service_registry.getHandler(registry.DATA_PLANE_CHANGE, self.parent_system)
+        dps = (False, conn.revision, True) # data plane status - active, version, version consistent
+        data_plane_change(None, None, None, conn.connection_id, dps, datetime.datetime.utcnow())
+
+    # --
 
     @defer.inlineCallbacks
     def dataPlaneChange(self, requester_nsa, provider_nsa, session_security_attr, connection_id, dps, timestamp):
-
-        @defer.inlineCallbacks
-        def doActivate(conn):
-            yield state.activating(conn)
-            yield state.active(conn)
-            data_plane_change = self.service_registry.getHandler(registry.DATA_PLANE_CHANGE, self.parent_system)
-            dps = (True, conn.revision, True) # data plane status - active, version, version consistent
-            data_plane_change(None, None, None, conn.connection_id, dps, datetime.datetime.utcnow())
-
 
         active, version, version_consistent = dps
 
@@ -572,7 +583,10 @@ class Aggregator:
             if len(sub_conns) == 1:
                 log.msg("than one sub connection for connection %s, notifying" % conn.connection_id)
                 # assert that data plane came up...
-                yield doActivate(conn)
+                if active:
+                    yield self.doActivate(conn)
+                else:
+                    yield self.doTeardown(conn)
             else:
                 log.msg("more than one sub connection for connection %s" % conn.connection_id)
 
