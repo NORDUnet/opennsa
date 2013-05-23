@@ -58,7 +58,7 @@ class AggregatorTest(unittest.TestCase):
 
         self.requester_nsa = nsa.NetworkServiceAgent('test_requester', 'http::/example.org/nsa_test_requester')
 
-#        # just so we don't have to put them in the test code
+        # just so we don't have to put them in the test code
         self.reserve        = self.sr.getHandler(registry.RESERVE,        registry.NSI2_AGGREGATOR)
         self.reserveCommit  = self.sr.getHandler(registry.RESERVE_COMMIT, registry.NSI2_AGGREGATOR)
         self.reserveAbort   = self.sr.getHandler(registry.RESERVE_ABORT,  registry.NSI2_AGGREGATOR)
