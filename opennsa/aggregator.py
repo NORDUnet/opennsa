@@ -109,28 +109,6 @@ LOG_SYSTEM = 'opennsa.Aggregator'
 
 
 
-#class Connection:
-
-#    def __init__(self, service_registry, requester_nsa, connection_id, source_stp, dest_stp, service_parameters=None, global_reservation_id=None, description=None):
-#        self.state                      = state.NSI2StateMachine()
-#        self.requester_nsa              = requester_nsa
-#        self.connection_id              = connection_id
-#        self.source_stp                 = source_stp
-#        self.dest_stp                   = dest_stp
-#        self.service_parameters         = service_parameters
-#        self.global_reservation_id      = global_reservation_id
-#        self.description                = description
-#        self.scheduler                  = scheduler.TransitionScheduler()
-#        self.sub_connections            = []
-#
-#        self.subscriptions              = []
-#        self.service_registry           = service_registry
-
-
-#    def connections(self):
-#        return self.sub_connections
-
-
 def _buildErrorMessage(results, action):
 
     # should probably seperate loggin somehow
