@@ -171,7 +171,7 @@ class DUDBackendTest(unittest.TestCase):
 
 
     @defer.inlineCallbacks
-    def testReserveAbortTimeout(self):
+    def testReserveTimeout(self):
 
         # these need to be constructed such that there is only one label option
         source_stp  = nsa.STP('Aruba', 'A1', labels=[ nsa.Label(nml.ETHERNET_VLAN, '2') ] )
