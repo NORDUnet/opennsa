@@ -35,6 +35,5 @@ class TopologyResource(resource.Resource):
 
         log.msg('Topology request from %s. Sending %i bytes' % (request.getClient(), len(self.topology_representation)), system=LOG_SYSTEM)
 
-        print type(self.topology_representation)
         return self.topology_representation
 
