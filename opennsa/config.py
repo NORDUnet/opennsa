@@ -136,15 +136,15 @@ def readVerifyConfig(cfg):
     except ConfigParser.NoOptionError:
         vc[LOG_FILE] = DEFAULT_LOG_FILE
 
-    try:
-        topology_list = cfg.get(BLOCK_SERVICE, TOPOLOGY_FILE)
-    except ConfigParser.NoOptionError:
-        topology_list = DEFAULT_TOPOLOGY_FILE
-    topology_files = topology_list.split(',')
-    for topology_file in topology_files:
-        if not os.path.exists(topology_file):
-            raise ConfigurationError('Specified (or default) topology file does not exist (%s)' % topology_file)
-    vc[TOPOLOGY_FILE] = topology_files
+#    try:
+#        topology_list = cfg.get(BLOCK_SERVICE, TOPOLOGY_FILE)
+#    except ConfigParser.NoOptionError:
+#        topology_list = DEFAULT_TOPOLOGY_FILE
+#    topology_files = topology_list.split(',')
+#    for topology_file in topology_files:
+#        if not os.path.exists(topology_file):
+#            raise ConfigurationError('Specified (or default) topology file does not exist (%s)' % topology_file)
+#    vc[TOPOLOGY_FILE] = topology_files
 
     try:
         nrm_map_file = cfg.get(BLOCK_SERVICE, NRM_MAP_FILE)
