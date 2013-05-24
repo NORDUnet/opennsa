@@ -7,7 +7,7 @@ from twisted.web import resource, server
 from twisted.application import internet, service as twistedservice
 
 from opennsa import config, logging, registry, nsa, database, nsiservice, viewresource
-from opennsa.topology import nrmparser, nml
+from opennsa.topology import nrmparser, nml, http as nmlhttp
 from opennsa.protocols import nsi2, discovery
 
 
@@ -97,6 +97,11 @@ class OpenNSAService(twistedservice.MultiService):
 
         vr = viewresource.ConnectionListResource(nsi_service)
         top_resource.children['NSI'].putChild('connections', vr)
+
+        topology_resource = resource.Resource()
+        topology_resource.putChild(vc[config.NETWORK_NAME] + '.xml', nmlhttp.TopologyResource(network))
+
+        top_resource.children['NSI'].putChild('topology', topology_resource)
 
         factory = server.Site(top_resource, logPath='/dev/null')
 
