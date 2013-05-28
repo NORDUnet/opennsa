@@ -36,7 +36,7 @@ class ProviderClient:
             # for now we just ignore this, as long as we get an okay
             return
 
-        f = httpclient.httpRequest(requester_url, action, payload, ctx_factory=self.ctx_factory)
+        f = httpclient.soapRequest(requester_url, action, payload, ctx_factory=self.ctx_factory)
         f.deferred.addCallbacks(gotReply) #, errReply)
         return f.deferred
 
@@ -61,7 +61,7 @@ class ProviderClient:
             # for now we just ignore this, as long as we get an okay
             return
 
-        f = httpclient.httpRequest(requester_url, action, payload, ctx_factory=self.ctx_factory)
+        f = httpclient.soapRequest(requester_url, action, payload, ctx_factory=self.ctx_factory)
         f.deferred.addCallbacks(gotReply) #, errReply)
         return f.deferred
 
@@ -95,7 +95,7 @@ class ProviderClient:
             # we don't really do anything about these
             return ""
 
-        f = httpclient.httpRequest(requester_url, actions.RESERVE_CONFIRMED, payload, ctx_factory=self.ctx_factory)
+        f = httpclient.soapRequest(requester_url, actions.RESERVE_CONFIRMED, payload, ctx_factory=self.ctx_factory)
         f.deferred.addCallbacks(gotReply) #, errReply)
         return f.deferred
 
@@ -169,7 +169,7 @@ class ProviderClient:
             # we don't really do anything about these
             return ""
 
-        f = httpclient.httpRequest(requester_url, actions.QUERY_CONFIRMED, payload, ctx_factory=self.ctx_factory)
+        f = httpclient.soapRequest(requester_url, actions.QUERY_CONFIRMED, payload, ctx_factory=self.ctx_factory)
         f.deferred.addCallbacks(gotReply) #, errReply)
         return f.deferred
 

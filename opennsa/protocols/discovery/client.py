@@ -52,7 +52,7 @@ class DiscoveryClient:
         payload = minisoap.createSoapPayload(body_payload)
 
 
-        f = httpclient.httpRequest(service_url, QUERY_SERVICES, payload, ctx_factory=self.ctx_factory)
+        f = httpclient.soapRequest(service_url, QUERY_SERVICES, payload, ctx_factory=self.ctx_factory)
         f.deferred.addCallbacks(gotReply, errReply)
 
         return f.deferred
