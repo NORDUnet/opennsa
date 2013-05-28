@@ -224,7 +224,7 @@ class SimpleBackend(service.Service):
 
         # should we save the requester or provider here?
         conn = Simplebackendconnection(connection_id=connection_id, revision=0, global_reservation_id=global_reservation_id, description=description,
-                                       requester_nsa=provider_nsa.urn(), reserve_time=now,
+                                       requester_nsa=requester_nsa.urn(), reserve_time=now,
                                        reservation_state=state.INITIAL, provision_state=state.SCHEDULED, activation_state=state.INACTIVE, lifecycle_state=state.INITIAL,
                                        source_network=source_stp.network, source_port=source_stp.port, source_labels=[src_label],
                                        dest_network=dest_stp.network, dest_port=dest_stp.port, dest_labels=[dst_label],
