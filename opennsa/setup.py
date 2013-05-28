@@ -43,6 +43,10 @@ def setupBackend(backend_conf, network_name, service_registry):
             from opennsa.backends import dell
             return dell.DellBackend(network_name, bc.items())
 
+        elif backend_type == config.BLOCK_NCSVPN:
+            from opennsa.backends import ncsvpn
+            return ncsvpn.NCSVPNBackend(network_name, service_registry, registry.NSI2_AGGREGATOR, bc.items())
+
         else:
             raise config.ConfigurationError('No backend specified')
 
