@@ -41,7 +41,7 @@ def httpRequest(url, payload, headers, method='POST', timeout=DEFAULT_TIMEOUT, c
 
     if type(url) is not str:
         e = HTTPRequestError('URL must be string, not %s' % type(url))
-        return defer.fail(e), None
+        return defer.fail(e)
 
     log.msg(" -- Sending Payload --\n%s\n -- END. Sending Payload --" % payload, system=LOG_SYSTEM, payload=True)
 
@@ -82,5 +82,5 @@ def httpRequest(url, payload, headers, method='POST', timeout=DEFAULT_TIMEOUT, c
 
     factory.deferred.addCallbacks(logReply, invocationError)
 
-    return factory
+    return factory.deferred
 
