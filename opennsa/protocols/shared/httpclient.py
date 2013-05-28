@@ -31,7 +31,7 @@ def soapRequest(url, soap_action, soap_envelope, timeout=DEFAULT_TIMEOUT, ctx_fa
     headers['soapaction'] = soap_action
     #headers['Authorization'] = 'Basic bnNpZGVtbzpSaW9QbHVnLUZlc3QyMDExIQ==' # base64.b64encode('nsidemo:RioPlug-Fest2011!')
 
-    return httpRequest(url, soap_envelope, headers, ctx_factory=None):
+    return httpRequest(url, soap_envelope, headers, ctx_factory=None)
 
 
 
