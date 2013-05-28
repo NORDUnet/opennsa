@@ -49,16 +49,16 @@ from opennsa.topology import nml
 
 ETHERNET_VPN_PAYLOAD_BASE = """
 <service xmlns="http://tail-f.com/ns/ncs" >
-  <object-id>%{service_name}</object-id>
+  <object-id>%(service_name)s</object-id>
   <type>
     <vpn xmlns="http://nordu.net/ns/ncs/vpn">
       <side-a>
-        <router>%{router_a}</router>
-        <interface>%{interface_a}</interface>
+        <router>%(router_a)s</router>
+        <interface>%(interface_a)s</interface>
       </side-a>
       <side-b>
-        <router>%{router_b}</router>
-        <interface>%{interface_b}</interface>
+        <router>%(router_b)s</router>
+        <interface>%(interface_b)s</interface>
       </side-b>
       <encapsulation-type>ethernet</encapsulation-type>
     </vpn>
@@ -68,19 +68,19 @@ ETHERNET_VPN_PAYLOAD_BASE = """
 
 ETHERNET_VLAN_VPN_PAYLOAD_BASE = """
 <service xmlns="http://tail-f.com/ns/ncs" >
-  <object-id>%{service_name}</object-id>
+  <object-id>%(service_name)s</object-id>
   <type>
     <vpn xmlns="http://nordu.net/ns/ncs/vpn">
       <side-a>
-        <router>%{router_a}</router>
-        <interface>%{interface_a}</interface>
+        <router>%(router_a)s</router>
+        <interface>%(interface_a)s</interface>
       </side-a>
       <side-b>
-        <router>%{router_b}</router>
-        <interface>%{interface_b}</interface>
+        <router>%(router_b)s</router>
+        <interface>%(interface_b)s</interface>
       </side-b>
       <encapsulation-type>ethernet-vlan</encapsulation-type>
-      <vlan>%{vlan}</vlan>
+      <vlan>%(vlan)i</vlan>
     </vpn>
   </type>
 </service>
