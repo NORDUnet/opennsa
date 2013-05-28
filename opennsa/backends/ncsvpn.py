@@ -168,7 +168,7 @@ class NCSVPNConnectionManager:
 
     def _createHeaders(self):
         headers = {}
-        headers['Content-Type'] = 'text/xml; charset=utf-8'
+        headers['Content-Type'] = 'application/vnd.yang.data+xml'
         headers['Authorization'] = self._createAuthzHeader()
         return headers
 
