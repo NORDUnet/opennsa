@@ -28,6 +28,7 @@ BLOCK_FORCE10    = 'force10'
 BLOCK_ARGIA      = 'argia'
 BLOCK_BROCADE    = 'brocade'
 BLOCK_DELL       = 'dell'
+BLOCK_NCSVPN     = 'ncsvpn'
 
 # service block
 NETWORK_NAME     = 'network'     # mandatory
@@ -92,6 +93,11 @@ DELL_PORT               = _SSH_PORT
 DELL_HOST_FINGERPRINT   = _SSH_HOST_FINGERPRINT
 DELL_USER               = _SSH_USER
 DELL_PASSWORD           = _SSH_PASSWORD
+
+# NCS VPN Backend
+NCS_SERVICES_URL        = 'url'
+NCS_USER                = 'user'
+NCS_PASSWORD            = 'password'
 
 
 
@@ -226,7 +232,7 @@ def readVerifyConfig(cfg):
         if name in backends:
             raise ConfigurationError('Can only have one backend named "%s"' % name)
 
-        if backend_type in (BLOCK_DUD, BLOCK_JUNOS, BLOCK_FORCE10, BLOCK_BROCADE, BLOCK_DELL):
+        if backend_type in (BLOCK_DUD, BLOCK_JUNOS, BLOCK_FORCE10, BLOCK_BROCADE, BLOCK_DELL, BLOCK_NCSVPN):
             backend_conf = dict( cfg.items(section) )
             backend_conf['_backend_type'] = backend_type
             backends[name] = backend_conf
