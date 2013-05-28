@@ -6,6 +6,7 @@ Copyright: NORDUnet(2011-2013)
 """
 
 import base64
+import random
 
 from twisted.python import log
 
@@ -145,10 +146,15 @@ class NCSVPNConnectionManager:
     def getTarget(self, port, label_type, label_value):
         assert label_type in (None, nml.ETHERNET_VLAN), 'Label must be None or VLAN'
         if label_type == nml.ETHERNET_VLAN:
-            assert type(label_value) is int and 1 <= label_value <= 4095, 'Invalid label value for vlan: %s' % label_value
+            vlan = int(label_value)
+            assert 1 <= vlan <= 4095, 'Invalid label value for vlan: %s' % label_value
 
         router, interface = port.split(':')
-        return NCSVPNTarget(router, interface, label_value)
+        return NCSVPNTarget(router, interface, vlan)
+
+
+    def createConnectionId(self, source_target, dest_target):
+        return 'ON-' + str(random.randint(100000,999999))
 
 
     def canSwapLabel(self, label_type):
