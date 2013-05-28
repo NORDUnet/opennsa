@@ -13,8 +13,6 @@ Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2011-2012)
 """
 
-import string
-import random
 import datetime
 
 from twisted.python import log
@@ -152,9 +150,6 @@ class SimpleBackend(service.Service):
 
         # need to check schedule
 
-        #connection_id = str(uuid.uuid1())
-        connection_id = ''.join( [ random.choice(string.hexdigits[:16]) for _ in range(8) ] )
-
         source_stp = service_params.source_stp
         dest_stp   = service_params.dest_stp
 
@@ -221,6 +216,10 @@ class SimpleBackend(service.Service):
                 raise error.STPUnavailableError('STP combination %s and %s not available in specified time span' % (source_stp, dest_stp))
 
         now =  datetime.datetime.utcnow()
+
+        source_target = self.connection_manager.getTarget(source_stp.port, src_label.type_, src_label.labelValue())
+        dest_target   = self.connection_manager.getTarget(dest_stp.port,   dst_label.type_, dst_label.labelValue())
+        connection_id = self.connection_manager.createConnectionId(source_target, dest_target)
 
         # should we save the requester or provider here?
         conn = Simplebackendconnection(connection_id=connection_id, revision=0, global_reservation_id=global_reservation_id, description=description,

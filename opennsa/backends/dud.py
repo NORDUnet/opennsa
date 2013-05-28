@@ -5,6 +5,9 @@ Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2011)
 """
 
+import string
+import random
+
 from twisted.python import log
 from twisted.internet import defer
 
@@ -36,20 +39,24 @@ class DUDConnectionManager:
         return port + '#' + label_value
 
 
+    def createConnectionId(self, source_target, dest_target):
+        return 'DUD-' + ''.join( [ random.choice(string.hexdigits[:16]) for _ in range(8) ] )
+
+
     def canSwapLabel(self, label_type):
         #return True
         return False
 
 
-    def setupLink(self, source_port, dest_port):
-        log.msg('Link %s -> %s up' % (source_port, dest_port), system=self.log_system)
+    def setupLink(self, source_target, dest_target):
+        log.msg('Link %s -> %s up' % (source_target, dest_target), system=self.log_system)
         return defer.succeed(None)
         #from opennsa import error
         #return defer.fail(error.InternalNRMError('Link setup failed'))
 
 
-    def teardownLink(self, source_port, dest_port):
-        log.msg('Link %s -> %s down' % (source_port, dest_port), system=self.log_system)
+    def teardownLink(self, source_target, dest_target):
+        log.msg('Link %s -> %s down' % (source_target, dest_target), system=self.log_system)
         return defer.succeed(None)
         #from opennsa import error
         #return defer.fail(error.InternalNRMError('Link teardown failed'))
