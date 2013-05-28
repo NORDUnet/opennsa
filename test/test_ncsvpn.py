@@ -3,7 +3,7 @@ import os, datetime, json
 from twisted.trial import unittest
 from twisted.internet import defer, task
 
-from opennsa import nsa, registry, database, error, state
+from opennsa import config, nsa, registry, database, error, state
 from opennsa.topology import nml
 from opennsa.backends import ncsvpn
 
