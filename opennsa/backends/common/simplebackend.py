@@ -414,7 +414,7 @@ class SimpleBackend(service.Service):
         src_target = self.connection_manager.getTarget(conn.source_port, conn.source_labels[0].type_, conn.source_labels[0].labelValue())
         dst_target = self.connection_manager.getTarget(conn.dest_port,   conn.dest_labels[0].type_,  conn.dest_labels[0].labelValue())
         try:
-            yield self.connection_manager.setupLink(conn.connection_id, src_target, dst_target)
+            yield self.connection_manager.setupLink(conn.connection_id, src_target, dst_target, conn.bandwidth)
         except Exception, e:
             # We need to mark failure in state machine here somehow....
             log.msg('Connection %s: Error setting up connection: %s' % (conn.connection_id, str(e)), system=self.log_system)
@@ -452,7 +452,7 @@ class SimpleBackend(service.Service):
         src_target = self.connection_manager.getTarget(conn.source_port, conn.source_labels[0].type_, conn.source_labels[0].labelValue())
         dst_target = self.connection_manager.getTarget(conn.dest_port,   conn.dest_labels[0].type_,   conn.dest_labels[0].labelValue())
         try:
-            yield self.connection_manager.teardownLink(conn.connection_id, src_target, dst_target)
+            yield self.connection_manager.teardownLink(conn.connection_id, src_target, dst_target, conn.bandwidth)
         except Exception, e:
             # We need to mark failure in state machine here somehow....
             log.msg('Connection %s: Error deactivating connection: %s' % (conn.connection_id, str(e)), system=self.log_system)

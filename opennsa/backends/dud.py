@@ -48,14 +48,14 @@ class DUDConnectionManager:
         return False
 
 
-    def setupLink(self, connection_id, source_target, dest_target):
+    def setupLink(self, connection_id, source_target, dest_target, bandwidth):
         log.msg('Link %s -> %s up' % (source_target, dest_target), system=self.log_system)
         return defer.succeed(None)
         #from opennsa import error
         #return defer.fail(error.InternalNRMError('Link setup failed'))
 
 
-    def teardownLink(self, connection_id, source_target, dest_target):
+    def teardownLink(self, connection_id, source_target, dest_target, bandwidth):
         log.msg('Link %s -> %s down' % (source_target, dest_target), system=self.log_system)
         return defer.succeed(None)
         #from opennsa import error
