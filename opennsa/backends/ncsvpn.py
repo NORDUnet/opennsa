@@ -192,8 +192,8 @@ class NCSVPNConnectionManager:
             log.msg('Link %s -> %s down' % (source_target, dest_target), system=self.log_system)
 
         d = httpclient.httpRequest(service_url, None, headers, method='DELETE')
+        d.addCallback(linkDown)
         return d
-        #log.msg('Link %s -> %s down' % (source_port, dest_port), system=self.log_system)
 
 
 # --
