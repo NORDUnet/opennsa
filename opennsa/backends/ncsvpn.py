@@ -206,6 +206,6 @@ class NCSVPNBackend(simplebackend.SimpleBackend):
         user             = cfg_dict[config.NCS_USER]
         password         = cfg_dict[config.NCS_PASSWORD]
 
-        cm = NCSVPNConnectionManager(ncs_services_url, user, password)
+        cm = NCSVPNConnectionManager(ncs_services_url, user, password, name)
         simplebackend.SimpleBackend.__init__(self, network_name, cm, service_registry, parent_system, name)
 
