@@ -131,7 +131,7 @@ def createVPNPayload(service_name, source_target, dest_target):
 class NCSVPNConnectionManager:
 
     def __init__(self, ncs_services_url, user, password, log_system):
-        self.ncs_services_url = str(ncs_services_url)
+        self.ncs_services_url = ncs_services_url
         self.user             = user
         self.password         = password
         self.log_system       = log_system
@@ -202,7 +202,7 @@ class NCSVPNBackend(simplebackend.SimpleBackend):
         # extract config items
         cfg_dict = dict(configuration)
 
-        ncs_services_url = cfg_dict[config.NCS_SERVICES_URL]
+        ncs_services_url = str(cfg_dict[config.NCS_SERVICES_URL])
         user             = cfg_dict[config.NCS_USER]
         password         = cfg_dict[config.NCS_PASSWORD]
 
