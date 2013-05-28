@@ -26,24 +26,8 @@ class HTTPRequestError(Exception):
 
 def soapRequest(url, soap_action, soap_envelope, timeout=DEFAULT_TIMEOUT, ctx_factory=None):
 
-#    if type(url) is not str:
-#        e = HTTPRequestError('URL must be string, not %s' % type(url))
-#        return defer.fail(e), None
-
-#    log.msg(" -- Sending Payload --\n%s\n -- END. Sending Payload --" % soap_envelope, system=LOG_SYSTEM, payload=True)
-
-#    scheme, host, port, _ = twclient._parse(url)
-
-#    factory = twclient.HTTPClientFactory(url, method='POST', postdata=soap_envelope, timeout=timeout)
-#    factory.noisy = False # stop spewing about factory start/stop
-
-    # fix missing port in header (bug in twisted.web.client)
-#    if port:
-#        factory.headers['host'] = host + ':' + str(port)
-
     headers = {}
     headers['Content-Type'] = 'text/xml; charset=utf-8' # CXF will complain if this is not set
-    #headers['User-Agent'] = 'OpenNSA/Twisted'
     headers['soapaction'] = soap_action
     #headers['Authorization'] = 'Basic bnNpZGVtbzpSaW9QbHVnLUZlc3QyMDExIQ==' # base64.b64encode('nsidemo:RioPlug-Fest2011!')
 
@@ -74,11 +58,6 @@ def httpRequest(url, payload, headers, method='POST', timeout=DEFAULT_TIMEOUT, c
 
     for header, value in headers.items():
         factory.headers[header] = value
-
-#    #factory.headers['Content-Type'] = 'text/xml' # CXF will complain if this is not set
-#    factory.headers['Content-Type'] = 'text/xml; charset=utf-8' # CXF will complain if this is not set
-##    factory.headers['soapaction'] = soap_action
-#    factory.headers['Authorization'] = 'Basic bnNpZGVtbzpSaW9QbHVnLUZlc3QyMDExIQ==' # base64.b64encode('nsidemo:RioPlug-Fest2011!')
 
     if scheme == 'https':
         if ctx_factory is None:
