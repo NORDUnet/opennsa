@@ -432,7 +432,15 @@ class SimpleBackend(service.Service):
         try:
             yield state.active(conn)
             self.logStateUpdate(conn, 'ACTIVE')
-            self.scheduler.scheduleCall(conn.connection_id, conn.end_time, self._doTerminate, conn)
+
+            # we might have passed end time during activation...
+            end_time = conn.end_time
+            now = datetime.datetime.utcnow():
+            if end_time < now:
+                log.msg('Connection %s: passed end time during activation, scheduling immediate termination.' % conn.connection_id, system=self.log_system)
+                end_time = now
+
+            self.scheduler.scheduleCall(conn.connection_id, end_time, self._doTerminate, conn)
             td = conn.end_time - datetime.datetime.utcnow()
             log.msg('Connection %s: terminate scheduled for %s UTC (%i seconds)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
 
