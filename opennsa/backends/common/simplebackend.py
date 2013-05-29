@@ -252,7 +252,7 @@ class SimpleBackend(service.Service):
         sc_source_stp = nsa.STP(source_stp.network, source_stp.port, labels=[src_label])
         sc_dest_stp   = nsa.STP(dest_stp.network,   dest_stp.port,   labels=[dst_label])
         sp = nsa.ServiceParameters(service_params.start_time, service_params.end_time, sc_source_stp, sc_dest_stp, service_params.bandwidth)
-        rig = (global_reservation_id, description, connection_id, sp)
+        rig = (connection_id, global_reservation_id, description, sp)
         defer.returnValue(rig)
 
 

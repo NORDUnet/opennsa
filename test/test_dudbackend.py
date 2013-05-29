@@ -1,7 +1,7 @@
 import os, datetime, json
 
 from twisted.trial import unittest
-from twisted.internet import defer, task
+from twisted.internet import reactor, defer, task
 
 from opennsa import nsa, registry, database, error, state
 from opennsa.topology import nml
@@ -56,14 +56,14 @@ class DUDBackendTest(unittest.TestCase):
     @defer.inlineCallbacks
     def testBasicUsage(self):
 
-        _,_,cid,sp = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, self.service_params)
+        cid,_,_,_ = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, self.service_params)
         yield self.terminate(self.requester_nsa, self.provider_nsa, None, cid)
 
 
     @defer.inlineCallbacks
     def testProvisionPostTerminate(self):
 
-        _,_,cid,sp = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, self.service_params)
+        cid,_,_,_ = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, self.service_params)
         yield self.reserveCommit(self.requester_nsa, self.provider_nsa, None, cid)
         yield self.terminate(self.requester_nsa, self.provider_nsa, None, cid)
         try:
@@ -76,7 +76,7 @@ class DUDBackendTest(unittest.TestCase):
     @defer.inlineCallbacks
     def testProvisionUsage(self):
 
-        _,_,cid,sp = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, self.service_params)
+        cid,_,_,_ = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, self.service_params)
         yield self.reserveCommit(self.requester_nsa, self.provider_nsa, None, cid)
         yield self.provision(self.requester_nsa, self.provider_nsa, None, cid)
         yield self.terminate(self.requester_nsa, self.provider_nsa, None, cid)
@@ -97,7 +97,7 @@ class DUDBackendTest(unittest.TestCase):
 
         self.sr.registerEventHandler(registry.DATA_PLANE_CHANGE,  dataPlaneChange, self.registry_system)
 
-        _,_,cid,sp = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, self.service_params)
+        cid,_,_,sp = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, self.service_params)
         yield self.reserveCommit(self.requester_nsa, self.provider_nsa, None, cid)
 
         yield self.provision(self.requester_nsa, self.provider_nsa, None, cid)
@@ -111,9 +111,9 @@ class DUDBackendTest(unittest.TestCase):
     @defer.inlineCallbacks
     def testDoubleReserve(self):
 
-        _,_,cid,_ = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, self.service_params)
+        cid,_,_,_ = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, self.service_params)
         try:
-            _,_,cid_ = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, self.service_params)
+            cid,_,_,_ = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, self.service_params)
             self.fail('Should have raised STPUnavailableError')
         except error.STPUnavailableError:
             pass # we expect this
@@ -142,7 +142,7 @@ class DUDBackendTest(unittest.TestCase):
 
         self.sr.registerEventHandler(registry.DATA_PLANE_CHANGE,  dataPlaneChange, self.registry_system)
 
-        _,_,cid,sp = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, self.service_params)
+        cid,_,_,_ = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, self.service_params)
         yield self.reserveCommit(self.requester_nsa, self.provider_nsa, None, cid)
         yield self.provision(self.requester_nsa, self.provider_nsa, None, cid)
         self.clock.advance(3)
@@ -165,10 +165,10 @@ class DUDBackendTest(unittest.TestCase):
         end_time   = datetime.datetime.utcnow() + datetime.timedelta(seconds=10)
         service_params = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, 200)
 
-        _,_,cid,sp = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, service_params)
+        cid,_,_,_ = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, service_params)
         yield self.reserveAbort(self.requester_nsa, self.provider_nsa, None, cid)
         # try to reserve the same resources
-        _,_,cid,sp = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, service_params)
+        cid,_,_,_ = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, service_params)
 
 
     @defer.inlineCallbacks
@@ -188,7 +188,7 @@ class DUDBackendTest(unittest.TestCase):
 
         self.sr.registerEventHandler(registry.RESERVE_TIMEOUT,  reserveTimeout, self.registry_system)
 
-        _,_,cid,sp = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, service_params)
+        cid,_,_,_ = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, service_params)
 
         self.clock.advance(dud.DUDNSIBackend.TPC_TIMEOUT + 1)
         connection_id, connection_states, timeout_value, timestamp = yield d
@@ -198,7 +198,58 @@ class DUDBackendTest(unittest.TestCase):
         self.failUnlessEquals(rsm, state.RESERVED)
 
         # try to reserve the same resources
-        _,_,cid,sp = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, service_params)
+        cid,_,_,_ = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, service_params)
+
+
+    @defer.inlineCallbacks
+    def testSlowActivate(self):
+        # key here is that end time is passed when activation is done
+
+        source_stp  = nsa.STP('Aruba', 'A1', labels=[ nsa.Label(nml.ETHERNET_VLAN, '100') ] )
+        dest_stp    = nsa.STP('Aruba', 'A3', labels=[ nsa.Label(nml.ETHERNET_VLAN, '100') ] )
+        start_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=1)
+        end_time   = datetime.datetime.utcnow() + datetime.timedelta(seconds=2)
+        service_params = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, 200)
+
+        d_up = defer.Deferred()
+        d_down = defer.Deferred()
+
+        def dataPlaneChange(requester_nsa, provider_nsa, session_security_attr, connection_id, dps, timestamp):
+            active, version, version_consistent = dps
+            values = connection_id, active, version_consistent, version, timestamp
+            if active:
+                d_up.callback(values)
+            else:
+                d_down.callback(values)
+
+        self.sr.registerEventHandler(registry.DATA_PLANE_CHANGE,  dataPlaneChange, self.registry_system)
+
+        def setupLink(connection_id, src, dst, bandwidth):
+            d = defer.Deferred()
+            reactor.callLater(2, d.callback, None)
+            return d
+
+        # make actication fail via monkey patching
+        self.backend.connection_manager.setupLink = setupLink
+
+        cid,_,_,_ = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, service_params)
+        yield self.reserveCommit(self.requester_nsa, self.provider_nsa, None, cid)
+        yield self.provision(self.requester_nsa, self.provider_nsa, None, cid)
+
+        self.clock.advance(2)
+        connection_id, active, version_consistent, version, timestamp = yield d_up
+        self.failUnlessEqual(cid, connection_id)
+        self.failUnlessEqual(active, True)
+        self.failUnlessEqual(version_consistent, True)
+
+        self.clock.advance(2)
+        connection_id, active, version_consistent, version, timestamp = yield d_down
+        self.failUnlessEqual(cid, connection_id)
+        self.failUnlessEqual(active, False)
+
+        yield self.terminate(self.requester_nsa, self.provider_nsa, None, cid)
+
+    testSlowActivate.skip = 'Uses reactor calls and real timings, and is too slow to be a regular test'
 
 
     @defer.inlineCallbacks
@@ -215,7 +266,7 @@ class DUDBackendTest(unittest.TestCase):
         self.backend.connection_manager.setupLink = \
             lambda src, dst : defer.fail(error.InternalNRMError('Link setup failed'))
 
-        _,_,cid,sp = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, self.service_params)
+        cid,_,_,_ = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, self.service_params)
         yield self.reserveCommit(self.requester_nsa, self.provider_nsa, None, cid)
         yield self.provision(self.requester_nsa, self.provider_nsa, None, cid)
         self.clock.advance(3)
@@ -247,7 +298,7 @@ class DUDBackendTest(unittest.TestCase):
         self.backend.connection_manager.teardownLink = \
             lambda src, dst : defer.fail(error.InternalNRMError('Link teardown failed'))
 
-        _,_,cid,sp = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, self.service_params)
+        cid,_,_,_ = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, self.service_params)
         yield self.reserveCommit(self.requester_nsa, self.provider_nsa, None, cid)
         yield self.provision(self.requester_nsa, self.provider_nsa, None, cid)
 
