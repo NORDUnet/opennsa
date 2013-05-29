@@ -27,7 +27,7 @@ class DUDBackendTest(unittest.TestCase):
             config.NCS_PASSWORD     : tc['ncs-password']
         }
 
-        self.backend = ncsvpn.NCSVPNBackend('NCSVPN Test', self.sr, self.registry_system, ncs_config)
+        self.backend = ncsvpn.NCSVPNBackend('Test', self.sr, self.registry_system, ncs_config)
         self.backend.scheduler.clock = self.clock
 
         self.backend.startService()
@@ -40,7 +40,7 @@ class DUDBackendTest(unittest.TestCase):
         source_stp  = nsa.STP('ncs', 'hel:ge-1/0/1', labels=[ nsa.Label(nml.ETHERNET_VLAN, '100-102') ] )
         dest_stp    = nsa.STP('ncs', 'sto:ge-1/0/1', labels=[ nsa.Label(nml.ETHERNET_VLAN, '101-104') ] )
         start_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=2)
-        end_time   = datetime.datetime.utcnow() + datetime.timedelta(seconds=10)
+        end_time   = datetime.datetime.utcnow() + datetime.timedelta(seconds=30)
         bandwidth = 200
         self.service_params = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, bandwidth)
 
@@ -65,26 +65,39 @@ class DUDBackendTest(unittest.TestCase):
     def testActivation(self):
 
         d_up = defer.Deferred()
+        d_down = defer.Deferred()
+
+        def errorEvent(requester_nsa, provider_nsa, session_security_attr, connection_id, event, connection_states, timestamp, info, ex):
+            print "errorEvent", event, info, ex
 
         def dataPlaneChange(requester_nsa, provider_nsa, session_security_attr, connection_id, dps, timestamp):
             active, version, version_consistent = dps
+            values = connection_id, active, version_consistent, version, timestamp
             if active:
-                values = connection_id, active, version_consistent, version, timestamp
                 d_up.callback(values)
+            else:
+                d_down.callback(values)
 
+        self.sr.registerEventHandler(registry.ERROR_EVENT,        errorEvent,      self.registry_system)
         self.sr.registerEventHandler(registry.DATA_PLANE_CHANGE,  dataPlaneChange, self.registry_system)
 
         _,_,cid,sp = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, self.service_params)
         yield self.reserveCommit(self.requester_nsa, self.provider_nsa, None, cid)
         yield self.provision(self.requester_nsa, self.provider_nsa, None, cid)
         self.clock.advance(3)
+
         connection_id, active, version_consistent, version, timestamp = yield d_up
         self.failUnlessEqual(cid, connection_id)
         self.failUnlessEqual(active, True)
         self.failUnlessEqual(version_consistent, True)
 
-        #yield self.release(  None, self.provider_nsa, None, cid)
+        #yield self.release(self.requester_nsa, self.provider_nsa, None, cid)
         yield self.terminate(self.requester_nsa, self.provider_nsa, None, cid)
+
+        connection_id, active, version_consistent, version, timestamp = yield d_down
+        self.failUnlessEqual(cid, connection_id)
+        self.failUnlessEqual(active, False)
+        self.failUnlessEqual(version_consistent, True)
 
     testActivation.skip = 'NCS VPN Test Requires NCS lab setup'
 
