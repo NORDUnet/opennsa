@@ -185,7 +185,7 @@ class NCSVPNConnectionManager:
 
 
     def teardownLink(self, connection_id, source_target, dest_target, bandwidth):
-        service_url = self.ncs_services_url + '/' + connection_id
+        service_url = self.ncs_services_url + '/service/' + connection_id
         headers = self._createHeaders()
 
         def linkDown(_):
