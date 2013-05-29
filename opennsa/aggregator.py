@@ -323,7 +323,7 @@ class Aggregator:
             @defer.inlineCallbacks
             def reserveDone(rig, link_provider_nsa, order_id):
                 # need to collapse the end stps in Connection object
-                global_reservation_id, description, connection_id, service_params = rig
+                connection_id, global_reservation_id, description, service_params = rig
                 log.msg('Sub link %s via %s reserved' % (connection_id, link_provider_nsa), debug=True, system=LOG_SYSTEM)
                 # should probably do some sanity checks here
                 sp = service_params
