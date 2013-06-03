@@ -49,7 +49,7 @@ def httpRequest(url, payload, headers, method='POST', timeout=DEFAULT_TIMEOUT, c
 
     factory = twclient.HTTPClientFactory(url, method, postdata=payload, timeout=timeout)
     factory.noisy = False # stop spewing about factory start/stop
-    factory.protocol.handleStatus_204 = lambda : None # 204 is an ok reply, needed by NCS VPN backend
+    factory.protocol.handleStatus_204 = lambda _ : None # 204 is an ok reply, needed by NCS VPN backend
 
     # fix missing port in header (bug in twisted.web.client)
     if port:
