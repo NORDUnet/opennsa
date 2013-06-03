@@ -86,6 +86,10 @@ def setupBackend(backend_conf, network_name, internal_topology):
             from opennsa.backends import brocade
             backends[backend_name] = brocade.BrocadeBackend(network_name, bc.items())
 
+        elif backend_type == config.BLOCK_NCSVPN:
+            from opennsa.backends import ncsvpn
+            backends[backend_name] = ncsvpn.NCSVPNBackend(network_name, bc.items())
+
     if len(backends) == 1:
         backend = backends.values()[0]
     else:
