@@ -1,10 +1,12 @@
 Requirements:
 
-* Python 2.6 or newer (Python 3 not supported yet)
+* Python 2.6 or later (Python 3 not supported yet)
 
 * Python Dateutil (http://labix.org/python-dateutil)
 
-* Twisted, http://twistedmatrix.com/trac/
+* Twisted 12.2.0 or later, http://twistedmatrix.com/trac/
+
+* PostgreSQL (just needs a database)
 
 Python and Twisted should be included in the package system in most recent
 Linux distributions.
@@ -27,7 +29,7 @@ but creating the topology specification is still somewhat tricky.
 Command line tool:
 
 Make a reservation:
-onsa reserve -u http://localhost:9080/NSI/services/ConnectionService -p OpenNSA-HTJClient -r Aruba -s Aruba:A1 -d Aruba:A4
+onsa reserve -u http://localhost:9080/NSI/services/ConnectionService -p OpenNSA-TestClient -r Aruba -s Aruba:A1 -d Aruba:A4
 
 Do a ./onsa --help for more information.
 
