@@ -13,7 +13,6 @@ from zope.interface import implements
 from twisted.python import log, failure
 from twisted.internet import reactor, defer, task
 
-from opennsa.interface import NSIServiceInterface
 from opennsa import nsa, error, registry, subscription, database, state, aggregator
 
 
@@ -24,11 +23,10 @@ LOG_SYSTEM = 'NSIService'
 
 class NSIService:
 
-    implements(NSIServiceInterface)
-
-    def __init__(self, network, backend, service_registry, topology):
-        self.network = network
-        self.backend = backend
+    def __init__(self, network, nsi_agent, backend, service_registry, topology):
+        self.network    = network
+        self.nsi_agent  = nsi_agent
+        self.backend    = backend
         self.service_registry = service_registry
 
         self.topology = topology

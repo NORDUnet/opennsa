@@ -15,91 +15,90 @@ from zope.interface import Interface
 
 
 
-class NSIInterface(Interface):
+class INSIProvider(Interface):
 
+    def reserve(header, connection_id, global_reservation_id, description, service_params):
+        pass
 
-    def reservation(requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters):
-        """
-        Make a path reservation.
-        """
+    def reserveCommit(header, connection_id):
+        pass
 
-#    def reservationConfirmed(requester_nsa, provider_nsa, global_reservation_id, description, connection_id, service_parameters):
-#        """
-#        Confirm a reservation.
-#        """
-#
-#    def reservationFailed(requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, service_exception):
-#        """
-#        Notify that a reservation has failed.
-#        """
+    def reserveAbort(header, connection_id):
+        pass
 
-    def provision(requester_nsa, provider_nsa, session_security_attr, connection_id):
-        """
-        Provisions a path.
-        """
+    def provision(header, connection_id):
+        pass
 
-    def release(requester_nsa, provider_nsa, session_security_attr, connection_id):
-        """
-        Release the path from provisioned mode.
-        """
+    def release(header, connection_id):
+        pass
 
-    def terminate(requester_nsa, provider_nsa, session_security_attr, connection_id):
-        """
-        Cancels a reservation.
-        """
+    def terminate(header, connection_id):
+        pass
 
-    def query(requester_nsa, provider_nsa, session_security_attr, query_filter):
-        """
-        Query reservations and provisions.
-        """
+    def querySummary(header, connection_ids, global_reservation_ids):
+        pass
 
+    def queryRecursive(header, connection_ids, global_reservation_ids):
+        pass
 
-#class NSIClientInterface(NSIInterface):
-#    pass
-#
-
-# this should go too
-class NSIServiceInterface(NSIInterface):
-    pass
+    def queryNotification(header, connection_id, start_notification, end_notification):
+        pass
 
 
 
+def INSIRequester(Interface):
 
-class NSIBackendInterface(Interface):
+    def reserveConfirmed(header, connection_id, global_reservation_id, description, criteria):
+        pass
 
-    # is something needed to "change" a reservation / provision
+    def reserveFailed(header, connection_id, connection_states, service_exception):
+        pass
 
-    def reserve(source_endpoint, dest_endpoint, service_parameters):
-        """
-        Reserve a connection at the backend.
+    def reserveCommitConfirmed(header, connection_id):
+        pass
 
-        @return: A L{defer.Deferred}, which, if successfull will fire with a
-        C{string} with an internal reservation id.
-        """
+    def reserveCommitFailed(header, connection_id, connection_states, service_exception):
+        pass
 
-    def terminate(reservation_id):
-        """
-        Cancal a reservation at the network backend.
-        """
+    def reserveAbortConfirmed(header, connection_id):
+        pass
 
-    def provision(reservation_id):
-        """
-        Provisions a connection.
+    def provisionConfirmed(header, connection_id):
+        pass
 
-        @return: A L{defer.Deferred}, which, if successfull will fire with a
-        C{string} with an internal connection id.
-        """
+    def releaseConfirmed(header, connection_id):
+        pass
 
-    def release(connection_id):
-        """
-        Release the path from provisioned mode.
+    def terminateConfirmed(header, connection_id):
+        pass
 
-        @return: A L{defer.Deferred}, which if successfull will fire with a
-        C{string} with reservation id.
-        """
+    def querySummaryConfirmed(header, summary_result):
+        pass
 
-    def query(query_filter):
-        """
-        Queries the backend.
-        """
+    def querySummaryFailed(header, service_exception):
+        pass
+
+    def queryRecursiveConfirmed(header, recursive_result):
+        pass
+
+    def queryRecursiveFailed(header, service_exception):
+        pass
+
+    def queryNotificationConfirmed(header, notification):
+        pass
+
+    def queryNotificationFailed(header, service_exception):
+        pass
+
+    def errorEvent(header, error_event):
+        pass
+
+    def reserveTimeout(header, reserve_timeout):
+        pass
+
+    def dataPlaneStateChange(header, data_plane_status):
+        pass
+
+    def messageDeliveryTimeout(header, message_timeout):
+        pass
 
