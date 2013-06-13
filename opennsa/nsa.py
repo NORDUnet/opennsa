@@ -22,11 +22,6 @@ NSA_PREFIX = 'urn:ogf:network:nsa:'
 
 LOG_SYSTEM = 'opennsa.nsa'
 
-# STP orientations
-INGRESS = 'Ingress'
-EGRESS  = 'Egress'
-
-
 
 
 class NSIHeader(object):
@@ -154,14 +149,11 @@ class Label(object):
 
 class STP(object): # Service Termination Point
 
-    # switch orientation and labels sometime
-    def __init__(self, network, port, orientation=None, labels=None):
+    def __init__(self, network, port, labels=None):
         assert type(network) is str, 'Invalid network type provided for STP'
         assert type(port) is str, 'Invalid port type provided for STP'
-        assert orientation in (None, INGRESS, EGRESS), 'Invalid orientation (%s) provided for STP' % (orientation)
         self.network = network
         self.port = port
-        self.orientation = orientation
         self.labels = labels or []
 
 
@@ -172,8 +164,7 @@ class STP(object): # Service Termination Point
     def __eq__(self, other):
         if not type(other) is STP:
             return False
-        return self.network == other.network and self.port == other.port and \
-               self.orientation == other.orientation and self.labels == other.labels
+        return self.network == other.network and self.port == other.port and self.labels == other.labels
 
 
     def __str__(self):
