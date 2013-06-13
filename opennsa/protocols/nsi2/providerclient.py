@@ -36,9 +36,9 @@ class ProviderClient:
             # for now we just ignore this, as long as we get an okay
             return
 
-        f = httpclient.soapRequest(requester_url, action, payload, ctx_factory=self.ctx_factory)
-        f.deferred.addCallbacks(gotReply) #, errReply)
-        return f.deferred
+        d = httpclient.soapRequest(requester_url, action, payload, ctx_factory=self.ctx_factory)
+        d.addCallbacks(gotReply) #, errReply)
+        return d
 
 
     def _genericFailure(self, requester_url, action, message_name, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, err):
@@ -61,9 +61,9 @@ class ProviderClient:
             # for now we just ignore this, as long as we get an okay
             return
 
-        f = httpclient.soapRequest(requester_url, action, payload, ctx_factory=self.ctx_factory)
-        f.deferred.addCallbacks(gotReply) #, errReply)
-        return f.deferred
+        d = httpclient.soapRequest(requester_url, action, payload, ctx_factory=self.ctx_factory)
+        d.addCallbacks(gotReply) #, errReply)
+        return d
 
 
     def reserveConfirmed(self, requester_url, correlation_id, requester_nsa, provider_nsa, global_reservation_id, description, connection_id, service_parameters):
@@ -95,9 +95,9 @@ class ProviderClient:
             # we don't really do anything about these
             return ""
 
-        f = httpclient.soapRequest(requester_url, actions.RESERVE_CONFIRMED, payload, ctx_factory=self.ctx_factory)
-        f.deferred.addCallbacks(gotReply) #, errReply)
-        return f.deferred
+        d = httpclient.soapRequest(requester_url, actions.RESERVE_CONFIRMED, payload, ctx_factory=self.ctx_factory)
+        d.addCallbacks(gotReply) #, errReply)
+        return d
 
 
     def reserveFailed(self, requester_url, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, err):
@@ -169,9 +169,9 @@ class ProviderClient:
             # we don't really do anything about these
             return ""
 
-        f = httpclient.soapRequest(requester_url, actions.QUERY_CONFIRMED, payload, ctx_factory=self.ctx_factory)
-        f.deferred.addCallbacks(gotReply) #, errReply)
-        return f.deferred
+        d = httpclient.soapRequest(requester_url, actions.QUERY_CONFIRMED, payload, ctx_factory=self.ctx_factory)
+        d.addCallbacks(gotReply) #, errReply)
+        return d
 
 #        if operation == "Summary":
 #            qsrs = []
