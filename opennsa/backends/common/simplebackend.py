@@ -15,9 +15,13 @@ Copyright: NORDUnet (2011-2012)
 
 import datetime
 
+from zope.interface import implements
+
 from twisted.python import log
 from twisted.internet import reactor, defer
 from twisted.application import service
+
+from opennsa.interface import INSIProvider
 
 from opennsa import registry, error, state, nsa
 from opennsa.backends.common import scheduler, calendar
@@ -32,6 +36,8 @@ class Simplebackendconnection(DBObject):
 
 
 class SimpleBackend(service.Service):
+
+    implements(INSIProvider)
 
     TPC_TIMEOUT = 30 # seconds
 
@@ -351,8 +357,18 @@ class SimpleBackend(service.Service):
         yield self._doTerminate(conn)
 
 
-    def query(self, query_filter):
-        pass
+    @defer.inlineCallbacks
+    def querySummary(self, header, connection_ids, global_reservation_ids):
+        raise NotImplementedError('QuerySummary not implemented in generic backend.')
+
+    @defer.inlineCallbacks
+    def queryRecursive(self, header, connection_ids, global_reservation_ids):
+        raise NotImplementedError('QueryRecursive not implemented in generic backend.')
+
+
+    @defer.inlineCallbacks
+    def queryNotification(self, header, connection_id, start_notification=None, end_notification=None):
+        raise NotImplementedError('QueryNotification not implemented in generic backend.')
 
 
     @defer.inlineCallbacks
