@@ -181,11 +181,6 @@ def doMain():
 
             bandwidth = config.subOptions[options.BANDWIDTH] or defaults.get(options.BANDWIDTH)
 
-            if connection_id is None:
-                connection_id = uuid.uuid1()
-            if global_id is None:
-                global_id = 'conn-%i' % random.randrange(1000,9999)
-
         if config.subCommand in ('provision', 'release', 'terminate'):
 
             if connection_id is None:
