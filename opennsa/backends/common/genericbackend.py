@@ -35,7 +35,7 @@ class Simplebackendconnection(DBObject):
 
 
 
-class SimpleBackend(service.Service):
+class GenericBackend(service.Service):
 
     implements(INSIProvider)
 

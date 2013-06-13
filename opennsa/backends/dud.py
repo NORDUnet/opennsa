@@ -11,17 +11,17 @@ import random
 from twisted.python import log
 from twisted.internet import defer
 
-from opennsa.backends.common import simplebackend
+from opennsa.backends.common import genericbackend
 
 
 
-class DUDNSIBackend(simplebackend.SimpleBackend):
+class DUDNSIBackend(genericbackend.GenericBackend):
 
     def __init__(self, network_name, service_registry, parent_system):
 
         name = 'DUD NRM %s' % network_name
         cm = DUDConnectionManager(name)
-        simplebackend.SimpleBackend.__init__(self, network_name, cm, service_registry, parent_system, name)
+        genericbackend.GenericBackend.__init__(self, network_name, cm, service_registry, parent_system, name)
 
 
 
