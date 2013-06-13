@@ -6,8 +6,7 @@ from twisted.python import log, failure
 from twisted.internet import reactor, defer
 
 from opennsa import error
-from opennsa.interface import NSIInterface
-#from opennsa.protocols.nsi2 import requesterclient
+from opennsa.interface import INSIRequester
 
 
 
@@ -22,7 +21,8 @@ def createCorrelationId():
 
 class Requester:
 
-    implements(NSIInterface)
+# this fails for some odd reason
+#    implements(INSIRequester)
 
     def __init__(self, requester_client, callback_timeout=DEFAULT_CALLBACK_TIMEOUT):
 
