@@ -103,9 +103,9 @@ class RequesterClient:
         def gotReply(data):
             pass
 
-        f = httpclient.soapRequest(provider_nsa.url(), actions.RESERVE, payload, ctx_factory=self.ctx_factory)
-        f.deferred.addCallbacks(gotReply, self._handleErrorReply)
-        return f.deferred
+        d = httpclient.soapRequest(provider_nsa.endpoint, actions.RESERVE, payload, ctx_factory=self.ctx_factory)
+        d.addCallbacks(gotReply, self._handleErrorReply)
+        return d
 
 
     def provision(self, correlation_id, requester_nsa, provider_nsa, session_security_attr, connection_id):
@@ -115,9 +115,9 @@ class RequesterClient:
         def gotReply(data):
             pass
 
-        f = httpclient.soapRequest(provider_nsa.url(), actions.PROVISION, payload, ctx_factory=self.ctx_factory)
-        f.deferred.addCallbacks(gotReply, self._handleErrorReply)
-        return f.deferred
+        d = httpclient.soapRequest(provider_nsa.endpoint, actions.PROVISION, payload, ctx_factory=self.ctx_factory)
+        d.addCallbacks(gotReply, self._handleErrorReply)
+        return d
 
 
     def release(self, correlation_id, requester_nsa, provider_nsa, session_security_attr, connection_id):
@@ -126,9 +126,9 @@ class RequesterClient:
             pass
 
         payload = self._createGenericRequestType('release', correlation_id, requester_nsa, provider_nsa, connection_id)
-        f = httpclient.soapRequest(provider_nsa.url(), actions.RELEASE, payload, ctx_factory=self.ctx_factory)
-        f.deferred.addCallbacks(gotReply, self._handleErrorReply)
-        return f.deferred
+        d = httpclient.soapRequest(provider_nsa.endpoint, actions.RELEASE, payload, ctx_factory=self.ctx_factory)
+        d.addCallbacks(gotReply, self._handleErrorReply)
+        return d
 
 
     def terminate(self, correlation_id, requester_nsa, provider_nsa, session_security_attr, connection_id):
@@ -137,9 +137,9 @@ class RequesterClient:
             pass
 
         payload = self._createGenericRequestType('terminate', correlation_id, requester_nsa, provider_nsa, connection_id)
-        f = httpclient.soapRequest(provider_nsa.url(), actions.TERMINATE, payload, ctx_factory=self.ctx_factory)
-        f.deferred.addCallbacks(gotReply, self._handleErrorReply)
-        return f.deferred
+        d = httpclient.soapRequest(provider_nsa.endpoint, actions.TERMINATE, payload, ctx_factory=self.ctx_factory)
+        d.addCallbacks(gotReply, self._handleErrorReply)
+        return d
 
 
     def query(self, correlation_id, requester_nsa, provider_nsa, session_security_attr, operation="Summary", connection_ids=None, global_reservation_ids=None):
@@ -156,7 +156,7 @@ class RequesterClient:
         def gotReply(data):
             pass
 
-        f = httpclient.soapRequest(provider_nsa.url(), actions.QUERY, payload, ctx_factory=self.ctx_factory)
-        f.deferred.addCallbacks(gotReply, self._handleErrorReply)
-        return f.deferred
+        d = httpclient.soapRequest(provider_nsa.endpoint, actions.QUERY, payload, ctx_factory=self.ctx_factory)
+        d.addCallbacks(gotReply, self._handleErrorReply)
+        return d
 
