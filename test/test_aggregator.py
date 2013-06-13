@@ -81,6 +81,22 @@ class AggregatorTest(unittest.TestCase):
     @defer.inlineCallbacks
     def testBasicUsage(self):
 
+#        d_confirmed = defer.Deferred()
+#        d_committed = defer.Deferred()
+
+#        reserve_confirmed = lambda cid, gid, desc, rcc : d_confirmed.callback( (cid, gid, desc, rcc) )
+#        reserve_committed = lambda cid : d_confirmed.callback( cid )
+
+#        self.sr.registerEventHandler(registry.RESERVE_CONFIRMED,  reserve_confirmed, self.registry_system)
+#        self.sr.registerEventHandler(registry.RESERVE_COMMITTED,  reserve_confirmed, self.registry_system)
+
+        def dataPlaneChange(requester_nsa, provider_nsa, sessesion_security_attrs, connection_id, dps, timestamp):
+            active, version, version_consistent = dps
+            if active:
+                values = connection_id, active, version_consistent, version, timestamp
+                d_up.callback(values)
+
+
         cid,_,_,sp = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, self.service_params)
         yield self.reserveCommit(self.requester_nsa, self.provider_nsa.urn(), None, cid)
         yield self.terminate(None, self.provider_nsa.urn(), None, cid)

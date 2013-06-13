@@ -41,12 +41,11 @@ class GenericBackend(service.Service):
 
     TPC_TIMEOUT = 30 # seconds
 
-    def __init__(self, network, connection_manager, service_registry, parent_system, log_system):
+    def __init__(self, network, connection_manager, parent_requester, log_system):
 
         self.network = network
         self.connection_manager = connection_manager
-        self.service_registry = service_registry
-        self.parent_system = parent_system
+        self.parent_requester = parent_requester
         self.log_system = log_system
 
         self.scheduler = scheduler.CallScheduler()
@@ -54,7 +53,8 @@ class GenericBackend(service.Service):
         # need to build the calendar as well
 
         # the connection cache is a work-around for a race condition in mmm... something
-        self.connection_cache = {}
+        # I think the bug was found, but the cache was not removed
+#        self.connection_cache = {}
 
         # need to build schedule here
         self.restore_defer = defer.Deferred()
@@ -63,13 +63,6 @@ class GenericBackend(service.Service):
 
     def startService(self):
         service.Service.startService(self)
-
-        self.service_registry.registerEventHandler(registry.RESERVE,        self.reserve,       registry.NSI2_LOCAL)
-        self.service_registry.registerEventHandler(registry.RESERVE_COMMIT, self.reserveCommit, registry.NSI2_LOCAL)
-        self.service_registry.registerEventHandler(registry.RESERVE_ABORT,  self.reserveAbort,  registry.NSI2_LOCAL)
-        self.service_registry.registerEventHandler(registry.PROVISION,      self.provision,     registry.NSI2_LOCAL)
-        self.service_registry.registerEventHandler(registry.RELEASE,        self.release,       registry.NSI2_LOCAL)
-        self.service_registry.registerEventHandler(registry.TERMINATE,      self.terminate,     registry.NSI2_LOCAL)
 
 
     def stopService(self):
@@ -125,14 +118,15 @@ class GenericBackend(service.Service):
     @defer.inlineCallbacks
     def _getConnection(self, connection_id, requester_nsa):
         # add security check sometime
-        try:
-            defer.returnValue(self.connection_cache[connection_id])
-        except KeyError:
-            pass
+# take out caching and see if it works
+#        try:
+#            defer.returnValue(self.connection_cache[connection_id])
+#        except KeyError:
+#            pass
         conns = yield GenericBackendConnections.findBy(connection_id=connection_id)
         if len(conns) == 0:
             raise error.ConnectionNonExistentError('No connection with id %s' % connection_id)
-        self.connection_cache[connection_id] = conns[0]
+#        self.connection_cache[connection_id] = conns[0]
         defer.returnValue( conns[0] ) # we only get one, unique in db
 
 
@@ -143,7 +137,7 @@ class GenericBackend(service.Service):
 
 
     @defer.inlineCallbacks
-    def reserve(self, requester_nsa, provider_nsa, session_security_attr, connection_id, global_reservation_id, description, service_params):
+    def reserve(self, header, connection_id, global_reservation_id, description, service_params):
 
         # return defer.fail( error.InternalNRMError('test reservation failure') )
 
@@ -229,45 +223,23 @@ class GenericBackend(service.Service):
 
         # should we save the requester or provider here?
         conn = GenericBackendConnections(connection_id=connection_id, revision=0, global_reservation_id=global_reservation_id, description=description,
-                                         requester_nsa=requester_nsa.urn(), reserve_time=now,
+                                         requester_nsa=header.requester_nsa, reserve_time=now,
                                          reservation_state=state.INITIAL, provision_state=state.SCHEDULED, activation_state=state.INACTIVE, lifecycle_state=state.INITIAL,
                                          source_network=source_stp.network, source_port=source_stp.port, source_labels=[src_label],
                                          dest_network=dest_stp.network, dest_port=dest_stp.port, dest_labels=[dst_label],
                                          start_time=service_params.start_time, end_time=service_params.end_time,
                                          bandwidth=service_params.bandwidth)
         yield conn.save()
-
-        # this sould really be much earlier, need to save connection before checking
-        yield state.reserveChecking(conn)
-        self.logStateUpdate(conn, 'RESERVE CHECKING')
-
-        yield state.reserveHeld(conn)
-        self.logStateUpdate(conn, 'RESERVE HELD')
-
-        # schedule 2PC timeout
-        if self.scheduler.hasScheduledCall(conn.connection_id):
-            # this means that the build scheduler made a call while we yielded
-            self.scheduler.cancelCall(connection_id)
-
-        timeout_time = min(now + datetime.timedelta(seconds=self.TPC_TIMEOUT), conn.end_time)
-
-        self.scheduler.scheduleCall(connection_id, timeout_time, self._doReserveTimeout, conn)
-        td = timeout_time - datetime.datetime.utcnow()
-        log.msg('Connection %s: reserve abort scheduled for %s UTC (%i seconds)' % (conn.connection_id, timeout_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
-
-        sc_source_stp = nsa.STP(source_stp.network, source_stp.port, labels=[src_label])
-        sc_dest_stp   = nsa.STP(dest_stp.network,   dest_stp.port,   labels=[dst_label])
-        sp = nsa.ServiceParameters(service_params.start_time, service_params.end_time, sc_source_stp, sc_dest_stp, service_params.bandwidth)
-        rig = (connection_id, global_reservation_id, description, sp)
-        defer.returnValue(rig)
+        reactor.callWhenRunning(self._doReserve, conn)
+        defer.returnValue(connection_id)
 
 
     @defer.inlineCallbacks
-    def reserveCommit(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
+    def reserveCommit(self, header, connection_id):
 
         log.msg('ReserveCommit request. Connection ID: %s' % connection_id, system=self.log_system)
 
-        conn = yield self._getConnection(connection_id, requester_nsa)
+        conn = yield self._getConnection(connection_id, header.requester_nsa)
         if conn.lifecycle_state in (state.TERMINATING, state.TERMINATED):
             raise error.ConnectionGoneError('Connection %s has been terminated')
 
@@ -275,6 +247,8 @@ class GenericBackend(service.Service):
         self.logStateUpdate(conn, 'RESERVE COMMIT')
         yield state.reserved(conn)
         self.logStateUpdate(conn, 'RESERVED')
+
+        self.parent_requester.reserveCommitConfirmed(header, connection_id)
 
         defer.returnValue(connection_id)
 
@@ -292,9 +266,9 @@ class GenericBackend(service.Service):
 
 
     @defer.inlineCallbacks
-    def provision(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
+    def provision(self, header, connection_id):
 
-        conn = yield self._getConnection(connection_id, requester_nsa)
+        conn = yield self._getConnection(connection_id, header.requester_nsa)
         if conn.lifecycle_state in (state.TERMINATING, state.TERMINATED):
             raise error.ConnectionGoneError('Connection %s has been terminated')
 
@@ -319,6 +293,9 @@ class GenericBackend(service.Service):
 
         yield state.provisioned(conn)
         self.logStateUpdate(conn, 'PROVISIONED')
+
+        self.parent_requester.provisionConfirmed(header, connection_id)
+
         defer.returnValue(conn.connection_id)
 
 
@@ -346,14 +323,17 @@ class GenericBackend(service.Service):
 
         yield state.scheduled(conn)
         self.logStateUpdate(conn, 'RELEASED')
+
+        self.parent_requester.releaseConfirmed(header, connection_id)
+
         defer.returnValue(conn.connection_id)
 
 
     @defer.inlineCallbacks
-    def terminate(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
+    def terminate(self, header, connection_id):
         # return defer.fail( error.InternalNRMError('test termination failure') )
 
-        conn = yield self._getConnection(connection_id, requester_nsa)
+        conn = yield self._getConnection(connection_id, header.requester_nsa)
         yield self._doTerminate(conn)
 
 
@@ -370,6 +350,37 @@ class GenericBackend(service.Service):
     def queryNotification(self, header, connection_id, start_notification=None, end_notification=None):
         raise NotImplementedError('QueryNotification not implemented in generic backend.')
 
+    # --
+
+    @defer.inlineCallbacks
+    def _doReserve(self, conn):
+
+        yield state.reserveChecking(conn)
+        self.logStateUpdate(conn, 'RESERVE CHECKING')
+
+        yield state.reserveHeld(conn)
+        self.logStateUpdate(conn, 'RESERVE HELD')
+
+        # schedule 2PC timeout
+        if self.scheduler.hasScheduledCall(conn.connection_id):
+            # this means that the build scheduler made a call while we yielded
+            self.scheduler.cancelCall(conn.connection_id)
+
+        now =  datetime.datetime.utcnow()
+        timeout_time = min(now + datetime.timedelta(seconds=self.TPC_TIMEOUT), conn.end_time)
+
+        self.scheduler.scheduleCall(conn.connection_id, timeout_time, self._doReserveTimeout, conn)
+        td = timeout_time - datetime.datetime.utcnow()
+        log.msg('Connection %s: reserve abort scheduled for %s UTC (%i seconds)' % (conn.connection_id, timeout_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
+
+        sc_source_stp = nsa.STP(conn.source_network, conn.source_port, conn.source_labels)
+        sc_dest_stp   = nsa.STP(conn.dest_network,   conn.dest_port,   conn.dest_labels)
+        sp = nsa.ServiceParameters(conn.start_time, conn.end_time, sc_source_stp, sc_dest_stp, conn.bandwidth)
+
+        header = nsa.NSIHeader(conn.requester_nsa, None, []) # not sure what to fill as a provider here
+        # yield here? Not for now
+        self.parent_requester.reserveConfirmed(header, conn.connection_id, conn.global_reservation_id, conn.description, sp)
+
 
     @defer.inlineCallbacks
     def _doReserveTimeout(self, conn):
@@ -384,6 +395,7 @@ class GenericBackend(service.Service):
             reserve_timeout = self.service_registry.getHandler(registry.RESERVE_TIMEOUT, self.parent_system)
 
             reserve_timeout(None, None, None, conn.connection_id, connection_states, self.TPC_TIMEOUT, datetime.datetime.utcnow())
+
 
         except Exception as e:
             log.msg('Error in reserveTimeout: %s: %s' % (type(e), e), system=self.log_system)
@@ -415,6 +427,8 @@ class GenericBackend(service.Service):
                 self.scheduler.scheduleCall(conn.connection_id, conn.end_time, self._doTerminate, conn)
                 td = conn.end_time - datetime.datetime.utcnow()
                 log.msg('Connection %s: terminate scheduled for %s UTC (%i seconds)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
+
+            self.parent_requester.reserveAbortConfirmed(header, connection_id)
 
         except Exception as e:
             log.msg('Error in reserveAbort: %s: %s' % (type(e), e), system=self.log_system)
@@ -528,5 +542,10 @@ class GenericBackend(service.Service):
 
         yield state.terminated(conn)
         self.logStateUpdate(conn, 'TERMINATED')
+
+        header = nsa.NSIHeader(conn.requester_nsa, None, []) # not sure what to fill as a provider here
+        # yield here? Not for now
+        self.parent_requester.terminateConfirmed(header, conn.connection_id)
+
         defer.returnValue(conn.connection_id)
 
