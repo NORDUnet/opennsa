@@ -6,7 +6,7 @@ from twisted.python import log
 from twisted.python.log import ILogObserver
 from twisted.application import internet, service
 
-from opennsa import setup, registry, logging, nsiservice
+from opennsa import setup, registry, logging
 from opennsa.backends import dud
 from opennsa.topology import gole
 from opennsa.protocols import nsi1

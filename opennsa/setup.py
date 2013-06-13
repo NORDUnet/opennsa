@@ -6,7 +6,7 @@ from twisted.python import log
 from twisted.web import resource, server
 from twisted.application import internet, service as twistedservice
 
-from opennsa import config, logging, registry, nsa, database, nsiservice, viewresource
+from opennsa import config, logging, registry, nsa, database, aggregator, viewresource
 from opennsa.topology import nrmparser, nml, http as nmlhttp
 from opennsa.protocols import nsi2, discovery
 
@@ -93,13 +93,13 @@ class OpenNSAService(twistedservice.MultiService):
         backend_service = setupBackend(vc['backend'], vc[config.NETWORK_NAME], service_registry)
         backend_service.setServiceParent(self)
 
-        nsi_service  = nsiservice.NSIService(vc[config.NETWORK_NAME], backend_service, service_registry, topology)
+        aggr = aggregator.Aggregator(vc[config.NETWORK_NAME], ns_agent, topology, service_registry, registry.NSI2_REMOTE)
 
         discovery.setupDiscoveryService(None, top_resource)
 
-        nsi2.setupProvider(nsi_service, top_resource, service_registry, vc[config.HOST], vc[config.PORT])
+        nsi2.setupProvider(aggr, top_resource, service_registry, vc[config.HOST], vc[config.PORT])
 
-        vr = viewresource.ConnectionListResource(nsi_service)
+        vr = viewresource.ConnectionListResource(aggr)
         top_resource.children['NSI'].putChild('connections', vr)
 
         topology_resource = resource.Resource()
