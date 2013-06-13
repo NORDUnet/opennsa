@@ -28,6 +28,17 @@ EGRESS  = 'Egress'
 
 
 
+
+class NSIHeader(object):
+
+    def __init__(self, requester_nsa, provider_nsa, session_security_attrs, correlation_id=None):
+        self.requester_nsa          = requester_nsa
+        self.provider_nsa           = provider_nsa
+        self.session_security_attrs = session_security_attrs
+        self.correlation_id         = correlation_id
+
+
+
 class EmptyLabelSet(Exception):
     pass
 
@@ -253,10 +264,6 @@ class NetworkServiceAgent(object):
         host, port = url.netloc.split(':',2)
         port = int(port)
         return host, port
-
-
-    def endpoint(self):
-        return self.endpoint
 
 
     def urn(self):
