@@ -9,6 +9,7 @@ import time
 from xml.etree import cElementTree as ET
 
 from dateutil import parser
+from dateutil.tz import tzutc
 
 from twisted.python import log, failure
 
@@ -115,8 +116,11 @@ class ProviderService:
             err = failure.Failure ( error.PayloadError('End time has no time zone information') )
             return self._createSOAPFault(err, header.providerNSA)
 
-        service_parameters = nsa.ServiceParameters(start_time, end_time, src_stp, dst_stp,
-                                                  directionality=path.directionality, bandwidth=criteria.bandwidth)
+        # convert to utc and remove timezone
+        start_time = start_time.astimezone(tzutc()).replace(tzinfo=None)
+        end_time   = end_time.astimezone(tzutc()).replace(tzinfo=None)
+
+        service_parameters = nsa.ServiceParameters(start_time, end_time, src_stp, dst_stp, directionality=path.directionality, bandwidth=criteria.bandwidth)
 
         # change core classes in a way that nsi1 protocol can still handle it
 
