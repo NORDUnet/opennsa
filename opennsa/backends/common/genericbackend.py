@@ -30,7 +30,7 @@ from twistar.dbobject import DBObject
 
 
 
-class Simplebackendconnection(DBObject):
+class GenericBackendConnections(DBObject):
     pass
 
 
@@ -80,7 +80,7 @@ class GenericBackend(service.Service):
     @defer.inlineCallbacks
     def buildSchedule(self):
 
-        conns = yield Simplebackendconnection.find(where=['lifecycle_state <> ?', state.TERMINATED])
+        conns = yield GenericBackendConnections.find(where=['lifecycle_state <> ?', state.TERMINATED])
         for conn in conns:
             # avoid race with newly created connections
             if self.scheduler.hasScheduledCall(conn.connection_id):
@@ -129,7 +129,7 @@ class GenericBackend(service.Service):
             defer.returnValue(self.connection_cache[connection_id])
         except KeyError:
             pass
-        conns = yield Simplebackendconnection.findBy(connection_id=connection_id)
+        conns = yield GenericBackendConnections.findBy(connection_id=connection_id)
         if len(conns) == 0:
             raise error.ConnectionNonExistentError('No connection with id %s' % connection_id)
         self.connection_cache[connection_id] = conns[0]
@@ -152,7 +152,7 @@ class GenericBackend(service.Service):
 
         if connection_id:
             raise ValueError('Cannot handle cases with existing connection id (yet)')
-            #conns = yield Simplebackendconnection.findBy(connection_id=connection_id)
+            #conns = yield GenericBackendConnections.findBy(connection_id=connection_id)
 
         # need to check schedule
 
@@ -228,13 +228,13 @@ class GenericBackend(service.Service):
         connection_id = self.connection_manager.createConnectionId(source_target, dest_target)
 
         # should we save the requester or provider here?
-        conn = Simplebackendconnection(connection_id=connection_id, revision=0, global_reservation_id=global_reservation_id, description=description,
-                                       requester_nsa=requester_nsa.urn(), reserve_time=now,
-                                       reservation_state=state.INITIAL, provision_state=state.SCHEDULED, activation_state=state.INACTIVE, lifecycle_state=state.INITIAL,
-                                       source_network=source_stp.network, source_port=source_stp.port, source_labels=[src_label],
-                                       dest_network=dest_stp.network, dest_port=dest_stp.port, dest_labels=[dst_label],
-                                       start_time=service_params.start_time, end_time=service_params.end_time,
-                                       bandwidth=service_params.bandwidth)
+        conn = GenericBackendConnections(connection_id=connection_id, revision=0, global_reservation_id=global_reservation_id, description=description,
+                                         requester_nsa=requester_nsa.urn(), reserve_time=now,
+                                         reservation_state=state.INITIAL, provision_state=state.SCHEDULED, activation_state=state.INACTIVE, lifecycle_state=state.INITIAL,
+                                         source_network=source_stp.network, source_port=source_stp.port, source_labels=[src_label],
+                                         dest_network=dest_stp.network, dest_port=dest_stp.port, dest_labels=[dst_label],
+                                         start_time=service_params.start_time, end_time=service_params.end_time,
+                                         bandwidth=service_params.bandwidth)
         yield conn.save()
 
         # this sould really be much earlier, need to save connection before checking

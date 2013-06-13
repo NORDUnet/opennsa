@@ -52,7 +52,7 @@ CREATE TABLE sub_connections (
 
 
 -- move this into the backend sometime
-CREATE TABLE simplebackendconnections (
+CREATE TABLE generic_backend_connections (
     id                      serial                      PRIMARY KEY,
     connection_id           text                        NOT NULL UNIQUE,
     revision                integer                     NOT NULL,
