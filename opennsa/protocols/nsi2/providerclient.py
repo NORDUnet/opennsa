@@ -66,9 +66,9 @@ class ProviderClient:
         return d
 
 
-    def reserveConfirmed(self, requester_url, correlation_id, requester_nsa, provider_nsa, global_reservation_id, description, connection_id, service_parameters):
+    def reserveConfirmed(self, nsi_header, connection_id, global_reservation_id, description, service_parameters):
 
-        header_payload = helper.createHeader(correlation_id, requester_nsa, provider_nsa)
+        header_payload = helper.createHeader(nsi_header.correlation_id, nsi_header.requester_nsa, nsi_header.provider_nsa)
 
         sp = service_parameters
 
@@ -95,7 +95,7 @@ class ProviderClient:
             # we don't really do anything about these
             return ""
 
-        d = httpclient.soapRequest(requester_url, actions.RESERVE_CONFIRMED, payload, ctx_factory=self.ctx_factory)
+        d = httpclient.soapRequest(nsi_header.reply_to, actions.RESERVE_CONFIRMED, payload, ctx_factory=self.ctx_factory)
         d.addCallbacks(gotReply) #, errReply)
         return d
 

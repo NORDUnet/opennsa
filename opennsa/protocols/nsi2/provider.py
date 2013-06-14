@@ -24,19 +24,9 @@ def _createErrorMessage(err):
 class Provider:
 
 
-    def __init__(self, event_registry, provider_client):
+    def __init__(self, service_provider):
 
-        self.provider_client = provider_client
-
-        # consider moving these to __init__
-
-        self.event_registry = event_registry
-
-        event_registry.registerEventHandler(registry.RESERVE_RESPONSE,   self.notifyReserveResult,   WS_PROTO_EVENT_SYSTEM)
-        event_registry.registerEventHandler(registry.PROVISION_RESPONSE, self.notifyProvisionResult, WS_PROTO_EVENT_SYSTEM)
-        event_registry.registerEventHandler(registry.RELEASE_RESPONSE,   self.notifyReleaseResult,   WS_PROTO_EVENT_SYSTEM)
-        event_registry.registerEventHandler(registry.TERMINATE_RESPONSE, self.notifyTerminateResult, WS_PROTO_EVENT_SYSTEM)
-        event_registry.registerEventHandler(registry.QUERY_RESPONSE,     self.notifyQueryResult,     WS_PROTO_EVENT_SYSTEM)
+        self.service_provider = service_provider
 
 
     def _extractData(self, data):
@@ -51,18 +41,20 @@ class Provider:
         return reply_to, correlation_id, requester_nsa, provider_nsa, connection_id, global_reservation_id
 
 
-    def reserve(self, correlation_id, reply_to, requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters):
+    def reserve(self, nsi_header, connection_id, global_reservation_id, description, service_parameters):
 
-        data = { 'reply_to'      : reply_to,      'correlation_id'        : correlation_id,
-                 'requester_nsa' : requester_nsa, 'provider_nsa'          : provider_nsa,
-                 'connection_id' : connection_id, 'global_reservation_id' : None,
-                 'description'   : description,   'service_parameters'    : service_parameters }
+#        data = { 'reply_to'                 : nsi_header.reply_to,
+#                 'correlation_id'           : nsi_header.correlation_id,
+#                 'requester_nsa'            : nsi_header.requester_nsa,
+#                 'provider_nsa'             : nsi_header.provider_nsa,
+#                 'connection_id'            : connection_id,
+#                 'global_reservation_id'    : None,
+#                 'description'              : description,
+#                 'service_parameters'       : service_parameters }
+#
+#        sub = subscription.Subscription(registry.RESERVE_RESPONSE, WS_PROTO_EVENT_SYSTEM, data)
 
-        sub = subscription.Subscription(registry.RESERVE_RESPONSE, WS_PROTO_EVENT_SYSTEM, data)
-
-        handler = self.event_registry.getHandler(registry.RESERVE, registry.SYSTEM_SERVICE)
-        d = defer.maybeDeferred(handler, requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters, sub)
-        return d
+        return self.service_provider.reserve(nsi_header, connection_id, global_reservation_id, description, service_parameters)
 
 
     def notifyReserveResult(self, success, result, data):
@@ -87,7 +79,7 @@ class Provider:
                  'connection_id' : connection_id, 'global_reservation_id' : None }
         sub = subscription.Subscription(registry.PROVISION_RESPONSE, WS_PROTO_EVENT_SYSTEM, data)
 
-        handler = self.event_registry.getHandler(registry.PROVISION, registry.SYSTEM_SERVICE)
+        handler = self.event_registry.getHandler(registry.PROVISION, self.sub_system)
         d = defer.maybeDeferred(handler, requester_nsa, provider_nsa, session_security_attr, connection_id, sub)
         return d
 
@@ -112,7 +104,8 @@ class Provider:
                  'connection_id' : connection_id, 'global_reservation_id' : None }
         sub = subscription.Subscription(registry.RELEASE_RESPONSE, WS_PROTO_EVENT_SYSTEM, data)
 
-        handler = self.event_registry.getHandler(registry.RELEASE, registry.SYSTEM_SERVICE)
+        #handler = self.event_registry.getHandler(registry.RELEASE, registry.SYSTEM_SERVICE)
+        handler = self.event_registry.getHandler(registry.RELEASE, self.sub_system)
         d = defer.maybeDeferred(handler, requester_nsa, provider_nsa, session_security_attr, connection_id, sub)
         return d
 

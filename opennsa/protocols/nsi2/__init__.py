@@ -14,7 +14,7 @@ from opennsa.protocols.nsi2 import providerservice, providerclient, provider, \
 
 
 
-def setupProvider(nsi_service, top_resource, service_registry, host, port, tls=False, ctx_factory=None):
+def setupProvider(nsi_service, top_resource, service_provider, host, port, tls=False, ctx_factory=None):
 
     soap_resource = soapresource.setupSOAPResource(top_resource, 'CS2')
 
@@ -26,9 +26,11 @@ def setupProvider(nsi_service, top_resource, service_registry, host, port, tls=F
 
     provider_client = providerclient.ProviderClient(ctx_factory)
 
-    nsi2_provider = provider.Provider(service_registry, provider_client)
+    nsi2_provider = provider.Provider(service_provider)
 
     providerservice.ProviderService(soap_resource, nsi2_provider)
+
+    return provider_client
 
 
 def setupRequester(top_resource, host, port, tls=False, ctx_factory=None, callback_timeout=None):

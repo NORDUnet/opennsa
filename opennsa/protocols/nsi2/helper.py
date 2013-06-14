@@ -96,7 +96,7 @@ def createSTP(stp_type):
     else:
         labels = []
 
-    return nsa.STP(network, local_id, stp_type.orientation, labels)
+    return nsa.STP(network, local_id, labels)
 
 
 def createSTPType(stp):
@@ -115,5 +115,5 @@ def createSTPType(stp):
     network = URN_NETWORK + stp.network
     port = stp.port
 
-    return CT.StpType(network, network + ':' + port, labels, stp.orientation)
+    return CT.StpType(network, network + ':' + port, labels)
 

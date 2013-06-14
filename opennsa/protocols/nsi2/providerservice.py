@@ -46,18 +46,18 @@ class ProviderService:
 #        "http://schemas.ogf.org/nsi/2012/03/connection/service/queryFailed"
 
 
-    def _createGenericAcknowledgement(self, _, correlation_id, requester_nsa, provider_nsa):
+    def _createGenericAcknowledgement(self, _, nsi_header):
 
-        header = HT.CommonHeaderType(None, correlation_id, requester_nsa, provider_nsa)
-        header_payload = helper.export(header, 'acknowledgment')
+        soap_header = HT.CommonHeaderType(None, nsi_header.correlation_id, nsi_header.requester_nsa, nsi_header.provider_nsa)
+        soap_header_payload = helper.export(soap_header, 'acknowledgment')
 
-        payload = minisoap.createSoapPayload(None, header_payload)
+        payload = minisoap.createSoapPayload(None, soap_header_payload)
         return payload
 
 
-    def _createSOAPFault(self, err, provider_nsa):
+    def _createSOAPFault(self, err, nsi_header):
 
-        se = helper.createServiceException(err, provider_nsa)
+        se = helper.createServiceException(err, nsi_header.provider_nsa)
         detail = helper.export(se, 'serviceException', level=4)
         soap_fault = resource.SOAPFault( err.getErrorMessage(), detail )
 
@@ -68,7 +68,7 @@ class ProviderService:
 
         t_start = time.time()
 
-        header, reservation = helper.parseRequest(soap_data)
+        soap_header, reservation = helper.parseRequest(soap_data)
 
         # do some checking here
 
@@ -101,10 +101,12 @@ class ProviderService:
 
         # Missing: EROs, symmetric, stp labels
 
-        session_security_attr = None
+        nsi_header = nsa.NSIHeader(soap_header.requesterNSA, soap_header.providerNSA, None, soap_header.replyTo, soap_header.correlationId)
 
         src_stp = helper.createSTP(path.sourceSTP)
         dst_stp = helper.createSTP(path.destSTP)
+
+        print "STPS", src_stp, dst_stp
 
         start_time = self.datetime_parser.parse(schedule.startTime)
         if start_time.utcoffset() is None:
@@ -122,17 +124,12 @@ class ProviderService:
 
         service_parameters = nsa.ServiceParameters(start_time, end_time, src_stp, dst_stp, directionality=path.directionality, bandwidth=criteria.bandwidth)
 
-        # change core classes in a way that nsi1 protocol can still handle it
-
         t_delta = time.time() - t_start
         log.msg('Profile: Reserve request parse time: %s' % round(t_delta, 3), profile=True, system=LOG_SYSTEM)
 
-        d = self.provider.reserve(header.correlationId, header.replyTo, header.requesterNSA, header.providerNSA, session_security_attr,
-                                  reservation.globalReservationId, reservation.description, reservation.connectionId, service_parameters)
+        d = self.provider.reserve(nsi_header, reservation.connectionId, reservation.globalReservationId, reservation.description, service_parameters)
 
-        d.addCallbacks(self._createGenericAcknowledgement, self._createSOAPFault,
-                       callbackArgs=(header.correlationId, header.requesterNSA, header.providerNSA),
-                       errbackArgs=(header.providerNSA,))
+        d.addCallbacks(self._createGenericAcknowledgement, self._createSOAPFault, callbackArgs=(nsi_header,), errbackArgs=(nsi_header,))
         return d
 
 
