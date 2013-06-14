@@ -50,8 +50,11 @@ def reserve(client, client_nsa, provider_nsa, src, dst, start_time, end_time, ba
     log.msg("Connection id: %s  Global id: %s" % (connection_id, global_id))
 
     try:
-        yield client.reserve(client_nsa, provider_nsa, None, global_id, 'Test Connection', connection_id, service_params)
-        log.msg("Reservation created at %s" % provider_nsa)
+        res = yield client.reserve(client_nsa, provider_nsa, None, global_id, 'Test Connection', connection_id, service_params)
+        log.msg("Connection held at %s" % provider_nsa)
+        yield client.reserveCommit(client_nsa, provider_nsa, connection_id)
+        log.msg("Reservation committed at %s" % provider_nsa)
+
     except error.NSIError, e:
         log.msg('Error reserving %s, %s : %s' % (connection_id, e.__class__.__name__, str(e)))
 
