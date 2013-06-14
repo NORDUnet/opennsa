@@ -248,7 +248,7 @@ class GenericBackend(service.Service):
         yield state.reserved(conn)
         self.logStateUpdate(conn, 'RESERVED')
 
-        self.parent_requester.reserveCommitConfirmed(header, connection_id)
+        yield self.parent_requester.reserveCommitConfirmed(header, connection_id)
 
         defer.returnValue(connection_id)
 
@@ -377,9 +377,8 @@ class GenericBackend(service.Service):
         sc_dest_stp   = nsa.STP(conn.dest_network,   conn.dest_port,   conn.dest_labels)
         sp = nsa.ServiceParameters(conn.start_time, conn.end_time, sc_source_stp, sc_dest_stp, conn.bandwidth)
 
-        header = nsa.NSIHeader(conn.requester_nsa, None, []) # not sure what to fill as a provider here
-        # yield here? Not for now
-        self.parent_requester.reserveConfirmed(header, conn.connection_id, conn.global_reservation_id, conn.description, sp)
+        header = nsa.NSIHeader(conn.requester_nsa, conn.requester_nsa, []) # The NSA is both requester and provider in the backend, but this might be problematic without aggregator
+        yield self.parent_requester.reserveConfirmed(header, conn.connection_id, conn.global_reservation_id, conn.description, sp)
 
 
     @defer.inlineCallbacks
@@ -392,10 +391,8 @@ class GenericBackend(service.Service):
             yield self._doReserveAbort(conn)
 
             connection_states = (conn.reservation_state, conn.provision_state, conn.lifecycle_state, conn.activation_state)
-            reserve_timeout = self.service_registry.getHandler(registry.RESERVE_TIMEOUT, self.parent_system)
-
-            reserve_timeout(None, None, None, conn.connection_id, connection_states, self.TPC_TIMEOUT, datetime.datetime.utcnow())
-
+            header = nsa.NSIHeader(conn.requester_nsa, conn.requester_nsa) # The NSA is both requester and provider in the backend, but this might be problematic without aggregator
+            self.parent_requester.reserveTimeout(header, conn.connection_id, connection_states, self.TPC_TIMEOUT, datetime.datetime.utcnow())
 
         except Exception as e:
             log.msg('Error in reserveTimeout: %s: %s' % (type(e), e), system=self.log_system)
@@ -543,9 +540,6 @@ class GenericBackend(service.Service):
         yield state.terminated(conn)
         self.logStateUpdate(conn, 'TERMINATED')
 
-        header = nsa.NSIHeader(conn.requester_nsa, None, []) # not sure what to fill as a provider here
-        # yield here? Not for now
-        self.parent_requester.terminateConfirmed(header, conn.connection_id)
-
-        defer.returnValue(conn.connection_id)
+        header = nsa.NSIHeader(conn.requester_nsa, conn.requester_nsa, []) # The NSA is both requester and provider in the backend, but this might be problematic without aggregator
+        yield self.parent_requester.terminateConfirmed(header, conn.connection_id)
 

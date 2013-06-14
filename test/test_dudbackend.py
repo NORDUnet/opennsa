@@ -7,67 +7,71 @@ from opennsa import nsa, registry, database, error, state
 from opennsa.topology import nml
 from opennsa.backends import dud
 
+from . import common
+
 
 
 class DUDBackendTest(unittest.TestCase):
+
+    source_stp  = nsa.STP('Aruba', 'A1', labels=[ nsa.Label(nml.ETHERNET_VLAN, '1-2') ] )
+    dest_stp    = nsa.STP('Aruba', 'A3', labels=[ nsa.Label(nml.ETHERNET_VLAN, '2-3') ] )
+    start_time  = datetime.datetime.utcnow() + datetime.timedelta(seconds=2)
+    end_time    = datetime.datetime.utcnow() + datetime.timedelta(seconds=10)
+    bandwidth   = 200
+
+    header         = nsa.NSIHeader('test-requester', 'test-provider', [])
+    service_params = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, bandwidth)
 
     def setUp(self):
 
         self.clock = task.Clock()
 
-        self.sr = registry.ServiceRegistry()
-        self.registry_system = 'dud-test'
-        self.backend = dud.DUDNSIBackend('Test', self.sr, self.registry_system)
-        self.backend.scheduler.clock = self.clock
+        self.requester = common.DUDRequester()
 
-        self.backend.startService()
+        self.provider = dud.DUDNSIBackend('Test', self.requester)
+        self.provider.scheduler.clock = self.clock
+        self.provider.startService()
 
         tcf = os.path.expanduser('~/.opennsa-test.json')
         tc = json.load( open(tcf) )
         database.setupDatabase( tc['database'], tc['database-user'], tc['database-password'])
 
-        self.requester_nsa = nsa.NetworkServiceAgent('test-requester', 'http://example.org/nsa-test-requester')
-        self.provider_nsa  = nsa.NetworkServiceAgent('test-provider',  'http://example.org/nsa-test-provider')
-
-        source_stp  = nsa.STP('Aruba', 'A1', labels=[ nsa.Label(nml.ETHERNET_VLAN, '1-2') ] )
-        dest_stp    = nsa.STP('Aruba', 'A3', labels=[ nsa.Label(nml.ETHERNET_VLAN, '2-3') ] )
-        start_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=2)
-        end_time   = datetime.datetime.utcnow() + datetime.timedelta(seconds=10)
-        bandwidth = 200
-        self.service_params = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, bandwidth)
-
-        # just so we don't have to put them in the test code
-        self.reserve        = self.sr.getHandler(registry.RESERVE,        registry.NSI2_LOCAL)
-        self.reserveCommit  = self.sr.getHandler(registry.RESERVE_COMMIT, registry.NSI2_LOCAL)
-        self.reserveAbort   = self.sr.getHandler(registry.RESERVE_ABORT,  registry.NSI2_LOCAL)
-        self.provision      = self.sr.getHandler(registry.PROVISION,      registry.NSI2_LOCAL)
-        self.release        = self.sr.getHandler(registry.RELEASE,        registry.NSI2_LOCAL)
-        self.terminate      = self.sr.getHandler(registry.TERMINATE,      registry.NSI2_LOCAL)
-
 
     @defer.inlineCallbacks
     def tearDown(self):
-        from opennsa.backends.common import simplebackend
-        # delete all created connections from test database
-        yield simplebackend.Simplebackendconnection.deleteAll()
-        yield self.backend.stopService()
+        from opennsa.backends.common import genericbackend
+        yield self.provider.stopService()
+        # delete all connections from test database
+        yield genericbackend.GenericBackendConnections.deleteAll()
 
 
     @defer.inlineCallbacks
     def testBasicUsage(self):
 
-        cid,_,_,_ = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, self.service_params)
-        yield self.terminate(self.requester_nsa, self.provider_nsa, None, cid)
+        response_cid = yield self.provider.reserve(self.header, None, None, None, self.service_params)
+        header, confirm_cid, gid, desc, criteria = yield self.requester.reserve_defer
+        self.failUnlessEquals(response_cid, confirm_cid, 'Connection Id from response and confirmation differs')
+
+        yield self.provider.reserveCommit(header, response_cid)
+        yield self.requester.reserve_commit_defer
+
+        yield self.provider.terminate(self.header, response_cid)
 
 
     @defer.inlineCallbacks
     def testProvisionPostTerminate(self):
 
-        cid,_,_,_ = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, self.service_params)
-        yield self.reserveCommit(self.requester_nsa, self.provider_nsa, None, cid)
-        yield self.terminate(self.requester_nsa, self.provider_nsa, None, cid)
+        cid = yield self.provider.reserve(self.header, None, None, None, self.service_params)
+        header, confirm_cid, gid, desc, criteria = yield self.requester.reserve_defer
+
+        yield self.provider.reserveCommit(self.header, cid)
+        yield self.requester.reserve_commit_defer
+
+        yield self.provider.terminate(self.header, cid)
+        yield self.requester.terminate_defer
+
         try:
-            yield self.provision(self.requester_nsa, self.provider_nsa, None, cid)
+            yield self.provider.provision(self.header, cid)
             self.fail('Should have raised ConnectionGoneError')
         except error.ConnectionGoneError:
             pass # expected
@@ -76,10 +80,17 @@ class DUDBackendTest(unittest.TestCase):
     @defer.inlineCallbacks
     def testProvisionUsage(self):
 
-        cid,_,_,_ = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, self.service_params)
-        yield self.reserveCommit(self.requester_nsa, self.provider_nsa, None, cid)
-        yield self.provision(self.requester_nsa, self.provider_nsa, None, cid)
-        yield self.terminate(self.requester_nsa, self.provider_nsa, None, cid)
+        cid = yield self.provider.reserve(self.header, None, None, None, self.service_params)
+        yield self.requester.reserve_defer
+
+        yield self.provider.reserveCommit(self.header, cid)
+        yield self.requester.reserve_commit_defer
+
+        yield self.provider.provision(self.header, cid)
+        yield self.requester.provision_defer
+
+        yield self.provider.terminate(self.header, cid)
+        yield self.requester.terminate_defer
 
 
     @defer.inlineCallbacks
