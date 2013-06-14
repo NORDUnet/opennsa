@@ -9,7 +9,7 @@ from opennsa import nsa, registry, database, error, state, aggregator
 from opennsa.topology import nml, nrmparser
 from opennsa.backends import dud
 
-from . import topology
+from . import topology, common
 
 
 
@@ -18,18 +18,31 @@ class AggregatorTest(unittest.TestCase):
     network = 'Aruba'
     aggregator_system = 'aggregator'
 
+    requester_nsa = nsa.NetworkServiceAgent('test_requester', 'http::/example.org/nsa_test_requester')
+
+    src_stp = nsa.STP('Aruba', 'ps',  labels=[ nsa.Label(nml.ETHERNET_VLAN, '1-2') ] )
+    dst_stp = nsa.STP('Aruba', 'bon', labels=[ nsa.Label(nml.ETHERNET_VLAN, '2-3') ] )
+
+    start_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=2)
+    end_time   = datetime.datetime.utcnow() + datetime.timedelta(seconds=10)
+    bandwidth = 200
+
+    header         = nsa.NSIHeader('test-requester', 'test-provider', [])
+    service_params = nsa.ServiceParameters(start_time, end_time, src_stp, dst_stp, bandwidth)
+
+
     def setUp(self):
 
         tcf = os.path.expanduser('~/.opennsa-test.json')
         tc = json.load( open(tcf) )
         database.setupDatabase( tc['database'], tc['database-user'], tc['database-password'])
 
+        self.requester = common.DUDRequester()
+
         self.clock = task.Clock()
 
-        self.sr = registry.ServiceRegistry()
-        self.registry_system = 'test-system'
-
-        self.backend = dud.DUDNSIBackend(self.network, self.sr, registry.NSI2_AGGREGATOR)
+        place_holder = None
+        self.backend = dud.DUDNSIBackend(self.network, place_holder)
         self.backend.scheduler.clock = self.clock
 
         ns_agent = nsa.NetworkServiceAgent('aruba', 'http://localhost:9080/NSI/CS2')
@@ -40,38 +53,20 @@ class AggregatorTest(unittest.TestCase):
 
         self.topology.addNetwork(aruba_topo)
 
-        self.aggregator = aggregator.Aggregator(self.network, ns_agent, self.topology, self.sr, self.registry_system)
+        providers = { ns_agent.urn() : self.backend }
+        self.aggregator = aggregator.Aggregator(self.network, ns_agent, self.topology, self.requester, providers)
 
-
+        # set parent for backend, we need to create the aggregator before this can be done
+        self.backend.parent_requester = self.aggregator
         self.backend.startService()
 
-        # stuff to test with
-        self.provider_nsa   = nsa.NetworkServiceAgent('testnsa', 'http://example.org/nsa_test_provider')
-
-        src_stp = nsa.STP('Aruba', 'ps',  labels=[ nsa.Label(nml.ETHERNET_VLAN, '1-2') ] )
-        dst_stp = nsa.STP('Aruba', 'bon', labels=[ nsa.Label(nml.ETHERNET_VLAN, '2-3') ] )
-
-        start_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=2)
-        end_time   = datetime.datetime.utcnow() + datetime.timedelta(seconds=10)
-        bandwidth = 200
-        self.service_params = nsa.ServiceParameters(start_time, end_time, src_stp, dst_stp, bandwidth)
-
-        self.requester_nsa = nsa.NetworkServiceAgent('test_requester', 'http::/example.org/nsa_test_requester')
-
-        # just so we don't have to put them in the test code
-        self.reserve        = self.sr.getHandler(registry.RESERVE,        registry.NSI2_AGGREGATOR)
-        self.reserveCommit  = self.sr.getHandler(registry.RESERVE_COMMIT, registry.NSI2_AGGREGATOR)
-        self.reserveAbort   = self.sr.getHandler(registry.RESERVE_ABORT,  registry.NSI2_AGGREGATOR)
-        self.provision      = self.sr.getHandler(registry.PROVISION,      registry.NSI2_AGGREGATOR)
-        self.release        = self.sr.getHandler(registry.RELEASE,        registry.NSI2_AGGREGATOR)
-        self.terminate      = self.sr.getHandler(registry.TERMINATE,      registry.NSI2_AGGREGATOR)
 
 
     @defer.inlineCallbacks
     def tearDown(self):
-        from opennsa.backends.common import simplebackend
+        from opennsa.backends.common import genericbackend
         # keep it simple...
-        yield simplebackend.Simplebackendconnection.deleteAll()
+        yield genericbackend.GenericBackendConnections.deleteAll()
         yield database.SubConnection.deleteAll()
         yield database.ServiceConnection.deleteAll()
 
@@ -81,33 +76,28 @@ class AggregatorTest(unittest.TestCase):
     @defer.inlineCallbacks
     def testBasicUsage(self):
 
-#        d_confirmed = defer.Deferred()
-#        d_committed = defer.Deferred()
+        cid = yield self.aggregator.reserve(self.header, None, None, None, self.service_params)
+        yield self.requester.reserve_defer
 
-#        reserve_confirmed = lambda cid, gid, desc, rcc : d_confirmed.callback( (cid, gid, desc, rcc) )
-#        reserve_committed = lambda cid : d_confirmed.callback( cid )
+        yield self.aggregator.reserveCommit(self.header, cid)
+        yield self.requester.reserve_commit_defer
 
-#        self.sr.registerEventHandler(registry.RESERVE_CONFIRMED,  reserve_confirmed, self.registry_system)
-#        self.sr.registerEventHandler(registry.RESERVE_COMMITTED,  reserve_confirmed, self.registry_system)
-
-        def dataPlaneChange(requester_nsa, provider_nsa, sessesion_security_attrs, connection_id, dps, timestamp):
-            active, version, version_consistent = dps
-            if active:
-                values = connection_id, active, version_consistent, version, timestamp
-                d_up.callback(values)
-
-
-        cid,_,_,sp = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, self.service_params)
-        yield self.reserveCommit(self.requester_nsa, self.provider_nsa.urn(), None, cid)
-        yield self.terminate(None, self.provider_nsa.urn(), None, cid)
+        yield self.aggregator.terminate(self.header, cid)
+        yield self.requester.terminate_defer
 
 
     @defer.inlineCallbacks
     def testProvisionPostTerminate(self):
 
-        cid,__,_,_ = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, self.service_params)
+        cid = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, self.service_params)
+        yield self.requester.reserve_defer
+
         yield self.reserveCommit(self.requester_nsa, self.provider_nsa, None, cid)
+        yield self.requester.reserve_commit_defer
+
         yield self.terminate(self.requester_nsa, self.provider_nsa, None, cid)
+        yield self.requester.terminate_defer
+
         try:
             yield self.provision(self.requester_nsa, self.provider_nsa, None, cid)
             self.fail('Should have raised ConnectionGoneError')

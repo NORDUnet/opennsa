@@ -70,23 +70,13 @@ def _createAggregateFailure(results, action):
 
 class Aggregator:
 
-    def __init__(self, network, nsa_, topology, service_registry, parent_system):
+    def __init__(self, network, nsa_, topology, parent_requester, providers):
         self.network = network
         self.nsa_ = nsa_
         self.topology = topology
-        self.service_registry = service_registry
-        self.parent_system = parent_system
 
-        self.service_registry.registerEventHandler(registry.RESERVE,            self.reserve,           registry.NSI2_AGGREGATOR)
-        self.service_registry.registerEventHandler(registry.RESERVE_COMMIT,     self.reserveCommit,     registry.NSI2_AGGREGATOR)
-        self.service_registry.registerEventHandler(registry.RESERVE_ABORT,      self.reserveAbort,      registry.NSI2_AGGREGATOR)
-        self.service_registry.registerEventHandler(registry.PROVISION,          self.provision,         registry.NSI2_AGGREGATOR)
-        self.service_registry.registerEventHandler(registry.RELEASE,            self.release,           registry.NSI2_AGGREGATOR)
-        self.service_registry.registerEventHandler(registry.TERMINATE,          self.terminate,         registry.NSI2_AGGREGATOR)
-
-        self.service_registry.registerEventHandler(registry.RESERVE_TIMEOUT,    self.reserveTimeout,    registry.NSI2_AGGREGATOR)
-        self.service_registry.registerEventHandler(registry.DATA_PLANE_CHANGE,  self.dataPlaneChange,   registry.NSI2_AGGREGATOR)
-        self.service_registry.registerEventHandler(registry.ERROR_EVENT,        self.errorEvent,        registry.NSI2_AGGREGATOR)
+        self.parent_requester   = parent_requester
+        self.providers          = providers
 
 
     def getConnection(self, requester_nsa, connection_id):
@@ -104,31 +94,24 @@ class Aggregator:
         return d
 
 
-    @defer.inlineCallbacks
-    def forAllSubConnections(self, conn, event):
-        # do a certain event for all sub connection for a connection
-        # only works for calls where handler args is: requester, provider, security_attrs, connection_id
-        # this happens to be quite a lot though
+    def getSubConnection(self, provider_nsa, connection_id):
 
-        sub_connections = yield conn.SubConnections.get()
+        def gotResult(connections):
+            # we should get 0 or 1 here since provider_nsa + connection id is unique
+            if len(connections) == 0:
+                return defer.fail( error.ConnectionNonExistentError('No sub connection with connection id %s at provider %s' % (connection_id, provider_nsa) ) )
+            return connections[0]
 
-        defs = []
-
-        for sc in sub_connections:
-            cs = registry.NSI2_LOCAL if sc.provider_nsa == self.nsa_.urn() else registry.NSI2_REMOTE
-            handler = self.service_registry.getHandler(event, cs)
-
-            d = handler(self.nsa_, sc.provider_nsa, None, sc.connection_id)
-            defs.append(d)
-
-        defer.returnValue(defs)
+        d = database.SubConnection.findBy(provider_nsa=provider_nsa, connection_id=connection_id)
+        d.addCallback(gotResult)
+        return d
 
 
     @defer.inlineCallbacks
-    def reserve(self, requester_nsa, provider_nsa, session_security_attr, connection_id, global_reservation_id, description, service_params):
+    def reserve(self, header, connection_id, global_reservation_id, description, service_params):
 
         log.msg('', system=LOG_SYSTEM)
-        log.msg('Reserve request. NSA: %s. Connection ID: %s' % (requester_nsa, connection_id), system=LOG_SYSTEM)
+        log.msg('Reserve request. NSA: %s. Connection ID: %s' % (header.requester_nsa, connection_id), system=LOG_SYSTEM)
 
         # rethink with modify
         if connection_id != None:
@@ -156,7 +139,7 @@ class Aggregator:
             raise error.TopologyError('Cannot connect STP %s to itself.' % source_stp)
 
         conn = database.ServiceConnection(connection_id=connection_id, revision=0, global_reservation_id=global_reservation_id, description=description,
-                            requester_nsa=requester_nsa.urn(), reserve_time=datetime.datetime.utcnow(),
+                            requester_nsa=header.requester_nsa, reserve_time=datetime.datetime.utcnow(),
                             reservation_state=state.INITIAL, provision_state=state.SCHEDULED, activation_state=state.INACTIVE, lifecycle_state=state.INITIAL,
                             source_network=source_stp.network, source_port=source_stp.port, source_labels=source_stp.labels,
                             dest_network=dest_stp.network, dest_port=dest_stp.port, dest_labels=dest_stp.labels,
@@ -224,48 +207,55 @@ class Aggregator:
         log.msg('Attempting to create path %s' % selected_path, system=LOG_SYSTEM)
         ## fixme, need to set end labels here
 
+        for link in selected_path:
+            provider_nsa = self.topology.getNetwork(link.network).managing_nsa
+            print "PROV", provider_nsa, provider_nsa.urn()
+            if not provider_nsa.urn() in self.providers:
+                raise error.ConnectionCreateError('Cannot create link at network %s, no available provider for NSA %s' % (link.network, provider_nsa.urn()))
+
         defs = []
         for idx, link in enumerate(selected_path):
+
+            provider_nsa = self.topology.getNetwork(link.network).managing_nsa
+            provider     = self.providers[provider_nsa.urn()]
 
             ssp  = nsa.ServiceParameters(conn.start_time, conn.end_time,
                                          nsa.STP(link.network, link.src_port, labels=link.src_labels),
                                          nsa.STP(link.network, link.dst_port, labels=link.dst_labels),
                                          conn.bandwidth)
 
-            cs = registry.NSI2_LOCAL if link.network == self.network else registry.NSI2_REMOTE
-            reserve = self.service_registry.getHandler(registry.RESERVE, cs)
-            link_provider_nsa = self.topology.getNetwork(self.network).managing_nsa
 
-            d = reserve(self.nsa_, link_provider_nsa, None, conn.global_reservation_id, conn.description, None, ssp)
+            header = nsa.NSIHeader(self.nsa_.urn(), provider_nsa.urn(), []) # need to something more here - or delegate to protocl stack (yes)
+            d = provider.reserve(header, None, conn.global_reservation_id, conn.description, ssp)
 
             @defer.inlineCallbacks
-            def reserveDone(rig, link_provider_nsa, order_id):
+            def reserveResponse(connection_id, link_provider_nsa, order_id):
                 # need to collapse the end stps in Connection object
-                connection_id, global_reservation_id, description, service_params = rig
-                log.msg('Sub link %s via %s reserved' % (connection_id, link_provider_nsa), debug=True, system=LOG_SYSTEM)
+                log.msg('Connection reservation for %s via %s acked' % (connection_id, link_provider_nsa), debug=True, system=LOG_SYSTEM)
                 # should probably do some sanity checks here
                 sp = service_params
                 local_link = True if link_provider_nsa == self.nsa_ else False
                 sc = database.SubConnection(provider_nsa=link_provider_nsa.urn(),
                                             connection_id=connection_id, local_link=local_link, revision=0, service_connection_id=conn.id, order_id=order_id,
                                             global_reservation_id=global_reservation_id, description=description,
-                                            reservation_state=state.RESERVE_HELD, provision_state=state.SCHEDULED, activation_state=state.INACTIVE, lifecycle_state=state.INITIAL,
+                                            reservation_state=state.INITIAL, provision_state=state.SCHEDULED, activation_state=state.INACTIVE, lifecycle_state=state.INITIAL,
                                             source_network=sp.source_stp.network, source_port=sp.source_stp.port, source_labels=sp.source_stp.labels,
                                             dest_network=sp.dest_stp.network, dest_port=sp.dest_stp.port, dest_labels=sp.dest_stp.labels,
                                             start_time=sp.start_time.isoformat(), end_time=sp.end_time.isoformat(), bandwidth=sp.bandwidth)
                 yield sc.save()
                 defer.returnValue(sc)
 
-            d.addCallback(reserveDone, link_provider_nsa, idx)
+            d.addCallback(reserveResponse, provider_nsa, idx)
             defs.append(d)
 
         results = yield defer.DeferredList(defs, consumeErrors=True) # doesn't errback
         successes = [ r[0] for r in results ]
 
         if all(successes):
-            yield state.reserveHeld(conn)
+#            yield state.reserveHeld(conn)
             log.msg('Connection %s: Reserve succeeded' % conn.connection_id, system=LOG_SYSTEM)
-            defer.returnValue( (connection_id, global_reservation_id, description, service_params) )
+            #defer.returnValue( (connection_id, global_reservation_id, description, service_params) )
+            defer.returnValue(connection_id)
 
         else:
             # terminate non-failed connections
@@ -291,31 +281,40 @@ class Aggregator:
 
 
     @defer.inlineCallbacks
-    def reserveCommit(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
+    def reserveCommit(self, header, connection_id):
 
         log.msg('', system=LOG_SYSTEM)
-        log.msg('ReserveCommit request. NSA: %s. Connection ID: %s' % (requester_nsa, connection_id), system=LOG_SYSTEM)
+        log.msg('ReserveCommit request. NSA: %s. Connection ID: %s' % (header.requester_nsa, connection_id), system=LOG_SYSTEM)
 
-        conn = yield self.getConnection(requester_nsa, connection_id)
+        conn = yield self.getConnection(header.requester_nsa, connection_id)
 
         if conn.lifecycle_state == state.TERMINATED:
             raise error.ConnectionGoneError('Connection %s has been terminated')
 
         yield state.reserveCommit(conn)
 
-        defs = yield self.forAllSubConnections(conn, registry.RESERVE_COMMIT)
+        defs = []
+        sub_connections = yield conn.SubConnections.get()
+        for sc in sub_connections:
+            # we assume a provider is available
+            provider = self.providers[sc.provider_nsa]
+            header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa, [])
+            # we should probably mark as committing before sending message...
+            d = provider.reserveCommit(header, sc.connection_id)
+            defs.append(d)
+
         results = yield defer.DeferredList(defs, consumeErrors=True)
 
         successes = [ r[0] for r in results ]
         if all(successes):
-            log.msg('Connection %s: ReserveCommit succeeded' % conn.connection_id, system=LOG_SYSTEM)
-            yield state.reserved(conn)
+            log.msg('Connection %s: ReserveCommit messages acked' % conn.connection_id, system=LOG_SYSTEM)
+#            yield state.reserved(conn)
             defer.returnValue(connection_id)
 
         else:
             n_success = sum( [ 1 for s in successes if s ] )
-            log.msg('Connection %s. Only %i of %i connections committed' % (self.connection_id, len(n_success), len(defs)), system=LOG_SYSTEM)
-            raise self._createAggregateException(results, 'committed', error.ConnectionError)
+            log.msg('Connection %s. Only %i of %i commit acked successfully' % (connection_id, n_success, len(defs)), system=LOG_SYSTEM)
+            raise _createAggregateException(results, 'committed', error.ConnectionError)
 
 
     @defer.inlineCallbacks
@@ -402,21 +401,29 @@ class Aggregator:
 
 
     @defer.inlineCallbacks
-    def terminate(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
+    def terminate(self, header, connection_id):
 
         log.msg('', system=LOG_SYSTEM)
-        log.msg('Terminate request. NSA: %s. Connection ID: %s' % (requester_nsa, connection_id), system=LOG_SYSTEM)
+        log.msg('Terminate request. NSA: %s. Connection ID: %s' % (header.requester_nsa, connection_id), system=LOG_SYSTEM)
 
-        conn = yield self.getConnection(requester_nsa, connection_id)
+        conn = yield self.getConnection(header.requester_nsa, connection_id)
 
         if conn.lifecycle_state == state.TERMINATED:
             defer.returnValue(connection_id) # all good
 
         yield state.terminating(conn)
 
-        defs = yield self.forAllSubConnections(conn, registry.TERMINATE)
+        defs = []
+        sub_connections = yield conn.SubConnections.get()
+        for sc in sub_connections:
+            # we assume a provider is available
+            provider = self.providers[sc.provider_nsa]
+            header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa, [])
+            d = provider.terminate(header, sc.connection_id)
+            defs.append(d)
 
         results = yield defer.DeferredList(defs, consumeErrors=True)
+
         successes = [ r[0] for r in results ]
         if all(successes):
             yield state.terminated(conn)
@@ -425,12 +432,114 @@ class Aggregator:
         else:
             # we are now in an inconsistent state...
             n_success = sum( [ 1 for s in successes if s ] )
-            log.msg('Connection %s. Only %i of %i connections successfully terminated' % (self.connection_id, len(n_success), len(defs)), system=LOG_SYSTEM)
-            raise self._createAggregateException(results, 'terminate', error.ConnectionError)
+            log.msg('Connection %s. Only %i of %i connections successfully terminated' % (conn.connection_id, n_success, len(defs)), system=LOG_SYSTEM)
+            raise _createAggregateException(results, 'terminate', error.ConnectionError)
 
         defer.returnValue(connection_id)
 
     # --
+    # Requester API
+    # --
+
+    @defer.inlineCallbacks
+    def reserveConfirmed(self, header, connection_id, global_reservation_id, description, criteria):
+
+        print "AGGR RES CONF", header, connection_id #, criteria.source_stp, criteria.dest_stp
+
+        sub_connection = yield self.getSubConnection(header.provider_nsa, connection_id)
+
+        # gid and desc should be identical, not checking, same with bandwidth, schedule, etc
+
+        # check that path matches our intent
+
+        if criteria.source_stp.network != sub_connection.source_network:
+            print "source network mismatch"
+        if criteria.source_stp.port    != sub_connection.source_port:
+            print "source port mismatch"
+        if criteria.dest_stp.network   != sub_connection.dest_network:
+            print "source network mismatch"
+        if criteria.dest_stp.port      != sub_connection.dest_port:
+            print "source port mismatch"
+        if not criteria.source_stp.labels[0].singleValue():
+            print "source label is no a single value"
+        if not criteria.source_stp.labels[0].singleValue():
+            print "dest label is no a single value"
+
+        # we might need something better for this...
+        criteria.source_stp.labels[0].intersect(sub_connection.source_labels[0])
+        criteria.dest_stp.labels[0].intersect(sub_connection.dest_labels[0])
+
+        sub_connection.reservation_state = state.RESERVE_HELD
+        sub_connection.source_labels = criteria.source_stp.labels
+        sub_connection.dest_labels   = criteria.dest_stp.labels
+
+        yield sub_connection.save()
+
+        # figure out if we can aggregate upwards
+
+        conn = yield sub_connection.ServiceConnection.get()
+        sub_conns = yield conn.SubConnections.get()
+
+        if sub_connection.order_id == 0:
+            conn.source_labels = criteria.source_stp.labels
+        if sub_connection.order_id == len(sub_conns)-1:
+            conn.dest_labels = criteria.dest_stp.labels
+
+        yield conn.save()
+
+        if all( [ sc.reservation_state == state.RESERVE_HELD for sc in sub_conns ] ):
+            print "ALL sub connections held, can emit message"
+            yield state.reserveHeld(conn)
+            #yield reserveHeld(conn)
+            header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn(), None)
+            # construct criteria..
+            source_stp = nsa.STP(conn.source_network, conn.source_port, conn.source_labels)
+            dest_stp   = nsa.STP(conn.dest_network,   conn.dest_port,   conn.dest_labels)
+            criteria = nsa.ServiceParameters(conn.start_time, conn.end_time, source_stp, dest_stp, conn.bandwidth)
+            self.parent_requester.reserveConfirmed(header, conn.connection_id, conn.global_reservation_id, conn.description, criteria)
+
+        else:
+            print "SC STATES", [ sc.reservation_state for sc in sub_conns ]
+
+
+    @defer.inlineCallbacks
+    def reserveCommitConfirmed(self, header, connection_id):
+
+        print "AGGR RES COMMIT CONFIRM", connection_id
+
+        sub_connection = yield self.getSubConnection(header.provider_nsa, connection_id)
+        #yield state.reserved(sub_connection)
+        sub_connection.reservation_state = state.RESERVED
+        yield sub_connection.save()
+
+        conn = yield sub_connection.ServiceConnection.get()
+        sub_conns = yield conn.SubConnections.get()
+
+        if all( [ sc.reservation_state == state.RESERVED for sc in sub_conns ] ):
+            yield state.reserved(conn)
+            header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn(), None)
+            self.parent_requester.reserveCommitConfirmed(header, conn.connection_id)
+
+
+    @defer.inlineCallbacks
+    def terminateConfirmed(self, header, connection_id):
+
+        print "AGGR TERMINATE CONF", header, connection_id
+
+        sub_connection = yield self.getSubConnection(header.provider_nsa, connection_id)
+        sub_connection.reservation_state = state.TERMINATED
+        yield sub_connection.save()
+
+        conn = yield sub_connection.ServiceConnection.get()
+        sub_conns = yield conn.SubConnections.get()
+
+        if all( [ sc.reservation_state == state.TERMINATED for sc in sub_conns ] ):
+            yield state.terminated(conn)
+            header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn(), None)
+            self.parent_requester.terminateConfirmed(header, conn.connection_id)
+
+    # --
+
 
     @defer.inlineCallbacks
     def doActivate(self, conn):
@@ -450,9 +559,9 @@ class Aggregator:
         data_plane_change(None, None, None, conn.connection_id, dps, datetime.datetime.utcnow())
 
     def doTimeout(self, conn):
-        reserve_timeout = self.service_registry.getHandler(registry.RESERVE_TIMEOUT, self.parent_system)
+        #reserve_timeout = self.service_registry.getHandler(registry.RESERVE_TIMEOUT, self.parent_system)
         connection_states = (None, None, None, None)
-        reserve_timeout(None, None, None, conn.connection_id, connection_states, None, datetime.datetime.utcnow())
+        self.parent_requester.reserveTimeout(None, None, None, conn.connection_id, connection_states, None, datetime.datetime.utcnow())
 
     def doErrorEvent(self, conn, event, info, service_ex=None):
         error_event = self.service_registry.getHandler(registry.ERROR_EVENT, self.parent_system)
@@ -476,9 +585,9 @@ class Aggregator:
 
 
     @defer.inlineCallbacks
-    def reserveTimeout(self, requester_nsa, provider_nsa, session_security_attr, connection_id, connection_states, timeout_value, timestamp):
+    def reserveTimeout(self, header, connection_id, connection_states, timeout_value, timestamp):
 
-        sub_conn = yield self.findSubConnection(provider_nsa, connection_id)
+        sub_conn = yield self.findSubConnection(header.provider_nsa, connection_id)
         conn = yield sub_conn.ServiceConnection.get()
         sub_conns = yield conn.SubConnections.get()
 
