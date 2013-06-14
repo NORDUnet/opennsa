@@ -127,7 +127,7 @@ class Label(object):
         return ','.join(vs)
 
     def singleValue(self):
-        return len(self.values) == 1 and self.values[0] == self.values[1]
+        return len(self.values) == 1 and self.values[0][0] == self.values[0][1]
 
     def enumerateValues(self):
         lv = [ range(lr[0], lr[1]+1) for lr in self.values ]
@@ -295,8 +295,8 @@ class ServiceParameters(object):
     def __str__(self):
         d = { 'start_time' : self.start_time.isoformat().rsplit('.',1)[0],
               'end_time'   : self.end_time.isoformat().rsplit('.',1)[0],
-              'source_stp' : self.source_stp.urn(),
-              'dest_stp'   : self.dest_stp.urn(),
+              'source_stp' : self.source_stp,
+              'dest_stp'   : self.dest_stp,
               'bandwidth'  : self.bandwidth
             }
 
