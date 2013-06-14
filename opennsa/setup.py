@@ -12,7 +12,7 @@ from opennsa.protocols import nsi2, discovery
 
 
 
-def setupBackend(backend_conf, network_name, service_registry):
+def setupBackend(backend_conf, network_name, parent_requester):
 
     for backend_name, cfg in backend_conf.items():
         backend_type = cfg['_backend_type']
@@ -21,7 +21,7 @@ def setupBackend(backend_conf, network_name, service_registry):
 
         if backend_type == config.BLOCK_DUD:
             from opennsa.backends import dud
-            return dud.DUDNSIBackend(network_name, service_registry, registry.NSI2_AGGREGATOR)
+            return dud.DUDNSIBackend(network_name, parent_requester)
 
         elif backend_type == config.BLOCK_JUNOS:
             from opennsa.backends import junos
@@ -76,28 +76,34 @@ class OpenNSAService(twistedservice.MultiService):
 
         # setup topology
 
-        nsa_id = 'urn:ogf:network:' + vc[config.NETWORK_NAME] + ':nsa' # is this right?
+        network_name = vc[config.NETWORK_NAME]
+
         base_protocol = 'https://' if vc[config.TLS] else 'http://'
         nsa_endpoint = base_protocol + vc[config.HOST] + ':' + str(vc[config.PORT]) + '/NSI/CS2' # hardcode for now
-        ns_agent = nsa.NetworkServiceAgent(nsa_id, nsa_endpoint)
+        ns_agent = nsa.NetworkServiceAgent(network_name, nsa_endpoint)
 
         topo_source = open( vc[config.NRM_MAP_FILE] ) if type(vc[config.NRM_MAP_FILE]) is str else vc[config.NRM_MAP_FILE] # wee bit hackish
 
-        network, pim = nrmparser.parseTopologySpec( topo_source, vc[config.NETWORK_NAME], ns_agent)
+        network, pim = nrmparser.parseTopologySpec( topo_source, network_name, ns_agent)
         topology = nml.Topology()
         topology.addNetwork(network)
 
         top_resource = resource.Resource()
         service_registry = registry.ServiceRegistry()
 
-        backend_service = setupBackend(vc['backend'], vc[config.NETWORK_NAME], service_registry)
+        providers = { ns_agent.urn() : None }
+
+        aggr = aggregator.Aggregator(network_name, ns_agent, topology, None, providers) # set requester later
+
+        backend_service = setupBackend(vc['backend'], network_name, aggr)
         backend_service.setServiceParent(self)
 
-        aggr = aggregator.Aggregator(vc[config.NETWORK_NAME], ns_agent, topology, service_registry, registry.NSI2_REMOTE)
+        providers[ ns_agent.urn() ] = backend_service
 
         discovery.setupDiscoveryService(None, top_resource)
 
-        nsi2.setupProvider(aggr, top_resource, service_registry, vc[config.HOST], vc[config.PORT])
+        pc = nsi2.setupProvider(aggr, top_resource, aggr, vc[config.HOST], vc[config.PORT])
+        aggr.parent_requester = pc
 
         vr = viewresource.ConnectionListResource(aggr)
         top_resource.children['NSI'].putChild('connections', vr)
