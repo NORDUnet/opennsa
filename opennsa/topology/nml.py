@@ -13,6 +13,9 @@ from opennsa import nsa, error
 
 LOG_SYSTEM = 'opennsa.topology'
 
+INGRESS = 'ingress'
+EGRESS  = 'egress'
+
 # Label types
 ETHERNET = 'http://schemas.ogf.org/nml/2012/10/ethernet'
 ETHERNET_VLAN = ETHERNET + '#vlan'
@@ -24,7 +27,7 @@ class Port(object):
     def __init__(self, name, orientation, labels, bandwidth, remote_network=None, remote_port=None):
 
         assert ':' not in name, 'Invalid port name, must not contain ":"'
-        assert orientation in (nsa.INGRESS, nsa.EGRESS), 'Invalid port orientation: %s' % orientation
+        assert orientation in (INGRESS, EGRESS), 'Invalid port orientation: %s' % orientation
         if labels:
             assert type(labels) is list, 'labels must be list or None'
             for label in labels:
@@ -197,17 +200,13 @@ class Topology:
 
         if source_port.isBidirectional() or dest_port.isBidirectional():
             # at least one of the stps are bidirectional
-            if source_stp.orientation is None:
-                raise error.TopologyError('Cannot perform path finding, source port is bidirectional and source stp has no orientation')
-            if dest_stp.orientation is None:
-                raise error.TopologyError('Cannot perform path finding, destination port is bidirectional and destination port has no orientation')
             if not source_port.isBidirectional():
                 raise error.TopologyError('Cannot connect bidirectional source with unidirectional destination')
             if not dest_port.isBidirectional():
                 raise error.TopologyError('Cannot connect bidirectional destination with unidirectional source')
         else:
             # both ports are unidirectional
-            if not (source_port.orientation, dest_port.orientation) in ( (nsa.INGRESS, nsa.EGRESS), (nsa.EGRESS, nsa.INGRESS) ):
+            if not (source_port.orientation, dest_port.orientation) in ( (nml.INGRESS, nml.EGRESS), (nml.EGRESS, nml.INGRESS) ):
                 raise error.TopologyError('Cannot connect STPs of same unidirectional direction (%s -> %s)' % (source_port.orientation, dest_port.orientation))
 
         # these are only really interesting for the initial call, afterwards they just prune
@@ -266,7 +265,7 @@ class Topology:
                         continue # don't do loops in path finding
 
                     demarcation_label = lp.labels()[0] if source_network.canSwapLabel(source_stp.labels[0].type_) else source_stp.labels[0].intersect(lp.labels()[0])
-                    demarcation_stp = nsa.STP(demarcation[0], demarcation[1], nsa.INGRESS, [ demarcation_label ] )
+                    demarcation_stp = nsa.STP(demarcation[0], demarcation[1], [ demarcation_label ] )
                     sub_exclude_networks = [ source_network.name ] + (exclude_networks or [])
                     sub_links = self._findPathsRecurse(demarcation_stp, dest_stp, bandwidth, sub_exclude_networks)
                     # if we didn't find any sub paths, just continue

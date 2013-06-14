@@ -9,9 +9,9 @@ from . import topology
 
 LABEL = nsa.Label(nml.ETHERNET_VLAN, '1781-1789')
 
-ARUBA_PS   = nsa.STP('aruba',   'ps', nsa.INGRESS, [LABEL])
-BONAIRE_PS = nsa.STP('bonaire', 'ps', nsa.INGRESS, [LABEL])
-CURACAO_PS = nsa.STP('curacao', 'ps', nsa.INGRESS, [LABEL])
+ARUBA_PS   = nsa.STP('aruba',   'ps', [LABEL])
+BONAIRE_PS = nsa.STP('bonaire', 'ps', [LABEL])
+CURACAO_PS = nsa.STP('curacao', 'ps', [LABEL])
 
 
 class TopologyTest(unittest.TestCase):

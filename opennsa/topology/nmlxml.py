@@ -87,7 +87,7 @@ def nmlXML(network):
     outbound_ports = ET.SubElement(node, NML_RELATION, {TYPE : NML_HASOUTBOUNDPORT} )
     for port in network.ports:
         if isinstance(port, nml.Port):
-            if port.orientation is nsa.INGRESS:
+            if port.orientation is nml.INGRESS:
                 ET.SubElement(inbound_ports, NML_PORT, {ID : URN_NETWORK + ':' + port.name})
             else:
                 ET.SubElement(outbound_ports, NML_PORT, {ID : URN_NETWORK + ':' + port.name})
