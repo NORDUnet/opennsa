@@ -8,7 +8,7 @@ from opennsa import nsa, error
 
 
 # this parser should perhaps be somewhere else
-def _createSTP(stp_desc, directionality):
+def _createSTP(stp_desc):
     network, local_part = stp_desc.rsplit(':',1)
     if '#' in local_part:
         port, label_part = local_part.split('#',1)
@@ -22,13 +22,13 @@ def _createSTP(stp_desc, directionality):
         port = local_part
         labels = None
 
-    return nsa.STP(network, port, directionality, labels)
+    return nsa.STP(network, port, labels)
 
 
 def _createServiceParams(start_time, end_time, src, dst, bandwidth):
 
-    src_stp = _createSTP(src, nsa.EGRESS)
-    dst_stp = _createSTP(dst, nsa.INGRESS)
+    src_stp = _createSTP(src)
+    dst_stp = _createSTP(dst)
 
     return nsa.ServiceParameters(start_time, end_time, src_stp, dst_stp, bandwidth)
 
