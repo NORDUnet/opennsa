@@ -26,12 +26,15 @@ LOG_SYSTEM = 'opennsa.nsa'
 
 class NSIHeader(object):
 
-    def __init__(self, requester_nsa, provider_nsa, session_security_attrs, correlation_id=None):
+    def __init__(self, requester_nsa, provider_nsa, session_security_attrs=None, correlation_id=None, reply_to=None):
         self.requester_nsa          = requester_nsa
         self.provider_nsa           = provider_nsa
         self.session_security_attrs = session_security_attrs
+        self.reply_to               = reply_to
         self.correlation_id         = correlation_id
 
+    def __repr__(self):
+        return '<NSIHeader: %s, %s, %s, %s>' % (self.requester_nsa, self.provider_nsa, self.session_security_attrs, self.correlation_id)
 
 
 class EmptyLabelSet(Exception):
