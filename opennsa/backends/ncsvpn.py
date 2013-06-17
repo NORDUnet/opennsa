@@ -11,7 +11,7 @@ import random
 from twisted.python import log
 
 from opennsa import config
-from opennsa.backends.common import simplebackend
+from opennsa.backends.common import genericbackend
 from opennsa.protocols.shared import httpclient
 from opennsa.topology import nml
 
@@ -199,7 +199,7 @@ class NCSVPNConnectionManager:
 # --
 
 
-class NCSVPNBackend(simplebackend.SimpleBackend):
+class NCSVPNBackend(genericbackend.GenericBackend):
 
     def __init__(self, network_name, service_registry, parent_system, configuration):
 
@@ -213,5 +213,5 @@ class NCSVPNBackend(simplebackend.SimpleBackend):
         password         = cfg_dict[config.NCS_PASSWORD]
 
         cm = NCSVPNConnectionManager(ncs_services_url, user, password, name)
-        simplebackend.SimpleBackend.__init__(self, network_name, cm, service_registry, parent_system, name)
+        genericbackend.GenericBackend.__init__(self, network_name, cm, service_registry, parent_system, name)
 
