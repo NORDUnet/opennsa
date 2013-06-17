@@ -253,7 +253,7 @@ class Aggregator:
 
         if all(successes):
 #            yield state.reserveHeld(conn)
-            log.msg('Connection %s: Reserve succeeded' % conn.connection_id, system=LOG_SYSTEM)
+            log.msg('Connection %s: Reserve acked' % conn.connection_id, system=LOG_SYSTEM)
             #defer.returnValue( (connection_id, global_reservation_id, description, service_params) )
             defer.returnValue(connection_id)
 
