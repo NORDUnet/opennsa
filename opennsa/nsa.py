@@ -34,7 +34,8 @@ class NSIHeader(object):
         self.correlation_id         = correlation_id
 
     def __repr__(self):
-        return '<NSIHeader: %s, %s, %s, %s>' % (self.requester_nsa, self.provider_nsa, self.session_security_attrs, self.correlation_id)
+        return '<NSIHeader: %s, %s, %s, %s, %s>' % (self.requester_nsa, self.provider_nsa, self.session_security_attrs, self.reply_to, self.correlation_id)
+
 
 
 class EmptyLabelSet(Exception):
