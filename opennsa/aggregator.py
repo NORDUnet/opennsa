@@ -146,14 +146,9 @@ class Aggregator:
                             start_time=service_params.start_time, end_time=service_params.end_time, bandwidth=service_params.bandwidth)
         yield conn.save()
 
-        # As STP Labels are only candidates as this point they will need to be changed later
+        # Here we should return / callback and spawn off the path creation
 
-#        def reserveResponse(result):
-#            success = False if isinstance(result, failure.Failure) else True
-#            if not success:
-#                log.msg('Error reserving: %s' % result.getErrorMessage(), system=LOG_SYSTEM)
-#            d = subscription.dispatchNotification(success, result, sub, self.service_registry)
-
+        # Note: At his point STP Labels are candidates and they will need to be changed later
 
     #    def reserveRequestsDone(results):
     #        successes = [ r[0] for r in results ]
@@ -205,7 +200,6 @@ class Aggregator:
 
         selected_path = paths[0] # shortest path
         log.msg('Attempting to create path %s' % selected_path, system=LOG_SYSTEM)
-        ## fixme, need to set end labels here
 
         for link in selected_path:
             provider_nsa = self.topology.getNetwork(link.network).managing_nsa
@@ -252,9 +246,7 @@ class Aggregator:
         successes = [ r[0] for r in results ]
 
         if all(successes):
-#            yield state.reserveHeld(conn)
             log.msg('Connection %s: Reserve acked' % conn.connection_id, system=LOG_SYSTEM)
-            #defer.returnValue( (connection_id, global_reservation_id, description, service_params) )
             defer.returnValue(connection_id)
 
         else:
