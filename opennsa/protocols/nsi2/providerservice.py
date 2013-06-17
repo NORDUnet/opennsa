@@ -106,8 +106,6 @@ class ProviderService:
         src_stp = helper.createSTP(path.sourceSTP)
         dst_stp = helper.createSTP(path.destSTP)
 
-        print "STPS", src_stp, dst_stp
-
         start_time = self.datetime_parser.parse(schedule.startTime)
         if start_time.utcoffset() is None:
             err = failure.Failure ( error.PayloadError('Start time has no time zone information') )

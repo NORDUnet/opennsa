@@ -18,12 +18,6 @@ def setupProvider(nsi_service, top_resource, service_provider, host, port, tls=F
 
     soap_resource = soapresource.setupSOAPResource(top_resource, 'CS2')
 
-#    service_registry.registerEventHandler(registry.RESERVE,   nsi_requester.reserve,    registry.NSI2_CLIENT)
-#    service_registry.registerEventHandler(registry.PROVISION, nsi_requester.provision,  registry.NSI2_CLIENT)
-#    service_registry.registerEventHandler(registry.RELEASE,   nsi_requester.release,    registry.NSI2_CLIENT)
-#    service_registry.registerEventHandler(registry.TERMINATE, nsi_requester.terminate,  registry.NSI2_CLIENT)
-#    service_registry.registerEventHandler(registry.QUERY,     nsi_requester.query,      registry.NSI2_CLIENT)
-
     provider_client = providerclient.ProviderClient(ctx_factory)
 
     nsi2_provider = provider.Provider(service_provider)
