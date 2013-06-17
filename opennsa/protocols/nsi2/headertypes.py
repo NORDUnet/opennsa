@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*- 
 
 #
-# Generated Wed Dec  5 13:54:35 2012 by generateDS.py version 2.7c.
+# Generated Mon Jun 17 14:38:04 2013 by generateDS.py version 2.7c.
 #
 
 import sys
@@ -355,7 +355,7 @@ def _cast(typ, value):
 class CommonHeaderType(GeneratedsSuper):
     """Type definition for the common NSI message header that is sent as
     part of every NSI message exchange. Mandatory Elements:
-    protocolVersion - A URI identifying the specific protocol
+    protocolVersion - A string identifying the specific protocol
     version carried in this NSI message. The protocol version is
     modeled separately from the namespace of the WSDL and XML schema
     to capture behavioral changes that cannot be modeled in schema
@@ -444,7 +444,7 @@ class CommonHeaderType(GeneratedsSuper):
     def insert_anytypeobjs_(self, index, value): self._anytypeobjs_[index] = value
     def get_anyAttributes_(self): return self.anyAttributes_
     def set_anyAttributes_(self, anyAttributes_): self.anyAttributes_ = anyAttributes_
-    def export(self, outfile, level, namespace_='fw:', name_='CommonHeaderType', namespacedef_='xmlns:fw="http://schemas.ogf.org/nsi/2012/03/framework/headers"', pretty_print=True):
+    def export(self, outfile, level, namespace_='tns:', name_='CommonHeaderType', namespacedef_='xmlns:fw="http://schemas.ogf.org/nsi/2012/03/framework/headers"', pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -7587,14 +7587,15 @@ class ServiceExceptionType(GeneratedsSuper):
     Elements: nsaId - NSA that generated the service exception.
     errorId - Error identifier uniquely identifying each known fault
     within the protocol. text - User friendly message text
-    describing the error. variables - A collection of type/value
-    pairs providing addition information relating to the error.
-    childException - Hierarchical list of service exceptions
-    capturing failures within the request tree."""
+    describing the error. variables - An optional collection of
+    type/value pairs providing additional information relating to
+    the error. childException - Hierarchical list of service
+    exceptions capturing failures within the request tree."""
     subclass = None
     superclass = None
-    def __init__(self, nsaId=None, errorId=None, text=None, variables=None, childException=None):
+    def __init__(self, nsaId=None, connectionId=None, errorId=None, text=None, variables=None, childException=None):
         self.nsaId = nsaId
+        self.connectionId = connectionId
         self.errorId = errorId
         self.text = text
         self.variables = variables
@@ -7612,6 +7613,11 @@ class ServiceExceptionType(GeneratedsSuper):
     def set_nsaId(self, nsaId): self.nsaId = nsaId
     def validate_NsaIdType(self, value):
         # Validate type NsaIdType, a restriction on xsd:anyURI.
+        pass
+    def get_connectionId(self): return self.connectionId
+    def set_connectionId(self, connectionId): self.connectionId = connectionId
+    def validate_ConnectionIdType(self, value):
+        # Validate type ConnectionIdType, a restriction on xsd:string.
         pass
     def get_errorId(self): return self.errorId
     def set_errorId(self, errorId): self.errorId = errorId
@@ -7649,6 +7655,9 @@ class ServiceExceptionType(GeneratedsSuper):
         if self.nsaId is not None:
             showIndent(outfile, level, pretty_print)
             outfile.write('<%snsaId>%s</%snsaId>%s' % (namespace_, self.gds_format_string(quote_xml(self.nsaId).encode(ExternalEncoding), input_name='nsaId'), namespace_, eol_))
+        if self.connectionId is not None:
+            showIndent(outfile, level, pretty_print)
+            outfile.write('<%sconnectionId>%s</%sconnectionId>%s' % (namespace_, self.gds_format_string(quote_xml(self.connectionId).encode(ExternalEncoding), input_name='connectionId'), namespace_, eol_))
         if self.errorId is not None:
             showIndent(outfile, level, pretty_print)
             outfile.write('<%serrorId>%s</%serrorId>%s' % (namespace_, self.gds_format_string(quote_xml(self.errorId).encode(ExternalEncoding), input_name='errorId'), namespace_, eol_))
@@ -7662,6 +7671,7 @@ class ServiceExceptionType(GeneratedsSuper):
     def hasContent_(self):
         if (
             self.nsaId is not None or
+            self.connectionId is not None or
             self.errorId is not None or
             self.text is not None or
             self.variables is not None or
@@ -7681,6 +7691,9 @@ class ServiceExceptionType(GeneratedsSuper):
         if self.nsaId is not None:
             showIndent(outfile, level)
             outfile.write('nsaId=%s,\n' % quote_python(self.nsaId).encode(ExternalEncoding))
+        if self.connectionId is not None:
+            showIndent(outfile, level)
+            outfile.write('connectionId=%s,\n' % quote_python(self.connectionId).encode(ExternalEncoding))
         if self.errorId is not None:
             showIndent(outfile, level)
             outfile.write('errorId=%s,\n' % quote_python(self.errorId).encode(ExternalEncoding))
@@ -7718,6 +7731,11 @@ class ServiceExceptionType(GeneratedsSuper):
             nsaId_ = self.gds_validate_string(nsaId_, node, 'nsaId')
             self.nsaId = nsaId_
             self.validate_NsaIdType(self.nsaId)    # validate type NsaIdType
+        elif nodeName_ == 'connectionId':
+            connectionId_ = child_.text
+            connectionId_ = self.gds_validate_string(connectionId_, node, 'connectionId')
+            self.connectionId = connectionId_
+            self.validate_ConnectionIdType(self.connectionId)    # validate type ConnectionIdType
         elif nodeName_ == 'errorId':
             errorId_ = child_.text
             errorId_ = self.gds_validate_string(errorId_, node, 'errorId')
@@ -7738,8 +7756,9 @@ class ServiceExceptionType(GeneratedsSuper):
 
 
 class VariablesType(GeneratedsSuper):
-    """A specific type definition providing a set of zero or more variables
-    associated with the ServiceException."""
+    """A type definition providing a set of zero or more type/value
+    variables used for modeling generic attributes. Elements:
+    variable - The variable containing the type/values."""
     subclass = None
     superclass = None
     def __init__(self, variable=None):
@@ -7915,7 +7934,7 @@ class TypeValuePairListType(GeneratedsSuper):
 class TypeValuePairType(GeneratedsSuper):
     """Definition for a simple type and multi-value tuple. Includes simple
     string type and value, as well as more advanced extensions if
-    needed. A targetNamespace attribute is include to provide
+    needed. A targetNamespace attribute is included to provide
     context where needed. Elements: value - A string value
     corresponding to type. any - Provides a flexible mechanism
     allowing additional elements to be provided as an alternative,
@@ -8141,6 +8160,11 @@ def parseString(inString):
         rootClass = CommonHeaderType
     rootObj = rootClass.factory()
     rootObj.build(rootNode)
+    # Enable Python to collect the space used by the DOM.
+    doc = None
+    sys.stdout.write('<?xml version="1.0" ?>\n')
+    rootObj.export(sys.stdout, 0, name_="nsiHeader",
+        namespacedef_='')
     return rootObj
 
 
