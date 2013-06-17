@@ -43,7 +43,11 @@ def httpRequest(url, payload, headers, method='POST', timeout=DEFAULT_TIMEOUT, c
         e = HTTPRequestError('URL must be string, not %s' % type(url))
         return defer.fail(e)
 
-    log.msg(" -- Sending Payload --\n%s\n -- END. Sending Payload --" % payload, system=LOG_SYSTEM, payload=True)
+    if not url.startswith('http'):
+        e = HTTPRequestError('URL does not start with http (URL %s)' % (url))
+        return defer.fail(e)
+
+    log.msg(" -- Sending Payload to %s --\n%s\n -- END. Sending Payload --" % (url, payload), system=LOG_SYSTEM, payload=True)
 
     scheme, host, port, _ = twclient._parse(url)
 
