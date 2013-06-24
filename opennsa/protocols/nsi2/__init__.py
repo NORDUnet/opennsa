@@ -20,11 +20,11 @@ def setupProvider(nsi_service, top_resource, service_provider, host, port, tls=F
 
     provider_client = providerclient.ProviderClient(ctx_factory)
 
-    nsi2_provider = provider.Provider(service_provider)
+    nsi2_provider = provider.Provider(service_provider, provider_client)
 
     providerservice.ProviderService(soap_resource, nsi2_provider)
 
-    return provider_client
+    return nsi2_provider
 
 
 def setupRequester(top_resource, host, port, tls=False, ctx_factory=None, callback_timeout=None):
