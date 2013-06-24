@@ -203,7 +203,6 @@ class Aggregator:
 
         for link in selected_path:
             provider_nsa = self.topology.getNetwork(link.network).managing_nsa
-            print "PROV", provider_nsa, provider_nsa.urn()
             if not provider_nsa.urn() in self.providers:
                 raise error.ConnectionCreateError('Cannot create link at network %s, no available provider for NSA %s' % (link.network, provider_nsa.urn()))
 
@@ -247,6 +246,7 @@ class Aggregator:
 
         if all(successes):
             log.msg('Connection %s: Reserve acked' % conn.connection_id, system=LOG_SYSTEM)
+            print self.parent_requester
             defer.returnValue(connection_id)
 
         else:
@@ -480,9 +480,8 @@ class Aggregator:
         yield conn.save()
 
         if all( [ sc.reservation_state == state.RESERVE_HELD for sc in sub_conns ] ):
-            print "ALL sub connections held, can emit message"
+            print "All sub connections reserve held, can emit reserveConfirmed"
             yield state.reserveHeld(conn)
-            #yield reserveHeld(conn)
             header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn(), None)
             # construct criteria..
             source_stp = nsa.STP(conn.source_network, conn.source_port, conn.source_labels)
@@ -551,9 +550,8 @@ class Aggregator:
         data_plane_change(None, None, None, conn.connection_id, dps, datetime.datetime.utcnow())
 
     def doTimeout(self, conn):
-        #reserve_timeout = self.service_registry.getHandler(registry.RESERVE_TIMEOUT, self.parent_system)
-        connection_states = (None, None, None, None)
-        self.parent_requester.reserveTimeout(None, None, None, conn.connection_id, connection_states, None, datetime.datetime.utcnow())
+        header = None
+        self.parent_requester.reserveTimeout(header, conn.connection_id, None, None, None, None, None)
 
     def doErrorEvent(self, conn, event, info, service_ex=None):
         error_event = self.service_registry.getHandler(registry.ERROR_EVENT, self.parent_system)
