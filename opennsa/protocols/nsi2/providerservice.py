@@ -6,7 +6,7 @@ Copyright: NORDUnet (2011)
 """
 
 import time
-from xml.etree import cElementTree as ET
+from xml.etree import ElementTree as ET
 
 from dateutil import parser
 from dateutil.tz import tzutc
@@ -15,7 +15,7 @@ from twisted.python import log, failure
 
 from opennsa import nsa, error
 from opennsa.protocols.shared import minisoap, resource
-from opennsa.protocols.nsi2 import actions, connectiontypes as CT, headertypes as HT, helper
+from opennsa.protocols.nsi2 import actions, bindings, helper
 
 
 
@@ -29,11 +29,15 @@ class ProviderService:
 
         self.provider = provider
 
-        soap_resource.registerDecoder(actions.RESERVE,   self.reserve)
-        soap_resource.registerDecoder(actions.PROVISION, self.provision)
-        soap_resource.registerDecoder(actions.RELEASE,   self.release)
-        soap_resource.registerDecoder(actions.TERMINATE, self.terminate)
-        soap_resource.registerDecoder(actions.QUERY,     self.query)
+        soap_resource.registerDecoder(actions.RESERVE,          self.reserve)
+        soap_resource.registerDecoder(actions.RESERVE_COMMIT,   self.reserveCommit)
+        soap_resource.registerDecoder(actions.RESERVE_ABORT,    self.reserveAbort)
+
+        soap_resource.registerDecoder(actions.PROVISION,        self.provision)
+        soap_resource.registerDecoder(actions.RELEASE,          self.release)
+        soap_resource.registerDecoder(actions.TERMINATE,        self.terminate)
+
+        soap_resource.registerDecoder(actions.QUERY_SUMMARY,     self.querySummary)
 
         self.datetime_parser = parser.parser()
 
@@ -48,10 +52,9 @@ class ProviderService:
 
     def _createGenericAcknowledgement(self, _, nsi_header):
 
-        soap_header = HT.CommonHeaderType(None, nsi_header.correlation_id, nsi_header.requester_nsa, nsi_header.provider_nsa)
-        soap_header_payload = helper.export(soap_header, 'acknowledgment')
-
-        payload = minisoap.createSoapPayload(None, soap_header_payload)
+        soap_header = bindings.CommonHeaderType(helper.PROTO, nsi_header.correlation_id, nsi_header.requester_nsa, nsi_header.provider_nsa, None, nsi_header.session_security_attrs)
+        soap_header_element = soap_header.xml(bindings.acknowledgment)
+        payload = minisoap.createSoapPayload(None, soap_header_element)
         return payload
 
 
@@ -68,7 +71,7 @@ class ProviderService:
 
         t_start = time.time()
 
-        soap_header, reservation = helper.parseRequest(soap_data)
+        nsi_header, reservation = helper.parseRequest(soap_data)
 
         # do some checking here
 
@@ -101,7 +104,7 @@ class ProviderService:
 
         # Missing: EROs, symmetric, stp labels
 
-        nsi_header = nsa.NSIHeader(soap_header.requesterNSA, soap_header.providerNSA, None, soap_header.replyTo, soap_header.correlationId)
+#        nsi_header = nsa.NSIHeader(soap_header.requesterNSA, soap_header.providerNSA, None, soap_header.correlationId, soap_header.replyTo)
 
         src_stp = helper.createSTP(path.sourceSTP)
         dst_stp = helper.createSTP(path.destSTP)
@@ -128,6 +131,29 @@ class ProviderService:
         d = self.provider.reserve(nsi_header, reservation.connectionId, reservation.globalReservationId, reservation.description, service_parameters)
 
         d.addCallbacks(self._createGenericAcknowledgement, self._createSOAPFault, callbackArgs=(nsi_header,), errbackArgs=(nsi_header,))
+        return d
+
+
+
+    def reserveCommit(self, soap_data):
+        header, request = helper.parseRequest(soap_data)
+        session_security_attr = None
+        d = self.provider.reserveCommit(header.correlationId, header.replyTo, header.requesterNSA, header.providerNSA, session_security_attr,
+                                        request.connectionId)
+        d.addCallbacks(self._createGenericAcknowledgement, self._createSOAPFault,
+                       callbackArgs=(header.correlationId, header.requesterNSA, header.providerNSA),
+                       errbackArgs=(header.providerNSA,))
+        return d
+
+
+    def reserveAbort(self, soap_data):
+        header, request = helper.parseRequest(soap_data)
+        session_security_attr = None
+        d = self.provider.reserveAbort(header.correlationId, header.replyTo, header.requesterNSA, header.providerNSA, session_security_attr,
+                                       request.connectionId)
+        d.addCallbacks(self._createGenericAcknowledgement, self._createSOAPFault,
+                       callbackArgs=(header.correlationId, header.requesterNSA, header.providerNSA),
+                       errbackArgs=(header.providerNSA,))
         return d
 
 
@@ -176,9 +202,9 @@ class ProviderService:
         return d
 
 
-    def query(self, soap_data):
+    def querySummary(self, soap_data):
 
-        header, query = helper.parseRequest(soap_data, CT.QueryType)
+        header, query = helper.parseRequest(soap_data, bindings.QueryType)
 
         session_security_attr = None
         filter_ = query.queryFilter

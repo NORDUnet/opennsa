@@ -7,7 +7,7 @@ Copyright: NORDUnet (2011)
 
 from opennsa import nsa
 from opennsa.protocols.shared import minisoap, httpclient
-from opennsa.protocols.nsi2 import actions, connectiontypes as CT, helper
+from opennsa.protocols.nsi2 import actions, bindings, helper
 
 
 
@@ -27,7 +27,7 @@ class ProviderClient:
 
         header_payload = helper.createHeader(correlation_id, requester_nsa, provider_nsa)
 
-        generic_confirm = CT.GenericConfirmedType(global_reservation_id, connection_id)
+        generic_confirm = bindings.GenericConfirmedType(global_reservation_id, connection_id)
         body_payload   = helper.export(generic_confirm, message_name)
 
         payload = minisoap.createSoapPayload(body_payload, header_payload)
@@ -45,13 +45,13 @@ class ProviderClient:
 
         header_payload = helper.createHeader(correlation_id, requester_nsa, provider_nsa)
 
-        connection_states = CT.ConnectionStatesType(CT.ReservationStateType(0, 'TerminateFailed'),
-                                                    CT.ProvisionStateType(0,   'TerminateFailed'),
-                                                    CT.ActivationStateType(0,  'Inactive'))
+        connection_states = bindings.ConnectionStatesType(bindings.ReservationStateType(0, 'TerminateFailed'),
+                                                    bindings.ProvisionStateType(0,   'TerminateFailed'),
+                                                    bindings.ActivationStateType(0,  'Inactive'))
 
         se = helper.createServiceException(err, provider_nsa)
 
-        generic_failed = CT.GenericFailedType(global_reservation_id, connection_id, connection_states, se)
+        generic_failed = bindings.GenericFailedType(global_reservation_id, connection_id, connection_states, se)
 
         body_payload   = helper.export(generic_failed, message_name)
 
@@ -68,32 +68,33 @@ class ProviderClient:
 
     def reserveConfirmed(self, nsi_header, connection_id, global_reservation_id, description, service_parameters):
 
-        header_payload = helper.createHeader(nsi_header.correlation_id, nsi_header.requester_nsa, nsi_header.provider_nsa)
+        header_element = helper.createHeader(nsi_header.requester_nsa, nsi_header.provider_nsa, correlation_id=nsi_header.correlation_id)
 
         sp = service_parameters
 
         version = 0
-        schedule = CT.ScheduleType( sp.start_time.isoformat(), sp.end_time.isoformat() )
+        schedule = bindings.ScheduleType( sp.start_time.isoformat(), sp.end_time.isoformat() )
         bandwidth = sp.bandwidth
 
-        service_attributes = CT.TypeValuePairListType()
+        service_attributes = None
 
         src_stp = helper.createSTPType(sp.source_stp)
         dst_stp = helper.createSTPType(sp.dest_stp)
 
-        path = CT.PathType(sp.directionality, False, src_stp, dst_stp)
+        path = bindings.PathType(sp.directionality, False, src_stp, dst_stp, None)
 
-        criteria = CT.ReservationConfirmCriteriaType(version, schedule, bandwidth, service_attributes, path)
+        criteria = bindings.ReservationConfirmCriteriaType(version, schedule, bandwidth, service_attributes, path)
 
-        reserve_conf = CT.ReserveConfirmedType(global_reservation_id, description, connection_id, [ criteria ] )
+        reserve_conf = bindings.ReserveConfirmedType(global_reservation_id, description, connection_id, [ criteria ] )
 
-        body_payload   = helper.export(reserve_conf, 'reserveConfirmed')
-
-        payload = minisoap.createSoapPayload(body_payload, header_payload)
+        body_element = reserve_conf.xml(bindings.reserveConfirmed)
+        payload = minisoap.createSoapPayload(body_element, header_element)
 
         def gotReply(data):
             # we don't really do anything about these
             return ""
+
+        print "RES CONF EMIT", nsi_header, nsi_header.reply_to
 
         d = httpclient.soapRequest(nsi_header.reply_to, actions.RESERVE_CONFIRMED, payload, ctx_factory=self.ctx_factory)
         d.addCallbacks(gotReply) #, errReply)
@@ -149,14 +150,14 @@ class ProviderClient:
         for conn in connections:
             # need to create criteria here sometime
             criteria      = None
-            states        = CT.ConnectionStatesType( CT.ReservationStateType(0, conn.state()),
-                                                     CT.ProvisionStateType(  0, conn.state()),
-                                                     CT.ActivationStateType( 0, conn.state()))
+            states        = bindings.ConnectionStatesType( bindings.ReservationStateType(0, conn.state()),
+                                                     bindings.ProvisionStateType(  0, conn.state()),
+                                                     bindings.ActivationStateType( 0, conn.state()))
             children      = None
-            conns.append( CT.QuerySummaryResultType(conn.global_reservation_id, conn.description, conn.connection_id,
+            conns.append( bindings.QuerySummaryResultType(conn.global_reservation_id, conn.description, conn.connection_id,
                                                     criteria, conn.requester_nsa, states, children) )
 
-        query_confirmed = CT.QueryConfirmedType(reservationSummary=conns)
+        query_confirmed = bindings.QueryConfirmedType(reservationSummary=conns)
 
         # --
 

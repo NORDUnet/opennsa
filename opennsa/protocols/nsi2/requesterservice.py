@@ -13,7 +13,7 @@ from twisted.python import log
 from opennsa import nsa, error
 
 from opennsa.protocols.shared import minisoap
-from opennsa.protocols.nsi2 import actions, headertypes as HT, connectiontypes as CT, helper
+from opennsa.protocols.nsi2 import actions, bindings, helper
 
 
 
@@ -29,27 +29,25 @@ class RequesterService:
         self.datetime_parser = parser.parser()
 
         # consider moving this to __init__ (soap_resource only used in setup)
-        soap_resource.registerDecoder(actions.RESERVE_CONFIRMED,   self.reserveConfirmed)
-        soap_resource.registerDecoder(actions.RESERVE_FAILED,      self.reserveFailed)
+        soap_resource.registerDecoder(actions.RESERVE_CONFIRMED,        self.reserveConfirmed)
+        soap_resource.registerDecoder(actions.RESERVE_FAILED,           self.reserveFailed)
+        soap_resource.registerDecoder(actions.RESERVE_COMMIT_CONFIRMED, self.reserveConfirmed)
+        soap_resource.registerDecoder(actions.RESERVE_COMMIT_FAILED,    self.reserveCommitFailed)
+        soap_resource.registerDecoder(actions.RESERVE_ABORT_CONFIRMED,  self.reserveAbortConfirmed)
 
-        soap_resource.registerDecoder(actions.PROVISION_CONFIRMED, self.provisionConfirmed)
-        soap_resource.registerDecoder(actions.PROVISION_FAILED,    self.provisionFailed)
+        soap_resource.registerDecoder(actions.PROVISION_CONFIRMED,      self.provisionConfirmed)
+        soap_resource.registerDecoder(actions.RELEASE_CONFIRMED,        self.releaseConfirmed)
+        soap_resource.registerDecoder(actions.TERMINATE_CONFIRMED,      self.terminateConfirmed)
 
-        soap_resource.registerDecoder(actions.RELEASE_CONFIRMED,   self.releaseConfirmed)
-        soap_resource.registerDecoder(actions.RELEASE_FAILED,      self.releaseFailed)
+        soap_resource.registerDecoder(actions.QUERY_SUMMARY_CONFIRMED,  self.querySummaryConfirmed)
+        soap_resource.registerDecoder(actions.QUERY_SUMMARY_FAILED,     self.querySummaryFailed)
 
-        soap_resource.registerDecoder(actions.TERMINATE_CONFIRMED, self.terminateConfirmed)
-        soap_resource.registerDecoder(actions.TERMINATE_FAILED,    self.terminateFailed)
-
-        soap_resource.registerDecoder(actions.QUERY_CONFIRMED,     self.queryConfirmed)
-        soap_resource.registerDecoder(actions.QUERY_FAILED,        self.queryFailed)
-
-##        #"http://schemas.ogf.org/nsi/2011/10/connection/service/forcedEnd"
+        # several actions still missing
 
 
     def _createGenericAcknowledgement(self, correlation_id, requester_nsa, provider_nsa):
 
-        header_payload = helper.createHeader(correlation_id, requester_nsa, provider_nsa)
+        header_payload = helper.createHeader(requester_nsa, provider_nsa, correlation_id=correlation_id)
 
         payload = minisoap.createSoapPayload(None, header_payload)
         return payload
@@ -57,7 +55,7 @@ class RequesterService:
 
     def _parseGenericFailure(self, soap_data):
 
-        header, generic_failure = helper.parseRequest(soap_data, CT.GenericFailedType)
+        header, generic_failure = helper.parseRequest(soap_data)
 
         service_exception = generic_failure.serviceException
 
@@ -73,11 +71,16 @@ class RequesterService:
         # reservation should perhaps be called reserve_confirm
         header, reservation = helper.parseRequest(soap_data)
 
+        print "RES", reservation
+        print "RC", reservation.criteria
+
         if type(reservation.criteria) == list and len(reservation.criteria) > 1:
             print "Multiple reservation criteria!"
             criteria = reservation.criteria[0]
         else:
             criteria = reservation.criteria
+
+        print "CRIT", criteria
 
         schedule = criteria.schedule
         path = criteria.path
@@ -117,61 +120,39 @@ class RequesterService:
         return self._createGenericAcknowledgement(header.correlationId, header.requesterNSA, header.providerNSA)
 
 
-    def provisionConfirmed(self, soap_data):
-
-        header, generic_confirm = helper.parseRequest(soap_data)
-        session_security_attr = None
-
-        self.requester.provisionConfirmed(header.correlationId, header.requesterNSA, header.providerNSA, session_security_attr,
-                                          generic_confirm.connectionId)
-
-        return self._createGenericAcknowledgement(header.correlationId, header.requesterNSA, header.providerNSA)
-
-
-    def provisionFailed(self, soap_data):
-
+    def reserveCommitFailed(self, soap_data):
         header, generic_failure, err = self._parseGenericFailure(soap_data)
         session_security_attr = None
 
-        self.requester.provisionFailed(header.correlationId, header.requesterNSA, header.providerNSA, session_security_attr,
-                                       generic_failure.connectionId, err)
+        nsi_header = nsa.NSIHeader(header.requesterNSA, header.providerNSA, None, None, header.correlationId)
+        self.requester.reserveCommitFailed(nsi_header, generic_failure.connectionId, err)
 
         return self._createGenericAcknowledgement(header.correlationId, header.requesterNSA, header.providerNSA)
+
+
+
+    def reserveAbortConfirmed(self, soap_data):
+        nsi_header, generic_confirm, = helper.parseRequest(soap_data)
+        self.requester.reserveAbortConfirmed(nsi_header, generic_failure.connectionId)
+        return self._createGenericAcknowledgement(nsi_header.correlation_id, nsi_header.requester_nsa, nsi_header.provider_nsa)
+
+
+    def provisionConfirmed(self, soap_data):
+        nsi_header, generic_confirm = helper.parseRequest(soap_data)
+        self.requester.provisionConfirmed(nsi_header, generic_confirm.connectionId)
+        return self._createGenericAcknowledgement(nsi_header.correlation_id, header.requester_nsa, header.provider_nsa)
 
 
     def releaseConfirmed(self, soap_data):
-
-        header, generic_confirm = helper.parseRequest(soap_data)
-
-        session_security_attr = None
-
-        self.requester.releaseConfirmed(header.correlationId, header.requesterNSA, header.providerNSA, session_security_attr,
-                                        generic_confirm.connectionId)
-
-        return self._createGenericAcknowledgement(header.correlationId, header.requesterNSA, header.providerNSA)
-
-
-    def releaseFailed(self, soap_data):
-
-        header, generic_failure, err = self._parseGenericFailure(soap_data)
-        session_security_attr = None
-
-        self.requester.releaseFailed(header.correlationId, header.requesterNSA, header.providerNSA, session_security_attr,
-                                     generic_failure.connectionId, err)
-
-        return self._createGenericAcknowledgement(header.correlationId, header.requesterNSA, header.providerNSA)
+        nsi_header, generic_confirm = helper.parseRequest(soap_data)
+        self.requester.releaseConfirmed(nsi_header, generic_confirm.connectionId)
+        return self._createGenericAcknowledgement(nsi_header.correlation_id, header.requester_nsa, header.provider_nsa)
 
 
     def terminateConfirmed(self, soap_data):
-
-        header, generic_confirm = helper.parseRequest(soap_data)
-
-        session_security_attr = None
-
-        self.requester.terminateConfirmed(header.correlationId, header.requesterNSA, header.providerNSA, session_security_attr,
-                                          generic_confirm.connectionId)
-
-        return self._createGenericAcknowledgement(header.correlationId, header.requesterNSA, header.providerNSA)
+        nsi_header, generic_confirm = helper.parseRequest(soap_data)
+        self.requester.terminateConfirmed(nsi_header, generic_confirm.connectionId)
+        return self._createGenericAcknowledgement(nsi_header.correlation_id, header.requester_nsa, header.provider_nsa)
 
 
     def terminateFailed(self, soap_data):
@@ -185,22 +166,22 @@ class RequesterService:
         return self._createGenericAcknowledgement(header.correlationId, header.requesterNSA, header.providerNSA)
 
 
-    def queryConfirmed(self, soap_data):
+    def querySummaryConfirmed(self, soap_data):
 
-        headers, bodies = minisoap.parseSoapPayload(soap_data)
+        nsi_headers, query_confirmed = minisoap.parseSoapPayload(soap_data)
 
-        header          = HT.parseString( ET.tostring( headers[0] ) )
-        query_confirmed = CT.parseString( ET.tostring( bodies[0]  ), rootClass=CT.QueryConfirmedType )
+#        header          = bindings.parseString( ET.tostring( headers[0] ) )
+#        query_confirmed = bindings.parseString( ET.tostring( bodies[0]  ) )
 
         query_result = query_confirmed.reservationSummary + query_confirmed.reservationDetails
         # should really do something more here...
 
-        d = self.requester.queryConfirmed(header.correlationId, header.requesterNSA, header.providerNSA, query_result)
+        d = self.requester.queryConfirmed(nsi_headers, query_result)
 
-        return self._createGenericAcknowledgement(header.correlationId, header.requesterNSA, header.providerNSA)
+        return self._createGenericAcknowledgement(nsi_header.correlation_id, header.requester_nsa, header.provider_nsa)
 
 
-    def queryFailed(self, soap_data):
+    def querySummaryFailed(self, soap_data):
 
         header, generic_failure, err = self._parseGenericFailure(soap_data)
         session_security_attr = None

@@ -11,7 +11,7 @@ from twisted.web.error import Error as WebError
 from opennsa import error
 from opennsa.protocols.shared import minisoap, httpclient
 
-from opennsa.protocols.nsi2 import connectiontypes as CT, actions, helper
+from opennsa.protocols.nsi2 import actions, bindings, helper
 
 
 URN_NETWORK = 'urn:ogf:network:'
@@ -34,7 +34,7 @@ class RequesterClient:
 
         header_payload = helper.createHeader(correlation_id, requester_nsa.urn(), provider_nsa.urn(), self.reply_to)
 
-        request = CT.GenericRequestType(connection_id)
+        request = bindings.GenericRequestType(connection_id)
         body_payload = helper.export(request, message_name)
 
         payload = minisoap.createSoapPayload(body_payload, header_payload)
@@ -56,7 +56,7 @@ class RequesterClient:
 
         service_exception = None
         if detail:
-            service_exception = CT.parseString(detail, CT.ServiceExceptionType)
+            service_exception = bindings.parseString(detail, bindings.ServiceExceptionType)
 
         if service_exception is None:
             # this is not entirely correct, but it isn't really wrong either
@@ -71,9 +71,9 @@ class RequesterClient:
 
 
     def reserve(self, service_url, correlation_id, requester_nsa, provider_nsa, session_security_attr,
-                global_reservation_id, description, connection_id, service_parameters):
+                global_reservation_id, description, connection_id, version, service_parameters):
 
-        header_payload = helper.createHeader(correlation_id, requester_nsa.urn(), provider_nsa.urn(), self.reply_to)
+        header_payload = helper.createHeader(requester_nsa.urn(), provider_nsa.urn(), reply_to=self.reply_to, correlation_id=correlation_id)
 
         sp = service_parameters
 
@@ -82,22 +82,21 @@ class RequesterClient:
         if sp.end_time.utcoffset() is None:
             raise ValueError('End time has no time zone info')
 
-        schedule = CT.ScheduleType(sp.start_time.isoformat(), sp.end_time.isoformat())
-        service_attributes = CT.TypeValuePairListType()
+        schedule = bindings.ScheduleType(sp.start_time.isoformat(), sp.end_time.isoformat())
+        service_attributes = None
 
         symmetric = False
 
         src_stp = helper.createSTPType(sp.source_stp)
         dst_stp = helper.createSTPType(sp.dest_stp)
 
-        path = CT.PathType(sp.directionality, symmetric, src_stp, dst_stp)
+        path = bindings.PathType(sp.directionality, symmetric, src_stp, dst_stp, None)
 
-        criteria = CT.ReservationRequestCriteriaType(schedule, sp.bandwidth, service_attributes, path)
+        criteria = bindings.ReservationRequestCriteriaType(version, schedule, sp.bandwidth, service_attributes, path)
 
-        reservation = CT.ReserveType(global_reservation_id, description, connection_id, criteria)
+        reservation = bindings.ReserveType(global_reservation_id, description, connection_id, criteria)
 
-        # create payload
-        body_payload   = helper.export(reservation, 'reserve')
+        body_payload   = reservation.xml(bindings.reserve)
         payload = minisoap.createSoapPayload(body_payload, header_payload)
 
         def gotReply(data):
@@ -146,8 +145,8 @@ class RequesterClient:
 
         header_payload = helper.createHeader(correlation_id, requester_nsa.urn(), provider_nsa.urn(), self.reply_to)
 
-        filter_ = CT.QueryFilterType(connection_ids, global_reservation_ids)
-        query = CT.QueryType(operation, filter_)
+        filter_ = bindings.QueryFilterType(connection_ids, global_reservation_ids)
+        query = bindings.QueryType(operation, filter_)
 
         # create payload
         body_payload   = helper.export(query, 'query')

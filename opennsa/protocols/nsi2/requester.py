@@ -73,7 +73,7 @@ class Requester:
             d.callback(result)
 
 
-    def reserve(self, requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, service_parameters):
+    def reserve(self, requester_nsa, provider_nsa, session_security_attr, global_reservation_id, description, connection_id, version, service_parameters):
 
         correlation_id = createCorrelationId()
 
@@ -85,10 +85,14 @@ class Requester:
         rd = self.addCall(provider_nsa, correlation_id, 'reserve')
         cd = self.requester_client.reserve(provider_nsa.endpoint,
                                            correlation_id, requester_nsa, provider_nsa, session_security_attr,
-                                           global_reservation_id, description, connection_id, service_parameters)
+                                           global_reservation_id, description, connection_id, version, service_parameters)
         cd.addErrback(reserveRequestFailed)
         return rd
 
+
+    def reserveCommit(self, nsi_header, connection_id):
+
+        raise NotImplementedError('need new wsdl types')
 
     def reserveConfirmed(self, correlation_id, requester_nsa, provider_nsa, session_security_attr,
                              global_reservation_id, description, connection_id, service_parameter):
