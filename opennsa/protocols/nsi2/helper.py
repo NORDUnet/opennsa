@@ -35,12 +35,6 @@ ET.register_namespace('nmleth', NML_ETHERNET_NS)
 
 
 
-def export(type_binding, name, level=0):
-
-    f = StringIO.StringIO()
-    type_binding.export(f, level, name_=name)
-    return f.getvalue()
-
 
 def createHeader(requester_nsa_urn, provider_nsa_urn, session_security_attrs=None, reply_to=None, correlation_id=None):
 
@@ -49,17 +43,22 @@ def createHeader(requester_nsa_urn, provider_nsa_urn, session_security_attrs=Non
     return header_element
 
 
-def createServiceException(err, provider_nsa):
+def createServiceException(err, provider_nsa, connection_id=None):
 
     variables = None
+    child_exception = None
 
     if err.check(error.NSIError):
-        se = bindings.ServiceExceptionType(provider_nsa, err.value.errorId, err.getErrorMessage(), variables)
+        error_id = err.value.errorId
+        #se = bindings.ServiceExceptionType(provider_nsa, connection_id, err.value.errorId, err.getErrorMessage(), variables, child_exception)
     else:
         log.msg('Got a non NSIError exception: %s : %s' % (err.value.__class__.__name__, err.getErrorMessage()), system=LOG_SYSTEM)
         log.msg('Cannot create detailed service exception, defaulting to NSI InternalServerError (00500)', system=LOG_SYSTEM)
         log.err(err)
-        se = bindings.ServiceExceptionType(provider_nsa, error.InternalServerError.errorId, err.getErrorMessage(), variables)
+        error_id = error.InternalServerError.errorId
+        #se = bindings.ServiceExceptionType(provider_nsa, connection_id, error.InternalServerError.errorId, err.getErrorMessage(), variables, child_exception)
+
+    se = bindings.ServiceExceptionType(provider_nsa, connection_id, error_id, err.getErrorMessage(), variables, child_exception)
 
     return se
 

@@ -58,10 +58,12 @@ class ProviderService:
         return payload
 
 
-    def _createSOAPFault(self, err, nsi_header):
+    def _createSOAPFault(self, err, provider_nsa, connection_id=None):
 
-        se = helper.createServiceException(err, nsi_header.provider_nsa)
-        detail = helper.export(se, 'serviceException', level=4)
+        se = helper.createServiceException(err, provider_nsa, connection_id)
+        element = se.xml(bindings.serviceException)
+        detail = ET.tostring(element)
+
         soap_fault = resource.SOAPFault( err.getErrorMessage(), detail )
 
         return failure.Failure(soap_fault)
@@ -71,7 +73,7 @@ class ProviderService:
 
         t_start = time.time()
 
-        nsi_header, reservation = helper.parseRequest(soap_data)
+        header, reservation = helper.parseRequest(soap_data)
 
         # do some checking here
 
@@ -104,8 +106,6 @@ class ProviderService:
 
         # Missing: EROs, symmetric, stp labels
 
-#        nsi_header = nsa.NSIHeader(soap_header.requesterNSA, soap_header.providerNSA, None, soap_header.correlationId, soap_header.replyTo)
-
         src_stp = helper.createSTP(path.sourceSTP)
         dst_stp = helper.createSTP(path.destSTP)
 
@@ -128,21 +128,17 @@ class ProviderService:
         t_delta = time.time() - t_start
         log.msg('Profile: Reserve request parse time: %s' % round(t_delta, 3), profile=True, system=LOG_SYSTEM)
 
-        d = self.provider.reserve(nsi_header, reservation.connectionId, reservation.globalReservationId, reservation.description, service_parameters)
+        d = self.provider.reserve(header, reservation.connectionId, reservation.globalReservationId, reservation.description, service_parameters)
 
-        d.addCallbacks(self._createGenericAcknowledgement, self._createSOAPFault, callbackArgs=(nsi_header,), errbackArgs=(nsi_header,))
+        d.addCallbacks(self._createGenericAcknowledgement, self._createSOAPFault, callbackArgs=(header,), errbackArgs=(header.provider_nsa,))
         return d
 
 
 
     def reserveCommit(self, soap_data):
         header, request = helper.parseRequest(soap_data)
-        session_security_attr = None
-        d = self.provider.reserveCommit(header.correlationId, header.replyTo, header.requesterNSA, header.providerNSA, session_security_attr,
-                                        request.connectionId)
-        d.addCallbacks(self._createGenericAcknowledgement, self._createSOAPFault,
-                       callbackArgs=(header.correlationId, header.requesterNSA, header.providerNSA),
-                       errbackArgs=(header.providerNSA,))
+        d = self.provider.reserveCommit(header, request.connectionId)
+        d.addCallbacks(self._createGenericAcknowledgement, self._createSOAPFault, callbackArgs=(header,), errbackArgs=(header.provider_nsa, request.connectionId))
         return d
 
 
@@ -151,54 +147,30 @@ class ProviderService:
         session_security_attr = None
         d = self.provider.reserveAbort(header.correlationId, header.replyTo, header.requesterNSA, header.providerNSA, session_security_attr,
                                        request.connectionId)
-        d.addCallbacks(self._createGenericAcknowledgement, self._createSOAPFault,
-                       callbackArgs=(header.correlationId, header.requesterNSA, header.providerNSA),
-                       errbackArgs=(header.providerNSA,))
+        d.addCallbacks(self._createGenericAcknowledgement, self._createSOAPFault, callbackArgs=(header,), errbackArgs=(header.provider_nsa, request.connectionId))
         return d
 
 
     def provision(self, soap_data):
-
-        header, generic_request = helper.parseRequest(soap_data)
-
-        session_security_attr = None
-
-        d = self.provider.provision(header.correlationId, header.replyTo, header.requesterNSA, header.providerNSA, session_security_attr,
-                                    generic_request.connectionId)
-
-        d.addCallbacks(self._createGenericAcknowledgement, self._createSOAPFault,
-                       callbackArgs=(header.correlationId, header.requesterNSA, header.providerNSA),
-                       errbackArgs=(header.providerNSA,))
+        header, request = helper.parseRequest(soap_data)
+        d = self.provider.provision(header, request.connectionId)
+        d.addCallbacks(self._createGenericAcknowledgement, self._createSOAPFault, callbackArgs=(header,), errbackArgs=(header.provider_nsa, request.connectionId))
         return d
 
 
     def release(self, soap_data):
-
-        header, generic_request = helper.parseRequest(soap_data)
-
-        session_security_attr = None
-
-        d = self.provider.release(header.correlationId, header.replyTo, header.requesterNSA, header.providerNSA, session_security_attr,
-                                  generic_request.connectionId)
-
-        d.addCallbacks(self._createGenericAcknowledgement, self._createSOAPFault,
-                       callbackArgs=(header.correlationId, header.requesterNSA, header.providerNSA),
-                       errbackArgs=(header.providerNSA,))
+        header, request = helper.parseRequest(soap_data)
+        d = self.provider.release(header, request.connectionId)
+        d.addCallbacks(self._createGenericAcknowledgement, self._createSOAPFault, callbackArgs=(header,), errbackArgs=(header.provider_nsa, request.connectionId))
         return d
 
 
     def terminate(self, soap_data):
 
-        header, generic_request = helper.parseRequest(soap_data)
+        header, request = helper.parseRequest(soap_data)
+        d = self.provider.terminate(header, request.connectionId)
 
-        session_security_attr = None
-
-        d = self.provider.terminate(header.correlationId, header.replyTo, header.requesterNSA, header.providerNSA, session_security_attr,
-                                    generic_request.connectionId)
-
-        d.addCallbacks(self._createGenericAcknowledgement, self._createSOAPFault,
-                       callbackArgs=(header.correlationId, header.requesterNSA, header.providerNSA),
-                       errbackArgs=(header.providerNSA,))
+        d.addCallbacks(self._createGenericAcknowledgement, self._createSOAPFault, callbackArgs=(header,), errbackArgs=(header.provider_nsa, request.connectionId))
         return d
 
 
@@ -212,7 +184,6 @@ class ProviderService:
         d = self.provider.query(header.correlationId, header.replyTo, header.requesterNSA, header.providerNSA, session_security_attr,
                                 query.operation, filter_.connectionId, filter_.globalReservationId)
         d.addCallbacks(self._createGenericAcknowledgement, self._createSOAPFault,
-                       callbackArgs=(header.correlationId, header.requesterNSA, header.providerNSA),
-                       errbackArgs=(header.providerNSA,))
+                       callbackArgs=(header.correlationId, header.requesterNSA, header.providerNSA), errbackArgs=(header.provider_nsa,))
         return d
 

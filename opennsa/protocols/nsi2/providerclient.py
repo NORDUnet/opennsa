@@ -23,14 +23,14 @@ class ProviderClient:
         self.ctx_factory = ctx_factory
 
 
-    def _genericConfirm(self, message_name, requester_url, action, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id):
+    def _genericConfirm(self, element_name, requester_url, action, correlation_id, requester_nsa, provider_nsa, connection_id):
 
-        header_payload = helper.createHeader(correlation_id, requester_nsa, provider_nsa)
+        header_element = helper.createHeader(requester_nsa, provider_nsa, correlation_id=correlation_id)
 
-        generic_confirm = bindings.GenericConfirmedType(global_reservation_id, connection_id)
-        body_payload   = helper.export(generic_confirm, message_name)
+        confirm = bindings.GenericConfirmedType(connection_id)
+        body_element   = confirm.xml(element_name)
 
-        payload = minisoap.createSoapPayload(body_payload, header_payload)
+        payload = minisoap.createSoapPayload(body_element, header_element)
 
         def gotReply(data):
             # for now we just ignore this, as long as we get an okay
@@ -85,7 +85,7 @@ class ProviderClient:
 
         criteria = bindings.ReservationConfirmCriteriaType(version, schedule, bandwidth, service_attributes, path)
 
-        reserve_conf = bindings.ReserveConfirmedType(global_reservation_id, description, connection_id, [ criteria ] )
+        reserve_conf = bindings.ReserveConfirmedType(connection_id, global_reservation_id, description, [ criteria ] )
 
         body_element = reserve_conf.xml(bindings.reserveConfirmed)
         payload = minisoap.createSoapPayload(body_element, header_element)
@@ -93,8 +93,6 @@ class ProviderClient:
         def gotReply(data):
             # we don't really do anything about these
             return ""
-
-        print "RES CONF EMIT", nsi_header, nsi_header.reply_to
 
         d = httpclient.soapRequest(nsi_header.reply_to, actions.RESERVE_CONFIRMED, payload, ctx_factory=self.ctx_factory)
         d.addCallbacks(gotReply) #, errReply)
@@ -107,9 +105,15 @@ class ProviderClient:
                                     correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, err)
 
 
+    def reserveCommitConfirmed(self, requester_url, requester_nsa, provider_nsa, correlation_id, connection_id):
+
+        return self._genericConfirm(bindings.reserveCommitConfirmed, requester_url, actions.RESERVE_COMMIT_CONFIRMED,
+                                    correlation_id, requester_nsa, provider_nsa, connection_id)
+
+
     def provisionConfirmed(self, requester_url, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id):
 
-        return self._genericConfirm('provisionConfirmed', requester_url, actions.PROVISION_CONFIRMED,
+        return self._genericConfirm(bindings.provisionConfirmed, requester_url, actions.PROVISION_CONFIRMED,
                                     correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id)
 
 

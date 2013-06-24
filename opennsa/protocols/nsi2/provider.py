@@ -9,6 +9,10 @@ WS_PROTO_EVENT_SYSTEM = 'nsi-2.0-soap'
 LOG_SYSTEM = 'protocol.nsi2soap'
 
 
+RESERVE_RESPONSE        = 'reserve_response'
+RESERVE_COMMIT_RESPONSE = 'reserve_commit_response'
+
+
 
 def _createErrorMessage(err):
     error_type = err.value.__class__.__name__
@@ -41,7 +45,7 @@ class Provider:
 
         def setNotify(assigned_connection_id):
             if nsi_header.reply_to:
-                self.notifications[(assigned_connection_id, 'reserve_response')] = nsi_header
+                self.notifications[(assigned_connection_id, RESERVE_RESPONSE)] = nsi_header
             return assigned_connection_id
 
         d = self.service_provider.reserve(nsi_header, connection_id, global_reservation_id, description, service_parameters)
@@ -50,11 +54,8 @@ class Provider:
 
 
     def reserveConfirmed(self, nsi_header, connection_id, global_reservation_id, description, service_parameters):
-
-        print "PROV RES CONF222", self.notifications
-
         try:
-            nsi_header = self.notifications.pop( (connection_id, 'reserve_response') )
+            nsi_header = self.notifications.pop( (connection_id, RESERVE_RESPONSE) )
             return self.provider_client.reserveConfirmed(nsi_header, connection_id, global_reservation_id, description, service_parameters)
         except KeyError, e:
             log.msg('No entity to notify about reserveConfirmed', log_system=LOG_SYSTEM)
@@ -63,7 +64,19 @@ class Provider:
 
     def reserveCommit(self, nsi_header, connection_id):
 
-        return self.service_provider.reserve(nsi_header, connection_id)
+        if nsi_header.reply_to:
+            self.notifications[(connection_id, RESERVE_COMMIT_RESPONSE)] = nsi_header
+        return self.service_provider.reserveCommit(nsi_header, connection_id)
+
+
+    def reserveCommitConfirmed(self, header, connection_id):
+
+        try:
+            org_header = self.notifications.pop( (connection_id, RESERVE_COMMIT_RESPONSE) )
+            return self.provider_client.reserveCommitConfirmed(org_header.reply_to, org_header.requester_nsa, org_header.provider_nsa, org_header.correlation_id, connection_id)
+        except KeyError, e:
+            log.msg('No entity to notify about reserveConfirmed', log_system=LOG_SYSTEM)
+            return defer.succeed(None)
 
 
     def reserveTimeout(self, nsi_header, connection_id, notification_id, timestamp, timeout_value, originating_connection_id, originating_nsa):
