@@ -338,21 +338,27 @@ class Aggregator:
 
 
     @defer.inlineCallbacks
-    def provision(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
+    def provision(self, header, connection_id):
 
         log.msg('', system=LOG_SYSTEM)
-        log.msg('ReserveCommit request. NSA: %s. Connection ID: %s' % (requester_nsa, connection_id), system=LOG_SYSTEM)
+        log.msg('Provision request. NSA: %s. Connection ID: %s' % (header.requester_nsa, connection_id), system=LOG_SYSTEM)
 
-        conn = yield self.getConnection(requester_nsa, connection_id)
+        conn = yield self.getConnection(header.requester_nsa, connection_id)
 
         if conn.lifecycle_state == state.TERMINATED:
             raise error.ConnectionGoneError('Connection %s has been terminated')
 
         yield state.provisioning(conn)
 
-        defs = yield self.forAllSubConnections(conn, registry.PROVISION)
-        results = yield defer.DeferredList(defs, consumeErrors=True)
+        defs = []
+        sub_connections = yield conn.SubConnections.get()
+        for sc in sub_connections:
+            provider = self.providers[sc.provider_nsa]
+            header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa, [])
+            d = provider.reserveCommit(header, sc.connection_id)
+            defs.append(d)
 
+        results = yield defer.DeferredList(defs, consumeErrors=True)
         successes = [ r[0] for r in results ]
         if all(successes):
             yield state.provisioned(conn)
@@ -360,17 +366,17 @@ class Aggregator:
 
         else:
             n_success = sum( [ 1 for s in successes if s ] )
-            log.msg('Connection %s. Only %i of %i connections successfully provision' % (self.connection_id, len(n_success), len(defs)), system=LOG_SYSTEM)
-            raise self._createAggregateException(results, 'provision', error.ConnectionError)
+            log.msg('Connection %s. Only %i of %i connections successfully provision' % (connection_id, n_success, len(defs)), system=LOG_SYSTEM)
+            raise _createAggregateException(results, 'provision', error.ConnectionError)
 
 
     @defer.inlineCallbacks
-    def release(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
+    def release(self, header, connection_id):
 
         log.msg('', system=LOG_SYSTEM)
-        log.msg('Release request. NSA: %s. Connection ID: %s' % (requester_nsa, connection_id), system=LOG_SYSTEM)
+        log.msg('Release request. NSA: %s. Connection ID: %s' % (header.requester_nsa, connection_id), system=LOG_SYSTEM)
 
-        conn = yield self.getConnection(requester_nsa, connection_id)
+        conn = yield self.getConnection(header.requester_nsa, connection_id)
 
         if conn.lifecycle_state == state.TERMINATED:
             raise error.ConnectionGoneError('Connection %s has been terminated')
