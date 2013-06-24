@@ -5,7 +5,7 @@ Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2011-2012)
 """
 
-from xml.etree import cElementTree as ET
+from xml.etree import ElementTree as ET
 
 
 LOG_SYSTEM = 'opennsa.protocols.soap'
@@ -48,18 +48,14 @@ def createSoapEnvelope():
 
 
 
-def createSoapPayload(body_payload=None, header_payload=None):
-    # somewhat backwards, but it works
+def createSoapPayload(body_element=None, header_element=None):
 
     envelope, header, body = createSoapEnvelope()
 
-    if header_payload is not None:
-        header_content = ET.fromstring(header_payload)
-        header.append(header_content)
-
-    if body_payload is not None:
-        body_content = ET.fromstring(body_payload)
-        body.append(body_content)
+    if header_element is not None:
+        header.append(header_element)
+    if body_element is not None:
+        body.append(body_element)
 
     _indent(envelope)
     payload = ET.tostring(envelope, 'utf-8')
