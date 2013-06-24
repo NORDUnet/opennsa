@@ -58,6 +58,7 @@ class CommonHeaderType:
         self.requesterNSA = requesterNSA  # NsaIdType -> anyURI
         self.providerNSA = providerNSA  # NsaIdType -> anyURI
         self.replyTo = replyTo  # anyURI
+        assert sessionSecurityAttr is None or type(sessionSecurityAttr) is AttributeStatementType, "Invalid type: %s" % type(sessionSecurityAttr)
         self.sessionSecurityAttr = sessionSecurityAttr  # AttributeStatementType
 
     @classmethod
@@ -822,7 +823,7 @@ class ReserveConfirmedType:
                 element.findtext('connectionId'),
                 element.findtext('globalReservationId'),
                 element.findtext('description'),
-                [ ReservationConfirmCriteriaType.build(e) for e in element.findall('schedule') ] if element.find('schedule') is not None else None
+                [ ReservationConfirmCriteriaType.build(e) for e in element.findall('criteria') ] if element.find('criteria') is not None else None
                )
 
     def xml(self, elementName):
