@@ -86,17 +86,17 @@ class Provider:
 
     def provision(self, nsi_header, connection_id):
 
-        return self.service_provider(nsi_header, connection_id)
+        return self.service_provider.provision(nsi_header, connection_id)
 
 
     def release(self, nsi_header, connection_id):
 
-        return self.service_provider(nsi_header, connection_id)
+        return self.service_provider.release(nsi_header, connection_id)
 
 
     def terminate(self, nsi_header, connection_id):
 
-        return self.service_provider(nsi_header, connection_id)
+        return self.service_provider.terminate(nsi_header, connection_id)
 
 
     # Need to think about how to do sync / async query
