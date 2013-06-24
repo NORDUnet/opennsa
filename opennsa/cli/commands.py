@@ -45,14 +45,17 @@ def discover(client, service_url):
 @defer.inlineCallbacks
 def reserve(client, client_nsa, provider_nsa, src, dst, start_time, end_time, bandwidth, connection_id, global_id):
 
+    nsi_header = nsa.NSIHeader(client_nsa.urn(), provider_nsa.urn(), reply_to=provider_nsa.endpoint)
     service_params = _createServiceParams(start_time, end_time, src, dst, bandwidth)
 
-    log.msg("Connection id: %s  Global id: %s" % (connection_id, global_id))
+    if connection_id or global_id:
+        log.msg("Connection id: %s  Global id: %s" % (connection_id, global_id))
+
 
     try:
-        res = yield client.reserve(client_nsa, provider_nsa, None, global_id, 'Test Connection', connection_id, service_params)
-        log.msg("Connection held at %s" % provider_nsa)
-        yield client.reserveCommit(client_nsa, provider_nsa, connection_id)
+        assigned_connection_id = yield client.reserve(nsi_header, connection_id, global_id, 'Test Connection', service_params)
+        log.msg("Connection created and held. Id %s at %s" % (assigned_connection_id, provider_nsa))
+        yield client.reserveCommit(nsi_header, assigned_connection_id)
         log.msg("Reservation committed at %s" % provider_nsa)
 
     except error.NSIError, e:
@@ -63,19 +66,23 @@ def reserve(client, client_nsa, provider_nsa, src, dst, start_time, end_time, ba
 @defer.inlineCallbacks
 def reserveprovision(client, client_nsa, provider_nsa, src, dst, start_time, end_time, bandwidth, connection_id, global_id):
 
+    nsi_header = nsa.NSIHeader(client_nsa.urn(), provider_nsa.urn())
     service_params = _createServiceParams(start_time, end_time, src, dst, bandwidth)
 
     log.msg("Connection id: %s  Global id: %s" % (connection_id, global_id))
 
+    version = None
     try:
-        yield client.reserve(client_nsa, provider_nsa, None, global_id, 'Test Connection', connection_id, service_params)
-        log.msg("Connection reserved at %s" % provider_nsa)
+        assigned_connection_id = yield client.reserve(provider_nsa.endpoint, nsi_header, connection_id, global_id, 'Test Connection', version, service_params)
+        log.msg("Connection created and held. Id %s at %s" % (assigned_connection_id, provider_nsa))
+        yield client.reserveCommit(provider_nsa.endpoint, nsi_header, assigned_connection_id)
+        log.msg("Connection committed at %s" % provider_nsa)
     except error.NSIError, e:
         log.msg('Error reserving %s, %s : %s' % (connection_id, e.__class__.__name__, str(e)))
         defer.returnValue(None)
 
     try:
-        yield client.provision(client_nsa, provider_nsa, None, connection_id)
+        yield client.provision(provider_nsa.endpoint, nsi_header, assigned_connection_id)
         log.msg('Connection %s provisioned' % connection_id)
     except error.NSIError, e:
         log.msg('Error provisioning %s, %s : %s' % (connection_id, e.__class__.__name__, str(e)))
