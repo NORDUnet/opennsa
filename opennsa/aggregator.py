@@ -573,18 +573,22 @@ class Aggregator:
     def doActivate(self, conn):
         yield state.activating(conn)
         yield state.active(conn)
-        data_plane_change = self.service_registry.getHandler(registry.DATA_PLANE_CHANGE, self.parent_system)
-        dps = (True, conn.revision, True) # data plane status - active, version, version consistent
-        data_plane_change(None, None, None, conn.connection_id, dps, datetime.datetime.utcnow())
+
+        header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn())
+        now = datetime.datetime.utcnow()
+        data_plane_status = (True, conn.revision, True) # active, version, consistent
+        self.parent_requester.dataPlaneStateChange(header, conn.connection_id, 0, now, data_plane_status)
 
 
     @defer.inlineCallbacks
     def doTeardown(self, conn):
         yield state.deactivating(conn)
         yield state.inactive(conn)
-        data_plane_change = self.service_registry.getHandler(registry.DATA_PLANE_CHANGE, self.parent_system)
-        dps = (False, conn.revision, True) # data plane status - active, version, version consistent
-        data_plane_change(None, None, None, conn.connection_id, dps, datetime.datetime.utcnow())
+
+        header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn())
+        data_plane_status = (False, conn.revision, True) # active, version, consistent
+        self.parent_requester.dataPlaneStateChange(header, conn.connection_id, 0, now, data_plane_status)
+
 
     def doTimeout(self, conn):
         header = None
@@ -626,11 +630,11 @@ class Aggregator:
 
 
     @defer.inlineCallbacks
-    def dataPlaneChange(self, requester_nsa, provider_nsa, session_security_attr, connection_id, dps, timestamp):
+    def dataPlaneStateChange(self, header, connection_id, notification_id, timestamp, dps):
 
         active, version, version_consistent = dps
 
-        sub_conn = yield self.findSubConnection(provider_nsa, connection_id)
+        sub_conn = yield self.findSubConnection(header.provider_nsa, connection_id)
 
         conn = yield sub_conn.ServiceConnection.get()
         sub_conns = yield conn.SubConnections.get()
