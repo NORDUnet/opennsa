@@ -151,8 +151,8 @@ class Aggregator:
             raise error.TopologyError('Cannot connect STP %s to itself.' % source_stp)
 
         conn = database.ServiceConnection(connection_id=connection_id, revision=0, global_reservation_id=global_reservation_id, description=description,
-                            requester_nsa=header.requester_nsa, reserve_time=datetime.datetime.utcnow(),
-                            reservation_state=state.INITIAL, provision_state=state.SCHEDULED, activation_state=state.INACTIVE, lifecycle_state=state.INITIAL,
+                            requester_nsa=header.requester_nsa, requester_url=header.reply_to, reserve_time=datetime.datetime.utcnow(),
+                            reservation_state=state.INITIAL, provision_state=state.SCHEDULED, lifecycle_state=state.INITIAL,
                             source_network=source_stp.network, source_port=source_stp.port, source_labels=source_stp.labels,
                             dest_network=dest_stp.network, dest_port=dest_stp.port, dest_labels=dest_stp.labels,
                             start_time=service_params.start_time, end_time=service_params.end_time, bandwidth=service_params.bandwidth)
@@ -244,7 +244,7 @@ class Aggregator:
                 sc = database.SubConnection(provider_nsa=link_provider_nsa.urn(),
                                             connection_id=connection_id, local_link=local_link, revision=0, service_connection_id=conn.id, order_id=order_id,
                                             global_reservation_id=global_reservation_id, description=description,
-                                            reservation_state=state.INITIAL, provision_state=state.SCHEDULED, activation_state=state.INACTIVE, lifecycle_state=state.INITIAL,
+                                            reservation_state=state.INITIAL, provision_state=state.SCHEDULED, lifecycle_state=state.INITIAL, data_plane_active=False,
                                             source_network=sp.source_stp.network, source_port=sp.source_stp.port, source_labels=sp.source_stp.labels,
                                             dest_network=sp.dest_stp.network, dest_port=sp.dest_stp.port, dest_labels=sp.dest_stp.labels,
                                             start_time=sp.start_time.isoformat(), end_time=sp.end_time.isoformat(), bandwidth=sp.bandwidth)
@@ -280,8 +280,6 @@ class Aggregator:
 
             err = _createAggregateException(results, 'reservations', error.ConnectionCreateError)
             raise err
-
-
 
 
     @defer.inlineCallbacks
@@ -569,28 +567,6 @@ class Aggregator:
     # --
 
 
-    @defer.inlineCallbacks
-    def doActivate(self, conn):
-        yield state.activating(conn)
-        yield state.active(conn)
-
-        header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn())
-        now = datetime.datetime.utcnow()
-        data_plane_status = (True, conn.revision, True) # active, version, consistent
-        self.parent_requester.dataPlaneStateChange(header, conn.connection_id, 0, now, data_plane_status)
-
-
-    @defer.inlineCallbacks
-    def doTeardown(self, conn):
-        yield state.deactivating(conn)
-        yield state.inactive(conn)
-
-        header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn())
-        now = datetime.datetime.utcnow()
-        data_plane_status = (False, conn.revision, True) # active, version, consistent
-        self.parent_requester.dataPlaneStateChange(header, conn.connection_id, 0, now, data_plane_status)
-
-
     def doTimeout(self, conn):
         header = None
         self.parent_requester.reserveTimeout(header, conn.connection_id, None, None, None, None, None)
@@ -633,21 +609,38 @@ class Aggregator:
     @defer.inlineCallbacks
     def dataPlaneStateChange(self, header, connection_id, notification_id, timestamp, dps):
 
-        active, version, version_consistent = dps
+        active, version, consistent = dps
+        log.msg("Data plane change for sub connection: %s Active: %s, version %i, consistent: %s" % \
+                 (connection_id, active, version, consistent), system=LOG_SYSTEM)
 
         sub_conn = yield self.findSubConnection(header.provider_nsa, connection_id)
+
+        sub_conn.data_plane_active      = active
+        sub_conn.data_plane_version     = version
+        sub_conn.data_plane_consistent  = consistent
+
+        yield sub_conn.save()
 
         conn = yield sub_conn.ServiceConnection.get()
         sub_conns = yield conn.SubConnections.get()
 
-        if len(sub_conns) == 1:
-            log.msg("than one sub connection for connection %s, notifying" % conn.connection_id)
-            if active:
-                yield self.doActivate(conn)
-            else:
-                yield self.doTeardown(conn)
-        else:
-            log.msg("more than one sub connection for connection %s" % conn.connection_id)
+        if not conn.requester_url:
+            log.msg("Connection %s: No url for requester to notify about data plane change" % conn.connection_id, system=LOG_SYSTEM)
+            defer.returnValue(None)
+
+        # do notification
+
+        aggr_active     = all( [ sc.data_plane_active     for sc in sub_conns ] )
+        aggr_version    = max( [ sc.data_plane_version    for sc in sub_conns ] )
+        aggr_consistent = all( [ sc.data_plane_consistent for sc in sub_conns ] )
+
+        header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn(), reply_to=conn.requester_url)
+        now = datetime.datetime.utcnow()
+        data_plane_status = (aggr_active, aggr_version, aggr_consistent)
+        log.msg("Connection %s: Aggregated data plane status: Active %s, version %i, consistent %s" % \
+            (conn.connection_id, aggr_active, aggr_version, aggr_consistent), system=LOG_SYSTEM)
+
+        self.parent_requester.dataPlaneStateChange(header, conn.connection_id, 0, now, data_plane_status)
 
 
     @defer.inlineCallbacks

@@ -106,7 +106,7 @@ class GenericBackend(service.Service):
                     log.msg('Unhandled provision state %s for connection %s in scheduler building' % (conn.provision_state, conn.connection_id))
 
             elif conn.start_time > now:
-                if conn.provision_state == state.PROVISIONED and conn.activation_state != state.ACTIVE:
+                if conn.provision_state == state.PROVISIONED and conn.data_plane_active == False:
                     log.msg('Connection %s: Immediate activate during buildSchedule' % conn.connection_id, system=self.log_system)
                     yield self._doActivate(conn)
                 elif conn.provision_state == state.SCHEDULED:
@@ -232,7 +232,7 @@ class GenericBackend(service.Service):
         # should we save the requester or provider here?
         conn = GenericBackendConnections(connection_id=connection_id, revision=0, global_reservation_id=global_reservation_id, description=description,
                                          requester_nsa=header.requester_nsa, reserve_time=now,
-                                         reservation_state=state.INITIAL, provision_state=state.SCHEDULED, activation_state=state.INACTIVE, lifecycle_state=state.INITIAL,
+                                         reservation_state=state.INITIAL, provision_state=state.SCHEDULED, lifecycle_state=state.INITIAL, data_plane_active=False,
                                          source_network=source_stp.network, source_port=source_stp.port, source_labels=[src_label],
                                          dest_network=dest_stp.network, dest_port=dest_stp.port, dest_labels=[dst_label],
                                          start_time=service_params.start_time, end_time=service_params.end_time,
@@ -319,7 +319,7 @@ class GenericBackend(service.Service):
 
         self.scheduler.cancelCall(connection_id)
 
-        if conn.activation_state == state.ACTIVE:
+        if conn.data_plane_active == state.ACTIVE:
             try:
                 yield self._doTeardown(conn)
             except Exception as e:
@@ -398,7 +398,7 @@ class GenericBackend(service.Service):
 
             yield self._doReserveAbort(conn)
 
-            connection_states = (conn.reservation_state, conn.provision_state, conn.lifecycle_state, conn.activation_state)
+            connection_states = (conn.reservation_state, conn.provision_state, conn.lifecycle_state, None)
             header = nsa.NSIHeader(conn.requester_nsa, conn.requester_nsa) # The NSA is both requester and provider in the backend, but this might be problematic without aggregator
             self.parent_requester.reserveTimeout(header, conn.connection_id, connection_states, self.TPC_TIMEOUT, datetime.datetime.utcnow())
 
@@ -442,10 +442,6 @@ class GenericBackend(service.Service):
     @defer.inlineCallbacks
     def _doActivate(self, conn):
 
-        if conn.activation_state != state.ACTIVATING: # We died during a previous activate somehow
-            yield state.activating(conn)
-            self.logStateUpdate(conn, 'ACTIVATING')
-
         src_target = self.connection_manager.getTarget(conn.source_port, conn.source_labels[0].type_, conn.source_labels[0].labelValue())
         dst_target = self.connection_manager.getTarget(conn.dest_port,   conn.dest_labels[0].type_,  conn.dest_labels[0].labelValue())
         try:
@@ -454,8 +450,8 @@ class GenericBackend(service.Service):
             # We need to mark failure in state machine here somehow....
             log.msg('Connection %s: Error setting up connection: %s' % (conn.connection_id, str(e)), system=self.log_system)
             # should include stack trace
-            yield state.inactive(conn)
-            self.logStateUpdate(conn, 'INACTIVE')
+            conn.data_plane_active = False
+            yield conn.save()
 
             now = datetime.datetime.utcnow()
             service_ex = None
@@ -464,8 +460,9 @@ class GenericBackend(service.Service):
             defer.returnValue(None)
 
         try:
-            yield state.active(conn)
-            self.logStateUpdate(conn, 'ACTIVE')
+            conn.data_plane_active = True
+            yield conn.save()
+            log.msg('Connection %s: Data plane activated' % (conn.connection_id), system=self.log_system)
 
             # we might have passed end time during activation...
             end_time = conn.end_time
@@ -489,8 +486,6 @@ class GenericBackend(service.Service):
     @defer.inlineCallbacks
     def _doTeardown(self, conn):
         # this one is not used as a stand-alone, just a utility function
-        yield state.deactivating(conn)
-        self.logStateUpdate(conn, 'DEACTIVATING')
 
         src_target = self.connection_manager.getTarget(conn.source_port, conn.source_labels[0].type_, conn.source_labels[0].labelValue())
         dst_target = self.connection_manager.getTarget(conn.dest_port,   conn.dest_labels[0].type_,   conn.dest_labels[0].labelValue())
@@ -500,19 +495,20 @@ class GenericBackend(service.Service):
             # We need to mark failure in state machine here somehow....
             log.msg('Connection %s: Error deactivating connection: %s' % (conn.connection_id, str(e)), system=self.log_system)
             # should include stack trace
-            yield state.inactive(conn)
-            self.logStateUpdate(conn, 'INACTIVE')
+            conn.data_plane_active = False # technically we don't know, but for NSI that means not active
+            yield conn.save()
 
             error_event = self.service_registry.getHandler(registry.ERROR_EVENT, self.parent_system)
-            connection_states = (conn.reservation_state, conn.provision_state, conn.lifecycle_state, conn.activation_state)
+            connection_states = (conn.reservation_state, conn.provision_state, conn.lifecycle_state, None)
             service_ex = (None, type(e), str(e), None, None)
             error_event(None, None, None, conn.connection_id, 'deactivateFailed', connection_states, datetime.datetime.utcnow(), str(e), service_ex)
 
             defer.returnValue(None)
 
         try:
-            yield state.inactive(conn)
-            self.logStateUpdate(conn, 'INACTIVE')
+            conn.data_plane_active = False # technically we don't know, but for NSI that means not active
+            yield conn.save()
+            log.msg('Connection %s: Data planed deactivated' % (conn.connection_id), system=self.log_system)
 
             now = datetime.datetime.utcnow()
             data_plane_status = (False, conn.revision, True) # active, version, onsistent
@@ -536,7 +532,7 @@ class GenericBackend(service.Service):
 
         self.scheduler.cancelCall(conn.connection_id)
 
-        if conn.activation_state == state.ACTIVE:
+        if conn.data_plane_active:
             try:
                 yield self._doTeardown(conn)
                 # we can only remove resource reservation entry if we succesfully shut down the link :-(

@@ -55,13 +55,6 @@ PROVISION_TRANSITIONS = {
     RELEASING       : [ SCHEDULED     ]
 }
 
-ACTIVATION_TRANSITIONS = {
-    INACTIVE        : [ ACTIVATING                ],
-    ACTIVATING      : [ ACTIVE,        INACTIVE   ],
-    ACTIVE          : [ DEACTIVATING              ],
-    DEACTIVATING    : [ INACTIVE                  ]
-}
-
 LIFECYCLE_TRANSITIONS = {
     INITIAL         : [ TERMINATING,    TERMINATED ],
     TERMINATING     : [ TERMINATED  ],
@@ -128,28 +121,6 @@ def releasing(conn):
 def scheduled(conn):
     _switchState(PROVISION_TRANSITIONS, conn.provision_state, SCHEDULED)
     conn.provision_state = SCHEDULED
-    return conn.save()
-
-# Data plane
-
-def activating(conn):
-    _switchState(ACTIVATION_TRANSITIONS, conn.activation_state, ACTIVATING)
-    conn.activation_state = ACTIVATING
-    return conn.save()
-
-def active(conn):
-    _switchState(ACTIVATION_TRANSITIONS, conn.activation_state, ACTIVE)
-    conn.activation_state = ACTIVE
-    return conn.save()
-
-def deactivating(conn):
-    _switchState(ACTIVATION_TRANSITIONS, conn.activation_state, DEACTIVATING)
-    conn.activation_state = DEACTIVATING
-    return conn.save()
-
-def inactive(conn):
-    _switchState(ACTIVATION_TRANSITIONS, conn.activation_state, INACTIVE)
-    conn.activation_state = INACTIVE
     return conn.save()
 
 # Lifecyle
