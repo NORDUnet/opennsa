@@ -48,6 +48,8 @@ class GenericBackend(service.Service):
         self.parent_requester = parent_requester
         self.log_system = log_system
 
+        self.notification_id = 0
+
         self.scheduler = scheduler.CallScheduler()
         self.calendar  = calendar.ReservationCalendar()
         # need to build the calendar as well
@@ -68,6 +70,12 @@ class GenericBackend(service.Service):
     def stopService(self):
         service.Service.stopService(self)
         return self.restore_defer.addCallback( lambda _ : self.scheduler.cancelAllCalls() )
+
+
+    def getNotificationId(self):
+        nid = self.notification_id
+        self.notification_id += 1
+        return nid
 
 
     @defer.inlineCallbacks
@@ -451,7 +459,7 @@ class GenericBackend(service.Service):
 
             now = datetime.datetime.utcnow()
             service_ex = None
-            self.parent_requester.errorEvent(conn.connection_id, 0, now, 'activateFailed', None, service_ex)
+            self.parent_requester.errorEvent(conn.connection_id, self.getNotificationId(), now, 'activateFailed', None, service_ex)
 
             defer.returnValue(None)
 
@@ -470,9 +478,10 @@ class GenericBackend(service.Service):
             td = end_time - datetime.datetime.utcnow()
             log.msg('Connection %s: teardown scheduled for %s UTC (%i seconds)' % (conn.connection_id, end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
 
-            data_plane_change = self.service_registry.getHandler(registry.DATA_PLANE_CHANGE, self.parent_system)
-            dps = (True, conn.revision, True) # data plane status - active, version, version consistent
-            data_plane_change(None, None, None, conn.connection_id, dps, datetime.datetime.utcnow())
+            data_plane_status = (True, conn.revision, True) # active, version, consistent
+            now = datetime.datetime.utcnow()
+            header = nsa.NSIHeader(conn.requester_nsa, conn.requester_nsa) # The NSA is both requester and provider in the backend, but this might be problematic without aggregator
+            self.parent_requester.dataPlaneStateChange(header, conn.connection_id, self.getNotificationId(), now, data_plane_status)
         except Exception, e:
             log.msg('Error in post-activation: %s: %s' % (type(e), e), system=self.log_system)
 
@@ -504,9 +513,12 @@ class GenericBackend(service.Service):
         try:
             yield state.inactive(conn)
             self.logStateUpdate(conn, 'INACTIVE')
-            data_plane_change = self.service_registry.getHandler(registry.DATA_PLANE_CHANGE, self.parent_system)
-            dps = (False, conn.revision, True) # data plane status - active, version, version consistent
-            data_plane_change(None, None, None, conn.connection_id, dps, datetime.datetime.utcnow())
+
+            now = datetime.datetime.utcnow()
+            data_plane_status = (False, conn.revision, True) # active, version, onsistent
+            header = nsa.NSIHeader(conn.requester_nsa, conn.requester_nsa) # The NSA is both requester and provider in the backend, but this might be problematic without aggregator
+            self.parent_requester.dataPlaneStateChange(header, conn.connection_id, self.getNotificationId(), now, data_plane_status)
+
         except Exception as e:
             log.msg('Error in post-deactivation: %s' % e)
 
