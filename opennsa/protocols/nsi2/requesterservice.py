@@ -123,19 +123,19 @@ class RequesterService:
     def provisionConfirmed(self, soap_data):
         header, generic_confirm = helper.parseRequest(soap_data)
         self.requester.provisionConfirmed(header, generic_confirm.connectionId)
-        return self._createGenericAcknowledgement(header.correlation_id, header.requester_nsa, header.provider_nsa)
+        return self._createGenericAcknowledgement(header)
 
 
     def releaseConfirmed(self, soap_data):
         header, generic_confirm = helper.parseRequest(soap_data)
         self.requester.releaseConfirmed(header, generic_confirm.connectionId)
-        return self._createGenericAcknowledgement(header.correlation_id, header.requester_nsa, header.provider_nsa)
+        return self._createGenericAcknowledgement(header)
 
 
     def terminateConfirmed(self, soap_data):
         header, generic_confirm = helper.parseRequest(soap_data)
         self.requester.terminateConfirmed(header, generic_confirm.connectionId)
-        return self._createGenericAcknowledgement(header.correlation_id, header.requester_nsa, header.provider_nsa)
+        return self._createGenericAcknowledgement(header)
 
 
     def terminateFailed(self, soap_data):
