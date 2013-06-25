@@ -302,9 +302,9 @@ class Aggregator:
         for sc in sub_connections:
             # we assume a provider is available
             provider = self.providers[sc.provider_nsa]
-            header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa, [])
+            req_header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa, [])
             # we should probably mark as committing before sending message...
-            d = provider.reserveCommit(header, sc.connection_id)
+            d = provider.reserveCommit(req_header, sc.connection_id)
             defs.append(d)
 
         results = yield defer.DeferredList(defs, consumeErrors=True)
