@@ -367,7 +367,7 @@ class Aggregator:
         for sc in sub_connections:
             provider = self.providers[sc.provider_nsa]
             header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa, [])
-            d = provider.reserveCommit(header, sc.connection_id)
+            d = provider.provision(header, sc.connection_id)
             defs.append(d)
 
         results = yield defer.DeferredList(defs, consumeErrors=True)
