@@ -83,9 +83,9 @@ def reserveprovision(client, client_nsa, provider_nsa, src, dst, start_time, end
 
     try:
         yield client.provision(provider_nsa.endpoint, nsi_header, assigned_connection_id)
-        log.msg('Connection %s provisioned' % connection_id)
+        log.msg('Connection %s provisioned' % assigned_connection_id)
     except error.NSIError, e:
-        log.msg('Error provisioning %s, %s : %s' % (connection_id, e.__class__.__name__, str(e)))
+        log.msg('Error provisioning %s, %s : %s' % (assigned_connection_id, e.__class__.__name__, str(e)))
 
 
 @defer.inlineCallbacks
