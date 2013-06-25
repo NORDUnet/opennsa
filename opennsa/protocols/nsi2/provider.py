@@ -30,6 +30,8 @@ def _createErrorMessage(err):
 
 class Provider:
 
+    # this is both a provider and requester, usually this sets on top of the aggregator
+
     # needs more implements
 
     def __init__(self, service_provider, provider_client):
@@ -133,4 +135,12 @@ class Provider:
 
         return self.service_provider(nsi_header, connection_ids, global_reservation_ids)
 
+
+    # requester interface
+
+    def dataPlaneStateChange(self, header, connection_id, notification_id, timestamp, data_plane_status):
+
+        active, version, consistent = data_plane_status
+        return self.provider_client.dataPlaneStateChange(header.reply_to, header.requester_nsa, header.provider_nsa,
+                                                         connection_id, notification_id, timestamp, active, version, consistent)
 

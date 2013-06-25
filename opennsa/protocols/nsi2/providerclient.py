@@ -146,6 +146,27 @@ class ProviderClient:
                                     correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, err)
 
 
+
+    def dataPlaneStateChange(self, requester_url, requester_nsa, provider_nsa, connection_id, notification_id, timestamp, active, version, consistent):
+
+        header_element = helper.createHeader(requester_nsa, provider_nsa)
+
+        data_plane_status = bindings.DataPlaneStatusType(active, version, consistent)
+        dps = bindings.DataPlaneStateChangeRequestType(connection_id, notification_id, timestamp, data_plane_status)
+
+        body_element = dps.xml(bindings.dataPlaneStateChange)
+
+        payload = minisoap.createSoapPayload(body_element, header_element)
+
+        def gotReply(data):
+            # for now we just ignore this, as long as we get an okay
+            return
+
+        d = httpclient.soapRequest(requester_url, actions.DATA_PLANE_STATE_CHANGE, payload, ctx_factory=self.ctx_factory)
+        d.addCallbacks(gotReply) #, errReply)
+        return d
+
+
     def queryConfirmed(self, requester_url, correlation_id, requester_nsa, provider_nsa, operation, connections):
 
         assert operation == 'Summary', 'Only Summary operation supported in nsi2.queryConfirmed so far'
