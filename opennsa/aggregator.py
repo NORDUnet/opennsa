@@ -362,18 +362,22 @@ class Aggregator:
 
         yield state.provisioning(conn)
 
+        save_defs = []
         defs = []
         sub_connections = yield conn.SubConnections.get()
         for sc in sub_connections:
+            save_defs.append( state.provisioning(sc) )
             provider = self.providers[sc.provider_nsa]
             header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa, [])
             d = provider.provision(header, sc.connection_id)
             defs.append(d)
 
+        yield defer.DeferredList(defs, consumeErrors=True)
+
         results = yield defer.DeferredList(defs, consumeErrors=True)
         successes = [ r[0] for r in results ]
         if all(successes):
-            yield state.provisioned(conn)
+            # this just means we got an ack from all children
             defer.returnValue(connection_id)
         else:
             n_success = sum( [ 1 for s in successes if s ] )
@@ -513,7 +517,6 @@ class Aggregator:
 
         log.msg('', system=LOG_SYSTEM)
         log.msg('ReserveCommit Confirmed for sub connection %s. NSA %s ' % (connection_id, header.provider_nsa), system=LOG_SYSTEM)
-#        print "AGGR RES COMMIT CONFIRM", connection_id
 
         sub_connection = yield self.getSubConnection(header.provider_nsa, connection_id)
         #yield state.reserved(sub_connection)
@@ -530,9 +533,26 @@ class Aggregator:
 
 
     @defer.inlineCallbacks
-    def terminateConfirmed(self, header, connection_id):
+    def provisionConfirmed(self, header, connection_id):
 
-        print "AGGR TERMINATE CONF", header, connection_id
+        log.msg('', system=LOG_SYSTEM)
+        log.msg('Provision Confirmed for sub connection %s. NSA %s ' % (connection_id, header.provider_nsa), system=LOG_SYSTEM)
+
+        sub_connection = yield self.getSubConnection(header.provider_nsa, connection_id)
+        yield state.provisioned(sub_connection)
+        yield sub_connection.save()
+
+        conn = yield sub_connection.ServiceConnection.get()
+        sub_conns = yield conn.SubConnections.get()
+
+        if all( [ sc.provision_state == state.PROVISIONED for sc in sub_conns ] ):
+            yield state.provisioned(conn)
+            req_header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn(), None)
+            self.parent_requester.provisionConfirmed(req_header, conn.connection_id)
+
+
+    @defer.inlineCallbacks
+    def terminateConfirmed(self, header, connection_id):
 
         sub_connection = yield self.getSubConnection(header.provider_nsa, connection_id)
         sub_connection.reservation_state = state.TERMINATED
@@ -542,7 +562,7 @@ class Aggregator:
         sub_conns = yield conn.SubConnections.get()
 
         if all( [ sc.reservation_state == state.TERMINATED for sc in sub_conns ] ):
-            yield state.terminated(conn)
+            yield state.terminated(conn) # we always allow, even though the canonical NSI state machine does not
             header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn(), None)
             self.parent_requester.terminateConfirmed(header, conn.connection_id)
 
