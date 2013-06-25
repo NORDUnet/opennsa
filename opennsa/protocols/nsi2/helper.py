@@ -119,7 +119,7 @@ def createSTPType(stp):
 
     labels = None
     if stp.labels not in (None, []):
-        labels = [ bindings.TypeValuePairType(NML_ETHERNET_NS, label.type_, [ createValue(*v) for v in label.values ] ) for label in stp.labels ]
+        labels = [ bindings.TypeValuePairType(label.type_, NML_ETHERNET_NS, [ createValue(*v) for v in label.values ] ) for label in stp.labels ]
 
     network = URN_NETWORK + stp.network
     port = stp.port
