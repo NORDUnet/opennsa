@@ -15,7 +15,7 @@ from opennsa import error, nsa, state, registry, database
 
 
 
-LOG_SYSTEM = 'opennsa.Aggregator'
+LOG_SYSTEM = 'Aggregator'
 
 
 
@@ -25,6 +25,18 @@ LOG_SYSTEM = 'opennsa.Aggregator'
 #    """
 #    source_stp, dest_stp = conn.stps()
 #    return '<%s:%s--%s:%s>' % (source_stp.network, source_stp.endpoint, dest_stp.network, dest_stp.endpoint)
+
+
+def shortLabel(labels):
+    # create a log friendly string representation of a lbel
+    lbs = []
+    for label in labels:
+        if '}' in label.type_:
+            name = label.type_.split('}',1)[1][1:]
+        else:
+            name = label.type_
+        lbs.append( name + ':' + label.labelValue() )
+    return ','.join(lbs)
 
 
 def _buildErrorMessage(results, action):
@@ -179,7 +191,7 @@ class Aggregator:
         yield state.reserveChecking(conn) # this also acts a lock
 
         if conn.source_network == self.network and conn.dest_network == self.network:
-            path_info = ( conn.connection_id, self.network, conn.source_port, conn.source_labels, conn.dest_port, conn.dest_labels )
+            path_info = ( conn.connection_id, self.network, conn.source_port, shortLabel(conn.source_labels), conn.dest_port, shortLabel(conn.dest_labels) )
             log.msg('Connection %s: Local link creation: %s %s#%s -> %s#%s' % path_info, system=LOG_SYSTEM)
             paths = [ [ nsa.Link(self.network, conn.source_port, conn.dest_port, conn.source_labels, conn.dest_labels) ] ]
 
@@ -199,7 +211,8 @@ class Aggregator:
             paths.sort(key=lambda e : len(e.links()))
 
         selected_path = paths[0] # shortest path
-        log.msg('Attempting to create path %s' % selected_path, system=LOG_SYSTEM)
+        log_path = ' -> '.join( [ str(p) for p in selected_path ] )
+        log.msg('Attempting to create path %s' % log_path, system=LOG_SYSTEM)
 
         for link in selected_path:
             provider_nsa = self.topology.getNetwork(link.network).managing_nsa
@@ -246,7 +259,6 @@ class Aggregator:
 
         if all(successes):
             log.msg('Connection %s: Reserve acked' % conn.connection_id, system=LOG_SYSTEM)
-            print self.parent_requester
             defer.returnValue(connection_id)
 
         else:
@@ -363,10 +375,9 @@ class Aggregator:
         if all(successes):
             yield state.provisioned(conn)
             defer.returnValue(connection_id)
-
         else:
             n_success = sum( [ 1 for s in successes if s ] )
-            log.msg('Connection %s. Only %i of %i connections successfully provision' % (connection_id, n_success, len(defs)), system=LOG_SYSTEM)
+            log.msg('Connection %s. Provision failure. %i of %i connections successfully acked' % (connection_id, n_success, len(defs)), system=LOG_SYSTEM)
             raise _createAggregateException(results, 'provision', error.ConnectionError)
 
 
@@ -442,8 +453,6 @@ class Aggregator:
     @defer.inlineCallbacks
     def reserveConfirmed(self, header, connection_id, global_reservation_id, description, criteria):
 
-        print "AGGR RES CONF", header, connection_id #, criteria.source_stp, criteria.dest_stp
-
         sub_connection = yield self.getSubConnection(header.provider_nsa, connection_id)
 
         # gid and desc should be identical, not checking, same with bandwidth, schedule, etc
@@ -486,7 +495,7 @@ class Aggregator:
         yield conn.save()
 
         if all( [ sc.reservation_state == state.RESERVE_HELD for sc in sub_conns ] ):
-            print "All sub connections reserve held, can emit reserveConfirmed"
+            log.msg('Connection %s: All sub connections reserve held, can emit reserveConfirmed' % (conn.connection_id), system=LOG_SYSTEM)
             yield state.reserveHeld(conn)
             header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn(), None)
             # construct criteria..
@@ -496,13 +505,15 @@ class Aggregator:
             self.parent_requester.reserveConfirmed(header, conn.connection_id, conn.global_reservation_id, conn.description, criteria)
 
         else:
-            print "SC STATES", [ sc.reservation_state for sc in sub_conns ]
+            log.msg('Connection %s: Still missing reserveConfirmed messages before emitting to parent' % (conn.connection_id), system=LOG_SYSTEM)
 
 
     @defer.inlineCallbacks
     def reserveCommitConfirmed(self, header, connection_id):
 
-        print "AGGR RES COMMIT CONFIRM", connection_id
+        log.msg('', system=LOG_SYSTEM)
+        log.msg('ReserveCommit Confirmed for sub connection %s. NSA %s ' % (connection_id, header.provider_nsa), system=LOG_SYSTEM)
+#        print "AGGR RES COMMIT CONFIRM", connection_id
 
         sub_connection = yield self.getSubConnection(header.provider_nsa, connection_id)
         #yield state.reserved(sub_connection)
