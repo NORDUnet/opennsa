@@ -111,22 +111,22 @@ class ProviderClient:
                                     correlation_id, requester_nsa, provider_nsa, connection_id)
 
 
-    def provisionConfirmed(self, requester_url, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id):
+    def provisionConfirmed(self, requester_url, correlation_id, requester_nsa, provider_nsa, connection_id):
 
         return self._genericConfirm(bindings.provisionConfirmed, requester_url, actions.PROVISION_CONFIRMED,
-                                    correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id)
+                                    correlation_id, requester_nsa, provider_nsa, connection_id)
 
 
-    def provisionFailed(self, requester_url, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, err):
+    def provisionFailed(self, requester_url, correlation_id, requester_nsa, provider_nsa, connection_id, connection_state, err):
 
         return self._genericFailure(requester_url, actions.PROVISION_FAILED, 'provisionFailed',
                                     correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, err)
 
 
-    def releaseConfirmed(self, requester_url, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id):
+    def releaseConfirmed(self, requester_url, correlation_id, requester_nsa, provider_nsa, connection_id):
 
-        return self._genericConfirm('releaseConfirmed', requester_url, actions.RELEASE_CONFIRMED,
-                                    correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id)
+        return self._genericConfirm(bindings.releaseConfirmed, requester_url, actions.RELEASE_CONFIRMED,
+                                    correlation_id, requester_nsa, provider_nsa, connection_id)
 
     def releaseFailed(self, requester_url, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, err):
 
@@ -134,10 +134,10 @@ class ProviderClient:
                                     correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, err)
 
 
-    def terminateConfirmed(self, requester_url, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id):
+    def terminateConfirmed(self, requester_url, correlation_id, requester_nsa, provider_nsa, connection_id):
 
-        return self._genericConfirm('terminateConfirmed', requester_url, actions.TERMINATE_CONFIRMED,
-                                    correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id)
+        return self._genericConfirm(bindings.terminateConfirmed, requester_url, actions.TERMINATE_CONFIRMED,
+                                    correlation_id, requester_nsa, provider_nsa, connection_id)
 
 
     def terminateFailed(self, requester_url, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, err):
