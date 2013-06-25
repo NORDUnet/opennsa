@@ -54,10 +54,6 @@ class GenericBackend(service.Service):
         self.calendar  = calendar.ReservationCalendar()
         # need to build the calendar as well
 
-        # the connection cache is a work-around for a race condition in mmm... something
-        # I think the bug was found, but the cache was not removed
-#        self.connection_cache = {}
-
         # need to build schedule here
         self.restore_defer = defer.Deferred()
         reactor.callWhenRunning(self.buildSchedule)
@@ -126,15 +122,10 @@ class GenericBackend(service.Service):
     @defer.inlineCallbacks
     def _getConnection(self, connection_id, requester_nsa):
         # add security check sometime
-# take out caching and see if it works
-#        try:
-#            defer.returnValue(self.connection_cache[connection_id])
-#        except KeyError:
-#            pass
+
         conns = yield GenericBackendConnections.findBy(connection_id=connection_id)
         if len(conns) == 0:
             raise error.ConnectionNonExistentError('No connection with id %s' % connection_id)
-#        self.connection_cache[connection_id] = conns[0]
         defer.returnValue( conns[0] ) # we only get one, unique in db
 
 
