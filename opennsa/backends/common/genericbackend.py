@@ -300,9 +300,9 @@ class GenericBackend(service.Service):
 
 
     @defer.inlineCallbacks
-    def release(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
+    def release(self, header, connection_id):
 
-        conn = yield self._getConnection(connection_id, requester_nsa)
+        conn = yield self._getConnection(connection_id, header.requester_nsa)
         if conn.lifecycle_state in (state.TERMINATING, state.TERMINATED):
             raise error.ConnectionGoneError('Connection %s has been terminated')
 
@@ -425,7 +425,7 @@ class GenericBackend(service.Service):
                 td = conn.end_time - datetime.datetime.utcnow()
                 log.msg('Connection %s: terminate scheduled for %s UTC (%i seconds)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
 
-            self.parent_requester.reserveAbortConfirmed(header, connection_id)
+            self.parent_requester.reserveAbortConfirmed(header, conn.connection_id)
 
         except Exception as e:
             log.msg('Error in reserveAbort: %s: %s' % (type(e), e), system=self.log_system)
@@ -449,10 +449,9 @@ class GenericBackend(service.Service):
             yield state.inactive(conn)
             self.logStateUpdate(conn, 'INACTIVE')
 
-            error_event = self.service_registry.getHandler(registry.ERROR_EVENT, self.parent_system)
-            connection_states = (conn.reservation_state, conn.provision_state, conn.lifecycle_state, conn.activation_state)
-            service_ex = (None, type(e), str(e), None, None)
-            error_event(None, None, None, conn.connection_id, 'activateFailed', connection_states, datetime.datetime.utcnow(), str(e), service_ex)
+            now = datetime.datetime.utcnow()
+            service_ex = None
+            self.parent_requester.errorEvent(conn.connection_id, 0, now, 'activateFailed', None, service_ex)
 
             defer.returnValue(None)
 
