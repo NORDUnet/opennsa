@@ -586,6 +586,7 @@ class Aggregator:
         yield state.inactive(conn)
 
         header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn())
+        now = datetime.datetime.utcnow()
         data_plane_status = (False, conn.revision, True) # active, version, consistent
         self.parent_requester.dataPlaneStateChange(header, conn.connection_id, 0, now, data_plane_status)
 
