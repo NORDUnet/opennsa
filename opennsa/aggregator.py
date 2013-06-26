@@ -527,13 +527,13 @@ class Aggregator:
 
         sub_connection = yield self.getSubConnection(header.provider_nsa, connection_id)
         #yield state.reserved(sub_connection)
-        sub_connection.reservation_state = state.RESERVED
+        sub_connection.reservation_state = state.RESERVE_START
         yield sub_connection.save()
 
         conn = yield sub_connection.ServiceConnection.get()
         sub_conns = yield conn.SubConnections.get()
 
-        if all( [ sc.reservation_state == state.RESERVED for sc in sub_conns ] ):
+        if all( [ sc.reservation_state == state.RESERVE_START for sc in sub_conns ] ):
             yield state.reserved(conn)
             header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn(), None)
             self.parent_requester.reserveCommitConfirmed(header, conn.connection_id)
