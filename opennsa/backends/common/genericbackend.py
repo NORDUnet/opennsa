@@ -301,31 +301,34 @@ class GenericBackend(service.Service):
     @defer.inlineCallbacks
     def release(self, header, connection_id):
 
-        conn = yield self._getConnection(connection_id, header.requester_nsa)
-        if conn.lifecycle_state in (state.TERMINATING, state.TERMINATED):
-            raise error.ConnectionGoneError('Connection %s has been terminated')
+        try:
+            conn = yield self._getConnection(connection_id, header.requester_nsa)
+            if conn.lifecycle_state in (state.TERMINATING, state.TERMINATED):
+                raise error.ConnectionGoneError('Connection %s has been terminated')
 
-        yield state.releasing(conn)
-        self.logStateUpdate(conn, 'RELEASING')
+            yield state.releasing(conn)
+            self.logStateUpdate(conn, 'RELEASING')
 
-        self.scheduler.cancelCall(connection_id)
+            self.scheduler.cancelCall(connection_id)
 
-        if conn.data_plane_active:
-            try:
-                yield self._doTeardown(conn)
-            except Exception as e:
-                log.msg('Connection %s: Error tearing down link: %s' % (conn.connection_id, e))
+            if conn.data_plane_active:
+                try:
+                    yield self._doTeardown(conn)
+                except Exception as e:
+                    log.msg('Connection %s: Error tearing down link: %s' % (conn.connection_id, e))
 
-        self.scheduler.scheduleCall(connection_id, conn.end_time, self._doTerminate, conn)
-        td = conn.start_time - datetime.datetime.utcnow()
-        log.msg('Connection %s: terminating scheduled for %s UTC (%i seconds)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
+            self.scheduler.scheduleCall(connection_id, conn.end_time, self._doTerminate, conn)
+            td = conn.start_time - datetime.datetime.utcnow()
+            log.msg('Connection %s: terminating scheduled for %s UTC (%i seconds)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
 
-        yield state.scheduled(conn)
-        self.logStateUpdate(conn, 'RELEASED')
+            yield state.released(conn)
+            self.logStateUpdate(conn, 'RELEASED')
 
-        self.parent_requester.releaseConfirmed(header, connection_id)
+            self.parent_requester.releaseConfirmed(header, connection_id)
 
-        defer.returnValue(conn.connection_id)
+            defer.returnValue(conn.connection_id)
+        except Exception, e:
+            log.msg('Error in release: %s: %s' % (type(e), e), system=self.log_system)
 
 
     @defer.inlineCallbacks
