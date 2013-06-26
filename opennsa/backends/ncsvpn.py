@@ -201,7 +201,7 @@ class NCSVPNConnectionManager:
 
 class NCSVPNBackend(genericbackend.GenericBackend):
 
-    def __init__(self, network_name, service_registry, parent_system, configuration):
+    def __init__(self, network_name, parent_requester, configuration):
 
         name = 'NCS VPN (%s)' % network_name
 
@@ -213,5 +213,5 @@ class NCSVPNBackend(genericbackend.GenericBackend):
         password         = cfg_dict[config.NCS_PASSWORD]
 
         cm = NCSVPNConnectionManager(ncs_services_url, user, password, name)
-        genericbackend.GenericBackend.__init__(self, network_name, cm, service_registry, parent_system, name)
+        genericbackend.GenericBackend.__init__(self, network_name, cm, parent_requester, name)
 
