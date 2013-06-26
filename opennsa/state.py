@@ -10,11 +10,10 @@ from opennsa import error
 
 
 # Reservation states
-INITIAL                 = 'Initial'             # Also used in LSM
+RESERVE_START           = 'ReserveStart'
 RESERVE_CHECKING        = 'ReserveChecking'
 RESERVE_HELD            = 'ReserveHeld'
 RESERVE_COMMITTING      = 'ReserveComitting'
-RESERVED                = 'Reserved'
 RESERVE_FAILED          = 'ReserveFailed'
 RESERVE_ABORTING        = 'ReserveAborting'
 RESERVE_TIMEOUT         = 'ReserveTimeout'      # Only UPA
@@ -26,26 +25,19 @@ PROVISIONED             = 'Provisioned'
 RELEASING               = 'Releasing'
 
 # Lifecycle
-# NO CREATED - Use Initial
+INITIAL                 = 'Initial'
 TERMINATING             = 'Terminating'
 TERMINATED              = 'Terminated'
 
-# Dataplane
-INACTIVE                = 'Inactive'
-ACTIVATING              = 'Activating'
-ACTIVE                  = 'Active'
-DEACTIVATING            = 'Deactivating'
-
 
 RESERVE_TRANSITIONS = {
-    INITIAL             : [ RESERVE_CHECKING                                       ],
+    RESERVE_START       : [ RESERVE_CHECKING                                       ],
     RESERVE_CHECKING    : [ RESERVE_HELD,       RESERVE_FAILED                     ],
     RESERVE_HELD        : [ RESERVE_COMMITTING, RESERVE_ABORTING, RESERVE_TIMEOUT  ],
-    RESERVE_COMMITTING  : [ RESERVED                                               ],
+    RESERVE_COMMITTING  : [ RESERVE_START                                          ],
     RESERVE_FAILED      : [ RESERVE_ABORTING                                       ],
     RESERVE_TIMEOUT     : [ RESERVE_ABORTING                                       ],
-    RESERVE_ABORTING    : [ RESERVED                                               ],
-    RESERVED            : [ RESERVE_CHECKING                                       ]
+    RESERVE_ABORTING    : [ RESERVE_START                                          ]
 }
 
 PROVISION_TRANSITIONS = {
@@ -97,8 +89,8 @@ def reserveTimeout(conn):
     return conn.save()
 
 def reserved(conn):
-    _switchState(RESERVE_TRANSITIONS, conn.reservation_state, RESERVED)
-    conn.reservation_state = RESERVED
+    _switchState(RESERVE_TRANSITIONS, conn.reservation_state, RESERVE_START)
+    conn.reservation_state = RESERVE_START
     return conn.save()
 
 # Provision

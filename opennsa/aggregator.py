@@ -152,7 +152,7 @@ class Aggregator:
 
         conn = database.ServiceConnection(connection_id=connection_id, revision=0, global_reservation_id=global_reservation_id, description=description,
                             requester_nsa=header.requester_nsa, requester_url=header.reply_to, reserve_time=datetime.datetime.utcnow(),
-                            reservation_state=state.INITIAL, provision_state=state.RELEASED, lifecycle_state=state.INITIAL,
+                            reservation_state=state.RESERVE_START, provision_state=state.RELEASED, lifecycle_state=state.INITIAL,
                             source_network=source_stp.network, source_port=source_stp.port, source_labels=source_stp.labels,
                             dest_network=dest_stp.network, dest_port=dest_stp.port, dest_labels=dest_stp.labels,
                             start_time=service_params.start_time, end_time=service_params.end_time, bandwidth=service_params.bandwidth)
@@ -244,7 +244,7 @@ class Aggregator:
                 sc = database.SubConnection(provider_nsa=link_provider_nsa.urn(),
                                             connection_id=connection_id, local_link=local_link, revision=0, service_connection_id=conn.id, order_id=order_id,
                                             global_reservation_id=global_reservation_id, description=description,
-                                            reservation_state=state.INITIAL, provision_state=state.RELEASED, lifecycle_state=state.INITIAL, data_plane_active=False,
+                                            reservation_state=state.RESERVE_START, provision_state=state.RELEASED, lifecycle_state=state.INITIAL, data_plane_active=False,
                                             source_network=sp.source_stp.network, source_port=sp.source_stp.port, source_labels=sp.source_stp.labels,
                                             dest_network=sp.dest_stp.network, dest_port=sp.dest_stp.port, dest_labels=sp.dest_stp.labels,
                                             start_time=sp.start_time.isoformat(), end_time=sp.end_time.isoformat(), bandwidth=sp.bandwidth)

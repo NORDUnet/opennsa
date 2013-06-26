@@ -223,7 +223,7 @@ class GenericBackend(service.Service):
         # should we save the requester or provider here?
         conn = GenericBackendConnections(connection_id=connection_id, revision=0, global_reservation_id=global_reservation_id, description=description,
                                          requester_nsa=header.requester_nsa, reserve_time=now,
-                                         reservation_state=state.INITIAL, provision_state=state.RELEASED, lifecycle_state=state.INITIAL, data_plane_active=False,
+                                         reservation_state=state.RESERVE_START, provision_state=state.RELEASED, lifecycle_state=state.INITIAL, data_plane_active=False,
                                          source_network=source_stp.network, source_port=source_stp.port, source_labels=[src_label],
                                          dest_network=dest_stp.network, dest_port=dest_stp.port, dest_labels=[dst_label],
                                          start_time=service_params.start_time, end_time=service_params.end_time,
@@ -271,7 +271,7 @@ class GenericBackend(service.Service):
         if conn.lifecycle_state in (state.TERMINATING, state.TERMINATED):
             raise error.ConnectionGoneError('Connection %s has been terminated')
 
-        if conn.reservation_state != state.RESERVED:
+        if conn.reservation_state != state.RESERVE_START:
             raise error.InvalidTransitionError('Cannot provision connection in a non-reserved state')
 
         now = datetime.datetime.utcnow()
