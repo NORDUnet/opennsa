@@ -396,19 +396,28 @@ class Aggregator:
 
         yield state.releasing(conn)
 
-        defs = yield self.forAllSubConnections(conn, registry.RELEASE)
-        results = yield defer.DeferredList(defs, consumeErrors=True)
+        save_defs = []
+        defs = []
+        sub_connections = yield conn.SubConnections.get()
+        for sc in sub_connections:
+            save_defs.append( state.releasing(sc) )
+            provider = self.providers[sc.provider_nsa]
+            header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa, [])
+            d = provider.release(header, sc.connection_id)
+            defs.append(d)
 
+        yield defer.DeferredList(defs, consumeErrors=True)
+
+        results = yield defer.DeferredList(defs, consumeErrors=True)
         successes = [ r[0] for r in results ]
         if all(successes):
-            log.msg('Connection %s: Release succeeded' % conn.connection_id, system=LOG_SYSTEM)
-            yield state.scheduled(conn)
+            # got ack from all children
             defer.returnValue(connection_id)
 
         else:
             n_success = sum( [ 1 for s in successes if s ] )
-            log.msg('Connection %s. Only %i of %i connections successfully provision' % (self.connection_id, len(n_success), len(defs)), system=LOG_SYSTEM)
-            raise self._createAggregateException(results, 'provision', error.ConnectionError)
+            log.msg('Connection %s. Only %i of %i connections successfully released' % (self.connection_id, n_success, len(defs)), system=LOG_SYSTEM)
+            raise self._createAggregateException(results, 'release', error.ConnectionError)
 
 
     @defer.inlineCallbacks
@@ -547,6 +556,25 @@ class Aggregator:
             yield state.provisioned(conn)
             req_header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn(), None)
             self.parent_requester.provisionConfirmed(req_header, conn.connection_id)
+
+
+    @defer.inlineCallbacks
+    def releaseConfirmed(self, header, connection_id):
+
+        log.msg('', system=LOG_SYSTEM)
+        log.msg('Release confirmed for sub connection %s. NSA %s ' % (connection_id, header.provider_nsa), system=LOG_SYSTEM)
+
+        sub_connection = yield self.getSubConnection(header.provider_nsa, connection_id)
+        yield state.released(sub_connection)
+        yield sub_connection.save()
+
+        conn = yield sub_connection.ServiceConnection.get()
+        sub_conns = yield conn.SubConnections.get()
+
+        if all( [ sc.provision_state == state.RELEASED for sc in sub_conns ] ):
+            yield state.released(conn)
+            req_header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn(), None)
+            self.parent_requester.releaseConfirmed(req_header, conn.connection_id)
 
 
     @defer.inlineCallbacks
