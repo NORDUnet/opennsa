@@ -652,12 +652,7 @@ class Aggregator:
         conn = yield sub_conn.ServiceConnection.get()
         sub_conns = yield conn.SubConnections.get()
 
-        if not conn.requester_url:
-            log.msg("Connection %s: No url for requester to notify about data plane change" % conn.connection_id, system=LOG_SYSTEM)
-            defer.returnValue(None)
-
         # do notification
-
         aggr_active     = all( [ sc.data_plane_active     for sc in sub_conns ] )
         aggr_version    = max( [ sc.data_plane_version    for sc in sub_conns ] )
         aggr_consistent = all( [ sc.data_plane_consistent for sc in sub_conns ] )
