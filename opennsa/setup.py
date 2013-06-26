@@ -6,7 +6,7 @@ from twisted.python import log
 from twisted.web import resource, server
 from twisted.application import internet, service as twistedservice
 
-from opennsa import config, logging, registry, nsa, database, aggregator, viewresource
+from opennsa import config, logging, nsa, database, aggregator, viewresource
 from opennsa.topology import nrmparser, nml, http as nmlhttp
 from opennsa.protocols import nsi2, discovery
 
@@ -45,7 +45,7 @@ def setupBackend(backend_conf, network_name, parent_requester):
 
         elif backend_type == config.BLOCK_NCSVPN:
             from opennsa.backends import ncsvpn
-            return ncsvpn.NCSVPNBackend(network_name, service_registry, registry.NSI2_AGGREGATOR, bc.items())
+            return ncsvpn.NCSVPNBackend(network_name, parent_requester, bc.items())
 
         else:
             raise config.ConfigurationError('No backend specified')
@@ -89,7 +89,6 @@ class OpenNSAService(twistedservice.MultiService):
         topology.addNetwork(network)
 
         top_resource = resource.Resource()
-        service_registry = registry.ServiceRegistry()
 
         providers = { ns_agent.urn() : None }
 
