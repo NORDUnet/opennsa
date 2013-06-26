@@ -23,7 +23,7 @@ from twisted.application import service
 
 from opennsa.interface import INSIProvider
 
-from opennsa import registry, error, state, nsa
+from opennsa import error, state, nsa
 from opennsa.backends.common import scheduler, calendar
 
 from twistar.dbobject import DBObject
