@@ -310,7 +310,7 @@ class GenericBackend(service.Service):
 
         self.scheduler.cancelCall(connection_id)
 
-        if conn.data_plane_active == state.ACTIVE:
+        if conn.data_plane_active:
             try:
                 yield self._doTeardown(conn)
             except Exception as e:
@@ -444,9 +444,10 @@ class GenericBackend(service.Service):
             conn.data_plane_active = False
             yield conn.save()
 
+            header = nsa.NSIHeader(conn.requester_nsa, conn.requester_nsa) # The NSA is both requester and provider in the backend, but this might be problematic without aggregator
             now = datetime.datetime.utcnow()
             service_ex = None
-            self.parent_requester.errorEvent(conn.connection_id, self.getNotificationId(), now, 'activateFailed', None, service_ex)
+            self.parent_requester.errorEvent(header, conn.connection_id, self.getNotificationId(), now, 'activateFailed', None, service_ex)
 
             defer.returnValue(None)
 
@@ -489,10 +490,10 @@ class GenericBackend(service.Service):
             conn.data_plane_active = False # technically we don't know, but for NSI that means not active
             yield conn.save()
 
-            error_event = self.service_registry.getHandler(registry.ERROR_EVENT, self.parent_system)
-            connection_states = (conn.reservation_state, conn.provision_state, conn.lifecycle_state, None)
-            service_ex = (None, type(e), str(e), None, None)
-            error_event(None, None, None, conn.connection_id, 'deactivateFailed', connection_states, datetime.datetime.utcnow(), str(e), service_ex)
+            header = nsa.NSIHeader(conn.requester_nsa, conn.requester_nsa) # The NSA is both requester and provider in the backend, but this might be problematic without aggregator
+            now = datetime.datetime.utcnow()
+            service_ex = None
+            self.parent_requester.errorEvent(header, conn.connection_id, self.getNotificationId(), now, 'deactivateFailed', None, service_ex)
 
             defer.returnValue(None)
 
