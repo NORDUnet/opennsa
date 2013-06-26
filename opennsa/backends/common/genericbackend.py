@@ -94,7 +94,7 @@ class GenericBackend(service.Service):
                     self.scheduler.scheduleCall(conn.connection_id, conn.end_time, self._doActivate, conn)
                     td = conn.end_time - now
                     log.msg('Connection %s: activate scheduled for %s UTC (%i seconds)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
-                elif conn.provision_state == state.SCHEDULED:
+                elif conn.provision_state == state.RELEASED:
                     self.scheduler.scheduleCall(conn.connection_id, conn.end_time, self._doTerminate, conn)
                     td = conn.end_time - now
                     log.msg('Connection %s: terminate scheduled for %s UTC (%i seconds)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
@@ -105,7 +105,7 @@ class GenericBackend(service.Service):
                 if conn.provision_state == state.PROVISIONED and conn.data_plane_active == False:
                     log.msg('Connection %s: Immediate activate during buildSchedule' % conn.connection_id, system=self.log_system)
                     yield self._doActivate(conn)
-                elif conn.provision_state == state.SCHEDULED:
+                elif conn.provision_state == state.RELEASED:
                     self.scheduler.scheduleCall(conn.connection_id, conn.end_time, self._doTerminate, conn)
                     td = conn.end_time - now
                     log.msg('Connection %s: terminate scheduled for %s UTC (%i seconds)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
@@ -223,7 +223,7 @@ class GenericBackend(service.Service):
         # should we save the requester or provider here?
         conn = GenericBackendConnections(connection_id=connection_id, revision=0, global_reservation_id=global_reservation_id, description=description,
                                          requester_nsa=header.requester_nsa, reserve_time=now,
-                                         reservation_state=state.INITIAL, provision_state=state.SCHEDULED, lifecycle_state=state.INITIAL, data_plane_active=False,
+                                         reservation_state=state.INITIAL, provision_state=state.RELEASED, lifecycle_state=state.INITIAL, data_plane_active=False,
                                          source_network=source_stp.network, source_port=source_stp.port, source_labels=[src_label],
                                          dest_network=dest_stp.network, dest_port=dest_stp.port, dest_labels=[dst_label],
                                          start_time=service_params.start_time, end_time=service_params.end_time,

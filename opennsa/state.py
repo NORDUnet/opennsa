@@ -20,7 +20,7 @@ RESERVE_ABORTING        = 'ReserveAborting'
 RESERVE_TIMEOUT         = 'ReserveTimeout'      # Only UPA
 
 # Provision
-SCHEDULED               = 'Scheduled'
+RELEASED                = 'Released'
 PROVISIONING            = 'Provisioning'
 PROVISIONED             = 'Provisioned'
 RELEASING               = 'Releasing'
@@ -49,10 +49,10 @@ RESERVE_TRANSITIONS = {
 }
 
 PROVISION_TRANSITIONS = {
-    SCHEDULED       : [ PROVISIONING  ],
+    RELEASED        : [ PROVISIONING  ],
     PROVISIONING    : [ PROVISIONED   ],
     PROVISIONED     : [ RELEASING     ],
-    RELEASING       : [ SCHEDULED     ]
+    RELEASING       : [ RELEASED      ]
 }
 
 LIFECYCLE_TRANSITIONS = {
@@ -118,9 +118,9 @@ def releasing(conn):
     conn.provision_state = RELEASING
     return conn.save()
 
-def scheduled(conn):
-    _switchState(PROVISION_TRANSITIONS, conn.provision_state, SCHEDULED)
-    conn.provision_state = SCHEDULED
+def released(conn):
+    _switchState(PROVISION_TRANSITIONS, conn.provision_state, RELEASED)
+    conn.provision_state = RELEASED
     return conn.save()
 
 # Lifecyle
