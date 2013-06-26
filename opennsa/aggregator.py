@@ -644,9 +644,10 @@ class Aggregator:
 
 
     @defer.inlineCallbacks
-    def errorEvent(self, requester_nsa, provider_nsa, session_security_attr, connection_id, event, connection_states, timestamp, info, service_ex):
+    def errorEvent(self, header, connection_id, notification_id, timestamp, event, info, service_ex):
 
-        sub_conn = yield self.findSubConnection(provider_nsa, connection_id)
+        # should mark sub connection as terminated / failed
+        sub_conn = yield self.findSubConnection(header.provider_nsa, connection_id)
         conn = yield sub_conn.ServiceConnection.get()
         sub_conns = yield conn.SubConnections.get()
 
