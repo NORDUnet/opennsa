@@ -310,7 +310,6 @@ class Aggregator:
         successes = [ r[0] for r in results ]
         if all(successes):
             log.msg('Connection %s: ReserveCommit messages acked' % conn.connection_id, system=LOG_SYSTEM)
-#            yield state.reserved(conn)
             defer.returnValue(connection_id)
 
         else:
@@ -380,7 +379,7 @@ class Aggregator:
             d = provider.provision(header, sc.connection_id)
             defs.append(d)
 
-        yield defer.DeferredList(defs, consumeErrors=True)
+        yield defer.DeferredList(save_defs, consumeErrors=True)
 
         results = yield defer.DeferredList(defs, consumeErrors=True)
         successes = [ r[0] for r in results ]
@@ -416,7 +415,7 @@ class Aggregator:
             d = provider.release(header, sc.connection_id)
             defs.append(d)
 
-        yield defer.DeferredList(defs, consumeErrors=True)
+        yield defer.DeferredList(save_defs, consumeErrors=True)
 
         results = yield defer.DeferredList(defs, consumeErrors=True)
         successes = [ r[0] for r in results ]
