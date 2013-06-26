@@ -320,25 +320,35 @@ class Aggregator:
 
 
     @defer.inlineCallbacks
-    def reserveAbort(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
+    def reserveAbort(self, header, connection_id):
 
         log.msg('', system=LOG_SYSTEM)
-        log.msg('ReserveAbort request. NSA: %s. Connection ID: %s' % (requester_nsa, connection_id), system=LOG_SYSTEM)
+        log.msg('ReserveAbort request. NSA: %s. Connection ID: %s' % (header.requester_nsa, connection_id), system=LOG_SYSTEM)
 
-        conn = yield self.getConnection(requester_nsa, connection_id)
+        conn = yield self.getConnection(header.requester_nsa, connection_id)
 
         if conn.lifecycle_state == state.TERMINATED:
             raise error.ConnectionGoneError('Connection %s has been terminated')
 
         yield state.reserveAbort(conn)
 
-        defs = yield self.forAllSubConnections(conn, registry.RESERVE_ABORT)
+        save_defs = []
+        defs = []
+        sub_connections = yield conn.SubConnections.get()
+        for sc in sub_connections:
+            save_defs.append( state.reserveAbort(sc) )
+            provider = self.providers[sc.provider_nsa]
+            header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa, [])
+            d = provider.reserveAbort(header, sc.connection_id)
+            defs.append(d)
+
+        yield defer.DeferredList(save_defs, consumeErrors=True)
+
         results = yield defer.DeferredList(defs, consumeErrors=True)
 
         successes = [ r[0] for r in results ]
         if all(successes):
-            log.msg('Connection %s: ReserveAbort succeeded' % conn.connection_id, system=LOG_SYSTEM)
-            yield state.reserved(conn)
+            log.msg('Connection %s: All ReserveAbort acked' % conn.connection_id, system=LOG_SYSTEM)
             defer.returnValue(connection_id)
 
         else:
@@ -537,6 +547,25 @@ class Aggregator:
             yield state.reserved(conn)
             header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn(), None)
             self.parent_requester.reserveCommitConfirmed(header, conn.connection_id)
+
+
+    @defer.inlineCallbacks
+    def reserveAbortConfirmed(self, header, connection_id):
+
+        log.msg('', system=LOG_SYSTEM)
+        log.msg('ReserveAbort confirmed for sub connection %s. NSA %s ' % (connection_id, header.provider_nsa), system=LOG_SYSTEM)
+
+        sub_connection = yield self.getSubConnection(header.provider_nsa, connection_id)
+        sub_connection.reservation_state = state.RESERVE_START
+        yield sub_connection.save()
+
+        conn = yield sub_connection.ServiceConnection.get()
+        sub_conns = yield conn.SubConnections.get()
+
+        if all( [ sc.reservation_state == state.RESERVE_START for sc in sub_conns ] ):
+            yield state.reserved(conn)
+            header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn(), None)
+            self.parent_requester.reserveAbortConfirmed(header, conn.connection_id)
 
 
     @defer.inlineCallbacks
