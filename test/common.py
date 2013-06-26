@@ -39,6 +39,6 @@ class DUDRequester:
     def terminateConfirmed(self, *args):
         self.terminate_defer.callback(args)
 
-    def dataPlaneChange(self, *args):
+    def dataPlaneStateChange(self, *args):
         self.data_plane_change_defer.callback(args)
 

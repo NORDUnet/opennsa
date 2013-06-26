@@ -143,27 +143,32 @@ class DUDBackendTest(unittest.TestCase):
     @defer.inlineCallbacks
     def testActivation(self):
 
-        d_up = defer.Deferred()
+        acid = yield self.provider.reserve(self.header, None, None, None, self.service_params)
+        header, cid, gid, desc, sc = yield self.requester.reserve_defer
+        self.failUnlessEqual(cid, acid)
 
-        def dataPlaneChange(requester_nsa, provider_nsa, session_security_attr, connection_id, dps, timestamp):
-            active, version, version_consistent = dps
-            if active:
-                values = connection_id, active, version_consistent, version, timestamp
-                d_up.callback(values)
+        yield self.provider.reserveCommit(self.header, acid)
+        cid = yield self.requester.reserve_commit_defer
 
-        self.sr.registerEventHandler(registry.DATA_PLANE_CHANGE,  dataPlaneChange, self.registry_system)
+        yield self.provider.provision(self.header, acid)
+        cid = yield self.requester.provision_defer
 
-        cid,_,_,_ = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, self.service_params)
-        yield self.reserveCommit(self.requester_nsa, self.provider_nsa, None, cid)
-        yield self.provision(self.requester_nsa, self.provider_nsa, None, cid)
         self.clock.advance(3)
-        connection_id, active, version_consistent, version, timestamp = yield d_up
-        self.failUnlessEqual(cid, connection_id)
-        self.failUnlessEqual(active, True)
-        self.failUnlessEqual(version_consistent, True)
 
-        #yield self.release(  None, self.provider_nsa, None, cid)
-        yield self.terminate(self.requester_nsa, self.provider_nsa, None, cid)
+        header, cid, nid, timestamp, dps = yield self.requester.data_plane_change_defer
+        active, version, consistent = dps
+
+        self.requester.data_plane_change_defer = defer.Deferred() # need a new one for deactivate
+
+        self.failUnlessEqual(cid, acid)
+        self.failUnlessEqual(active, True)
+        self.failUnlessEqual(consistent, True)
+
+        #yield self.provider.release(self.header, cid)
+        #cid = yield self.requester.release_defer
+
+        yield self.provider.terminate(self.header, acid)
+        cid = yield self.requester.terminate_defer
 
 
     @defer.inlineCallbacks
