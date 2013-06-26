@@ -10,6 +10,7 @@ class DUDRequester:
         self.provision_defer         = defer.Deferred()
         self.release_defer           = defer.Deferred()
         self.terminate_defer         = defer.Deferred()
+        self.reserve_timeout_defer   = defer.Deferred()
         self.data_plane_change_defer = defer.Deferred()
         self.error_event_defer       = defer.Deferred()
 
@@ -39,6 +40,9 @@ class DUDRequester:
 
     def terminateConfirmed(self, *args):
         self.terminate_defer.callback(args)
+
+    def reserveTimeout(self, *args):
+        self.reserve_timeout_defer.callback(args)
 
     def dataPlaneStateChange(self, *args):
         self.data_plane_change_defer.callback(args)

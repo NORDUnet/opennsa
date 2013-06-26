@@ -253,11 +253,11 @@ class GenericBackend(service.Service):
 
 
     @defer.inlineCallbacks
-    def reserveAbort(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
+    def reserveAbort(self, header, connection_id):
 
         log.msg('ReserveAbort request. Connection ID: %s' % connection_id, system=self.log_system)
 
-        conn = yield self._getConnection(connection_id, requester_nsa)
+        conn = yield self._getConnection(connection_id, header.requester_nsa)
         if conn.lifecycle_state in (state.TERMINATING, state.TERMINATED):
             raise error.ConnectionGoneError('Connection %s has been terminated')
 
@@ -389,9 +389,10 @@ class GenericBackend(service.Service):
 
             yield self._doReserveAbort(conn)
 
-            connection_states = (conn.reservation_state, conn.provision_state, conn.lifecycle_state, None)
             header = nsa.NSIHeader(conn.requester_nsa, conn.requester_nsa) # The NSA is both requester and provider in the backend, but this might be problematic without aggregator
-            self.parent_requester.reserveTimeout(header, conn.connection_id, connection_states, self.TPC_TIMEOUT, datetime.datetime.utcnow())
+            now = datetime.datetime.utcnow()
+            # the conn.requesteR_nsa is somewhat problematic - the backend should really know its identity
+            self.parent_requester.reserveTimeout(header, conn.connection_id, self.getNotificationId(), now, self.TPC_TIMEOUT, conn.connection_id, conn.requester_nsa)
 
         except Exception as e:
             log.msg('Error in reserveTimeout: %s: %s' % (type(e), e), system=self.log_system)
@@ -424,6 +425,7 @@ class GenericBackend(service.Service):
                 td = conn.end_time - datetime.datetime.utcnow()
                 log.msg('Connection %s: terminate scheduled for %s UTC (%i seconds)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
 
+            header = nsa.NSIHeader(conn.requester_nsa, conn.requester_nsa) # The NSA is both requester and provider in the backend, but this might be problematic without aggregator
             self.parent_requester.reserveAbortConfirmed(header, conn.connection_id)
 
         except Exception as e:

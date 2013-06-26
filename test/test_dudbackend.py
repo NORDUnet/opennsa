@@ -96,35 +96,43 @@ class DUDBackendTest(unittest.TestCase):
     @defer.inlineCallbacks
     def testProvisionReleaseUsage(self):
 
-        d_up   = defer.Deferred()
-        d_down = defer.Deferred()
+        acid = yield self.provider.reserve(self.header, None, None, None, self.service_params)
+        yield self.requester.reserve_defer
 
-        def dataPlaneChange(requester_nsa, provider_nsa, session_security_attr, connection_id, dps, timestamp):
-            active, version, version_consistent = dps
-            if active:
-                d_up.callback(connection_id)
-            else:
-                d_down.callback(connection_id)
+        yield self.provider.reserveCommit(self.header, acid)
+        yield self.requester.reserve_commit_defer
 
-        self.sr.registerEventHandler(registry.DATA_PLANE_CHANGE,  dataPlaneChange, self.registry_system)
+        yield self.provider.provision(self.header, acid)
+        yield self.requester.provision_defer
 
-        cid,_,_,sp = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, self.service_params)
-        yield self.reserveCommit(self.requester_nsa, self.provider_nsa, None, cid)
-
-        yield self.provision(self.requester_nsa, self.provider_nsa, None, cid)
         self.clock.advance(3)
-        yield d_up
-        yield self.release(  self.requester_nsa, self.provider_nsa, None, cid)
-        yield d_down
-        yield self.terminate(self.requester_nsa, self.provider_nsa, None, cid)
+
+        header, cid, nid, timestamp, dps = yield self.requester.data_plane_change_defer
+        active, version, consistent = dps
+        self.failUnlessEquals(active, True)
+
+        self.requester.data_plane_change_defer = defer.Deferred()
+
+        yield self.provider.release(self.header, acid)
+        yield self.requester.release_defer
+
+        header, cid, nid, timestamp, dps = yield self.requester.data_plane_change_defer
+        active, version, consistent = dps
+        self.failUnlessEquals(active, False)
+
+        yield self.provider.terminate(self.header, cid)
+        yield self.requester.terminate_defer
 
 
     @defer.inlineCallbacks
     def testDoubleReserve(self):
 
-        cid,_,_,_ = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, self.service_params)
+        acid = yield self.provider.reserve(self.header, None, None, None, self.service_params)
+        header, cid, gid, desc, sp = yield self.requester.reserve_defer
+
+        self.requester.reserve_defer = defer.Deferred() # new defer for new reserve request
         try:
-            cid,_,_,_ = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, self.service_params)
+            acid2 = yield self.provider.reserve(self.header, None, None, None, self.service_params)
             self.fail('Should have raised STPUnavailableError')
         except error.STPUnavailableError:
             pass # we expect this
@@ -134,7 +142,7 @@ class DUDBackendTest(unittest.TestCase):
     def testProvisionNonExistentConnection(self):
 
         try:
-            yield self.provision(self.requester_nsa, self.provider_nsa, None, '1234')
+            yield self.provider.provision(self.header, '1234')
             self.fail('Should have raised ConnectionNonExistentError')
         except error.ConnectionNonExistentError:
             pass # expected
@@ -181,10 +189,17 @@ class DUDBackendTest(unittest.TestCase):
         end_time   = datetime.datetime.utcnow() + datetime.timedelta(seconds=10)
         service_params = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, 200)
 
-        cid,_,_,_ = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, service_params)
-        yield self.reserveAbort(self.requester_nsa, self.provider_nsa, None, cid)
+        acid = yield self.provider.reserve(self.header, None, None, None, service_params)
+        header, cid, gid, desc, sp = yield self.requester.reserve_defer
+
+        yield self.provider.reserveAbort(self.header, acid)
+        header, cid = yield self.requester.reserve_abort_defer
+
+        self.requester.reserve_defer = defer.Deferred()
+
         # try to reserve the same resources
-        cid,_,_,_ = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, service_params)
+        acid2 = yield self.provider.reserve(self.header, None, None, None, service_params)
+        header, cid, gid, desc, sp = yield self.requester.reserve_defer
 
 
     @defer.inlineCallbacks
@@ -197,24 +212,20 @@ class DUDBackendTest(unittest.TestCase):
         end_time   = datetime.datetime.utcnow() + datetime.timedelta(seconds=60)
         service_params = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, 200)
 
-        d = defer.Deferred()
-        def reserveTimeout(requester_nsa, provider_nsa, session_security_attr, connection_id, connection_states, timeout_value, timestamp):
-            values = connection_id, connection_states, timeout_value, timestamp
-            d.callback(values)
-
-        self.sr.registerEventHandler(registry.RESERVE_TIMEOUT,  reserveTimeout, self.registry_system)
-
-        cid,_,_,_ = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, service_params)
+        acid = yield self.provider.reserve(self.header, None, None, None, service_params)
+        header, cid, gid, desc, sp = yield self.requester.reserve_defer
 
         self.clock.advance(dud.DUDNSIBackend.TPC_TIMEOUT + 1)
-        connection_id, connection_states, timeout_value, timestamp = yield d
-        rsm, psm, lsm, asm = connection_states
 
-        self.failUnlessEquals(connection_id, cid)
-        self.failUnlessEquals(rsm, state.RESERVED)
+        header, cid, notification_id, timestamp, timeout_value, org_cid, org_nsa = yield self.requester.reserve_timeout_defer
+
+        self.failUnlessEquals(cid, acid)
+
+        self.requester.reserve_defer = defer.Deferred()
 
         # try to reserve the same resources
-        cid,_,_,_ = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, service_params)
+        acid2 = yield self.provider.reserve(self.header, None, None, None, service_params)
+        header, cid, gid, desc, sp = yield self.requester.reserve_defer
 
 
     @defer.inlineCallbacks
@@ -227,43 +238,43 @@ class DUDBackendTest(unittest.TestCase):
         end_time   = datetime.datetime.utcnow() + datetime.timedelta(seconds=2)
         service_params = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, 200)
 
-        d_up = defer.Deferred()
-        d_down = defer.Deferred()
-
-        def dataPlaneChange(requester_nsa, provider_nsa, session_security_attr, connection_id, dps, timestamp):
-            active, version, version_consistent = dps
-            values = connection_id, active, version_consistent, version, timestamp
-            if active:
-                d_up.callback(values)
-            else:
-                d_down.callback(values)
-
-        self.sr.registerEventHandler(registry.DATA_PLANE_CHANGE,  dataPlaneChange, self.registry_system)
-
         def setupLink(connection_id, src, dst, bandwidth):
             d = defer.Deferred()
             reactor.callLater(2, d.callback, None)
             return d
 
         # make actication fail via monkey patching
-        self.backend.connection_manager.setupLink = setupLink
+        self.provider.connection_manager.setupLink = setupLink
 
-        cid,_,_,_ = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, service_params)
-        yield self.reserveCommit(self.requester_nsa, self.provider_nsa, None, cid)
-        yield self.provision(self.requester_nsa, self.provider_nsa, None, cid)
+        acid = yield self.provider.reserve(self.header, None, None, None, service_params)
+        header, cid, gid, desc, sp = yield self.requester.reserve_defer
+
+        yield self.provider.reserveCommit(self.header, cid)
+        yield self.requester.reserve_commit_defer
+
+        yield self.provider.provision(self.header, cid)
+        yield self.requester.provision_defer
 
         self.clock.advance(2)
-        connection_id, active, version_consistent, version, timestamp = yield d_up
-        self.failUnlessEqual(cid, connection_id)
+
+        header, cid, nid, timestamp, dps = yield self.requester.data_plane_change_defer
+        active, version, consistent = dps
+
+        self.failUnlessEqual(cid, acid)
         self.failUnlessEqual(active, True)
-        self.failUnlessEqual(version_consistent, True)
+        self.failUnlessEqual(consistent, True)
+
+        self.requester.data_plane_change_defer = defer.Deferred()
 
         self.clock.advance(2)
-        connection_id, active, version_consistent, version, timestamp = yield d_down
-        self.failUnlessEqual(cid, connection_id)
+        header, cid, nid, timestamp, dps = yield self.requester.data_plane_change_defer
+        active, version, consistent = dps
+
+        self.failUnlessEqual(cid, acid)
         self.failUnlessEqual(active, False)
 
-        yield self.terminate(self.requester_nsa, self.provider_nsa, None, cid)
+        yield self.provider.terminate(self.header, cid)
+        yield self.requester.terminate_defer
 
     testSlowActivate.skip = 'Uses reactor calls and real timings, and is too slow to be a regular test'
 
@@ -271,56 +282,50 @@ class DUDBackendTest(unittest.TestCase):
     @defer.inlineCallbacks
     def testFaultyActivate(self):
 
-        d_err = defer.Deferred()
-
-        def errorEvent(requester_nsa, provider_nsa, session_security_attr, connection_id, event, connection_states, timestamp, info, ex):
-            d_err.callback( (event, connection_id, connection_states, timestamp, info, ex) )
-
-        self.sr.registerEventHandler(registry.ERROR_EVENT, errorEvent, self.registry_system)
-
         # make actication fail via monkey patching
-        self.backend.connection_manager.setupLink = \
-            lambda src, dst : defer.fail(error.InternalNRMError('Link setup failed'))
+        self.provider.connection_manager.setupLink = lambda cid, src, dst, bw : defer.fail(error.InternalNRMError('Link setup failed'))
 
-        cid,_,_,_ = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, self.service_params)
-        yield self.reserveCommit(self.requester_nsa, self.provider_nsa, None, cid)
-        yield self.provision(self.requester_nsa, self.provider_nsa, None, cid)
+        acid = yield self.provider.reserve(self.header, None, None, None, self.service_params)
+        header, cid, gid, desc, sp = yield self.requester.reserve_defer
+
+        yield self.provider.reserveCommit(self.header, acid)
+        header, cid = yield self.requester.reserve_commit_defer
+
+        yield self.provider.provision(self.header, cid)
+        header, cid = yield self.requester.provision_defer
+
         self.clock.advance(3)
-        vals = yield d_err
 
-        event, connection_id, connection_states, timestamp, info, ex = vals
+        header, cid, nid, timestamp, event, info, ex = yield self.requester.error_event_defer
+
         self.failUnlessEquals(event, 'activateFailed')
-        self.failUnlessEquals(connection_id, cid)
+        self.failUnlessEquals(cid, acid)
 
 
     @defer.inlineCallbacks
     def testFaultyDeactivate(self):
 
-        d_up  = defer.Deferred()
-        d_err = defer.Deferred()
-
-        def dataPlaneChange(requester_nsa, provider_nsa, session_security_attr, connection_id, dps, timestamp):
-            active, version, version_consistent = dps
-            if active:
-                d_up.callback( ( connection_id, active, version_consistent, version, timestamp ) )
-
-        def errorEvent(requester_nsa, provider_nsa, session_security_attr, connection_id, event, connection_states, timestamp, info, ex):
-            d_err.callback( (event, connection_id, connection_states, timestamp, info, ex) )
-
-        self.sr.registerEventHandler(registry.DATA_PLANE_CHANGE,  dataPlaneChange, self.registry_system)
-        self.sr.registerEventHandler(registry.ERROR_EVENT, errorEvent, self.registry_system)
-
         # make actication fail via monkey patching
-        self.backend.connection_manager.teardownLink = \
-            lambda src, dst : defer.fail(error.InternalNRMError('Link teardown failed'))
+        self.provider.connection_manager.teardownLink = lambda cid, src, dst, bw : defer.fail(error.InternalNRMError('Link teardown failed'))
 
-        cid,_,_,_ = yield self.reserve(self.requester_nsa, self.provider_nsa, None, None, None, None, self.service_params)
-        yield self.reserveCommit(self.requester_nsa, self.provider_nsa, None, cid)
-        yield self.provision(self.requester_nsa, self.provider_nsa, None, cid)
+        acid = yield self.provider.reserve(self.header, None, None, None, self.service_params)
+        header, cid, gid, desc, sp = yield self.requester.reserve_defer
+
+        yield self.provider.reserveCommit(self.header, cid)
+        header, cid = yield self.requester.reserve_commit_defer
+
+        yield self.provider.provision(self.header, cid)
+        header, cid = yield self.requester.provision_defer
 
         self.clock.advance(3)
-        yield d_up
+
+        header, cid, nid, timestamp, dps = yield self.requester.data_plane_change_defer
+        active, version, consistent = dps
+        self.requester.data_plane_change_defer = defer.Deferred()
 
         self.clock.advance(11)
-        yield d_err
+
+        header, cid, nid, timestamp, event, info, ex = yield self.requester.error_event_defer
+        self.failUnlessEquals(event, 'deactivateFailed')
+        self.failUnlessEquals(cid, acid)
 
