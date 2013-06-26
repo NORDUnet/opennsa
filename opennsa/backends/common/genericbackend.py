@@ -255,13 +255,20 @@ class GenericBackend(service.Service):
     @defer.inlineCallbacks
     def reserveAbort(self, header, connection_id):
 
-        log.msg('ReserveAbort request. Connection ID: %s' % connection_id, system=self.log_system)
+        try:
+            log.msg('ReserveAbort request. Connection ID: %s' % connection_id, system=self.log_system)
 
-        conn = yield self._getConnection(connection_id, header.requester_nsa)
-        if conn.lifecycle_state in (state.TERMINATING, state.TERMINATED):
-            raise error.ConnectionGoneError('Connection %s has been terminated')
+            conn = yield self._getConnection(connection_id, header.requester_nsa)
+            if conn.lifecycle_state in (state.TERMINATING, state.TERMINATED):
+                raise error.ConnectionGoneError('Connection %s has been terminated')
 
-        yield self._doReserveAbort(conn)
+            yield self._doReserveRollback(conn)
+
+            header = nsa.NSIHeader(conn.requester_nsa, conn.requester_nsa) # The NSA is both requester and provider in the backend, but this might be problematic without aggregator
+            self.parent_requester.reserveAbortConfirmed(header, conn.connection_id)
+
+        except Exception, e:
+            log.msg('Error in reserveAbort: %s: %s' % (type(e), e), system=self.log_system)
 
 
     @defer.inlineCallbacks
@@ -390,7 +397,7 @@ class GenericBackend(service.Service):
             yield state.reserveTimeout(conn)
             self.logStateUpdate(conn, 'RESERVE TIMEOUT')
 
-            yield self._doReserveAbort(conn)
+            yield self._doReserveRollback(conn)
 
             header = nsa.NSIHeader(conn.requester_nsa, conn.requester_nsa) # The NSA is both requester and provider in the backend, but this might be problematic without aggregator
             now = datetime.datetime.utcnow()
@@ -402,7 +409,7 @@ class GenericBackend(service.Service):
 
 
     @defer.inlineCallbacks
-    def _doReserveAbort(self, conn):
+    def _doReserveRollback(self, conn):
 
         try:
             yield state.reserveAbort(conn)
@@ -428,11 +435,8 @@ class GenericBackend(service.Service):
                 td = conn.end_time - datetime.datetime.utcnow()
                 log.msg('Connection %s: terminate scheduled for %s UTC (%i seconds)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
 
-            header = nsa.NSIHeader(conn.requester_nsa, conn.requester_nsa) # The NSA is both requester and provider in the backend, but this might be problematic without aggregator
-            self.parent_requester.reserveAbortConfirmed(header, conn.connection_id)
-
         except Exception as e:
-            log.msg('Error in reserveAbort: %s: %s' % (type(e), e), system=self.log_system)
+            log.msg('Error in doReserveRollback: %s: %s' % (type(e), e), system=self.log_system)
 
 
     @defer.inlineCallbacks
