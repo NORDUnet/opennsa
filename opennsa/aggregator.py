@@ -624,9 +624,11 @@ class Aggregator:
     # --
 
 
-    def doTimeout(self, conn):
-        header = None
-        self.parent_requester.reserveTimeout(header, conn.connection_id, None, None, None, None, None)
+    def doTimeout(self, conn, timeout_value, org_connection_id, org_nsa):
+        header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn(), None)
+        now = datetime.datetime.utcnow()
+        self.parent_requester.reserveTimeout(header, conn.connection_id, 0, now, timeout_value, org_connection_id, org_nsa)
+
 
     def doErrorEvent(self, conn, notification_id, event, info, service_ex=None):
         header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn(), None)
@@ -650,7 +652,7 @@ class Aggregator:
 
 
     @defer.inlineCallbacks
-    def reserveTimeout(self, header, connection_id, connection_states, timeout_value, timestamp):
+    def reserveTimeout(self, header, connection_id, notification_id, timestamp, timeout_value, org_connection_id, org_nsa):
 
         sub_conn = yield self.findSubConnection(header.provider_nsa, connection_id)
         conn = yield sub_conn.ServiceConnection.get()
@@ -658,7 +660,7 @@ class Aggregator:
 
         if len(sub_conns) == 1:
             log.msg("reserveTimeout: One sub connection for connection %s, notifying" % conn.connection_id)
-            self.doTimeout(conn)
+            self.doTimeout(conn, timeout_value, org_connection_id, org_nsa)
         else:
             raise NotImplementedError('Cannot handle timeout for connection with more than one sub connection')
 
