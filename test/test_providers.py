@@ -1,49 +1,17 @@
-import os, datetime, json
+import os, datetime, json, StringIO
 
 from twisted.trial import unittest
 from twisted.internet import reactor, defer, task
 
-from opennsa import nsa, registry, database, error, state
-from opennsa.topology import nml
+from opennsa import nsa, database, error, aggregator
+from opennsa.topology import nml, nrmparser
 from opennsa.backends import dud
 
-from . import common
+from . import topology, common
 
 
 
-class DUDBackendTest(unittest.TestCase):
-
-    source_stp  = nsa.STP('Aruba', 'A1', labels=[ nsa.Label(nml.ETHERNET_VLAN, '1-2') ] )
-    dest_stp    = nsa.STP('Aruba', 'A3', labels=[ nsa.Label(nml.ETHERNET_VLAN, '2-3') ] )
-    start_time  = datetime.datetime.utcnow() + datetime.timedelta(seconds=2)
-    end_time    = datetime.datetime.utcnow() + datetime.timedelta(seconds=10)
-    bandwidth   = 200
-
-    header         = nsa.NSIHeader('test-requester', 'test-provider', [])
-    service_params = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, bandwidth)
-
-    def setUp(self):
-
-        self.clock = task.Clock()
-
-        self.requester = common.DUDRequester()
-
-        self.provider = dud.DUDNSIBackend('Test', self.requester)
-        self.provider.scheduler.clock = self.clock
-        self.provider.startService()
-
-        tcf = os.path.expanduser('~/.opennsa-test.json')
-        tc = json.load( open(tcf) )
-        database.setupDatabase( tc['database'], tc['database-user'], tc['database-password'])
-
-
-    @defer.inlineCallbacks
-    def tearDown(self):
-        from opennsa.backends.common import genericbackend
-        yield self.provider.stopService()
-        # delete all connections from test database
-        yield genericbackend.GenericBackendConnections.deleteAll()
-
+class GenericProviderTest:
 
     @defer.inlineCallbacks
     def testBasicUsage(self):
@@ -183,8 +151,8 @@ class DUDBackendTest(unittest.TestCase):
     def testReserveAbort(self):
 
         # these need to be constructed such that there is only one label option
-        source_stp  = nsa.STP('Aruba', 'A1', labels=[ nsa.Label(nml.ETHERNET_VLAN, '2') ] )
-        dest_stp    = nsa.STP('Aruba', 'A3', labels=[ nsa.Label(nml.ETHERNET_VLAN, '2') ] )
+        source_stp  = nsa.STP('Aruba', self.source_port, labels=[ nsa.Label(nml.ETHERNET_VLAN, '2') ] )
+        dest_stp    = nsa.STP('Aruba', self.dest_port,   labels=[ nsa.Label(nml.ETHERNET_VLAN, '2') ] )
         start_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=1)
         end_time   = datetime.datetime.utcnow() + datetime.timedelta(seconds=10)
         service_params = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, 200)
@@ -206,8 +174,8 @@ class DUDBackendTest(unittest.TestCase):
     def testReserveTimeout(self):
 
         # these need to be constructed such that there is only one label option
-        source_stp  = nsa.STP('Aruba', 'A1', labels=[ nsa.Label(nml.ETHERNET_VLAN, '2') ] )
-        dest_stp    = nsa.STP('Aruba', 'A3', labels=[ nsa.Label(nml.ETHERNET_VLAN, '2') ] )
+        source_stp  = nsa.STP('Aruba', self.source_port, labels=[ nsa.Label(nml.ETHERNET_VLAN, '2') ] )
+        dest_stp    = nsa.STP('Aruba', self.dest_port,   labels=[ nsa.Label(nml.ETHERNET_VLAN, '2') ] )
         start_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=1)
         end_time   = datetime.datetime.utcnow() + datetime.timedelta(seconds=60)
         service_params = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, 200)
@@ -244,7 +212,7 @@ class DUDBackendTest(unittest.TestCase):
             return d
 
         # make actication fail via monkey patching
-        self.provider.connection_manager.setupLink = setupLink
+        self.backend.connection_manager.setupLink = setupLink
 
         acid = yield self.provider.reserve(self.header, None, None, None, service_params)
         header, cid, gid, desc, sp = yield self.requester.reserve_defer
@@ -283,7 +251,7 @@ class DUDBackendTest(unittest.TestCase):
     def testFaultyActivate(self):
 
         # make actication fail via monkey patching
-        self.provider.connection_manager.setupLink = lambda cid, src, dst, bw : defer.fail(error.InternalNRMError('Link setup failed'))
+        self.backend.connection_manager.setupLink = lambda cid, src, dst, bw : defer.fail(error.InternalNRMError('Link setup failed'))
 
         acid = yield self.provider.reserve(self.header, None, None, None, self.service_params)
         header, cid, gid, desc, sp = yield self.requester.reserve_defer
@@ -306,7 +274,7 @@ class DUDBackendTest(unittest.TestCase):
     def testFaultyDeactivate(self):
 
         # make actication fail via monkey patching
-        self.provider.connection_manager.teardownLink = lambda cid, src, dst, bw : defer.fail(error.InternalNRMError('Link teardown failed'))
+        self.backend.connection_manager.teardownLink = lambda cid, src, dst, bw : defer.fail(error.InternalNRMError('Link teardown failed'))
 
         acid = yield self.provider.reserve(self.header, None, None, None, self.service_params)
         header, cid, gid, desc, sp = yield self.requester.reserve_defer
@@ -328,4 +296,102 @@ class DUDBackendTest(unittest.TestCase):
         header, cid, nid, timestamp, event, info, ex = yield self.requester.error_event_defer
         self.failUnlessEquals(event, 'deactivateFailed')
         self.failUnlessEquals(cid, acid)
+
+
+
+class DUDBackendTest(GenericProviderTest, unittest.TestCase):
+
+    source_port = 'A1'
+    dest_port   = 'A3'
+
+    source_stp  = nsa.STP('Aruba', source_port, labels=[ nsa.Label(nml.ETHERNET_VLAN, '1-2') ] )
+    dest_stp    = nsa.STP('Aruba', dest_port,   labels=[ nsa.Label(nml.ETHERNET_VLAN, '2-3') ] )
+    start_time  = datetime.datetime.utcnow() + datetime.timedelta(seconds=2)
+    end_time    = datetime.datetime.utcnow() + datetime.timedelta(seconds=10)
+    bandwidth   = 200
+
+    header         = nsa.NSIHeader('test-requester', 'test-provider', [])
+    service_params = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, bandwidth)
+
+    def setUp(self):
+
+        self.clock = task.Clock()
+
+        self.requester = common.DUDRequester()
+
+        self.backend = dud.DUDNSIBackend('Test', self.requester)
+
+        self.provider = self.backend
+        self.provider.scheduler.clock = self.clock
+        self.provider.startService()
+
+        tcf = os.path.expanduser('~/.opennsa-test.json')
+        tc = json.load( open(tcf) )
+        database.setupDatabase( tc['database'], tc['database-user'], tc['database-password'])
+
+
+    @defer.inlineCallbacks
+    def tearDown(self):
+        from opennsa.backends.common import genericbackend
+        yield self.provider.stopService()
+        # delete all connections from test database
+        yield genericbackend.GenericBackendConnections.deleteAll()
+
+
+
+class AggregatorTest(GenericProviderTest, unittest.TestCase):
+
+    network = 'Aruba'
+
+    source_port = 'ps'
+    dest_port   = 'bon'
+
+    src_stp = nsa.STP('Aruba', 'ps',  labels=[ nsa.Label(nml.ETHERNET_VLAN, '1-2') ] )
+    dst_stp = nsa.STP('Aruba', 'bon', labels=[ nsa.Label(nml.ETHERNET_VLAN, '2-3') ] )
+
+    start_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=2)
+    end_time   = datetime.datetime.utcnow() + datetime.timedelta(seconds=10)
+    bandwidth = 200
+
+    header         = nsa.NSIHeader('test-requester', 'test-provider', [])
+    service_params = nsa.ServiceParameters(start_time, end_time, src_stp, dst_stp, bandwidth)
+
+
+    def setUp(self):
+
+        tcf = os.path.expanduser('~/.opennsa-test.json')
+        tc = json.load( open(tcf) )
+        database.setupDatabase( tc['database'], tc['database-user'], tc['database-password'])
+
+        self.requester = common.DUDRequester()
+
+        self.clock = task.Clock()
+
+        place_holder = None
+        self.backend = dud.DUDNSIBackend(self.network, place_holder)
+        self.backend.scheduler.clock = self.clock
+
+        ns_agent = nsa.NetworkServiceAgent('aruba', 'http://localhost:9080/NSI/CS2')
+
+        self.topology = nml.Topology()
+
+        aruba_topo, pim = nrmparser.parseTopologySpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY), self.network, ns_agent)
+
+        self.topology.addNetwork(aruba_topo)
+
+        providers = { ns_agent.urn() : self.backend }
+        self.provider = aggregator.Aggregator(self.network, ns_agent, self.topology, self.requester, providers)
+
+        # set parent for backend, we need to create the aggregator before this can be done
+        self.backend.parent_requester = self.provider
+        self.backend.startService()
+
+
+    @defer.inlineCallbacks
+    def tearDown(self):
+        from opennsa.backends.common import genericbackend
+        # keep it simple...
+        yield genericbackend.GenericBackendConnections.deleteAll()
+        yield database.SubConnection.deleteAll()
+        yield database.ServiceConnection.deleteAll()
 
