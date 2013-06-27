@@ -37,8 +37,8 @@ QUERY_SUMMARY_FAILED            = '"http://schemas.ogf.org/nsi/2013/04/connectio
 QUERY_RECURSIVE_CONFIRMED       = '"http://schemas.ogf.org/nsi/2013/04/connection/service/queryRecursiveConfirmed"'
 QUERY_RECURSIVE_FAILED          = '"http://schemas.ogf.org/nsi/2013/04/connection/service/queryRecursiveFailed"'
 QUERY_NOTIFICATION_CONFIRMED    = '"http://schemas.ogf.org/nsi/2013/04/connection/service/queryNotificationConfirmed"'
-
 QUERY_NOTIFICATION_FAILED       = '"http://schemas.ogf.org/nsi/2013/04/connection/service/queryNotificationFailed"'
+
 ERROR_EVENT                     = '"http://schemas.ogf.org/nsi/2013/04/connection/service/errorEvent"'
 DATA_PLANE_STATE_CHANGE         = '"http://schemas.ogf.org/nsi/2013/04/connection/service/dataPlaneStateChange"'
 RESERVE_TIMEOUT                 = '"http://schemas.ogf.org/nsi/2013/04/connection/service/reserveTimeout"'
