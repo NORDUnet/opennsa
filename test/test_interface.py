@@ -6,7 +6,7 @@ from opennsa.interface import INSIProvider, INSIRequester
 
 from opennsa import aggregator
 from opennsa.backends.common import genericbackend
-from opennsa.protocols.nsi2 import provider
+from opennsa.protocols.nsi2 import provider, requester
 
 
 
@@ -30,5 +30,10 @@ class InterfaceTest(unittest.TestCase):
         verifyObject(INSIRequester, prov)
 
     testSoapProvider.skip = 'provider not complete yet'
+
+    def testSoapRequester(self):
+        prov = provider.Provider(None, None)
+        verifyObject(INSIRequester, prov)
+
 
 
