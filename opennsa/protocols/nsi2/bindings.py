@@ -872,9 +872,9 @@ class DataPlaneStatusType:
     @classmethod
     def build(self, element):
         return DataPlaneStatusType(
-                None if not element.find('active') else (True if element.findtext('active') == 'true' else False),
+                True if element.findtext('active') == 'true' else False,
                 int(element.findtext('version')),
-                None if not element.find('versionConsistent') else (True if element.findtext('versionConsistent') == 'true' else False)
+                True if element.findtext('versionConsistent') == 'true' else False
                )
 
     def xml(self, elementName):
