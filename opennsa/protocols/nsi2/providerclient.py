@@ -2,10 +2,9 @@
 Web Service protocol for OpenNSA.
 
 Author: Henrik Thostrup Jensen <htj@nordu.net>
-Copyright: NORDUnet (2011)
+Copyright: NORDUnet (2011-2013)
 """
 
-from opennsa import nsa
 from opennsa.protocols.shared import minisoap, httpclient
 from opennsa.protocols.nsi2 import actions, bindings, helper
 
@@ -41,21 +40,22 @@ class ProviderClient:
         return d
 
 
-    def _genericFailure(self, requester_url, action, message_name, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, err):
+    def _genericFailure(self, requester_url, action, message_name, requester_nsa, provider_nsa, correlation_id,
+                        connection_id, connection_states, err):
 
-        header_payload = helper.createHeader(correlation_id, requester_nsa, provider_nsa)
+        header_element = helper.createHeader(requester_nsa, provider_nsa, correlation_id=correlation_id)
 
-        connection_states = bindings.ConnectionStatesType(bindings.ReservationStateType(0, 'TerminateFailed'),
-                                                    bindings.ProvisionStateType(0,   'TerminateFailed'),
-                                                    bindings.ActivationStateType(0,  'Inactive'))
+        active, version, consistent = connection_states[3]
+        data_plane_state = bindings.DataPlaneStatusType(active, version, consistent)
+        connection_states = bindings.ConnectionStatesType(connection_states[0], connection_states[1], connection_states[2], data_plane_state)
 
         se = helper.createServiceException(err, provider_nsa)
 
-        generic_failed = bindings.GenericFailedType(global_reservation_id, connection_id, connection_states, se)
+        failure = bindings.GenericFailedType(connection_id, connection_states, se)
 
-        body_payload   = helper.export(generic_failed, message_name)
+        body_element = failure.xml(message_name)
 
-        payload = minisoap.createSoapPayload(body_payload, header_payload)
+        payload = minisoap.createSoapPayload(body_element, header_element)
 
         def gotReply(data):
             # for now we just ignore this, as long as we get an okay
@@ -99,10 +99,11 @@ class ProviderClient:
         return d
 
 
-    def reserveFailed(self, requester_url, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, err):
+    def reserveFailed(self, requester_url, requester_nsa, provider_nsa, correlation_id, connection_id, connection_states, err):
 
-        return self._genericFailure(requester_url, actions.RESERVE_FAILED, 'reserveFailed',
-                                    correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, err)
+        return self._genericFailure(requester_url, actions.RESERVE_FAILED, bindings.reserveFailed,
+                                    requester_nsa, provider_nsa, correlation_id,
+                                    connection_id, connection_states, err)
 
 
     def reserveCommitConfirmed(self, requester_url, requester_nsa, provider_nsa, correlation_id, connection_id):
@@ -111,16 +112,17 @@ class ProviderClient:
                                     correlation_id, requester_nsa, provider_nsa, connection_id)
 
 
+    def reserveCommitFailed(self, requester_url, requester_nsa, provider_nsa, correlation_id, connection_id, connection_states, err):
+
+        return self._genericFailure(requester_url, actions.RESERVE_COMMIT_FAILED, bindings.reserveCommitFailed,
+                                    requester_nsa, provider_nsa, correlation_id,
+                                    connection_id, connection_states, err)
+
+
     def provisionConfirmed(self, requester_url, correlation_id, requester_nsa, provider_nsa, connection_id):
 
         return self._genericConfirm(bindings.provisionConfirmed, requester_url, actions.PROVISION_CONFIRMED,
                                     correlation_id, requester_nsa, provider_nsa, connection_id)
-
-
-    def provisionFailed(self, requester_url, correlation_id, requester_nsa, provider_nsa, connection_id, connection_state, err):
-
-        return self._genericFailure(requester_url, actions.PROVISION_FAILED, 'provisionFailed',
-                                    correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, err)
 
 
     def releaseConfirmed(self, requester_url, correlation_id, requester_nsa, provider_nsa, connection_id):
@@ -128,23 +130,11 @@ class ProviderClient:
         return self._genericConfirm(bindings.releaseConfirmed, requester_url, actions.RELEASE_CONFIRMED,
                                     correlation_id, requester_nsa, provider_nsa, connection_id)
 
-    def releaseFailed(self, requester_url, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, err):
-
-        return self._genericFailure(requester_url, actions.RELEASE_FAILED, 'releaseFailed',
-                                    correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, err)
-
 
     def terminateConfirmed(self, requester_url, correlation_id, requester_nsa, provider_nsa, connection_id):
 
         return self._genericConfirm(bindings.terminateConfirmed, requester_url, actions.TERMINATE_CONFIRMED,
                                     correlation_id, requester_nsa, provider_nsa, connection_id)
-
-
-    def terminateFailed(self, requester_url, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, connection_state, err):
-
-        return self._genericFailure(requester_url, actions.TERMINATE_FAILED, 'terminateFailed',
-                                    correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id, err)
-
 
 
     def dataPlaneStateChange(self, requester_url, requester_nsa, provider_nsa, connection_id, notification_id, timestamp, active, version, consistent):
