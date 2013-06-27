@@ -33,11 +33,12 @@
 # Flags
 # -v verbose
 # -q dump soap payloads
+# -y Wait for notifications, exists on dataPlane deactivation and errorEvent
 # -x Use TLS for callback port
 # -z (skip) verify certificate (default is to verify)
 
 # free switches
-# ijmy + 0-9
+# ijm + 0-9
 
 # Not all commands will accept all flags and some flags are mutally exclusive
 
@@ -113,6 +114,9 @@ class CertificateDirectoryOption(usage.Options):
 
 # flags
 
+class NotificationWaitFlag(usage.Options):
+    optFlags = [ [ options.NOTIFICATION_WAIT, 'y', 'Wait for notifications, exists on data plane deactive and errorEvent' ] ]
+
 class TLSFlag(usage.Options):
     optFlags = [ [ options.TLS, 'x', 'Use TLS for listener port' ] ]
 
@@ -148,6 +152,9 @@ class NetworkCommandOptions(NetworkBaseOptions, ProviderNSAOption, RequesterNSAO
     pass
 
 
+class ProvisionOptions(NetworkCommandOptions, NotificationWaitFlag):
+    pass
+
 class DiscoveryOptions(NetworkBaseOptions):
     pass
 
@@ -158,6 +165,9 @@ class ReserveOptions(NetworkCommandOptions, SourceSTPOption, DestSTPOption, Star
         NetworkCommandOptions.postOptions(self)
         StartTimeOption.postOptions(self)
         EndTimeOption.postOptions(self)
+
+class ReserveProvisionOptions(ReserveOptions, NotificationWaitFlag):
+    pass
 
 
 class PathOptions(BaseOptions, SourceSTPOption, DestSTPOption, TopologyFileOption):
@@ -180,10 +190,10 @@ class Options(usage.Options):
     subCommands = [
         ['discover',        None,   DiscoveryOptions,       'Discover services at an NSA.'],
         ['reserve',         None,   ReserveOptions,         'Create a reservation.'],
-        ['reserveprovision',None,   ReserveOptions,         'Create a reservation and provision the connection.'],
+        ['reserveprovision',None,   ReserveProvisionOptions,'Create a reservation and provision the connection.'],
         ['rprt',            None,   ReserveOptions,         'Create a reservation and provision, release and terminate the connection.'],
-        ['provision',       None,   NetworkCommandOptions,  'Provision a connection.'],
-        ['release',         None,   NetworkCommandOptions,  'Release a connection.'],
+        ['provision',       None,   ProvisionOptions,       'Provision a connection.'],
+        ['release',         None,   ProvisionOptions,       'Release a connection.'],
         ['terminate',       None,   NetworkCommandOptions,  'Terminate a connection.'],
         ['querysummary',    None,   NetworkCommandOptions,  'Query a connection (summary).'],
         ['querydetails',    None,   NetworkCommandOptions,  'Query a connection (recursive).'],

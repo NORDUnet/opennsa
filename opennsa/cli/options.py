@@ -40,6 +40,8 @@ CERTIFICATE     = config.CERTIFICATE
 CERTIFICATE_DIR = config.CERTIFICATE_DIR
 VERIFY_CERT     = config.VERIFY_CERT
 
+NOTIFICATION_WAIT = 'notification_wait'
+
 FULL_GRAPH      = 'fullgraph'
 
 # other constants

@@ -33,6 +33,28 @@ def _createServiceParams(start_time, end_time, src, dst, bandwidth):
     return nsa.ServiceParameters(start_time, end_time, src_stp, dst_stp, bandwidth)
 
 
+def _handleEvent(event):
+
+    notification_type, header, entry = event
+
+    if notification_type == 'errorEvent':
+        log.msg('Error event: %s' % str(entry))
+        return True
+    elif notification_type == 'dataPlaneStateChange':
+        cid, nid, timestamp, dps = entry
+        active, version, consistent = dps
+        if active:
+            log.msg('Connection %s Data plane active, version %i, consistent: %s' % (cid, version, consistent))
+            return False
+        else:
+            log.msg('Connection %s Data plane down, version %i, consistent: %s' % (cid, version, consistent))
+            return True
+
+    else:
+        log.msg('Unrecognized event %s ' % notification_type)
+        return False
+
+
 @defer.inlineCallbacks
 def discover(client, service_url):
 
@@ -64,7 +86,7 @@ def reserve(client, client_nsa, provider_nsa, src, dst, start_time, end_time, ba
 
 
 @defer.inlineCallbacks
-def reserveprovision(client, client_nsa, provider_nsa, src, dst, start_time, end_time, bandwidth, connection_id, global_id):
+def reserveprovision(client, client_nsa, provider_nsa, src, dst, start_time, end_time, bandwidth, connection_id, global_id, notification_wait):
 
     nsi_header = nsa.NSIHeader(client_nsa.urn(), provider_nsa.urn())
     service_params = _createServiceParams(start_time, end_time, src, dst, bandwidth)
@@ -86,6 +108,13 @@ def reserveprovision(client, client_nsa, provider_nsa, src, dst, start_time, end
         log.msg('Connection %s provisioned' % assigned_connection_id)
     except error.NSIError, e:
         log.msg('Error provisioning %s, %s : %s' % (assigned_connection_id, e.__class__.__name__, str(e)))
+
+    while notification_wait:
+        event = yield client.notifications.get()
+        exit = _handleEvent(event)
+        if exit:
+            break
+
 
 
 @defer.inlineCallbacks
@@ -122,7 +151,7 @@ def rprt(client, client_nsa, provider_nsa, src, dst, start_time, end_time, bandw
 
 
 @defer.inlineCallbacks
-def provision(client, client_nsa, provider_nsa, connection_id):
+def provision(client, client_nsa, provider_nsa, connection_id, notification_wait):
 
     try:
         yield client.provision(client_nsa, provider_nsa, None, connection_id)
@@ -130,15 +159,21 @@ def provision(client, client_nsa, provider_nsa, connection_id):
     except error.NSIError, e:
         log.msg('Error provisioning %s, %s : %s' % (connection_id, e.__class__.__name__, str(e)))
 
+    if notification_wait:
+        log.msg("Notification wait not added to provision yet")
+
 
 @defer.inlineCallbacks
-def release(client, client_nsa, provider_nsa, connection_id):
+def release(client, client_nsa, provider_nsa, connection_id, notification_wait):
 
     try:
         yield client.release(client_nsa, provider_nsa, None, connection_id)
         log.msg('Connection %s released' % connection_id)
     except error.NSIError, e:
         log.msg('Error releasing %s, %s : %s' % (connection_id, e.__class__.__name__, str(e)))
+
+    if notification_wait:
+        log.msg("Notification wait not added to release yet")
 
 
 @defer.inlineCallbacks
