@@ -9,10 +9,10 @@ from twisted.python import log
 from twisted.internet import reactor, defer
 from twisted.web import client as twclient
 from twisted.web.error import Error as WebError
-from twisted.internet.error import ConnectionClosed
+from twisted.internet.error import ConnectionClosed, ConnectionRefusedError
 
 
-LOG_SYSTEM = 'opennsa.protocols.httpclient'
+LOG_SYSTEM = 'HTTPClient'
 
 DEFAULT_TIMEOUT = 30 # seconds
 
@@ -77,6 +77,9 @@ def httpRequest(url, payload, headers, method='POST', timeout=DEFAULT_TIMEOUT, c
         elif isinstance(err.value, WebError):
             data = err.value.response
             log.msg(' -- Received Reply (fault) --\n%s\n -- END. Received Reply (fault) --' % data, system=LOG_SYSTEM, payload=True)
+            return err
+        elif isinstance(err.value, ConnectionRefusedError):
+            log.msg('Connection refused while issuing http request to %s' % url, system=LOG_SYSTEM)
             return err
         else:
             return err
