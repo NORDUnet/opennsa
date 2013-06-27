@@ -46,7 +46,7 @@ class INSIProvider(Interface):
 
 
 
-def INSIRequester(Interface):
+class INSIRequester(Interface):
 
     def reserveConfirmed(header, connection_id, global_reservation_id, description, criteria):
         pass
