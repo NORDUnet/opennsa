@@ -354,7 +354,6 @@ class AggregatorTest(GenericProviderTest, unittest.TestCase):
 
     header         = nsa.NSIHeader('test-requester', 'test-provider', [])
 
-
     def setUp(self):
 
         tcf = os.path.expanduser('~/.opennsa-test.json')
@@ -365,16 +364,13 @@ class AggregatorTest(GenericProviderTest, unittest.TestCase):
 
         self.clock = task.Clock()
 
-        place_holder = None
-        self.backend = dud.DUDNSIBackend(self.network, place_holder)
+        self.backend = dud.DUDNSIBackend(self.network, None) # we the parent later
         self.backend.scheduler.clock = self.clock
 
         ns_agent = nsa.NetworkServiceAgent('aruba', 'http://localhost:9080/NSI/CS2')
 
-        self.topology = nml.Topology()
-
         aruba_topo, pim = nrmparser.parseTopologySpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY), self.network, ns_agent)
-
+        self.topology = nml.Topology()
         self.topology.addNetwork(aruba_topo)
 
         providers = { ns_agent.urn() : self.backend }
@@ -393,6 +389,94 @@ class AggregatorTest(GenericProviderTest, unittest.TestCase):
 
     @defer.inlineCallbacks
     def tearDown(self):
+        from opennsa.backends.common import genericbackend
+        # keep it simple...
+        yield genericbackend.GenericBackendConnections.deleteAll()
+        yield database.SubConnection.deleteAll()
+        yield database.ServiceConnection.deleteAll()
+
+
+
+class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
+
+    PROVIDER_PORT = 8180
+    REQUESTER_PORT = 8280
+
+    network = 'Aruba'
+
+    source_port = 'ps'
+    dest_port   = 'bon'
+
+    src_stp = nsa.STP('Aruba', 'ps',  labels=[ nsa.Label(nml.ETHERNET_VLAN, '1-2') ] )
+    dst_stp = nsa.STP('Aruba', 'bon', labels=[ nsa.Label(nml.ETHERNET_VLAN, '2-3') ] )
+    bandwidth = 200
+
+    header         = nsa.NSIHeader('test-requester', 'test-provider', [])
+
+    def setUp(self):
+
+        from opennsa.protocols import nsi2
+        from twisted.web import resource, server
+        from twisted.application import internet
+        from dateutil.tz import tzutc
+
+        tcf = os.path.expanduser('~/.opennsa-test.json')
+        tc = json.load( open(tcf) )
+        database.setupDatabase( tc['database'], tc['database-user'], tc['database-password'])
+
+        self.requester = common.DUDRequester()
+
+        self.clock = task.Clock()
+
+        self.backend = dud.DUDNSIBackend(self.network, None) # we the parent later
+        self.backend.scheduler.clock = self.clock
+
+        ns_agent = nsa.NetworkServiceAgent('aruba', 'http://localhost:%i/NSI/services/CS2' % self.PROVIDER_PORT)
+
+        aruba_topo, pim = nrmparser.parseTopologySpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY), self.network, ns_agent)
+        self.topology = nml.Topology()
+        self.topology.addNetwork(aruba_topo)
+
+        providers = { ns_agent.urn() : self.backend }
+        self.aggregator = aggregator.Aggregator(self.network, ns_agent, self.topology, None, providers) # we set the parent later
+
+        self.backend.parent_requester = self.aggregator
+
+        # provider protocol
+        http_top_resource = resource.Resource()
+
+        cs2_prov = nsi2.setupProvider(self.aggregator, http_top_resource)
+        self.aggregator.parent_requester = cs2_prov
+
+
+        factory = server.Site(http_top_resource)
+
+        self.provider_service = internet.TCPServer(self.PROVIDER_PORT, factory)
+
+        # requester protocol
+        providers = {'test-provider' : ns_agent.endpoint }
+        self.provider, factory = nsi2.createRequesterClient('localhost', self.REQUESTER_PORT, providers)
+        self.provider.requester_client.requester = self.requester
+
+        # start engines!
+        self.backend.startService()
+        self.provider_service.startService()
+        self.requester_iport = reactor.listenTCP(self.REQUESTER_PORT, factory)
+
+        # request stuff
+        start_time = datetime.datetime.now(tzutc()) + datetime.timedelta(seconds=2)
+        end_time   = datetime.datetime.now(tzutc()) + datetime.timedelta(seconds=10)
+
+        self.service_params = nsa.ServiceParameters(start_time, end_time, self.src_stp, self.dst_stp, self.bandwidth)
+
+
+    @defer.inlineCallbacks
+    def tearDown(self):
+
+        self.backend.stopService()
+        self.provider_service.stopService()
+        self.requester_iport.stopListening()
+
         from opennsa.backends.common import genericbackend
         # keep it simple...
         yield genericbackend.GenericBackendConnections.deleteAll()
