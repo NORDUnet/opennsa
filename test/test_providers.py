@@ -306,12 +306,9 @@ class DUDBackendTest(GenericProviderTest, unittest.TestCase):
 
     source_stp  = nsa.STP('Aruba', source_port, labels=[ nsa.Label(nml.ETHERNET_VLAN, '1-2') ] )
     dest_stp    = nsa.STP('Aruba', dest_port,   labels=[ nsa.Label(nml.ETHERNET_VLAN, '2-3') ] )
-    start_time  = datetime.datetime.utcnow() + datetime.timedelta(seconds=2)
-    end_time    = datetime.datetime.utcnow() + datetime.timedelta(seconds=10)
     bandwidth   = 200
 
     header         = nsa.NSIHeader('test-requester', 'test-provider', [])
-    service_params = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, bandwidth)
 
     def setUp(self):
 
@@ -328,6 +325,11 @@ class DUDBackendTest(GenericProviderTest, unittest.TestCase):
         tcf = os.path.expanduser('~/.opennsa-test.json')
         tc = json.load( open(tcf) )
         database.setupDatabase( tc['database'], tc['database-user'], tc['database-password'])
+
+        # request stuff
+        start_time  = datetime.datetime.utcnow() + datetime.timedelta(seconds=2)
+        end_time    = datetime.datetime.utcnow() + datetime.timedelta(seconds=10)
+        self.service_params = nsa.ServiceParameters(start_time, end_time, self.source_stp, self.dest_stp, self.bandwidth)
 
 
     @defer.inlineCallbacks
@@ -348,13 +350,9 @@ class AggregatorTest(GenericProviderTest, unittest.TestCase):
 
     src_stp = nsa.STP('Aruba', 'ps',  labels=[ nsa.Label(nml.ETHERNET_VLAN, '1-2') ] )
     dst_stp = nsa.STP('Aruba', 'bon', labels=[ nsa.Label(nml.ETHERNET_VLAN, '2-3') ] )
-
-    start_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=2)
-    end_time   = datetime.datetime.utcnow() + datetime.timedelta(seconds=10)
     bandwidth = 200
 
     header         = nsa.NSIHeader('test-requester', 'test-provider', [])
-    service_params = nsa.ServiceParameters(start_time, end_time, src_stp, dst_stp, bandwidth)
 
 
     def setUp(self):
@@ -385,6 +383,12 @@ class AggregatorTest(GenericProviderTest, unittest.TestCase):
         # set parent for backend, we need to create the aggregator before this can be done
         self.backend.parent_requester = self.provider
         self.backend.startService()
+
+        # request stuff
+        start_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=2)
+        end_time   = datetime.datetime.utcnow() + datetime.timedelta(seconds=10)
+
+        self.service_params = nsa.ServiceParameters(start_time, end_time, self.src_stp, self.dst_stp, self.bandwidth)
 
 
     @defer.inlineCallbacks
