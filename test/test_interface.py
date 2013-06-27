@@ -21,6 +21,7 @@ class InterfaceTest(unittest.TestCase):
     def testAggregator(self):
         aggr = aggregator.Aggregator('network', None, None, None, None)
         verifyObject(INSIProvider, aggr)
+        verifyObject(INSIRequester, aggr)
 
     testAggregator.skip = 'aggregator not complete yet'
 

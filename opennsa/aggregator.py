@@ -471,6 +471,16 @@ class Aggregator:
 
         defer.returnValue(connection_id)
 
+
+    def querySummary(self, header, connection_ids, global_reservation_ids):
+        raise NotImplementedError('querySummary not yet implemented in aggregator')
+
+    def queryRecursive(self, header, connection_ids, global_reservation_ids):
+        raise NotImplementedError('queryRecursive not yet implemented in aggregator')
+
+    def queryNotification(self, header, connection_id, start_notification, end_notification):
+        raise NotImplementedError('queryNotification not yet implemented in aggregator')
+
     # --
     # Requester API
     # --
