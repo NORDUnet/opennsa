@@ -8,9 +8,12 @@ import string
 import random
 import datetime
 
+from zope.interface import implements
+
 from twisted.python import log, failure
 from twisted.internet import defer
 
+from opennsa.interface import INSIProvider, INSIRequester
 from opennsa import error, nsa, state, database
 
 
@@ -81,6 +84,8 @@ def _createAggregateFailure(results, action):
 
 
 class Aggregator:
+
+    implements(INSIProvider, INSIRequester)
 
     def __init__(self, network, nsa_, topology, parent_requester, providers):
         self.network = network
