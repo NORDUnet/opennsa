@@ -1,10 +1,14 @@
 import traceback
 
+from zope.interface import implements
+
 from twisted.python import log
 from twisted.internet import defer
 
+from opennsa.interface import INSIRequester
 
-LOG_SYSTEM = 'protocol.nsi2soap'
+
+LOG_SYSTEM = 'NSI2SOAP.Provider'
 
 
 RESERVE_RESPONSE        = 'reserve_response'
@@ -15,24 +19,19 @@ TERMINATE_RESPONSE      = 'terminate_response'
 
 
 
-def _createErrorMessage(err):
-    error_type = err.value.__class__.__name__
-    msg = err.getErrorMessage()
-    tb = traceback.extract_tb( err.getTracebackObject() )
-    if tb:
-        filename, line, fun = tb[-1][0:3]
-        error_message = '%s: %s (%s, line %s in %s)' % (error_type, msg, filename, line, fun)
-    else:
-        error_message = '%s: %s' % (error_type, msg)
-    return error_message
+def logError(err, message_type):
+
+    log.msg('Error during %s request: %s' % (message_type, err.getErrorMessage()), system=LOG_SYSTEM)
+    log.err(err, system=LOG_SYSTEM)
 
 
 
 class Provider:
+    # This is part of the provider side of the protocol, and usually sits on top of the aggregator
+    # As it sits on top of the aggregator - which is a provider - it implements the Requester interface
+    # So it is Provider, that implements the Requester interface. If this doesn't confuse, you may continue reading
 
-    # this is both a provider and requester, usually this sets on top of the aggregator
-
-    # needs more implements
+    implements(INSIRequester)
 
     def __init__(self, service_provider, provider_client):
 
@@ -59,7 +58,9 @@ class Provider:
     def reserveConfirmed(self, nsi_header, connection_id, global_reservation_id, description, service_parameters):
         try:
             nsi_header = self.notifications.pop( (connection_id, RESERVE_RESPONSE) )
-            return self.provider_client.reserveConfirmed(nsi_header, connection_id, global_reservation_id, description, service_parameters)
+            d = self.provider_client.reserveConfirmed(nsi_header, connection_id, global_reservation_id, description, service_parameters)
+            d.addErrback(logError, 'reserveConfirmed')
+            return d
         except KeyError, e:
             log.msg('No entity to notify about reserveConfirmed for %s' % connection_id, log_system=LOG_SYSTEM)
             return defer.succeed(None)
@@ -76,7 +77,9 @@ class Provider:
 
         try:
             org_header = self.notifications.pop( (connection_id, RESERVE_COMMIT_RESPONSE) )
-            return self.provider_client.reserveCommitConfirmed(org_header.reply_to, org_header.requester_nsa, org_header.provider_nsa, org_header.correlation_id, connection_id)
+            d = self.provider_client.reserveCommitConfirmed(org_header.reply_to, org_header.requester_nsa, org_header.provider_nsa, org_header.correlation_id, connection_id)
+            d.addErrback(logError, 'reserveCommitConfirmed')
+            return d
         except KeyError, e:
             log.msg('No entity to notify about reserveConfirmed for %s' % connection_id, log_system=LOG_SYSTEM)
             return defer.succeed(None)
@@ -98,17 +101,19 @@ class Provider:
 
         try:
             org_header = self.notifications.pop( (connection_id, PROVISION_RESPONSE) )
-            return self.provider_client.provisionConfirmed(org_header.reply_to, org_header.correlation_id, org_header.requester_nsa, org_header.provider_nsa, connection_id)
+            d = self.provider_client.provisionConfirmed(org_header.reply_to, org_header.correlation_id, org_header.requester_nsa, org_header.provider_nsa, connection_id)
+            d.addErrback(logError, 'provisionConfirmed')
+            return d
         except KeyError, e:
             log.msg('No entity to notify about provisionConfirmed for %s' % connection_id, log_system=LOG_SYSTEM)
             return defer.succeed(None)
 
-        return self.service_provider.provisionConfirmed(header, connection_id)
-
 
     def release(self, nsi_header, connection_id):
 
-        return self.service_provider.release(nsi_header, connection_id)
+        d = self.service_provider.release(nsi_header, connection_id)
+        d.addErrback(logError, 'release')
+        return d
 
 
     def terminate(self, nsi_header, connection_id):
@@ -127,7 +132,9 @@ class Provider:
             log.msg('No entity to notify about terminateConfirmed for %s' % connection_id, log_system=LOG_SYSTEM)
             return defer.succeed(None)
 
-        return self.service_provider.terminateConfirmed(header, connection_id)
+        d = self.service_provider.terminateConfirmed(header, connection_id)
+        d.addErrback(logError, 'terminateConfirmed')
+        return d
 
     # Need to think about how to do sync / async query
 
@@ -141,6 +148,8 @@ class Provider:
     def dataPlaneStateChange(self, header, connection_id, notification_id, timestamp, data_plane_status):
 
         active, version, consistent = data_plane_status
-        return self.provider_client.dataPlaneStateChange(header.reply_to, header.requester_nsa, header.provider_nsa,
-                                                         connection_id, notification_id, timestamp, active, version, consistent)
+        d = self.provider_client.dataPlaneStateChange(header.reply_to, header.requester_nsa, header.provider_nsa,
+                                                      connection_id, notification_id, timestamp, active, version, consistent)
+        d.addErrback(logError, 'dataPlaneStateChange')
+        return d
 
