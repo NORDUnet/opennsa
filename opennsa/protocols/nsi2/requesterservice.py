@@ -41,7 +41,16 @@ class RequesterService:
         soap_resource.registerDecoder(actions.QUERY_SUMMARY_CONFIRMED,  self.querySummaryConfirmed)
         soap_resource.registerDecoder(actions.QUERY_SUMMARY_FAILED,     self.querySummaryFailed)
 
-        # several actions still missing
+#        actions.QUERY_RECURSIVE_CONFIRMED
+#        actions.QUERY_RECURSIVE_FAILED
+#        actions.QUERY_NOTIFICATION_CONFIRMED
+#        actions.QUERY_NOTIFICATION_FAILED
+
+        # notifications
+        soap_resource.registerDecoder(actions.ERROR_EVENT,              self.errorEvent)
+        soap_resource.registerDecoder(actions.DATA_PLANE_STATE_CHANGE,  self.dataPlaneStateChange)
+        soap_resource.registerDecoder(actions.RESERVE_TIMEOUT,          self.reserveTimeout)
+        soap_resource.registerDecoder(actions.MESSAGE_DELIVERY_TIMEOUT, self.messageDeliveryTimeout)
 
 
     def _createGenericAcknowledgement(self, header):
@@ -173,4 +182,28 @@ class RequesterService:
                                        generic_failure.connectionId, err)
 
         return self._createGenericAcknowledgement(header)
+
+
+    def errorEvent(self, soap_data):
+        raise NotImplementedError('errorEvent not yet implemented in requester service')
+
+
+    def dataPlaneStateChange(self, soap_data):
+
+        header, data_plane_state_change = helper.parseRequest(soap_data)
+
+        dpsc = data_plane_state_change
+        dps = dpsc.dataPlaneStatus
+
+        self.requester.dataPlaneStateChange(header, (dpsc.connectionId, dpsc.notificationId, dpsc.timeStamp, (dps.active, dps.version, dps.versionConsistent) ) )
+
+        return self._createGenericAcknowledgement(header)
+
+
+    def reserveTimeout(self, soap_data):
+        raise NotImplementedError('reserveTimeout not yet implemented in requester service')
+
+
+    def messageDeliveryTimeout(self, soap_data):
+        raise NotImplementedError('messageDeliveryTimeout not yet implemented in requester service')
 

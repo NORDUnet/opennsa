@@ -6,7 +6,7 @@ from twisted.python import log, failure
 from twisted.internet import reactor, defer
 
 from opennsa import error
-from opennsa.interface import INSIRequester
+from opennsa.interface import INSIProvider
 
 
 
@@ -28,14 +28,15 @@ def createCorrelationId():
 
 class Requester:
 
-# this fails for some odd reason
-#    implements(INSIRequester)
+    # In OpenNSA the requester is something that acts as a provider :-)
+    implements(INSIProvider)
 
     def __init__(self, requester_client, callback_timeout=DEFAULT_CALLBACK_TIMEOUT):
 
         self.requester_client = requester_client
         self.callback_timeout = callback_timeout
         self.calls = {}
+        self.notifications = defer.DeferredQueue()
 
 
     def addCall(self, provider_nsa, correlation_id, action):
@@ -221,4 +222,14 @@ class Requester:
     def queryFailed(self, correlation_id, requester_nsa, provider_nsa, error_message):
 
         self.triggerCall(provider_nsa, correlation_id, 'query', error.QueryError(error_message))
+
+
+    def errorEvent(self, header, error_event):
+
+        return self.notifications.put( ('errorEvent', header, error_event) )
+
+
+    def dataPlaneStateChange(self, header, data_plane_status):
+
+        return self.notifications.put( ('dataPlaneStateChange', header, data_plane_status) )
 
