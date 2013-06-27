@@ -272,10 +272,9 @@ class NetworkServiceAgent(object):
 
 class ServiceParameters(object):
 
-    def __init__(self, start_time, end_time, source_stp, dest_stp, bandwidth, stps=None, directionality='Bidirectional'):
+    def __init__(self, start_time, end_time, source_stp, dest_stp, bandwidth, stps=None, directionality='Bidirectional', version=None):
 
         # should probably make path object sometime..
-
         # schedule
         self.start_time = start_time
         self.end_time   = end_time
@@ -287,6 +286,8 @@ class ServiceParameters(object):
         self.stps       = stps
         assert directionality in ('Unidirectional', 'Bidirectional'), 'Invalid directionality: %s' % directionality
         self.directionality = directionality
+
+        self.version = version
 
 
     def subConnectionClone(self, source_stp, dest_stp):
