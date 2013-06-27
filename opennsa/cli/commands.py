@@ -1,7 +1,5 @@
 # cli commands
 
-from zope.interface import implements
-
 from twisted.python import log
 from twisted.internet import defer
 
