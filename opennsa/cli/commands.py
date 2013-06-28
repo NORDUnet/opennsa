@@ -93,18 +93,17 @@ def reserveprovision(client, client_nsa, provider_nsa, src, dst, start_time, end
 
     log.msg("Connection id: %s  Global id: %s" % (connection_id, global_id))
 
-    version = None
     try:
-        assigned_connection_id = yield client.reserve(provider_nsa.endpoint, nsi_header, connection_id, global_id, 'Test Connection', version, service_params)
+        assigned_connection_id = yield client.reserve(nsi_header, connection_id, global_id, 'Test Connection', service_params)
         log.msg("Connection created and held. Id %s at %s" % (assigned_connection_id, provider_nsa))
-        yield client.reserveCommit(provider_nsa.endpoint, nsi_header, assigned_connection_id)
+        yield client.reserveCommit(nsi_header, assigned_connection_id)
         log.msg("Connection committed at %s" % provider_nsa)
     except error.NSIError, e:
         log.msg('Error reserving %s, %s : %s' % (connection_id, e.__class__.__name__, str(e)))
         defer.returnValue(None)
 
     try:
-        yield client.provision(provider_nsa.endpoint, nsi_header, assigned_connection_id)
+        yield client.provision(nsi_header, assigned_connection_id)
         log.msg('Connection %s provisioned' % assigned_connection_id)
     except error.NSIError, e:
         log.msg('Error provisioning %s, %s : %s' % (assigned_connection_id, e.__class__.__name__, str(e)))
