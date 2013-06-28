@@ -31,10 +31,9 @@ class Requester:
     # In OpenNSA the requester is something that acts as a provider :-)
     implements(INSIProvider)
 
-    def __init__(self, requester_client, providers, callback_timeout=None):
+    def __init__(self, requester_client, callback_timeout=None):
 
         self.requester_client = requester_client
-        self.providers = providers
 
         self.callback_timeout = callback_timeout or DEFAULT_CALLBACK_TIMEOUT
         self.calls = {}
@@ -89,15 +88,13 @@ class Requester:
 
         header.correlation_id = createCorrelationId()
 
-        provider_url = self.providers[header.provider_nsa]
-
         def reserveRequestFailed(err):
             # invocation failed, so we error out immediately
             log.msg('Reserve invocation failed: %s' % err.getErrorMessage())
             self.triggerCall(header.provider_nsa, header.correlation_id, RESERVE, err.value)
 
         rd = self.addCall(header.provider_nsa, header.correlation_id, RESERVE)
-        cd = self.requester_client.reserve(provider_url, header, connection_id, global_reservation_id, description, service_parameters)
+        cd = self.requester_client.reserve(header, connection_id, global_reservation_id, description, service_parameters)
         cd.addErrback(reserveRequestFailed)
         return rd
 
@@ -112,7 +109,7 @@ class Requester:
         self.triggerCall(provider_nsa, correlation_id, RESERVE, err)
 
 
-    def reserveCommit(self, service_url, header, connection_id):
+    def reserveCommit(self, header, connection_id):
 
         header.correlation_id = createCorrelationId()
 
@@ -122,7 +119,7 @@ class Requester:
             self.triggerCall(header.provider_nsa, header.correlation_id, RESERVE_COMMIT, err.value)
 
         rd = self.addCall(header.provider_nsa, header.correlation_id, RESERVE_COMMIT)
-        cd = self.requester_client.reserveCommit(service_url, header, connection_id)
+        cd = self.requester_client.reserveCommit(header, connection_id)
         cd.addErrback(reserveCommitFailed)
         return rd
 
@@ -132,7 +129,7 @@ class Requester:
         self.triggerCall(header.provider_nsa, header.correlation_id, RESERVE_COMMIT, connection_id)
 
 
-    def provision(self, service_url, header, connection_id):
+    def provision(self, header, connection_id):
 
         header.correlation_id = createCorrelationId()
 
@@ -141,7 +138,7 @@ class Requester:
             self.triggerCall(header.provider_nsa, header.correlation_id, PROVISION, err.value)
 
         rd = self.addCall(header.provider_nsa, header.correlation_id, PROVISION)
-        cd = self.requester_client.provision(service_url, header, connection_id)
+        cd = self.requester_client.provision(header, connection_id)
         cd.addErrback(provisionRequestFailed)
         return rd
 
@@ -231,7 +228,8 @@ class Requester:
         return self.notifications.put( ('errorEvent', header, error_event) )
 
 
-    def dataPlaneStateChange(self, header, data_plane_status):
+    def dataPlaneStateChange(self, header, connection_id, notification_id, timestamp, data_plane_status):
 
-        return self.notifications.put( ('dataPlaneStateChange', header, data_plane_status) )
+        data = (connection_id, notification_id, timestamp, data_plane_status)
+        return self.notifications.put( ('dataPlaneStateChange', header, data) )
 
