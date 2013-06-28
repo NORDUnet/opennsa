@@ -414,11 +414,12 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
     header         = nsa.NSIHeader('test-requester', 'test-provider', [])
 
     def setUp(self):
-
-        from opennsa.protocols import nsi2
+        from dateutil.tz import tzutc
         from twisted.web import resource, server
         from twisted.application import internet
-        from dateutil.tz import tzutc
+        from opennsa.protocols import nsi2
+        from opennsa.protocols.shared import resource as soapresource
+        from opennsa.protocols.nsi2 import requesterservice, requesterclient, requester
 
         tcf = os.path.expanduser('~/.opennsa-test.json')
         tc = json.load( open(tcf) )
@@ -448,20 +449,25 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
         cs2_prov = nsi2.setupProvider(self.aggregator, http_top_resource)
         self.aggregator.parent_requester = cs2_prov
 
-
-        factory = server.Site(http_top_resource)
-
-        self.provider_service = internet.TCPServer(self.PROVIDER_PORT, factory)
+        provider_factory = server.Site(http_top_resource)
+        self.provider_service = internet.TCPServer(self.PROVIDER_PORT, provider_factory)
 
         # requester protocol
+
+        requester_top_resource = resource.Resource()
+        soap_resource = soapresource.setupSOAPResource(requester_top_resource, 'RequesterService2')
+
         providers = {'test-provider' : ns_agent.endpoint }
-        self.provider, factory = nsi2.createRequesterClient('localhost', self.REQUESTER_PORT, providers)
-        self.provider.requester_client.requester = self.requester
+        requester_url = 'http://localhost:%i/NSI/services/RequesterService2' % self.REQUESTER_PORT
+        self.provider = requesterclient.RequesterClient(providers, requester_url)
+
+        requester_service = requesterservice.RequesterService(soap_resource, self.requester) # this is the important part
+        requester_factory = server.Site(requester_top_resource, logPath='/dev/null')
 
         # start engines!
         self.backend.startService()
         self.provider_service.startService()
-        self.requester_iport = reactor.listenTCP(self.REQUESTER_PORT, factory)
+        self.requester_iport = reactor.listenTCP(self.REQUESTER_PORT, requester_factory)
 
         # request stuff
         start_time = datetime.datetime.now(tzutc()) + datetime.timedelta(seconds=2)
