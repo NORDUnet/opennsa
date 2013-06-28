@@ -296,7 +296,7 @@ class Aggregator:
         conn = yield self.getConnection(header.requester_nsa, connection_id)
 
         if conn.lifecycle_state == state.TERMINATED:
-            raise error.ConnectionGoneError('Connection %s has been terminated')
+            raise error.ConnectionGoneError('Connection %s has been terminated' % connection_id)
 
         yield state.reserveCommit(conn)
 
@@ -332,7 +332,7 @@ class Aggregator:
         conn = yield self.getConnection(header.requester_nsa, connection_id)
 
         if conn.lifecycle_state == state.TERMINATED:
-            raise error.ConnectionGoneError('Connection %s has been terminated')
+            raise error.ConnectionGoneError('Connection %s has been terminated' % connection_id)
 
         yield state.reserveAbort(conn)
 
@@ -370,7 +370,7 @@ class Aggregator:
         conn = yield self.getConnection(header.requester_nsa, connection_id)
 
         if conn.lifecycle_state == state.TERMINATED:
-            raise error.ConnectionGoneError('Connection %s has been terminated')
+            raise error.ConnectionGoneError('Connection %s has been terminated' % connection_id)
 
         yield state.provisioning(conn)
 
@@ -406,7 +406,7 @@ class Aggregator:
         conn = yield self.getConnection(header.requester_nsa, connection_id)
 
         if conn.lifecycle_state == state.TERMINATED:
-            raise error.ConnectionGoneError('Connection %s has been terminated')
+            raise error.ConnectionGoneError('Connection %s has been terminated' % connection_id)
 
         yield state.releasing(conn)
 
