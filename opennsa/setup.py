@@ -101,7 +101,7 @@ class OpenNSAService(twistedservice.MultiService):
 
         discovery.setupDiscoveryService(None, top_resource)
 
-        pc = nsi2.setupProvider(aggr, top_resource, aggr, vc[config.HOST], vc[config.PORT])
+        pc = nsi2.setupProvider(aggr, top_resource)
         aggr.parent_requester = pc
 
         vr = viewresource.ConnectionListResource(aggr)

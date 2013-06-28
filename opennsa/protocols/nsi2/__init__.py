@@ -14,20 +14,20 @@ from opennsa.protocols.nsi2 import providerservice, providerclient, provider, \
 
 
 
-def setupProvider(nsi_service, top_resource, service_provider, host, port, tls=False, ctx_factory=None):
+def setupProvider(child_provider, top_resource, tls=False, ctx_factory=None):
 
     soap_resource = soapresource.setupSOAPResource(top_resource, 'CS2')
 
     provider_client = providerclient.ProviderClient(ctx_factory)
 
-    nsi2_provider = provider.Provider(service_provider, provider_client)
+    nsi2_provider = provider.Provider(child_provider, provider_client)
 
     providerservice.ProviderService(soap_resource, nsi2_provider)
 
     return nsi2_provider
 
 
-def setupRequester(top_resource, host, port, tls=False, ctx_factory=None, callback_timeout=None):
+def setupRequester(top_resource, host, port, providers, tls=False, ctx_factory=None, callback_timeout=None):
 
     resource_name = 'RequesterService2'
 
@@ -41,7 +41,7 @@ def setupRequester(top_resource, host, port, tls=False, ctx_factory=None, callba
 
     soap_resource = soapresource.setupSOAPResource(top_resource, resource_name)
 
-    requester_client = requesterclient.RequesterClient(service_url)
+    requester_client = requesterclient.RequesterClient(providers, service_url)
 
     nsi_requester = requester.Requester(requester_client, callback_timeout=callback_timeout)
 
@@ -51,10 +51,10 @@ def setupRequester(top_resource, host, port, tls=False, ctx_factory=None, callba
 
 
 # copied from nsi1.__init__
-def createRequesterClient(host, port, tls=False, ctx_factory=None, callback_timeout=None):
+def createRequesterClient(host, port, providers, tls=False, ctx_factory=None, callback_timeout=None):
 
     top_resource = resource.Resource()
-    nsi_requester = setupRequester(top_resource, host, port, tls, ctx_factory, callback_timeout)
+    nsi_requester = setupRequester(top_resource, host, port, providers, tls, ctx_factory, callback_timeout)
     site = server.Site(top_resource, logPath='/dev/null')
     return nsi_requester, site
 
