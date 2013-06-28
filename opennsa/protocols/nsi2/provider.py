@@ -111,9 +111,24 @@ class Provider:
 
     def release(self, nsi_header, connection_id):
 
-        d = self.service_provider.release(nsi_header, connection_id)
-        d.addErrback(logError, 'release')
-        return d
+        if nsi_header.reply_to:
+            self.notifications[(connection_id, RELEASE_RESPONSE)] = nsi_header
+        return self.service_provider.release(nsi_header, connection_id)
+
+
+    def releaseConfirmed(self, header, connection_id):
+
+        try:
+            org_header = self.notifications.pop( (connection_id, RELEASE_RESPONSE) )
+            d = self.provider_client.releaseConfirmed(org_header.reply_to, org_header.correlation_id, org_header.requester_nsa, org_header.provider_nsa, connection_id)
+            d.addErrback(logError, 'releaseConfirmed')
+            return d
+        except KeyError, e:
+            log.msg('No entity to notify about releaseConfirmed for %s' % connection_id, log_system=LOG_SYSTEM)
+            return defer.succeed(None)
+
+
+
 
 
     def terminate(self, nsi_header, connection_id):

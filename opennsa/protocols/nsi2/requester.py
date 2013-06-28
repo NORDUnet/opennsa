@@ -31,10 +31,12 @@ class Requester:
     # In OpenNSA the requester is something that acts as a provider :-)
     implements(INSIProvider)
 
-    def __init__(self, requester_client, callback_timeout=DEFAULT_CALLBACK_TIMEOUT):
+    def __init__(self, requester_client, providers, callback_timeout=None):
 
         self.requester_client = requester_client
-        self.callback_timeout = callback_timeout
+        self.providers = providers
+
+        self.callback_timeout = callback_timeout or DEFAULT_CALLBACK_TIMEOUT
         self.calls = {}
         self.notifications = defer.DeferredQueue()
 
@@ -58,8 +60,6 @@ class Requester:
 
     def triggerCall(self, provider_nsa, correlation_id, action, result):
 
-        assert provider_nsa.startswith('urn:'), 'Invalid provider nsa specified'
-        #print "TRIGGER CALL", self.calls
         key = (provider_nsa, correlation_id)
         try:
             acd = self.calls.pop(key)
@@ -80,7 +80,7 @@ class Requester:
             d.callback(result)
 
 
-    def reserve(self, service_url, header, connection_id, global_reservation_id, description, version, service_parameters):
+    def reserve(self, header, connection_id, global_reservation_id, description, service_parameters):
 
         if header.correlation_id is not None:
             log.msg('Reserve ignoring specified correlation id')
@@ -89,13 +89,15 @@ class Requester:
 
         header.correlation_id = createCorrelationId()
 
+        provider_url = self.providers[header.provider_nsa]
+
         def reserveRequestFailed(err):
             # invocation failed, so we error out immediately
             log.msg('Reserve invocation failed: %s' % err.getErrorMessage())
             self.triggerCall(header.provider_nsa, header.correlation_id, RESERVE, err.value)
 
         rd = self.addCall(header.provider_nsa, header.correlation_id, RESERVE)
-        cd = self.requester_client.reserve(service_url, header, connection_id, global_reservation_id, description, version, service_parameters)
+        cd = self.requester_client.reserve(provider_url, header, connection_id, global_reservation_id, description, service_parameters)
         cd.addErrback(reserveRequestFailed)
         return rd
 

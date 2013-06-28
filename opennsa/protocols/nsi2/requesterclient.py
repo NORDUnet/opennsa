@@ -5,12 +5,14 @@ Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2011)
 """
 
+from zope.interface import implements
+
 from twisted.python import log, failure
 from twisted.web.error import Error as WebError
 
+from opennsa.interface import INSIProvider
 from opennsa import error
 from opennsa.protocols.shared import minisoap, httpclient
-
 from opennsa.protocols.nsi2 import actions, bindings, helper
 
 
@@ -24,18 +26,29 @@ def utcTime(dt):
 
 class RequesterClient:
 
-    def __init__(self, reply_to, ctx_factory=None):
+    implements(INSIProvider)
 
-        self.reply_to = reply_to
+    def __init__(self, providers, reply_to, ctx_factory=None):
+
+        self.providers   = providers
+        self.reply_to    = reply_to
         self.ctx_factory = ctx_factory
 
 
+    def _checkHeader(self, header):
+
+        if header.reply_to and header.correlation_id is None:
+            raise ValueError('Header must specify correlation id, if reply to is specified')
+
+
     def _createGenericRequestType(self, body_element_name, header, connection_id):
+
         header_element = helper.createHeader(header.requester_nsa, header.provider_nsa, reply_to=self.reply_to, correlation_id=header.correlation_id)
         body_element = bindings.GenericRequestType(connection_id).xml(body_element_name)
 
         payload = minisoap.createSoapPayload(body_element, header_element)
         return payload
+
 
 
     def _handleErrorReply(self, err):
@@ -66,7 +79,13 @@ class RequesterClient:
         return err
 
 
-    def reserve(self, service_url, header, connection_id, global_reservation_id, description, version, service_parameters):
+    def reserve(self, header, connection_id, global_reservation_id, description, service_parameters):
+
+        self._checkHeader(header)
+
+        service_url = self.providers[header.provider_nsa]
+
+        # payload construction
 
         header_payload = helper.createHeader(header.requester_nsa, header.provider_nsa, reply_to=self.reply_to, correlation_id=header.correlation_id)
 
@@ -87,58 +106,64 @@ class RequesterClient:
 
         path = bindings.PathType(sp.directionality, symmetric, src_stp, dst_stp, None)
 
-        criteria = bindings.ReservationRequestCriteriaType(version, schedule, sp.bandwidth, service_attributes, path)
+        criteria = bindings.ReservationRequestCriteriaType(service_parameters.version, schedule, sp.bandwidth, service_attributes, path)
 
         reservation = bindings.ReserveType(global_reservation_id, description, connection_id, criteria)
 
         body_payload   = reservation.xml(bindings.reserve)
         payload = minisoap.createSoapPayload(body_payload, header_payload)
 
-        def gotReply(data):
-            pass
+        def _handleAck(soap_data):
+            header, ack = helper.parseRequest(soap_data)
+            return ack.connectionId
 
         d = httpclient.soapRequest(service_url, actions.RESERVE, payload, ctx_factory=self.ctx_factory)
-        d.addCallbacks(gotReply, self._handleErrorReply)
+        d.addCallbacks(_handleAck, self._handleErrorReply)
         return d
 
 
-    def reserveCommit(self, service_url, header, connection_id):
-        def gotReply(data):
-            pass
+    def reserveCommit(self, header, connection_id):
+
+        self._checkHeader(header)
+        service_url = self.providers[header.provider_nsa]
 
         payload = self._createGenericRequestType(bindings.reserveCommit, header, connection_id)
+
         d = httpclient.soapRequest(service_url, actions.RESERVE_COMMIT, payload, ctx_factory=self.ctx_factory)
-        d.addCallbacks(gotReply, self._handleErrorReply)
+        d.addCallbacks(lambda sd : None, self._handleErrorReply)
         return d
 
 
-    def provision(self, service_url, header, connection_id):
-        def gotReply(data):
-            pass
+    def provision(self, header, connection_id):
+
+        self._checkHeader(header)
+        service_url = self.providers[header.provider_nsa]
 
         payload = self._createGenericRequestType(bindings.provision, header, connection_id)
         d = httpclient.soapRequest(service_url, actions.PROVISION, payload, ctx_factory=self.ctx_factory)
-        d.addCallbacks(gotReply, self._handleErrorReply)
+        d.addCallbacks(lambda sd : None, self._handleErrorReply)
         return d
 
 
-    def release(self, service_url, header, connection_id):
-        def gotReply(data):
-            pass
+    def release(self, header, connection_id):
+
+        self._checkHeader(header)
+        service_url = self.providers[header.provider_nsa]
 
         payload = self._createGenericRequestType(bindings.release, header, connection_id)
         d = httpclient.soapRequest(service_url, actions.RELEASE, payload, ctx_factory=self.ctx_factory)
-        d.addCallbacks(gotReply, self._handleErrorReply)
+        d.addCallbacks(lambda sd : None, self._handleErrorReply)
         return d
 
 
-    def terminate(self, service_url, header, connection_id):
-        def gotReply(data):
-            pass
+    def terminate(self, header, connection_id):
+
+        self._checkHeader(header)
+        service_url = self.providers[header.provider_nsa]
 
         payload = self._createGenericRequestType(bindings.terminate, header, connection_id)
         d = httpclient.soapRequest(service_url, actions.TERMINATE, payload, ctx_factory=self.ctx_factory)
-        d.addCallbacks(gotReply, self._handleErrorReply)
+        d.addCallbacks(lambda sd : None, self._handleErrorReply)
         return d
 
 

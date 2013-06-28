@@ -53,12 +53,6 @@ class RequesterService:
         soap_resource.registerDecoder(actions.MESSAGE_DELIVERY_TIMEOUT, self.messageDeliveryTimeout)
 
 
-    def _createGenericAcknowledgement(self, header):
-        header_element = helper.createHeader(header.requester_nsa, header.provider_nsa, correlation_id=header.correlation_id)
-        payload = minisoap.createSoapPayload(None, header_element)
-        return payload
-
-
     def _parseGenericFailure(self, soap_data):
 
         header, generic_failure = helper.parseRequest(soap_data)
@@ -101,50 +95,49 @@ class RequesterService:
 
         self.requester.reserveConfirmed(header, reservation.connectionId,  reservation.globalReservationId, reservation.description, service_parameters)
 
-        return self._createGenericAcknowledgement(header)
+        return helper.createGenericAcknowledgement(header)
 
 
     def reserveFailed(self, soap_data):
         header, generic_failure, err = self._parseGenericFailure(soap_data)
         self.requester.reserveFailed(header, generic_failure.connectionId, err)
-        return self._createGenericAcknowledgement(header)
+        return helper.createGenericAcknowledgement(header)
 
 
     def reserveCommitConfirmed(self, soap_data):
         header, generic_confirm = helper.parseRequest(soap_data)
         self.requester.reserveCommitConfirmed(header, generic_confirm.connectionId)
-        return self._createGenericAcknowledgement(header)
+        return helper.createGenericAcknowledgement(header)
 
 
     def reserveCommitFailed(self, soap_data):
         header, generic_failure, err = self._parseGenericFailure(soap_data)
         self.requester.reserveCommitFailed(header, generic_failure.connectionId, err)
-        return self._createGenericAcknowledgement(header)
+        return helper.createGenericAcknowledgement(header)
 
 
     def reserveAbortConfirmed(self, soap_data):
         header, generic_confirm = helper.parseRequest(soap_data)
         self.requester.reserveAbortConfirmed(header, generic_confirm.connectionId)
-        return self._createGenericAcknowledgement(header)
+        return helper.createGenericAcknowledgement(header)
 
-    # --
 
     def provisionConfirmed(self, soap_data):
         header, generic_confirm = helper.parseRequest(soap_data)
         self.requester.provisionConfirmed(header, generic_confirm.connectionId)
-        return self._createGenericAcknowledgement(header)
+        return helper.createGenericAcknowledgement(header)
 
 
     def releaseConfirmed(self, soap_data):
         header, generic_confirm = helper.parseRequest(soap_data)
         self.requester.releaseConfirmed(header, generic_confirm.connectionId)
-        return self._createGenericAcknowledgement(header)
+        return helper.createGenericAcknowledgement(header)
 
 
     def terminateConfirmed(self, soap_data):
         header, generic_confirm = helper.parseRequest(soap_data)
         self.requester.terminateConfirmed(header, generic_confirm.connectionId)
-        return self._createGenericAcknowledgement(header)
+        return helper.createGenericAcknowledgement(header)
 
 
     def terminateFailed(self, soap_data):
@@ -155,7 +148,7 @@ class RequesterService:
         self.requester.terminateFailed(header.correlationId, header.requesterNSA, header.providerNSA, session_security_attr,
                                        generic_failure.connectionId, err)
 
-        return self._createGenericAcknowledgement(header)
+        return helper.createGenericAcknowledgement(header)
 
 
     def querySummaryConfirmed(self, soap_data):
@@ -170,7 +163,7 @@ class RequesterService:
 
         d = self.requester.queryConfirmed(header, query_result)
 
-        return self._createGenericAcknowledgement(header)
+        return helper.createGenericAcknowledgement(header)
 
 
     def querySummaryFailed(self, soap_data):
@@ -181,7 +174,7 @@ class RequesterService:
         self.requester.queryFailed(header.correlationId, header.requesterNSA, header.providerNSA, session_security_attr,
                                        generic_failure.connectionId, err)
 
-        return self._createGenericAcknowledgement(header)
+        return helper.createGenericAcknowledgement(header)
 
 
     def errorEvent(self, soap_data):
@@ -195,9 +188,9 @@ class RequesterService:
         dpsc = data_plane_state_change
         dps = dpsc.dataPlaneStatus
 
-        self.requester.dataPlaneStateChange(header, (dpsc.connectionId, dpsc.notificationId, dpsc.timeStamp, (dps.active, dps.version, dps.versionConsistent) ) )
+        self.requester.dataPlaneStateChange(header, dpsc.connectionId, dpsc.notificationId, dpsc.timeStamp, (dps.active, dps.version, dps.versionConsistent) )
 
-        return self._createGenericAcknowledgement(header)
+        return helper.createGenericAcknowledgement(header)
 
 
     def reserveTimeout(self, soap_data):

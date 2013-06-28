@@ -43,6 +43,18 @@ def createHeader(requester_nsa_urn, provider_nsa_urn, session_security_attrs=Non
     return header_element
 
 
+def createGenericAcknowledgement(header):
+
+    soap_header = bindings.CommonHeaderType(PROTO, header.correlation_id, header.requester_nsa, header.provider_nsa, None, header.session_security_attrs)
+    soap_header_element = soap_header.xml(bindings.nsiHeader)
+
+    generic_confirm = bindings.GenericAcknowledgmentType()
+    generic_confirm_element = generic_confirm.xml(bindings.acknowledgment)
+
+    payload = minisoap.createSoapPayload(generic_confirm_element, soap_header_element)
+    return payload
+
+
 def createServiceException(err, provider_nsa, connection_id=None):
 
     variables = None
