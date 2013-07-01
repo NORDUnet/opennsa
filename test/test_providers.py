@@ -340,6 +340,10 @@ class DUDBackendTest(GenericProviderTest, unittest.TestCase):
         # delete all connections from test database
         yield genericbackend.GenericBackendConnections.deleteAll()
 
+        # close database connections, so we don't run out
+        from twistar.registry import Registry
+        Registry.DBPOOL.close()
+
 
 
 class AggregatorTest(GenericProviderTest, unittest.TestCase):
@@ -395,6 +399,9 @@ class AggregatorTest(GenericProviderTest, unittest.TestCase):
         yield genericbackend.GenericBackendConnections.deleteAll()
         yield database.SubConnection.deleteAll()
         yield database.ServiceConnection.deleteAll()
+        # close database connections, so we don't run out
+        from twistar.registry import Registry
+        Registry.DBPOOL.close()
 
 
 
@@ -489,4 +496,8 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
         yield genericbackend.GenericBackendConnections.deleteAll()
         yield database.SubConnection.deleteAll()
         yield database.ServiceConnection.deleteAll()
+
+        # close database connections, so we don't run out
+        from twistar.registry import Registry
+        Registry.DBPOOL.close()
 
