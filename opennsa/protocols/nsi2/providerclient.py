@@ -148,12 +148,27 @@ class ProviderClient:
 
         payload = minisoap.createSoapPayload(body_element, header_element)
 
-        def gotReply(data):
-            # for now we just ignore this, as long as we get an okay
-            return
-
         d = httpclient.soapRequest(requester_url, actions.DATA_PLANE_STATE_CHANGE, payload, ctx_factory=self.ctx_factory)
-        d.addCallbacks(gotReply) #, errReply)
+        return d
+
+
+    def errorEvent(self, requester_url, requester_nsa, provider_nsa, connection_id, notification_id, timestamp, event, info, service_ex):
+
+        header_element = helper.createHeader(requester_nsa, provider_nsa)
+
+        if service_ex:
+            nsa_id, connection_id, error_id, text, variables, child_ex = service_ex
+            service_exception = bindings.ServiceExceptionType(nsa_id, connection_id, error_id, text, None, None)
+        else:
+            service_exception = None
+
+        error_event = bindings.ErrorEventType(connection_id, notification_id, timestamp, event, None, service_exception)
+
+        body_element = error_event.xml(bindings.errorEvent)
+
+        payload = minisoap.createSoapPayload(body_element, header_element)
+
+        d = httpclient.soapRequest(requester_url, actions.ERROR_EVENT, payload, ctx_factory=self.ctx_factory)
         return d
 
 

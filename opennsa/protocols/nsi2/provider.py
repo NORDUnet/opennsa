@@ -128,9 +128,6 @@ class Provider:
             return defer.succeed(None)
 
 
-
-
-
     def terminate(self, nsi_header, connection_id):
 
         if nsi_header.reply_to:
@@ -166,5 +163,12 @@ class Provider:
         d = self.provider_client.dataPlaneStateChange(header.reply_to, header.requester_nsa, header.provider_nsa,
                                                       connection_id, notification_id, timestamp, active, version, consistent)
         d.addErrback(logError, 'dataPlaneStateChange')
+        return d
+
+
+    def errorEvent(self, header, connection_id, notification_id, timestamp, event, info, service_ex):
+
+        d = self.provider_client.errorEvent(header.reply_to, header.requester_nsa, header.provider_nsa,
+                                            connection_id, notification_id, timestamp, event, info, service_ex)
         return d
 

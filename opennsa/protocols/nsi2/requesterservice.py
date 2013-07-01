@@ -178,7 +178,21 @@ class RequesterService:
 
 
     def errorEvent(self, soap_data):
-        raise NotImplementedError('errorEvent not yet implemented in requester service')
+
+        header, error_event = helper.parseRequest(soap_data)
+
+        #connection_id, notification_id, timestamp, event, info, service_ex = 
+        ee = error_event
+        if ee.serviceException:
+            se = ee.serviceException
+            service_ex = (se.nsaId, se.connectionId, se.errorId, se.text, se.variables, se.childException)
+        else:
+            service_ex = None
+
+        self.requester.errorEvent(header, ee.connectionId, ee.notificationId, ee.timeStamp, ee.event, ee.additionalInfo, service_ex)
+
+        return helper.createGenericAcknowledgement(header)
+
 
 
     def dataPlaneStateChange(self, soap_data):

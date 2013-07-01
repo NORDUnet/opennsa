@@ -223,9 +223,10 @@ class Requester:
         self.triggerCall(provider_nsa, correlation_id, 'query', error.QueryError(error_message))
 
 
-    def errorEvent(self, header, error_event):
+    def errorEvent(self, header, connection_id, notification_id, timestamp, event, info, service_ex):
 
-        return self.notifications.put( ('errorEvent', header, error_event) )
+        data = (connection_id, notification_id, timestamp, event, info, service_ex)
+        return self.notifications.put( ('errorEvent', header, data) )
 
 
     def dataPlaneStateChange(self, header, connection_id, notification_id, timestamp, data_plane_status):
