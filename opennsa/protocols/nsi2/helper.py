@@ -26,9 +26,9 @@ PROTO = 'urn:org.ogf.schema.NSIv2'
 URN_NETWORK = 'urn:ogf:network:'
 
 
-ET.register_namespace('ftypes' , FRAMEWORK_TYPES_NS)
-ET.register_namespace('fheader', FRAMEWORK_HEADERS_NS)
-ET.register_namespace('ctypes' , CONNECTION_TYPES_NS)
+ET.register_namespace('ftypes', FRAMEWORK_TYPES_NS)
+ET.register_namespace('header', FRAMEWORK_HEADERS_NS)
+ET.register_namespace('ctypes', CONNECTION_TYPES_NS)
 
 
 
