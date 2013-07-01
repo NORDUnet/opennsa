@@ -153,9 +153,7 @@ class GenericProviderTest:
         # these need to be constructed such that there is only one label option
         source_stp  = nsa.STP('Aruba', self.source_port, labels=[ nsa.Label(nml.ETHERNET_VLAN, '2') ] )
         dest_stp    = nsa.STP('Aruba', self.dest_port,   labels=[ nsa.Label(nml.ETHERNET_VLAN, '2') ] )
-        start_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=1)
-        end_time   = datetime.datetime.utcnow() + datetime.timedelta(seconds=10)
-        service_params = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, 200)
+        service_params = nsa.ServiceParameters(self.start_time, self.end_time, source_stp, dest_stp, 200)
 
         acid = yield self.provider.reserve(self.header, None, None, None, service_params)
         header, cid, gid, desc, sp = yield self.requester.reserve_defer
@@ -176,9 +174,7 @@ class GenericProviderTest:
         # these need to be constructed such that there is only one label option
         source_stp  = nsa.STP('Aruba', self.source_port, labels=[ nsa.Label(nml.ETHERNET_VLAN, '2') ] )
         dest_stp    = nsa.STP('Aruba', self.dest_port,   labels=[ nsa.Label(nml.ETHERNET_VLAN, '2') ] )
-        start_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=1)
-        end_time   = datetime.datetime.utcnow() + datetime.timedelta(seconds=60)
-        service_params = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, 200)
+        service_params = nsa.ServiceParameters(self.start_time, self.end_time, source_stp, dest_stp, 200)
 
         acid = yield self.provider.reserve(self.header, None, None, None, service_params)
         header, cid, gid, desc, sp = yield self.requester.reserve_defer
@@ -200,10 +196,15 @@ class GenericProviderTest:
     def testSlowActivate(self):
         # key here is that end time is passed when activation is done
 
-        source_stp  = nsa.STP('Aruba', 'A1', labels=[ nsa.Label(nml.ETHERNET_VLAN, '100') ] )
-        dest_stp    = nsa.STP('Aruba', 'A3', labels=[ nsa.Label(nml.ETHERNET_VLAN, '100') ] )
-        start_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=1)
-        end_time   = datetime.datetime.utcnow() + datetime.timedelta(seconds=2)
+        source_stp  = nsa.STP('Aruba', self.source_port, labels=[ nsa.Label(nml.ETHERNET_VLAN, '100') ] )
+        dest_stp    = nsa.STP('Aruba', self.dest_port,   labels=[ nsa.Label(nml.ETHERNET_VLAN, '100') ] )
+        ## for backend/aggregator
+        #start_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=1)
+        #end_time   = datetime.datetime.utcnow() + datetime.timedelta(seconds=2)
+        ## remote test
+        #from dateutil.tz import tzutc
+        #start_time = datetime.datetime.now(tzutc()) + datetime.timedelta(seconds=1)
+        #end_time   = datetime.datetime.now(tzutc()) + datetime.timedelta(seconds=2)
         service_params = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, 200)
 
         def setupLink(connection_id, src, dst, bandwidth):
@@ -211,7 +212,7 @@ class GenericProviderTest:
             reactor.callLater(2, d.callback, None)
             return d
 
-        # make actication fail via monkey patching
+        # make activation fail via monkey patching
         self.backend.connection_manager.setupLink = setupLink
 
         acid = yield self.provider.reserve(self.header, None, None, None, service_params)
@@ -327,9 +328,9 @@ class DUDBackendTest(GenericProviderTest, unittest.TestCase):
         database.setupDatabase( tc['database'], tc['database-user'], tc['database-password'])
 
         # request stuff
-        start_time  = datetime.datetime.utcnow() + datetime.timedelta(seconds=2)
-        end_time    = datetime.datetime.utcnow() + datetime.timedelta(seconds=10)
-        self.service_params = nsa.ServiceParameters(start_time, end_time, self.source_stp, self.dest_stp, self.bandwidth)
+        self.start_time  = datetime.datetime.utcnow() + datetime.timedelta(seconds=2)
+        self.end_time    = datetime.datetime.utcnow() + datetime.timedelta(seconds=10)
+        self.service_params = nsa.ServiceParameters(self.start_time, self.end_time, self.source_stp, self.dest_stp, self.bandwidth)
 
 
     @defer.inlineCallbacks
@@ -381,10 +382,10 @@ class AggregatorTest(GenericProviderTest, unittest.TestCase):
         self.backend.startService()
 
         # request stuff
-        start_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=2)
-        end_time   = datetime.datetime.utcnow() + datetime.timedelta(seconds=10)
+        self.start_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=2)
+        self.end_time   = datetime.datetime.utcnow() + datetime.timedelta(seconds=10)
 
-        self.service_params = nsa.ServiceParameters(start_time, end_time, self.src_stp, self.dst_stp, self.bandwidth)
+        self.service_params = nsa.ServiceParameters(self.start_time, self.end_time, self.src_stp, self.dst_stp, self.bandwidth)
 
 
     @defer.inlineCallbacks
@@ -470,10 +471,10 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
         self.requester_iport = reactor.listenTCP(self.REQUESTER_PORT, requester_factory)
 
         # request stuff
-        start_time = datetime.datetime.now(tzutc()) + datetime.timedelta(seconds=2)
-        end_time   = datetime.datetime.now(tzutc()) + datetime.timedelta(seconds=10)
+        self.start_time = datetime.datetime.now(tzutc()) + datetime.timedelta(seconds=2)
+        self.end_time   = datetime.datetime.now(tzutc()) + datetime.timedelta(seconds=10)
 
-        self.service_params = nsa.ServiceParameters(start_time, end_time, self.src_stp, self.dst_stp, self.bandwidth)
+        self.service_params = nsa.ServiceParameters(self.start_time, self.end_time, self.src_stp, self.dst_stp, self.bandwidth)
 
 
     @defer.inlineCallbacks
