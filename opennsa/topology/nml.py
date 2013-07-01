@@ -18,7 +18,7 @@ EGRESS  = 'egress'
 
 # Label types
 ETHERNET = 'http://schemas.ogf.org/nml/2012/10/ethernet'
-ETHERNET_VLAN = ETHERNET + '#vlan'
+ETHERNET_VLAN = '{%s}vlan' % ETHERNET
 
 
 
