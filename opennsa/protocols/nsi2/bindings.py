@@ -161,7 +161,10 @@ class TypeValuePairType:
                )
 
     def xml(self, elementName):
-        r = ET.Element(elementName, attrib={'type' : str(self.type_), 'targetNamespace' : str(self.targetNamespace)})
+        attribs = attrib={'type' : self.type_}
+        if self.targetNamespace:
+            attribs['targetNamespace'] = self.targetNamespace
+        r = ET.Element(elementName, attrib=attribs)
         if self.value:
             for el in self.value:
                 ET.SubElement(r, 'value').text = el
