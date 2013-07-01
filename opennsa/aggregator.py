@@ -639,13 +639,13 @@ class Aggregator:
 
 
     def doTimeout(self, conn, timeout_value, org_connection_id, org_nsa):
-        header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn(), None)
+        header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn(), reply_to=conn.requester_url)
         now = datetime.datetime.utcnow()
         self.parent_requester.reserveTimeout(header, conn.connection_id, 0, now, timeout_value, org_connection_id, org_nsa)
 
 
     def doErrorEvent(self, conn, notification_id, event, info, service_ex=None):
-        header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn(), None)
+        header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn(), reply_to=conn.requester_url)
         now = datetime.datetime.utcnow()
         self.parent_requester.errorEvent(header, conn.connection_id, notification_id, now, event, info, service_ex)
 
