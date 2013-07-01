@@ -18,21 +18,17 @@ from opennsa.protocols.nsi2 import bindings
 LOG_SYSTEM = 'NSI2.Helper'
 
 # don't really fit anywhere, consider cramming them into the bindings
+FRAMEWORK_TYPES_NS   = "http://schemas.ogf.org/nsi/2013/04/framework/types"
 FRAMEWORK_HEADERS_NS = "http://schemas.ogf.org/nsi/2013/04/framework/headers"
 CONNECTION_TYPES_NS  = "http://schemas.ogf.org/nsi/2013/04/connection/types"
 
-NML_ETHERNET_NS      = "http://schemas.ogf.org/nml/2012/10/ethernet#"
-
 PROTO = 'urn:org.ogf.schema.NSIv2'
-
 URN_NETWORK = 'urn:ogf:network:'
 
 
-
-ET.register_namespace('ftypes', FRAMEWORK_HEADERS_NS)
-ET.register_namespace('ctypes', CONNECTION_TYPES_NS)
-ET.register_namespace('nmleth', NML_ETHERNET_NS)
-
+ET.register_namespace('ftypes' , FRAMEWORK_TYPES_NS)
+ET.register_namespace('fheader', FRAMEWORK_HEADERS_NS)
+ET.register_namespace('ctypes' , CONNECTION_TYPES_NS)
 
 
 
@@ -129,9 +125,20 @@ def createSTPType(stp):
         else:
             return str(v1) + '-' + str(v2)
 
+    def splitLabelType(label_type):
+        if '{' in label_type:
+            ns, tag = label_type.split('}',1)
+            ns = ns[1:]
+        else:
+            ns, tag = None, label_type
+        return ns, tag
+
     labels = None
     if stp.labels not in (None, []):
-        labels = [ bindings.TypeValuePairType(label.type_, NML_ETHERNET_NS, [ createValue(*v) for v in label.values ] ) for label in stp.labels ]
+        labels = []
+        for label in stp.labels:
+            ns, tag = splitLabelType(label.type_)
+            labels.append( bindings.TypeValuePairType(tag, ns, [ label.labelValue() ] ) )
 
     network = URN_NETWORK + stp.network
     port = stp.port
