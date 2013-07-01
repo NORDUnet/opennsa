@@ -117,6 +117,7 @@ class ProviderClient:
         return self._genericFailure(requester_url, actions.RESERVE_COMMIT_FAILED, bindings.reserveCommitFailed,
                                     requester_nsa, provider_nsa, correlation_id, connection_id, connection_states, err)
 
+
     def reserveAbortConfirmed(self, requester_url, requester_nsa, provider_nsa, correlation_id, connection_id):
 
         return self._genericConfirm(bindings.reserveAbortConfirmed, requester_url, actions.RESERVE_ABORT_CONFIRMED,
@@ -145,6 +146,21 @@ class ProviderClient:
 
         return self._genericConfirm(bindings.terminateConfirmed, requester_url, actions.TERMINATE_CONFIRMED,
                                     correlation_id, requester_nsa, provider_nsa, connection_id)
+
+    # notifications
+
+    def reserveTimeout(self, requester_url, requester_nsa, provider_nsa, connection_id, notification_id, timestamp, timeout_value, originating_connection_id, originating_nsa):
+
+        header_element = helper.createHeader(requester_nsa, provider_nsa)
+
+        reserve_timeout = bindings.ReserveTimeoutRequestType(connection_id, notification_id, timestamp, timeout_value, originating_connection_id, originating_nsa)
+
+        body_element = reserve_timeout.xml(bindings.reserveTimeout)
+
+        payload = minisoap.createSoapPayload(body_element, header_element)
+
+        d = httpclient.soapRequest(requester_url, actions.RESERVE_TIMEOUT, payload, ctx_factory=self.ctx_factory)
+        return d
 
 
     def dataPlaneStateChange(self, requester_url, requester_nsa, provider_nsa, connection_id, notification_id, timestamp, active, version, consistent):

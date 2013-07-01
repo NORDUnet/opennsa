@@ -105,11 +105,6 @@ class Provider:
             return defer.succeed(None)
 
 
-    def reserveTimeout(self, nsi_header, connection_id, notification_id, timestamp, timeout_value, originating_connection_id, originating_nsa):
-
-        print "No reserve timeout implemented in nsi2 soap provider yet"
-
-
     def provision(self, nsi_header, connection_id):
 
         if nsi_header.reply_to:
@@ -176,6 +171,14 @@ class Provider:
 
 
     # requester interface
+
+    def reserveTimeout(self, header, connection_id, notification_id, timestamp, timeout_value, originating_connection_id, originating_nsa):
+
+        d = self.provider_client.reserveTimeout(header.reply_to, header.requester_nsa, header.provider_nsa,
+                                                connection_id, notification_id, timestamp, timeout_value, originating_connection_id, originating_nsa)
+        d.addErrback(logError, 'reserveTimeout')
+        return d
+
 
     def dataPlaneStateChange(self, header, connection_id, notification_id, timestamp, data_plane_status):
 

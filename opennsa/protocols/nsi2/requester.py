@@ -234,3 +234,9 @@ class Requester:
         data = (connection_id, notification_id, timestamp, data_plane_status)
         return self.notifications.put( ('dataPlaneStateChange', header, data) )
 
+
+    def reserveTimeout(self, header, connection_id, notification_id, timestamp, timeout_value, org_connection_id, org_nsa):
+
+        data = (connection_id, notification_id, timestamp, timeout_value, org_connection_id, org_nsa)
+        return self.notifications.put( ('reserveTimeout', header, data) )
+

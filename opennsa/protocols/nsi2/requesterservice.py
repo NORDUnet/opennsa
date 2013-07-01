@@ -208,7 +208,12 @@ class RequesterService:
 
 
     def reserveTimeout(self, soap_data):
-        raise NotImplementedError('reserveTimeout not yet implemented in requester service')
+
+        header, reserve_timeout = helper.parseRequest(soap_data)
+        rt = reserve_timeout
+        self.requester.reserveTimeout(header, rt.connectionId, rt.notificationId, rt.timeStamp, rt.timeoutValue, rt.originatingConnectionId, rt.originatingNSA)
+
+        return helper.createGenericAcknowledgement(header)
 
 
     def messageDeliveryTimeout(self, soap_data):
