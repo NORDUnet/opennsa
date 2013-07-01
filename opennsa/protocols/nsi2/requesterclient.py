@@ -134,6 +134,18 @@ class RequesterClient:
         return d
 
 
+    def reserveAbort(self, header, connection_id):
+
+        self._checkHeader(header)
+        service_url = self.providers[header.provider_nsa]
+
+        payload = self._createGenericRequestType(bindings.reserveAbort, header, connection_id)
+
+        d = httpclient.soapRequest(service_url, actions.RESERVE_ABORT, payload, ctx_factory=self.ctx_factory)
+        d.addCallbacks(lambda sd : None, self._handleErrorReply)
+        return d
+
+
     def provision(self, header, connection_id):
 
         self._checkHeader(header)

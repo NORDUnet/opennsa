@@ -13,6 +13,7 @@ LOG_SYSTEM = 'NSI2SOAP.Provider'
 
 RESERVE_RESPONSE        = 'reserve_response'
 RESERVE_COMMIT_RESPONSE = 'reserve_commit_response'
+RESERVE_ABORT_RESPONSE  = 'reserve_commit_response'
 PROVISION_RESPONSE      = 'provision_response'
 RELEASE_RESPONSE        = 'release_response'
 TERMINATE_RESPONSE      = 'terminate_response'
@@ -81,7 +82,26 @@ class Provider:
             d.addErrback(logError, 'reserveCommitConfirmed')
             return d
         except KeyError, e:
-            log.msg('No entity to notify about reserveConfirmed for %s' % connection_id, log_system=LOG_SYSTEM)
+            log.msg('No entity to notify about reserveCommitConfirmed for %s' % connection_id, log_system=LOG_SYSTEM)
+            return defer.succeed(None)
+
+
+    def reserveAbort(self, header, connection_id):
+
+        if header.reply_to:
+            self.notifications[(connection_id, RESERVE_ABORT_RESPONSE)] = header
+        return self.service_provider.reserveAbort(header, connection_id)
+
+
+    def reserveAbortConfirmed(self, header, connection_id):
+
+        try:
+            org_header = self.notifications.pop( (connection_id, RESERVE_ABORT_RESPONSE) )
+            d = self.provider_client.reserveAbortConfirmed(org_header.reply_to, org_header.requester_nsa, org_header.provider_nsa, org_header.correlation_id, connection_id)
+            d.addErrback(logError, 'reserveAbortConfirmed')
+            return d
+        except KeyError, e:
+            log.msg('No entity to notify about reserveAbortConfirmed for %s' % connection_id, log_system=LOG_SYSTEM)
             return defer.succeed(None)
 
 

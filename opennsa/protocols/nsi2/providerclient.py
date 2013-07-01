@@ -115,8 +115,18 @@ class ProviderClient:
     def reserveCommitFailed(self, requester_url, requester_nsa, provider_nsa, correlation_id, connection_id, connection_states, err):
 
         return self._genericFailure(requester_url, actions.RESERVE_COMMIT_FAILED, bindings.reserveCommitFailed,
-                                    requester_nsa, provider_nsa, correlation_id,
-                                    connection_id, connection_states, err)
+                                    requester_nsa, provider_nsa, correlation_id, connection_id, connection_states, err)
+
+    def reserveAbortConfirmed(self, requester_url, requester_nsa, provider_nsa, correlation_id, connection_id):
+
+        return self._genericConfirm(bindings.reserveAbortConfirmed, requester_url, actions.RESERVE_ABORT_CONFIRMED,
+                                    correlation_id, requester_nsa, provider_nsa, connection_id)
+
+
+    def reserveAbortFailed(self, requester_url, requester_nsa, provider_nsa, correlation_id, connection_id, connection_states, err):
+
+        return self._genericFailure(requester_url, actions.RESERVE_ABORT_FAILED, bindings.reserveAbortFailed,
+                                    requester_nsa, provider_nsa, correlation_id, connection_id, connection_states, err)
 
 
     def provisionConfirmed(self, requester_url, correlation_id, requester_nsa, provider_nsa, connection_id):
