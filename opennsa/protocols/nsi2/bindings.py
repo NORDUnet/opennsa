@@ -190,7 +190,10 @@ class ReservationRequestCriteriaType:
                )
 
     def xml(self, elementName):
-        r = ET.Element(elementName, attrib={'version' : str(self.version)})
+        attribs = {}
+        if self.version:
+            attribs['version'] = str(self.version)
+        r = ET.Element(elementName, attrib=attribs)
         if self.schedule:
             r.append(self.schedule.xml('schedule'))
         if self.bandwidth:
