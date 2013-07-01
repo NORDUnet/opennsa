@@ -61,7 +61,6 @@ class SOAPFault(Exception):
         else:
             payload = SERVICE_FAULT_DETAILED % {'fault_string': fault_string, 'detail': self.detail }
 
-        print "SERVICE FAULT\n", payload, "\n"
         return payload
 
 
