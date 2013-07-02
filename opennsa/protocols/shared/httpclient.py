@@ -7,7 +7,7 @@ Copyright: NORDUnet (2011-2012)
 
 from twisted.python import log
 from twisted.internet import reactor, defer
-from twisted.web import client as twclient
+from twisted.web import client as twclient, http as twhttp
 from twisted.web.error import Error as WebError
 from twisted.internet.error import ConnectionClosed, ConnectionRefusedError
 
@@ -49,15 +49,20 @@ def httpRequest(url, payload, headers, method='POST', timeout=DEFAULT_TIMEOUT, c
 
     log.msg(" -- Sending Payload to %s --\n%s\n -- END. Sending Payload --" % (url, payload), system=LOG_SYSTEM, payload=True)
 
-    scheme, host, port, _ = twclient._parse(url)
+    scheme, netloc, _ , _, _, _ = twhttp.urlparse(url)
+    if not ':' in netloc:
+        e = HTTPRequestError('No port specified in URL (URL %s)' % (url))
+        return defer.fail(e)
+
+    host, s_port = netloc.split(':',1)
+    port = int(s_port)
 
     factory = twclient.HTTPClientFactory(url, method, postdata=payload, timeout=timeout)
     factory.noisy = False # stop spewing about factory start/stop
     factory.protocol.handleStatus_204 = lambda _ : None # 204 is an ok reply, needed by NCS VPN backend
 
     # fix missing port in header (bug in twisted.web.client)
-    if port:
-        factory.headers['host'] = host + ':' + str(port)
+    factory.headers['host'] = host + ':' + s_port
 
     factory.headers['User-Agent'] = 'OpenNSA/Twisted'
 
