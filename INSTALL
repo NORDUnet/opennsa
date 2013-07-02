@@ -1,10 +1,12 @@
 Requirements:
 
-* Python 2.6 or later (Python 3 not supported yet)
+* Python 2.7 or later (Python 3 not supported yet)
 
 * Python Dateutil (http://labix.org/python-dateutil)
 
 * Twisted 12.2.0 or later, http://twistedmatrix.com/trac/
+
+* Twistar 1.1 or later (https://pypi.python.org/pypi/twistar/ & http://findingscience.com/twistar/ )
 
 * PostgreSQL (just needs a database)
 
@@ -20,6 +22,9 @@ Installation:
 
 python setup.py build
 sudo python setup.py install
+
+
+Setup:
 
 Edit /etc/opennsa.conf. Configuring the service is relatively straightforward,
 but creating the topology specification is still somewhat tricky.
