@@ -1,0 +1,8 @@
+# Draft Topology/NRM configuration for OpenNSA
+
+# type          name    remote                      labels              bandwith    interface
+
+bi-ethernet     ps      -                           vlan:1780-1787      1000        em0
+bi-ethernet     port1   NetworkA#portX-(in|out)     vlan:1781-1787      1000        em1
+bi-ethernet     port2   NetworkB#portY-(in|out)     vlan:1782-1787      1000        em2
+
