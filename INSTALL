@@ -24,11 +24,25 @@ python setup.py build
 sudo python setup.py install
 
 
-Setup:
+Database setup:
+
+You need to have a postgresql database setup and the user should have access to
+it (if you use OS access - which is the easiest - you can put whatever in the
+password field, it isn't used). Usually like this: 
+
+$ su - postgres
+$ createdb opennsa
+$ createuser opennsa
+$ exit
+$ psql opennsa # as the user that runs opennsa
+$ \i datafiles/schemq.sql
+
+
+Configuration:
 
 Edit /etc/opennsa.conf. Configuring the service is relatively straightforward,
-but creating the topology specification is still somewhat tricky.
-
+but creating the topology specification is still somewhat tricky. Look at the
+.nrm file in opennsa distribution for an example.
 
 
 Command line tool:
