@@ -112,6 +112,10 @@ class OpenNSAService(twistedservice.MultiService):
 
         top_resource.children['NSI'].putChild('topology', topology_resource)
 
+        proto_scheme = 'https' if vc[config.TLS] else 'http'
+        log.msg('Provider URL: %s://%s:%s/NSI/services/CS2' % (proto_scheme, vc[config.HOST], vc[config.PORT] ) )
+        log.msg('Topology URL: %s://%s:%s/NSI/topology/%s.xml' % (proto_scheme, vc[config.HOST], vc[config.PORT], vc[config.NETWORK_NAME]) )
+
         factory = server.Site(top_resource, logPath='/dev/null')
 
 
