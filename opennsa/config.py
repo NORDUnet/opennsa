@@ -223,6 +223,9 @@ def readVerifyConfig(cfg):
 
     for section in cfg.sections():
 
+        if section == 'service':
+            continue
+
         if ':' in section:
             backend_type, name = section.split(':',2)
         else:
