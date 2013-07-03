@@ -15,13 +15,11 @@ from opennsa.backends.common import genericbackend
 
 
 
-class DUDNSIBackend(genericbackend.GenericBackend):
+def DUDNSIBackend(network_name, network_topology, parent_requester, port_map, configuration):
 
-    def __init__(self, network_name, network_topology, parent_requester, port_map, configuration):
-
-        name = 'DUD NRM %s' % network_name
-        cm = DUDConnectionManager(name, port_map)
-        genericbackend.GenericBackend.__init__(self, network_name, network_topology, cm, parent_requester, name)
+    name = 'DUD NRM %s' % network_name
+    cm = DUDConnectionManager(name, port_map)
+    return genericbackend.GenericBackend(network_name, network_topology, cm, parent_requester, name)
 
 
 
