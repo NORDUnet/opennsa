@@ -45,3 +45,7 @@ class LabelTest(unittest.TestCase):
         self.failUnlessEquals(nsa.Label('', '80-89').intersect(nsa.Label('','81-82')).enumerateValues(), [ 81,82] )
 
 
+    def testIntersectedLabelUnderAndSingleValued(self):
+
+        self.failUnlessRaises(nsa.EmptyLabelSet, nsa.Label('', '1781-1784').intersect, nsa.Label('', '1780-1780') )
+

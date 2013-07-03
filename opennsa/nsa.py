@@ -105,7 +105,10 @@ class Label(object):
                 if v2 < o1:
                     break
                 elif o2 < v1:
-                    o1, o2 = i.next()
+                    try:
+                        o1, o2 = i.next()
+                    except StopIteration:
+                        break
                     continue
                 label_values.append( ( max(v1,o1), min(v2,o2)) )
                 if v2 <= o2:
