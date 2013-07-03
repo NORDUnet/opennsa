@@ -35,7 +35,7 @@ def shortLabel(labels):
     lbs = []
     for label in labels:
         if '}' in label.type_:
-            name = label.type_.split('}',1)[1][1:]
+            name = label.type_.split('}',1)[1]
         else:
             name = label.type_
         lbs.append( name + ':' + label.labelValue() )
