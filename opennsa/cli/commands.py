@@ -4,8 +4,12 @@ from twisted.python import log
 from twisted.internet import defer
 
 from opennsa import nsa, error
+from opennsa.topology import nml
 
 
+LABEL_LOOKUP = {
+    'vlan' : nml.ETHERNET_VLAN
+}
 
 # this parser should perhaps be somewhere else
 def _createSTP(stp_desc):
@@ -17,7 +21,7 @@ def _createSTP(stp_desc):
             if not '=' in tvl:
                 raise ValueError('Invalid label type-value: %s' % tvl)
             type_, values = tvl.split('=')
-            labels.append( nsa.Label( type_, values ) )
+            labels.append( nsa.Label( LABEL_LOOKUP.get(type_, type_), values ) )
     else:
         port = local_part
         labels = None
