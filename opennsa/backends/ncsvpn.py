@@ -201,16 +201,14 @@ class NCSVPNConnectionManager:
 
 class NCSVPNBackend(genericbackend.GenericBackend):
 
-    def __init__(self, network_name, parent_requester, configuration):
+    def __init__(self, network_name, parent_requester, cfg):
 
         name = 'NCS VPN (%s)' % network_name
 
         # extract config items
-        cfg_dict = dict(configuration)
-
-        ncs_services_url = str(cfg_dict[config.NCS_SERVICES_URL])
-        user             = cfg_dict[config.NCS_USER]
-        password         = cfg_dict[config.NCS_PASSWORD]
+        ncs_services_url = str(cfg[config.NCS_SERVICES_URL])
+        user             = cfg[config.NCS_USER]
+        password         = cfg[config.NCS_PASSWORD]
 
         cm = NCSVPNConnectionManager(ncs_services_url, user, password, name)
         genericbackend.GenericBackend.__init__(self, network_name, cm, parent_requester, name)

@@ -12,43 +12,46 @@ from opennsa.protocols import nsi2, discovery
 
 
 
-def setupBackend(backend_conf, network_name, parent_requester):
+def setupBackend(backend_cfg, network_name, network_topology, parent_requester, port_map):
 
-    for backend_name, cfg in backend_conf.items():
-        backend_type = cfg['_backend_type']
-        bc = cfg.copy()
-        del bc['_backend_type']
+    bc = backend_cfg.copy()
+    backend_type = backend_cfg.pop('_backend_type')
 
-        if backend_type == config.BLOCK_DUD:
-            from opennsa.backends import dud
-            return dud.DUDNSIBackend(network_name, parent_requester)
+    if backend_type == config.BLOCK_DUD:
+        from opennsa.backends import dud
+        BackendConstructer = dud.DUDNSIBackend
 
-        elif backend_type == config.BLOCK_JUNOS:
-            from opennsa.backends import junos
-            return junos.JunOSBackend(network_name, bc.items())
+# These are not yet ported for the new backend
+#    elif backend_type == config.BLOCK_JUNOS:
+#        from opennsa.backends import junos
+#        return junos.JunOSBackend(network_name, parent_requester, port_map, bc.items())
+#
+#    elif backend_type == config.BLOCK_FORCE10:
+#        from opennsa.backends import force10
+#        return force10.Force10Backend(network_name, parent_requester, port_map, bc.items())
+#
+#    elif backend_type == config.BLOCK_ARGIA:
+#        from opennsa.backends import argia
+#        return argia.ArgiaBackend(network_name, bc.items())
+#
+#    elif backend_type == config.BLOCK_BROCADE:
+#        from opennsa.backends import brocade
+#        return brocade.BrocadeBackend(network_name, bc.items())
+#
+#    elif backend_type == config.BLOCK_DELL:
+#        from opennsa.backends import dell
+#        return dell.DellBackend(network_name, bc.items())
 
-        elif backend_type == config.BLOCK_FORCE10:
-            from opennsa.backends import force10
-            return force10.Force10Backend(network_name, bc.items())
+    elif backend_type == config.BLOCK_NCSVPN:
+        from opennsa.backends import ncsvpn
+        BackendConstructer = ncsvpn.NCSVPNBackend
 
-        elif backend_type == config.BLOCK_ARGIA:
-            from opennsa.backends import argia
-            return argia.ArgiaBackend(network_name, bc.items())
+    else:
+        raise config.ConfigurationError('No backend specified')
 
-        elif backend_type == config.BLOCK_BROCADE:
-            from opennsa.backends import brocade
-            return brocade.BrocadeBackend(network_name, bc.items())
+    b = BackendConstructer(network_name, network_topology, parent_requester, port_map, bc)
+    return b
 
-        elif backend_type == config.BLOCK_DELL:
-            from opennsa.backends import dell
-            return dell.DellBackend(network_name, bc.items())
-
-        elif backend_type == config.BLOCK_NCSVPN:
-            from opennsa.backends import ncsvpn
-            return ncsvpn.NCSVPNBackend(network_name, parent_requester, bc.items())
-
-        else:
-            raise config.ConfigurationError('No backend specified')
 
 
 class OpenNSAService(twistedservice.MultiService):
@@ -84,21 +87,32 @@ class OpenNSAService(twistedservice.MultiService):
 
         topo_source = open( vc[config.NRM_MAP_FILE] ) if type(vc[config.NRM_MAP_FILE]) is str else vc[config.NRM_MAP_FILE] # wee bit hackish
 
-        network, pim = nrmparser.parseTopologySpec( topo_source, network_name, ns_agent)
+        network, port_map = nrmparser.parseTopologySpec( topo_source, network_name, ns_agent)
         topology = nml.Topology()
         topology.addNetwork(network)
 
-        top_resource = resource.Resource()
-
-        providers = { ns_agent.urn() : None }
+        providers = {} # This is filled out later, consider it a registry
 
         aggr = aggregator.Aggregator(network_name, ns_agent, topology, None, providers) # set requester later
 
-        backend_service = setupBackend(vc['backend'], network_name, aggr)
+        # setup backend(s) - for now we only support one
+
+        backend_configs = vc['backend']
+        if len(backend_configs) > 1:
+            raise config.ConfigurationError('Only one backend supported for now. Multiple will probably come later.')
+
+        backend_cfg = backend_configs.values()[0]
+
+        network_topology = topology.getNetwork(network_name)
+
+        backend_service = setupBackend(backend_cfg, network_name, network_topology, aggr, port_map)
         backend_service.setServiceParent(self)
 
         providers[ ns_agent.urn() ] = backend_service
 
+        # done with backend
+
+        top_resource = resource.Resource()
         discovery.setupDiscoveryService(None, top_resource)
 
         pc = nsi2.setupProvider(aggr, top_resource)

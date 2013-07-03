@@ -41,12 +41,15 @@ class GenericBackend(service.Service):
 
     TPC_TIMEOUT = 30 # seconds
 
-    def __init__(self, network, connection_manager, parent_requester, log_system):
+    def __init__(self, network, network_topology, connection_manager, parent_requester, log_system):
 
-        self.network = network
+        assert network == network_topology.name, 'Network name and network topology name does not match %s != %s' % (network, network_topology.name)
+
+        self.network            = network
+        self.network_topology    = network_topology
         self.connection_manager = connection_manager
-        self.parent_requester = parent_requester
-        self.log_system = log_system
+        self.parent_requester   = parent_requester
+        self.log_system         = log_system
 
         self.notification_id = 0
 
@@ -147,13 +150,21 @@ class GenericBackend(service.Service):
             raise ValueError('Cannot handle cases with existing connection id (yet)')
             #conns = yield GenericBackendConnections.findBy(connection_id=connection_id)
 
-        # need to check schedule
-
         source_stp = service_params.source_stp
         dest_stp   = service_params.dest_stp
 
-        # resolve nrm ports from the topology
+        # check network and ports exist
 
+        if source_stp.network != self.network:
+            raise error.TopologyError('Source network does not match network this NSA is managing')
+        if dest_stp.network != self.network:
+            raise error.TopologyError('Source network does not match network this NSA is managing')
+
+        # ensure that ports actually exists
+        topo_source_port = self.network_topology.getPort(source_stp.port)
+        topo_dest_port   = self.network_topology.getPort(dest_stp.port)
+
+        # basic label check
         if len(source_stp.labels) == 0:
             raise error.TopologyError('Source STP must specify a label')
         if len(dest_stp.labels) == 0:
@@ -167,6 +178,12 @@ class GenericBackend(service.Service):
         src_label_candidate = source_stp.labels[0]
         dst_label_candidate = dest_stp.labels[0]
         assert src_label_candidate.type_ == dst_label_candidate.type_, 'Cannot connect ports with different label types'
+
+        # now check that the ports have (some of) the specified labels
+        if not topo_source_port.canMatchLabels(source_stp.labels):
+            raise error.TopologyError('Source port %s cannot match label set %s' % (topo_source_port.name, src_label_candidate ) )
+        if not topo_dest_port.canMatchLabels(dest_stp.labels):
+            raise error.TopologyError('Destination port %s cannot match label set %s' % (topo_dest_port.name, dst_label_candidate ) )
 
         # do the: lets find the labels danace
         if self.connection_manager.canSwapLabel(src_label_candidate.type_):
@@ -219,6 +236,8 @@ class GenericBackend(service.Service):
         source_target = self.connection_manager.getTarget(source_stp.port, src_label.type_, src_label.labelValue())
         dest_target   = self.connection_manager.getTarget(dest_stp.port,   dst_label.type_, dst_label.labelValue())
         connection_id = self.connection_manager.createConnectionId(source_target, dest_target)
+
+        # we should check the schedule here
 
         # should we save the requester or provider here?
         conn = GenericBackendConnections(connection_id=connection_id, revision=0, global_reservation_id=global_reservation_id, description=description,

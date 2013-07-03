@@ -151,8 +151,8 @@ class GenericProviderTest:
     def testReserveAbort(self):
 
         # these need to be constructed such that there is only one label option
-        source_stp  = nsa.STP('Aruba', self.source_port, labels=[ nsa.Label(nml.ETHERNET_VLAN, '2') ] )
-        dest_stp    = nsa.STP('Aruba', self.dest_port,   labels=[ nsa.Label(nml.ETHERNET_VLAN, '2') ] )
+        source_stp  = nsa.STP('Aruba', self.source_port, labels=[ nsa.Label(nml.ETHERNET_VLAN, '1782') ] )
+        dest_stp    = nsa.STP('Aruba', self.dest_port,   labels=[ nsa.Label(nml.ETHERNET_VLAN, '1782') ] )
         service_params = nsa.ServiceParameters(self.start_time, self.end_time, source_stp, dest_stp, 200)
 
         acid = yield self.provider.reserve(self.header, None, None, None, service_params)
@@ -172,8 +172,8 @@ class GenericProviderTest:
     def testReserveTimeout(self):
 
         # these need to be constructed such that there is only one label option
-        source_stp  = nsa.STP('Aruba', self.source_port, labels=[ nsa.Label(nml.ETHERNET_VLAN, '2') ] )
-        dest_stp    = nsa.STP('Aruba', self.dest_port,   labels=[ nsa.Label(nml.ETHERNET_VLAN, '2') ] )
+        source_stp  = nsa.STP('Aruba', self.source_port, labels=[ nsa.Label(nml.ETHERNET_VLAN, '1782') ] )
+        dest_stp    = nsa.STP('Aruba', self.dest_port,   labels=[ nsa.Label(nml.ETHERNET_VLAN, '1782') ] )
         service_params = nsa.ServiceParameters(self.start_time, self.end_time, source_stp, dest_stp, 200)
 
         acid = yield self.provider.reserve(self.header, None, None, None, service_params)
@@ -196,8 +196,8 @@ class GenericProviderTest:
     def testSlowActivate(self):
         # key here is that end time is passed when activation is done
 
-        source_stp  = nsa.STP('Aruba', self.source_port, labels=[ nsa.Label(nml.ETHERNET_VLAN, '100') ] )
-        dest_stp    = nsa.STP('Aruba', self.dest_port,   labels=[ nsa.Label(nml.ETHERNET_VLAN, '100') ] )
+        source_stp  = nsa.STP('Aruba', self.source_port, labels=[ nsa.Label(nml.ETHERNET_VLAN, '1780') ] )
+        dest_stp    = nsa.STP('Aruba', self.dest_port,   labels=[ nsa.Label(nml.ETHERNET_VLAN, '1780') ] )
         ## for backend/aggregator
         #start_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=1)
         #end_time   = datetime.datetime.utcnow() + datetime.timedelta(seconds=2)
@@ -302,11 +302,13 @@ class GenericProviderTest:
 
 class DUDBackendTest(GenericProviderTest, unittest.TestCase):
 
-    source_port = 'A1'
-    dest_port   = 'A3'
+    network = 'Aruba'
 
-    source_stp  = nsa.STP('Aruba', source_port, labels=[ nsa.Label(nml.ETHERNET_VLAN, '1-2') ] )
-    dest_stp    = nsa.STP('Aruba', dest_port,   labels=[ nsa.Label(nml.ETHERNET_VLAN, '2-3') ] )
+    source_port = 'ps'
+    dest_port   = 'bon'
+
+    source_stp  = nsa.STP('Aruba', source_port, labels=[ nsa.Label(nml.ETHERNET_VLAN, '1781-1782') ] )
+    dest_stp    = nsa.STP('Aruba', dest_port,   labels=[ nsa.Label(nml.ETHERNET_VLAN, '1782-1783') ] )
     bandwidth   = 200
 
     header         = nsa.NSIHeader('test-requester', 'test-provider', [])
@@ -317,7 +319,10 @@ class DUDBackendTest(GenericProviderTest, unittest.TestCase):
 
         self.requester = common.DUDRequester()
 
-        self.backend = dud.DUDNSIBackend('Test', self.requester)
+        ns_agent = nsa.NetworkServiceAgent('aruba', 'http://localhost:9080/NSI/CS2')
+        aruba_topo, pm = nrmparser.parseTopologySpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY), self.network, ns_agent)
+
+        self.backend = dud.DUDNSIBackend('Aruba', aruba_topo, self.requester, pm, {})
 
         self.provider = self.backend
         self.provider.scheduler.clock = self.clock
@@ -353,8 +358,8 @@ class AggregatorTest(GenericProviderTest, unittest.TestCase):
     source_port = 'ps'
     dest_port   = 'bon'
 
-    src_stp = nsa.STP('Aruba', 'ps',  labels=[ nsa.Label(nml.ETHERNET_VLAN, '1-2') ] )
-    dst_stp = nsa.STP('Aruba', 'bon', labels=[ nsa.Label(nml.ETHERNET_VLAN, '2-3') ] )
+    src_stp = nsa.STP('Aruba', 'ps',  labels=[ nsa.Label(nml.ETHERNET_VLAN, '1781-1782') ] )
+    dst_stp = nsa.STP('Aruba', 'bon', labels=[ nsa.Label(nml.ETHERNET_VLAN, '1782-1783') ] )
     bandwidth = 200
 
     header         = nsa.NSIHeader('test-requester', 'test-provider', [])
@@ -369,12 +374,12 @@ class AggregatorTest(GenericProviderTest, unittest.TestCase):
 
         self.clock = task.Clock()
 
-        self.backend = dud.DUDNSIBackend(self.network, None) # we the parent later
+        ns_agent = nsa.NetworkServiceAgent('aruba', 'http://localhost:9080/NSI/CS2')
+        aruba_topo, pm = nrmparser.parseTopologySpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY), self.network, ns_agent)
+
+        self.backend = dud.DUDNSIBackend('Aruba', aruba_topo, self.requester, pm, {})
         self.backend.scheduler.clock = self.clock
 
-        ns_agent = nsa.NetworkServiceAgent('aruba', 'http://localhost:9080/NSI/CS2')
-
-        aruba_topo, pim = nrmparser.parseTopologySpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY), self.network, ns_agent)
         self.topology = nml.Topology()
         self.topology.addNetwork(aruba_topo)
 
@@ -415,8 +420,8 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
     source_port = 'ps'
     dest_port   = 'bon'
 
-    src_stp = nsa.STP('Aruba', 'ps',  labels=[ nsa.Label(nml.ETHERNET_VLAN, '1-2') ] )
-    dst_stp = nsa.STP('Aruba', 'bon', labels=[ nsa.Label(nml.ETHERNET_VLAN, '2-3') ] )
+    src_stp = nsa.STP('Aruba', 'ps',  labels=[ nsa.Label(nml.ETHERNET_VLAN, '1781-1782') ] )
+    dst_stp = nsa.STP('Aruba', 'bon', labels=[ nsa.Label(nml.ETHERNET_VLAN, '1782-1783') ] )
     bandwidth = 200
 
     header         = nsa.NSIHeader('test-requester', 'test-provider', [])
@@ -437,12 +442,12 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
 
         self.clock = task.Clock()
 
-        self.backend = dud.DUDNSIBackend(self.network, None) # we the parent later
+        ns_agent = nsa.NetworkServiceAgent('aruba', 'http://localhost:%i/NSI/services/CS2' % self.PROVIDER_PORT)
+        aruba_topo, pm = nrmparser.parseTopologySpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY), self.network, ns_agent)
+
+        self.backend = dud.DUDNSIBackend('Aruba', aruba_topo, None, pm, {}) # we set the parent later
         self.backend.scheduler.clock = self.clock
 
-        ns_agent = nsa.NetworkServiceAgent('aruba', 'http://localhost:%i/NSI/services/CS2' % self.PROVIDER_PORT)
-
-        aruba_topo, pim = nrmparser.parseTopologySpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY), self.network, ns_agent)
         self.topology = nml.Topology()
         self.topology.addNetwork(aruba_topo)
 
