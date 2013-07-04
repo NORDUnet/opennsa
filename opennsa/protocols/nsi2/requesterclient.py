@@ -179,21 +179,19 @@ class RequesterClient:
         return d
 
 
-    def query(self, correlation_id, requester_nsa, provider_nsa, session_security_attr, operation="Summary", connection_ids=None, global_reservation_ids=None):
+    def querySummary(self, header, connection_ids=None, global_reservation_ids=None):
 
-        header_payload = helper.createHeader(correlation_id, requester_nsa.urn(), provider_nsa.urn(), self.reply_to)
+        self._checkHeader(header)
+        service_url = self.providers[header.provider_nsa]
 
-        filter_ = bindings.QueryFilterType(connection_ids, global_reservation_ids)
-        query = bindings.QueryType(operation, filter_)
+        header_element = helper.createHeader(header.requester_nsa, header.provider_nsa, reply_to=self.reply_to, correlation_id=header.correlation_id)
 
-        # create payload
-        body_payload   = helper.export(query, 'query')
-        payload = minisoap.createSoapPayload(body_payload, header_payload)
+        query_type = bindings.QueryType(connection_ids, global_reservation_ids)
+        body_element = query_type.xml(bindings.querySummary)
 
-        def gotReply(data):
-            pass
+        payload = minisoap.createSoapPayload(body_element, header_element)
 
-        d = httpclient.soapRequest(provider_nsa.endpoint, actions.QUERY, payload, ctx_factory=self.ctx_factory)
-        d.addCallbacks(gotReply, self._handleErrorReply)
+        d = httpclient.soapRequest(service_url, actions.QUERY_SUMMARY, payload, ctx_factory=self.ctx_factory)
+        d.addCallbacks(lambda sd : None, self._handleErrorReply)
         return d
 
