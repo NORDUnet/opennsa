@@ -93,6 +93,20 @@ class GenericProviderTest:
 
 
     @defer.inlineCallbacks
+    def testInvalidNetworkReservation(self):
+
+        source_stp  = nsa.STP('Aruba',   self.source_port, labels=[ nsa.Label(nml.ETHERNET_VLAN, '1782') ] )
+        dest_stp    = nsa.STP('NoSuchNetwork', 'whatever', labels=[ nsa.Label(nml.ETHERNET_VLAN, '1782') ] )
+        service_params = nsa.ServiceParameters(self.start_time, self.end_time, source_stp, dest_stp, 200)
+
+        try:
+            yield self.provider.reserve(self.header, None, None, None, service_params)
+            self.fail('Should have raised TopologyError')
+        except error.TopologyError:
+            pass # expected
+
+
+    @defer.inlineCallbacks
     def testDoubleReserve(self):
 
         acid = yield self.provider.reserve(self.header, None, None, None, self.service_params)
