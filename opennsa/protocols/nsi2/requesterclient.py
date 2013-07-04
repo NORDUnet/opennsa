@@ -108,7 +108,7 @@ class RequesterClient:
 
         criteria = bindings.ReservationRequestCriteriaType(service_parameters.version, schedule, sp.bandwidth, service_attributes, path)
 
-        reservation = bindings.ReserveType(global_reservation_id, description, connection_id, criteria)
+        reservation = bindings.ReserveType(connection_id, global_reservation_id, description, criteria)
 
         body_payload   = reservation.xml(bindings.reserve)
         payload = minisoap.createSoapPayload(body_payload, header_payload)
