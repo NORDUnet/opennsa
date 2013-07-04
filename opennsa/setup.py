@@ -33,11 +33,11 @@ def setupBackend(backend_cfg, network_name, network_topology, parent_requester, 
 #    elif backend_type == config.BLOCK_ARGIA:
 #        from opennsa.backends import argia
 #        return argia.ArgiaBackend(network_name, bc.items())
-#
-#    elif backend_type == config.BLOCK_BROCADE:
-#        from opennsa.backends import brocade
-#        return brocade.BrocadeBackend(network_name, bc.items())
-#
+
+    elif backend_type == config.BLOCK_BROCADE:
+        from opennsa.backends import brocade
+        BackendConstructer = brocade.BrocadeBackend
+
 #    elif backend_type == config.BLOCK_DELL:
 #        from opennsa.backends import dell
 #        return dell.DellBackend(network_name, bc.items())
