@@ -95,6 +95,8 @@ class Aggregator:
         self.parent_requester   = parent_requester
         self.providers          = providers
 
+        self.notification_id    = 0
+
 
     def getConnection(self, requester_nsa, connection_id):
 
@@ -472,8 +474,42 @@ class Aggregator:
         defer.returnValue(connection_id)
 
 
-    def querySummary(self, header, connection_ids, global_reservation_ids):
-        raise NotImplementedError('querySummary not yet implemented in aggregator')
+    @defer.inlineCallbacks
+    def querySummary(self, header, connection_ids=None, global_reservation_ids=None):
+
+        log.msg('QuerySummary request from %s' % (header.requester_nsa), system=LOG_SYSTEM)
+
+        try:
+            if connection_ids:
+                conns = yield database.ServiceConnection.find(where=['requester_nsa = ? AND connection_id IN ?', header.requester_nsa, tuple(connection_ids) ] )
+            elif global_reservation_ids:
+                conns = yield database.ServiceConnection.find(where=['requester_nsa = ? AND global_reservation_ids IN ?', header.requester_nsa, tuple(global_reservation_ids) ] )
+            else:
+                raise error.MissingParameterError('Must specify connectionId or globalReservationId')
+
+            # largely copied from genericbackend, merge later
+            reservations = []
+            for c in conns:
+                sub_conns = yield c.SubConnections.get()
+
+                source_stp = nsa.STP(c.source_network, c.source_port, c.source_labels)
+                dest_stp = nsa.STP(c.dest_network, c.dest_port, c.dest_labels)
+                criteria = nsa.ServiceParameters(c.start_time, c.end_time, source_stp, dest_stp, c.bandwidth, version=c.revision)
+
+                aggr_active     = all( [ sc.data_plane_active     for sc in sub_conns ] )
+                aggr_version    = max( [ sc.data_plane_version    for sc in sub_conns ] ) or 0 # can be None otherwise
+                aggr_consistent = all( [ sc.data_plane_consistent for sc in sub_conns ] )
+                data_plane_status = (aggr_active, aggr_version, aggr_consistent)
+
+                states = (c.reservation_state, c.provision_state, c.lifecycle_state, data_plane_status)
+                t = ( c.connection_id, c.global_reservation_id, c.description, criteria, c.requester_nsa, states, self.notification_id)
+                reservations.append(t)
+
+            self.parent_requester.querySummaryConfirmed(header, reservations)
+
+        except Exception as e:
+            log.msg('Error during querySummary request: %s' % str(e), system=LOG_SYSTEM)
+
 
     def queryRecursive(self, header, connection_ids, global_reservation_ids):
         raise NotImplementedError('queryRecursive not yet implemented in aggregator')

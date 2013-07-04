@@ -175,7 +175,7 @@ class GenericProviderTest:
         self.failUnlessEquals(rsm, state.RESERVE_START)
         self.failUnlessEquals(psm, state.RELEASED)
         self.failUnlessEquals(lsm, state.INITIAL)
-        self.failUnlessEquals(dps, (0, False, True) )
+        self.failUnlessEquals(dps[:2], (False, 0) )  # we cannot really expect a consistent result for consistent here
 
 
     @defer.inlineCallbacks
@@ -424,7 +424,8 @@ class AggregatorTest(GenericProviderTest, unittest.TestCase):
     dst_stp = nsa.STP('Aruba', 'bon', labels=[ nsa.Label(nml.ETHERNET_VLAN, '1782-1783') ] )
     bandwidth = 200
 
-    header         = nsa.NSIHeader('test-requester', 'test-provider', [])
+    ns_agent = nsa.NetworkServiceAgent('aruba', 'http://localhost:9080/NSI/CS2')
+    header         = nsa.NSIHeader(ns_agent.urn(), 'test-provider', [])
 
     def setUp(self):
 
@@ -436,7 +437,6 @@ class AggregatorTest(GenericProviderTest, unittest.TestCase):
 
         self.clock = task.Clock()
 
-        self.ns_agent = nsa.NetworkServiceAgent('aruba', 'http://localhost:9080/NSI/CS2')
         aruba_topo, pm = nrmparser.parseTopologySpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY), self.network, self.ns_agent)
 
         self.backend = dud.DUDNSIBackend('Aruba', aruba_topo, self.requester, pm, {})
