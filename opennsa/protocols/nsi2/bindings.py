@@ -732,7 +732,7 @@ class QuerySummaryResultType:
             ET.SubElement(r, 'description').text = self.description
         if self.criteria:
             for el in self.criteria:
-                ET.SubElement(r, 'criteria').extend( [ e.xml('schedule') for e in el ] )
+                r.append( el.xml('criteria') )
         ET.SubElement(r, 'requesterNSA').text = str(self.requesterNSA)
         r.append(self.connectionStates.xml('connectionStates'))
         if self.notificationId:
