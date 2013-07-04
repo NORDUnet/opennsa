@@ -165,9 +165,19 @@ class Provider:
 
     # Need to think about how to do sync / async query
 
-    def querySummary(self, nsi_header, connection_ids, global_reservation_ids):
+    def querySummary(self, header, connection_ids=None, global_reservation_ids=None):
 
-        return self.service_provider(nsi_header, connection_ids, global_reservation_ids)
+        if not header.reply_to:
+            raise ValueError('Cannot perform querySummary request without a replyTo field in the header')
+        if not header.correlation_id:
+            raise ValueError('Cannot perform querySummary request without a correlationId field in the header')
+
+        return self.service_provider.querySummary(header, connection_ids, global_reservation_ids)
+
+
+    def querySummaryConfirmed(self, header, reservations):
+
+        return self.provider_client.querySummaryConfirmed(header.reply_to, header.requester_nsa, header.provider_nsa, header.correlation_id, reservations)
 
 
     # requester interface
