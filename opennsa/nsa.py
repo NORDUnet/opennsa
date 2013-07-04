@@ -9,6 +9,7 @@ Copyright: NORDUnet (2011-2013)
 """
 
 
+import uuid
 import random
 import urlparse
 import itertools
@@ -32,6 +33,10 @@ class NSIHeader(object):
         self.session_security_attrs = session_security_attrs
         self.reply_to               = reply_to
         self.correlation_id         = correlation_id
+
+    def newCorrelationId(self):
+        self.correlation_id = 'urn:uuid:' + str(uuid.uuid1())
+
 
     def __repr__(self):
         return '<NSIHeader: %s, %s, %s, %s, %s>' % (self.requester_nsa, self.provider_nsa, self.session_security_attrs, self.reply_to, self.correlation_id)
