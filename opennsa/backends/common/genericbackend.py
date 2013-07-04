@@ -366,8 +366,27 @@ class GenericBackend(service.Service):
 
 
     @defer.inlineCallbacks
-    def querySummary(self, header, connection_ids, global_reservation_ids):
-        raise NotImplementedError('QuerySummary not implemented in generic backend.')
+    def querySummary(self, header, connection_ids=None, global_reservation_ids=None):
+
+        if connection_ids:
+            conns = yield GenericBackendConnections.find(where=['requester_nsa = ? AND connection_id IN ?', header.requester_nsa, tuple(connection_ids) ])
+        elif global_reservation_ids:
+            conns = yield GenericBackendConnections.find(where=['requester_nsa = ? AND global_reservation_ids IN ?', header.requester_nsa, tuple(global_reservation_ids) ])
+        else:
+            raise error.MissingParameterError('Must specify connectionId or globalReservationId')
+
+        reservations = []
+        for c in conns:
+            source_stp = nsa.STP(c.source_network, c.source_port, c.source_labels)
+            dest_stp = nsa.STP(c.dest_network, c.dest_port, c.dest_labels)
+            criteria = nsa.ServiceParameters(c.start_time, c.end_time, source_stp, dest_stp, c.bandwidth, version=c.revision)
+            data_plane_status = ( c.data_plane_active, c.revision, True )
+            states = (c.reservation_state, c.provision_state, c.lifecycle_state, data_plane_status)
+            t = ( c.connection_id, c.global_reservation_id, c.description, criteria, c.requester_nsa, states, self.notification_id)
+            reservations.append(t)
+
+        self.parent_requester.querySummaryConfirmed(header, reservations)
+
 
     @defer.inlineCallbacks
     def queryRecursive(self, header, connection_ids, global_reservation_ids):

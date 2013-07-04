@@ -131,6 +131,57 @@ class GenericProviderTest:
 
 
     @defer.inlineCallbacks
+    def testQuerySummary(self):
+
+        acid = yield self.provider.reserve(self.header, None, 'gid-123', 'desc2', self.service_params)
+        yield self.requester.reserve_defer
+
+        yield self.provider.reserveCommit(self.header, acid)
+        yield self.requester.reserve_commit_defer
+
+        yield self.provider.querySummary(self.header, connection_ids = [ acid ] )
+        header, reservations = yield self.requester.query_summary_defer
+
+        print "R", reservations
+        self.failUnlessEquals(len(reservations), 1)
+
+        cid, gid, desc, crit, req_nsa, states, nid = reservations[0]
+
+        print "R0", cid, gid, desc, crit, req_nsa, states, nid
+
+        self.failUnlessEquals(cid, acid)
+        self.failUnlessEquals(gid, 'gid-123')
+        self.failUnlessEquals(desc, 'desc2')
+
+        self.failUnlessEquals(req_nsa, self.ns_agent.urn())
+
+        src_stp = crit.source_stp
+        dst_stp = crit.dest_stp
+
+        self.failUnlessEquals(src_stp.network, self.network)
+        self.failUnlessEquals(src_stp.port,    self.source_port)
+        self.failUnlessEquals(len(src_stp.labels), 1)
+        self.failUnlessEquals(src_stp.labels[0].type_, nml.ETHERNET_VLAN)
+        self.failUnlessEquals(src_stp.labels[0].labelValue(), '1782')
+
+        self.failUnlessEquals(dst_stp.network, self.network)
+        self.failUnlessEquals(dst_stp.port,    self.dest_port)
+        self.failUnlessEquals(len(dst_stp.labels), 1)
+        self.failUnlessEquals(dst_stp.labels[0].type_, nml.ETHERNET_VLAN)
+        self.failUnlessEquals(dst_stp.labels[0].labelValue(), '1782')
+
+        self.failUnlessEqual(crit.bandwidth, self.bandwidth)
+        self.failUnlessEqual(crit.version,   0)
+
+        from opennsa import state
+        rsm, psm, lsm, dps = states
+        self.failUnlessEquals(rsm, state.RESERVE_START)
+        self.failUnlessEquals(psm, state.RELEASED)
+        self.failUnlessEquals(lsm, state.INITIAL)
+        self.failUnlessEquals(dps, (0, False, True) )
+
+
+    @defer.inlineCallbacks
     def testActivation(self):
 
         acid = yield self.provider.reserve(self.header, None, None, None, self.service_params)
@@ -325,7 +376,8 @@ class DUDBackendTest(GenericProviderTest, unittest.TestCase):
     dest_stp    = nsa.STP('Aruba', dest_port,   labels=[ nsa.Label(nml.ETHERNET_VLAN, '1782-1783') ] )
     bandwidth   = 200
 
-    header         = nsa.NSIHeader('test-requester', 'test-provider', [])
+    ns_agent    = nsa.NetworkServiceAgent('test-requester', 'http://localhost:9080/NSI/CS2')
+    header      = nsa.NSIHeader(ns_agent.urn(), 'test-provider', [])
 
     def setUp(self):
 
@@ -333,8 +385,7 @@ class DUDBackendTest(GenericProviderTest, unittest.TestCase):
 
         self.requester = common.DUDRequester()
 
-        ns_agent = nsa.NetworkServiceAgent('aruba', 'http://localhost:9080/NSI/CS2')
-        aruba_topo, pm = nrmparser.parseTopologySpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY), self.network, ns_agent)
+        aruba_topo, pm = nrmparser.parseTopologySpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY), self.network, self.ns_agent)
 
         self.backend = dud.DUDNSIBackend('Aruba', aruba_topo, self.requester, pm, {})
 
@@ -388,8 +439,8 @@ class AggregatorTest(GenericProviderTest, unittest.TestCase):
 
         self.clock = task.Clock()
 
-        ns_agent = nsa.NetworkServiceAgent('aruba', 'http://localhost:9080/NSI/CS2')
-        aruba_topo, pm = nrmparser.parseTopologySpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY), self.network, ns_agent)
+        self.ns_agent = nsa.NetworkServiceAgent('aruba', 'http://localhost:9080/NSI/CS2')
+        aruba_topo, pm = nrmparser.parseTopologySpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY), self.network, self.ns_agent)
 
         self.backend = dud.DUDNSIBackend('Aruba', aruba_topo, self.requester, pm, {})
         self.backend.scheduler.clock = self.clock
@@ -397,8 +448,8 @@ class AggregatorTest(GenericProviderTest, unittest.TestCase):
         self.topology = nml.Topology()
         self.topology.addNetwork(aruba_topo)
 
-        providers = { ns_agent.urn() : self.backend }
-        self.provider = aggregator.Aggregator(self.network, ns_agent, self.topology, self.requester, providers)
+        providers = { self.ns_agent.urn() : self.backend }
+        self.provider = aggregator.Aggregator(self.network, self.ns_agent, self.topology, self.requester, providers)
 
         # set parent for backend, we need to create the aggregator before this can be done
         self.backend.parent_requester = self.provider
