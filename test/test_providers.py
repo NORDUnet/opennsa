@@ -142,12 +142,9 @@ class GenericProviderTest:
         yield self.provider.querySummary(self.header, connection_ids = [ acid ] )
         header, reservations = yield self.requester.query_summary_defer
 
-        print "R", reservations
         self.failUnlessEquals(len(reservations), 1)
 
         cid, gid, desc, crit, req_nsa, states, nid = reservations[0]
-
-        print "R0", cid, gid, desc, crit, req_nsa, states, nid
 
         self.failUnlessEquals(cid, acid)
         self.failUnlessEquals(gid, 'gid-123')
