@@ -1,6 +1,7 @@
 """
 Brocade backend.
 Contributed by Balasubramania Pillai from MAX Gigapop.
+Ported to OpenNSA NSIv2 by Henrik Thostrup Jensen (summer 2013)
 
 Notes:
 
@@ -17,11 +18,17 @@ no vlan $vlan_id
 end
 """
 
+import string
+import random
+
 from twisted.python import log
 from twisted.internet import defer
 
-from opennsa import error, config
-from opennsa.backends.common import calendar as reservationcalendar, simplebackend, ssh
+#from opennsa import error, config
+from opennsa import config
+from opennsa.topology import nml
+#from opennsa.backends.common import calendar as reservationcalendar, simplebackend, ssh
+from opennsa.backends.common import ssh, genericbackend
 
 LOG_SYSTEM = 'opennsa.brocade'
 
@@ -38,8 +45,7 @@ COMMAND_NO_VLAN     = 'no vlan %(vlan)i'
 
 def _portToInterfaceVLAN(nrm_port):
 
-    prefix_str, port_vlan_str = nrm_port.split('::')
-    port, vlan = port_vlan_str.split('.')
+    port, vlan = nrm_port.split('.')
     vlan = int(vlan)
     return port, vlan
 
@@ -163,7 +169,7 @@ class BrocadeCommandSender:
 
 
     @defer.inlineCallbacks
-    def _sendCommands(self, commands):
+    def sendCommands(self, commands):
 
         # Open a connection for each request
         # This is done due to the code being based on the Force10 backend
@@ -184,60 +190,68 @@ class BrocadeCommandSender:
             ssh_connection.transport.loseConnection()
 
 
-    def setupLink(self, source_nrm_port, dest_nrm_port):
 
-        log.msg('setupLink: src %s dst %s' % (source_nrm_port, dest_nrm_port))
+class BrocadeConnectionManager:
 
+    def __init__(self, log_system, port_map, cfg):
+        self.log_system = log_system
+        self.port_map   = port_map
 
-        commands = _createSetupCommands(source_nrm_port, dest_nrm_port)
-        return self._sendCommands(commands)
-
-
-    def teardownLink(self, source_nrm_port, dest_nrm_port):
-
-        commands = _createTeardownCommands(source_nrm_port, dest_nrm_port)
-        return self._sendCommands(commands)
-
-
-
-class BrocadeBackend:
-
-    def __init__(self, network_name, configuration):
-        self.network_name = network_name
-        self.calendar = reservationcalendar.ReservationCalendar()
-
-        # extract config items
-        cfg_dict = dict(configuration)
-
-        host             = cfg_dict[config.BROCADE_HOST]
-        port             = cfg_dict.get(config.BROCADE_PORT, 22)
-        host_fingerprint = cfg_dict[config.BROCADE_HOST_FINGERPRINT]
-        user             = cfg_dict[config.BROCADE_USER]
-        ssh_public_key   = cfg_dict[config.BROCADE_SSH_PUBLIC_KEY]
-        ssh_private_key  = cfg_dict[config.BROCADE_SSH_PRIVATE_KEY]
+        host             = cfg[config.BROCADE_HOST]
+        port             = cfg.get(config.BROCADE_PORT, 22)
+        host_fingerprint = cfg[config.BROCADE_HOST_FINGERPRINT]
+        user             = cfg[config.BROCADE_USER]
+        ssh_public_key   = cfg[config.BROCADE_SSH_PUBLIC_KEY]
+        ssh_private_key  = cfg[config.BROCADE_SSH_PRIVATE_KEY]
 
         self.command_sender = BrocadeCommandSender(host, port, host_fingerprint, user, ssh_public_key, ssh_private_key)
 
 
-    def createConnection(self, source_nrm_port, dest_nrm_port, service_parameters):
-
-        self._checkVLANMatch(source_nrm_port, dest_nrm_port)
-
-        # probably need a short hand for this
-        self.calendar.checkReservation(source_nrm_port, service_parameters.start_time, service_parameters.end_time)
-        self.calendar.checkReservation(dest_nrm_port  , service_parameters.start_time, service_parameters.end_time)
-
-        self.calendar.addConnection(source_nrm_port, service_parameters.start_time, service_parameters.end_time)
-        self.calendar.addConnection(dest_nrm_port  , service_parameters.start_time, service_parameters.end_time)
-
-        c = simplebackend.GenericConnection(source_nrm_port, dest_nrm_port, service_parameters, self.network_name, self.calendar,
-                                            'Brocade', LOG_SYSTEM, self.command_sender)
-        return c
+    def getResource(self, port, label_type, label_value):
+        assert label_type == nml.ETHERNET_VLAN, 'Label type must be ethernet-vlan'
+        return label_value
 
 
-    def _checkVLANMatch(self, source_nrm_port, dest_nrm_port):
-        source_vlan = source_nrm_port.split('.')[-1]
-        dest_vlan = dest_nrm_port.split('.')[-1]
-        if source_vlan != dest_vlan:
-            raise error.VLANInterchangeNotSupportedError('Cannot create connection between different VLANs (%s/%s).' % (source_vlan, dest_vlan) )
+    def getTarget(self, port, label_type, label_value):
+        return self.port_map[port] + '.' + label_value
+
+
+    def createConnectionId(self, source_target, dest_target):
+        return 'B-' + ''.join( [ random.choice(string.hexdigits[:16]) for _ in range(10) ] )
+
+
+    def canSwapLabel(self, label_type):
+        return False
+
+
+    def setupLink(self, connection_id, source_target, dest_target, bandwidth):
+
+        def linkUp(pt):
+            log.msg('Link %s -> %s up' % (source_target, dest_target), system=self.log_system)
+            return pt
+
+        commands = _createSetupCommands(source_target, dest_target)
+        d = self._sendCommands(commands)
+        d.addCallback(linkUp)
+        return d
+
+
+    def teardownLink(self, connection_id, source_target, dest_target, bandwidth):
+
+        def linkDown(pt):
+            log.msg('Link %s -> %s down' % (source_target, dest_target), system=self.log_system)
+            return pt
+
+        commands = _createTeardownCommands(source_target, dest_target)
+        d = self._sendCommands(commands)
+        d.addCallback(linkDown)
+        return d
+
+
+
+def BrocadeBackend(network_name, network_topology, parent_requester, port_map, configuration):
+
+    name = 'Brocade %s' % network_name
+    cm = BrocadeConnectionManager(name, port_map, configuration)
+    return genericbackend.GenericBackend(network_name, network_topology, cm, parent_requester, name)
 
