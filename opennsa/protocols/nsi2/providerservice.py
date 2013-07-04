@@ -171,13 +171,8 @@ class ProviderService:
 
     def querySummary(self, soap_data):
 
-        header, query = helper.parseRequest(soap_data, bindings.QueryType)
-
-        session_security_attr = None
-        filter_ = query.queryFilter
-
-        d = self.provider.query(header.correlationId, header.replyTo, header.requesterNSA, header.providerNSA, session_security_attr,
-                                query.operation, filter_.connectionId, filter_.globalReservationId)
-        d.addCallbacks(helper.createGenericAcknowledgement(header), self._createSOAPFault, errbackArgs=(header.provider_nsa,))
+        header, query = helper.parseRequest(soap_data)
+        d = self.provider.querySummary(header, query.connectionId, query.globalReservationId)
+        d.addCallbacks(lambda _ : helper.createGenericAcknowledgement(header), self._createSOAPFault, errbackArgs=(header.provider_nsa))
         return d
 
