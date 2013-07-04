@@ -286,6 +286,24 @@ class GenericConfirmedType:
         return r
 
 
+class QuerySummaryConfirmedType:
+    def __init__(self, reservations):
+        self.reservations = reservations  # [ QuerySummaryResultType ]
+
+    @classmethod
+    def build(self, element):
+        return QuerySummaryConfirmedType(
+                element.findall('reservations')
+               )
+
+    def xml(self, elementName):
+        r = ET.Element(elementName)
+        if self.reservations:
+            for el in self.reservations:
+                r.append( el.xml('reservations') )
+        return r
+
+
 class OrderedStpType:
     def __init__(self, order, stp):
         self.order = order  # int
