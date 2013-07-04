@@ -334,8 +334,8 @@ class QueryType:
     @classmethod
     def build(self, element):
         return QueryType(
-                element.findtext('connectionId'),
-                element.findtext('globalReservationId')
+                [ e.text for e in element.findall('connectionId') ] ,
+                [ e.text for e in element.findall('globalReservationId') ]
                )
 
     def xml(self, elementName):
