@@ -133,12 +133,14 @@ class GenericProviderTest:
     @defer.inlineCallbacks
     def testQuerySummary(self):
 
+        self.header.newCorrelationId()
         acid = yield self.provider.reserve(self.header, None, 'gid-123', 'desc2', self.service_params)
         yield self.requester.reserve_defer
 
         yield self.provider.reserveCommit(self.header, acid)
         yield self.requester.reserve_commit_defer
 
+        self.header.newCorrelationId()
         yield self.provider.querySummary(self.header, connection_ids = [ acid ] )
         header, reservations = yield self.requester.query_summary_defer
 
@@ -486,7 +488,8 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
     dst_stp = nsa.STP('Aruba', 'bon', labels=[ nsa.Label(nml.ETHERNET_VLAN, '1782-1783') ] )
     bandwidth = 200
 
-    header         = nsa.NSIHeader('test-requester', 'test-provider', [])
+    ns_agent = nsa.NetworkServiceAgent('test-requester', 'http://localhost:%i/NSI/services/CS2' % PROVIDER_PORT)
+    header   = nsa.NSIHeader(ns_agent.urn(), 'test-provider', reply_to=ns_agent.endpoint)
 
     def setUp(self):
         from dateutil.tz import tzutc
@@ -504,8 +507,7 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
 
         self.clock = task.Clock()
 
-        ns_agent = nsa.NetworkServiceAgent('aruba', 'http://localhost:%i/NSI/services/CS2' % self.PROVIDER_PORT)
-        aruba_topo, pm = nrmparser.parseTopologySpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY), self.network, ns_agent)
+        aruba_topo, pm = nrmparser.parseTopologySpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY), self.network, self.ns_agent)
 
         self.backend = dud.DUDNSIBackend('Aruba', aruba_topo, None, pm, {}) # we set the parent later
         self.backend.scheduler.clock = self.clock
@@ -513,8 +515,8 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
         self.topology = nml.Topology()
         self.topology.addNetwork(aruba_topo)
 
-        providers = { ns_agent.urn() : self.backend }
-        self.aggregator = aggregator.Aggregator(self.network, ns_agent, self.topology, None, providers) # we set the parent later
+        providers = { self.ns_agent.urn() : self.backend }
+        self.aggregator = aggregator.Aggregator(self.network, self.ns_agent, self.topology, None, providers) # we set the parent later
 
         self.backend.parent_requester = self.aggregator
 
@@ -532,7 +534,7 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
         requester_top_resource = resource.Resource()
         soap_resource = soapresource.setupSOAPResource(requester_top_resource, 'RequesterService2')
 
-        providers = {'test-provider' : ns_agent.endpoint }
+        providers = {'test-provider' : self.ns_agent.endpoint }
         requester_url = 'http://localhost:%i/NSI/services/RequesterService2' % self.REQUESTER_PORT
         self.provider = requesterclient.RequesterClient(providers, requester_url)
 
