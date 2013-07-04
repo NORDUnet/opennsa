@@ -293,14 +293,14 @@ class QuerySummaryConfirmedType:
     @classmethod
     def build(self, element):
         return QuerySummaryConfirmedType(
-                element.findall('reservations')
+                element.findall('reservation')
                )
 
     def xml(self, elementName):
         r = ET.Element(elementName)
         if self.reservations:
             for el in self.reservations:
-                r.append( el.xml('reservations') )
+                r.append( el.xml('reservation') )
         return r
 
 
