@@ -839,7 +839,7 @@ class ReserveConfirmedType:
         self.connectionId = connectionId  # ConnectionIdType -> string
         self.globalReservationId = globalReservationId  # GlobalReservationIdType -> anyURI
         self.description = description  # string
-        self.criteria = criteria  # [ ReservationConfirmCriteriaType ]
+        self.criteria = criteria  # ReservationConfirmCriteriaType
 
     @classmethod
     def build(self, element):
@@ -847,7 +847,7 @@ class ReserveConfirmedType:
                 element.findtext('connectionId'),
                 element.findtext('globalReservationId'),
                 element.findtext('description'),
-                [ ReservationConfirmCriteriaType.build(e) for e in element.findall('criteria') ] if element.find('criteria') is not None else None
+                ReservationConfirmCriteriaType.build( element.find('criteria') ) 
                )
 
     def xml(self, elementName):
@@ -857,10 +857,7 @@ class ReserveConfirmedType:
             ET.SubElement(r, 'globalReservationId').text = str(self.globalReservationId)
         if self.description:
             ET.SubElement(r, 'description').text = self.description
-        if self.criteria:
-            for el in self.criteria:
-                #ET.SubElement(r, 'criteria').extend( [ e.xml('schedule') for e in el ] )
-                r.append( el.xml('criteria') )
+        r.append( self.criteria.xml('criteria') )
         return r
 
 

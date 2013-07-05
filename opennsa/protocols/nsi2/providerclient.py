@@ -85,7 +85,7 @@ class ProviderClient:
 
         criteria = bindings.ReservationConfirmCriteriaType(version, schedule, bandwidth, service_attributes, path)
 
-        reserve_conf = bindings.ReserveConfirmedType(connection_id, global_reservation_id, description, [ criteria ] )
+        reserve_conf = bindings.ReserveConfirmedType(connection_id, global_reservation_id, description, criteria )
 
         body_element = reserve_conf.xml(bindings.reserveConfirmed)
         payload = minisoap.createSoapPayload(body_element, header_element)
