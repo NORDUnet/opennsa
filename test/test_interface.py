@@ -9,12 +9,15 @@ from opennsa.backends.common import genericbackend
 from opennsa.protocols.nsi2 import provider, requester
 
 
+class FakeTopology:
+    def __init__(self, name):
+        self.name = name
 
 
 class InterfaceTest(unittest.TestCase):
 
     def testGenericBackend(self):
-        simple_backend = genericbackend.GenericBackend('network', None, None, None)
+        simple_backend = genericbackend.GenericBackend('network', FakeTopology('network'), None, None, None)
         verifyObject(INSIProvider, simple_backend)
 
 
@@ -30,10 +33,5 @@ class InterfaceTest(unittest.TestCase):
         verifyObject(INSIRequester, prov)
 
     testSoapProvider.skip = 'provider not complete yet'
-
-    def testSoapRequester(self):
-        prov = provider.Provider(None, None)
-        verifyObject(INSIRequester, prov)
-
 
 
