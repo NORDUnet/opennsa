@@ -3,6 +3,8 @@ import os, datetime, json, StringIO
 from twisted.trial import unittest
 from twisted.internet import reactor, defer, task
 
+from dateutil.tz import tzutc
+
 from opennsa import nsa, database, error, aggregator
 from opennsa.topology import nml, nrmparser
 from opennsa.backends import dud
@@ -44,6 +46,20 @@ class GenericProviderTest:
             yield self.provider.provision(self.header, cid)
             self.fail('Should have raised ConnectionGoneError')
         except error.ConnectionGoneError:
+            pass # expected
+
+
+    @defer.inlineCallbacks
+    def testStartTimeInPast(self):
+
+        start_time = self.start_time - datetime.timedelta(seconds=10)
+        service_params = nsa.ServiceParameters(start_time, self.end_time, self.source_stp, self.dest_stp, self.bandwidth)
+
+        self.header.newCorrelationId()
+        try:
+            yield self.provider.reserve(self.header, None, None, None, service_params)
+            self.fail('Should have raised PayloadError') # Error type is somewhat debatable, but this what we use
+        except error.PayloadError:
             pass # expected
 
 
@@ -278,7 +294,6 @@ class GenericProviderTest:
         #start_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=1)
         #end_time   = datetime.datetime.utcnow() + datetime.timedelta(seconds=2)
         ## remote test
-        #from dateutil.tz import tzutc
         #start_time = datetime.datetime.now(tzutc()) + datetime.timedelta(seconds=1)
         #end_time   = datetime.datetime.now(tzutc()) + datetime.timedelta(seconds=2)
         service_params = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, 200)
@@ -437,8 +452,8 @@ class AggregatorTest(GenericProviderTest, unittest.TestCase):
     source_port = 'ps'
     dest_port   = 'bon'
 
-    src_stp = nsa.STP('Aruba', 'ps',  labels=[ nsa.Label(nml.ETHERNET_VLAN, '1781-1782') ] )
-    dst_stp = nsa.STP('Aruba', 'bon', labels=[ nsa.Label(nml.ETHERNET_VLAN, '1782-1783') ] )
+    source_stp = nsa.STP('Aruba', 'ps',  labels=[ nsa.Label(nml.ETHERNET_VLAN, '1781-1782') ] )
+    dest_stp   = nsa.STP('Aruba', 'bon', labels=[ nsa.Label(nml.ETHERNET_VLAN, '1782-1783') ] )
     bandwidth = 200
 
     ns_agent = nsa.NetworkServiceAgent('aruba', 'http://localhost:9080/NSI/CS2')
@@ -473,7 +488,7 @@ class AggregatorTest(GenericProviderTest, unittest.TestCase):
         self.start_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=2)
         self.end_time   = datetime.datetime.utcnow() + datetime.timedelta(seconds=10)
 
-        self.service_params = nsa.ServiceParameters(self.start_time, self.end_time, self.src_stp, self.dst_stp, self.bandwidth)
+        self.service_params = nsa.ServiceParameters(self.start_time, self.end_time, self.source_stp, self.dest_stp, self.bandwidth)
 
 
     @defer.inlineCallbacks
@@ -499,15 +514,14 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
     source_port = 'ps'
     dest_port   = 'bon'
 
-    src_stp = nsa.STP('Aruba', 'ps',  labels=[ nsa.Label(nml.ETHERNET_VLAN, '1781-1782') ] )
-    dst_stp = nsa.STP('Aruba', 'bon', labels=[ nsa.Label(nml.ETHERNET_VLAN, '1782-1783') ] )
-    bandwidth = 200
+    source_stp = nsa.STP('Aruba', 'ps',  labels=[ nsa.Label(nml.ETHERNET_VLAN, '1781-1782') ] )
+    dest_stp   = nsa.STP('Aruba', 'bon', labels=[ nsa.Label(nml.ETHERNET_VLAN, '1782-1783') ] )
+    bandwidth  = 200
 
     ns_agent = nsa.NetworkServiceAgent('test-requester', 'http://localhost:%i/NSI/services/CS2' % PROVIDER_PORT)
     header   = nsa.NSIHeader(ns_agent.urn(), 'test-provider', reply_to=ns_agent.endpoint)
 
     def setUp(self):
-        from dateutil.tz import tzutc
         from twisted.web import resource, server
         from twisted.application import internet
         from opennsa.protocols import nsi2
@@ -565,7 +579,7 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
         self.start_time = datetime.datetime.now(tzutc()) + datetime.timedelta(seconds=2)
         self.end_time   = datetime.datetime.now(tzutc()) + datetime.timedelta(seconds=10)
 
-        self.service_params = nsa.ServiceParameters(self.start_time, self.end_time, self.src_stp, self.dst_stp, self.bandwidth)
+        self.service_params = nsa.ServiceParameters(self.start_time, self.end_time, self.source_stp, self.dest_stp, self.bandwidth)
 
 
     @defer.inlineCallbacks
