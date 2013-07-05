@@ -70,10 +70,7 @@ class RequesterService:
 
         header, reservation = helper.parseRequest(soap_data)
 
-        if len(reservation.criteria) > 1:
-            print "Multiple reservation criteria!"
-
-        criteria = reservation.criteria[0]
+        criteria = reservation.criteria
 
         schedule = criteria.schedule
         path = criteria.path
