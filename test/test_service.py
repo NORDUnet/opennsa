@@ -114,7 +114,7 @@ class ServiceTest(unittest.TestCase):
         d = task.deferLater(reactor, 0.01, lambda : None)
         yield d
 
-    testBasicConnectionLifeCycle.skip = 'Service not yet ready'
+    testBasicConnectionLifeCycle.skip = 'Service no longer exist in its old form'
 
 
     @defer.inlineCallbacks
@@ -140,31 +140,5 @@ class ServiceTest(unittest.TestCase):
         errors = self.flushLoggedErrors(error.TopologyError)
         self.assertEqual(len(errors), 1)
 
-    testNoRouteReservation.skip = 'Service not yet ready'
-
-
-    @defer.inlineCallbacks
-    def testConnectSTPToItself(self):
-
-        provider = nsa.Network('Aruba', nsa.NetworkServiceAgent('Aruba-OpenNSA', 'http://localhost:9080/NSI/services/ConnectionService'))
-
-        source_stp      = nsa.STP('Aruba', 'A1' )
-        dest_stp        = nsa.STP('Aruba', 'A1')
-
-        start_time = datetime.datetime.utcfromtimestamp(time.time() + 2 )
-        end_time   = datetime.datetime.utcfromtimestamp(time.time() + 40 )
-
-        bandwidth = 200
-        service_params  = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, bandwidth)
-        connection_id         = 'conn-id1'
-
-        try:
-            yield self.client.reserve(self.client_nsa, provider.nsa, None, None, '', connection_id, service_params)
-            self.fail('Reserve call should have failed')
-        except error.ReserveError as e:
-            self.failUnlessIn('Cannot connect <STP Aruba:A1> to itself', str(e))
-        errors = self.flushLoggedErrors(error.TopologyError)
-        self.assertEqual(len(errors), 1)
-
-    testConnectSTPToItself.skip = 'Service not yet ready'
+    testNoRouteReservation.skip = 'Service no longer exist in its old form'
 
