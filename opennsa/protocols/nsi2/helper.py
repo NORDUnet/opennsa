@@ -145,3 +145,31 @@ def createSTPType(stp):
 
     return bindings.StpType(network, network + ':' + port, labels)
 
+
+def buildQuerySummaryResultType(reservations):
+
+    query_results = []
+
+    for rsv in reservations:
+
+        cid, gid, desc, crits, req_nsa, states, nid = rsv
+        rsm, psm, lsm, dsm = states
+
+        criterias = []
+        for crit in crits:
+            schedule   = bindings.ScheduleType(crit.start_time, crit.end_time)
+            source_stp = helper.createSTPType(crit.source_stp)
+            dest_stp   = helper.createSTPType(crit.dest_stp)
+            path       = bindings.PathType('Bidirectional', False, source_stp, dest_stp, None)
+            criteria   = bindings.QuerySummaryResultCriteriaType(crit.version, schedule, crit.bandwidth, None, path, None)
+            criterias.append(criteria)
+
+        data_plane_status = bindings.DataPlaneStatusType(dsm[0], dsm[1], dsm[2])
+        connection_states = bindings.ConnectionStatesType(rsm, psm, lsm, data_plane_status)
+
+        qsrt = bindings.QuerySummaryResultType(cid, gid, desc, criterias, req_nsa, connection_states, nid)
+        query_results.append(qsrt)
+
+    qsc = bindings.QuerySummaryConfirmedType(query_results)
+    return qsc
+

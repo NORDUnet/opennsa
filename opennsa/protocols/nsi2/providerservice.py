@@ -38,6 +38,7 @@ class ProviderService:
         soap_resource.registerDecoder(actions.TERMINATE,        self.terminate)
 
         soap_resource.registerDecoder(actions.QUERY_SUMMARY,     self.querySummary)
+        soap_resource.registerDecoder(actions.QUERY_SUMMARY_SYNC,self.querySummarySync)
 
         self.datetime_parser = parser.parser()
 
@@ -174,5 +175,25 @@ class ProviderService:
         header, query = helper.parseRequest(soap_data)
         d = self.provider.querySummary(header, query.connectionId, query.globalReservationId)
         d.addCallbacks(lambda _ : helper.createGenericAcknowledgement(header), self._createSOAPFault, errbackArgs=(header.provider_nsa))
+        return d
+
+
+    def querySummarySync(self, soap_data):
+
+        def gotReservations(reservations):
+            # do reply inline
+            soap_header = bindings.CommonHeaderType(helper.PROTO, header.correlation_id, header.requester_nsa, header.provider_nsa, None, header.session_security_attrs)
+            soap_header_element = soap_header.xml(bindings.nsiHeader)
+
+            query_summary_result = helper.buildQuerySummaryResultType(reservations)
+            qsr_element = query_summary_result.xml(bindings.querySummarySyncConfirmed)
+
+            payload = minisoap.createSoapPayload(qsr_element, soap_header_element)
+            return payload
+
+
+        header, query = helper.parseRequest(soap_data)
+        d = self.provider.querySummarySync(header, query.connectionId, query.globalReservationId)
+        d.addCallbacks(gotReservations, self._createSOAPFault)
         return d
 

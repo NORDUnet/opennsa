@@ -17,6 +17,7 @@ RESERVE_ABORT_RESPONSE  = 'reserve_commit_response'
 PROVISION_RESPONSE      = 'provision_response'
 RELEASE_RESPONSE        = 'release_response'
 TERMINATE_RESPONSE      = 'terminate_response'
+QUERY_SUMMARY_SYNC_RESPONSE = 'query_summary_sync_response'
 
 
 
@@ -175,10 +176,28 @@ class Provider:
         return self.service_provider.querySummary(header, connection_ids, global_reservation_ids)
 
 
+    def querySummarySync(self, header, connection_ids=None, global_reservation_ids=None):
+
+        if not header.reply_to:
+            raise ValueError('Cannot perform querySummary request without a replyTo field in the header')
+        if not header.correlation_id:
+            raise ValueError('Cannot perform querySummary request without a correlationId field in the header')
+
+        dc = defer.Deferred()
+        self.notifications[(header.correlation_id, QUERY_SUMMARY_SYNC_RESPONSE)] = dc
+
+        d = self.service_provider.querySummary(header, connection_ids, global_reservation_ids)
+        d.chainDeferred(dc)
+        return d
+
+
     def querySummaryConfirmed(self, header, reservations):
 
-        return self.provider_client.querySummaryConfirmed(header.reply_to, header.requester_nsa, header.provider_nsa, header.correlation_id, reservations)
-
+        dc = self.notifications.pop( (header.correlation_id, QUERY_SUMMARY_SYNC_RESPONSE) )
+        if dc is None:
+            return self.provider_client.querySummaryConfirmed(header.reply_to, header.requester_nsa, header.provider_nsa, header.correlation_id, reservations)
+        else:
+            dc.callback( reservations )
 
     # requester interface
 
