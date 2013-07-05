@@ -146,15 +146,29 @@ class RequesterService:
 
     def querySummaryConfirmed(self, soap_data):
 
-        header, query_confirmed = minisoap.parseSoapPayload(soap_data)
+        header, query_confirmed = helper.parseRequest(soap_data)
 
-#        header          = bindings.parseString( ET.tostring( headers[0] ) )
-#        query_confirmed = bindings.parseString( ET.tostring( bodies[0]  ) )
+        reservations = []
+        for resv in query_confirmed.reservations:
 
-        query_result = query_confirmed.reservationSummary + query_confirmed.reservationDetails
-        # should really do something more here...
+            r_states    = resv.connectionStates
+            r_dps       = r_states.dataPlaneStatus
 
-        d = self.requester.queryConfirmed(header, query_result)
+            dps = (r_dps.active, r_dps.version, r_dps.versionConsistent)
+            states = (r_states.reservationState, r_states.provisionState, r_states.lifecycleState, dps)
+
+            criterias = []
+            if resv.criteria is not None:
+                for rc in resv.criteria:
+                    rp = rc.path
+                    source_stp = helper.createSTP(rp.sourceSTP)
+                    dest_stp   = helper.createSTP(rp.destSTP)
+                    crit = nsa.ServiceParameters(rc.schedule.startTime, rc.schedule.endTime, source_stp, dest_stp, rc.bandwidth, directionality=rp.directionality, version=int(rc.version))
+                    criterias.append(crit)
+
+            reservations.append( ( resv.connectionId, resv.globalReservationId, resv.description, criterias, resv.requesterNSA, states, resv.notificationId) )
+
+        d = self.requester.querySummaryConfirmed(header, reservations)
 
         return helper.createGenericAcknowledgement(header)
 

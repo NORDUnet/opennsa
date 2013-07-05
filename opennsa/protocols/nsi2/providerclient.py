@@ -198,73 +198,43 @@ class ProviderClient:
         return d
 
 
-    def queryConfirmed(self, requester_url, correlation_id, requester_nsa, provider_nsa, operation, connections):
+    def querySummaryConfirmed(self, requester_url, requester_nsa, provider_nsa, correlation_id, reservations):
 
-        assert operation == 'Summary', 'Only Summary operation supported in nsi2.queryConfirmed so far'
+        query_results = []
 
-        conns = []
-        for conn in connections:
-            # need to create criteria here sometime
-            criteria      = None
-            states        = bindings.ConnectionStatesType( bindings.ReservationStateType(0, conn.state()),
-                                                     bindings.ProvisionStateType(  0, conn.state()),
-                                                     bindings.ActivationStateType( 0, conn.state()))
-            children      = None
-            conns.append( bindings.QuerySummaryResultType(conn.global_reservation_id, conn.description, conn.connection_id,
-                                                    criteria, conn.requester_nsa, states, children) )
+        for rsv in reservations:
 
-        query_confirmed = bindings.QueryConfirmedType(reservationSummary=conns)
+            cid, gid, desc, crits, req_nsa, states, nid = rsv
+            rsm, psm, lsm, dsm = states
+
+            criterias = []
+            for crit in crits:
+                schedule   = bindings.ScheduleType(crit.start_time, crit.end_time)
+                source_stp = helper.createSTPType(crit.source_stp)
+                dest_stp   = helper.createSTPType(crit.dest_stp)
+                path       = bindings.PathType('Bidirectional', False, source_stp, dest_stp, None)
+                criteria   = bindings.QuerySummaryResultCriteriaType(crit.version, schedule, crit.bandwidth, None, path, None)
+                criterias.append(criteria)
+
+            data_plane_status = bindings.DataPlaneStatusType(dsm[0], dsm[1], dsm[2])
+            connection_states = bindings.ConnectionStatesType(rsm, psm, lsm, data_plane_status)
+
+            qsrt = bindings.QuerySummaryResultType(cid, gid, desc, criterias, req_nsa, connection_states, nid)
+            query_results.append(qsrt)
 
         # --
 
-        header_payload = helper.createHeader(correlation_id, requester_nsa, provider_nsa)
-        body_payload   = helper.export(query_confirmed, 'queryConfirmed')
+        header_element = helper.createHeader(requester_nsa, provider_nsa)
 
-        payload = minisoap.createSoapPayload(body_payload, header_payload)
+        query_confirmed = bindings.QuerySummaryConfirmedType(query_results)
+        body_element    = query_confirmed.xml(bindings.querySummaryConfirmed)
 
-        def gotReply(data):
-            # we don't really do anything about these
-            return ""
+        payload = minisoap.createSoapPayload(body_element, header_element)
 
-        d = httpclient.soapRequest(requester_url, actions.QUERY_CONFIRMED, payload, ctx_factory=self.ctx_factory)
-        d.addCallbacks(gotReply) #, errReply)
+        d = httpclient.soapRequest(requester_url, actions.QUERY_SUMMARY_CONFIRMED, payload, ctx_factory=self.ctx_factory)
         return d
 
-#        if operation == "Summary":
-#            qsrs = []
-#            for conn in connections:
-#                qsr = self.client.createType('{http://schemas.ogf.org/nsi/2011/10/connection/types}QuerySummaryResultType')
-#                #print qsr
-#                qsr.globalReservationId = conn.global_reservation_id
-#                qsr.description         = conn.description
-#                qsr.connectionId        = conn.connection_id
-#                qsr.connectionState     = conn.state()
-#
-#                qsr.path.sourceSTP.stpId    = conn.source_stp.urn()
-#                qsr.path.destSTP.stpId      = conn.dest_stp.urn()
-#
-#                qsr.serviceParameters.schedule.startTime = utcTime(conn.service_parameters.start_time)
-#                qsr.serviceParameters.schedule.endTime   = utcTime(conn.service_parameters.end_time)
-#
-#                qsr.serviceParameters.bandwidth.desired  = conn.service_parameters.bandwidth.desired
-#                qsr.serviceParameters.bandwidth.minimum  = conn.service_parameters.bandwidth.minimum
-#                qsr.serviceParameters.bandwidth.maximum  = conn.service_parameters.bandwidth.maximum
-#
-#                def createOrderedSTP(stp, rank):
-#                    ostp = self.client.createType('{http://schemas.ogf.org/nsi/2011/10/connection/types}OrderedServiceTerminationPointType')
-#                    ostp.stpId = stp.urn()
-#                    ostp._order = rank
-#                    return ostp
-#
-#                # create list of all stps, but skip source and dest stp
-#                stps = [ stp for sc in conn.connections() for stp in sc.stps() ] [1:-1]
-#                for i, stp in zip(range(len(stps)), stps):
-#                    qsr.path.stpList.stp.append( createOrderedSTP(stp, i) )
-#
-#                qsrs.append(qsr)
-#
-#            res.reservationSummary = qsrs
-#
+
 #        elif operation == "Details":
 #            qdr = self.client.createType('{http://schemas.ogf.org/nsi/2011/10/connection/types}QueryDetailsResultType')
 #            #print qdr
