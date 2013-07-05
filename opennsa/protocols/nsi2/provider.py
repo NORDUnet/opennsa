@@ -187,8 +187,7 @@ class Provider:
         self.notifications[(header.correlation_id, QUERY_SUMMARY_SYNC_RESPONSE)] = dc
 
         d = self.service_provider.querySummary(header, connection_ids, global_reservation_ids)
-        dc.chainDeferred(d)
-        return d
+        return dc
 
 
     def querySummaryConfirmed(self, header, reservations):
