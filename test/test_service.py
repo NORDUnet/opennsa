@@ -118,32 +118,6 @@ class ServiceTest(unittest.TestCase):
 
 
     @defer.inlineCallbacks
-    def testInvalidNetworkReservation(self):
-
-        provider = nsa.Network('Aruba', nsa.NetworkServiceAgent('Aruba-OpenNSA', 'http://localhost:9080/NSI/services/ConnectionService'))
-
-        source_stp      = nsa.STP('NoSuchNetwork', 'PS' )
-        dest_stp        = nsa.STP('Aruba', 'A2')
-
-        start_time = datetime.datetime.utcfromtimestamp(time.time() + 1.5 )
-        end_time   = datetime.datetime.utcfromtimestamp(time.time() + 120 )
-
-        bandwidth = 200
-        service_params  = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, bandwidth)
-        connection_id         = 'conn-id1'
-
-        try:
-            yield self.client.reserve(self.client_nsa, provider.nsa, None, None, '', connection_id, service_params)
-            self.fail('Reserve call should have failed')
-        except error.ReserveError as e:
-            self.failUnlessIn('No network named NoSuchNetwork', str(e))
-        errors = self.flushLoggedErrors(error.TopologyError)
-        self.assertEqual(len(errors), 1)
-
-    testInvalidNetworkReservation.skip = 'Service not yet ready'
-
-
-    @defer.inlineCallbacks
     def testNoRouteReservation(self):
 
         provider = nsa.Network('Aruba', nsa.NetworkServiceAgent('Aruba-OpenNSA', 'http://localhost:9080/NSI/services/ConnectionService'))
@@ -167,32 +141,6 @@ class ServiceTest(unittest.TestCase):
         self.assertEqual(len(errors), 1)
 
     testNoRouteReservation.skip = 'Service not yet ready'
-
-    @defer.inlineCallbacks
-    def testStartTimeInPast(self):
-
-        provider = nsa.Network('Aruba', nsa.NetworkServiceAgent('Aruba-OpenNSA', 'http://localhost:9080/NSI/services/ConnectionService'))
-
-        source_stp      = nsa.STP('Aruba', 'A1' )
-        dest_stp        = nsa.STP('Aruba', 'A2')
-
-        tn = time.time()
-        start_time = datetime.datetime.fromtimestamp(tn - 1   , tzutc() )
-        end_time   = datetime.datetime.fromtimestamp(tn + 120 , tzutc() )
-
-        bandwidth = 200
-        service_params  = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, bandwidth)
-        connection_id         = 'conn-id1'
-
-        try:
-            yield self.client.reserve(self.client_nsa, provider.nsa, None, None, '', connection_id, service_params)
-            self.fail('Reserve call should have failed')
-        except error.ReserveError as e:
-            self.failUnlessIn('Start time in the past', str(e))
-        errors = self.flushLoggedErrors(error.PayloadError)
-        self.assertEqual(len(errors), 1)
-
-    testStartTimeInPast.skip = 'Service not yet ready'
 
 
     @defer.inlineCallbacks
