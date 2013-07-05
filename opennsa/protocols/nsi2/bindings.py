@@ -293,7 +293,7 @@ class QuerySummaryConfirmedType:
     @classmethod
     def build(self, element):
         return QuerySummaryConfirmedType(
-                element.findall('reservation')
+                [ QuerySummaryResultType.build(e) for e in element.findall('reservation') ]
                )
 
     def xml(self, elementName):
@@ -738,7 +738,7 @@ class QuerySummaryResultType:
                 [ QuerySummaryResultCriteriaType.build(e) for e in element.findall('schedule') ] if element.find('schedule') is not None else None,
                 element.findtext('requesterNSA'),
                 ConnectionStatesType.build(element.find('connectionStates')) if element.find('connectionStates') is not None else None,
-                int(element.findtext('notificationId'))
+                int(element.findtext('notificationId')) if element.find('notificationId') is not None else None
                )
 
     def xml(self, elementName):
@@ -990,6 +990,7 @@ def parseElement(element):
         '{http://schemas.ogf.org/nsi/2013/04/connection/types}messageDeliveryTimeout' : MessageDeliveryTimeoutRequestType,
         '{http://schemas.ogf.org/nsi/2013/04/connection/types}acknowledgment' : GenericAcknowledgmentType,
         '{http://schemas.ogf.org/nsi/2013/04/connection/types}reserveAbortConfirmed' : GenericConfirmedType,
+        '{http://schemas.ogf.org/nsi/2013/04/connection/types}querySummaryConfirmed' : QuerySummaryConfirmedType,
         '{http://schemas.ogf.org/nsi/2013/04/connection/types}querySummaryFailed' : QueryFailedType,
         '{http://schemas.ogf.org/nsi/2013/04/connection/types}queryRecursiveFailed' : QueryFailedType,
         '{http://schemas.ogf.org/nsi/2013/04/connection/types}queryNotification' : QueryNotificationType,
