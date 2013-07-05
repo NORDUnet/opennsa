@@ -613,3 +613,54 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
         from twistar.registry import Registry
         Registry.DBPOOL.close()
 
+
+    @defer.inlineCallbacks
+    def testQuerySummarySync(self):
+        # sync is only available remotely
+
+        self.header.newCorrelationId()
+        acid = yield self.provider.reserve(self.header, None, 'gid-123', 'desc2', self.service_params)
+        yield self.requester.reserve_defer
+
+        yield self.provider.reserveCommit(self.header, acid)
+        yield self.requester.reserve_commit_defer
+
+        reservations = yield self.provider.querySummarySync(self.header, connection_ids = [ acid ] )
+
+        self.failUnlessEquals(len(reservations), 1)
+
+        cid, gid, desc, crits, req_nsa, states, nid = reservations[0]
+
+        self.failUnlessEquals(cid, acid)
+        self.failUnlessEquals(gid, 'gid-123')
+        self.failUnlessEquals(desc, 'desc2')
+
+        self.failUnlessEquals(req_nsa, self.ns_agent.urn())
+        self.failUnlessEquals(len(crits), 1)
+        crit = crits[0]
+
+        src_stp = crit.source_stp
+        dst_stp = crit.dest_stp
+
+        self.failUnlessEquals(src_stp.network, self.network)
+        self.failUnlessEquals(src_stp.port,    self.source_port)
+        self.failUnlessEquals(len(src_stp.labels), 1)
+        self.failUnlessEquals(src_stp.labels[0].type_, nml.ETHERNET_VLAN)
+        self.failUnlessEquals(src_stp.labels[0].labelValue(), '1782')
+
+        self.failUnlessEquals(dst_stp.network, self.network)
+        self.failUnlessEquals(dst_stp.port,    self.dest_port)
+        self.failUnlessEquals(len(dst_stp.labels), 1)
+        self.failUnlessEquals(dst_stp.labels[0].type_, nml.ETHERNET_VLAN)
+        self.failUnlessEquals(dst_stp.labels[0].labelValue(), '1782')
+
+        self.failUnlessEqual(crit.bandwidth, self.bandwidth)
+        self.failUnlessEqual(crit.version,   0)
+
+        from opennsa import state
+        rsm, psm, lsm, dps = states
+        self.failUnlessEquals(rsm, state.RESERVE_START)
+        self.failUnlessEquals(psm, state.RELEASED)
+        self.failUnlessEquals(lsm, state.INITIAL)
+        self.failUnlessEquals(dps[:2], (False, 0) )  # we cannot really expect a consistent result for consistent here
+
