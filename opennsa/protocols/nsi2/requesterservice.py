@@ -140,11 +140,7 @@ class RequesterService:
     def terminateFailed(self, soap_data):
 
         header, generic_failure, err = self._parseGenericFailure(soap_data)
-        session_security_attr = None
-
-        self.requester.terminateFailed(header.correlationId, header.requesterNSA, header.providerNSA, session_security_attr,
-                                       generic_failure.connectionId, err)
-
+        self.requester.terminateFailed(header, generic_failure.connectionId, err)
         return helper.createGenericAcknowledgement(header)
 
 
