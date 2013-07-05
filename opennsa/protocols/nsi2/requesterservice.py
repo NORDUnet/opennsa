@@ -148,27 +148,8 @@ class RequesterService:
 
         header, query_confirmed = helper.parseRequest(soap_data)
 
-        reservations = []
-        for resv in query_confirmed.reservations:
-
-            r_states    = resv.connectionStates
-            r_dps       = r_states.dataPlaneStatus
-
-            dps = (r_dps.active, r_dps.version, r_dps.versionConsistent)
-            states = (r_states.reservationState, r_states.provisionState, r_states.lifecycleState, dps)
-
-            criterias = []
-            if resv.criteria is not None:
-                for rc in resv.criteria:
-                    rp = rc.path
-                    source_stp = helper.createSTP(rp.sourceSTP)
-                    dest_stp   = helper.createSTP(rp.destSTP)
-                    crit = nsa.ServiceParameters(rc.schedule.startTime, rc.schedule.endTime, source_stp, dest_stp, rc.bandwidth, directionality=rp.directionality, version=int(rc.version))
-                    criterias.append(crit)
-
-            reservations.append( ( resv.connectionId, resv.globalReservationId, resv.description, criterias, resv.requesterNSA, states, resv.notificationId) )
-
-        d = self.requester.querySummaryConfirmed(header, reservations)
+        reservations = helper.buildQuerySummaryResult(query_confirmed)
+        self.requester.querySummaryConfirmed(header, reservations)
 
         return helper.createGenericAcknowledgement(header)
 

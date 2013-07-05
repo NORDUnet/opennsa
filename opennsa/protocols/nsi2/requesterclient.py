@@ -181,7 +181,6 @@ class RequesterClient:
 
     def querySummary(self, header, connection_ids=None, global_reservation_ids=None):
 
-        self._checkHeader(header)
         service_url = self.providers[header.provider_nsa]
 
         header_element = helper.createHeader(header.requester_nsa, header.provider_nsa, reply_to=self.reply_to, correlation_id=header.correlation_id)
@@ -194,4 +193,27 @@ class RequesterClient:
         d = httpclient.soapRequest(service_url, actions.QUERY_SUMMARY, payload, ctx_factory=self.ctx_factory)
         d.addCallbacks(lambda sd : None, self._handleErrorReply)
         return d
+
+
+    def querySummarySync(self, header, connection_ids=None, global_reservation_ids=None):
+
+        def gotReply(soap_data):
+            header, query_confirmed = helper.parseRequest(soap_data)
+            reservations = helper.buildQuerySummaryResult(query_confirmed)
+            return reservations
+
+        # don't need to check header here
+        service_url = self.providers[header.provider_nsa]
+
+        header_element = helper.createHeader(header.requester_nsa, header.provider_nsa, reply_to=self.reply_to, correlation_id=header.correlation_id)
+
+        query_type = bindings.QueryType(connection_ids, global_reservation_ids)
+        body_element = query_type.xml(bindings.querySummary)
+
+        payload = minisoap.createSoapPayload(body_element, header_element)
+
+        d = httpclient.soapRequest(service_url, actions.QUERY_SUMMARY_SYNC, payload, ctx_factory=self.ctx_factory)
+        d.addCallbacks(gotReply, self._handleErrorReply)
+        return d
+
 

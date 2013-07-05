@@ -146,6 +146,32 @@ def createSTPType(stp):
     return bindings.StpType(network, network + ':' + port, labels)
 
 
+
+def buildQuerySummaryResult(query_confirmed):
+
+    reservations = []
+    for resv in query_confirmed.reservations:
+
+        r_states    = resv.connectionStates
+        r_dps       = r_states.dataPlaneStatus
+
+        dps = (r_dps.active, r_dps.version, r_dps.versionConsistent)
+        states = (r_states.reservationState, r_states.provisionState, r_states.lifecycleState, dps)
+
+        criterias = []
+        if resv.criteria is not None:
+            for rc in resv.criteria:
+                rp = rc.path
+                source_stp = createSTP(rp.sourceSTP)
+                dest_stp   = createSTP(rp.destSTP)
+                crit = nsa.ServiceParameters(rc.schedule.startTime, rc.schedule.endTime, source_stp, dest_stp, rc.bandwidth, directionality=rp.directionality, version=int(rc.version))
+                criterias.append(crit)
+
+        reservations.append( ( resv.connectionId, resv.globalReservationId, resv.description, criterias, resv.requesterNSA, states, resv.notificationId) )
+
+    return reservations
+
+
 def buildQuerySummaryResultType(reservations):
 
     query_results = []
@@ -158,8 +184,8 @@ def buildQuerySummaryResultType(reservations):
         criterias = []
         for crit in crits:
             schedule   = bindings.ScheduleType(crit.start_time, crit.end_time)
-            source_stp = helper.createSTPType(crit.source_stp)
-            dest_stp   = helper.createSTPType(crit.dest_stp)
+            source_stp = createSTPType(crit.source_stp)
+            dest_stp   = createSTPType(crit.dest_stp)
             path       = bindings.PathType('Bidirectional', False, source_stp, dest_stp, None)
             criteria   = bindings.QuerySummaryResultCriteriaType(crit.version, schedule, crit.bandwidth, None, path, None)
             criterias.append(criteria)
