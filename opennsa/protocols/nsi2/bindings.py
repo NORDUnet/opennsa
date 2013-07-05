@@ -735,7 +735,7 @@ class QuerySummaryResultType:
                 element.findtext('connectionId'),
                 element.findtext('globalReservationId'),
                 element.findtext('description'),
-                [ QuerySummaryResultCriteriaType.build(e) for e in element.findall('schedule') ] if element.find('schedule') is not None else None,
+                [ QuerySummaryResultCriteriaType.build(e) for e in element.findall('criteria') ] if element.find('criteria') is not None else None,
                 element.findtext('requesterNSA'),
                 ConnectionStatesType.build(element.find('connectionStates')) if element.find('connectionStates') is not None else None,
                 int(element.findtext('notificationId')) if element.find('notificationId') is not None else None
