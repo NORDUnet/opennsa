@@ -758,3 +758,13 @@ class Aggregator:
         else:
             raise NotImplementedError('Cannot handle timeout for connection with more than one sub connection')
 
+
+    def querySummaryConfirmed(self, header, summary_results):
+        raise NotImplementedError('querySummaryConfirmed is not yet implemented in aggregater')
+
+    def queryRecursiveConfirmed(self, header, recursive_results):
+        raise NotImplementedError('queryRecursiveConfirmed is not yet implemented in aggregater')
+
+    def queryNotificationFailed(self, header, service_exception):
+        raise NotImplementedError('queryNotificationFailed is not yet implemented in aggregater')
+
