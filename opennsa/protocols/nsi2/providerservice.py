@@ -174,7 +174,7 @@ class ProviderService:
 
         header, query = helper.parseRequest(soap_data)
         d = self.provider.querySummary(header, query.connectionId, query.globalReservationId)
-        d.addCallbacks(lambda _ : helper.createGenericAcknowledgement(header), self._createSOAPFault, errbackArgs=(header.provider_nsa))
+        d.addCallbacks(lambda _ : helper.createGenericAcknowledgement(header), self._createSOAPFault, errbackArgs=(header.provider_nsa,))
         return d
 
 
@@ -191,9 +191,8 @@ class ProviderService:
             payload = minisoap.createSoapPayload(qsr_element, soap_header_element)
             return payload
 
-
         header, query = helper.parseRequest(soap_data)
         d = self.provider.querySummarySync(header, query.connectionId, query.globalReservationId)
-        d.addCallbacks(gotReservations, self._createSOAPFault)
+        d.addCallbacks(gotReservations, self._createSOAPFault, errbackArgs=(header.provider_nsa,))
         return d
 

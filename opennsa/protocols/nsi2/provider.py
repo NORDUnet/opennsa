@@ -187,17 +187,17 @@ class Provider:
         self.notifications[(header.correlation_id, QUERY_SUMMARY_SYNC_RESPONSE)] = dc
 
         d = self.service_provider.querySummary(header, connection_ids, global_reservation_ids)
-        d.chainDeferred(dc)
+        dc.chainDeferred(d)
         return d
 
 
     def querySummaryConfirmed(self, header, reservations):
 
-        dc = self.notifications.pop( (header.correlation_id, QUERY_SUMMARY_SYNC_RESPONSE) )
-        if dc is None:
-            return self.provider_client.querySummaryConfirmed(header.reply_to, header.requester_nsa, header.provider_nsa, header.correlation_id, reservations)
-        else:
+        if (header.correlation_id, QUERY_SUMMARY_SYNC_RESPONSE) in self.notifications:
+            dc = self.notifications.pop( (header.correlation_id, QUERY_SUMMARY_SYNC_RESPONSE) )
             dc.callback( reservations )
+        else:
+            return self.provider_client.querySummaryConfirmed(header.reply_to, header.requester_nsa, header.provider_nsa, header.correlation_id, reservations)
 
     # requester interface
 
