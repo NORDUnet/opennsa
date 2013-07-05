@@ -154,9 +154,6 @@ class Aggregator:
         if dest_stp.network == self.network:
             self.topology.getNetwork(self.network).getPort(dest_stp.port)
 
-        if source_stp == dest_stp and source_stp.label.singleValue():
-            raise error.TopologyError('Cannot connect STP %s to itself.' % source_stp)
-
         conn = database.ServiceConnection(connection_id=connection_id, revision=0, global_reservation_id=global_reservation_id, description=description,
                             requester_nsa=header.requester_nsa, requester_url=header.reply_to, reserve_time=datetime.datetime.utcnow(),
                             reservation_state=state.RESERVE_START, provision_state=state.RELEASED, lifecycle_state=state.INITIAL,

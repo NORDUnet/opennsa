@@ -179,6 +179,10 @@ class GenericBackend(service.Service):
         dst_label_candidate = dest_stp.labels[0]
         assert src_label_candidate.type_ == dst_label_candidate.type_, 'Cannot connect ports with different label types'
 
+        # check that we are connecting an stp to itself
+        if source_stp == dest_stp and source_stp.labels[0].singleValue():
+            raise error.TopologyError('Cannot connect STP %s to itself.' % source_stp)
+
         # now check that the ports have (some of) the specified labels
         if not topo_source_port.canMatchLabels(source_stp.labels):
             raise error.TopologyError('Source port %s cannot match label set %s' % (topo_source_port.name, src_label_candidate ) )

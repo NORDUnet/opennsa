@@ -64,6 +64,20 @@ class GenericProviderTest:
 
 
     @defer.inlineCallbacks
+    def testConnectSTPToItself(self):
+
+        stp = nsa.STP('Aruba',   self.source_port, labels=[ nsa.Label(nml.ETHERNET_VLAN, '1782') ] )
+        service_params = nsa.ServiceParameters(self.start_time, self.end_time, stp, stp, self.bandwidth)
+
+        self.header.newCorrelationId()
+        try:
+            yield self.provider.reserve(self.header, None, None, None, service_params)
+            self.fail('Should have raised TopologyError')
+        except error.TopologyError:
+            pass # expected
+
+
+    @defer.inlineCallbacks
     def testProvisionUsage(self):
 
         self.header.newCorrelationId()
