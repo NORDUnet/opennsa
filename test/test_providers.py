@@ -153,13 +153,15 @@ class GenericProviderTest:
 
         self.failUnlessEquals(len(reservations), 1)
 
-        cid, gid, desc, crit, req_nsa, states, nid = reservations[0]
+        cid, gid, desc, crits, req_nsa, states, nid = reservations[0]
 
         self.failUnlessEquals(cid, acid)
         self.failUnlessEquals(gid, 'gid-123')
         self.failUnlessEquals(desc, 'desc2')
 
         self.failUnlessEquals(req_nsa, self.ns_agent.urn())
+        self.failUnlessEquals(len(crits), 1)
+        crit = crits[0]
 
         src_stp = crit.source_stp
         dst_stp = crit.dest_stp

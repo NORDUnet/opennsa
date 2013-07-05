@@ -502,7 +502,7 @@ class Aggregator:
                 data_plane_status = (aggr_active, aggr_version, aggr_consistent)
 
                 states = (c.reservation_state, c.provision_state, c.lifecycle_state, data_plane_status)
-                t = ( c.connection_id, c.global_reservation_id, c.description, criteria, c.requester_nsa, states, self.notification_id)
+                t = ( c.connection_id, c.global_reservation_id, c.description, [ criteria ], c.requester_nsa, states, self.notification_id)
                 reservations.append(t)
 
             self.parent_requester.querySummaryConfirmed(header, reservations)

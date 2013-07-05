@@ -382,7 +382,7 @@ class GenericBackend(service.Service):
             criteria = nsa.ServiceParameters(c.start_time, c.end_time, source_stp, dest_stp, c.bandwidth, version=c.revision)
             data_plane_status = ( c.data_plane_active, c.revision, True )
             states = (c.reservation_state, c.provision_state, c.lifecycle_state, data_plane_status)
-            t = ( c.connection_id, c.global_reservation_id, c.description, criteria, c.requester_nsa, states, self.notification_id)
+            t = ( c.connection_id, c.global_reservation_id, c.description, [ criteria ], c.requester_nsa, states, self.notification_id)
             reservations.append(t)
 
         self.parent_requester.querySummaryConfirmed(header, reservations)
