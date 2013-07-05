@@ -16,6 +16,7 @@ class GenericProviderTest:
     @defer.inlineCallbacks
     def testBasicUsage(self):
 
+        self.header.newCorrelationId()
         response_cid = yield self.provider.reserve(self.header, None, None, None, self.service_params)
         header, confirm_cid, gid, desc, criteria = yield self.requester.reserve_defer
         self.failUnlessEquals(response_cid, confirm_cid, 'Connection Id from response and confirmation differs')
@@ -29,6 +30,7 @@ class GenericProviderTest:
     @defer.inlineCallbacks
     def testProvisionPostTerminate(self):
 
+        self.header.newCorrelationId()
         cid = yield self.provider.reserve(self.header, None, None, None, self.service_params)
         header, confirm_cid, gid, desc, criteria = yield self.requester.reserve_defer
 
@@ -48,6 +50,7 @@ class GenericProviderTest:
     @defer.inlineCallbacks
     def testProvisionUsage(self):
 
+        self.header.newCorrelationId()
         cid = yield self.provider.reserve(self.header, None, None, None, self.service_params)
         yield self.requester.reserve_defer
 
@@ -64,6 +67,7 @@ class GenericProviderTest:
     @defer.inlineCallbacks
     def testProvisionReleaseUsage(self):
 
+        self.header.newCorrelationId()
         acid = yield self.provider.reserve(self.header, None, None, None, self.service_params)
         yield self.requester.reserve_defer
 
@@ -99,6 +103,7 @@ class GenericProviderTest:
         dest_stp    = nsa.STP('NoSuchNetwork', 'whatever', labels=[ nsa.Label(nml.ETHERNET_VLAN, '1782') ] )
         service_params = nsa.ServiceParameters(self.start_time, self.end_time, source_stp, dest_stp, 200)
 
+        self.header.newCorrelationId()
         try:
             yield self.provider.reserve(self.header, None, None, None, service_params)
             self.fail('Should have raised TopologyError')
@@ -109,6 +114,7 @@ class GenericProviderTest:
     @defer.inlineCallbacks
     def testDoubleReserve(self):
 
+        self.header.newCorrelationId()
         acid = yield self.provider.reserve(self.header, None, None, None, self.service_params)
         header, cid, gid, desc, sp = yield self.requester.reserve_defer
 
@@ -123,6 +129,7 @@ class GenericProviderTest:
     @defer.inlineCallbacks
     def testProvisionNonExistentConnection(self):
 
+        self.header.newCorrelationId()
         try:
             yield self.provider.provision(self.header, '1234')
             self.fail('Should have raised ConnectionNonExistentError')
@@ -183,6 +190,7 @@ class GenericProviderTest:
     @defer.inlineCallbacks
     def testActivation(self):
 
+        self.header.newCorrelationId()
         acid = yield self.provider.reserve(self.header, None, None, None, self.service_params)
         header, cid, gid, desc, sc = yield self.requester.reserve_defer
         self.failUnlessEqual(cid, acid)
@@ -219,6 +227,7 @@ class GenericProviderTest:
         dest_stp    = nsa.STP('Aruba', self.dest_port,   labels=[ nsa.Label(nml.ETHERNET_VLAN, '1782') ] )
         service_params = nsa.ServiceParameters(self.start_time, self.end_time, source_stp, dest_stp, 200)
 
+        self.header.newCorrelationId()
         acid = yield self.provider.reserve(self.header, None, None, None, service_params)
         header, cid, gid, desc, sp = yield self.requester.reserve_defer
 
@@ -240,6 +249,7 @@ class GenericProviderTest:
         dest_stp    = nsa.STP('Aruba', self.dest_port,   labels=[ nsa.Label(nml.ETHERNET_VLAN, '1782') ] )
         service_params = nsa.ServiceParameters(self.start_time, self.end_time, source_stp, dest_stp, 200)
 
+        self.header.newCorrelationId()
         acid = yield self.provider.reserve(self.header, None, None, None, service_params)
         header, cid, gid, desc, sp = yield self.requester.reserve_defer
 
@@ -279,6 +289,7 @@ class GenericProviderTest:
         # make activation fail via monkey patching
         self.backend.connection_manager.setupLink = setupLink
 
+        self.header.newCorrelationId()
         acid = yield self.provider.reserve(self.header, None, None, None, service_params)
         header, cid, gid, desc, sp = yield self.requester.reserve_defer
 
@@ -318,6 +329,7 @@ class GenericProviderTest:
         # make actication fail via monkey patching
         self.backend.connection_manager.setupLink = lambda cid, src, dst, bw : defer.fail(error.InternalNRMError('Link setup failed'))
 
+        self.header.newCorrelationId()
         acid = yield self.provider.reserve(self.header, None, None, None, self.service_params)
         header, cid, gid, desc, sp = yield self.requester.reserve_defer
 
@@ -341,6 +353,7 @@ class GenericProviderTest:
         # make actication fail via monkey patching
         self.backend.connection_manager.teardownLink = lambda cid, src, dst, bw : defer.fail(error.InternalNRMError('Link teardown failed'))
 
+        self.header.newCorrelationId()
         acid = yield self.provider.reserve(self.header, None, None, None, self.service_params)
         header, cid, gid, desc, sp = yield self.requester.reserve_defer
 
