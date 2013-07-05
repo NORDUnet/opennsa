@@ -22,7 +22,7 @@ FRAMEWORK_TYPES_NS   = "http://schemas.ogf.org/nsi/2013/04/framework/types"
 FRAMEWORK_HEADERS_NS = "http://schemas.ogf.org/nsi/2013/04/framework/headers"
 CONNECTION_TYPES_NS  = "http://schemas.ogf.org/nsi/2013/04/connection/types"
 
-PROTO = 'urn:org.ogf.schema.NSIv2'
+PROTO = 'application/vnd.org.ogf.nsi.cs.v2+soap'
 URN_NETWORK = 'urn:ogf:network:'
 
 
