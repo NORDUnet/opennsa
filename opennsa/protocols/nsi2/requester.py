@@ -200,18 +200,12 @@ class Requester:
         self.triggerCall(provider_nsa, correlation_id, 'terminate', err)
 
 
-    def query(self, requester_nsa, provider_nsa, session_security_attr, operation='Summary', connection_ids=None, global_reservation_ids=None):
+    def querySummary(self, header, connection_ids=None, global_reservation_ids=None):
 
-        correlation_id = createCorrelationId()
+        # we just use sync for this, keep it simple
+        d = self.requester_client.querySummarySync(header, connection_ids, global_reservation_ids)
+        return d
 
-        def queryRequestFailed(err):
-            # invocation failed, so we error out immediately
-            self.triggerCall(provider_nsa.urn(), correlation_id, 'query', err.value)
-
-        rd = self.addCall(provider_nsa, correlation_id, 'query')
-        cd = self.requester_client.query(correlation_id, requester_nsa, provider_nsa, session_security_attr, operation, connection_ids, global_reservation_ids)
-        cd.addErrback(queryRequestFailed)
-        return rd
 
     def queryConfirmed(self, correlation_id, requester_nsa, provider_nsa, query_result):
 

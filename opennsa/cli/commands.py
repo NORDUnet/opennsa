@@ -191,8 +191,9 @@ def terminate(client, client_nsa, provider_nsa, connection_id):
 @defer.inlineCallbacks
 def querysummary(client, client_nsa, provider_nsa, connection_ids, global_reservation_ids):
 
+    header = nsa.NSIHeader(client_nsa.urn(), provider_nsa.urn())
     try:
-        qc = yield client.query(client_nsa, provider_nsa, None, "Summary", connection_ids, global_reservation_ids)
+        qc = yield client.querySummary(header, connection_ids, global_reservation_ids)
         log.msg('Query results:')
         for qr in qc:
             log.msg('Connection    : %s' % qr.connectionId)
