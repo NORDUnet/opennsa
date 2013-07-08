@@ -36,7 +36,8 @@ COMMAND_CONFIGURE   = 'configure terminal'
 COMMAND_END         = 'end'
 
 COMMAND_VLAN        = 'vlan %(vlan)i name %(name)s'
-COMMAND_TAGGED      = 'tagged %(port)s'
+#COMMAND_TAGGED      = 'tagged %(port)s'
+COMMAND_TAGGED      = 'tagged ethernet %(port)s'
 
 COMMAND_NO_VLAN     = 'no vlan %(vlan)i'
 
