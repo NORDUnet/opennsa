@@ -231,7 +231,7 @@ class BrocadeConnectionManager:
             return pt
 
         commands = _createSetupCommands(source_target, dest_target)
-        d = self._sendCommands(commands)
+        d = self.command_sender.sendCommands(commands)
         d.addCallback(linkUp)
         return d
 
@@ -243,7 +243,7 @@ class BrocadeConnectionManager:
             return pt
 
         commands = _createTeardownCommands(source_target, dest_target)
-        d = self._sendCommands(commands)
+        d = self.command_sender.sendCommands(commands)
         d.addCallback(linkDown)
         return d
 
