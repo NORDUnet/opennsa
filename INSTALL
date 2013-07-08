@@ -13,6 +13,9 @@ Requirements:
 Python and Twisted should be included in the package system in most recent
 Linux distributions.
 
+Furthermore, for SSH based backends (Brocade, Force10, and Juniper), the
+packages pyasn1 and python-crypto are also required.
+
 If you use a backend which uses SSH (JunOS, Force10), there is a patch to
 remove some of the log statements in the Twisted SSH module, which is rather
 noisy. This makes the log a lot easier to read.
