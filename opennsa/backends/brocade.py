@@ -24,10 +24,8 @@ import random
 from twisted.python import log
 from twisted.internet import defer
 
-#from opennsa import error, config
 from opennsa import config
 from opennsa.topology import nml
-#from opennsa.backends.common import calendar as reservationcalendar, simplebackend, ssh
 from opennsa.backends.common import ssh, genericbackend
 
 LOG_SYSTEM = 'opennsa.brocade'
