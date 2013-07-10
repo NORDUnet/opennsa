@@ -482,7 +482,7 @@ class Aggregator:
             elif global_reservation_ids:
                 conns = yield database.ServiceConnection.find(where=['requester_nsa = ? AND global_reservation_ids IN ?', header.requester_nsa, tuple(global_reservation_ids) ] )
             else:
-                raise error.MissingParameterError('Must specify connectionId or globalReservationId')
+                conns = yield database.ServiceConnection.find(where=['requester_nsa = ?', header.requester_nsa ] )
 
             # largely copied from genericbackend, merge later
             reservations = []
