@@ -196,17 +196,26 @@ def querysummary(client, client_nsa, provider_nsa, connection_ids, global_reserv
         qc = yield client.querySummary(header, connection_ids, global_reservation_ids)
         log.msg('Query results:')
         for qr in qc:
-            log.msg('Connection    : %s' % qr.connectionId)
-            if qr.globalReservationId:
-                log.msg('  Global ID   : %s' % qr.globalReservationId)
-            if qr.description:
-                log.msg('  Description : %s' % qr.description)
+            cid, gid, desc, crits, requester, states, children = qr
+            dps = states[3]
+            log.msg('Connection    : %s' % cid)
+            if gid:
+                log.msg('  Global ID   : %s' % gid)
+            if desc:
+                log.msg('  Description : %s' % desc)
 
-            log.msg('  Reservation state : %s' % qr.connectionStates.reservationState.state)
-            log.msg('  Provision   state : %s' % qr.connectionStates.provisionState.state)
-            log.msg('  Activaction state : %s' % qr.connectionStates.activationState.state)
-            if qr.children:
-                log.msg('  Children    : %s' % qr.children)
+            if crits:
+                crit = crits[0]
+                log.msg('  Start time  : %s, End time: %s' % (crit.start_time, crit.end_time))
+                log.msg('  Source STP  : %s' % crit.source_stp)
+                log.msg('  Dest   STP  : %s' % crit.dest_stp)
+                log.msg('  Bandwidth   : %s' % crit.bandwidth)
+
+            log.msg('  States      : %s' % ', '.join(states[0:3]))
+            log.msg('  Dataplane   : Active : %s, Version: %s, Consistent %s' % dps)
+
+            if children:
+                log.msg('  Children    : %s' % children)
     except error.NSIError, e:
         log.msg('Error querying %s, %s : %s' % (connection_ids, e.__class__.__name__, str(e)))
 
