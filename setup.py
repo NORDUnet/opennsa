@@ -63,7 +63,6 @@ setup(name='opennsa',
 
       data_files=[
         ('bin',                     ['onsa']),
-        ('share/nsi/topology',      ['AutoGOLE-Topo-2012-02-29.owl']),
         ('/etc',                    ['datafiles/opennsa.conf']),
         ('/etc/init.d',             ['datafiles/opennsa']),
       ]
