@@ -57,7 +57,7 @@ class HostOption(usage.Options):
     optParameters = [ [ options.HOST, 'h', None, 'Host (for callback)'] ]
 
 class PortOption(usage.Options):
-    optParameters = [ [ options.PORT, 'o', None, 'Port (for callback)'] ]
+    optParameters = [ [ options.PORT, 'o', None, 'Port (for callback)', int] ]
 
 # parameters which are only used for some commands
 
