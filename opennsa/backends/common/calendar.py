@@ -29,7 +29,10 @@ class ReservationCalendar:
 
     def removeReservation(self, resource, start_time, end_time):
         reservation = (resource, start_time, end_time)
-        self.reservations.remove(reservation)
+        try:
+            self.reservations.remove(reservation)
+        except ValueError:
+            raise ValueError('Reservation (%s, %s, %s) does not exists. Cannot remove' % (resource, start_time, end_time))
 
 
     def checkReservation(self, resource, start_time, end_time):
