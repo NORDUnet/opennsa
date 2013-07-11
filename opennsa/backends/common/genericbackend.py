@@ -109,9 +109,9 @@ class GenericBackend(service.Service):
                 # we have passed start time, we must either: activate, schedule deactive, or schedule terminate
                 if conn.provision_state == state.PROVISIONED:
                     if conn.data_plane_active:
-                        self.scheduler.scheduleCall(conn.connection_id, conn.end_time, self._doTeardown, conn)
+                        self.scheduler.scheduleCall(conn.connection_id, conn.end_time, self._doEndtime, conn)
                         td = conn.end_time - now
-                        log.msg('Connection %s: already active, scheduling teardown for %s UTC (%i seconds) (buildSchedule)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
+                        log.msg('Connection %s: already active, scheduling end for %s UTC (%i seconds) (buildSchedule)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
                     else:
                         log.msg('Connection %s: Immediate activate during buildSchedule' % conn.connection_id, system=self.log_system)
                         yield self._doActivate(conn)
@@ -536,9 +536,9 @@ class GenericBackend(service.Service):
                 log.msg('Connection %s: passed end time during activation, scheduling immediate teardown.' % conn.connection_id, system=self.log_system)
                 end_time = now
 
-            self.scheduler.scheduleCall(conn.connection_id, end_time, self._doTeardown, conn)
+            self.scheduler.scheduleCall(conn.connection_id, end_time, self._doEndtime, conn)
             td = end_time - datetime.datetime.utcnow()
-            log.msg('Connection %s: teardown scheduled for %s UTC (%i seconds)' % (conn.connection_id, end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
+            log.msg('Connection %s: End and teardown scheduled for %s UTC (%i seconds)' % (conn.connection_id, end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
 
             data_plane_status = (True, conn.revision, True) # active, version, consistent
             now = datetime.datetime.utcnow()
