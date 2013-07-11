@@ -215,7 +215,7 @@ class GenericProviderTest:
         rsm, psm, lsm, dps = states
         self.failUnlessEquals(rsm, state.RESERVE_START)
         self.failUnlessEquals(psm, state.RELEASED)
-        self.failUnlessEquals(lsm, state.INITIAL)
+        self.failUnlessEquals(lsm, state.CREATED)
         self.failUnlessEquals(dps[:2], (False, 0) )  # we cannot really expect a consistent result for consistent here
 
 
@@ -661,6 +661,6 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
         rsm, psm, lsm, dps = states
         self.failUnlessEquals(rsm, state.RESERVE_START)
         self.failUnlessEquals(psm, state.RELEASED)
-        self.failUnlessEquals(lsm, state.INITIAL)
+        self.failUnlessEquals(lsm, state.CREATED)
         self.failUnlessEquals(dps[:2], (False, 0) )  # we cannot really expect a consistent result for consistent here
 

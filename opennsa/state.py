@@ -25,7 +25,9 @@ PROVISIONED             = 'Provisioned'
 RELEASING               = 'Releasing'
 
 # Lifecycle
-INITIAL                 = 'Initial'
+CREATED                 = 'Created'
+FAILED                  = 'Failed'
+PASSED_ENDTIME          = 'PassedEndTime'
 TERMINATING             = 'Terminating'
 TERMINATED              = 'Terminated'
 
@@ -48,8 +50,10 @@ PROVISION_TRANSITIONS = {
 }
 
 LIFECYCLE_TRANSITIONS = {
-    INITIAL         : [ TERMINATING,    TERMINATED ],
-    TERMINATING     : [ TERMINATED  ],
+    CREATED         : [ FAILED, PASSED_ENDTIME, TERMINATING, TERMINATED ],
+    FAILED          : [ TERMINATING ],
+    PASSED_ENDTIME  : [ TERMINATING ],
+    TERMINATING     : [ TERMINATED ],
     TERMINATED      : []
 }
 
@@ -116,6 +120,16 @@ def released(conn):
     return conn.save()
 
 # Lifecyle
+
+def passedEndtime(conn):
+    _switchState(LIFECYCLE_TRANSITIONS, conn.lifecycle_state, PASSED_ENDTIME)
+    conn.lifecycle_state = PASSED_ENDTIME
+    return conn.save()
+
+def failed(conn):
+    _switchState(LIFECYCLE_TRANSITIONS, conn.lifecycle_state, FAILED)
+    conn.lifecycle_state = FAILED
+    return conn.save()
 
 def terminating(conn):
     _switchState(LIFECYCLE_TRANSITIONS, conn.lifecycle_state, TERMINATING)
