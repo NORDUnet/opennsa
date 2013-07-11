@@ -2,6 +2,7 @@
 Brocade backend.
 Contributed by Balasubramania Pillai from MAX Gigapop.
 Ported to OpenNSA NSIv2 by Henrik Thostrup Jensen (summer 2013)
+Further contributions/fixes from Jeronimo Aguiar from AMPATH.
 
 Notes:
 
