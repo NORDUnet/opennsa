@@ -376,6 +376,10 @@ class GenericBackend(service.Service):
         conn = yield self._getConnection(connection_id, header.requester_nsa)
         yield self._doTerminate(conn)
 
+        # reply, here the reply will practially always come before the ack
+        header = nsa.NSIHeader(conn.requester_nsa, conn.requester_nsa, []) # The NSA is both requester and provider in the backend, but this might be problematic without aggregator
+        yield self.parent_requester.terminateConfirmed(header, conn.connection_id)
+
 
     @defer.inlineCallbacks
     def querySummary(self, header, connection_ids=None, global_reservation_ids=None):
@@ -597,7 +601,4 @@ class GenericBackend(service.Service):
 
         yield state.terminated(conn)
         self.logStateUpdate(conn, 'TERMINATED')
-
-        header = nsa.NSIHeader(conn.requester_nsa, conn.requester_nsa, []) # The NSA is both requester and provider in the backend, but this might be problematic without aggregator
-        yield self.parent_requester.terminateConfirmed(header, conn.connection_id)
 
