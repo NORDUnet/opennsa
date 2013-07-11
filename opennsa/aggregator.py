@@ -238,6 +238,8 @@ class Aggregator:
             header = nsa.NSIHeader(self.nsa_.urn(), provider_nsa.urn(), []) # need to something more here - or delegate to protocl stack (yes)
             d = provider.reserve(header, None, conn.global_reservation_id, conn.description, ssp)
 
+            # Note: This approach is racy. If the reserveConfirmed message gets back first, there is no sub connection to grab for it.
+
             @defer.inlineCallbacks
             def reserveResponse(connection_id, link_provider_nsa, order_id):
                 # need to collapse the end stps in Connection object
