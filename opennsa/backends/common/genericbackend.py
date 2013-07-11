@@ -88,7 +88,10 @@ class GenericBackend(service.Service):
 
             now = datetime.datetime.utcnow()
 
-            if conn.end_time < now and conn.lifecycle_state != state.TERMINATED:
+            if conn.lifecycle_state in (state.PASSED_ENDTIME, state.TERMINATED):
+                pass # This connection has already lived it life to the fullest :-)
+
+            elif conn.end_time < now and conn.lifecycle_state not in (state.PASSED_ENDTIME, state.TERMINATED):
                 log.msg('Connection %s: Immediate end during buildSchedule' % conn.connection_id, system=self.log_system)
                 yield self._doEndtime(conn)
 
