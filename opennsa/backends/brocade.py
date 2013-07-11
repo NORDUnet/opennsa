@@ -31,7 +31,7 @@ from opennsa.backends.common import ssh, genericbackend
 LOG_SYSTEM = 'opennsa.brocade'
 
 
-COMMAND_PRIVILEGE   = 'enable privileged'
+COMMAND_PRIVILEGE   = 'enable %s'
 COMMAND_CONFIGURE   = 'configure terminal'
 COMMAND_END         = 'end'
 
@@ -100,7 +100,7 @@ class SSHChannel(ssh.SSHChannel):
 
 
     @defer.inlineCallbacks
-    def sendCommands(self, commands):
+    def sendCommands(self, commands, enable_password):
         LT = '\r' # line termination
 
         try:
@@ -108,7 +108,7 @@ class SSHChannel(ssh.SSHChannel):
             yield self.conn.sendRequest(self, 'shell', '', wantReply=1)
 
             d = self.waitForData('>')
-            self.write(COMMAND_PRIVILEGE + LT)
+            self.write(COMMAND_PRIVILEGE % enable_password + LT)
             yield d
             log.msg('Entered privileged mode', debug=True, system=LOG_SYSTEM)
 
@@ -161,10 +161,11 @@ class SSHChannel(ssh.SSHChannel):
 
 class BrocadeCommandSender:
 
-    def __init__(self, host, port, ssh_host_fingerprint, user, ssh_public_key_path, ssh_private_key_path):
+    def __init__(self, host, port, ssh_host_fingerprint, user, ssh_public_key_path, ssh_private_key_path, enable_password):
 
         self.ssh_connection_creator = \
              ssh.SSHConnectionCreator(host, port, [ ssh_host_fingerprint ], user, ssh_public_key_path, ssh_private_key_path)
+        self.enable_password = enable_password
 
 
     @defer.inlineCallbacks
@@ -183,7 +184,7 @@ class BrocadeCommandSender:
             ssh_connection.openChannel(channel)
 
             yield channel.channel_open
-            yield channel.sendCommands(commands)
+            yield channel.sendCommands(commands, self.enable_password)
 
         finally:
             ssh_connection.transport.loseConnection()
@@ -202,8 +203,9 @@ class BrocadeConnectionManager:
         user             = cfg[config.BROCADE_USER]
         ssh_public_key   = cfg[config.BROCADE_SSH_PUBLIC_KEY]
         ssh_private_key  = cfg[config.BROCADE_SSH_PRIVATE_KEY]
+        enable_password  = cfg[config.BROCADE_ENABLE_PASSWORD]
 
-        self.command_sender = BrocadeCommandSender(host, port, host_fingerprint, user, ssh_public_key, ssh_private_key)
+        self.command_sender = BrocadeCommandSender(host, port, host_fingerprint, user, ssh_public_key, ssh_private_key, enable_password)
 
 
     def getResource(self, port, label_type, label_value):
