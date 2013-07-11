@@ -89,8 +89,8 @@ class GenericBackend(service.Service):
             now = datetime.datetime.utcnow()
 
             if conn.end_time < now and conn.lifecycle_state != state.TERMINATED:
-                log.msg('Connection %s: Immediate terminate during buildSchedule' % conn.connection_id, system=self.log_system)
-                yield self._doTerminate(conn)
+                log.msg('Connection %s: Immediate end during buildSchedule' % conn.connection_id, system=self.log_system)
+                yield self._doEndtime(conn)
 
             elif conn.start_time > now:
                 # start time has not yet passed, we most schedule activate or schedule terminate depending on state
@@ -99,9 +99,9 @@ class GenericBackend(service.Service):
                     td = conn.start_time - now
                     log.msg('Connection %s: activate scheduled for %s UTC (%i seconds) (buildSchedule)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
                 elif conn.provision_state == state.RELEASED:
-                    self.scheduler.scheduleCall(conn.connection_id, conn.end_time, self._doTerminate, conn)
+                    self.scheduler.scheduleCall(conn.connection_id, conn.end_time, self._doEndtime, conn)
                     td = conn.end_time - now
-                    log.msg('Connection %s: terminate scheduled for %s UTC (%i seconds) (buildSchedule' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
+                    log.msg('Connection %s: End scheduled for %s UTC (%i seconds) (buildSchedule' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
                 else:
                     log.msg('Unhandled provision state %s for connection %s in scheduler building' % (conn.provision_state, conn.connection_id))
 
@@ -116,9 +116,9 @@ class GenericBackend(service.Service):
                         log.msg('Connection %s: Immediate activate during buildSchedule' % conn.connection_id, system=self.log_system)
                         yield self._doActivate(conn)
                 elif conn.provision_state == state.RELEASED:
-                    self.scheduler.scheduleCall(conn.connection_id, conn.end_time, self._doTerminate, conn)
+                    self.scheduler.scheduleCall(conn.connection_id, conn.end_time, self._doEndtime, conn)
                     td = conn.end_time - now
-                    log.msg('Connection %s: terminate scheduled for %s UTC (%i seconds) (buildSchedule)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
+                    log.msg('Connection %s: End scheduled for %s UTC (%i seconds) (buildSchedule)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
                 else:
                     log.msg('Unhandled provision state %s for connection %s in scheduler building' % (conn.provision_state, conn.connection_id))
 
@@ -355,7 +355,7 @@ class GenericBackend(service.Service):
                 except Exception as e:
                     log.msg('Connection %s: Error tearing down link: %s' % (conn.connection_id, e))
 
-            self.scheduler.scheduleCall(connection_id, conn.end_time, self._doTerminate, conn)
+            self.scheduler.scheduleCall(connection_id, conn.end_time, self._doEndtime, conn)
             td = conn.start_time - datetime.datetime.utcnow()
             log.msg('Connection %s: terminating scheduled for %s UTC (%i seconds)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
 
@@ -374,11 +374,21 @@ class GenericBackend(service.Service):
         # return defer.fail( error.InternalNRMError('test termination failure') )
 
         conn = yield self._getConnection(connection_id, header.requester_nsa)
-        yield self._doTerminate(conn)
 
-        # reply, here the reply will practially always come before the ack
+        if conn.lifecycle_state == state.TERMINATED:
+            defer.returnValue(conn.cid)
+
+        yield self._doEndtime(conn)
+
+        yield state.terminating(conn)
+        self.logStateUpdate(conn, 'TERMINATING')
+
+        # here the reply will practially always come before the ack
         header = nsa.NSIHeader(conn.requester_nsa, conn.requester_nsa, []) # The NSA is both requester and provider in the backend, but this might be problematic without aggregator
         yield self.parent_requester.terminateConfirmed(header, conn.connection_id)
+
+        yield state.terminated(conn)
+        self.logStateUpdate(conn, 'TERMINATED')
 
 
     @defer.inlineCallbacks
@@ -483,9 +493,9 @@ class GenericBackend(service.Service):
 
             now = datetime.datetime.utcnow()
             if now > conn.end_time:
-                yield self._doTerminate(conn)
+                yield self._doEndtime(conn)
             else:
-                self.scheduler.scheduleCall(conn.connection_id, conn.end_time, self._doTerminate, conn)
+                self.scheduler.scheduleCall(conn.connection_id, conn.end_time, self._doEndtime, conn)
                 td = conn.end_time - datetime.datetime.utcnow()
                 log.msg('Connection %s: terminate scheduled for %s UTC (%i seconds)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
 
@@ -575,15 +585,10 @@ class GenericBackend(service.Service):
 
 
     @defer.inlineCallbacks
-    def _doTerminate(self, conn):
+    def _doEndtime(self, conn):
 
-        if conn.lifecycle_state == state.TERMINATED:
-            defer.returnValue(conn.cid)
-
-        # this allows connections stuck in terminating to terminate
-        if conn.lifecycle_state == state.CREATED:
-            yield state.terminating(conn)
-            self.logStateUpdate(conn, 'TERMINATING')
+        if conn.lifecycle_state != state.CREATED:
+            raise error.InvalidTransitionError('Cannot end connection in state: %s' % conn.lifecycle_state)
 
         self.scheduler.cancelCall(conn.connection_id)
 
@@ -596,9 +601,8 @@ class GenericBackend(service.Service):
                 self.calendar.removeReservation(src_resource, conn.start_time, conn.end_time)
                 self.calendar.removeReservation(dst_resource, conn.start_time, conn.end_time)
             except Exception as e:
-                log.msg('Error terminating connection: %s' % e)
+                log.msg('Error ending connection: %s' % e)
                 raise e
 
-        yield state.terminated(conn)
-        self.logStateUpdate(conn, 'TERMINATED')
+        yield state.passedEndtime(conn)
 
