@@ -92,26 +92,33 @@ class GenericBackend(service.Service):
                 log.msg('Connection %s: Immediate terminate during buildSchedule' % conn.connection_id, system=self.log_system)
                 yield self._doTerminate(conn)
 
-            elif conn.start_time < now:
-                if conn.provision_state == state.PROVISIONED:
-                    self.scheduler.scheduleCall(conn.connection_id, conn.end_time, self._doActivate, conn)
-                    td = conn.end_time - now
-                    log.msg('Connection %s: activate scheduled for %s UTC (%i seconds)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
+            elif conn.start_time > now:
+                # start time has not yet passed, we most schedule activate or schedule terminate depending on state
+                if conn.provision_state == state.PROVISIONED and conn.data_plane_active == False:
+                    self.scheduler.scheduleCall(conn.connection_id, conn.start_time, self._doActivate, conn)
+                    td = conn.start_time - now
+                    log.msg('Connection %s: activate scheduled for %s UTC (%i seconds) (buildSchedule)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
                 elif conn.provision_state == state.RELEASED:
                     self.scheduler.scheduleCall(conn.connection_id, conn.end_time, self._doTerminate, conn)
                     td = conn.end_time - now
-                    log.msg('Connection %s: terminate scheduled for %s UTC (%i seconds)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
+                    log.msg('Connection %s: terminate scheduled for %s UTC (%i seconds) (buildSchedule' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
                 else:
                     log.msg('Unhandled provision state %s for connection %s in scheduler building' % (conn.provision_state, conn.connection_id))
 
-            elif conn.start_time > now:
-                if conn.provision_state == state.PROVISIONED and conn.data_plane_active == False:
-                    log.msg('Connection %s: Immediate activate during buildSchedule' % conn.connection_id, system=self.log_system)
-                    yield self._doActivate(conn)
+            elif conn.start_time < now:
+                # we have passed start time, we must either: activate, schedule deactive, or schedule terminate
+                if conn.provision_state == state.PROVISIONED:
+                    if conn.data_plane_active:
+                        self.scheduler.scheduleCall(conn.connection_id, conn.end_time, self._doTeardown, conn)
+                        td = conn.end_time - now
+                        log.msg('Connection %s: already active, scheduling teardown for %s UTC (%i seconds) (buildSchedule)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
+                    else:
+                        log.msg('Connection %s: Immediate activate during buildSchedule' % conn.connection_id, system=self.log_system)
+                        yield self._doActivate(conn)
                 elif conn.provision_state == state.RELEASED:
                     self.scheduler.scheduleCall(conn.connection_id, conn.end_time, self._doTerminate, conn)
                     td = conn.end_time - now
-                    log.msg('Connection %s: terminate scheduled for %s UTC (%i seconds)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
+                    log.msg('Connection %s: terminate scheduled for %s UTC (%i seconds) (buildSchedule)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
                 else:
                     log.msg('Unhandled provision state %s for connection %s in scheduler building' % (conn.provision_state, conn.connection_id))
 
@@ -318,7 +325,8 @@ class GenericBackend(service.Service):
         else:
             self.scheduler.scheduleCall(connection_id, conn.start_time, self._doActivate, conn)
             td = conn.start_time - now
-            log.msg('Connection %s: activate scheduled for %s UTC (%i seconds)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
+            log.msg('Connection %s: activate scheduled for %s UTC (%i seconds) (provision)' % \
+                    (conn.connection_id, conn.start_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
 
         yield state.provisioned(conn)
         self.logStateUpdate(conn, 'PROVISIONED')
