@@ -523,6 +523,7 @@ class Aggregator:
     @defer.inlineCallbacks
     def reserveConfirmed(self, header, connection_id, global_reservation_id, description, criteria):
 
+        # This will fail if we don't get an ack first
         sub_connection = yield self.getSubConnection(header.provider_nsa, connection_id)
 
         # gid and desc should be identical, not checking, same with bandwidth, schedule, etc
