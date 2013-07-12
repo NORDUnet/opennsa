@@ -5,7 +5,6 @@ Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2012)
 """
 
-import StringIO
 from xml.etree import ElementTree as ET
 
 from twisted.python import log
