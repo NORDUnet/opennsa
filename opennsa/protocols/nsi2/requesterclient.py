@@ -19,10 +19,6 @@ from opennsa.protocols.nsi2 import actions, bindings, helper
 URN_NETWORK = 'urn:ogf:network:'
 
 
-def utcTime(dt):
-    return dt.isoformat().rsplit('.',1)[0] + 'Z'
-
-
 
 class RequesterClient:
 
