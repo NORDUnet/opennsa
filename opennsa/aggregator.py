@@ -98,6 +98,12 @@ class Aggregator:
         self.notification_id    = 0
 
 
+    def getNotificationId(self):
+        nid = self.notification_id
+        self.notification_id += 1
+        return nid
+
+
     def getConnection(self, requester_nsa, connection_id):
 
         # need to do authz here
@@ -236,6 +242,7 @@ class Aggregator:
 
 
             header = nsa.NSIHeader(self.nsa_.urn(), provider_nsa.urn(), []) # need to something more here - or delegate to protocl stack (yes)
+            header.newCorrelationId()
             d = provider.reserve(header, None, conn.global_reservation_id, conn.description, ssp)
 
             # Note: This approach is racy. If the reserveConfirmed message gets back first, there is no sub connection to grab for it.
@@ -501,7 +508,7 @@ class Aggregator:
                 data_plane_status = (aggr_active, aggr_version, aggr_consistent)
 
                 states = (c.reservation_state, c.provision_state, c.lifecycle_state, data_plane_status)
-                t = ( c.connection_id, c.global_reservation_id, c.description, [ criteria ], c.requester_nsa, states, self.notification_id)
+                t = ( c.connection_id, c.global_reservation_id, c.description, [ criteria ], c.requester_nsa, states, self.getNotificationId())
                 reservations.append(t)
 
             self.parent_requester.querySummaryConfirmed(header, reservations)
