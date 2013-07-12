@@ -262,7 +262,7 @@ class GenericBackend(service.Service):
                                          start_time=service_params.start_time, end_time=service_params.end_time,
                                          bandwidth=service_params.bandwidth)
         yield conn.save()
-        reactor.callWhenRunning(self._doReserve, conn)
+        reactor.callWhenRunning(self._doReserve, conn, header.correlation_id)
         defer.returnValue(connection_id)
 
 
@@ -429,7 +429,7 @@ class GenericBackend(service.Service):
     # --
 
     @defer.inlineCallbacks
-    def _doReserve(self, conn):
+    def _doReserve(self, conn, correlation_id):
 
         yield state.reserveChecking(conn)
         self.logStateUpdate(conn, 'RESERVE CHECKING')
@@ -451,9 +451,9 @@ class GenericBackend(service.Service):
 
         sc_source_stp = nsa.STP(conn.source_network, conn.source_port, conn.source_labels)
         sc_dest_stp   = nsa.STP(conn.dest_network,   conn.dest_port,   conn.dest_labels)
-        sp = nsa.ServiceParameters(conn.start_time, conn.end_time, sc_source_stp, sc_dest_stp, conn.bandwidth)
+        sp = nsa.ServiceParameters(conn.start_time, conn.end_time, sc_source_stp, sc_dest_stp, conn.bandwidth, version=conn.revision)
 
-        header = nsa.NSIHeader(conn.requester_nsa, conn.requester_nsa, []) # The NSA is both requester and provider in the backend, but this might be problematic without aggregator
+        header = nsa.NSIHeader(conn.requester_nsa, conn.requester_nsa, correlation_id=correlation_id) # The NSA is both requester and provider in the backend, but this might be problematic without aggregator
         yield self.parent_requester.reserveConfirmed(header, conn.connection_id, conn.global_reservation_id, conn.description, sp)
 
 
