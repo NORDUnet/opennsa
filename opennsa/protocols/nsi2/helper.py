@@ -189,7 +189,7 @@ def buildQuerySummaryResultType(reservations):
 
         criterias = []
         for crit in crits:
-            schedule   = bindings.ScheduleType(crit.start_time, crit.end_time)
+            schedule   = bindings.ScheduleType( createXMLTime(crit.start_time), createXMLTime(crit.end_time) )
             source_stp = createSTPType(crit.source_stp)
             dest_stp   = createSTPType(crit.dest_stp)
             path       = bindings.PathType('Bidirectional', False, source_stp, dest_stp, None)
