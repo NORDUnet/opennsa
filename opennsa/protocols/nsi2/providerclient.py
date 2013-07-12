@@ -10,11 +10,6 @@ from opennsa.protocols.nsi2 import actions, bindings, helper
 
 
 
-def utcTime(dt):
-    return dt.isoformat().rsplit('.',1)[0] + 'Z'
-
-
-
 class ProviderClient:
 
     def __init__(self, ctx_factory=None):
@@ -73,7 +68,7 @@ class ProviderClient:
         sp = service_parameters
 
         version = 0
-        schedule = bindings.ScheduleType( sp.start_time.isoformat(), sp.end_time.isoformat() )
+        schedule = bindings.ScheduleType( helper.createXMLTime(sp.start_time) ,helper.createXMLTime(sp.end_time) )
         bandwidth = sp.bandwidth
 
         service_attributes = None

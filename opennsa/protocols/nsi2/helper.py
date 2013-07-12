@@ -89,6 +89,12 @@ def parseRequest(soap_data):
     return nsi_header, body
 
 
+def createXMLTime(timestamp):
+    # we assume this is without tz info and in utc time, because that is how it should be in opennsa
+    assert timestamp.tzinfo is None, 'timestamp must be without time zone information'
+    return timestamp.isoformat() + 'Z'
+
+
 def createLabel(type_value_pair):
     if type_value_pair.targetNamespace:
         label_type = '{%s}%s' % (type_value_pair.targetNamespace, type_value_pair.type_)
