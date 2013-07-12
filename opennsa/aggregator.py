@@ -95,6 +95,7 @@ class Aggregator:
         self.parent_requester   = parent_requester
         self.providers          = providers
 
+        self.reservations       = {} # correlation_id -> info
         self.notification_id    = 0
 
 
@@ -243,29 +244,42 @@ class Aggregator:
 
             header = nsa.NSIHeader(self.nsa_.urn(), provider_nsa.urn(), []) # need to something more here - or delegate to protocl stack (yes)
             header.newCorrelationId()
+
+            # save info for db saving
+            local_link = True if provider_nsa == self.nsa_ else False
+
+            self.reservations[header.correlation_id] = {'local_link'    : local_link,
+                                                        'provider_nsa'  : provider_nsa.urn(),
+                                                        'service_connection_id' : conn.id,
+                                                        'order_id'       : idx,
+                                                        'source_network' : link.network,
+                                                        'source_port'    : link.src_port,
+                                                        'dest_network'   : link.network,
+                                                        'dest_port'      : link.dst_port }
+
             d = provider.reserve(header, None, conn.global_reservation_id, conn.description, ssp)
-
-            # Note: This approach is racy. If the reserveConfirmed message gets back first, there is no sub connection to grab for it.
-
-            @defer.inlineCallbacks
-            def reserveResponse(connection_id, link_provider_nsa, order_id):
-                # need to collapse the end stps in Connection object
-                log.msg('Connection reservation for %s via %s acked' % (connection_id, link_provider_nsa), debug=True, system=LOG_SYSTEM)
-                # should probably do some sanity checks here
-                sp = service_params
-                local_link = True if link_provider_nsa == self.nsa_ else False
-                sc = database.SubConnection(provider_nsa=link_provider_nsa.urn(),
-                                            connection_id=connection_id, local_link=local_link, revision=0, service_connection_id=conn.id, order_id=order_id,
-                                            global_reservation_id=global_reservation_id, description=description,
-                                            reservation_state=state.RESERVE_START, provision_state=state.RELEASED, lifecycle_state=state.CREATED, data_plane_active=False,
-                                            source_network=sp.source_stp.network, source_port=sp.source_stp.port, source_labels=sp.source_stp.labels,
-                                            dest_network=sp.dest_stp.network, dest_port=sp.dest_stp.port, dest_labels=sp.dest_stp.labels,
-                                            start_time=sp.start_time.isoformat(), end_time=sp.end_time.isoformat(), bandwidth=sp.bandwidth)
-                yield sc.save()
-                defer.returnValue(sc)
-
-            d.addCallback(reserveResponse, provider_nsa, idx)
             defs.append(d)
+
+            # Don't bother trying to save connection here, wait for reserveConfirmed
+
+#            @defer.inlineCallbacks
+#            def reserveResponse(connection_id, link_provider_nsa, order_id):
+#                # need to collapse the label values when getting reserveConfirm
+#                log.msg('Connection reservation for %s via %s acked' % (connection_id, link_provider_nsa), debug=True, system=LOG_SYSTEM)
+#                # should probably do some sanity checks here
+#                sp = service_params
+#                local_link = True if link_provider_nsa == self.nsa_ else False
+#                sc = database.SubConnection(provider_nsa=link_provider_nsa.urn(),
+#                                            connection_id=connection_id, local_link=local_link, revision=0, service_connection_id=conn.id, order_id=order_id,
+#                                            global_reservation_id=global_reservation_id, description=description,
+#                                            reservation_state=state.RESERVE_START, provision_state=state.RELEASED, lifecycle_state=state.CREATED, data_plane_active=False,
+#                                            source_network=sp.source_stp.network, source_port=sp.source_stp.port, source_labels=sp.source_stp.labels,
+#                                            dest_network=sp.dest_stp.network, dest_port=sp.dest_stp.port, dest_labels=sp.dest_stp.labels,
+#                                            start_time=sp.start_time.isoformat(), end_time=sp.end_time.isoformat(), bandwidth=sp.bandwidth)
+#                yield sc.save()
+#                defer.returnValue(sc)
+#
+#            d.addCallback(reserveResponse, provider_nsa, idx)
 
         results = yield defer.DeferredList(defs, consumeErrors=True) # doesn't errback
         successes = [ r[0] for r in results ]
@@ -530,44 +544,60 @@ class Aggregator:
     @defer.inlineCallbacks
     def reserveConfirmed(self, header, connection_id, global_reservation_id, description, criteria):
 
-        # This will fail if we don't get an ack first
-        sub_connection = yield self.getSubConnection(header.provider_nsa, connection_id)
+        log.msg('', system=LOG_SYSTEM)
+        log.msg('reserveConfirm. NSA: %s. Connection ID: %s' % (header.requester_nsa, connection_id), system=LOG_SYSTEM)
+
+        if not header.correlation_id in self.reservations:
+            msg = 'Unrecognized correlation id %s in reserveConfirmed. Connection ID %s. NSA %s' % (header.correlation_id, connection_id, header.provider_nsa)
+            log.msg(msg, system=LOG_SYSTEM)
+            raise error.ConnectionNonExistentError(msg)
+
+        org_provider_nsa = self.reservations[header.correlation_id]['provider_nsa']
+        if header.provider_nsa != org_provider_nsa:
+            log.msg('Provider NSA in header %s for reserveConfirmed does not match saved identity %s' % (header.provider_nsa, org_provider_nsa), system=LOG_SYSTEM)
+            raise error.SecurityError('Provider NSA for connection does not match saved identity')
+
+        resv_info = self.reservations.pop(header.correlation_id)
 
         # gid and desc should be identical, not checking, same with bandwidth, schedule, etc
 
         # check that path matches our intent
-
-        if criteria.source_stp.network != sub_connection.source_network:
+        if criteria.source_stp.network != resv_info['source_network']:
             print "source network mismatch"
-        if criteria.source_stp.port    != sub_connection.source_port:
+        if criteria.source_stp.port    != resv_info['source_port']:
             print "source port mismatch"
-        if criteria.dest_stp.network   != sub_connection.dest_network:
+        if criteria.dest_stp.network   != resv_info['dest_network']:
             print "source network mismatch"
-        if criteria.dest_stp.port      != sub_connection.dest_port:
+        if criteria.dest_stp.port      != resv_info['dest_port']:
             print "source port mismatch"
         if not criteria.source_stp.labels[0].singleValue():
             print "source label is no a single value"
         if not criteria.source_stp.labels[0].singleValue():
             print "dest label is no a single value"
 
-        # we might need something better for this...
-        criteria.source_stp.labels[0].intersect(sub_connection.source_labels[0])
-        criteria.dest_stp.labels[0].intersect(sub_connection.dest_labels[0])
+        # skip label check for now
+        #criteria.source_stp.labels[0].intersect(sub_connection.source_labels[0])
+        #criteria.dest_stp.labels[0].intersect(sub_connection.dest_labels[0])
 
-        sub_connection.reservation_state = state.RESERVE_HELD
-        sub_connection.source_labels = criteria.source_stp.labels
-        sub_connection.dest_labels   = criteria.dest_stp.labels
+        # save sub connection in database
+        sc = database.SubConnection(provider_nsa=org_provider_nsa, connection_id=connection_id, local_link=resv_info['local_link'],
+                                    revision=criteria.version, service_connection_id=resv_info['service_connection_id'], order_id=resv_info['order_id'],
+                                    global_reservation_id=global_reservation_id, description=description,
+                                    reservation_state=state.RESERVE_HELD, provision_state=state.RELEASED, lifecycle_state=state.CREATED, data_plane_active=False,
+                                    source_network=criteria.source_stp.network, source_port=criteria.source_stp.port, source_labels=criteria.source_stp.labels,
+                                    dest_network=criteria.dest_stp.network, dest_port=criteria.dest_stp.port, dest_labels=criteria.dest_stp.labels,
+                                    start_time=criteria.start_time.isoformat(), end_time=criteria.end_time.isoformat(), bandwidth=criteria.bandwidth)
 
-        yield sub_connection.save()
+        yield sc.save()
 
         # figure out if we can aggregate upwards
 
-        conn = yield sub_connection.ServiceConnection.get()
+        conn = yield sc.ServiceConnection.get()
         sub_conns = yield conn.SubConnections.get()
 
-        if sub_connection.order_id == 0:
+        if sc.order_id == 0:
             conn.source_labels = criteria.source_stp.labels
-        if sub_connection.order_id == len(sub_conns)-1:
+        if sc.order_id == len(sub_conns)-1:
             conn.dest_labels = criteria.dest_stp.labels
 
         yield conn.save()
