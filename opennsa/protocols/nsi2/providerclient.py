@@ -148,7 +148,7 @@ class ProviderClient:
 
         header_element = helper.createHeader(requester_nsa, provider_nsa)
 
-        reserve_timeout = bindings.ReserveTimeoutRequestType(connection_id, notification_id, timestamp, timeout_value, originating_connection_id, originating_nsa)
+        reserve_timeout = bindings.ReserveTimeoutRequestType(connection_id, notification_id, helper.createXMLTime(timestamp), timeout_value, originating_connection_id, originating_nsa)
 
         body_element = reserve_timeout.xml(bindings.reserveTimeout)
 
@@ -163,7 +163,7 @@ class ProviderClient:
         header_element = helper.createHeader(requester_nsa, provider_nsa)
 
         data_plane_status = bindings.DataPlaneStatusType(active, version, consistent)
-        dps = bindings.DataPlaneStateChangeRequestType(connection_id, notification_id, timestamp, data_plane_status)
+        dps = bindings.DataPlaneStateChangeRequestType(connection_id, notification_id, helper.createXMLTime(timestamp), data_plane_status)
 
         body_element = dps.xml(bindings.dataPlaneStateChange)
 
@@ -183,7 +183,7 @@ class ProviderClient:
         else:
             service_exception = None
 
-        error_event = bindings.ErrorEventType(connection_id, notification_id, timestamp, event, None, service_exception)
+        error_event = bindings.ErrorEventType(connection_id, notification_id, helper.createXMLTime(timestamp), event, None, service_exception)
 
         body_element = error_event.xml(bindings.errorEvent)
 
