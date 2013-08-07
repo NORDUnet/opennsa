@@ -70,10 +70,9 @@ def _parseLabelSpec(label_spec):
 
 def parseTopologySpec(source, network_name, managing_nsa):
 
-#    ports, port_interface_map = parsePortSpec(source)
-    inbound_ports, outbound_ports, bidirectional_ports, port_interface_map = parsePortSpec(source)
-
     assert managing_nsa.identity == network_name + ':nsa', 'Network name and nsa name does not match'
+
+    inbound_ports, outbound_ports, bidirectional_ports, port_interface_map = parsePortSpec(source)
 
     network = nml.Network(network_name, managing_nsa, inbound_ports, outbound_ports, bidirectional_ports)
     return network, port_interface_map
@@ -94,7 +93,6 @@ def parsePortSpec(source):
     assert isinstance(source, file) or isinstance(source, StringIO.StringIO), 'Topology source must be file or StringIO instance'
 
     port_interface_map = {}
-#    ports = []
     inbound_ports       = []
     outbound_ports      = []
     bidirectional_ports = []
