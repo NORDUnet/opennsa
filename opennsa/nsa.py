@@ -18,8 +18,8 @@ from opennsa import error
 
 
 
+OGF_PREFIX = 'urn:ogf:network:'
 STP_PREFIX = 'urn:ogf:network:stp:'
-NSA_PREFIX = 'urn:ogf:network:nsa:'
 
 LOG_SYSTEM = 'opennsa.nsa'
 
@@ -270,7 +270,7 @@ class NetworkServiceAgent(object):
 
 
     def urn(self):
-        return NSA_PREFIX + self.identity
+        return OGF_PREFIX + self.identity
 
 
     def __str__(self):
