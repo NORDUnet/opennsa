@@ -24,10 +24,9 @@ ETHERNET_VLAN = '{%s}vlan' % ETHERNET
 
 class Port(object):
 
-    def __init__(self, name, orientation, labels, bandwidth, remote_network=None, remote_port=None):
+    def __init__(self, name, labels, remote_network=None, remote_port=None):
 
-        assert ':' not in name, 'Invalid port name, must not contain ":"'
-        assert orientation in (INGRESS, EGRESS), 'Invalid port orientation: %s' % orientation
+        assert ':' not in name, 'Invalid port name %s, must not contain ":"' % name
         if labels:
             assert type(labels) is list, 'labels must be list or None'
             for label in labels:
@@ -35,9 +34,7 @@ class Port(object):
         assert (remote_network and remote_port) or not (remote_network and remote_port), 'Must specify remote network and port or none of them'
 
         self.name           = name              # String  ; Base name, no network name or uri prefix
-        self.orientation    = orientation       # Must be INGRESS or EGRESS
         self._labels        = labels            # [ nsa.Label ]  ; can be empty
-        self.bandwidth      = bandwidth         # Integer  ; in Mbps
         self.remote_network = remote_network    # String
         self.remote_port    = remote_port       # String
 
@@ -73,8 +70,8 @@ class Port(object):
         return self.remote_network != None
 
 
-    def canProvideBandwidth(self, desired_bandwidth):
-        return desired_bandwidth <= self.bandwidth
+#    def canProvideBandwidth(self, desired_bandwidth):
+#        return desired_bandwidth <= self.bandwidth
 
 
 
@@ -121,17 +118,21 @@ class BidirectionalPort(object):
 
 class Network(object):
 
-    def __init__(self, name, ports, managing_nsa):
+    def __init__(self, name, managing_nsa, inbound_ports, outbound_ports, bidirectional_ports):
 
         assert type(name) is str, 'Network name must be a string'
-        assert type(ports) is list, 'Network ports must be a list'
+        assert type(inbound_ports) is list, 'Inbound ports must be a list'
+        assert type(outbound_ports) is list, 'Outbound network ports must be a list'
+        assert type(bidirectional_ports) is list, 'Bidirectional network ports must be a list'
         assert type(managing_nsa) is nsa.NetworkServiceAgent, 'Managing NSA must be a <NetworkServiceAgent>'
 
         # we should perhaps check that no ports has the same name
 
-        self.name           = name          # String  ; just base name, no prefix or URI stuff
-        self.ports          = ports         # [ Port | BidirectionalPort ]
-        self.managing_nsa   = managing_nsa  # nsa.NetworkServiceAgent
+        self.name                = name          # String  ; just base name, no prefix or URI stuff
+        self.inbound_ports       = inbound_ports or []
+        self.outbound_ports      = outbound_ports or []
+        self.bidirectional_ports = bidirectional_ports or []
+        self.managing_nsa        = managing_nsa  # nsa.NetworkServiceAgent
 
 
     def getPort(self, port_name):

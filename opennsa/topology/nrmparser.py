@@ -70,8 +70,12 @@ def _parseLabelSpec(label_spec):
 
 def parseTopologySpec(source, network_name, managing_nsa):
 
-    ports, port_interface_map = parsePortSpec(source)
-    network = nml.Network(network_name, ports, managing_nsa)
+#    ports, port_interface_map = parsePortSpec(source)
+    inbound_ports, outbound_ports, bidirectional_ports, port_interface_map = parsePortSpec(source)
+
+    assert managing_nsa.identity == network_name + ':nsa', 'Network name and nsa name does not match'
+
+    network = nml.Network(network_name, managing_nsa, inbound_ports, outbound_ports, bidirectional_ports)
     return network, port_interface_map
 
 
@@ -90,7 +94,10 @@ def parsePortSpec(source):
     assert isinstance(source, file) or isinstance(source, StringIO.StringIO), 'Topology source must be file or StringIO instance'
 
     port_interface_map = {}
-    ports = []
+#    ports = []
+    inbound_ports       = []
+    outbound_ports      = []
+    bidirectional_ports = []
 
     for line in source:
         line = line.strip()
@@ -127,15 +134,18 @@ def parsePortSpec(source):
                 remote_in  = remote_port + in_suffix
                 remote_out = remote_port + out_suffix
 
-            inbound_port  = nml.Port(port_name + '-in',  nml.INGRESS, labels, bandwidth, remote_network, remote_out)
-            outbound_port = nml.Port(port_name + '-out', nml.EGRESS,  labels, bandwidth, remote_network, remote_in)
-            port = nml.BidirectionalPort(port_name, inbound_port, outbound_port)
+            inbound_port        = nml.Port(port_name + '-in',  labels, remote_network, remote_out)
+            outbound_port       = nml.Port(port_name + '-out', labels, remote_network, remote_in)
+            bidirectional_port  = nml.BidirectionalPort(port_name, inbound_port, outbound_port)
 
-            ports += [ inbound_port, outbound_port, port ]
+            inbound_ports.append(inbound_port)
+            outbound_ports.append(outbound_port)
+            bidirectional_ports.append(bidirectional_port)
+
             port_interface_map[port_name] = interface
 
         elif port_type == UNIDIRECTIONAL_ETHERNET:
             raise NotImplementedError('Unidirectional ethernet ports not implemented yet')
 
-    return ports, port_interface_map
+    return inbound_ports, outbound_ports, bidirectional_ports, port_interface_map
 
