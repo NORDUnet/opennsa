@@ -132,8 +132,8 @@ def parsePortSpec(source):
                 remote_in  = remote_port + in_suffix
                 remote_out = remote_port + out_suffix
 
-            inbound_port        = nml.Port(port_name + '-in',  labels, remote_network, remote_out)
-            outbound_port       = nml.Port(port_name + '-out', labels, remote_network, remote_in)
+            inbound_port        = nml.InternalPort(port_name + '-in',  bandwidth, labels, remote_network, remote_out)
+            outbound_port       = nml.InternalPort(port_name + '-out', bandwidth, labels, remote_network, remote_in)
             bidirectional_port  = nml.BidirectionalPort(port_name, inbound_port, outbound_port)
 
             inbound_ports.append(inbound_port)

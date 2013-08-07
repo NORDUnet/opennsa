@@ -6,6 +6,8 @@ Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2011-2013)
 """
 
+import itertools
+
 from twisted.python import log
 
 from opennsa import nsa, error
@@ -70,8 +72,19 @@ class Port(object):
         return self.remote_network != None
 
 
-#    def canProvideBandwidth(self, desired_bandwidth):
-#        return desired_bandwidth <= self.bandwidth
+
+class InternalPort(Port):
+    """
+    Same as Port, but also has a bandwidth, so the pathfinder can probe for bandwidth.
+    """
+    def __init__(self, name, bandwidth, labels, remote_network=None, remote_port=None):
+
+        super(InternalPort, self).__init__(name, labels, remote_network, remote_port)
+        self.bandwidth = bandwidth
+
+
+    def canProvideBandwidth(self, desired_bandwidth):
+        return desired_bandwidth <= self.bandwidth
 
 
 
@@ -79,8 +92,8 @@ class BidirectionalPort(object):
 
     def __init__(self, name, inbound_port, outbound_port):
         assert type(name) is str, 'Name must be a string'
-        assert type(inbound_port) is Port, 'Inbound port must be a <Port>'
-        assert type(outbound_port) is Port, 'Outbound port must be a <Port>'
+        assert isinstance(inbound_port, Port), 'Inbound port must be a <Port>'
+        assert isinstance(outbound_port, Port), 'Outbound port must be a <Port>'
         assert [ l.type_ for l in inbound_port.labels() ] == [ l.type_ for l in outbound_port.labels() ], 'Port labels must match each other'
 
         self.name = name
@@ -136,16 +149,16 @@ class Network(object):
 
 
     def getPort(self, port_name):
-        for port in self.ports:
+        for port in itertools.chain(self.inbound_ports, self.outbound_ports, self.bidirectional_ports):
             if port.name == port_name:
                 return port
         raise error.TopologyError('No port named %s for network %s' %(port_name, self.name))
 
 
-    def findPorts(self, bidirectionality, labels, exclude=None):
+    def findPorts(self, bidirectionality, labels=None, exclude=None):
         matching_ports = []
-        for port in self.ports:
-            if port.isBidirectional() == bidirectionality and port.canMatchLabels(labels):
+        for port in itertools.chain(self.inbound_ports, self.outbound_ports, self.bidirectional_ports):
+            if port.isBidirectional() == bidirectionality and (labels is None or port.canMatchLabels(labels)):
                 if exclude and port.name == exclude:
                     continue
                 matching_ports.append(port)
@@ -188,7 +201,7 @@ class Topology:
         remote_network  = self.getNetwork(port.inbound_port.remote_network)
         inbound_remote  = port.inbound_port.remote_port
         outbound_remote = port.outbound_port.remote_port
-        for rp in remote_network.ports:
+        for rp in remote_network.findPorts(True):
             if isinstance(rp, BidirectionalPort) and rp.inbound_port.name == outbound_remote and rp.outbound_port.name == inbound_remote:
                 return remote_network.name, rp.name
         return None
