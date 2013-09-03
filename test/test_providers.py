@@ -189,7 +189,7 @@ class GenericProviderTest:
         self.failUnlessEquals(gid, 'gid-123')
         self.failUnlessEquals(desc, 'desc2')
 
-        self.failUnlessEquals(req_nsa, self.ns_agent.urn())
+        self.failUnlessEquals(req_nsa, self.requester_agent.urn())
         self.failUnlessEquals(len(crits), 1)
         crit = crits[0]
 
@@ -302,8 +302,8 @@ class GenericProviderTest:
     def testSlowActivate(self):
         # key here is that end time is passed when activation is done
 
-        source_stp  = nsa.STP('Aruba', self.source_port, labels=[ nsa.Label(nml.ETHERNET_VLAN, '1780') ] )
-        dest_stp    = nsa.STP('Aruba', self.dest_port,   labels=[ nsa.Label(nml.ETHERNET_VLAN, '1780') ] )
+        source_stp  = nsa.STP(self.network, self.source_port, labels=[ nsa.Label(nml.ETHERNET_VLAN, '1780') ] )
+        dest_stp    = nsa.STP(self.network, self.dest_port,   labels=[ nsa.Label(nml.ETHERNET_VLAN, '1780') ] )
         ## for backend/aggregator
         #start_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=1)
         #end_time   = datetime.datetime.utcnow() + datetime.timedelta(seconds=2)
@@ -410,17 +410,18 @@ class GenericProviderTest:
 
 class DUDBackendTest(GenericProviderTest, unittest.TestCase):
 
-    network = 'Aruba'
-
+    network     = 'Aruba'
     source_port = 'ps'
     dest_port   = 'bon'
 
-    source_stp  = nsa.STP('Aruba', source_port, labels=[ nsa.Label(nml.ETHERNET_VLAN, '1781-1782') ] )
-    dest_stp    = nsa.STP('Aruba', dest_port,   labels=[ nsa.Label(nml.ETHERNET_VLAN, '1782-1783') ] )
+    source_stp  = nsa.STP(network, source_port, labels=[ nsa.Label(nml.ETHERNET_VLAN, '1781-1782') ] )
+    dest_stp    = nsa.STP(network, dest_port,   labels=[ nsa.Label(nml.ETHERNET_VLAN, '1782-1783') ] )
     bandwidth   = 200
 
-    ns_agent    = nsa.NetworkServiceAgent('test-requester', 'http://localhost:9080/NSI/CS2')
-    header      = nsa.NSIHeader(ns_agent.urn(), 'test-provider', [])
+    requester_agent = nsa.NetworkServiceAgent('test-requester:nsa', 'dud_endpoint1')
+    provider_agent  = nsa.NetworkServiceAgent('Aruba:nsa', 'dud_endpoint2')
+
+    header      = nsa.NSIHeader(requester_agent.urn(), provider_agent.urn())
 
     def setUp(self):
 
@@ -428,9 +429,9 @@ class DUDBackendTest(GenericProviderTest, unittest.TestCase):
 
         self.requester = common.DUDRequester()
 
-        aruba_topo, pm = nrmparser.parseTopologySpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY), self.network, self.ns_agent)
+        aruba_topo, pm = nrmparser.parseTopologySpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY), self.network, self.provider_agent)
 
-        self.backend = dud.DUDNSIBackend('Aruba', aruba_topo, self.requester, pm, {})
+        self.backend = dud.DUDNSIBackend(self.network, aruba_topo, self.requester, pm, {})
 
         self.provider = self.backend
         self.provider.scheduler.clock = self.clock
@@ -461,17 +462,17 @@ class DUDBackendTest(GenericProviderTest, unittest.TestCase):
 
 class AggregatorTest(GenericProviderTest, unittest.TestCase):
 
-    network = 'Aruba'
-
+    network     = 'Aruba'
     source_port = 'ps'
     dest_port   = 'bon'
 
-    source_stp = nsa.STP('Aruba', 'ps',  labels=[ nsa.Label(nml.ETHERNET_VLAN, '1781-1782') ] )
-    dest_stp   = nsa.STP('Aruba', 'bon', labels=[ nsa.Label(nml.ETHERNET_VLAN, '1782-1783') ] )
+    source_stp = nsa.STP(network, source_port, labels=[ nsa.Label(nml.ETHERNET_VLAN, '1781-1782') ] )
+    dest_stp   = nsa.STP(network, dest_port,   labels=[ nsa.Label(nml.ETHERNET_VLAN, '1782-1783') ] )
     bandwidth = 200
 
-    ns_agent = nsa.NetworkServiceAgent('aruba', 'http://localhost:9080/NSI/CS2')
-    header         = nsa.NSIHeader(ns_agent.urn(), 'test-provider', [])
+    requester_agent = nsa.NetworkServiceAgent('test-requester:nsa', 'dud_endpoint1')
+    provider_agent  = nsa.NetworkServiceAgent('Aruba:nsa', 'dud_endpoint2')
+    header          = nsa.NSIHeader(requester_agent.urn(), provider_agent.urn())
 
     def setUp(self):
 
@@ -483,16 +484,16 @@ class AggregatorTest(GenericProviderTest, unittest.TestCase):
 
         self.clock = task.Clock()
 
-        aruba_topo, pm = nrmparser.parseTopologySpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY), self.network, self.ns_agent)
+        aruba_topo, pm = nrmparser.parseTopologySpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY), self.network, self.provider_agent)
 
-        self.backend = dud.DUDNSIBackend('Aruba', aruba_topo, self.requester, pm, {})
+        self.backend = dud.DUDNSIBackend(self.network, aruba_topo, self.requester, pm, {})
         self.backend.scheduler.clock = self.clock
 
         self.topology = nml.Topology()
         self.topology.addNetwork(aruba_topo)
 
-        providers = { self.ns_agent.urn() : self.backend }
-        self.provider = aggregator.Aggregator(self.network, self.ns_agent, self.topology, self.requester, providers)
+        providers = { self.provider_agent.urn() : self.backend }
+        self.provider = aggregator.Aggregator(self.network, self.provider_agent, self.topology, self.requester, providers)
 
         # set parent for backend, we need to create the aggregator before this can be done
         self.backend.parent_requester = self.provider
@@ -523,17 +524,18 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
     PROVIDER_PORT = 8180
     REQUESTER_PORT = 8280
 
-    network = 'Aruba'
-
+    network     = 'Aruba'
     source_port = 'ps'
     dest_port   = 'bon'
 
-    source_stp = nsa.STP('Aruba', 'ps',  labels=[ nsa.Label(nml.ETHERNET_VLAN, '1781-1782') ] )
-    dest_stp   = nsa.STP('Aruba', 'bon', labels=[ nsa.Label(nml.ETHERNET_VLAN, '1782-1783') ] )
+    source_stp = nsa.STP(network, source_port, labels=[ nsa.Label(nml.ETHERNET_VLAN, '1781-1782') ] )
+    dest_stp   = nsa.STP(network, dest_port,   labels=[ nsa.Label(nml.ETHERNET_VLAN, '1782-1783') ] )
     bandwidth  = 200
 
-    ns_agent = nsa.NetworkServiceAgent('test-requester', 'http://localhost:%i/NSI/services/CS2' % PROVIDER_PORT)
-    header   = nsa.NSIHeader(ns_agent.urn(), 'test-provider', reply_to=ns_agent.endpoint)
+    requester_agent = nsa.NetworkServiceAgent('test-requester:nsa', 'http://localhost:%i/NSI/services/RequesterService2' % REQUESTER_PORT)
+    provider_agent  = nsa.NetworkServiceAgent('Aruba:nsa', 'http://localhost:%i/NSI/services/CS2' % PROVIDER_PORT)
+
+    header   = nsa.NSIHeader(requester_agent.urn(), provider_agent.urn(), reply_to=requester_agent.endpoint)
 
     def setUp(self):
         from twisted.web import resource, server
@@ -550,16 +552,16 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
 
         self.clock = task.Clock()
 
-        aruba_topo, pm = nrmparser.parseTopologySpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY), self.network, self.ns_agent)
+        aruba_topo, pm = nrmparser.parseTopologySpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY), self.network, self.provider_agent)
 
-        self.backend = dud.DUDNSIBackend('Aruba', aruba_topo, None, pm, {}) # we set the parent later
+        self.backend = dud.DUDNSIBackend(self.network, aruba_topo, None, pm, {}) # we set the parent later
         self.backend.scheduler.clock = self.clock
 
         self.topology = nml.Topology()
         self.topology.addNetwork(aruba_topo)
 
-        providers = { self.ns_agent.urn() : self.backend }
-        self.aggregator = aggregator.Aggregator(self.network, self.ns_agent, self.topology, None, providers) # we set the parent later
+        providers = { self.provider_agent.urn() : self.backend }
+        self.aggregator = aggregator.Aggregator(self.network, self.provider_agent, self.topology, None, providers) # we set the parent later
 
         self.backend.parent_requester = self.aggregator
 
@@ -577,9 +579,8 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
         requester_top_resource = resource.Resource()
         soap_resource = soapresource.setupSOAPResource(requester_top_resource, 'RequesterService2')
 
-        providers = {'test-provider' : self.ns_agent.endpoint }
-        requester_url = 'http://localhost:%i/NSI/services/RequesterService2' % self.REQUESTER_PORT
-        self.provider = requesterclient.RequesterClient(providers, requester_url)
+        providers = { self.provider_agent.urn() : self.provider_agent.endpoint }
+        self.provider = requesterclient.RequesterClient(providers, self.requester_agent.endpoint)
 
         requester_service = requesterservice.RequesterService(soap_resource, self.requester) # this is the important part
         requester_factory = server.Site(requester_top_resource, logPath='/dev/null')
@@ -635,7 +636,7 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
         self.failUnlessEquals(gid, 'gid-123')
         self.failUnlessEquals(desc, 'desc2')
 
-        self.failUnlessEquals(req_nsa, self.ns_agent.urn())
+        self.failUnlessEquals(req_nsa, self.requester_agent.urn())
         self.failUnlessEquals(len(crits), 1)
         crit = crits[0]
 
