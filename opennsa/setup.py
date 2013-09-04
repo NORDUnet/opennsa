@@ -87,7 +87,7 @@ class OpenNSAService(twistedservice.MultiService):
 
         topo_source = open( vc[config.NRM_MAP_FILE] ) if type(vc[config.NRM_MAP_FILE]) is str else vc[config.NRM_MAP_FILE] # wee bit hackish
 
-        network, port_map = nrmparser.parseTopologySpec( topo_source, network_name, ns_agent)
+        network, port_map = nrmparser.parseTopologySpec(topo_source, network_name)
         topology = nml.Topology()
         topology.addNetwork(network)
 
@@ -122,7 +122,7 @@ class OpenNSAService(twistedservice.MultiService):
         top_resource.children['NSI'].putChild('connections', vr)
 
         topology_resource = resource.Resource()
-        topology_resource.putChild(vc[config.NETWORK_NAME] + '.xml', nmlhttp.TopologyResource(network))
+        topology_resource.putChild(vc[config.NETWORK_NAME] + '.xml', nmlhttp.TopologyResource(ns_agent, network))
 
         top_resource.children['NSI'].putChild('topology', topology_resource)
 

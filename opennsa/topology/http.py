@@ -22,10 +22,10 @@ class TopologyResource(resource.Resource):
 
     isLeaf = True
 
-    def __init__(self, nml_topology):
+    def __init__(self, nsi_agent, nml_topology):
         resource.Resource.__init__(self)
 
-        xml = nmlxml.nmlXML(nml_topology)
+        xml = nmlxml.nsiXML(nsi_agent, nml_topology)
         self.topology_representation = ET.tostring(xml)
 
 

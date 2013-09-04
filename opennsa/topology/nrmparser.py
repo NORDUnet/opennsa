@@ -68,17 +68,16 @@ def _parseLabelSpec(label_spec):
     return labels
 
 
-def parseTopologySpec(source, network_name, managing_nsa):
+def parseTopologySpec(source, network_name):
 
-    assert managing_nsa.identity == network_name + ':nsa', 'Network name and nsa name does not match'
+    inbound_ports, outbound_ports, bidirectional_ports, port_interface_map = parsePortSpec(source, network_name)
 
-    inbound_ports, outbound_ports, bidirectional_ports, port_interface_map = parsePortSpec(source)
-
-    network = nml.Network(network_name, managing_nsa, inbound_ports, outbound_ports, bidirectional_ports)
+    network_id = nml.URN_OGF_NETWORK + network_name + ':topology'
+    network = nml.Network(network_id, network_name, inbound_ports, outbound_ports, bidirectional_ports)
     return network, port_interface_map
 
 
-def parsePortSpec(source):
+def parsePortSpec(source, network_name):
 
     # Parse the entries like the following:
 
@@ -132,9 +131,16 @@ def parsePortSpec(source):
                 remote_in  = remote_port + in_suffix
                 remote_out = remote_port + out_suffix
 
-            inbound_port        = nml.InternalPort(port_name + '-in',  bandwidth, labels, remote_network, remote_out)
-            outbound_port       = nml.InternalPort(port_name + '-out', bandwidth, labels, remote_network, remote_in)
-            bidirectional_port  = nml.BidirectionalPort(port_name, inbound_port, outbound_port)
+            inbound_port_name   = port_name + '-in'
+            outbound_port_name  = port_name + '-out'
+
+            port_id             = nml.URN_OGF_NETWORK + network_name + port_name
+            inbound_port_id     = nml.URN_OGF_NETWORK + network_name + inbound_port_name
+            outbound_port_id    = nml.URN_OGF_NETWORK + network_name + outbound_port_name
+
+            inbound_port        = nml.InternalPort(inbound_port_id,  inbound_port_name,  bandwidth, labels, remote_network, remote_out)
+            outbound_port       = nml.InternalPort(outbound_port_id, outbound_port_name, bandwidth, labels, remote_network, remote_in)
+            bidirectional_port  = nml.BidirectionalPort(port_id, port_name, inbound_port, outbound_port)
 
             inbound_ports.append(inbound_port)
             outbound_ports.append(outbound_port)

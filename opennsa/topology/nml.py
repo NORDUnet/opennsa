@@ -18,15 +18,17 @@ LOG_SYSTEM = 'opennsa.topology'
 INGRESS = 'ingress'
 EGRESS  = 'egress'
 
+URN_OGF_NETWORK = 'urn:ogf:network:'
+
 # Label types
-ETHERNET = 'http://schemas.ogf.org/nml/2012/10/ethernet'
-ETHERNET_VLAN = '{%s}vlan' % ETHERNET
+ETHERNET = 'http://schemas.ogf.org/nml/2013/05/ethernet'
+ETHERNET_VLAN = '%s#vlan' % ETHERNET
 
 
 
 class Port(object):
 
-    def __init__(self, name, labels, remote_network=None, remote_port=None):
+    def __init__(self, id_, name, labels, remote_network=None, remote_port=None):
 
         assert ':' not in name, 'Invalid port name %s, must not contain ":"' % name
         if labels:
@@ -35,6 +37,7 @@ class Port(object):
                 assert type(label) is nsa.Label
         assert (remote_network and remote_port) or not (remote_network and remote_port), 'Must specify remote network and port or none of them'
 
+        self.id_            = id_               # The URN of the port
         self.name           = name              # String  ; Base name, no network name or uri prefix
         self._labels        = labels            # [ nsa.Label ]  ; can be empty
         self.remote_network = remote_network    # String
@@ -77,9 +80,8 @@ class InternalPort(Port):
     """
     Same as Port, but also has a bandwidth, so the pathfinder can probe for bandwidth.
     """
-    def __init__(self, name, bandwidth, labels, remote_network=None, remote_port=None):
-
-        super(InternalPort, self).__init__(name, labels, remote_network, remote_port)
+    def __init__(self, port_id, name, bandwidth, labels, remote_network=None, remote_port=None):
+        super(InternalPort, self).__init__(port_id, name, labels, remote_network, remote_port)
         self.bandwidth = bandwidth
 
 
@@ -90,12 +92,13 @@ class InternalPort(Port):
 
 class BidirectionalPort(object):
 
-    def __init__(self, name, inbound_port, outbound_port):
+    def __init__(self, port_id, name, inbound_port, outbound_port):
         assert type(name) is str, 'Name must be a string'
         assert isinstance(inbound_port, Port), 'Inbound port must be a <Port>'
         assert isinstance(outbound_port, Port), 'Outbound port must be a <Port>'
         assert [ l.type_ for l in inbound_port.labels() ] == [ l.type_ for l in outbound_port.labels() ], 'Port labels must match each other'
 
+        self.port_id = port_id
         self.name = name
         self.inbound_port  = inbound_port
         self.outbound_port = outbound_port
@@ -131,21 +134,21 @@ class BidirectionalPort(object):
 
 class Network(object):
 
-    def __init__(self, name, managing_nsa, inbound_ports, outbound_ports, bidirectional_ports):
+    def __init__(self, id_, name, inbound_ports, outbound_ports, bidirectional_ports):
 
+        assert type(id_) is str, 'Network id must be a string'
         assert type(name) is str, 'Network name must be a string'
         assert type(inbound_ports) is list, 'Inbound ports must be a list'
         assert type(outbound_ports) is list, 'Outbound network ports must be a list'
         assert type(bidirectional_ports) is list, 'Bidirectional network ports must be a list'
-        assert type(managing_nsa) is nsa.NetworkServiceAgent, 'Managing NSA must be a <NetworkServiceAgent>'
 
         # we should perhaps check that no ports has the same name
 
+        self.id_                 = id_           # String  ; the urn of the network topology
         self.name                = name          # String  ; just base name, no prefix or URI stuff
         self.inbound_ports       = inbound_ports or []
         self.outbound_ports      = outbound_ports or []
         self.bidirectional_ports = bidirectional_ports or []
-        self.managing_nsa        = managing_nsa  # nsa.NetworkServiceAgent
 
 
     def getPort(self, port_name):
@@ -220,7 +223,7 @@ class Topology:
                 raise error.TopologyError('Cannot connect bidirectional destination with unidirectional source')
         else:
             # both ports are unidirectional
-            if not (source_port.orientation, dest_port.orientation) in ( (nml.INGRESS, nml.EGRESS), (nml.EGRESS, nml.INGRESS) ):
+            if not (source_port.orientation, dest_port.orientation) in ( (INGRESS, EGRESS), (EGRESS, INGRESS) ):
                 raise error.TopologyError('Cannot connect STPs of same unidirectional direction (%s -> %s)' % (source_port.orientation, dest_port.orientation))
 
         # these are only really interesting for the initial call, afterwards they just prune
