@@ -244,11 +244,12 @@ def parseNSIService(nsi_service):
     assert nsi_service.tag == NSI_SERVICE, 'Top level container must be nsi:Service (is %s) ' % nsi_service.tag
 
     service_id = nsi_service.attrib[ID]
+    service_name = _baseName(service_id)
     service_type = nsi_service.findtext( str(NSI_TYPE) )
 
     if service_type == NSI_CS2_SERVICE_TYPE:
         endpoint = nsi_service.findtext( str(NSI_LINK) )
-        nsi_agent = nsa.NetworkServiceAgent(service_id, endpoint)
+        nsi_agent = nsa.NetworkServiceAgent(service_name, endpoint)
         return nsi_agent
     else:
         print 'Unrecognized service type: %s' % service_type
