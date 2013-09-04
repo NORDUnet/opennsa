@@ -36,8 +36,8 @@ LOG_FILE         = 'logfile'
 HOST             = 'host'
 PORT             = 'port'
 TLS              = 'tls'
-TOPOLOGY_FILE    = 'topology'
 NRM_MAP_FILE     = 'nrmmap'
+PEERS            = 'peers'
 
 # database
 DATABASE                = 'database'    # mandatory
@@ -143,16 +143,6 @@ def readVerifyConfig(cfg):
     except ConfigParser.NoOptionError:
         vc[LOG_FILE] = DEFAULT_LOG_FILE
 
-#    try:
-#        topology_list = cfg.get(BLOCK_SERVICE, TOPOLOGY_FILE)
-#    except ConfigParser.NoOptionError:
-#        topology_list = DEFAULT_TOPOLOGY_FILE
-#    topology_files = topology_list.split(',')
-#    for topology_file in topology_files:
-#        if not os.path.exists(topology_file):
-#            raise ConfigurationError('Specified (or default) topology file does not exist (%s)' % topology_file)
-#    vc[TOPOLOGY_FILE] = topology_files
-
     try:
         nrm_map_file = cfg.get(BLOCK_SERVICE, NRM_MAP_FILE)
         if not os.path.exists(nrm_map_file):
@@ -160,6 +150,13 @@ def readVerifyConfig(cfg):
         vc[NRM_MAP_FILE] = nrm_map_file
     except ConfigParser.NoOptionError:
         vc[NRM_MAP_FILE] = None
+
+    try:
+        peers_raw = cfg.get(BLOCK_SERVICE, PEERS)
+        peer_pairs = peers_raw.split('\n')
+        vc[PEERS] = [ pp.split('#',2) for pp in peer_pairs ]
+    except ConfigParser.NoOptionError:
+        vc[PEERS] = None
 
     try:
         vc[HOST] = cfg.get(BLOCK_SERVICE, HOST)

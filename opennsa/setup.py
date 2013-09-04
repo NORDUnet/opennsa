@@ -7,7 +7,7 @@ from twisted.web import resource, server
 from twisted.application import internet, service as twistedservice
 
 from opennsa import config, logging, nsa, database, aggregator, viewresource
-from opennsa.topology import nrmparser, nml, http as nmlhttp
+from opennsa.topology import nrmparser, nml, http as nmlhttp, fetcher
 from opennsa.protocols import nsi2, discovery
 
 
@@ -110,7 +110,13 @@ class OpenNSAService(twistedservice.MultiService):
 
         providers[ ns_agent.urn() ] = backend_service
 
-        # done with backend
+        # done with backend, now fetcher
+
+        if vc[config.PEERS]:
+            fetcher_service = fetcher.FetcherService(vc[config.PEERS])
+            fetcher_service.setServiceParent(self)
+
+        # wire up the http stuff
 
         top_resource = resource.Resource()
         discovery.setupDiscoveryService(None, top_resource)
