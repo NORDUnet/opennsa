@@ -17,10 +17,10 @@ CURACAO_PS = nsa.STP('curacao', 'ps', [LABEL])
 class TopologyTest(unittest.TestCase):
 
     def setUp(self):
-        an,_ = nrmparser.parseTopologySpec(StringIO(topology.ARUBA_TOPOLOGY),    'aruba',    nsa.NetworkServiceAgent('aruba:nsa',    'a-endpoint'))
-        bn,_ = nrmparser.parseTopologySpec(StringIO(topology.BONAIRE_TOPOLOGY),  'bonaire',  nsa.NetworkServiceAgent('bonaire:nsa',  'b-endpoint'))
-        cn,_ = nrmparser.parseTopologySpec(StringIO(topology.CURACAO_TOPOLOGY),  'curacao',  nsa.NetworkServiceAgent('curacao:nsa',  'c-endpoint'))
-        dn,_ = nrmparser.parseTopologySpec(StringIO(topology.DOMINICA_TOPOLOGY), 'dominica', nsa.NetworkServiceAgent('dominica:nsa', 'd-endpoint'))
+        an,_ = nrmparser.parseTopologySpec(StringIO(topology.ARUBA_TOPOLOGY),    'aruba')
+        bn,_ = nrmparser.parseTopologySpec(StringIO(topology.BONAIRE_TOPOLOGY),  'bonaire')
+        cn,_ = nrmparser.parseTopologySpec(StringIO(topology.CURACAO_TOPOLOGY),  'curacao')
+        dn,_ = nrmparser.parseTopologySpec(StringIO(topology.DOMINICA_TOPOLOGY), 'dominica')
 
         self.networks = [ an, bn, cn, dn ]
         self.topology = nml.Topology()
