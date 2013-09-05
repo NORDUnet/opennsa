@@ -208,10 +208,10 @@ class Aggregator:
 
         else:
             # log about creation and the connection type
-            path_info = ( conn.connection_id, conn.source_network, conn.source_port, conn.dest_network, conn.dest_port, conn.nsa)
+            path_info = ( conn.connection_id, conn.source_network, conn.source_port, conn.dest_network, conn.dest_port, conn.requester_nsa)
             log.msg('Connection %s: Aggregate path creation: %s:%s -> %s:%s (%s)' % path_info, system=LOG_SYSTEM)
             # making the connection is the same for all though :-)
-            paths = self.topology.findPaths(source_stp, dest_stp)
+            paths = self.topology.findPaths(source_stp, dest_stp, conn.bandwidth)
 
             # error out if we could not find a path
             if not paths:
