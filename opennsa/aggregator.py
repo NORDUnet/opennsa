@@ -219,7 +219,7 @@ class Aggregator:
                 log.msg(error_msg, system=LOG_SYSTEM)
                 raise error.TopologyError(error_msg)
 
-            paths.sort(key=lambda e : len(e.links()))
+            paths.sort(key=lambda e : len(e))
 
         selected_path = paths[0] # shortest path
         log_path = ' -> '.join( [ str(p) for p in selected_path ] )
