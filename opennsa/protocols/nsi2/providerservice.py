@@ -47,13 +47,14 @@ class ProviderService:
 
     def _createSOAPFault(self, err, provider_nsa, connection_id=None):
 
+        log.msg('Request error: %s. Returning error to remote client.' % err.getErrorMessage(), system=LOG_SYSTEM)
+
         se = helper.createServiceException(err, provider_nsa, connection_id)
         element = se.xml(bindings.serviceException)
         detail = ET.tostring(element)
 
         soap_fault = resource.SOAPFault( err.getErrorMessage(), detail )
-
-        return failure.Failure(soap_fault)
+        return soap_fault
 
 
     def reserve(self, soap_data):

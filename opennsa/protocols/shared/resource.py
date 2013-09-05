@@ -101,10 +101,16 @@ class SOAPResource(resource.Resource):
         log.msg('Received SOAP request. Action: %s. Length: %i' % (soap_action, len(soap_data)), system=LOG_SYSTEM, debug=True)
 
         def reply(reply_data):
+
+            if type(reply_data) is SOAPFault:
+                reply_data = reply_data.createPayload()
+                request.setResponseCode(500) # Internal server error
+
             if reply_data is None or len(reply_data) == 0:
                 log.msg('None/empty reply data supplied for SOAPResource. This is probably wrong', system=LOG_SYSTEM)
             else:
                 log.msg(" -- Sending response --\n%s\n -- END: Sending response --" % reply_data, system=LOG_SYSTEM, payload=True)
+
             request.setHeader('Content-Type', 'text/xml') # Keeps some SOAP implementations happy
             request.write(reply_data)
             request.finish()
@@ -112,14 +118,9 @@ class SOAPResource(resource.Resource):
         def errorReply(err, soap_data):
 
             log.msg('Failure during SOAP decoding/dispatch: %s' % err.getErrorMessage(), system=LOG_SYSTEM)
-
-            if err.check(SOAPFault): # is not None:
-                error_payload = err.value.createPayload()
-            else:
-                # non SOAPFault error, we should log this
-                log.err(err)
-                log.msg('SOAP Payload that caused error:\n%s\n' % soap_data)
-                error_payload = SOAPFault(err.getErrorMessage()).createPayload()
+            log.err(err)
+            log.msg('SOAP Payload that caused error:\n%s\n' % soap_data)
+            error_payload = SOAPFault(err.getErrorMessage()).createPayload()
 
             log.msg(" -- Sending response (fault) --\n%s\n -- END: Sending response (fault) --" % error_payload, system=LOG_SYSTEM, payload=True)
 
