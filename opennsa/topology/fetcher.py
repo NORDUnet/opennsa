@@ -12,7 +12,7 @@ from opennsa.topology import nmlxml
 
 LOG_SYSTEM = 'topology.Fetcher'
 
-FETCH_INTERVAL = 30 # seconds, increase for production :-)
+FETCH_INTERVAL = 120 # seconds, increase for production :-)
 
 
 
@@ -47,7 +47,7 @@ class FetcherService(service.Service):
         service.Service.stopService(self)
 
 
-    def blacklistNetwork(self, network_name, seconds=600):
+    def blacklistNetwork(self, network_name, seconds=7200): # 7200 seconds = 2 hours
         # blacklist a network for a certain amount of time
         delayed_call = reactor.callLater(seconds, self.blacklist.pop, network_name)
         self.blacklist[network_name] = delayed_call
@@ -64,7 +64,7 @@ class FetcherService(service.Service):
 
         defs = []
         for network_name, topology_url in self.getPeeringEntries():
-            log.msg('Fetchin topology for network %s from %s' % (network_name, topology_url), system=LOG_SYSTEM)
+            log.msg('Fetchin topology for network %s from %s' % (network_name, topology_url), debug=True, system=LOG_SYSTEM)
             d = httpclient.httpRequest(topology_url, '', {}, 'GET', timeout=10) # https should perhaps be added sometime
             ca = (network_name, topology_url)
             d.addCallbacks(self.gotTopology, self.retrievalFailed, callbackArgs=ca, errbackArgs=ca)
@@ -75,13 +75,13 @@ class FetcherService(service.Service):
 
 
     def gotTopology(self, result, network_name, topology_url):
-        log.msg('Got topology for %s (%i bytes)' % (network_name, len(result)), system=LOG_SYSTEM)
+        log.msg('Got topology for %s (%i bytes)' % (network_name, len(result)), debug=True, system=LOG_SYSTEM)
         try:
             # here we should let the parser know that it should not go outside the network name when parsing - later man...
             nsi_agent, nml_network = nmlxml.parseNSITopology(StringIO.StringIO(result))
             # here we could do some version checking first
             self.topology.updateNetwork(nml_network, nsi_agent)
-            log.msg('Topology for network %s updated' % nml_network.name, system=LOG_SYSTEM)
+            log.msg('Topology for network %s retrieved, parsed and updated' % nml_network.name, system=LOG_SYSTEM)
         except error.TopologyError as e:
             log.msg('Error parsing topology for network %s, url %s. Reason %s' % (network_name, topology_url, str(e)), system=LOG_SYSTEM)
             self.blacklistNetwork(network_name)
