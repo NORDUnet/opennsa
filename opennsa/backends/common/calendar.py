@@ -21,24 +21,31 @@ class ReservationCalendar:
         self.reservations = [] # [ ( resource, start_time, end_time ) ]
 
 
+    def _checkArgs(self, resource, start_time, end_time):
+        assert type(resource)   is str, 'Calendar resource must be a string'
+        assert type(start_time) is datetime.datetime, 'Start time must be a datetime object'
+        assert type(end_time)   is datetime.datetime, 'Start time must be a datetime object'
+
+
     def addReservation(self, resource, start_time, end_time):
-        # does no checking, assuming checkReservation has been called
+        self._checkArgs(resource, start_time, end_time)
+
         reservation = (resource, start_time, end_time)
         self.reservations.append(reservation)
 
 
     def removeReservation(self, resource, start_time, end_time):
+        self._checkArgs(resource, start_time, end_time)
+
         reservation = (resource, start_time, end_time)
         try:
             self.reservations.remove(reservation)
         except ValueError:
-            raise ValueError('Reservation (%s, %s, %s) does not exists. Cannot remove' % (resource, start_time, end_time))
+            raise ValueError('Reservation (%s, %s, %s) does not exist. Cannot remove' % (resource, start_time, end_time))
 
 
     def checkReservation(self, resource, start_time, end_time):
-        # check types
-        if not type(start_time) is datetime.datetime and type(end_time) is datetime.datetime:
-            raise ValueError('Reservation start and end types must be datetime types')
+        self._checkArgs(resource, start_time, end_time)
 
         # sanity checks
         if start_time > end_time:
