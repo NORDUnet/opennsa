@@ -1,10 +1,9 @@
 # Fetches topology representations from other
 
-import time
 import StringIO
 
 from twisted.python import log
-from twisted.internet import defer, task
+from twisted.internet import defer, task, reactor
 from twisted.application import service
 
 from opennsa.protocols.shared import httpclient
@@ -43,37 +42,25 @@ class FetcherService(service.Service):
 
     def stopService(self):
         self.call.stop()
+        for delayed_call in self.blacklist.values():
+            delayed_call.cancel()
         service.Service.stopService(self)
 
 
     def blacklistNetwork(self, network_name, seconds=600):
         # blacklist a network for a certain amount of time
-        expire_time = int(time.time() + seconds)
-        self.blacklist[network_name] = expire_time
+        delayed_call = reactor.callLater(seconds, self.blacklist.pop, network_name)
+        self.blacklist[network_name] = delayed_call
         log.msg('Network %s blacklisted from topology retrieval for %i seconds' % (network_name, seconds), system=LOG_SYSTEM)
 
 
     def getPeeringEntries(self):
         # filters out the blacklisted sites - returns non-blacklisted entries
-        now = time.time()
-        active_peering_entries = []
-
-        for network_name, topology_url in self.peering_entries:
-            try:
-                if self.blacklist[network_name] > now:
-                    continue
-                else:
-                    # blacklist has expired
-                    self.blacklist.pop(network_name)
-            except KeyError:
-                pass
-            active_peering_entries.append( (network_name, topology_url) )
-
-        return active_peering_entries
+        return [ (nw, tu) for nw, tu in self.peering_entries if nw not in self.blacklist ]
 
 
     def fetchTopologies(self):
-        log.msg('Fetching topologies. %i sources, %i possibly blacklisted' % (len(self.peering_entries), len(self.blacklist)), system=LOG_SYSTEM)
+        log.msg('Fetching topologies. %i sources, %i blacklisted' % (len(self.peering_entries), len(self.blacklist)), system=LOG_SYSTEM)
 
         defs = []
         for network_name, topology_url in self.getPeeringEntries():
