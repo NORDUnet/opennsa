@@ -44,23 +44,37 @@ class FetcherService(service.Service):
         service.Service.stopService(self)
 
 
-    def blacklist(self, network_name, time=600):
+    def blacklistNetwork(self, network_name, seconds=600):
         # blacklist a network for a certain amount of time
-        expire_time = int(time.time() + time)
-        self.blacklists[network_name] = expire_time
+        expire_time = int(time.time() + seconds)
+        self.blacklist[network_name] = expire_time
+        log.msg('Network %s blacklisted from topology retrieval for %i seconds' % (network_name, seconds), system=LOG_SYSTEM)
 
 
     def getPeeringEntries(self):
-        # filters out the blacklisted sites
-        pass # implement me
+        # filters out the blacklisted sites - returns non-blacklisted entries
+        now = time.time()
+        active_peering_entries = []
 
+        for network_name, topology_url in self.peering_entries:
+            try:
+                if self.blacklist[network_name] > now:
+                    continue
+                else:
+                    # blacklist has expired
+                    self.blacklist.pop(network_name)
+            except KeyError:
+                pass
+            active_peering_entries.append( (network_name, topology_url) )
+
+        return active_peering_entries
 
 
     def fetchTopologies(self):
-        log.msg('Fetching topologies. %i sources' % len(self.peering_entries), system=LOG_SYSTEM)
+        log.msg('Fetching topologies. %i sources, %i possibly blacklisted' % (len(self.peering_entries), len(self.blacklist)), system=LOG_SYSTEM)
 
         defs = []
-        for network_name, topology_url in self.peering_entries:
+        for network_name, topology_url in self.getPeeringEntries():
             log.msg('Fetchin topology for network %s from %s' % (network_name, topology_url), system=LOG_SYSTEM)
             d = httpclient.httpRequest(topology_url, '', {}, 'GET', timeout=10) # https should perhaps be added sometime
             ca = (network_name, topology_url)
@@ -77,10 +91,10 @@ class FetcherService(service.Service):
             nsi_agent, nml_network = nmlxml.parseNSITopology(StringIO.StringIO(result))
         except Exception as e:
             log.msg('Error parsing topology for network %s, url %s. Reason %s' % (network_name, topology_url, str(e)), system=LOG_SYSTEM)
-            self.blacklist(network_name)
+            self.blacklistNetwork(network_name)
 
 
     def retrievalFailed(self, result, network_name, topology_url):
-        log.msg('Topology retrieval for network %s from URL %s failed. Reason %s' % (network_name, topology_url, str(result)), system=LOG_SYSTEM)
-        self.blacklist(network_name)
+        log.msg('Topology retrieval for network %s from URL %s failed. Reason %s' % (network_name, topology_url, result.getErrorMessage), system=LOG_SYSTEM)
+        self.blacklistNetwork(network_name)
 
