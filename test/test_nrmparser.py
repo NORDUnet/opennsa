@@ -23,7 +23,7 @@ class NRMParserTest(unittest.TestCase):
 
         network_name = 'dud'
         source = StringIO.StringIO(NRM_ENTRY)
-        network, pim = nrmparser.parseTopologySpec(source, network_name, nsa.NetworkServiceAgent('dud:nsa', 'dud_endpoint'))
+        network, pim = nrmparser.parseTopologySpec(source, network_name)
 
         self.assertEquals( pim.get('ps'),           'em0')
         self.assertEquals( pim.get('netherlight'),  'em1')
