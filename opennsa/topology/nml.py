@@ -173,23 +173,34 @@ class Network(object):
 
 
 
-class Topology:
+class Topology(object):
 
     def __init__(self):
-        self.networks = []
+        self.networks = {} # network_name -> ( Network, nsa.NetworkServiceAgent)
 
 
-    def addNetwork(self, network):
-        if network.name in [ n.name for n in self.networks ]:
-            raise error.TopologyError('Network name must be unique (name: %s)' % network.name)
-        self.networks.append(network)
+    def addNetwork(self, network, managing_nsa):
+        assert type(network) is Network
+        assert type(managing_nsa) is nsa.NetworkServiceAgent
+
+        if network.name in self.networks:
+            raise error.TopologyError('Entry for network named %s already exists' % network.name)
+
+        self.networks[network.name] = (network, managing_nsa)
 
 
     def getNetwork(self, network_name):
-        for network in self.networks:
-            if network.name == network_name:
-                return network
-        raise error.TopologyError('No network named %s' % network_name)
+        try:
+            return self.networks[network_name][0]
+        except KeyError as e:
+            raise error.TopologyError('No network named %s (%s)' % (network_name, str(e)))
+
+
+    def getNSA(self, network_name):
+        try:
+            return self.networks[network_name][1]
+        except KeyError as e:
+            raise error.TopologyError('No NSA for network named %s (%s)' % (network_name, str(e)))
 
 
     def findDemarcationPort(self, network_name, port_name):

@@ -89,7 +89,7 @@ class OpenNSAService(twistedservice.MultiService):
 
         network, port_map = nrmparser.parseTopologySpec(topo_source, network_name)
         topology = nml.Topology()
-        topology.addNetwork(network)
+        topology.addNetwork(network, ns_agent)
 
         providers = {} # This is filled out later, consider it a registry
 

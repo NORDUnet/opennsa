@@ -226,14 +226,15 @@ class Aggregator:
         log.msg('Attempting to create path %s' % log_path, system=LOG_SYSTEM)
 
         for link in selected_path:
-            provider_nsa = self.topology.getNetwork(link.network).managing_nsa
-            if not provider_nsa.urn() in self.providers:
-                raise error.ConnectionCreateError('Cannot create link at network %s, no available provider for NSA %s' % (link.network, provider_nsa.urn()))
+            try:
+                self.topology.getNSA(link.network)
+            except error.TopologyError:
+                raise error.ConnectionCreateError('No provider for network %s. Cannot create link' % link.network)
 
         defs = []
         for idx, link in enumerate(selected_path):
 
-            provider_nsa = self.topology.getNetwork(link.network).managing_nsa
+            provider_nsa = self.topology.getNSA(link.network)
             provider     = self.providers[provider_nsa.urn()]
 
             ssp  = nsa.ServiceParameters(conn.start_time, conn.end_time,

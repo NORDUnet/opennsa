@@ -22,11 +22,17 @@ class TopologyTest(unittest.TestCase):
         cn,_ = nrmparser.parseTopologySpec(StringIO(topology.CURACAO_TOPOLOGY),  'curacao')
         dn,_ = nrmparser.parseTopologySpec(StringIO(topology.DOMINICA_TOPOLOGY), 'dominica')
 
+        a_nsa = nsa.NetworkServiceAgent('aruba:nsa',    'a-endpoint')
+        b_nsa = nsa.NetworkServiceAgent('bonaire:nsa',  'b-endpoint')
+        c_nsa = nsa.NetworkServiceAgent('curacao:nsa',  'c-endpoint')
+        d_nsa = nsa.NetworkServiceAgent('dominica:nsa', 'd-endpoint')
+
         self.networks = [ an, bn, cn, dn ]
+        self.nsas     = [ a_nsa, b_nsa, c_nsa, d_nsa ]
         self.topology = nml.Topology()
 
-        for n in self.networks:
-            self.topology.addNetwork(n)
+        for network, nsi_agent in zip(self.networks, self.nsas):
+            self.topology.addNetwork(network, nsi_agent)
 
 
     def testBasicPathfinding(self):

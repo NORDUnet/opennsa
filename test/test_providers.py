@@ -429,7 +429,7 @@ class DUDBackendTest(GenericProviderTest, unittest.TestCase):
 
         self.requester = common.DUDRequester()
 
-        aruba_topo, pm = nrmparser.parseTopologySpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY), self.network, self.provider_agent)
+        aruba_topo, pm = nrmparser.parseTopologySpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY), self.network)
 
         self.backend = dud.DUDNSIBackend(self.network, aruba_topo, self.requester, pm, {})
 
@@ -484,13 +484,13 @@ class AggregatorTest(GenericProviderTest, unittest.TestCase):
 
         self.clock = task.Clock()
 
-        aruba_topo, pm = nrmparser.parseTopologySpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY), self.network, self.provider_agent)
+        aruba_topo, pm = nrmparser.parseTopologySpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY), self.network)
 
         self.backend = dud.DUDNSIBackend(self.network, aruba_topo, self.requester, pm, {})
         self.backend.scheduler.clock = self.clock
 
         self.topology = nml.Topology()
-        self.topology.addNetwork(aruba_topo)
+        self.topology.addNetwork(aruba_topo, self.provider_agent)
 
         providers = { self.provider_agent.urn() : self.backend }
         self.provider = aggregator.Aggregator(self.network, self.provider_agent, self.topology, self.requester, providers)
@@ -552,13 +552,13 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
 
         self.clock = task.Clock()
 
-        aruba_topo, pm = nrmparser.parseTopologySpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY), self.network, self.provider_agent)
+        aruba_topo, pm = nrmparser.parseTopologySpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY), self.network)
 
         self.backend = dud.DUDNSIBackend(self.network, aruba_topo, None, pm, {}) # we set the parent later
         self.backend.scheduler.clock = self.clock
 
         self.topology = nml.Topology()
-        self.topology.addNetwork(aruba_topo)
+        self.topology.addNetwork(aruba_topo, self.provider_agent)
 
         providers = { self.provider_agent.urn() : self.backend }
         self.aggregator = aggregator.Aggregator(self.network, self.provider_agent, self.topology, None, providers) # we set the parent later
