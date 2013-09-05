@@ -81,13 +81,13 @@ class FetcherService(service.Service):
             nsi_agent, nml_network = nmlxml.parseNSITopology(StringIO.StringIO(result))
             # here we could do some version checking first
             self.topology.updateNetwork(nml_network, nsi_agent)
-            log.msg('Topology for network %s retrieved, parsed and updated' % nml_network.name, system=LOG_SYSTEM)
+            log.msg('Topology for %s updated' % nml_network.name, system=LOG_SYSTEM)
         except error.TopologyError as e:
             log.msg('Error parsing topology for network %s, url %s. Reason %s' % (network_name, topology_url, str(e)), system=LOG_SYSTEM)
             self.blacklistNetwork(network_name)
 
 
     def retrievalFailed(self, result, network_name, topology_url):
-        log.msg('Topology retrieval for network %s from URL %s failed. Reason %s' % (network_name, topology_url, result.getErrorMessage), system=LOG_SYSTEM)
+        log.msg('Topology retrieval failed for %s. Reason: %s. URL %s' % (network_name, result.getErrorMessage(), topology_url), system=LOG_SYSTEM)
         self.blacklistNetwork(network_name)
 
