@@ -13,13 +13,13 @@ from opennsa.topology import nmlxml
 
 LOG_SYSTEM = 'topology.Fetcher'
 
-FETCH_INTERVAL = 20 # seconds, increase for production :-)
+FETCH_INTERVAL = 30 # seconds, increase for production :-)
 
 
 
 class FetcherService(service.Service):
 
-    def __init__(self, peering_entries):
+    def __init__(self, peering_entries, topology):
         # peering entries is a list of two-tuples, where each tuple contains
         # a network name and the url of the network topology
         #for network, topo_url in peering_pairs:
@@ -29,6 +29,8 @@ class FetcherService(service.Service):
             assert topo_url.startswith('http'), 'Topology URL %s does not start with http' % topo_url
 
         self.peering_entries = peering_entries
+        self.topology = topology
+
         self.blacklist = {}
 
         self.call = task.LoopingCall(self.fetchTopologies)
@@ -88,8 +90,12 @@ class FetcherService(service.Service):
     def gotTopology(self, result, network_name, topology_url):
         log.msg('Got topology for %s (%i bytes)' % (network_name, len(result)), system=LOG_SYSTEM)
         try:
+            # here we should let the parser know that it should not go outside the network name when parsing - later man...
             nsi_agent, nml_network = nmlxml.parseNSITopology(StringIO.StringIO(result))
-        except Exception as e:
+            # here we could do some version checking first
+            self.topology.updateNetwork(nml_network, nsi_agent)
+            log.msg('Topology for network %s updated' % nml_network.name, system=LOG_SYSTEM)
+        except error.TopologyError as e:
             log.msg('Error parsing topology for network %s, url %s. Reason %s' % (network_name, topology_url, str(e)), system=LOG_SYSTEM)
             self.blacklistNetwork(network_name)
 

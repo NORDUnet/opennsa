@@ -189,6 +189,18 @@ class Topology(object):
         self.networks[network.name] = (network, managing_nsa)
 
 
+    def updateNetwork(self, network, managing_nsa):
+        # update an existing network entry
+        existing_entry = self.networks.pop(network.name, None) # note - we may get none here (for new network)
+        try:
+            self.addNetwork(network, managing_nsa)
+        except error.TopologyError as e:
+            log.msg('Error updating network entry for %s. Reason: %s' % (network.name, str(e)))
+            if existing_entry:
+                self.networks[network.name] = existing_entry # restore old entry
+            raise e
+
+
     def getNetwork(self, network_name):
         try:
             return self.networks[network_name][0]
