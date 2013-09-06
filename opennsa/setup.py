@@ -87,11 +87,11 @@ class OpenNSAService(twistedservice.MultiService):
 
         topo_source = open( vc[config.NRM_MAP_FILE] ) if type(vc[config.NRM_MAP_FILE]) is str else vc[config.NRM_MAP_FILE] # wee bit hackish
 
-        network, port_map = nrmparser.parseTopologySpec(topo_source, network_name)
-        topology = nml.Topology()
-        topology.addNetwork(network, ns_agent)
-
         providers = {} # This is filled out later, consider it a registry
+
+        network_topology, port_map = nrmparser.parseTopologySpec(topo_source, network_name)
+        topology = nml.Topology()
+        topology.addNetwork(network_topology, ns_agent)
 
         aggr = aggregator.Aggregator(network_name, ns_agent, topology, None, providers) # set requester later
 
@@ -102,8 +102,6 @@ class OpenNSAService(twistedservice.MultiService):
             raise config.ConfigurationError('Only one backend supported for now. Multiple will probably come later.')
 
         backend_cfg = backend_configs.values()[0]
-
-        network_topology = topology.getNetwork(network_name)
 
         backend_service = setupBackend(backend_cfg, network_name, network_topology, aggr, port_map)
         backend_service.setServiceParent(self)
@@ -128,7 +126,7 @@ class OpenNSAService(twistedservice.MultiService):
         top_resource.children['NSI'].putChild('connections', vr)
 
         topology_resource = resource.Resource()
-        topology_resource.putChild(vc[config.NETWORK_NAME] + '.xml', nmlhttp.TopologyResource(ns_agent, network))
+        topology_resource.putChild(vc[config.NETWORK_NAME] + '.xml', nmlhttp.TopologyResource(ns_agent, network_topology))
 
         top_resource.children['NSI'].putChild('topology', topology_resource)
 
