@@ -204,8 +204,8 @@ class Topology(object):
     def getNetwork(self, network_name):
         try:
             return self.networks[network_name][0]
-        except KeyError as e:
-            raise error.TopologyError('No network named %s (%s)' % (network_name, str(e)))
+        except KeyError:
+            raise error.TopologyError('No network named %s' % (network_name))
 
 
     def getNSA(self, network_name):
