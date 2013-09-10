@@ -249,7 +249,7 @@ def parseNSIService(nsi_service):
 
     if service_type == NSI_CS2_SERVICE_TYPE:
         endpoint = nsi_service.findtext( str(NSI_LINK) )
-        nsi_agent = nsa.NetworkServiceAgent(service_name, endpoint)
+        nsi_agent = nsa.NetworkServiceAgent(service_name, endpoint, service_type)
         return nsi_agent
     else:
         print 'Unrecognized service type: %s' % service_type

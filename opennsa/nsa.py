@@ -255,11 +255,12 @@ class Path(object):
 
 class NetworkServiceAgent(object):
 
-    def __init__(self, identity, endpoint): #, service_attributes=None):
+    def __init__(self, identity, endpoint, service_type=None):
         assert type(identity) is str, 'NSA identity type must be string (type: %s, value %s)' % (type(identity), identity)
         assert type(endpoint) is str, 'NSA endpoint type must be string (type: %s, value %s)' % (type(endpoint), endpoint)
         self.identity = identity
         self.endpoint = endpoint.strip()
+        self.service_type = service_type
 
 
     def getHostPort(self):
@@ -271,6 +272,12 @@ class NetworkServiceAgent(object):
 
     def urn(self):
         return OGF_PREFIX + self.identity
+
+
+    def getServiceType(self):
+        if self.service_type is None:
+            raise ValueError('NSA with identity %s is not constructed with a type' % self.identity)
+        return self.service_type
 
 
     def __str__(self):
