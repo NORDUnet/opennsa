@@ -45,9 +45,12 @@ def shortLabel(labels):
 def _buildErrorMessage(results, action):
 
     # should probably seperate loggin somehow
-    failures = [ (conn, f) for (success, f), conn in zip(results, self.connections()) if success is False ]
-    failure_msgs = [ conn.curator() + ' ' + connPath(conn) + ' ' + f.getErrorMessage() for (conn, f) in failures ]
-    log.msg('Connection %s: %i/%i %s failed.' % (self.connection_id, len(failures), len(results), action), system=LOG_SYSTEM)
+    failures = [ fail for (success, fail) in results if success is False ]
+    for f in failures:
+        print f
+    failure_msgs = [ f.getErrorMessage() for f in failures ]
+
+    log.msg('Connection ... %i failures' % len(failures), system=LOG_SYSTEM)
     for msg in failure_msgs:
         log.msg('* Failure: ' + msg, system=LOG_SYSTEM)
 
