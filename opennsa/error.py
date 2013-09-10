@@ -108,6 +108,11 @@ class TopologyError(NSIError):
     errorId = '00400'
 
 
+class STPResolutionError(NSIError):
+
+    errorId = '00402'
+
+
 class VLANInterchangeNotSupportedError(TopologyError):
 
     errorId = '00404'
