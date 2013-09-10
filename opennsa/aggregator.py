@@ -90,13 +90,13 @@ class Aggregator:
 
     implements(INSIProvider, INSIRequester)
 
-    def __init__(self, network, nsa_, topology, parent_requester, providers):
+    def __init__(self, network, nsa_, topology, parent_requester, provider_registry):
         self.network = network
         self.nsa_ = nsa_
         self.topology = topology
 
         self.parent_requester   = parent_requester
-        self.providers          = providers
+        self.provider_registry  = provider_registry
 
         self.reservations       = {} # correlation_id -> info
         self.notification_id    = 0
@@ -106,6 +106,10 @@ class Aggregator:
         nid = self.notification_id
         self.notification_id += 1
         return nid
+
+
+    def getProvider(self, nsi_agent_urn):
+        return self.provider_registry.getProvider(nsi_agent_urn)
 
 
     def getConnection(self, requester_nsa, connection_id):
@@ -238,7 +242,7 @@ class Aggregator:
         for idx, link in enumerate(selected_path):
 
             provider_nsa = self.topology.getNSA(link.network)
-            provider     = self.providers[provider_nsa.urn()]
+            provider     = self.getProvider(provider_nsa.urn())
 
             ssp  = nsa.ServiceParameters(conn.start_time, conn.end_time,
                                          nsa.STP(link.network, link.src_port, labels=link.src_labels),
@@ -330,7 +334,7 @@ class Aggregator:
         sub_connections = yield conn.SubConnections.get()
         for sc in sub_connections:
             # we assume a provider is available
-            provider = self.providers[sc.provider_nsa]
+            provider = self.getProvider(sc.provider_nsa)
             req_header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa, [])
             # we should probably mark as committing before sending message...
             d = provider.reserveCommit(req_header, sc.connection_id)
@@ -367,7 +371,7 @@ class Aggregator:
         sub_connections = yield conn.SubConnections.get()
         for sc in sub_connections:
             save_defs.append( state.reserveAbort(sc) )
-            provider = self.providers[sc.provider_nsa]
+            provider = self.getProvider(sc.provider_nsa)
             header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa, [])
             d = provider.reserveAbort(header, sc.connection_id)
             defs.append(d)
@@ -405,7 +409,7 @@ class Aggregator:
         sub_connections = yield conn.SubConnections.get()
         for sc in sub_connections:
             save_defs.append( state.provisioning(sc) )
-            provider = self.providers[sc.provider_nsa]
+            provider = self.getProvider(sc.provider_nsa)
             header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa, [])
             d = provider.provision(header, sc.connection_id)
             defs.append(d)
@@ -441,7 +445,7 @@ class Aggregator:
         sub_connections = yield conn.SubConnections.get()
         for sc in sub_connections:
             save_defs.append( state.releasing(sc) )
-            provider = self.providers[sc.provider_nsa]
+            provider = self.getProvider(sc.provider_nsa)
             header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa, [])
             d = provider.release(header, sc.connection_id)
             defs.append(d)
@@ -477,7 +481,7 @@ class Aggregator:
         sub_connections = yield conn.SubConnections.get()
         for sc in sub_connections:
             # we assume a provider is available
-            provider = self.providers[sc.provider_nsa]
+            provider = self.getProvider(sc.provider_nsa)
             header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa, [])
             d = provider.terminate(header, sc.connection_id)
             defs.append(d)
@@ -627,7 +631,6 @@ class Aggregator:
         log.msg('ReserveCommit Confirmed for sub connection %s. NSA %s ' % (connection_id, header.provider_nsa), system=LOG_SYSTEM)
 
         sub_connection = yield self.getSubConnection(header.provider_nsa, connection_id)
-        #yield state.reserved(sub_connection)
         sub_connection.reservation_state = state.RESERVE_START
         yield sub_connection.save()
 
