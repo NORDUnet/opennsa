@@ -1,12 +1,13 @@
 """
 High-level functionality for creating clients and services in OpenNSA.
 """
+import hashlib
 
 from twisted.python import log
 from twisted.web import resource, server
 from twisted.application import internet, service as twistedservice
 
-from opennsa import config, logging, nsa, database, aggregator, viewresource
+from opennsa import config, logging, nsa, provreg, database, aggregator, viewresource
 from opennsa.topology import nrmparser, nml, http as nmlhttp, fetcher
 from opennsa.protocols import nsi2, discovery
 
@@ -83,17 +84,19 @@ class OpenNSAService(twistedservice.MultiService):
 
         base_protocol = 'https://' if vc[config.TLS] else 'http://'
         nsa_endpoint = base_protocol + vc[config.HOST] + ':' + str(vc[config.PORT]) + '/NSI/services/CS2' # hardcode for now
-        ns_agent = nsa.NetworkServiceAgent(network_name + ':nsa', nsa_endpoint)
+        ns_agent = nsa.NetworkServiceAgent(network_name + ':nsa', nsa_endpoint, 'local')
 
         topo_source = open( vc[config.NRM_MAP_FILE] ) if type(vc[config.NRM_MAP_FILE]) is str else vc[config.NRM_MAP_FILE] # wee bit hackish
-
-        providers = {} # This is filled out later, consider it a registry
 
         network_topology, port_map = nrmparser.parseTopologySpec(topo_source, network_name)
         topology = nml.Topology()
         topology.addNetwork(network_topology, ns_agent)
 
-        aggr = aggregator.Aggregator(network_name, ns_agent, topology, None, providers) # set requester later
+        top_resource = resource.Resource()
+        cs2_requester_creator = lambda nsi_agent : nsi2.setupRequester(top_resource, vc[config.HOST], vc[config.PORT], nsi_agent.endpoint, 'RequesterService2' + hashlib.sha1(ns_agent.urn() + ns_agent.endpoint).hexdigest() )
+
+        provider_registry = provreg.ProviderRegistry({}, { nsi2.SERVICE_TYPE: cs2_requester_creator} )
+        aggr = aggregator.Aggregator(network_name, ns_agent, topology, None, provider_registry) # set parent requester later
 
         # setup backend(s) - for now we only support one
 
@@ -106,17 +109,16 @@ class OpenNSAService(twistedservice.MultiService):
         backend_service = setupBackend(backend_cfg, network_name, network_topology, aggr, port_map)
         backend_service.setServiceParent(self)
 
-        providers[ ns_agent.urn() ] = backend_service
+        provider_registry.addProvider(ns_agent.urn(), backend_service)
 
         # done with backend, now fetcher
 
         if vc[config.PEERS]:
-            fetcher_service = fetcher.FetcherService(vc[config.PEERS], topology)
+            fetcher_service = fetcher.FetcherService(vc[config.PEERS], topology, provider_registry)
             fetcher_service.setServiceParent(self)
 
         # wire up the http stuff
 
-        top_resource = resource.Resource()
         discovery.setupDiscoveryService(None, top_resource)
 
         pc = nsi2.setupProvider(aggr, top_resource)

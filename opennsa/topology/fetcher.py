@@ -6,6 +6,7 @@ from twisted.python import log
 from twisted.internet import defer, task, reactor
 from twisted.application import service
 
+from opennsa import error
 from opennsa.protocols.shared import httpclient
 from opennsa.topology import nmlxml
 
@@ -18,7 +19,7 @@ FETCH_INTERVAL = 120 # seconds, increase for production :-)
 
 class FetcherService(service.Service):
 
-    def __init__(self, peering_entries, topology):
+    def __init__(self, peering_entries, topology, provider_registry):
         # peering entries is a list of two-tuples, where each tuple contains
         # a network name and the url of the network topology
         #for network, topo_url in peering_pairs:
@@ -29,6 +30,7 @@ class FetcherService(service.Service):
 
         self.peering_entries = peering_entries
         self.topology = topology
+        self.provider_registry = provider_registry
 
         self.blacklist = {}
 
@@ -82,6 +84,8 @@ class FetcherService(service.Service):
             # here we could do some version checking first
             self.topology.updateNetwork(nml_network, nsi_agent)
             log.msg('Topology for %s updated' % nml_network.name, system=LOG_SYSTEM)
+            self.provider_registry.spawnProvider(nsi_agent)
+
         except error.TopologyError as e:
             log.msg('Error parsing topology for network %s, url %s. Reason %s' % (network_name, topology_url, str(e)), system=LOG_SYSTEM)
             self.blacklistNetwork(network_name)
