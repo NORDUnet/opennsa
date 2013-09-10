@@ -13,6 +13,8 @@ from opennsa.protocols.nsi2 import providerservice, providerclient, provider, \
                                    requesterservice, requesterclient, requester
 
 
+SERVICE_TYPE = 'application/vnd.org.ogf.nsi.cs.v2+soap'
+
 
 def setupProvider(child_provider, top_resource, tls=False, ctx_factory=None):
 
@@ -27,11 +29,10 @@ def setupProvider(child_provider, top_resource, tls=False, ctx_factory=None):
     return nsi2_provider
 
 
-def setupRequester(top_resource, host, port, providers, tls=False, ctx_factory=None, callback_timeout=None):
+def setupRequester(top_resource, host, port, service_endpoint, resource_name=None, tls=False, ctx_factory=None, callback_timeout=None):
 
-    resource_name = 'RequesterService2'
+    resource_name = resource_name or 'RequesterService2'
 
-    # copied from nsi1.__init__
     def _createServiceURL(host, port, tls=False):
         proto_scheme = 'https://' if tls else 'http://'
         service_url = proto_scheme + '%s:%i/NSI/services/%s' % (host,port, resource_name)
@@ -41,7 +42,7 @@ def setupRequester(top_resource, host, port, providers, tls=False, ctx_factory=N
 
     soap_resource = soapresource.setupSOAPResource(top_resource, resource_name)
 
-    requester_client = requesterclient.RequesterClient(providers, service_url)
+    requester_client = requesterclient.RequesterClient(service_endpoint, service_url)
 
     nsi_requester = requester.Requester(requester_client, callback_timeout=callback_timeout)
 
@@ -50,11 +51,10 @@ def setupRequester(top_resource, host, port, providers, tls=False, ctx_factory=N
     return nsi_requester
 
 
-# copied from nsi1.__init__
-def createRequesterClient(host, port, providers, tls=False, ctx_factory=None, callback_timeout=None):
+def createRequesterClient(host, port, service_endpoint, resource_name=None, tls=False, ctx_factory=None, callback_timeout=None):
 
     top_resource = resource.Resource()
-    nsi_requester = setupRequester(top_resource, host, port, providers, tls, ctx_factory, callback_timeout)
+    nsi_requester = setupRequester(top_resource, host, port, service_endpoint, resource_name=resource_name, tls=tls, ctx_factory=ctx_factory, callback_timeout=callback_timeout)
     site = server.Site(top_resource, logPath='/dev/null')
     return nsi_requester, site
 

@@ -24,9 +24,10 @@ class RequesterClient:
 
     implements(INSIProvider)
 
-    def __init__(self, providers, reply_to, ctx_factory=None):
+    def __init__(self, service_url, reply_to, ctx_factory=None):
 
-        self.providers   = providers
+        assert type(service_url) in (str,bytes), 'Service URL must be of type string or bytes'
+        self.service_url = service_url
         self.reply_to    = reply_to
         self.ctx_factory = ctx_factory
 
@@ -79,8 +80,6 @@ class RequesterClient:
 
         self._checkHeader(header)
 
-        service_url = self.providers[header.provider_nsa]
-
         # payload construction
 
         header_payload = helper.createHeader(header.requester_nsa, header.provider_nsa, reply_to=self.reply_to, correlation_id=header.correlation_id)
@@ -113,7 +112,7 @@ class RequesterClient:
             header, ack = helper.parseRequest(soap_data)
             return ack.connectionId
 
-        d = httpclient.soapRequest(service_url, actions.RESERVE, payload, ctx_factory=self.ctx_factory)
+        d = httpclient.soapRequest(self.service_url, actions.RESERVE, payload, ctx_factory=self.ctx_factory)
         d.addCallbacks(_handleAck, self._handleErrorReply)
         return d
 
@@ -121,11 +120,10 @@ class RequesterClient:
     def reserveCommit(self, header, connection_id):
 
         self._checkHeader(header)
-        service_url = self.providers[header.provider_nsa]
 
         payload = self._createGenericRequestType(bindings.reserveCommit, header, connection_id)
 
-        d = httpclient.soapRequest(service_url, actions.RESERVE_COMMIT, payload, ctx_factory=self.ctx_factory)
+        d = httpclient.soapRequest(self.service_url, actions.RESERVE_COMMIT, payload, ctx_factory=self.ctx_factory)
         d.addCallbacks(lambda sd : None, self._handleErrorReply)
         return d
 
@@ -133,11 +131,10 @@ class RequesterClient:
     def reserveAbort(self, header, connection_id):
 
         self._checkHeader(header)
-        service_url = self.providers[header.provider_nsa]
 
         payload = self._createGenericRequestType(bindings.reserveAbort, header, connection_id)
 
-        d = httpclient.soapRequest(service_url, actions.RESERVE_ABORT, payload, ctx_factory=self.ctx_factory)
+        d = httpclient.soapRequest(self.service_url, actions.RESERVE_ABORT, payload, ctx_factory=self.ctx_factory)
         d.addCallbacks(lambda sd : None, self._handleErrorReply)
         return d
 
@@ -145,10 +142,9 @@ class RequesterClient:
     def provision(self, header, connection_id):
 
         self._checkHeader(header)
-        service_url = self.providers[header.provider_nsa]
 
         payload = self._createGenericRequestType(bindings.provision, header, connection_id)
-        d = httpclient.soapRequest(service_url, actions.PROVISION, payload, ctx_factory=self.ctx_factory)
+        d = httpclient.soapRequest(self.service_url, actions.PROVISION, payload, ctx_factory=self.ctx_factory)
         d.addCallbacks(lambda sd : None, self._handleErrorReply)
         return d
 
@@ -156,10 +152,9 @@ class RequesterClient:
     def release(self, header, connection_id):
 
         self._checkHeader(header)
-        service_url = self.providers[header.provider_nsa]
 
         payload = self._createGenericRequestType(bindings.release, header, connection_id)
-        d = httpclient.soapRequest(service_url, actions.RELEASE, payload, ctx_factory=self.ctx_factory)
+        d = httpclient.soapRequest(self.service_url, actions.RELEASE, payload, ctx_factory=self.ctx_factory)
         d.addCallbacks(lambda sd : None, self._handleErrorReply)
         return d
 
@@ -167,17 +162,16 @@ class RequesterClient:
     def terminate(self, header, connection_id):
 
         self._checkHeader(header)
-        service_url = self.providers[header.provider_nsa]
 
         payload = self._createGenericRequestType(bindings.terminate, header, connection_id)
-        d = httpclient.soapRequest(service_url, actions.TERMINATE, payload, ctx_factory=self.ctx_factory)
+        d = httpclient.soapRequest(self.service_url, actions.TERMINATE, payload, ctx_factory=self.ctx_factory)
         d.addCallbacks(lambda sd : None, self._handleErrorReply)
         return d
 
 
     def querySummary(self, header, connection_ids=None, global_reservation_ids=None):
 
-        service_url = self.providers[header.provider_nsa]
+        self._checkHeader(header)
 
         header_element = helper.createHeader(header.requester_nsa, header.provider_nsa, reply_to=self.reply_to, correlation_id=header.correlation_id)
 
@@ -186,7 +180,7 @@ class RequesterClient:
 
         payload = minisoap.createSoapPayload(body_element, header_element)
 
-        d = httpclient.soapRequest(service_url, actions.QUERY_SUMMARY, payload, ctx_factory=self.ctx_factory)
+        d = httpclient.soapRequest(self.service_url, actions.QUERY_SUMMARY, payload, ctx_factory=self.ctx_factory)
         d.addCallbacks(lambda sd : None, self._handleErrorReply)
         return d
 
@@ -199,7 +193,6 @@ class RequesterClient:
             return reservations
 
         # don't need to check header here
-        service_url = self.providers[header.provider_nsa]
 
         header_element = helper.createHeader(header.requester_nsa, header.provider_nsa, reply_to=self.reply_to, correlation_id=header.correlation_id)
 
@@ -208,7 +201,7 @@ class RequesterClient:
 
         payload = minisoap.createSoapPayload(body_element, header_element)
 
-        d = httpclient.soapRequest(service_url, actions.QUERY_SUMMARY_SYNC, payload, ctx_factory=self.ctx_factory)
+        d = httpclient.soapRequest(self.service_url, actions.QUERY_SUMMARY_SYNC, payload, ctx_factory=self.ctx_factory)
         d.addCallbacks(gotReply, self._handleErrorReply)
         return d
 
