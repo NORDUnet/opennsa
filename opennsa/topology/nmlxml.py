@@ -79,6 +79,12 @@ def topologyXML(network):
             rpa = ET.SubElement(nml_port, NML_RELATION, { TYPE : NML_ISALIAS} )
             ET.SubElement(rpa, NML_PORT, { ID : nml.URN_OGF_NETWORK + port.remote_network + ':' + port.remote_port})
 
+    for port in network.bidirectional_ports:
+        pn = ET.SubElement(nml_topology, NML_BIDIRECTIONALPORT, { ID: portName(port) } )
+        ET.SubElement(pn, NML_NAME).text = port.name
+        ET.SubElement(pn, NML_PORT, {ID: URN_NETWORK + ':' + port.inbound_port.name} )
+        ET.SubElement(pn, NML_PORT, {ID: URN_NETWORK + ':' + port.outbound_port.name} )
+
     if network.inbound_ports:
         nml_inbound_ports = ET.SubElement(nml_topology, NML_RELATION, {TYPE: NML_HASINBOUNDPORT})
         for port in network.inbound_ports:
@@ -88,12 +94,6 @@ def topologyXML(network):
         nml_outbound_ports = ET.SubElement(nml_topology, NML_RELATION, {TYPE: NML_HASOUTBOUNDPORT})
         for port in network.outbound_ports:
             addPort(nml_outbound_ports, port)
-
-    for port in network.bidirectional_ports:
-        pn = ET.SubElement(nml_topology, NML_BIDIRECTIONALPORT, { ID: portName(port) } )
-        ET.SubElement(pn, NML_NAME).text = port.name
-        ET.SubElement(pn, NML_PORT, {ID: URN_NETWORK + ':' + port.inbound_port.name} )
-        ET.SubElement(pn, NML_PORT, {ID: URN_NETWORK + ':' + port.outbound_port.name} )
 
     return nml_topology
 
