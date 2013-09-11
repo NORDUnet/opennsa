@@ -8,7 +8,7 @@ from twisted.internet import defer
 from opennsa.interface import INSIRequester
 
 
-LOG_SYSTEM = 'NSI2SOAP.Provider'
+LOG_SYSTEM = 'nsi2.Provider'
 
 
 RESERVE_RESPONSE        = 'reserve_response'
@@ -64,7 +64,7 @@ class Provider:
             d.addErrback(logError, 'reserveConfirmed')
             return d
         except KeyError, e:
-            log.msg('No entity to notify about reserveConfirmed for %s' % connection_id, log_system=LOG_SYSTEM)
+            log.msg('No entity to notify about reserveConfirmed for %s' % connection_id, system=LOG_SYSTEM)
             return defer.succeed(None)
 
 
@@ -83,7 +83,7 @@ class Provider:
             d.addErrback(logError, 'reserveCommitConfirmed')
             return d
         except KeyError, e:
-            log.msg('No entity to notify about reserveCommitConfirmed for %s' % connection_id, log_system=LOG_SYSTEM)
+            log.msg('No entity to notify about reserveCommitConfirmed for %s' % connection_id, system=LOG_SYSTEM)
             return defer.succeed(None)
 
 
@@ -102,7 +102,7 @@ class Provider:
             d.addErrback(logError, 'reserveAbortConfirmed')
             return d
         except KeyError, e:
-            log.msg('No entity to notify about reserveAbortConfirmed for %s' % connection_id, log_system=LOG_SYSTEM)
+            log.msg('No entity to notify about reserveAbortConfirmed for %s' % connection_id, system=LOG_SYSTEM)
             return defer.succeed(None)
 
 
@@ -121,7 +121,7 @@ class Provider:
             d.addErrback(logError, 'provisionConfirmed')
             return d
         except KeyError, e:
-            log.msg('No entity to notify about provisionConfirmed for %s' % connection_id, log_system=LOG_SYSTEM)
+            log.msg('No entity to notify about provisionConfirmed for %s' % connection_id, system=LOG_SYSTEM)
             return defer.succeed(None)
 
 
@@ -140,7 +140,7 @@ class Provider:
             d.addErrback(logError, 'releaseConfirmed')
             return d
         except KeyError, e:
-            log.msg('No entity to notify about releaseConfirmed for %s' % connection_id, log_system=LOG_SYSTEM)
+            log.msg('No entity to notify about releaseConfirmed for %s' % connection_id, system=LOG_SYSTEM)
             return defer.succeed(None)
 
 
@@ -157,7 +157,7 @@ class Provider:
             org_header = self.notifications.pop( (connection_id, TERMINATE_RESPONSE) )
             return self.provider_client.terminateConfirmed(org_header.reply_to, org_header.requester_nsa, org_header.provider_nsa, org_header.correlation_id, connection_id)
         except KeyError, e:
-            log.msg('No entity to notify about terminateConfirmed for %s' % connection_id, log_system=LOG_SYSTEM)
+            log.msg('No entity to notify about terminateConfirmed for %s' % connection_id, system=LOG_SYSTEM)
             return defer.succeed(None)
 
         d = self.service_provider.terminateConfirmed(header, connection_id)

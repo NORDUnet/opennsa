@@ -83,9 +83,9 @@ class Requester:
     def reserve(self, header, connection_id, global_reservation_id, description, service_parameters):
 
         if header.correlation_id is not None:
-            log.msg('Reserve ignoring specified correlation id')
+            log.msg('Reserve ignoring specified correlation id', system=LOG_SYSTEM)
         if header.reply_to is not None:
-            log.msg('Reserve ignoring reply to')
+            log.msg('Reserve ignoring reply to', system=LOG_SYSTEM)
 
         header.correlation_id = createCorrelationId()
 
