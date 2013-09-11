@@ -22,9 +22,11 @@ class ReservationCalendar:
 
 
     def _checkArgs(self, resource, start_time, end_time):
-        assert type(resource)   is str, 'Calendar resource must be a string'
-        assert type(start_time) is datetime.datetime, 'Start time must be a datetime object'
-        assert type(end_time)   is datetime.datetime, 'Start time must be a datetime object'
+        assert type(resource)    is str, 'Resource must be a string'
+        assert type(start_time)  is datetime.datetime, 'Start time must be a datetime object, not %s' % str(type(start_time))
+        assert type(end_time)    is datetime.datetime, 'End time must be a datetime object, not %s' % str(type(end_time))
+        assert start_time.tzinfo is None, 'Start time must NOT have time zone.'
+        assert end_time.tzinfo   is None, 'End time must NOT have time zone.'
 
 
     def addReservation(self, resource, start_time, end_time):

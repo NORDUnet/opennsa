@@ -53,10 +53,10 @@ def parseTimestamp(value):
 
     if value.startswith('+'):
         offset = int(value[1:])
-        ts = datetime.datetime.fromtimestamp(time.time() + offset, tzutc())
+        ts = datetime.datetime.fromtimestamp(time.time() + offset, tzutc()).replace(tzinfo=None)
     else:
-        ts = datetime.datetime.strptime(value, XSD_DATETIME_FORMAT)
-    assert ts.utcoffset() is not None, 'No time zone specified in timestamp'
+        ts = datetime.datetime.strptime(value, XSD_DATETIME_FORMAT).astimezone(tzutc()).replace(tzinfo=None)
+    assert ts.tzinfo is None, 'Timestamp must NOT have time zone'
     return ts
 
 

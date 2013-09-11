@@ -5,6 +5,8 @@ Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2011)
 """
 
+from dateutil.tz import tzutc
+
 from zope.interface import implements
 
 from twisted.python import log, failure
@@ -87,12 +89,10 @@ class RequesterClient:
 
         sp = service_parameters
 
-        if sp.start_time.utcoffset() is None:
-            raise ValueError('Start time has no time zone info')
-        if sp.end_time.utcoffset() is None:
-            raise ValueError('End time has no time zone info')
+        assert sp.start_time.tzinfo is None, 'Start time must NOT have time zone'
+        assert sp.end_time.tzinfo   is None, 'End time must NOT have time zone'
 
-        schedule = bindings.ScheduleType(sp.start_time.isoformat(), sp.end_time.isoformat())
+        schedule = bindings.ScheduleType(sp.start_time.replace(tzinfo=tzutc()).isoformat(), sp.end_time.replace(tzinfo=tzutc()).isoformat())
         service_attributes = None
 
         symmetric = False
