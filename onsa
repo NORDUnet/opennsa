@@ -190,10 +190,8 @@ def doMain():
             if connection_id is None:
                 raise usage.UsageError('Connection ID is not defined')
 
-        providers = { provider_nsa.urn() : service_url }
-
         from opennsa.protocols import nsi2
-        client, factory = nsi2.createRequesterClient(host, port, providers, tls, ctx_factory, 12)
+        client, factory = nsi2.createRequesterClient(host, port, service_url, tls, ctx_factory, 12)
 
         # setup listener port
         if tls:
