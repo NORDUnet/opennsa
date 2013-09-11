@@ -17,6 +17,7 @@ from opennsa.protocols.nsi2 import actions, bindings, helper
 
 
 URN_NETWORK = 'urn:ogf:network:'
+LOG_SYSTEM  = 'nsi2.RequesterClient'
 
 
 
@@ -55,7 +56,7 @@ class RequesterClient:
             return err
 
         if err.value.status != '500':
-            log.msg("Got error with non-500 status. Message: %s" % err.getErrorMessage())
+            log.msg("Got error with non-500 status. Message: %s" % err.getErrorMessage(), system=LOG_SYSTEM)
             return err
 
         fault_code, fault_string, detail = minisoap.parseFault(err.value.response)
