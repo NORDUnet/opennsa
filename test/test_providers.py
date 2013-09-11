@@ -5,7 +5,7 @@ from twisted.internet import reactor, defer, task
 
 from dateutil.tz import tzutc
 
-from opennsa import nsa, database, error, aggregator
+from opennsa import nsa, provreg, database, error, aggregator
 from opennsa.topology import nml, nrmparser
 from opennsa.backends import dud
 
@@ -492,8 +492,8 @@ class AggregatorTest(GenericProviderTest, unittest.TestCase):
         self.topology = nml.Topology()
         self.topology.addNetwork(aruba_topo, self.provider_agent)
 
-        providers = { self.provider_agent.urn() : self.backend }
-        self.provider = aggregator.Aggregator(self.network, self.provider_agent, self.topology, self.requester, providers)
+        pr = provreg.ProviderRegistry( { self.provider_agent.urn() : self.backend }, {} )
+        self.provider = aggregator.Aggregator(self.network, self.provider_agent, self.topology, self.requester, pr)
 
         # set parent for backend, we need to create the aggregator before this can be done
         self.backend.parent_requester = self.provider
@@ -560,8 +560,8 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
         self.topology = nml.Topology()
         self.topology.addNetwork(aruba_topo, self.provider_agent)
 
-        providers = { self.provider_agent.urn() : self.backend }
-        self.aggregator = aggregator.Aggregator(self.network, self.provider_agent, self.topology, None, providers) # we set the parent later
+        pr = provreg.ProviderRegistry( { self.provider_agent.urn() : self.backend }, {} )
+        self.aggregator = aggregator.Aggregator(self.network, self.provider_agent, self.topology, None, pr) # we set the parent later
 
         self.backend.parent_requester = self.aggregator
 
@@ -579,8 +579,7 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
         requester_top_resource = resource.Resource()
         soap_resource = soapresource.setupSOAPResource(requester_top_resource, 'RequesterService2')
 
-        providers = { self.provider_agent.urn() : self.provider_agent.endpoint }
-        self.provider = requesterclient.RequesterClient(providers, self.requester_agent.endpoint)
+        self.provider = requesterclient.RequesterClient(self.provider_agent.endpoint, self.requester_agent.endpoint)
 
         requester_service = requesterservice.RequesterService(soap_resource, self.requester) # this is the important part
         requester_factory = server.Site(requester_top_resource, logPath='/dev/null')
@@ -591,8 +590,8 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
         self.requester_iport = reactor.listenTCP(self.REQUESTER_PORT, requester_factory)
 
         # request stuff
-        self.start_time = datetime.datetime.now(tzutc()) + datetime.timedelta(seconds=2)
-        self.end_time   = datetime.datetime.now(tzutc()) + datetime.timedelta(seconds=10)
+        self.start_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=2)
+        self.end_time   = datetime.datetime.utcnow() + datetime.timedelta(seconds=10)
 
         self.service_params = nsa.ServiceParameters(self.start_time, self.end_time, self.source_stp, self.dest_stp, self.bandwidth)
 
