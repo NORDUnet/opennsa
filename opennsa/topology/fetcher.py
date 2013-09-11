@@ -38,7 +38,7 @@ class FetcherService(service.Service):
 
 
     def startService(self):
-        self.call.start(FETCH_INTERVAL)
+        reactor.callWhenRunning(self.call.start, FETCH_INTERVAL)
         service.Service.startService(self)
 
 
