@@ -254,10 +254,10 @@ class Topology(object):
             raise error.TopologyError('Source port %s cannot match labels for source STP' % source_port.name)
         if not dest_port.canMatchLabels(dest_stp.labels):
             raise error.TopologyError('Desitination port %s cannot match labels for destination STP' % dest_port.name)
-        if not source_port.canProvideBandwidth(bandwidth):
-            raise error.BandwidthUnavailableError('Source port cannot provide enough bandwidth (%i)' % bandwidth)
-        if not dest_port.canProvideBandwidth(bandwidth):
-            raise error.BandwidthUnavailableError('Destination port cannot provide enough bandwidth (%i)' % bandwidth)
+#        if not source_port.canProvideBandwidth(bandwidth):
+#            raise error.BandwidthUnavailableError('Source port cannot provide enough bandwidth (%i)' % bandwidth)
+#        if not dest_port.canProvideBandwidth(bandwidth):
+#            raise error.BandwidthUnavailableError('Destination port cannot provide enough bandwidth (%i)' % bandwidth)
 
         return self._findPathsRecurse(source_stp, dest_stp, bandwidth)
 
@@ -271,8 +271,8 @@ class Topology(object):
 
         if not (source_port.canMatchLabels(source_stp.labels) or dest_port.canMatchLabels(dest_stp.labels)):
             return []
-        if not (source_port.canProvideBandwidth(bandwidth) and dest_port.canProvideBandwidth(bandwidth)):
-            return []
+#        if not (source_port.canProvideBandwidth(bandwidth) and dest_port.canProvideBandwidth(bandwidth)):
+#            return []
 
         # this code heavily relies on the assumption that ports only have one label
 
