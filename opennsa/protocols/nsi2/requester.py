@@ -9,6 +9,7 @@ from opennsa import error
 from opennsa.interface import INSIProvider
 
 
+LOG_SYSTEM = 'nsi2.Requester'
 
 DEFAULT_CALLBACK_TIMEOUT = 60 # 1 minute
 URN_UUID_PREFIX = 'urn:uuid:'
@@ -63,7 +64,7 @@ class Requester:
         try:
             acd = self.calls.pop(key)
         except KeyError:
-            log.msg('Got callback for unknown call. Action: %s. NSA: %s' % (action, provider_nsa), system='opennsa.Requester')
+            log.msg('Got callback for unknown call. Action: %s. NSA: %s' % (action, provider_nsa), system=LOG_SYSTEM)
             return
 
         ract, d, call = acd
@@ -90,7 +91,7 @@ class Requester:
 
         def reserveRequestFailed(err):
             # invocation failed, so we error out immediately
-            log.msg('Reserve invocation failed: %s' % err.getErrorMessage())
+            log.msg('Reserve invocation failed: %s' % err.getErrorMessage(), system=LOG_SYSTEM)
             self.triggerCall(header.provider_nsa, header.correlation_id, RESERVE, err.value)
 
         rd = self.addCall(header.provider_nsa, header.correlation_id, RESERVE)
