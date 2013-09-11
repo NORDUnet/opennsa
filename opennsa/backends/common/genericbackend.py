@@ -46,7 +46,7 @@ class GenericBackend(service.Service):
         assert network == network_topology.name, 'Network name and network topology name does not match %s != %s' % (network, network_topology.name)
 
         self.network            = network
-        self.network_topology    = network_topology
+        self.network_topology   = network_topology
         self.connection_manager = connection_manager
         self.parent_requester   = parent_requester
         self.log_system         = log_system
