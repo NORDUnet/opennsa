@@ -36,7 +36,7 @@ class RequesterClient:
     def _checkHeader(self, header):
 
         if header.reply_to and header.correlation_id is None:
-            raise ValueError('Header must specify correlation id, if reply to is specified')
+            raise AssertionError('Header must specify correlation id, if reply to is specified')
 
 
     def _createGenericRequestType(self, body_element_name, header, connection_id):
