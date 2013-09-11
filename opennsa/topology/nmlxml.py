@@ -28,12 +28,12 @@ ET.register_namespace('vc',  VC_NS)
 ID = 'id'
 VERSION = 'version'
 TYPE = 'type'
-LABEL_TYPE = 'labelType'
+LABEL_TYPE = 'labeltype'
 
 NML_TOPOLOGY            = ET.QName('{%s}Topology'   % NML_NS)
 NML_PORT                = ET.QName('{%s}Port'       % NML_NS)
 NML_LABEL               = ET.QName('{%s}Label'      % NML_NS)
-NML_NAME                = ET.QName('{%s}Name'       % NML_NS)
+NML_NAME                = ET.QName('{%s}name'       % NML_NS)
 NML_RELATION            = ET.QName('{%s}Relation'   % NML_NS)
 NML_NODE                = ET.QName('{%s}Node'       % NML_NS)
 NML_BIDIRECTIONALPORT   = ET.QName('{%s}BidirectionalPort'  % NML_NS)
