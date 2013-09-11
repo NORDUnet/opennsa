@@ -100,12 +100,12 @@ class ProviderService:
         start_time = self.datetime_parser.parse(schedule.startTime)
         if start_time.utcoffset() is None:
             err = failure.Failure ( error.PayloadError('Start time has no time zone information') )
-            return self._createSOAPFault(err, header.providerNSA)
+            return self._createSOAPFault(err, header.provider_nsa)
 
         end_time   = self.datetime_parser.parse(schedule.endTime)
         if end_time.utcoffset() is None:
             err = failure.Failure ( error.PayloadError('End time has no time zone information') )
-            return self._createSOAPFault(err, header.providerNSA)
+            return self._createSOAPFault(err, header.provider_nsa)
 
         # convert to utc and remove timezone
         start_time = start_time.astimezone(tzutc()).replace(tzinfo=None)
