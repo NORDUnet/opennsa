@@ -7,16 +7,9 @@ Copyright: NORDUnet (2011)
 
 from dateutil import parser
 
-from twisted.python import log
-
 from opennsa import nsa, error
 
-from opennsa.protocols.shared import minisoap
-from opennsa.protocols.nsi2 import actions, bindings, helper
-
-
-
-LOG_SYSTEM = 'NSI2.RequesterService'
+from opennsa.protocols.nsi2 import actions, helper
 
 
 
