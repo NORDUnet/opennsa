@@ -244,13 +244,12 @@ class Aggregator:
             provider_nsa = self.topology.getNSA(link.network)
             provider     = self.getProvider(provider_nsa.urn())
 
+            header = nsa.NSIHeader(self.nsa_.urn(), provider_nsa.urn(), [])
+
             ssp  = nsa.ServiceParameters(conn.start_time, conn.end_time,
                                          nsa.STP(link.network, link.src_port, labels=link.src_labels),
                                          nsa.STP(link.network, link.dst_port, labels=link.dst_labels),
                                          conn.bandwidth)
-
-
-            header = nsa.NSIHeader(self.nsa_.urn(), provider_nsa.urn(), []) # need to something more here - or delegate to protocl stack (yes)
 
             # save info for db saving
             local_link = True if provider_nsa == self.nsa_ else False
