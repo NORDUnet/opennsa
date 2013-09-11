@@ -18,10 +18,11 @@ from opennsa import error
 
 
 
+LOG_SYSTEM = 'opennsa.nsa'
+
 OGF_PREFIX = 'urn:ogf:network:'
 STP_PREFIX = 'urn:ogf:network:stp:'
-
-LOG_SYSTEM = 'opennsa.nsa'
+URN_UUID_PREFIX = 'urn:uuid:'
 
 
 
@@ -32,10 +33,13 @@ class NSIHeader(object):
         self.provider_nsa           = provider_nsa
         self.session_security_attrs = session_security_attrs
         self.reply_to               = reply_to
-        self.correlation_id         = correlation_id
+        self.correlation_id = correlation_id or self.createCorrelationId()
+
+    def createCorrelationId(self):
+        return URN_UUID_PREFIX + str(uuid.uuid1())
 
     def newCorrelationId(self):
-        self.correlation_id = 'urn:uuid:' + str(uuid.uuid1())
+        self.correlation_id = self.createCorrelationId()
 
 
     def __repr__(self):

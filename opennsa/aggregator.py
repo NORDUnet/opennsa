@@ -251,7 +251,6 @@ class Aggregator:
 
 
             header = nsa.NSIHeader(self.nsa_.urn(), provider_nsa.urn(), []) # need to something more here - or delegate to protocl stack (yes)
-            header.newCorrelationId()
 
             # save info for db saving
             local_link = True if provider_nsa == self.nsa_ else False
@@ -306,7 +305,6 @@ class Aggregator:
 
                 provider = self.getProvider(provider_nsa.urn())
                 header = nsa.NSIHeader(self.nsa_.urn(), provider_nsa.urn(), [])
-                header.newCorrelationId() # should be moved to requester - i think
 
                 d = provider.terminate(header, sc_id)
                 d.addCallbacks(

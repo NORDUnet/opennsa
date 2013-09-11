@@ -12,18 +12,12 @@ from opennsa.interface import INSIProvider
 LOG_SYSTEM = 'nsi2.Requester'
 
 DEFAULT_CALLBACK_TIMEOUT = 60 # 1 minute
-URN_UUID_PREFIX = 'urn:uuid:'
 
 RESERVE         = 'reserve'
 RESERVE_COMMIT  = 'reserve_commit'
 PROVISION       = 'provision'
 RELEASE         = 'release'
 TERMINATE       = 'terminate'
-
-
-
-def createCorrelationId():
-    return URN_UUID_PREFIX + str(uuid.uuid1())
 
 
 
@@ -82,12 +76,8 @@ class Requester:
 
     def reserve(self, header, connection_id, global_reservation_id, description, service_parameters):
 
-        if header.correlation_id is not None:
-            log.msg('Reserve ignoring specified correlation id', system=LOG_SYSTEM)
         if header.reply_to is not None:
             log.msg('Reserve ignoring reply to', system=LOG_SYSTEM)
-
-        header.correlation_id = createCorrelationId()
 
         def reserveRequestFailed(err):
             # invocation failed, so we error out immediately
@@ -112,8 +102,6 @@ class Requester:
 
     def reserveCommit(self, header, connection_id):
 
-        header.correlation_id = createCorrelationId()
-
         def reserveCommitFailed(err):
             # invocation failed, so we error out immediately
             log.msg('ReserveCommit invocation failed: %s' % err.getErrorMessage())
@@ -131,8 +119,6 @@ class Requester:
 
 
     def provision(self, header, connection_id):
-
-        header.correlation_id = createCorrelationId()
 
         def provisionRequestFailed(err):
             # invocation failed, so we error out immediately
@@ -154,51 +140,47 @@ class Requester:
         self.triggerCall(provider_nsa, correlation_id, PROVISION, err)
 
 
-    def release(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
-
-        correlation_id = createCorrelationId()
+    def release(self, header, connection_id):
 
         def releaseRequestFailed(err):
             # invocation failed, so we error out immediately
-            self.triggerCall(provider_nsa.urn(), correlation_id, 'release', err.value)
+            self.triggerCall(header.provider_nsa, header.correlation_id, RELEASE, err.value)
 
-        rd = self.addCall(provider_nsa, correlation_id, 'release')
-        cd = self.requester_client.release(correlation_id, requester_nsa, provider_nsa, session_security_attr, connection_id)
+        rd = self.addCall(provider_nsa, correlation_id, RELEASE)
+        cd = self.requester_client.release(header, connection_id)
         cd.addErrback(releaseRequestFailed)
         return rd
 
     def releaseConfirmed(self, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id):
 
-        self.triggerCall(provider_nsa, correlation_id, 'release', connection_id)
+        self.triggerCall(provider_nsa, correlation_id, RELEASE, connection_id)
 
 
     def releaseFailed(self, correlation_id, requester_nsa, provider_nsa, session_security_attr, connection_id, err):
 
-        self.triggerCall(provider_nsa, correlation_id, 'release', err)
+        self.triggerCall(provider_nsa, correlation_id, RELEASE, err)
 
 
-    def terminate(self, requester_nsa, provider_nsa, session_security_attr, connection_id):
-
-        correlation_id = createCorrelationId()
+    def terminate(self, header, connection_id):
 
         def terminateRequestFailed(err):
             # invocation failed, so we error out immediately
-            self.triggerCall(provider_nsa.urn(), correlation_id, 'terminate', err.value)
+            self.triggerCall(header.provider_nsa, header.correlation_id, TERMINATE, err.value)
 
-        rd = self.addCall(provider_nsa, correlation_id, 'terminate')
-        cd = self.requester_client.terminate(correlation_id, requester_nsa, provider_nsa, session_security_attr, connection_id)
+        rd = self.addCall(provider_nsa, correlation_id, TERMINATE)
+        cd = self.requester_client.terminate(header, connection_id)
         cd.addErrback(terminateRequestFailed)
         return rd
 
 
-    def terminateConfirmed(self, correlation_id, requester_nsa, provider_nsa, global_reservation_id, connection_id):
+    def terminateConfirmed(self, correlation_id, requester_nsa, provider_nsa, connection_id):
 
-        self.triggerCall(provider_nsa, correlation_id, 'terminate', connection_id)
+        self.triggerCall(provider_nsa, correlation_id, TERMIANTE, connection_id)
 
 
     def terminateFailed(self, correlation_id, requester_nsa, provider_nsa, session_security_attr, connection_id, err):
 
-        self.triggerCall(provider_nsa, correlation_id, 'terminate', err)
+        self.triggerCall(provider_nsa, correlation_id, TERMINATE, err)
 
 
     def querySummary(self, header, connection_ids=None, global_reservation_ids=None):
