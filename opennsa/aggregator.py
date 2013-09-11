@@ -238,7 +238,7 @@ class Aggregator:
             except error.TopologyError:
                 raise error.ConnectionCreateError('No provider for network %s. Cannot create link' % link.network)
 
-        defs = []
+        conn_info = []
         for idx, link in enumerate(selected_path):
 
             provider_nsa = self.topology.getNSA(link.network)
@@ -266,7 +266,7 @@ class Aggregator:
                                                         'dest_port'      : link.dst_port }
 
             d = provider.reserve(header, None, conn.global_reservation_id, conn.description, ssp)
-            defs.append(d)
+            conn_info.append( (d, provider_nsa) )
 
             # Don't bother trying to save connection here, wait for reserveConfirmed
 
@@ -289,7 +289,7 @@ class Aggregator:
 #
 #            d.addCallback(reserveResponse, provider_nsa, idx)
 
-        results = yield defer.DeferredList(defs, consumeErrors=True) # doesn't errback
+        results = yield defer.DeferredList( [ c[0] for c in conn_info ], consumeErrors=True) # doesn't errback
         successes = [ r[0] for r in results ]
 
         if all(successes):
@@ -301,11 +301,16 @@ class Aggregator:
             # currently we don't try and be too clever about cleaning, just do it, and switch state
             yield state.terminating(conn)
             defs = []
-            reserved_connections = [ sc for success,sc in results if success ]
-            for rc in reserved_connections:
-                d = rc.terminate()
+            reserved_connections = [ (sc_id, provider_nsa) for (success,sc_id),(_,provider_nsa) in zip(results, conn_info) if success ]
+            for (sc_id, provider_nsa) in reserved_connections:
+
+                provider = self.getProvider(provider_nsa.urn())
+                header = nsa.NSIHeader(self.nsa_.urn(), provider_nsa.urn(), [])
+                header.newCorrelationId() # should be moved to requester - i think
+
+                d = provider.terminate(header, sc_id)
                 d.addCallbacks(
-                    lambda c : log.msg('Succesfully terminated sub connection after partial reservation failure %s %s' % (c.curator(), connPath(c)) , system=LOG_SYSTEM),
+                    lambda c : log.msg('Succesfully terminated sub connection %s at %s after partial reservation failure.' % (sc_id, provider_nsa.urn()) , system=LOG_SYSTEM),
                     lambda f : log.msg('Error terminating connection after partial-reservation failure: %s' % str(f), system=LOG_SYSTEM)
                 )
                 defs.append(d)
