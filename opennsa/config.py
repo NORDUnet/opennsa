@@ -18,6 +18,7 @@ DEFAULT_TOPOLOGY_FILE   = '/usr/local/share/nsi/topology.owl'
 DEFAULT_TCP_PORT        = 9080
 DEFAULT_TLS_PORT        = 9443
 DEFAULT_VERIFY          = True
+DEFAULT_CERTIFICATE_DIR = '/etc/ssl/certs' # This will work on most mordern linux distros
 
 
 # config blocks and options
@@ -189,16 +190,21 @@ def readVerifyConfig(cfg):
     except ConfigParser.NoOptionError:
         vc[DATABASE_PASSWORD] = None
 
+    # we always extract certdir and verify as we need that for performing https requests
+    try:
+        vc[CERTIFICATE_DIR] = cfg.get(BLOCK_SERVICE, CERTIFICATE_DIR)
+    except ConfigParser.NoOptionError, e:
+        vc[CERTIFICATE_DIR] = DEFAULT_CERTIFICATE_DIR
+    try:
+        vc[VERIFY_CERT] = cfg.getboolean(BLOCK_SERVICE, VERIFY_CERT)
+    except ConfigParser.NoOptionError:
+        vc[VERIFY_CERT] = DEFAULT_VERIFY
+
     # tls
     if vc[TLS]:
         try:
             hostkey  = cfg.get(BLOCK_SERVICE, KEY)
             hostcert = cfg.get(BLOCK_SERVICE, CERTIFICATE)
-            certdir  = cfg.get(BLOCK_SERVICE, CERTIFICATE_DIR)
-            try:
-                vc[VERIFY_CERT] = cfg.getboolean(BLOCK_SERVICE, VERIFY_CERT)
-            except ConfigParser.NoOptionError:
-                vc[VERIFY_CERT] = DEFAULT_VERIFY
 
             if not os.path.exists(hostkey):
                 raise ConfigurationError('Specified hostkey does not exist (%s)' % hostkey)
@@ -209,14 +215,13 @@ def readVerifyConfig(cfg):
 
             vc[KEY] = hostkey
             vc[CERTIFICATE] = hostcert
-            vc[CERTIFICATE_DIR] = certdir
 
         except ConfigParser.NoOptionError, e:
             # Not enough options for configuring tls context
             raise ConfigurationError('Missing TLS option: %s' % str(e))
 
-    # backends
 
+    # backends
     backends = {}
 
     for section in cfg.sections():
