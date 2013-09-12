@@ -6,6 +6,8 @@ Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2013)
 """
 
+from twisted.python import log
+
 from xml.etree import ElementTree as ET
 import datetime
 
@@ -14,12 +16,14 @@ from opennsa.topology import nml
 
 
 
+LOG_SYSTEM = 'topology.nmlxml'
+
+
 NML_NS = 'http://schemas.ogf.org/nml/2013/05/base#'
 NSI_NS = 'http://schemas.ogf.org/nsi/2013/09/topology#'
 VC_NS  = 'urn:ietf:params:xml:ns:vcard-4.0'
 
 NSI_CS2_SERVICE_TYPE = 'application/vnd.org.ogf.nsi.cs.v2+soap'
-
 
 ET.register_namespace('nml', NML_NS)
 ET.register_namespace('nsi', NSI_NS)
@@ -168,9 +172,9 @@ def parseNMLPort(nml_port):
                 network_port_name = _baseName(port_alias)
                 remote_network, remote_port = network_port_name.rsplit(':',1)
             else:
-                print "Unknown nml relation type %s" % pe.attrib[TYPE]
+                log.msg('Unknown nml relation type %s, ignoring' % pe.attrib[TYPE], system=LOG_SYSTEM)
         else:
-            print "Unknown port element", pe
+            log.msg('Unknown port element %s, ignoring' % pe, system=LOG_SYSTEM)
 
     port = nml.Port(port_id, port_name, labels, remote_network, remote_port)
     return port
@@ -195,7 +199,7 @@ def parseNMLTopology(nml_topology):
         elif nte.tag == NML_RELATION and nte.attrib[TYPE] == NML_HASINBOUNDPORT:
             for npe in nte:
                 if npe.tag != NML_PORT:
-                    print 'Relation with inboundPort type has non-Port element (%s)' % npe.tag
+                    log.msg('Relation with inboundPort type has non-Port element (%s), ignoring' % npe.tag, system=LOG_SYSTEM)
                     continue
                 port = parseNMLPort(npe)
                 inbound_ports[port.id_] = port
@@ -203,7 +207,7 @@ def parseNMLTopology(nml_topology):
         elif nte.tag == NML_RELATION and nte.attrib[TYPE] == NML_HASOUTBOUNDPORT:
             for npe in nte:
                 if npe.tag != NML_PORT:
-                    print 'Relation with outboundPort type has non-Port element (%s)' % npe.tag
+                    log.msg('Relation with outboundPort type has non-Port element (%s), ignoring' % npe.tag, system=LOG_SYSTEM)
                     continue
                 port = parseNMLPort(npe)
                 outbound_ports[port.id_] = port
@@ -220,7 +224,7 @@ def parseNMLTopology(nml_topology):
             bd_ports.append( (port_id, name, sub_ports) )
 
         else:
-            print "Unknown topology element", nte.tag
+            log.msg('Unknown topology element %s, ignoring' % nte.tag, system=LOG_SYSTEM)
 
     # construct the bidirectional ports
     bidirectional_ports = []
