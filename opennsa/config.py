@@ -192,7 +192,10 @@ def readVerifyConfig(cfg):
 
     # we always extract certdir and verify as we need that for performing https requests
     try:
-        vc[CERTIFICATE_DIR] = cfg.get(BLOCK_SERVICE, CERTIFICATE_DIR)
+        certdir = cfg.get(BLOCK_SERVICE, CERTIFICATE_DIR)
+        if not os.path.exists(certdir):
+            raise ConfigurationError('Specified certdir does not exist (%s)' % certdir)
+        vc[CERTIFICATE_DIR] = certdir
     except ConfigParser.NoOptionError, e:
         vc[CERTIFICATE_DIR] = DEFAULT_CERTIFICATE_DIR
     try:
@@ -210,8 +213,6 @@ def readVerifyConfig(cfg):
                 raise ConfigurationError('Specified hostkey does not exist (%s)' % hostkey)
             if not os.path.exists(hostcert):
                 raise ConfigurationError('Specified hostcert does not exist (%s)' % hostcert)
-            if not os.path.exists(certdir):
-                raise ConfigurationError('Specified certdir does not exist (%s)' % certdir)
 
             vc[KEY] = hostkey
             vc[CERTIFICATE] = hostcert
