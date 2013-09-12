@@ -86,14 +86,25 @@ class OpenNSAService(twistedservice.MultiService):
         nsa_endpoint = base_protocol + vc[config.HOST] + ':' + str(vc[config.PORT]) + '/NSI/services/CS2' # hardcode for now
         ns_agent = nsa.NetworkServiceAgent(network_name + ':nsa', nsa_endpoint, 'local')
 
+        # topology
         topo_source = open( vc[config.NRM_MAP_FILE] ) if type(vc[config.NRM_MAP_FILE]) is str else vc[config.NRM_MAP_FILE] # wee bit hackish
-
         network_topology, port_map = nrmparser.parseTopologySpec(topo_source, network_name)
         topology = nml.Topology()
         topology.addNetwork(network_topology, ns_agent)
 
+        # ssl/tls contxt
+        if vc[config.TLS]:
+            from opennsa import ctxfactory
+            ctx_factory = ctxfactory.ContextFactory(vc[config.KEY], vc[config.CERTIFICATE], vc[config.CERTIFICATE_DIR], vc[config.VERIFY_CERT])
+        elif vc[config.PEERS]:
+            # we need a fetcher that can retrieve stuff over https
+            from opennsa import ctxfactory
+            ctx_factory = ctxfactory.RequestContextFactory(vc[config.CERTIFICATE_DIR], vc[config.VERIFY_CERT])
+        else:
+            ctx_factory = None
+
         top_resource = resource.Resource()
-        cs2_requester_creator = lambda nsi_agent : nsi2.setupRequester(top_resource, vc[config.HOST], vc[config.PORT], nsi_agent.endpoint, 'RequesterService2' + hashlib.sha1(ns_agent.urn() + ns_agent.endpoint).hexdigest() )
+        cs2_requester_creator = lambda nsi_agent : nsi2.setupRequester(top_resource, vc[config.HOST], vc[config.PORT], nsi_agent.endpoint, 'RequesterService2' + hashlib.sha1(ns_agent.urn() + ns_agent.endpoint).hexdigest(), tls=vc[config.TLS], ctx_factory=ctx_factory )
 
         provider_registry = provreg.ProviderRegistry({}, { nsi2.SERVICE_TYPE: cs2_requester_creator} )
         aggr = aggregator.Aggregator(network_name, ns_agent, topology, None, provider_registry) # set parent requester later
@@ -111,15 +122,6 @@ class OpenNSAService(twistedservice.MultiService):
 
         provider_registry.addProvider(ns_agent.urn(), backend_service)
 
-        # ssl/tls contxt
-        if vc[config.TLS]:
-            from opennsa import ctxfactory
-            ctx_factory = ctxfactory.ContextFactory(vc[config.KEY], vc[config.CERTIFICATE], vc[config.CERTIFICATE_DIR], vc[config.VERIFY_CERT])
-        elif vc[config.PEERS]:
-            # we need a fetcher that can retrieve stuff over https
-            from opennsa import ctxfactory
-            ctx_factory = ctxfactory.RequestContextFactory(vc[config.CERTIFICATE_DIR], vc[config.VERIFY_CERT])
-
         # fetcher
         if vc[config.PEERS]:
             fetcher_service = fetcher.FetcherService(vc[config.PEERS], topology, provider_registry, ctx_factory=ctx_factory)
@@ -129,7 +131,7 @@ class OpenNSAService(twistedservice.MultiService):
 
         discovery.setupDiscoveryService(None, top_resource)
 
-        pc = nsi2.setupProvider(aggr, top_resource)
+        pc = nsi2.setupProvider(aggr, top_resource, ctx_factory=ctx_factory)
         aggr.parent_requester = pc
 
         vr = viewresource.ConnectionListResource(aggr)
