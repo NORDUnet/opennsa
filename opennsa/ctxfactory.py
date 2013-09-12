@@ -11,12 +11,13 @@ from OpenSSL import SSL
 
 
 
-class ContextFactory:
+class RequestContextFactory(object):
+    """
+    Context Factory for issuing requests to SSL/TLS services without having
+    a client certificate.
+    """
+    def __init__(self, certificate_dir, verify):
 
-    def __init__(self, private_key_path, public_key_path, certificate_dir, verify=True):
-
-        self.private_key_path   = private_key_path
-        self.public_key_path    = public_key_path
         self.certificate_dir    = certificate_dir
         self.verify             = verify
 
@@ -34,12 +35,6 @@ class ContextFactory:
 
     def _createContext(self):
 
-        ctx = SSL.Context(SSL.TLSv1_METHOD) # only tls v1 (its almost 2012, should be okay
-
-        ctx.use_privatekey_file(self.private_key_path)
-        ctx.use_certificate_file(self.public_key_path)
-        ctx.check_privatekey() # sanity check
-
         def verify_callback(conn, x509, error_number, error_depth, allowed):
             # just return what openssl thinks is right
             if self.verify:
@@ -47,6 +42,7 @@ class ContextFactory:
             else:
                 return 1 # allow everything which has a cert
 
+        ctx = SSL.Context(SSL.TLSv1_METHOD) # only tls v1 (its almost 2012, should be okay
         ctx.set_verify(SSL.VERIFY_PEER, verify_callback)
 
         calist = [ ca for ca in os.listdir(self.certificate_dir) if ca.endswith('.0') ]
@@ -54,6 +50,31 @@ class ContextFactory:
             # openssl wants absolute paths
             ca = os.path.join(self.certificate_dir, ca)
             ctx.load_verify_locations(ca)
+
+        return ctx
+
+
+
+class ContextFactory(RequestContextFactory):
+    """
+    Full context factory with private key and cert. When running service
+    over SSL/TLS.
+    """
+    def __init__(self, private_key_path, public_key_path, certificate_dir, verify):
+
+        super(RequestContextFactory, self).__init__(certificate_dir, verify)
+
+        self.private_key_path   = private_key_path
+        self.public_key_path    = public_key_path
+
+
+    def _createContext(self):
+
+        ctx = super(RequestContextFactory, self).createContext()
+
+        ctx.use_privatekey_file(self.private_key_path)
+        ctx.use_certificate_file(self.public_key_path)
+        ctx.check_privatekey() # sanity check
 
         return ctx
 
