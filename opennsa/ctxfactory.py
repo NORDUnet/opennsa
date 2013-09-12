@@ -70,7 +70,7 @@ class ContextFactory(RequestContextFactory):
 
     def _createContext(self):
 
-        ctx = super(RequestContextFactory, self).createContext()
+        ctx = RequestContextFactory._createContext(self)
 
         ctx.use_privatekey_file(self.private_key_path)
         ctx.use_certificate_file(self.public_key_path)
