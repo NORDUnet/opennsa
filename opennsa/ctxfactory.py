@@ -11,7 +11,7 @@ from OpenSSL import SSL
 
 
 
-class RequestContextFactory(object):
+class RequestContextFactory:
     """
     Context Factory for issuing requests to SSL/TLS services without having
     a client certificate.
@@ -62,7 +62,7 @@ class ContextFactory(RequestContextFactory):
     """
     def __init__(self, private_key_path, public_key_path, certificate_dir, verify):
 
-        super(RequestContextFactory, self).__init__(certificate_dir, verify)
+        RequestContextFactory.__init__(self, certificate_dir, verify)
 
         self.private_key_path   = private_key_path
         self.public_key_path    = public_key_path
