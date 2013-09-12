@@ -13,7 +13,7 @@ from opennsa.topology import nmlxml
 
 LOG_SYSTEM = 'topology.Fetcher'
 
-FETCH_INTERVAL = 120 # seconds, increase for production :-)
+FETCH_INTERVAL = 1200 # seconds
 
 
 
