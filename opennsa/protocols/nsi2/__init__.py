@@ -42,7 +42,7 @@ def setupRequester(top_resource, host, port, service_endpoint, resource_name=Non
 
     soap_resource = soapresource.setupSOAPResource(top_resource, resource_name)
 
-    requester_client = requesterclient.RequesterClient(service_endpoint, service_url)
+    requester_client = requesterclient.RequesterClient(service_endpoint, service_url, ctx_factory=ctx_factory)
 
     nsi_requester = requester.Requester(requester_client, callback_timeout=callback_timeout)
 
