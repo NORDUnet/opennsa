@@ -87,7 +87,7 @@ class FetcherService(service.Service):
             log.msg('Topology for %s updated' % nml_network.name, system=LOG_SYSTEM)
             self.provider_registry.spawnProvider(nsi_agent)
 
-        except error.TopologyError as e:
+        except Exception as e:
             log.msg('Error parsing topology for network %s, url %s. Reason %s' % (network_name, topology_url, str(e)), system=LOG_SYSTEM)
             self.blacklistNetwork(network_name)
 
