@@ -111,10 +111,18 @@ class OpenNSAService(twistedservice.MultiService):
 
         provider_registry.addProvider(ns_agent.urn(), backend_service)
 
-        # done with backend, now fetcher
+        # ssl/tls contxt
+        if vc[config.TLS]:
+            from opennsa import ctxfactory
+            ctx_factory = ctxfactory.ContextFactory(vc[config.KEY], vc[config.CERTIFICATE], vc[config.CERTIFICATE_DIR], vc[config.VERIFY_CERT])
+        elif vc[config.PEERS]:
+            # we need a fetcher that can retrieve stuff over https
+            from opennsa import ctxfactory
+            ctx_factory = ctxfactory.RequestContextFactory(vc[config.CERTIFICATE_DIR], vc[config.VERIFY_CERT])
 
+        # fetcher
         if vc[config.PEERS]:
-            fetcher_service = fetcher.FetcherService(vc[config.PEERS], topology, provider_registry)
+            fetcher_service = fetcher.FetcherService(vc[config.PEERS], topology, provider_registry, ctx_factory=ctx_factory)
             fetcher_service.setServiceParent(self)
 
         # wire up the http stuff
@@ -138,10 +146,7 @@ class OpenNSAService(twistedservice.MultiService):
 
         factory = server.Site(top_resource, logPath='/dev/null')
 
-
         if vc[config.TLS]:
-            from opennsa import ctxfactory
-            ctx_factory = ctxfactory.ContextFactory(vc[config.KEY], vc[config.CERTIFICATE], vc[config.CERTIFICATE_DIR], vc[config.VERIFY_CERT])
             internet.SSLServer(vc[config.PORT], factory, ctx_factory).setServiceParent(self)
         else:
             internet.TCPServer(vc[config.PORT], factory).setServiceParent(self)
