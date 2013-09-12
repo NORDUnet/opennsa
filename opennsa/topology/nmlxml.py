@@ -230,8 +230,8 @@ def parseNMLTopology(nml_topology):
             in_port  = inbound_ports[p1]
             out_port = outbound_ports[p2]
         else:
-            in_port  = ports[ portName(p2, network_name) ]
-            out_port = ports[ portName(p1, network_name) ]
+            in_port  = inbound_ports[p2]
+            out_port = outbound_ports[p1]
         bidirectional_ports.append( nml.BidirectionalPort(port_id, name, in_port, out_port) )
 
     network = nml.Network(topology_id, network_name, inbound_ports.values(), outbound_ports.values(), bidirectional_ports)
@@ -263,10 +263,9 @@ def parseNSITopology(nsi_topology_source):
     nsi_nsa = tree.getroot()
     assert nsi_nsa.tag == NSI_NSA, 'Top level container must be a nsi:NSA tag'
 
-    nsa_id  = nsi_nsa.attrib[ID]
-    version = nsi_nsa.attrib[VERSION]
-
-    nsa_name = _baseName(nsa_id)
+    ## we currently don't use these for anything
+    # nsa_id  = nsi_nsa.attrib[ID]
+    # version = nsi_nsa.attrib[VERSION]
 
     nsi_agent = None
     network_topo = None
