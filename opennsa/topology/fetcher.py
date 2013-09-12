@@ -19,7 +19,7 @@ FETCH_INTERVAL = 1200 # seconds
 
 class FetcherService(service.Service):
 
-    def __init__(self, peering_entries, topology, provider_registry):
+    def __init__(self, peering_entries, topology, provider_registry, ctx_factory=None):
         # peering entries is a list of two-tuples, where each tuple contains
         # a network name and the url of the network topology
         #for network, topo_url in peering_pairs:
@@ -31,6 +31,7 @@ class FetcherService(service.Service):
         self.peering_entries = peering_entries
         self.topology = topology
         self.provider_registry = provider_registry
+        self.ctx_factory = ctx_factory
 
         self.blacklist = {}
 
@@ -67,7 +68,7 @@ class FetcherService(service.Service):
         defs = []
         for network_name, topology_url in self.getPeeringEntries():
             log.msg('Fetchin topology for network %s from %s' % (network_name, topology_url), debug=True, system=LOG_SYSTEM)
-            d = httpclient.httpRequest(topology_url, '', {}, 'GET', timeout=10) # https should perhaps be added sometime
+            d = httpclient.httpRequest(topology_url, '', {}, 'GET', timeout=10, ctx_factory=self.ctx_factory)
             ca = (network_name, topology_url)
             d.addCallbacks(self.gotTopology, self.retrievalFailed, callbackArgs=ca, errbackArgs=ca)
             defs.append(d)
