@@ -41,8 +41,8 @@ PEERS            = 'peers'
 
 # database
 DATABASE                = 'database'    # mandatory
-DATABASE_USER           = 'dbuser'        # mandatory
-DATABASE_PASSWORD       = 'dbpassword'    # can be none (os auth)
+DATABASE_USER           = 'dbuser'      # mandatory
+DATABASE_PASSWORD       = 'dbpassword'  # can be none (os auth)
 
 # tls
 KEY                     = 'key'         # mandatory, if tls is set
