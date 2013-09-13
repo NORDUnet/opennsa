@@ -782,6 +782,8 @@ class Aggregator:
         conn = yield sub_conn.ServiceConnection.get()
         sub_conns = yield conn.SubConnections.get()
 
+        # At some point we should check if data plane aggregated state actually changes and only emit for those that change
+
         # do notification
         aggr_active     = all( [ sc.data_plane_active     for sc in sub_conns ] )
         aggr_version    = max( [ sc.data_plane_version    for sc in sub_conns ] )
