@@ -610,6 +610,11 @@ class Aggregator:
 
         yield conn.save()
 
+        outstanding_calls = [ v for v in self.reservations.values() if v.get('service_connection_id') == resv_info['service_connection_id'] ]
+        if len(outstanding_calls) > 0:
+            log.msg('Connection %s: Still missing %i reserveConfirmed call(s) to aggregate' % (conn.connection_id, len(outstanding_calls)), system=LOG_SYSTEM)
+            return
+
         if all( [ sc.reservation_state == state.RESERVE_HELD for sc in sub_conns ] ):
             log.msg('Connection %s: All sub connections reserve held, can emit reserveConfirmed' % (conn.connection_id), system=LOG_SYSTEM)
             yield state.reserveHeld(conn)
