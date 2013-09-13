@@ -252,9 +252,7 @@ class Aggregator:
                                          conn.bandwidth)
 
             # save info for db saving
-            local_link = True if provider_nsa == self.nsa_ else False
-
-            self.reservations[header.correlation_id] = {'local_link'    : local_link,
+            self.reservations[header.correlation_id] = {
                                                         'provider_nsa'  : provider_nsa.urn(),
                                                         'service_connection_id' : conn.id,
                                                         'order_id'       : idx,
@@ -590,7 +588,7 @@ class Aggregator:
         #criteria.dest_stp.labels[0].intersect(sub_connection.dest_labels[0])
 
         # save sub connection in database
-        sc = database.SubConnection(provider_nsa=org_provider_nsa, connection_id=connection_id, local_link=resv_info['local_link'],
+        sc = database.SubConnection(provider_nsa=org_provider_nsa, connection_id=connection_id, local_link=False, # remove local link sometime
                                     revision=criteria.version, service_connection_id=resv_info['service_connection_id'], order_id=resv_info['order_id'],
                                     global_reservation_id=global_reservation_id, description=description,
                                     reservation_state=state.RESERVE_HELD, provision_state=state.RELEASED, lifecycle_state=state.CREATED, data_plane_active=False,
