@@ -571,17 +571,17 @@ class Aggregator:
 
         # check that path matches our intent
         if criteria.source_stp.network != resv_info['source_network']:
-            print "source network mismatch"
+            log.msg('reserveConfirmed: source network mismatch (%s != %s)' % (resv_info['source_network'], criteria.source_stp.network), system=LOG_SYSTEM)
         if criteria.source_stp.port    != resv_info['source_port']:
-            print "source port mismatch"
+            log.msg('reserveConfirmed: source port mismatch (%s != %s' % (resv_info['source_port'], criteria.source_stp.port), system=LOG_SYSTEM)
         if criteria.dest_stp.network   != resv_info['dest_network']:
-            print "source network mismatch"
+            log.msg('reserveConfirmed: dest network mismatch', system=LOG_SYSTEM)
         if criteria.dest_stp.port      != resv_info['dest_port']:
-            print "source port mismatch"
+            log.msg('reserveConfirmed: dest port mismatch', system=LOG_SYSTEM)
         if not criteria.source_stp.labels[0].singleValue():
-            print "source label is no a single value"
+            log.msg('resourceConfirmed: source label is no a single value', system=LOG_SYSTEM)
         if not criteria.source_stp.labels[0].singleValue():
-            print "dest label is no a single value"
+            log.msg('reserveConfirmed: dest label is no a single value', system=LOG_SYSTEM)
 
         # skip label check for now
         #criteria.source_stp.labels[0].intersect(sub_connection.source_labels[0])
