@@ -250,6 +250,7 @@ class GenericBackend(service.Service):
         source_target = self.connection_manager.getTarget(source_stp.port, src_label.type_, src_label.labelValue())
         dest_target   = self.connection_manager.getTarget(dest_stp.port,   dst_label.type_, dst_label.labelValue())
         connection_id = self.connection_manager.createConnectionId(source_target, dest_target)
+        log.msg('Connection %s: Id assigned.' % connection_id, system=self.log_system)
 
         # we should check the schedule here
 
