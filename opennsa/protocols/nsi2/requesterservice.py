@@ -69,19 +69,15 @@ class RequesterService:
         path = criteria.path
 
         # create DTOs
+        # Missing: ERO, symmetric
 
-        # Missing: EROs, symmetric, stp labels
-
-        ss = path.sourceSTP
-        ds = path.destSTP
-
-        source_stp = nsa.STP(ss.networkId, ss.localId)
-        dest_stp   = nsa.STP(ds.networkId, ds.localId)
+        source_stp = helper.createSTP(path.sourceSTP)
+        dest_stp   = helper.createSTP(path.destSTP)
 
         start_time = self.datetime_parser.parse(schedule.startTime)
         end_time   = self.datetime_parser.parse(schedule.endTime)
 
-        service_parameters = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, directionality=path.directionality, bandwidth=criteria.bandwidth)
+        service_parameters = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, directionality=path.directionality, bandwidth=criteria.bandwidth, version=criteria.version)
 
         self.requester.reserveConfirmed(header, reservation.connectionId,  reservation.globalReservationId, reservation.description, service_parameters)
 
