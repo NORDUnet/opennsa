@@ -183,8 +183,8 @@ class STP(object): # Service Termination Point
         return self.network == other.network and self.port == other.port and self.labels == other.labels
 
 
-    def __str__(self):
-        base = '<STP %s:%s' % (self.network, self.port)
+    def __repr__(self):
+        base = '<STP %s %s' % (self.network, self.port)
         if self.labels:
             base += '#' + ','.join( [ label.type_.split('#')[-1] + '=' + label.labelValue() for label in self.labels ] )
         return base + '>'
@@ -318,7 +318,8 @@ class ServiceParameters(object):
               'end_time'   : self.end_time.isoformat().rsplit('.',1)[0],
               'source_stp' : self.source_stp,
               'dest_stp'   : self.dest_stp,
-              'bandwidth'  : self.bandwidth
+              'bandwidth'  : self.bandwidth,
+              'version'    : self.version
             }
 
         return '<ServiceParameters %s>' % d
