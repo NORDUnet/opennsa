@@ -52,7 +52,7 @@ def _handleEvent(event):
             return False
         else:
             log.msg('Connection %s Data plane down, version %i, consistent: %s' % (cid, version, consistent))
-            return True
+            return consistent # this means we don't exit on initial partially down, where we are not consistent
 
     else:
         log.msg('Unrecognized event %s ' % notification_type)
