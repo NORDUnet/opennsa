@@ -553,7 +553,7 @@ class Aggregator:
     def reserveConfirmed(self, header, connection_id, global_reservation_id, description, criteria):
 
         log.msg('', system=LOG_SYSTEM)
-        log.msg('reserveConfirm. NSA: %s. Connection ID: %s' % (header.requester_nsa, connection_id), system=LOG_SYSTEM)
+        log.msg('reserveConfirm. NSA: %s. Connection ID: %s' % (header.provider_nsa, connection_id), system=LOG_SYSTEM)
 
         if not header.correlation_id in self.reservations:
             msg = 'Unrecognized correlation id %s in reserveConfirmed. Connection ID %s. NSA %s' % (header.correlation_id, connection_id, header.provider_nsa)
