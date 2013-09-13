@@ -55,6 +55,25 @@ def setupBackend(backend_cfg, network_name, network_topology, parent_requester, 
 
 
 
+class CS2RequesterCreator:
+
+    def __init__(self, top_resource, aggregator, host, port, tls, ctx_factory):
+        self.top_resource = top_resource
+        self.aggregator   = aggregator
+        self.host         = host
+        self.port         = port
+        self.tls          = tls
+        self.ctx_factory  = ctx_factory
+
+
+    def create(self, nsi_agent):
+
+        resource_name = 'RequesterService2-' + hashlib.sha1(nsi_agent.urn() + nsi_agent.endpoint).hexdigest()
+        return nsi2.setupRequesterPair(self.top_resource, self.host, self.port, nsi_agent.endpoint, self.aggregator,
+                                       resource_name, tls=self.tls, ctx_factory=self.ctx_factory)
+
+
+
 class OpenNSAService(twistedservice.MultiService):
 
     def __init__(self, vc):
@@ -103,11 +122,14 @@ class OpenNSAService(twistedservice.MultiService):
         else:
             ctx_factory = None
 
+        # the dance to setup dynamic providers right
         top_resource = resource.Resource()
-        cs2_requester_creator = lambda nsi_agent : nsi2.setupRequester(top_resource, vc[config.HOST], vc[config.PORT], nsi_agent.endpoint, 'RequesterService2' + hashlib.sha1(ns_agent.urn() + ns_agent.endpoint).hexdigest(), tls=vc[config.TLS], ctx_factory=ctx_factory )
+        requester_creator = CS2RequesterCreator(top_resource, None, vc[config.HOST], vc[config.PORT], vc[config.TLS], ctx_factory) # set aggregator later
 
-        provider_registry = provreg.ProviderRegistry({}, { nsi2.SERVICE_TYPE: cs2_requester_creator} )
+        provider_registry = provreg.ProviderRegistry({}, { nsi2.SERVICE_TYPE: requester_creator.create } )
         aggr = aggregator.Aggregator(network_name, ns_agent, topology, None, provider_registry) # set parent requester later
+
+        requester_creator.aggregator = aggr
 
         # setup backend(s) - for now we only support one
 

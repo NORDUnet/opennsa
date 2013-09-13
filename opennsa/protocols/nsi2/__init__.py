@@ -29,33 +29,40 @@ def setupProvider(child_provider, top_resource, tls=False, ctx_factory=None):
     return nsi2_provider
 
 
-def setupRequester(top_resource, host, port, service_endpoint, resource_name=None, tls=False, ctx_factory=None, callback_timeout=None):
+def setupRequesterClient(top_resource, host, port, service_endpoint, resource_name, tls=False, ctx_factory=None):
+
+    proto_scheme = 'https://' if tls else 'http://'
+    service_url = proto_scheme + '%s:%i/NSI/services/%s' % (host,port, resource_name)
+
+    requester_client = requesterclient.RequesterClient(service_endpoint, service_url, ctx_factory=ctx_factory)
+    return requester_client
+
+
+def setupRequesterPair(top_resource, host, port, service_endpoint, nsi_requester, resource_name=None, tls=False, ctx_factory=None):
 
     resource_name = resource_name or 'RequesterService2'
 
-    def _createServiceURL(host, port, tls=False):
-        proto_scheme = 'https://' if tls else 'http://'
-        service_url = proto_scheme + '%s:%i/NSI/services/%s' % (host,port, resource_name)
-        return service_url
-
-    service_url = _createServiceURL(host, port, tls)
+    requester_client = setupRequesterClient(top_resource, host, port, service_endpoint, resource_name=resource_name, tls=False, ctx_factory=None)
 
     soap_resource = soapresource.setupSOAPResource(top_resource, resource_name)
+    requester_service = requesterservice.RequesterService(soap_resource, nsi_requester)
 
-    requester_client = requesterclient.RequesterClient(service_endpoint, service_url, ctx_factory=ctx_factory)
+    return requester_client
+
+
+def createRequester(host, port, service_endpoint, resource_name=None, tls=False, ctx_factory=None, callback_timeout=None):
+
+    resource_name = resource_name or 'RequesterService2'
+
+    top_resource = resource.Resource()
+
+    requester_client = setupRequesterClient(top_resource, host, port, service_endpoint, resource_name=resource_name, tls=False, ctx_factory=None)
 
     nsi_requester = requester.Requester(requester_client, callback_timeout=callback_timeout)
 
+    soap_resource = soapresource.setupSOAPResource(top_resource, resource_name)
     requester_service = requesterservice.RequesterService(soap_resource, nsi_requester)
 
-    return nsi_requester
-
-
-def createRequesterClient(host, port, service_endpoint, resource_name=None, tls=False, ctx_factory=None, callback_timeout=None):
-
-    top_resource = resource.Resource()
-    nsi_requester = setupRequester(top_resource, host, port, service_endpoint, resource_name=resource_name, tls=tls, ctx_factory=ctx_factory, callback_timeout=callback_timeout)
     site = server.Site(top_resource, logPath='/dev/null')
     return nsi_requester, site
-
 
