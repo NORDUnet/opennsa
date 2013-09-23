@@ -193,27 +193,27 @@ class QuerySummaryResultType:
 
 
 class DataPlaneStateChangeRequestType:
-    def __init__(self, dataPlaneStatus, connectionId, notificationId, timeStamp):
-        self.dataPlaneStatus = dataPlaneStatus  # DataPlaneStatusType
+    def __init__(self, connectionId, notificationId, timeStamp, dataPlaneStatus):
         self.connectionId = connectionId  # ConnectionIdType -> string
         self.notificationId = notificationId  # NotificationIdType -> int
         self.timeStamp = timeStamp  # DateTimeType -> dateTime
+        self.dataPlaneStatus = dataPlaneStatus  # DataPlaneStatusType
 
     @classmethod
     def build(self, element):
         return DataPlaneStateChangeRequestType(
-                DataPlaneStatusType.build(element.find('dataPlaneStatus')) if element.find('dataPlaneStatus') is not None else None,
                 element.findtext('connectionId'),
                 int(element.findtext('notificationId')),
-                element.findtext('timeStamp')
+                element.findtext('timeStamp'),
+                DataPlaneStatusType.build(element.find('dataPlaneStatus')) if element.find('dataPlaneStatus') is not None else None
                )
 
     def xml(self, elementName):
         r = ET.Element(elementName)
-        r.append(self.dataPlaneStatus.xml('dataPlaneStatus'))
         ET.SubElement(r, 'connectionId').text = self.connectionId
         ET.SubElement(r, 'notificationId').text = str(self.notificationId)
         ET.SubElement(r, 'timeStamp').text = str(self.timeStamp)
+        r.append(self.dataPlaneStatus.xml('dataPlaneStatus'))
         return r
 
 
@@ -408,7 +408,7 @@ class ReservationConfirmCriteriaType:
     @classmethod
     def build(self, element):
         from . import p2pservices
-        service_defs = [ p2pservices.parseElement(e) for e in element if e.tag not in ('schedule', 'serviceType') ]
+        service_defs = dict( [ (e.tag, p2pservices.parseElement(e)) for e in element if e.tag not in ('schedule', 'serviceType') ] )
         return ReservationConfirmCriteriaType(
                 element.get('version'),
                 ScheduleType.build(element.find('schedule')) if element.find('schedule') is not None else None,
@@ -636,9 +636,9 @@ class DataPlaneStatusType:
     @classmethod
     def build(self, element):
         return DataPlaneStatusType(
-                None if element.find('active') is not None else (True if element.findtext('active') == 'true' else False),
+                True if element.findtext('active') == 'true' else False,
                 int(element.findtext('version')),
-                None if element.find('versionConsistent') is not None else (True if element.findtext('versionConsistent') == 'true' else False)
+                True if element.findtext('versionConsistent') == 'true' else False
                )
 
     def xml(self, elementName):
