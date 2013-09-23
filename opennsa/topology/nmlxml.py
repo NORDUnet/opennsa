@@ -36,7 +36,9 @@ LABEL_TYPE = 'labeltype'
 
 NML_TOPOLOGY            = ET.QName('{%s}Topology'   % NML_NS)
 NML_PORT                = ET.QName('{%s}Port'       % NML_NS)
+NML_PORTGROUP           = ET.QName('{%s}PortGroup'  % NML_NS)
 NML_LABEL               = ET.QName('{%s}Label'      % NML_NS)
+NML_LABELGROUP          = ET.QName('{%s}LabelGroup' % NML_NS)
 NML_NAME                = ET.QName('{%s}name'       % NML_NS)
 NML_RELATION            = ET.QName('{%s}Relation'   % NML_NS)
 NML_NODE                = ET.QName('{%s}Node'       % NML_NS)
@@ -75,9 +77,9 @@ def topologyXML(network):
     portName = lambda port : URN_NETWORK + ':' + port.name
 
     def addPort(nml_port_relation, port):
-        nml_port = ET.SubElement(nml_port_relation, NML_PORT, {ID: portName(port)} )
+        nml_port = ET.SubElement(nml_port_relation, NML_PORTGROUP, {ID: portName(port)} )
         for label in port.labels():
-            ln = ET.SubElement(nml_port, NML_LABEL, { LABEL_TYPE : label.type_} )
+            ln = ET.SubElement(nml_port, NML_LABELGROUP, { LABEL_TYPE : label.type_} )
             ln.text = label.labelValue()
         if port.remote_network is not None:
             rpa = ET.SubElement(nml_port, NML_RELATION, { TYPE : NML_ISALIAS} )
@@ -86,8 +88,8 @@ def topologyXML(network):
     for port in network.bidirectional_ports:
         pn = ET.SubElement(nml_topology, NML_BIDIRECTIONALPORT, { ID: portName(port) } )
         ET.SubElement(pn, NML_NAME).text = port.name
-        ET.SubElement(pn, NML_PORT, {ID: URN_NETWORK + ':' + port.inbound_port.name} )
-        ET.SubElement(pn, NML_PORT, {ID: URN_NETWORK + ':' + port.outbound_port.name} )
+        ET.SubElement(pn, NML_PORTGROUP, {ID: URN_NETWORK + ':' + port.inbound_port.name} )
+        ET.SubElement(pn, NML_PORTGROUP, {ID: URN_NETWORK + ':' + port.outbound_port.name} )
 
     if network.inbound_ports:
         nml_inbound_ports = ET.SubElement(nml_topology, NML_RELATION, {TYPE: NML_HASINBOUNDPORT})
@@ -152,7 +154,7 @@ def _baseName(urn_id):
 
 def parseNMLPort(nml_port):
 
-    assert nml_port.tag == NML_PORT, 'Port tag name must be nml:Port, not (%s)' % nml_port.tag
+    assert nml_port.tag in (NML_PORT,NML_PORTGROUP), 'Port tag name must be nml:Port or nml:PortGroup, not (%s)' % nml_port.tag
     port_id = nml_port.attrib[ID]
     port_name = port_id.split(':')[-1]
 
@@ -161,7 +163,7 @@ def parseNMLPort(nml_port):
     remote_port    = None
 
     for pe in nml_port:
-        if pe.tag == NML_LABEL:
+        if pe.tag in (NML_LABEL, NML_LABELGROUP):
             label_type = pe.attrib[LABEL_TYPE]
             label_value = pe.text
             labels.append( nsa.Label(label_type, label_value) )
@@ -198,7 +200,7 @@ def parseNMLTopology(nml_topology):
 
         elif nte.tag == NML_RELATION and nte.attrib[TYPE] == NML_HASINBOUNDPORT:
             for npe in nte:
-                if npe.tag != NML_PORT:
+                if not npe.tag in (NML_PORT, NML_PORTGROUP):
                     log.msg('Relation with inboundPort type has non-Port element (%s), ignoring' % npe.tag, system=LOG_SYSTEM)
                     continue
                 port = parseNMLPort(npe)
@@ -206,7 +208,7 @@ def parseNMLTopology(nml_topology):
 
         elif nte.tag == NML_RELATION and nte.attrib[TYPE] == NML_HASOUTBOUNDPORT:
             for npe in nte:
-                if npe.tag != NML_PORT:
+                if not npe.tag in (NML_PORT, NML_PORTGROUP):
                     log.msg('Relation with outboundPort type has non-Port element (%s), ignoring' % npe.tag, system=LOG_SYSTEM)
                     continue
                 port = parseNMLPort(npe)
@@ -218,7 +220,7 @@ def parseNMLTopology(nml_topology):
             for pel in nte:
                 if pel.tag == NML_NAME:
                     name = pel.text
-                elif pel.tag == NML_PORT:
+                elif pel.tag in (NML_PORT, NML_PORTGROUP):
                     sub_ports.append( pel.attrib[ID] )
             assert len(sub_ports) == 2, 'The number of ports in a bidirectional port must be 2'
             bd_ports.append( (port_id, name, sub_ports) )
