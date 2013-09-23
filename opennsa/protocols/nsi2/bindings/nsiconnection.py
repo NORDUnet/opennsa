@@ -262,17 +262,22 @@ class NotificationBaseType:
 
 
 class ReservationRequestCriteriaType:
-    def __init__(self, version, schedule, serviceType):
+    def __init__(self, version, schedule, serviceType, serviceDefinitions):
         self.version = version  # int
         self.schedule = schedule  # ScheduleType
         self.serviceType = serviceType  # string
+        self.serviceDefinitions = serviceDefinitions # { name : service definitions }
 
     @classmethod
     def build(self, element):
+        # we do some manual stuff here
+        from . import p2pservices
+        service_defs = [ p2pservices.parseElement(e) for e in element if e.tag not in ('schedule', 'serviceType') ]
         return ReservationRequestCriteriaType(
                 element.get('version'),
                 ScheduleType.build(element.find('schedule')) if element.find('schedule') is not None else None,
-                element.findtext('serviceType')
+                element.findtext('serviceType'),
+                service_defs
                )
 
     def xml(self, elementName):
@@ -281,17 +286,20 @@ class ReservationRequestCriteriaType:
             r.append(self.schedule.xml('schedule'))
         if self.serviceType:
             ET.SubElement(r, 'serviceType').text = self.serviceType
+        if self.serviceDefinitions:
+            for sn, sd in self.serviceDefinitions.items():
+                r.append(sd.xml(sn))
         return r
 
 
 class ReserveTimeoutRequestType:
-    def __init__(self, timeoutValue, originatingConnectionId, originatingNSA, connectionId, notificationId, timeStamp):
-        self.timeoutValue = timeoutValue  # int
-        self.originatingConnectionId = originatingConnectionId  # ConnectionIdType -> string
-        self.originatingNSA = originatingNSA  # NsaIdType -> anyURI
+    def __init__(self, connectionId, notificationId, timeStamp, timeoutValue, originatingConnectionId, originatingNSA):
         self.connectionId = connectionId  # ConnectionIdType -> string
         self.notificationId = notificationId  # NotificationIdType -> int
         self.timeStamp = timeStamp  # DateTimeType -> dateTime
+        self.timeoutValue = timeoutValue  # int
+        self.originatingConnectionId = originatingConnectionId  # ConnectionIdType -> string
+        self.originatingNSA = originatingNSA  # NsaIdType -> anyURI
 
     @classmethod
     def build(self, element):
@@ -391,17 +399,21 @@ class QueryNotificationType:
 
 
 class ReservationConfirmCriteriaType:
-    def __init__(self, version, schedule, serviceType):
+    def __init__(self, version, schedule, serviceType, serviceDefinitions):
         self.version = version  # int
         self.schedule = schedule  # ScheduleType
         self.serviceType = serviceType  # string
+        self.serviceDefinitions = serviceDefinitions # [ anyType ]
 
     @classmethod
     def build(self, element):
+        from . import p2pservices
+        service_defs = [ p2pservices.parseElement(e) for e in element if e.tag not in ('schedule', 'serviceType') ]
         return ReservationConfirmCriteriaType(
                 element.get('version'),
                 ScheduleType.build(element.find('schedule')) if element.find('schedule') is not None else None,
-                element.findtext('serviceType')
+                element.findtext('serviceType'),
+                service_defs
                )
 
     def xml(self, elementName):
@@ -409,6 +421,9 @@ class ReservationConfirmCriteriaType:
         r.append(self.schedule.xml('schedule'))
         if self.serviceType:
             ET.SubElement(r, 'serviceType').text = self.serviceType
+        if self.serviceDefinitions:
+            for sn, sd in self.serviceDefinitions.items():
+                r.append(sd.xml(sn))
         return r
 
 

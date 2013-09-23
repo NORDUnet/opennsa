@@ -122,7 +122,9 @@ class ServiceExceptionType:
 
 
 class EthernetVlanType:
-    def __init__(self, sourceVLAN, destVLAN, mtu, burstsize, capacity, directionality, symmetricPath, sourceSTP, destSTP, ero):
+    def __init__(self, sourceSTP, destSTP, sourceVLAN, destVLAN, mtu, burstsize, capacity, directionality, symmetricPath, ero):
+        self.sourceSTP = sourceSTP  # StpType
+        self.destSTP = destSTP  # StpType
         self.sourceVLAN = sourceVLAN  # vlanIdType -> int
         self.destVLAN = destVLAN  # vlanIdType -> int
         self.mtu = mtu  # int
@@ -130,13 +132,13 @@ class EthernetVlanType:
         self.capacity = capacity  # long
         self.directionality = directionality  # DirectionalityType -> string
         self.symmetricPath = symmetricPath  # boolean
-        self.sourceSTP = sourceSTP  # StpType
-        self.destSTP = destSTP  # StpType
         self.ero = ero  # [ OrderedStpType ]
 
     @classmethod
     def build(self, element):
         return EthernetVlanType(
+                StpType.build(element.find('{http://schemas.ogf.org/nsi/2013/07/services/types}sourceSTP')),
+                StpType.build(element.find('{http://schemas.ogf.org/nsi/2013/07/services/types}destSTP')),
                 int(element.findtext('sourceVLAN')),
                 int(element.findtext('destVLAN')),
                 int(element.findtext('mtu')),
@@ -144,8 +146,6 @@ class EthernetVlanType:
                 int(element.findtext('capacity')),
                 element.findtext('directionality'),
                 None if element.find('symmetricPath') is not None else (True if element.findtext('symmetricPath') == 'true' else False),
-                StpType.build(element.find('sourceSTP')) if element.find('sourceSTP') is not None else None,
-                StpType.build(element.find('destSTP')) if element.find('destSTP') is not None else None,
                 [ OrderedStpType.build(e) for e in element.find('ero') ] if element.find('ero') is not None else None
                )
 
