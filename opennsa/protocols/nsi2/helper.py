@@ -11,15 +11,17 @@ from twisted.python import log
 
 from opennsa import nsa, error
 from opennsa.protocols.shared import minisoap
-from opennsa.protocols.nsi2 import bindings
+from opennsa.protocols.nsi2.bindings import nsiframework, nsiconnection, p2pservices
 
 
 LOG_SYSTEM = 'NSI2.Helper'
 
 # don't really fit anywhere, consider cramming them into the bindings
-FRAMEWORK_TYPES_NS   = "http://schemas.ogf.org/nsi/2013/04/framework/types"
-FRAMEWORK_HEADERS_NS = "http://schemas.ogf.org/nsi/2013/04/framework/headers"
-CONNECTION_TYPES_NS  = "http://schemas.ogf.org/nsi/2013/04/connection/types"
+FRAMEWORK_TYPES_NS   = "http://schemas.ogf.org/nsi/2013/07/framework/types"
+FRAMEWORK_HEADERS_NS = "http://schemas.ogf.org/nsi/2013/07/framework/headers"
+CONNECTION_TYPES_NS  = "http://schemas.ogf.org/nsi/2013/07/connection/types"
+SERVICE_TYPES_NS     = 'http://schemas.ogf.org/nsi/2013/07/services/types'
+P2PSERVICES_TYPES_NS = 'http://schemas.ogf.org/nsi/2013/07/services/point2point'
 
 PROTO = 'application/vnd.org.ogf.nsi.cs.v2+soap'
 URN_NETWORK = 'urn:ogf:network:'
@@ -28,29 +30,31 @@ URN_NETWORK = 'urn:ogf:network:'
 ET.register_namespace('ftypes', FRAMEWORK_TYPES_NS)
 ET.register_namespace('header', FRAMEWORK_HEADERS_NS)
 ET.register_namespace('ctypes', CONNECTION_TYPES_NS)
+ET.register_namespace('stypes', SERVICE_TYPES_NS)
+ET.register_namespace('p2psrv', P2PSERVICES_TYPES_NS)
 
 
 
 def createHeader(requester_nsa_urn, provider_nsa_urn, session_security_attrs=None, reply_to=None, correlation_id=None):
 
-    header = bindings.CommonHeaderType(PROTO, correlation_id, requester_nsa_urn, provider_nsa_urn, reply_to, session_security_attrs)
-    header_element = header.xml(bindings.nsiHeader)
+    header = nsiframework.CommonHeaderType(PROTO, correlation_id, requester_nsa_urn, provider_nsa_urn, reply_to, session_security_attrs)
+    header_element = header.xml(nsiframework.nsiHeader)
     return header_element
 
 
 def createGenericAcknowledgement(header):
 
-    soap_header = bindings.CommonHeaderType(PROTO, header.correlation_id, header.requester_nsa, header.provider_nsa, None, header.session_security_attrs)
-    soap_header_element = soap_header.xml(bindings.nsiHeader)
+    soap_header = nsiframework.CommonHeaderType(PROTO, header.correlation_id, header.requester_nsa, header.provider_nsa, None, header.session_security_attrs)
+    soap_header_element = soap_header.xml(nsiframework.nsiHeader)
 
-    generic_confirm = bindings.GenericAcknowledgmentType()
-    generic_confirm_element = generic_confirm.xml(bindings.acknowledgment)
+    generic_confirm = nsiconnection.GenericAcknowledgmentType()
+    generic_confirm_element = generic_confirm.xml(nsiconnection.acknowledgment)
 
     payload = minisoap.createSoapPayload(generic_confirm_element, soap_header_element)
     return payload
 
 
-def createServiceException(err, provider_nsa, connection_id=None):
+def createServiceException(err, provider_nsa, connection_id=None, service_type=None):
 
     variables = None
     child_exception = None
@@ -65,7 +69,7 @@ def createServiceException(err, provider_nsa, connection_id=None):
         error_id = error.InternalServerError.errorId
         #se = bindings.ServiceExceptionType(provider_nsa, connection_id, error.InternalServerError.errorId, err.getErrorMessage(), variables, child_exception)
 
-    se = bindings.ServiceExceptionType(provider_nsa, connection_id, error_id, err.getErrorMessage(), variables, child_exception)
+    se = nsiframework.ServiceExceptionType(provider_nsa, connection_id, service_type, error_id, err.getErrorMessage(), variables, child_exception)
 
     return se
 
@@ -80,8 +84,8 @@ def parseRequest(soap_data):
 
     # more checking here...
 
-    header = bindings.parseElement(headers[0])
-    body   = bindings.parseElement(bodies[0])
+    header = nsiframework.parseElement(headers[0])
+    body   = nsiconnection.parseElement(bodies[0])
 
     nsi_header = nsa.NSIHeader(header.requesterNSA, header.providerNSA, None, header.correlationId, header.replyTo)
 
@@ -143,12 +147,12 @@ def createSTPType(stp):
         labels = []
         for label in stp.labels:
             ns, tag = splitLabelType(label.type_)
-            labels.append( bindings.TypeValuePairType(tag, ns, [ label.labelValue() ] ) )
+            labels.append( nsiconnection.TypeValuePairType(tag, ns, [ label.labelValue() ] ) )
 
     network = URN_NETWORK + stp.network
     port = stp.port
 
-    return bindings.StpType(network, network + ':' + port, labels)
+    return p2pservices.StpType(network, network + ':' + port, labels)
 
 
 
@@ -188,19 +192,19 @@ def buildQuerySummaryResultType(reservations):
 
         criterias = []
         for crit in crits:
-            schedule   = bindings.ScheduleType( createXMLTime(crit.start_time), createXMLTime(crit.end_time) )
+            schedule   = nsiconnection.ScheduleType( createXMLTime(crit.start_time), createXMLTime(crit.end_time) )
             source_stp = createSTPType(crit.source_stp)
             dest_stp   = createSTPType(crit.dest_stp)
-            path       = bindings.PathType('Bidirectional', False, source_stp, dest_stp, None)
-            criteria   = bindings.QuerySummaryResultCriteriaType(crit.version, schedule, crit.bandwidth, None, path, None)
+            path       = nsiconnection.PathType('Bidirectional', False, source_stp, dest_stp, None)
+            criteria   = nsiconnection.QuerySummaryResultCriteriaType(crit.version, schedule, crit.bandwidth, None, path, None)
             criterias.append(criteria)
 
-        data_plane_status = bindings.DataPlaneStatusType(dsm[0], dsm[1], dsm[2])
-        connection_states = bindings.ConnectionStatesType(rsm, psm, lsm, data_plane_status)
+        data_plane_status = nsiconnection.DataPlaneStatusType(dsm[0], dsm[1], dsm[2])
+        connection_states = nsiconnection.ConnectionStatesType(rsm, psm, lsm, data_plane_status)
 
-        qsrt = bindings.QuerySummaryResultType(cid, gid, desc, criterias, req_nsa, connection_states, nid)
+        qsrt = nsiconnection.QuerySummaryResultType(cid, gid, desc, criterias, req_nsa, connection_states, nid)
         query_results.append(qsrt)
 
-    qsc = bindings.QuerySummaryConfirmedType(query_results)
+    qsc = nsiconnection.QuerySummaryConfirmedType(query_results)
     return qsc
 

@@ -13,9 +13,10 @@ from twisted.python import log, failure
 from twisted.web.error import Error as WebError
 
 from opennsa.interface import INSIProvider
-from opennsa import error
+from opennsa import nsa, error
 from opennsa.protocols.shared import minisoap, httpclient
-from opennsa.protocols.nsi2 import actions, bindings, helper
+from opennsa.protocols.nsi2 import helper
+from opennsa.protocols.nsi2.bindings import actions, nsiframework, nsiconnection, p2pservices
 
 
 URN_NETWORK = 'urn:ogf:network:'
@@ -44,7 +45,7 @@ class RequesterClient:
     def _createGenericRequestType(self, body_element_name, header, connection_id):
 
         header_element = helper.createHeader(header.requester_nsa, header.provider_nsa, reply_to=self.reply_to, correlation_id=header.correlation_id)
-        body_element = bindings.GenericRequestType(connection_id).xml(body_element_name)
+        body_element = nsiconnection.GenericRequestType(connection_id).xml(body_element_name)
 
         payload = minisoap.createSoapPayload(body_element, header_element)
         return payload
@@ -65,7 +66,7 @@ class RequesterClient:
 
         service_exception = None
         if detail:
-            service_exception = bindings.parse(detail)
+            service_exception = nsiframework.parse(detail)
 
         if service_exception is None:
             # this is not entirely correct, but it isn't really wrong either
@@ -79,7 +80,7 @@ class RequesterClient:
         return err
 
 
-    def reserve(self, header, connection_id, global_reservation_id, description, service_parameters):
+    def reserve(self, header, connection_id, global_reservation_id, description, criteria):
 
         self._checkHeader(header)
 
@@ -87,26 +88,39 @@ class RequesterClient:
 
         header_payload = helper.createHeader(header.requester_nsa, header.provider_nsa, reply_to=self.reply_to, correlation_id=header.correlation_id)
 
-        sp = service_parameters
+        schedule = criteria.schedule
+        sd = criteria.service_def
 
-        assert sp.start_time.tzinfo is None, 'Start time must NOT have time zone'
-        assert sp.end_time.tzinfo   is None, 'End time must NOT have time zone'
+        assert schedule.start_time.tzinfo is None, 'Start time must NOT have time zone'
+        assert schedule.end_time.tzinfo   is None, 'End time must NOT have time zone'
 
-        schedule = bindings.ScheduleType(sp.start_time.replace(tzinfo=tzutc()).isoformat(), sp.end_time.replace(tzinfo=tzutc()).isoformat())
-        service_attributes = None
+        if type(sd) is nsa.EthernetVLANService:
 
-        symmetric = False
+            # we pass labels on STPs internally, but not in EVTS service, the latter will change after r99
+            src_vlan = sd.source_stp.labels[0].labelValue()
+            dst_vlan = sd.dest_stp.labels[0].labelValue()
 
-        src_stp = helper.createSTPType(sp.source_stp)
-        dst_stp = helper.createSTPType(sp.dest_stp)
+            src_stp = helper.createSTPType(sd.source_stp)
+            dst_stp = helper.createSTPType(sd.dest_stp)
+            src_stp.labels = []
+            dst_stp.labels = []
 
-        path = bindings.PathType(sp.directionality, symmetric, src_stp, dst_stp, None)
+            service_type = p2pservices.EthernetVlanType(src_stp, dst_stp, src_vlan, dst_vlan,
+                                                        sd.mtu, sd.burst_size, sd.capacity, sd.directionality, sd.symmetric, sd.ero)
 
-        criteria = bindings.ReservationRequestCriteriaType(service_parameters.version, schedule, sp.bandwidth, service_attributes, path)
+        else:
+            raise ValueError('Cannot create request for service definition of type %s' % type(service_definition))
 
-        reservation = bindings.ReserveType(connection_id, global_reservation_id, description, criteria)
 
-        body_payload   = reservation.xml(bindings.reserve)
+        schedule_type = nsiconnection.ScheduleType(schedule.start_time.replace(tzinfo=tzutc()).isoformat(),
+                                                   schedule.end_time.replace(tzinfo=tzutc()).isoformat())
+
+        version = 0 # FIXME
+        criteria = nsiconnection.ReservationRequestCriteriaType(version, schedule_type, str(p2pservices.evts), { p2pservices.evts : service_type } )
+
+        reservation = nsiconnection.ReserveType(connection_id, global_reservation_id, description, criteria)
+
+        body_payload   = reservation.xml(nsiconnection.reserve)
         payload = minisoap.createSoapPayload(body_payload, header_payload)
 
         def _handleAck(soap_data):
@@ -122,7 +136,7 @@ class RequesterClient:
 
         self._checkHeader(header)
 
-        payload = self._createGenericRequestType(bindings.reserveCommit, header, connection_id)
+        payload = self._createGenericRequestType(nsiconnection.reserveCommit, header, connection_id)
 
         d = httpclient.soapRequest(self.service_url, actions.RESERVE_COMMIT, payload, ctx_factory=self.ctx_factory)
         d.addCallbacks(lambda sd : None, self._handleErrorReply)
@@ -133,7 +147,7 @@ class RequesterClient:
 
         self._checkHeader(header)
 
-        payload = self._createGenericRequestType(bindings.reserveAbort, header, connection_id)
+        payload = self._createGenericRequestType(nsiconnection.reserveAbort, header, connection_id)
 
         d = httpclient.soapRequest(self.service_url, actions.RESERVE_ABORT, payload, ctx_factory=self.ctx_factory)
         d.addCallbacks(lambda sd : None, self._handleErrorReply)
@@ -144,7 +158,7 @@ class RequesterClient:
 
         self._checkHeader(header)
 
-        payload = self._createGenericRequestType(bindings.provision, header, connection_id)
+        payload = self._createGenericRequestType(nsiconnection.provision, header, connection_id)
         d = httpclient.soapRequest(self.service_url, actions.PROVISION, payload, ctx_factory=self.ctx_factory)
         d.addCallbacks(lambda sd : None, self._handleErrorReply)
         return d
@@ -154,7 +168,7 @@ class RequesterClient:
 
         self._checkHeader(header)
 
-        payload = self._createGenericRequestType(bindings.release, header, connection_id)
+        payload = self._createGenericRequestType(nsiconnection.release, header, connection_id)
         d = httpclient.soapRequest(self.service_url, actions.RELEASE, payload, ctx_factory=self.ctx_factory)
         d.addCallbacks(lambda sd : None, self._handleErrorReply)
         return d
@@ -164,7 +178,7 @@ class RequesterClient:
 
         self._checkHeader(header)
 
-        payload = self._createGenericRequestType(bindings.terminate, header, connection_id)
+        payload = self._createGenericRequestType(nsiconnection.terminate, header, connection_id)
         d = httpclient.soapRequest(self.service_url, actions.TERMINATE, payload, ctx_factory=self.ctx_factory)
         d.addCallbacks(lambda sd : None, self._handleErrorReply)
         return d
@@ -176,8 +190,8 @@ class RequesterClient:
 
         header_element = helper.createHeader(header.requester_nsa, header.provider_nsa, reply_to=self.reply_to, correlation_id=header.correlation_id)
 
-        query_type = bindings.QueryType(connection_ids, global_reservation_ids)
-        body_element = query_type.xml(bindings.querySummary)
+        query_type = nsiconnection.QueryType(connection_ids, global_reservation_ids)
+        body_element = query_type.xml(nsiconnection.querySummary)
 
         payload = minisoap.createSoapPayload(body_element, header_element)
 
@@ -197,8 +211,8 @@ class RequesterClient:
 
         header_element = helper.createHeader(header.requester_nsa, header.provider_nsa, reply_to=self.reply_to, correlation_id=header.correlation_id)
 
-        query_type = bindings.QueryType(connection_ids, global_reservation_ids)
-        body_element = query_type.xml(bindings.querySummary)
+        query_type = nsiconnection.QueryType(connection_ids, global_reservation_ids)
+        body_element = query_type.xml(nsiconnection.querySummary)
 
         payload = minisoap.createSoapPayload(body_element, header_element)
 

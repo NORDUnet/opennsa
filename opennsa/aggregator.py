@@ -141,7 +141,7 @@ class Aggregator:
 
 
     @defer.inlineCallbacks
-    def reserve(self, header, connection_id, global_reservation_id, description, service_params):
+    def reserve(self, header, connection_id, global_reservation_id, description, criteria):
 
         log.msg('', system=LOG_SYSTEM)
         log.msg('Reserve request. NSA: %s. Connection ID: %s' % (header.requester_nsa, connection_id), system=LOG_SYSTEM)
@@ -155,8 +155,9 @@ class Aggregator:
 
         connection_id = 'NU-T' + ''.join( [ random.choice(string.hexdigits[:16]) for _ in range(12) ] )
 
-        source_stp = service_params.source_stp
-        dest_stp   = service_params.dest_stp
+        sd = criteria.service_def
+        source_stp = sd.source_stp
+        dest_stp   = sd.dest_stp
 
         # check that we know the networks
         self.topology.getNetwork(source_stp.network)
@@ -173,7 +174,7 @@ class Aggregator:
                             reservation_state=state.RESERVE_START, provision_state=state.RELEASED, lifecycle_state=state.CREATED,
                             source_network=source_stp.network, source_port=source_stp.port, source_labels=source_stp.labels,
                             dest_network=dest_stp.network, dest_port=dest_stp.port, dest_labels=dest_stp.labels,
-                            start_time=service_params.start_time, end_time=service_params.end_time, bandwidth=service_params.bandwidth)
+                            start_time=criteria.schedule.start_time, end_time=criteria.schedule.end_time, bandwidth=sd.capacity)
         yield conn.save()
 
         # Here we should return / callback and spawn off the path creation
@@ -246,10 +247,10 @@ class Aggregator:
 
             header = nsa.NSIHeader(self.nsa_.urn(), provider_nsa.urn(), [])
 
-            ssp  = nsa.ServiceParameters(conn.start_time, conn.end_time,
-                                         nsa.STP(link.network, link.src_port, labels=link.src_labels),
+            # this has to be done more generic sometime
+            sd = nsa.EthernetVLANService(nsa.STP(link.network, link.src_port, labels=link.src_labels),
                                          nsa.STP(link.network, link.dst_port, labels=link.dst_labels),
-                                         conn.bandwidth)
+                                         conn.bandwidth, sd.mtu, sd.burst_size, sd.directionality, sd.symmetric)
 
             # save info for db saving
             self.reservations[header.correlation_id] = {
@@ -261,7 +262,9 @@ class Aggregator:
                                                         'dest_network'   : link.network,
                                                         'dest_port'      : link.dst_port }
 
-            d = provider.reserve(header, None, conn.global_reservation_id, conn.description, ssp)
+            crt = nsa.Criteria(criteria.revision, criteria.schedule, sd)
+
+            d = provider.reserve(header, None, conn.global_reservation_id, conn.description, crt)
             conn_info.append( (d, provider_nsa) )
 
             # Don't bother trying to save connection here, wait for reserveConfirmed
@@ -569,32 +572,33 @@ class Aggregator:
 
         # gid and desc should be identical, not checking, same with bandwidth, schedule, etc
 
+        sd = criteria.service_def
         # check that path matches our intent
-        if criteria.source_stp.network != resv_info['source_network']:
-            log.msg('reserveConfirmed: source network mismatch (%s != %s)' % (resv_info['source_network'], criteria.source_stp.network), system=LOG_SYSTEM)
-        if criteria.source_stp.port    != resv_info['source_port']:
-            log.msg('reserveConfirmed: source port mismatch (%s != %s' % (resv_info['source_port'], criteria.source_stp.port), system=LOG_SYSTEM)
-        if criteria.dest_stp.network   != resv_info['dest_network']:
+        if sd.source_stp.network != resv_info['source_network']:
+            log.msg('reserveConfirmed: source network mismatch (%s != %s)' % (resv_info['source_network'], sd.source_stp.network), system=LOG_SYSTEM)
+        if sd.source_stp.port    != resv_info['source_port']:
+            log.msg('reserveConfirmed: source port mismatch (%s != %s' % (resv_info['source_port'], sd.source_stp.port), system=LOG_SYSTEM)
+        if sd.dest_stp.network   != resv_info['dest_network']:
             log.msg('reserveConfirmed: dest network mismatch', system=LOG_SYSTEM)
-        if criteria.dest_stp.port      != resv_info['dest_port']:
+        if sd.dest_stp.port      != resv_info['dest_port']:
             log.msg('reserveConfirmed: dest port mismatch', system=LOG_SYSTEM)
-        if not criteria.source_stp.labels[0].singleValue():
+        if not sd.source_stp.labels[0].singleValue():
             log.msg('resourceConfirmed: source label is no a single value', system=LOG_SYSTEM)
-        if not criteria.source_stp.labels[0].singleValue():
+        if not sd.source_stp.labels[0].singleValue():
             log.msg('reserveConfirmed: dest label is no a single value', system=LOG_SYSTEM)
 
         # skip label check for now
-        #criteria.source_stp.labels[0].intersect(sub_connection.source_labels[0])
-        #criteria.dest_stp.labels[0].intersect(sub_connection.dest_labels[0])
+        #sd.source_stp.labels[0].intersect(sub_connection.source_labels[0])
+        #sd.dest_stp.labels[0].intersect(sub_connection.dest_labels[0])
 
         # save sub connection in database
         sc = database.SubConnection(provider_nsa=org_provider_nsa, connection_id=connection_id, local_link=False, # remove local link sometime
-                                    revision=criteria.version, service_connection_id=resv_info['service_connection_id'], order_id=resv_info['order_id'],
+                                    revision=criteria.revision, service_connection_id=resv_info['service_connection_id'], order_id=resv_info['order_id'],
                                     global_reservation_id=global_reservation_id, description=description,
                                     reservation_state=state.RESERVE_HELD, provision_state=state.RELEASED, lifecycle_state=state.CREATED, data_plane_active=False,
-                                    source_network=criteria.source_stp.network, source_port=criteria.source_stp.port, source_labels=criteria.source_stp.labels,
-                                    dest_network=criteria.dest_stp.network, dest_port=criteria.dest_stp.port, dest_labels=criteria.dest_stp.labels,
-                                    start_time=criteria.start_time.isoformat(), end_time=criteria.end_time.isoformat(), bandwidth=criteria.bandwidth)
+                                    source_network=sd.source_stp.network, source_port=sd.source_stp.port, source_labels=sd.source_stp.labels,
+                                    dest_network=sd.dest_stp.network, dest_port=sd.dest_stp.port, dest_labels=sd.dest_stp.labels,
+                                    start_time=criteria.schedule.start_time.isoformat(), end_time=criteria.schedule.end_time.isoformat(), bandwidth=sd.capacity)
 
         yield sc.save()
 
@@ -604,9 +608,9 @@ class Aggregator:
         sub_conns = yield conn.SubConnections.get()
 
         if sc.order_id == 0:
-            conn.source_labels = criteria.source_stp.labels
+            conn.source_labels = sd.source_stp.labels
         if sc.order_id == len(sub_conns)-1:
-            conn.dest_labels = criteria.dest_stp.labels
+            conn.dest_labels = sd.dest_stp.labels
 
         yield conn.save()
 
@@ -619,11 +623,12 @@ class Aggregator:
             log.msg('Connection %s: All sub connections reserve held, can emit reserveConfirmed' % (conn.connection_id), system=LOG_SYSTEM)
             yield state.reserveHeld(conn)
             header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn(), None)
-            # construct criteria..
             source_stp = nsa.STP(conn.source_network, conn.source_port, conn.source_labels)
             dest_stp   = nsa.STP(conn.dest_network,   conn.dest_port,   conn.dest_labels)
-            criteria = nsa.ServiceParameters(conn.start_time, conn.end_time, source_stp, dest_stp, conn.bandwidth)
-            self.parent_requester.reserveConfirmed(header, conn.connection_id, conn.global_reservation_id, conn.description, criteria)
+            schedule = nsa.Schedule(conn.start_time, conn.end_time)
+            evts = nsa.EthernetVLANService(source_stp, dest_stp, conn.bandwidth, 1, 1)
+            conn_criteria = nsa.Criteria(conn.revision, schedule, evts)
+            self.parent_requester.reserveConfirmed(header, conn.connection_id, conn.global_reservation_id, conn.description, conn_criteria)
 
         else:
             log.msg('Connection %s: Still missing reserveConfirmed messages before emitting to parent' % (conn.connection_id), system=LOG_SYSTEM)
@@ -785,9 +790,10 @@ class Aggregator:
         # At some point we should check if data plane aggregated state actually changes and only emit for those that change
 
         # do notification
-        aggr_active     = all( [ sc.data_plane_active     for sc in sub_conns ] )
+        actives  = [ sc.data_plane_active     for sc in sub_conns ]
+        aggr_active     = all( actives )
         aggr_version    = max( [ sc.data_plane_version    for sc in sub_conns ] )
-        aggr_consistent = all( [ sc.data_plane_consistent for sc in sub_conns ] )
+        aggr_consistent = all( [ sc.data_plane_consistent for sc in sub_conns ] ) and all( [ a == actives[0] for a in actives ] ) # we need version here i think
 
         header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn(), reply_to=conn.requester_url)
         now = datetime.datetime.utcnow()

@@ -149,9 +149,15 @@ class GenericBackend(service.Service):
 
 
     @defer.inlineCallbacks
-    def reserve(self, header, connection_id, global_reservation_id, description, service_params):
+    def reserve(self, header, connection_id, global_reservation_id, description, criteria):
 
         # return defer.fail( error.InternalNRMError('test reservation failure') )
+
+        schedule = criteria.schedule
+        sd = criteria.service_def
+
+        if type(sd) is not nsa.EthernetVLANService:
+            raise ValueError('Cannot handle service of type %s, only EthernetVLANService is currently supported' % type(sd))
 
         # should perhaps verify nsa, but not that important
         log.msg('Reserve request. Connection ID: %s' % connection_id, system=self.log_system)
@@ -160,8 +166,8 @@ class GenericBackend(service.Service):
             raise ValueError('Cannot handle cases with existing connection id (yet)')
             #conns = yield GenericBackendConnections.findBy(connection_id=connection_id)
 
-        source_stp = service_params.source_stp
-        dest_stp   = service_params.dest_stp
+        source_stp = sd.source_stp
+        dest_stp   = sd.dest_stp
 
         # check network and ports exist
 
@@ -204,8 +210,8 @@ class GenericBackend(service.Service):
             for lv in src_label_candidate.enumerateValues():
                 src_resource = self.connection_manager.getResource(source_stp.port, src_label_candidate.type_, lv)
                 try:
-                    self.calendar.checkReservation(src_resource, service_params.start_time, service_params.end_time)
-                    self.calendar.addReservation(   src_resource, service_params.start_time, service_params.end_time)
+                    self.calendar.checkReservation(src_resource, schedule.start_time, schedule.end_time)
+                    self.calendar.addReservation(  src_resource, schedule.start_time, schedule.end_time)
                     src_label = nsa.Label(src_label_candidate.type_, str(lv))
                     break
                 except error.STPUnavailableError:
@@ -217,8 +223,8 @@ class GenericBackend(service.Service):
             for lv in dst_label_candidate.enumerateValues():
                 dst_resource = self.connection_manager.getResource(dest_stp.port, dst_label_candidate.type_, lv)
                 try:
-                    self.calendar.checkReservation(dst_resource, service_params.start_time, service_params.end_time)
-                    self.calendar.addReservation(   dst_resource, service_params.start_time, service_params.end_time)
+                    self.calendar.checkReservation(dst_resource, schedule.start_time, schedule.end_time)
+                    self.calendar.addReservation(  dst_resource, schedule.start_time, schedule.end_time)
                     dst_label = nsa.Label(dst_label_candidate.type_, str(lv))
                     break
                 except error.STPUnavailableError:
@@ -233,10 +239,10 @@ class GenericBackend(service.Service):
                 src_resource = self.connection_manager.getResource(source_stp.port, label_candidate.type_, lv)
                 dst_resource = self.connection_manager.getResource(dest_stp.port,   label_candidate.type_, lv)
                 try:
-                    self.calendar.checkReservation(src_resource, service_params.start_time, service_params.end_time)
-                    self.calendar.checkReservation(dst_resource, service_params.start_time, service_params.end_time)
-                    self.calendar.addReservation(   src_resource, service_params.start_time, service_params.end_time)
-                    self.calendar.addReservation(   dst_resource, service_params.start_time, service_params.end_time)
+                    self.calendar.checkReservation(src_resource, schedule.start_time, schedule.end_time)
+                    self.calendar.checkReservation(dst_resource, schedule.start_time, schedule.end_time)
+                    self.calendar.addReservation(  src_resource, schedule.start_time, schedule.end_time)
+                    self.calendar.addReservation(  dst_resource, schedule.start_time, schedule.end_time)
                     src_label = nsa.Label(label_candidate.type_, str(lv))
                     dst_label = nsa.Label(label_candidate.type_, str(lv))
                     break
@@ -260,8 +266,8 @@ class GenericBackend(service.Service):
                                          reservation_state=state.RESERVE_START, provision_state=state.RELEASED, lifecycle_state=state.CREATED, data_plane_active=False,
                                          source_network=source_stp.network, source_port=source_stp.port, source_labels=[src_label],
                                          dest_network=dest_stp.network, dest_port=dest_stp.port, dest_labels=[dst_label],
-                                         start_time=service_params.start_time, end_time=service_params.end_time,
-                                         bandwidth=service_params.bandwidth)
+                                         start_time=schedule.start_time, end_time=schedule.end_time,
+                                         bandwidth=sd.capacity)
         yield conn.save()
         reactor.callWhenRunning(self._doReserve, conn, header.correlation_id)
         defer.returnValue(connection_id)
@@ -450,12 +456,14 @@ class GenericBackend(service.Service):
         td = timeout_time - datetime.datetime.utcnow()
         log.msg('Connection %s: reserve abort scheduled for %s UTC (%i seconds)' % (conn.connection_id, timeout_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
 
+        schedule = nsa.Schedule(conn.start_time, conn.end_time)
         sc_source_stp = nsa.STP(conn.source_network, conn.source_port, conn.source_labels)
         sc_dest_stp   = nsa.STP(conn.dest_network,   conn.dest_port,   conn.dest_labels)
-        sp = nsa.ServiceParameters(conn.start_time, conn.end_time, sc_source_stp, sc_dest_stp, conn.bandwidth, version=conn.revision)
+        sd = nsa.EthernetVLANService(sc_source_stp, sc_dest_stp, conn.bandwidth, 1, 1) #, version=conn.revision) # we fake some things due to db limitations
+        crit = nsa.Criteria(conn.revision, schedule, sd)
 
         header = nsa.NSIHeader(conn.requester_nsa, conn.requester_nsa, correlation_id=correlation_id) # The NSA is both requester and provider in the backend, but this might be problematic without aggregator
-        yield self.parent_requester.reserveConfirmed(header, conn.connection_id, conn.global_reservation_id, conn.description, sp)
+        yield self.parent_requester.reserveConfirmed(header, conn.connection_id, conn.global_reservation_id, conn.description, crit)
 
 
     @defer.inlineCallbacks

@@ -6,10 +6,14 @@ Copyright: NORDUnet (2011)
 """
 
 from dateutil import parser
+from dateutil.tz import tzutc
+
+from twisted.python import failure
 
 from opennsa import nsa, error
 
-from opennsa.protocols.nsi2 import actions, helper
+from opennsa.protocols.nsi2 import helper
+from opennsa.protocols.nsi2.bindings import actions, p2pservices
 
 
 
@@ -65,21 +69,40 @@ class RequesterService:
 
         criteria = reservation.criteria
 
-        schedule = criteria.schedule
-        path = criteria.path
+        # This overlaps heavily with the parsing done in providerservice - unify sometime
+
+        # schedule
+        start_time = self.datetime_parser.parse(criteria.schedule.startTime)
+        end_time   = self.datetime_parser.parse(criteria.schedule.endTime)
+        # convert to utc and remove timezone
+        start_time = start_time.astimezone(tzutc()).replace(tzinfo=None)
+        end_time   = end_time.astimezone(tzutc()).replace(tzinfo=None)
+        # dto
+        schedule   = nsa.Schedule(start_time, end_time)
+
+        if criteria.serviceType != p2pservices.evts:
+            raise ValueError('Only EVTS service supported for now')
+
+        evts = criteria.serviceDefinitions.values()[0] # add check later
 
         # create DTOs
         # Missing: ERO, symmetric
 
-        source_stp = helper.createSTP(path.sourceSTP)
-        dest_stp   = helper.createSTP(path.destSTP)
+        src_stp = helper.createSTP(evts.sourceSTP)
+        dst_stp = helper.createSTP(evts.destSTP)
 
-        start_time = self.datetime_parser.parse(schedule.startTime)
-        end_time   = self.datetime_parser.parse(schedule.endTime)
+        # for evts in r99, STPs are without labels, but this will change in the future, so we set them here
+        src_stp.labels = [ nsa.Label(nsa.EthernetVLANService.ETHERNET_VLAN, str(evts.sourceVLAN)) ]
+        dst_stp.labels = [ nsa.Label(nsa.EthernetVLANService.ETHERNET_VLAN, str(evts.destVLAN))   ]
 
-        service_parameters = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, directionality=path.directionality, bandwidth=criteria.bandwidth, version=criteria.version)
+        if evts.ero:
+            err = failure.Failure ( error.PayloadError('ERO not supported, go away.') )
+            return self._createSOAPFault(err, header.provider_nsa)
 
-        self.requester.reserveConfirmed(header, reservation.connectionId,  reservation.globalReservationId, reservation.description, service_parameters)
+        sd = nsa.EthernetVLANService(src_stp, dst_stp, evts.capacity, evts.mtu, evts.burstsize, evts.directionality, evts.symmetricPath, None)
+        crt = nsa.Criteria(criteria.version, schedule, sd)
+
+        self.requester.reserveConfirmed(header, reservation.connectionId,  reservation.globalReservationId, reservation.description, crt)
 
         return helper.createGenericAcknowledgement(header)
 

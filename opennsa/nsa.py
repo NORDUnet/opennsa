@@ -24,6 +24,8 @@ OGF_PREFIX = 'urn:ogf:network:'
 STP_PREFIX = 'urn:ogf:network:stp:'
 URN_UUID_PREFIX = 'urn:uuid:'
 
+BIDIRECTIONAL   = 'Bidirectional'
+
 
 
 class NSIHeader(object):
@@ -289,38 +291,64 @@ class NetworkServiceAgent(object):
 
 
 
-class ServiceParameters(object):
+class Criteria(object):
 
-    def __init__(self, start_time, end_time, source_stp, dest_stp, bandwidth, stps=None, directionality='Bidirectional', version=None):
+    def __init__(self, revision, schedule, service_def):
+        self.revision    = revision
+        self.schedule    = schedule
+        self.service_def = service_def
 
-        # should probably make path object sometime..
-        # schedule
+
+
+class Schedule(object):
+
+    def __init__(self, start_time, end_time):
+        # Must be datetime instances without tzinfo
+        assert start_time.tzinfo is None, 'Start time must NOT have time zone'
+        assert end_time.tzinfo   is None, 'End time must NOT have time zone'
+
         self.start_time = start_time
         self.end_time   = end_time
-        # path
-        self.source_stp = source_stp
-        self.dest_stp   = dest_stp
-        self.bandwidth  = bandwidth
-
-        self.stps       = stps
-        assert directionality in ('Unidirectional', 'Bidirectional'), 'Invalid directionality: %s' % directionality
-        self.directionality = directionality
-
-        self.version = version
-
-
-    def subConnectionClone(self, source_stp, dest_stp):
-        return ServiceParameters(self.start_time, self.end_time, source_stp, dest_stp, self.bandwidth, None, self.directionality)
 
 
     def __str__(self):
-        d = { 'start_time' : self.start_time.isoformat().rsplit('.',1)[0],
-              'end_time'   : self.end_time.isoformat().rsplit('.',1)[0],
-              'source_stp' : self.source_stp,
-              'dest_stp'   : self.dest_stp,
-              'bandwidth'  : self.bandwidth,
-              'version'    : self.version
-            }
+        return '<Schedule: %s-%s>' % (self.start_time, self.end_time)
 
-        return '<ServiceParameters %s>' % d
+
+
+class EthernetService(object):
+
+    def __init__(self, source_stp, dest_stp, capacity, mtu, burst_size,  directionality=BIDIRECTIONAL, symmetric=False, ero=None):
+
+        self._verifySTPs(source_stp, dest_stp)
+
+        self.source_stp     = source_stp
+        self.dest_stp       = dest_stp
+        self.capacity       = capacity
+        self.mtu            = mtu
+        self.burst_size     = burst_size
+        self.directionality = directionality
+        self.symmetric      = symmetric
+        self.ero            = ero
+
+
+    def _verifySTPs(self, source_stp, dest_stp):
+
+        assert source_stp.labels == [], 'Source STP must not specify labels in EthernetService'
+        assert dest_stp.labels == [],   'Destination STP must not specify labels in EthernetService'
+
+
+
+class EthernetVLANService(EthernetService):
+
+    # remove the entry from nml module sometime, this is the right place
+    ETHERNET_VLAN = 'http://schemas.ogf.org/nml/2013/05/ethernet#vlan'
+
+    def _verifySTPs(self, source_stp, dest_stp):
+
+        assert source_stp.labels and len(source_stp.labels) == 1,  'Source STP must specify label and exactly one for EthernetVLANService'
+        assert dest_stp.labels and len(dest_stp.labels) == 1, 'Destination STP must specify label and exactly one for EthernetVLANService'
+
+        assert source_stp.labels[0].type_ == self.ETHERNET_VLAN, 'Source STP label type must be %s for EthernetVLANService' % self.ETHERNET_VLAN
+        assert dest_stp.labels[0].type_   == self.ETHERNET_VLAN, 'Destination STP label type must be %s for EthernetVLANService' % self.ETHERNET_VLAN
 

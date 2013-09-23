@@ -14,27 +14,36 @@ LABEL_LOOKUP = {
 # this parser should perhaps be somewhere else
 def _createSTP(stp_desc):
     network, local_part = stp_desc.rsplit(':',1)
-    if '#' in local_part:
-        port, label_part = local_part.split('#',1)
-        labels = []
-        for tvl in label_part.split(';'):
-            if not '=' in tvl:
-                raise ValueError('Invalid label type-value: %s' % tvl)
-            type_, values = tvl.split('=')
-            labels.append( nsa.Label( LABEL_LOOKUP.get(type_, type_), values ) )
-    else:
-        port = local_part
-        labels = None
+#    if '#' in local_part:
+#        port, label_part = local_part.split('#',1)
+#        labels = []
+#        for tvl in label_part.split(';'):
+#            if not '=' in tvl:
+#                raise ValueError('Invalid label type-value: %s' % tvl)
+#            type_, values = tvl.split('=')
+#            labels.append( nsa.Label( LABEL_LOOKUP.get(type_, type_), values ) )
+#    else:
+#        port = local_part
+#        labels = None
+
+    port = local_part
+    labels = None
 
     return nsa.STP(network, port, labels)
 
 
-def _createServiceParams(start_time, end_time, src, dst, bandwidth):
+def _createEVTS(src, dst, capacity, mtu=1500, burst_size=5000000):
 
-    src_stp = _createSTP(src)
-    dst_stp = _createSTP(dst)
+    src_np, src_vlan = src.split('#')
+    dst_np, dst_vlan = dst.split('#')
 
-    return nsa.ServiceParameters(start_time, end_time, src_stp, dst_stp, bandwidth)
+    src_stp = _createSTP(src_np)
+    dst_stp = _createSTP(dst_np)
+
+    src_stp.labels = [ nsa.Label(nsa.EthernetVLANService.ETHERNET_VLAN, src_vlan) ]
+    dst_stp.labels = [ nsa.Label(nsa.EthernetVLANService.ETHERNET_VLAN, dst_vlan) ]
+
+    return nsa.EthernetVLANService(src_stp, dst_stp, capacity, mtu, burst_size)
 
 
 def _handleEvent(event):
@@ -69,17 +78,19 @@ def discover(client, service_url):
 
 
 @defer.inlineCallbacks
-def reserve(client, client_nsa, provider_nsa, src, dst, start_time, end_time, bandwidth, connection_id, global_id):
+def reserve(client, client_nsa, provider_nsa, src, dst, start_time, end_time, capacity, connection_id, global_id):
 
     nsi_header = nsa.NSIHeader(client_nsa.urn(), provider_nsa.urn(), reply_to=provider_nsa.endpoint)
-    service_params = _createServiceParams(start_time, end_time, src, dst, bandwidth)
+    schedule = nsa.Schedule(start_time, end_time)
+    service_def = _createEVTS(src, dst, capacity)
+    crt = nsa.Criteria(0, schedule, service_def)
 
     if connection_id or global_id:
         log.msg("Connection id: %s  Global id: %s" % (connection_id, global_id))
 
 
     try:
-        assigned_connection_id = yield client.reserve(nsi_header, connection_id, global_id, 'Test Connection', service_params)
+        assigned_connection_id = yield client.reserve(nsi_header, connection_id, global_id, 'Test Connection', crt)
         log.msg("Connection created and held. Id %s at %s" % (assigned_connection_id, provider_nsa))
         yield client.reserveCommit(nsi_header, assigned_connection_id)
         log.msg("Reservation committed at %s" % provider_nsa)
@@ -90,15 +101,17 @@ def reserve(client, client_nsa, provider_nsa, src, dst, start_time, end_time, ba
 
 
 @defer.inlineCallbacks
-def reserveprovision(client, client_nsa, provider_nsa, src, dst, start_time, end_time, bandwidth, connection_id, global_id, notification_wait):
+def reserveprovision(client, client_nsa, provider_nsa, src, dst, start_time, end_time, capacity, connection_id, global_id, notification_wait):
 
     nsi_header = nsa.NSIHeader(client_nsa.urn(), provider_nsa.urn())
-    service_params = _createServiceParams(start_time, end_time, src, dst, bandwidth)
+    schedule = nsa.Schedule(start_time, end_time)
+    service_def = _createEVTS(src, dst, capacity)
+    crt = nsa.Criteria(0, schedule, service_def)
 
     log.msg("Connection id: %s  Global id: %s" % (connection_id, global_id))
 
     try:
-        assigned_connection_id = yield client.reserve(nsi_header, connection_id, global_id, 'Test Connection', service_params)
+        assigned_connection_id = yield client.reserve(nsi_header, connection_id, global_id, 'Test Connection', crt)
         log.msg("Connection created and held. Id %s at %s" % (assigned_connection_id, provider_nsa))
         yield client.reserveCommit(nsi_header, assigned_connection_id)
         log.msg("Connection committed at %s" % provider_nsa)
@@ -121,36 +134,44 @@ def reserveprovision(client, client_nsa, provider_nsa, src, dst, start_time, end
 
 
 @defer.inlineCallbacks
-def rprt(client, client_nsa, provider_nsa, src, dst, start_time, end_time, bandwidth, connection_id, global_id):
+def rprt(client, client_nsa, provider_nsa, src, dst, start_time, end_time, capacity, connection_id, global_id):
     # reserve, provision, release,  terminate
-    service_params = _createServiceParams(start_time, end_time, src, dst, bandwidth)
+    nsi_header = nsa.NSIHeader(client_nsa.urn(), provider_nsa.urn())
+    schedule = nsa.Schedule(start_time, end_time)
+    service_def = _createEVTS(src, dst, capacity)
+    crt = nsa.Criteria(0, schedule, service_def)
 
     log.msg("Connection id: %s  Global id: %s" % (connection_id, global_id))
 
     try:
-        yield client.reserve(client_nsa, provider_nsa, None, global_id, 'Test Connection', connection_id, service_params)
-        log.msg("Connection reserved at %s" % provider_nsa)
+        assigned_connection_id = yield client.reserve(nsi_header, connection_id, global_id, 'Test Connection', crt)
+        log.msg("Connection created and held. Id %s at %s" % (assigned_connection_id, provider_nsa))
+        yield client.reserveCommit(nsi_header, assigned_connection_id)
+        log.msg("Connection committed at %s" % provider_nsa)
     except error.NSIError, e:
         log.msg('Error reserving %s, %s : %s' % (connection_id, e.__class__.__name__, str(e)))
         defer.returnValue(None)
 
     try:
-        yield client.provision(client_nsa, provider_nsa, None, connection_id)
-        log.msg('Connection %s provisioned' % connection_id)
+        yield client.provision(nsi_header, assigned_connection_id)
+        log.msg('Connection %s provisioned' % assigned_connection_id)
     except error.NSIError, e:
-        log.msg('Error provisioning %s, %s : %s' % (connection_id, e.__class__.__name__, str(e)))
+        log.msg('Error provisioning %s, %s : %s' % (assigned_connection_id, e.__class__.__name__, str(e)))
+        defer.returnValue(None)
 
     try:
-        yield client.release(client_nsa, provider_nsa, None, connection_id)
-        log.msg('Connection %s released' % connection_id)
+        yield client.release(nsi_header, assigned_connection_id)
+        log.msg('Connection %s released' % assigned_connection_id)
     except error.NSIError, e:
-        log.msg('Error releasing %s, %s : %s' % (connection_id, e.__class__.__name__, str(e)))
+        log.msg('Error releasing %s, %s : %s' % (assigned_connection_id, e.__class__.__name__, str(e)))
+        defer.returnValue(None)
 
     try:
-        yield client.terminate(client_nsa, provider_nsa, None, connection_id)
-        log.msg('Connection %s terminated' % connection_id)
+        yield client.terminate(nsi_header, assigned_connection_id)
+        log.msg('Connection %s terminated' % assigned_connection_id)
     except error.NSIError, e:
-        log.msg('Error terminating %s, %s : %s' % (connection_id, e.__class__.__name__, str(e)))
+        log.msg('Error terminating %s, %s : %s' % (assigned_connection_id, e.__class__.__name__, str(e)))
+        defer.returnValue(None)
 
 
 @defer.inlineCallbacks

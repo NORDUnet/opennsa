@@ -6,7 +6,8 @@ Copyright: NORDUnet (2011-2013)
 """
 
 from opennsa.protocols.shared import minisoap, httpclient
-from opennsa.protocols.nsi2 import actions, bindings, helper
+from opennsa.protocols.nsi2 import helper
+from opennsa.protocols.nsi2.bindings import actions, nsiconnection, p2pservices
 
 
 
@@ -21,7 +22,7 @@ class ProviderClient:
 
         header_element = helper.createHeader(requester_nsa, provider_nsa, correlation_id=correlation_id)
 
-        confirm = bindings.GenericConfirmedType(connection_id)
+        confirm = nsiconnection.GenericConfirmedType(connection_id)
         body_element   = confirm.xml(element_name)
 
         payload = minisoap.createSoapPayload(body_element, header_element)
@@ -41,12 +42,12 @@ class ProviderClient:
         header_element = helper.createHeader(requester_nsa, provider_nsa, correlation_id=correlation_id)
 
         active, version, consistent = connection_states[3]
-        data_plane_state = bindings.DataPlaneStatusType(active, version, consistent)
-        connection_states = bindings.ConnectionStatesType(connection_states[0], connection_states[1], connection_states[2], data_plane_state)
+        data_plane_state = nsiconnection.DataPlaneStatusType(active, version, consistent)
+        connection_states = nsiconnection.ConnectionStatesType(connection_states[0], connection_states[1], connection_states[2], data_plane_state)
 
         se = helper.createServiceException(err, provider_nsa)
 
-        failure = bindings.GenericFailedType(connection_id, connection_states, se)
+        failure = nsiconnection.GenericFailedType(connection_id, connection_states, se)
 
         body_element = failure.xml(message_name)
 
@@ -61,28 +62,30 @@ class ProviderClient:
         return d
 
 
-    def reserveConfirmed(self, nsi_header, connection_id, global_reservation_id, description, service_parameters):
+    def reserveConfirmed(self, nsi_header, connection_id, global_reservation_id, description, criteria):
 
         header_element = helper.createHeader(nsi_header.requester_nsa, nsi_header.provider_nsa, correlation_id=nsi_header.correlation_id)
 
-        sp = service_parameters
+        schedule = nsiconnection.ScheduleType( helper.createXMLTime(criteria.schedule.start_time) ,helper.createXMLTime(criteria.schedule.end_time) )
 
-        version = 0
-        schedule = bindings.ScheduleType( helper.createXMLTime(sp.start_time) ,helper.createXMLTime(sp.end_time) )
-        bandwidth = sp.bandwidth
+        sd = criteria.service_def
 
-        service_attributes = None
+        # we only support evts for now
+        src_stp = helper.createSTPType(sd.source_stp)
+        dst_stp = helper.createSTPType(sd.dest_stp)
+        src_stp.labels = []
+        dst_stp.labels = []
 
-        src_stp = helper.createSTPType(sp.source_stp)
-        dst_stp = helper.createSTPType(sp.dest_stp)
+        src_vlan = sd.source_stp.labels[0].labelValue()
+        dst_vlan = sd.dest_stp.labels[0].labelValue()
+ 
+        evts = p2pservices.EthernetVlanType(src_stp, dst_stp, src_vlan, dst_vlan, sd.mtu, sd.burst_size, sd.capacity, sd.directionality, sd.symmetric, None)
 
-        path = bindings.PathType(sp.directionality, False, src_stp, dst_stp, None)
+        criteria = nsiconnection.ReservationConfirmCriteriaType(criteria.revision, schedule, str(p2pservices.evts), { p2pservices.evts : evts } )
 
-        criteria = bindings.ReservationConfirmCriteriaType(version, schedule, bandwidth, service_attributes, path)
+        reserve_conf = nsiconnection.ReserveConfirmedType(connection_id, global_reservation_id, description, criteria)
 
-        reserve_conf = bindings.ReserveConfirmedType(connection_id, global_reservation_id, description, criteria )
-
-        body_element = reserve_conf.xml(bindings.reserveConfirmed)
+        body_element = reserve_conf.xml(nsiconnection.reserveConfirmed)
         payload = minisoap.createSoapPayload(body_element, header_element)
 
         def gotReply(data):
@@ -96,50 +99,50 @@ class ProviderClient:
 
     def reserveFailed(self, requester_url, requester_nsa, provider_nsa, correlation_id, connection_id, connection_states, err):
 
-        return self._genericFailure(requester_url, actions.RESERVE_FAILED, bindings.reserveFailed,
+        return self._genericFailure(requester_url, actions.RESERVE_FAILED, nsiconnection.reserveFailed,
                                     requester_nsa, provider_nsa, correlation_id,
                                     connection_id, connection_states, err)
 
 
     def reserveCommitConfirmed(self, requester_url, requester_nsa, provider_nsa, correlation_id, connection_id):
 
-        return self._genericConfirm(bindings.reserveCommitConfirmed, requester_url, actions.RESERVE_COMMIT_CONFIRMED,
+        return self._genericConfirm(nsiconnection.reserveCommitConfirmed, requester_url, actions.RESERVE_COMMIT_CONFIRMED,
                                     correlation_id, requester_nsa, provider_nsa, connection_id)
 
 
     def reserveCommitFailed(self, requester_url, requester_nsa, provider_nsa, correlation_id, connection_id, connection_states, err):
 
-        return self._genericFailure(requester_url, actions.RESERVE_COMMIT_FAILED, bindings.reserveCommitFailed,
+        return self._genericFailure(requester_url, actions.RESERVE_COMMIT_FAILED, nsiconnection.reserveCommitFailed,
                                     requester_nsa, provider_nsa, correlation_id, connection_id, connection_states, err)
 
 
     def reserveAbortConfirmed(self, requester_url, requester_nsa, provider_nsa, correlation_id, connection_id):
 
-        return self._genericConfirm(bindings.reserveAbortConfirmed, requester_url, actions.RESERVE_ABORT_CONFIRMED,
+        return self._genericConfirm(nsiconnection.reserveAbortConfirmed, requester_url, actions.RESERVE_ABORT_CONFIRMED,
                                     correlation_id, requester_nsa, provider_nsa, connection_id)
 
 
     def reserveAbortFailed(self, requester_url, requester_nsa, provider_nsa, correlation_id, connection_id, connection_states, err):
 
-        return self._genericFailure(requester_url, actions.RESERVE_ABORT_FAILED, bindings.reserveAbortFailed,
+        return self._genericFailure(requester_url, actions.RESERVE_ABORT_FAILED, nsiconnection.reserveAbortFailed,
                                     requester_nsa, provider_nsa, correlation_id, connection_id, connection_states, err)
 
 
     def provisionConfirmed(self, requester_url, correlation_id, requester_nsa, provider_nsa, connection_id):
 
-        return self._genericConfirm(bindings.provisionConfirmed, requester_url, actions.PROVISION_CONFIRMED,
+        return self._genericConfirm(nsiconnection.provisionConfirmed, requester_url, actions.PROVISION_CONFIRMED,
                                     correlation_id, requester_nsa, provider_nsa, connection_id)
 
 
     def releaseConfirmed(self, requester_url, correlation_id, requester_nsa, provider_nsa, connection_id):
 
-        return self._genericConfirm(bindings.releaseConfirmed, requester_url, actions.RELEASE_CONFIRMED,
+        return self._genericConfirm(nsiconnection.releaseConfirmed, requester_url, actions.RELEASE_CONFIRMED,
                                     correlation_id, requester_nsa, provider_nsa, connection_id)
 
 
     def terminateConfirmed(self, requester_url, correlation_id, requester_nsa, provider_nsa, connection_id):
 
-        return self._genericConfirm(bindings.terminateConfirmed, requester_url, actions.TERMINATE_CONFIRMED,
+        return self._genericConfirm(nsiconnection.terminateConfirmed, requester_url, actions.TERMINATE_CONFIRMED,
                                     correlation_id, requester_nsa, provider_nsa, connection_id)
 
     # notifications
@@ -148,9 +151,9 @@ class ProviderClient:
 
         header_element = helper.createHeader(requester_nsa, provider_nsa)
 
-        reserve_timeout = bindings.ReserveTimeoutRequestType(connection_id, notification_id, helper.createXMLTime(timestamp), timeout_value, originating_connection_id, originating_nsa)
+        reserve_timeout = nsiconnection.ReserveTimeoutRequestType(connection_id, notification_id, helper.createXMLTime(timestamp), timeout_value, originating_connection_id, originating_nsa)
 
-        body_element = reserve_timeout.xml(bindings.reserveTimeout)
+        body_element = reserve_timeout.xml(nsiconnection.reserveTimeout)
 
         payload = minisoap.createSoapPayload(body_element, header_element)
 
@@ -162,10 +165,10 @@ class ProviderClient:
 
         header_element = helper.createHeader(requester_nsa, provider_nsa)
 
-        data_plane_status = bindings.DataPlaneStatusType(active, version, consistent)
-        dps = bindings.DataPlaneStateChangeRequestType(connection_id, notification_id, helper.createXMLTime(timestamp), data_plane_status)
+        data_plane_status = nsiconnection.DataPlaneStatusType(active, version, consistent)
+        dps = nsiconnection.DataPlaneStateChangeRequestType(connection_id, notification_id, helper.createXMLTime(timestamp), data_plane_status)
 
-        body_element = dps.xml(bindings.dataPlaneStateChange)
+        body_element = dps.xml(nsiconnection.dataPlaneStateChange)
 
         payload = minisoap.createSoapPayload(body_element, header_element)
 
@@ -179,13 +182,13 @@ class ProviderClient:
 
         if service_ex:
             nsa_id, connection_id, error_id, text, variables, child_ex = service_ex
-            service_exception = bindings.ServiceExceptionType(nsa_id, connection_id, error_id, text, None, None)
+            service_exception = nsiconnection.ServiceExceptionType(nsa_id, connection_id, error_id, text, None, None)
         else:
             service_exception = None
 
-        error_event = bindings.ErrorEventType(connection_id, notification_id, helper.createXMLTime(timestamp), event, None, service_exception)
+        error_event = nsiconnection.ErrorEventType(connection_id, notification_id, helper.createXMLTime(timestamp), event, None, service_exception)
 
-        body_element = error_event.xml(bindings.errorEvent)
+        body_element = error_event.xml(nsiconnection.errorEvent)
 
         payload = minisoap.createSoapPayload(body_element, header_element)
 
@@ -204,25 +207,25 @@ class ProviderClient:
 
             criterias = []
             for crit in crits:
-                schedule   = bindings.ScheduleType(crit.start_time, crit.end_time)
+                schedule   = nsiconnection.ScheduleType(crit.start_time, crit.end_time)
                 source_stp = helper.createSTPType(crit.source_stp)
                 dest_stp   = helper.createSTPType(crit.dest_stp)
-                path       = bindings.PathType('Bidirectional', False, source_stp, dest_stp, None)
-                criteria   = bindings.QuerySummaryResultCriteriaType(crit.version, schedule, crit.bandwidth, None, path, None)
+                path       = nsiconnection.PathType('Bidirectional', False, source_stp, dest_stp, None)
+                criteria   = nsiconnection.QuerySummaryResultCriteriaType(crit.version, schedule, crit.bandwidth, None, path, None)
                 criterias.append(criteria)
 
-            data_plane_status = bindings.DataPlaneStatusType(dsm[0], dsm[1], dsm[2])
-            connection_states = bindings.ConnectionStatesType(rsm, psm, lsm, data_plane_status)
+            data_plane_status = nsiconnection.DataPlaneStatusType(dsm[0], dsm[1], dsm[2])
+            connection_states = nsiconnection.ConnectionStatesType(rsm, psm, lsm, data_plane_status)
 
-            qsrt = bindings.QuerySummaryResultType(cid, gid, desc, criterias, req_nsa, connection_states, nid)
+            qsrt = nsiconnection.QuerySummaryResultType(cid, gid, desc, criterias, req_nsa, connection_states, nid)
             query_results.append(qsrt)
 
         # --
 
         header_element = helper.createHeader(requester_nsa, provider_nsa)
 
-        query_confirmed = bindings.QuerySummaryConfirmedType(query_results)
-        body_element    = query_confirmed.xml(bindings.querySummaryConfirmed)
+        query_confirmed = nsiconnection.QuerySummaryConfirmedType(query_results)
+        body_element    = query_confirmed.xml(nsiconnection.querySummaryConfirmed)
 
         payload = minisoap.createSoapPayload(body_element, header_element)
 

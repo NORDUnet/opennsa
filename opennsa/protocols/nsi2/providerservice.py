@@ -15,7 +15,8 @@ from twisted.python import log, failure
 
 from opennsa import nsa, error
 from opennsa.protocols.shared import minisoap, resource
-from opennsa.protocols.nsi2 import actions, bindings, helper
+from opennsa.protocols.nsi2 import  helper
+from opennsa.protocols.nsi2.bindings import actions, nsiframework, nsiconnection, p2pservices
 
 
 
@@ -45,12 +46,12 @@ class ProviderService:
         # Some actions still missing
 
 
-    def _createSOAPFault(self, err, provider_nsa, connection_id=None):
+    def _createSOAPFault(self, err, provider_nsa, connection_id=None, service_type=None):
 
         log.msg('Request error: %s. Returning error to remote client.' % err.getErrorMessage(), system=LOG_SYSTEM)
 
         se = helper.createServiceException(err, provider_nsa, connection_id)
-        element = se.xml(bindings.serviceException)
+        element = se.xml(nsiframework.serviceException)
         detail = ET.tostring(element)
 
         soap_fault = resource.SOAPFault( err.getErrorMessage(), detail )
@@ -72,8 +73,24 @@ class ProviderService:
 #        print header.replyTo
 
         criteria = reservation.criteria
-        schedule = criteria.schedule
-        path = criteria.path
+
+        version      = criteria.version
+        service_type = criteria.serviceType
+        service_defs = criteria.serviceDefinitions
+
+        if service_type != p2pservices.evts:
+            err = failure.Failure ( error.PayloadError('Unrecognized service type: %s ' % service_type) )
+            return self._createSOAPFault(err, header.provider_nsa, service_type=service_type)
+
+        if len(service_defs) == 0:
+            err = failure.Failure ( error.PayloadError('No service definition element in message') )
+            return self._createSOAPFault(err, header.provider_nsa, service_type=service_type)
+
+        if len(service_defs) != 1:
+            err = failure.Failure ( error.PayloadError('Only one service definition allowed') )
+            return self._createSOAPFault(err, header.provider_nsa, service_type=service_type)
+
+        evts = service_defs[0]
 
 #        print reservation.globalReservationId
 #        print reservation.description
@@ -94,15 +111,12 @@ class ProviderService:
 
         # Missing: EROs, symmetric, stp labels
 
-        src_stp = helper.createSTP(path.sourceSTP)
-        dst_stp = helper.createSTP(path.destSTP)
-
-        start_time = self.datetime_parser.parse(schedule.startTime)
+        start_time = self.datetime_parser.parse(criteria.schedule.startTime)
         if start_time.utcoffset() is None:
             err = failure.Failure ( error.PayloadError('Start time has no time zone information') )
             return self._createSOAPFault(err, header.provider_nsa)
 
-        end_time   = self.datetime_parser.parse(schedule.endTime)
+        end_time = self.datetime_parser.parse(criteria.schedule.endTime)
         if end_time.utcoffset() is None:
             err = failure.Failure ( error.PayloadError('End time has no time zone information') )
             return self._createSOAPFault(err, header.provider_nsa)
@@ -111,19 +125,34 @@ class ProviderService:
         start_time = start_time.astimezone(tzutc()).replace(tzinfo=None)
         end_time   = end_time.astimezone(tzutc()).replace(tzinfo=None)
 
-        service_parameters = nsa.ServiceParameters(start_time, end_time, src_stp, dst_stp, directionality=path.directionality, bandwidth=criteria.bandwidth)
+        schedule = nsa.Schedule(start_time, end_time)
+
+        src_stp = helper.createSTP(evts.sourceSTP)
+        dst_stp = helper.createSTP(evts.destSTP)
+
+        # for evts in r99, STPs are without labels, but this will change in the future, so we set them here
+        src_stp.labels = [ nsa.Label(nsa.EthernetVLANService.ETHERNET_VLAN, str(evts.sourceVLAN)) ]
+        dst_stp.labels = [ nsa.Label(nsa.EthernetVLANService.ETHERNET_VLAN, str(evts.destVLAN))   ]
+
+        if evts.ero:
+            err = failure.Failure ( error.PayloadError('ERO not supported, go away.') )
+            return self._createSOAPFault(err, header.provider_nsa)
+
+        sd = nsa.EthernetVLANService(src_stp, dst_stp, evts.capacity, evts.mtu, evts.burstsize, evts.directionality, evts.symmetricPath, None)
+
+        crt = nsa.Criteria(criteria.version, schedule, sd)
 
         t_delta = time.time() - t_start
         log.msg('Profile: Reserve request parse time: %s' % round(t_delta, 3), profile=True, system=LOG_SYSTEM)
 
-        d = self.provider.reserve(header, reservation.connectionId, reservation.globalReservationId, reservation.description, service_parameters)
+        d = self.provider.reserve(header, reservation.connectionId, reservation.globalReservationId, reservation.description, crt)
 
         def createReserveAcknowledgement(connection_id):
-            soap_header = bindings.CommonHeaderType(helper.PROTO, header.correlation_id, header.requester_nsa, header.provider_nsa, None, header.session_security_attrs)
-            soap_header_element = soap_header.xml(bindings.nsiHeader)
+            soap_header = nsiframework.CommonHeaderType(helper.PROTO, header.correlation_id, header.requester_nsa, header.provider_nsa, None, header.session_security_attrs)
+            soap_header_element = soap_header.xml(nsiframework.nsiHeader)
 
-            reserve_response = bindings.ReserveResponseType(connection_id)
-            reserve_response_element = reserve_response.xml(bindings.reserveResponse)
+            reserve_response = nsiconnection.ReserveResponseType(connection_id)
+            reserve_response_element = reserve_response.xml(nsiconnection.reserveResponse)
 
             payload = minisoap.createSoapPayload(reserve_response_element, soap_header_element)
             return payload
@@ -183,11 +212,11 @@ class ProviderService:
 
         def gotReservations(reservations):
             # do reply inline
-            soap_header = bindings.CommonHeaderType(helper.PROTO, header.correlation_id, header.requester_nsa, header.provider_nsa, None, header.session_security_attrs)
-            soap_header_element = soap_header.xml(bindings.nsiHeader)
+            soap_header = nsiframework.CommonHeaderType(helper.PROTO, header.correlation_id, header.requester_nsa, header.provider_nsa, None, header.session_security_attrs)
+            soap_header_element = soap_header.xml(nsiframework.nsiHeader)
 
             query_summary_result = helper.buildQuerySummaryResultType(reservations)
-            qsr_element = query_summary_result.xml(bindings.querySummarySyncConfirmed)
+            qsr_element = query_summary_result.xml(nsiframework.querySummarySyncConfirmed)
 
             payload = minisoap.createSoapPayload(qsr_element, soap_header_element)
             return payload

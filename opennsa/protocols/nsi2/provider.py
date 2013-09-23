@@ -1,5 +1,3 @@
-import traceback
-
 from zope.interface import implements
 
 from twisted.python import log
@@ -42,7 +40,7 @@ class Provider:
         self.notifications = {}
 
 
-    def reserve(self, nsi_header, connection_id, global_reservation_id, description, service_parameters):
+    def reserve(self, nsi_header, connection_id, global_reservation_id, description, criteria):
 
         # we cannot create notification immediately, as there might not be a connection id yet
         # the notification mechanisms relies on the received ack coming before the confirmation, which is not ideal
@@ -52,7 +50,7 @@ class Provider:
                 self.notifications[(assigned_connection_id, RESERVE_RESPONSE)] = nsi_header
             return assigned_connection_id
 
-        d = self.service_provider.reserve(nsi_header, connection_id, global_reservation_id, description, service_parameters)
+        d = self.service_provider.reserve(nsi_header, connection_id, global_reservation_id, description, criteria)
         d.addCallback(setNotify)
         return d
 
