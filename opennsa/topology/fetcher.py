@@ -6,7 +6,6 @@ from twisted.python import log
 from twisted.internet import defer, task, reactor
 from twisted.application import service
 
-from opennsa import error
 from opennsa.protocols.shared import httpclient
 from opennsa.topology import nmlxml
 
@@ -24,7 +23,7 @@ class FetcherService(service.Service):
         # a network name and the url of the network topology
         #for network, topo_url in peering_pairs:
         for pe in peering_entries:
-            assert len(pe) is 2, 'Peering entry %s is not two-tuple' % pp
+            assert len(pe) is 2, 'Peering entry %s is not two-tuple' % pe
             network, topo_url = pe
             assert topo_url.startswith('http'), 'Topology URL %s does not start with http' % topo_url
 
