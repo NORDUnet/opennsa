@@ -19,8 +19,8 @@ class P2PServiceBaseType:
                 int(element.findtext('capacity')),
                 element.findtext('directionality'),
                 None if element.find('symmetricPath') is not None else (True if element.findtext('symmetricPath') == 'true' else False),
-                StpType.build(element.find('sourceSTP')) if element.find('sourceSTP') is not None else None,
-                StpType.build(element.find('destSTP')) if element.find('destSTP') is not None else None,
+                StpType.build(element.find('sourceSTP')),
+                StpType.build(element.find('destSTP')),
                 [ OrderedStpType.build(e) for e in element.find('ero') ] if element.find('ero') is not None else None
                )
 
@@ -30,10 +30,10 @@ class P2PServiceBaseType:
         ET.SubElement(r, 'directionality').text = self.directionality
         if self.symmetricPath:
             ET.SubElement(r, 'symmetricPath').text = 'true' if self.symmetricPath else 'false'
-        r.append(self.sourceSTP.xml(ET.QName('http://schemas.ogf.org/nsi/2013/07/services/types', 'sourceSTP')))
-        r.append(self.destSTP.xml(ET.QName('http://schemas.ogf.org/nsi/2013/07/services/types', 'destSTP')))
+        r.append(self.sourceSTP.xml('sourceSTP'))
+        r.append(self.destSTP.xml('destSTP'))
         if self.ero:
-            ET.SubElement(r, 'ero').extend( [ e.xml(ET.QName('http://schemas.ogf.org/nsi/2013/07/services/types', 'ero')) for e in self.ero ] )
+            ET.SubElement(r, 'ero').extend( [ e.xml('ero') for e in self.ero ] )
         return r
 
 
@@ -56,7 +56,7 @@ class StpType:
         ET.SubElement(r, 'networkId').text = self.networkId
         ET.SubElement(r, 'localId').text = self.localId
         if self.labels:
-            ET.SubElement(r, 'labels').extend( [ e.xml(ET.QName('http://schemas.ogf.org/nsi/2013/07/framework/types', 'labels')) for e in self.labels ] )
+            ET.SubElement(r, 'labels').extend( [ e.xml('labels') for e in self.labels ] )
         return r
 
 
@@ -137,8 +137,8 @@ class EthernetVlanType:
     @classmethod
     def build(self, element):
         return EthernetVlanType(
-                StpType.build(element.find('{http://schemas.ogf.org/nsi/2013/07/services/types}sourceSTP')),
-                StpType.build(element.find('{http://schemas.ogf.org/nsi/2013/07/services/types}destSTP')),
+                StpType.build(element.find('sourceSTP')),
+                StpType.build(element.find('destSTP')),
                 int(element.findtext('sourceVLAN')),
                 int(element.findtext('destVLAN')),
                 int(element.findtext('mtu')),
@@ -155,10 +155,10 @@ class EthernetVlanType:
         ET.SubElement(r, 'directionality').text = self.directionality
         if self.symmetricPath:
             ET.SubElement(r, 'symmetricPath').text = 'true' if self.symmetricPath else 'false'
-        r.append(self.sourceSTP.xml(ET.QName('http://schemas.ogf.org/nsi/2013/07/services/types', 'sourceSTP')))
-        r.append(self.destSTP.xml(ET.QName('http://schemas.ogf.org/nsi/2013/07/services/types', 'destSTP')))
+        r.append(self.sourceSTP.xml('sourceSTP'))
+        r.append(self.destSTP.xml('destSTP'))
         if self.ero:
-            ET.SubElement(r, 'ero').extend( [ e.xml(ET.QName('http://schemas.ogf.org/nsi/2013/07/services/types', 'ero')) for e in self.ero ] )
+            ET.SubElement(r, 'ero').extend( [ e.xml('ero') for e in self.ero ] )
         if self.mtu:
             ET.SubElement(r, 'mtu').text = str(self.mtu)
         if self.burstsize:
@@ -205,8 +205,8 @@ class EthernetBaseType:
                 int(element.findtext('capacity')),
                 element.findtext('directionality'),
                 None if element.find('symmetricPath') is not None else (True if element.findtext('symmetricPath') == 'true' else False),
-                StpType.build(element.find('sourceSTP')) if element.find('sourceSTP') is not None else None,
-                StpType.build(element.find('destSTP')) if element.find('destSTP') is not None else None,
+                StpType.build(element.find('sourceSTP')),
+                StpType.build(element.find('destSTP')),
                 [ OrderedStpType.build(e) for e in element.find('ero') ] if element.find('ero') is not None else None
                )
 
@@ -216,10 +216,10 @@ class EthernetBaseType:
         ET.SubElement(r, 'directionality').text = self.directionality
         if self.symmetricPath:
             ET.SubElement(r, 'symmetricPath').text = 'true' if self.symmetricPath else 'false'
-        r.append(self.sourceSTP.xml(ET.QName('http://schemas.ogf.org/nsi/2013/07/services/types', 'sourceSTP')))
-        r.append(self.destSTP.xml(ET.QName('http://schemas.ogf.org/nsi/2013/07/services/types', 'destSTP')))
+        r.append(self.sourceSTP.xml('sourceSTP'))
+        r.append(self.destSTP.xml('destSTP'))
         if self.ero:
-            ET.SubElement(r, 'ero').extend( [ e.xml(ET.QName('http://schemas.ogf.org/nsi/2013/07/services/types', 'ero')) for e in self.ero ] )
+            ET.SubElement(r, 'ero').extend( [ e.xml('ero') for e in self.ero ] )
         if self.mtu:
             ET.SubElement(r, 'mtu').text = str(self.mtu)
         if self.burstsize:
