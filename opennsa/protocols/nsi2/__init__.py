@@ -42,7 +42,7 @@ def setupRequesterPair(top_resource, host, port, service_endpoint, nsi_requester
 
     resource_name = resource_name or 'RequesterService2'
 
-    requester_client = setupRequesterClient(top_resource, host, port, service_endpoint, resource_name=resource_name, tls=False, ctx_factory=None)
+    requester_client = setupRequesterClient(top_resource, host, port, service_endpoint, resource_name=resource_name, tls=tls, ctx_factory=ctx_factory)
 
     soap_resource = soapresource.setupSOAPResource(top_resource, resource_name)
     requester_service = requesterservice.RequesterService(soap_resource, nsi_requester)
@@ -56,7 +56,7 @@ def createRequester(host, port, service_endpoint, resource_name=None, tls=False,
 
     top_resource = resource.Resource()
 
-    requester_client = setupRequesterClient(top_resource, host, port, service_endpoint, resource_name=resource_name, tls=False, ctx_factory=None)
+    requester_client = setupRequesterClient(top_resource, host, port, service_endpoint, resource_name=resource_name, tls=tls, ctx_factory=ctx_factory)
 
     nsi_requester = requester.Requester(requester_client, callback_timeout=callback_timeout)
 
