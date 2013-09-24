@@ -83,7 +83,7 @@ def topologyXML(network):
             ln.text = label.labelValue()
         if port.remote_network is not None:
             rpa = ET.SubElement(nml_port, NML_RELATION, { TYPE : NML_ISALIAS} )
-            ET.SubElement(rpa, NML_PORT, { ID : nml.URN_OGF_NETWORK + port.remote_network + ':' + port.remote_port})
+            ET.SubElement(rpa, NML_PORTGROUP, { ID : nml.URN_OGF_NETWORK + port.remote_network + ':' + port.remote_port})
 
     for port in network.bidirectional_ports:
         pn = ET.SubElement(nml_topology, NML_BIDIRECTIONALPORT, { ID: portName(port) } )
