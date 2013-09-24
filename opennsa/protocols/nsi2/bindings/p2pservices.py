@@ -141,8 +141,8 @@ class EthernetVlanType:
                 StpType.build(element.find('destSTP')),
                 int(element.findtext('sourceVLAN')),
                 int(element.findtext('destVLAN')),
-                int(element.findtext('mtu')),
-                int(element.findtext('burstsize')),
+                int(element.findtext('mtu')) if element.findtext('mtu') else None,
+                int(element.findtext('burstsize')) if element.findtext('burstsize') else None,
                 int(element.findtext('capacity')),
                 element.findtext('directionality'),
                 None if element.find('symmetricPath') is not None else (True if element.findtext('symmetricPath') == 'true' else False),
@@ -200,8 +200,8 @@ class EthernetBaseType:
     @classmethod
     def build(self, element):
         return EthernetBaseType(
-                int(element.findtext('mtu')),
-                int(element.findtext('burstsize')),
+                int(element.findtext('mtu')) if element.findtext('mtu') else None,
+                int(element.findtext('burstsize')) if element.findtext('burstsize') else None,
                 int(element.findtext('capacity')),
                 element.findtext('directionality'),
                 None if element.find('symmetricPath') is not None else (True if element.findtext('symmetricPath') == 'true' else False),
