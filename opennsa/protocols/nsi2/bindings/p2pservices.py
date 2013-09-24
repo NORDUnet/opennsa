@@ -151,12 +151,6 @@ class EthernetVlanType:
 
     def xml(self, elementName):
         r = ET.Element(elementName)
-        ET.SubElement(r, 'sourceVLAN').text = str(self.sourceVLAN)
-        ET.SubElement(r, 'destVLAN').text = str(self.destVLAN)
-        if self.mtu:
-            ET.SubElement(r, 'mtu').text = str(self.mtu)
-        if self.burstsize:
-            ET.SubElement(r, 'burstsize').text = str(self.burstsize)
         ET.SubElement(r, 'capacity').text = str(self.capacity)
         ET.SubElement(r, 'directionality').text = self.directionality
         if self.symmetricPath:
@@ -165,6 +159,12 @@ class EthernetVlanType:
         r.append(self.destSTP.xml(ET.QName('http://schemas.ogf.org/nsi/2013/07/services/types', 'destSTP')))
         if self.ero:
             ET.SubElement(r, 'ero').extend( [ e.xml(ET.QName('http://schemas.ogf.org/nsi/2013/07/services/types', 'ero')) for e in self.ero ] )
+        if self.mtu:
+            ET.SubElement(r, 'mtu').text = str(self.mtu)
+        if self.burstsize:
+            ET.SubElement(r, 'burstsize').text = str(self.burstsize)
+        ET.SubElement(r, 'sourceVLAN').text = str(self.sourceVLAN)
+        ET.SubElement(r, 'destVLAN').text = str(self.destVLAN)
         return r
 
 
@@ -212,10 +212,6 @@ class EthernetBaseType:
 
     def xml(self, elementName):
         r = ET.Element(elementName)
-        if self.mtu:
-            ET.SubElement(r, 'mtu').text = str(self.mtu)
-        if self.burstsize:
-            ET.SubElement(r, 'burstsize').text = str(self.burstsize)
         ET.SubElement(r, 'capacity').text = str(self.capacity)
         ET.SubElement(r, 'directionality').text = self.directionality
         if self.symmetricPath:
@@ -224,6 +220,10 @@ class EthernetBaseType:
         r.append(self.destSTP.xml(ET.QName('http://schemas.ogf.org/nsi/2013/07/services/types', 'destSTP')))
         if self.ero:
             ET.SubElement(r, 'ero').extend( [ e.xml(ET.QName('http://schemas.ogf.org/nsi/2013/07/services/types', 'ero')) for e in self.ero ] )
+        if self.mtu:
+            ET.SubElement(r, 'mtu').text = str(self.mtu)
+        if self.burstsize:
+            ET.SubElement(r, 'burstsize').text = str(self.burstsize)
         return r
 
 
