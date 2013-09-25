@@ -7,7 +7,7 @@ from twisted.python import log
 from twisted.web import resource, server
 from twisted.application import internet, service as twistedservice
 
-from opennsa import config, logging, nsa, provreg, database, aggregator, viewresource
+from opennsa import config, logging, constants as cnt, nsa, provreg, database, aggregator, viewresource
 from opennsa.topology import nrmparser, nml, http as nmlhttp, fetcher
 from opennsa.protocols import nsi2
 
@@ -126,7 +126,7 @@ class OpenNSAService(twistedservice.MultiService):
         top_resource = resource.Resource()
         requester_creator = CS2RequesterCreator(top_resource, None, vc[config.HOST], vc[config.PORT], vc[config.TLS], ctx_factory) # set aggregator later
 
-        provider_registry = provreg.ProviderRegistry({}, { nsi2.SERVICE_TYPE: requester_creator.create } )
+        provider_registry = provreg.ProviderRegistry({}, { cnt.CS2_SERVICE_TYPE : requester_creator.create } )
         aggr = aggregator.Aggregator(network_name, ns_agent, topology, None, provider_registry) # set parent requester later
 
         requester_creator.aggregator = aggr

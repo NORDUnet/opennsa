@@ -11,7 +11,7 @@ from twisted.python import log
 from xml.etree import ElementTree as ET
 import datetime
 
-from opennsa import nsa
+from opennsa import constants as cnt, nsa
 from opennsa.topology import nml
 
 
@@ -22,8 +22,6 @@ LOG_SYSTEM = 'topology.nmlxml'
 NML_NS = 'http://schemas.ogf.org/nml/2013/05/base#'
 NSI_NS = 'http://schemas.ogf.org/nsi/2013/09/topology#'
 VC_NS  = 'urn:ietf:params:xml:ns:vcard-4.0'
-
-NSI_CS2_SERVICE_TYPE = 'application/vnd.org.ogf.nsi.cs.v2+soap'
 
 ET.register_namespace('nml', NML_NS)
 ET.register_namespace('nsi', NSI_NS)
@@ -133,7 +131,7 @@ def nsiXML(nsi_agent, network, version=None):
     urn_cs_service = URN_NSA + '-cs'
     nsi_cs_service = ET.SubElement(nsi_nsa, NSI_SERVICE, { ID : urn_cs_service } )
     ET.SubElement(nsi_cs_service, NSI_LINK).text = nsi_agent.endpoint
-    ET.SubElement(nsi_cs_service, NSI_TYPE).text = NSI_CS2_SERVICE_TYPE
+    ET.SubElement(nsi_cs_service, NSI_TYPE).text = cnt.CS2_SERVICE_TYPE
 
     # nml topology
     nml_network = topologyXML(network)
@@ -253,7 +251,7 @@ def parseNSIService(nsi_service):
     service_name = _baseName(service_id)
     service_type = nsi_service.findtext( str(NSI_TYPE) )
 
-    if service_type == NSI_CS2_SERVICE_TYPE:
+    if service_type == cnt.CS2_SERVICE_TYPE:
         endpoint = nsi_service.findtext( str(NSI_LINK) )
         nsi_agent = nsa.NetworkServiceAgent(service_name, endpoint, service_type)
         return nsi_agent

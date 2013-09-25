@@ -9,7 +9,7 @@ from xml.etree import ElementTree as ET
 
 from twisted.python import log
 
-from opennsa import nsa, error
+from opennsa import constants as cnt, nsa, error
 from opennsa.protocols.shared import minisoap
 from opennsa.protocols.nsi2.bindings import nsiframework, nsiconnection, p2pservices
 
@@ -23,9 +23,7 @@ CONNECTION_TYPES_NS  = "http://schemas.ogf.org/nsi/2013/07/connection/types"
 SERVICE_TYPES_NS     = 'http://schemas.ogf.org/nsi/2013/07/services/types'
 P2PSERVICES_TYPES_NS = 'http://schemas.ogf.org/nsi/2013/07/services/point2point'
 
-PROTO = 'application/vnd.org.ogf.nsi.cs.v2+soap'
 URN_NETWORK = 'urn:ogf:network:'
-
 
 ET.register_namespace('ftypes', FRAMEWORK_TYPES_NS)
 ET.register_namespace('header', FRAMEWORK_HEADERS_NS)
@@ -37,14 +35,14 @@ ET.register_namespace('p2psrv', P2PSERVICES_TYPES_NS)
 
 def createHeader(requester_nsa_urn, provider_nsa_urn, session_security_attrs=None, reply_to=None, correlation_id=None):
 
-    header = nsiframework.CommonHeaderType(PROTO, correlation_id, requester_nsa_urn, provider_nsa_urn, reply_to, session_security_attrs)
+    header = nsiframework.CommonHeaderType(cnt.CS2_SERVICE_TYPE, correlation_id, requester_nsa_urn, provider_nsa_urn, reply_to, session_security_attrs)
     header_element = header.xml(nsiframework.nsiHeader)
     return header_element
 
 
 def createGenericAcknowledgement(header):
 
-    soap_header = nsiframework.CommonHeaderType(PROTO, header.correlation_id, header.requester_nsa, header.provider_nsa, None, header.session_security_attrs)
+    soap_header = nsiframework.CommonHeaderType(cnt.CS2_SERVICE_TYPE, header.correlation_id, header.requester_nsa, header.provider_nsa, None, header.session_security_attrs)
     soap_header_element = soap_header.xml(nsiframework.nsiHeader)
 
     generic_confirm = nsiconnection.GenericAcknowledgmentType()
