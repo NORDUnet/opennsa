@@ -21,7 +21,6 @@ from opennsa import error
 LOG_SYSTEM = 'opennsa.nsa'
 
 OGF_PREFIX = 'urn:ogf:network:'
-STP_PREFIX = 'urn:ogf:network:stp:'
 URN_UUID_PREFIX = 'urn:uuid:'
 
 BIDIRECTIONAL   = 'Bidirectional'
@@ -173,10 +172,6 @@ class STP(object): # Service Termination Point
         self.network = network
         self.port = port
         self.labels = labels or []
-
-
-    def urn(self):
-        return STP_PREFIX + self.network + ':' + self.port
 
 
     def __eq__(self, other):
