@@ -13,7 +13,13 @@ LABEL_LOOKUP = {
 
 # this parser should perhaps be somewhere else
 def _createSTP(stp_desc):
-    network, local_part = stp_desc.rsplit(':',1)
+
+    if '%' in stp_desc:
+        network, port = stp_desc.rsplit('%',1)
+    else:
+        network, local_part = stp_desc.rsplit(':',1)
+        port = network + ':' + local_part
+
 #    if '#' in local_part:
 #        port, label_part = local_part.split('#',1)
 #        labels = []
@@ -26,9 +32,7 @@ def _createSTP(stp_desc):
 #        port = local_part
 #        labels = None
 
-    port = local_part
     labels = None
-
     return nsa.STP(network, port, labels)
 
 
