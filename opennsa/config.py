@@ -24,6 +24,7 @@ DEFAULT_CERTIFICATE_DIR = '/etc/ssl/certs' # This will work on most mordern linu
 # config blocks and options
 BLOCK_SERVICE    = 'service'
 BLOCK_DUD        = 'dud'
+BLOCK_JUNIPER_EX = 'juniperex'
 BLOCK_JUNOS      = 'junos'
 BLOCK_FORCE10    = 'force10'
 BLOCK_ARGIA      = 'argia'
@@ -60,13 +61,13 @@ _SSH_PASSWORD           = 'password'
 _SSH_PUBLIC_KEY         = 'publickey'
 _SSH_PRIVATE_KEY        = 'privatekey'
 
-# junos block
-JUNOS_HOST              = _SSH_HOST
-JUNOS_PORT              = _SSH_PORT
-JUNOS_HOST_FINGERPRINT  = _SSH_HOST_FINGERPRINT
-JUNOS_USER              = _SSH_USER
-JUNOS_SSH_PUBLIC_KEY    = _SSH_PUBLIC_KEY
-JUNOS_SSH_PRIVATE_KEY   = _SSH_PRIVATE_KEY
+# juniper block - same for ex/qxf backend and mx backend
+JUNIPER_HOST                = _SSH_HOST
+JUNIPER_PORT                = _SSH_PORT
+JUNIPER_HOST_FINGERPRINT    = _SSH_HOST_FINGERPRINT
+JUNIPER_USER                = _SSH_USER
+JUNIPER_SSH_PUBLIC_KEY      = _SSH_PUBLIC_KEY
+JUNIPER_SSH_PRIVATE_KEY     = _SSH_PRIVATE_KEY
 
 # force10 block
 FORCE10_HOST            = _SSH_HOST
@@ -239,7 +240,7 @@ def readVerifyConfig(cfg):
         if name in backends:
             raise ConfigurationError('Can only have one backend named "%s"' % name)
 
-        if backend_type in (BLOCK_DUD, BLOCK_JUNOS, BLOCK_FORCE10, BLOCK_BROCADE, BLOCK_DELL, BLOCK_NCSVPN):
+        if backend_type in (BLOCK_DUD, BLOCK_JUNIPER_EX, BLOCK_JUNOS, BLOCK_FORCE10, BLOCK_BROCADE, BLOCK_DELL, BLOCK_NCSVPN):
             backend_conf = dict( cfg.items(section) )
             backend_conf['_backend_type'] = backend_type
             backends[name] = backend_conf

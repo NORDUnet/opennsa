@@ -35,6 +35,10 @@ def setupBackend(backend_cfg, network_name, network_topology, parent_requester, 
 #        from opennsa.backends import argia
 #        return argia.ArgiaBackend(network_name, bc.items())
 
+    elif backend_type == config.BLOCK_JUNIPER_EX:
+        from opennsa.backends import juniperex
+        BackendConstructer = juniperex.JuniperEXBackend
+
     elif backend_type == config.BLOCK_BROCADE:
         from opennsa.backends import brocade
         BackendConstructer = brocade.BrocadeBackend
