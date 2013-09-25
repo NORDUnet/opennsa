@@ -109,19 +109,19 @@ def createSTP(stp_type):
     if not stp_type.networkId.startswith(URN_NETWORK):
         raise error.PayloadError('STP networkId (%s) did not start with %s' % (stp_type.networkId, URN_NETWORK))
 
-    network = stp_type.networkId.replace(URN_NETWORK, '')
+    network_id = stp_type.networkId.replace(URN_NETWORK, '')
 
     if not stp_type.localId.startswith(URN_NETWORK):
         raise error.PayloadError('STP localId (%s) did not start with %s' % (stp_type.localId, URN_NETWORK))
 
-    local_id = stp_type.localId.replace(stp_type.networkId + ':', '')
+    local_id = stp_type.localId.replace(URN_NETWORK, '')
 
     if stp_type.labels is not None:
         labels = [ createLabel(tvp) for tvp in stp_type.labels ]
     else:
         labels = []
 
-    return nsa.STP(network, local_id, labels)
+    return nsa.STP(network_id, local_id, labels)
 
 
 def createSTPType(stp):
@@ -147,10 +147,10 @@ def createSTPType(stp):
             ns, tag = splitLabelType(label.type_)
             labels.append( nsiconnection.TypeValuePairType(tag, ns, [ label.labelValue() ] ) )
 
-    network = URN_NETWORK + stp.network
-    port = stp.port
+    network_id = URN_NETWORK + stp.network
+    local_id = URN_NETWORK + stp.port
 
-    return p2pservices.StpType(network, network + ':' + port, labels)
+    return p2pservices.StpType(network_id, local_id, labels)
 
 
 
