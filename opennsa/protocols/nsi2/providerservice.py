@@ -75,12 +75,8 @@ class ProviderService:
         criteria = reservation.criteria
 
         version      = criteria.version
-        service_type = criteria.serviceType
+        service_type = criteria.serviceType # right now we just ignore this, either we know the service type or not
         service_defs = criteria.serviceDefinitions
-
-        if service_type != p2pservices.evts:
-            err = failure.Failure ( error.PayloadError('Unrecognized service type: %s ' % service_type) )
-            return self._createSOAPFault(err, header.provider_nsa, service_type=service_type)
 
         if len(service_defs) == 0:
             err = failure.Failure ( error.PayloadError('No service definition element in message') )
@@ -91,21 +87,9 @@ class ProviderService:
             return self._createSOAPFault(err, header.provider_nsa, service_type=service_type)
 
         evts = service_defs[0]
-
-#        print reservation.globalReservationId
-#        print reservation.description
-#        print reservation.connectionId
-#        print reservation.criteria
-#
-#        print criteria.bandwidth
-#        print criteria.path
-#
-#        print schedule.startTime
-#        print schedule.endTime
-#
-#        print path.directionality
-#        print path.sourceSTP
-#        print path.destSTP
+        if type(evts) is not p2pservices.EthernetVlanType:
+            err = failure.Failure ( error.PayloadError('Only support EthernetVlanType service for now.') )
+            return self._createSOAPFault(err, header.provider_nsa, service_type=service_type)
 
         # create DTOs
 

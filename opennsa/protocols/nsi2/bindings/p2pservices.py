@@ -4,7 +4,7 @@ from xml.etree import ElementTree as ET
 
 # types
 
-class P2PServiceBaseType:
+class P2PServiceBaseType(object):
     def __init__(self, capacity, directionality, symmetricPath, sourceSTP, destSTP, ero):
         self.capacity = capacity  # long
         self.directionality = directionality  # DirectionalityType -> string
@@ -121,7 +121,7 @@ class ServiceExceptionType:
         return r
 
 
-class EthernetVlanType:
+class EthernetVlanType(object):
     def __init__(self, sourceSTP, destSTP, sourceVLAN, destVLAN, mtu, burstsize, capacity, directionality, symmetricPath, ero):
         self.sourceSTP = sourceSTP  # StpType
         self.destSTP = destSTP  # StpType
@@ -186,7 +186,7 @@ class OrderedStpType:
         return r
 
 
-class EthernetBaseType:
+class EthernetBaseType(object):
     def __init__(self, mtu, burstsize, capacity, directionality, symmetricPath, sourceSTP, destSTP, ero):
         self.mtu = mtu  # int
         self.burstsize = burstsize  # long
