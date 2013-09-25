@@ -157,7 +157,7 @@ class Network(object):
                 return port
         # better error message
         ports = list(itertools.chain(self.inbound_ports, self.outbound_ports, self.bidirectional_ports))
-        raise error.TopologyError('No port named %s for network %s (i% options, ports: %s)' %(port_id, self.name, len(ports), str(ports)))
+        raise error.TopologyError('No port named %s for network %s (i% options, ports: %s)' %(port_name, self.name, len(ports), str(ports)))
 
 
     def findPorts(self, bidirectionality, labels=None, exclude=None):
