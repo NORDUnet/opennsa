@@ -13,8 +13,6 @@ from opennsa.protocols.nsi2 import providerservice, providerclient, provider, \
                                    requesterservice, requesterclient, requester
 
 
-SERVICE_TYPE = 'application/vnd.org.ogf.nsi.cs.v2+soap'
-
 
 def setupProvider(child_provider, top_resource, tls=False, ctx_factory=None):
 
