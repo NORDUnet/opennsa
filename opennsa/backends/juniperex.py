@@ -235,7 +235,7 @@ class JuniperEXConnectionManager:
 
     def getResource(self, port, label_type, label_value):
         assert label_type in (None, nml.ETHERNET_VLAN), 'Label must be None or VLAN'
-        return label_value # vlan is a global resource, only one be used at a time
+        return str(label_value) # vlan is a global resource, only one be used at a time
 
 
     def getTarget(self, port, label_type, label_value):
@@ -244,7 +244,7 @@ class JuniperEXConnectionManager:
             vlan = int(label_value)
             assert 1 <= vlan <= 4095, 'Invalid label value for vlan: %s' % label_value
 
-        return JunosEXTarget(self.port_map[port], label_value)
+        return JunosEXTarget(self.port_map[port], vlan)
 
 
     def createConnectionId(self, source_target, dest_target):
