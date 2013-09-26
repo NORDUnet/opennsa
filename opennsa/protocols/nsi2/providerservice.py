@@ -13,7 +13,7 @@ from dateutil.tz import tzutc
 
 from twisted.python import log, failure
 
-from opennsa import nsa, error
+from opennsa import constants as cnt, nsa, error
 from opennsa.protocols.shared import minisoap, resource
 from opennsa.protocols.nsi2 import  helper
 from opennsa.protocols.nsi2.bindings import actions, nsiframework, nsiconnection, p2pservices
@@ -132,7 +132,7 @@ class ProviderService:
         d = self.provider.reserve(header, reservation.connectionId, reservation.globalReservationId, reservation.description, crt)
 
         def createReserveAcknowledgement(connection_id):
-            soap_header = nsiframework.CommonHeaderType(helper.PROTO, header.correlation_id, header.requester_nsa, header.provider_nsa, None, header.session_security_attrs)
+            soap_header = nsiframework.CommonHeaderType(cnt.CS2_SERVICE_TYPE, header.correlation_id, header.requester_nsa, header.provider_nsa, None, header.session_security_attrs)
             soap_header_element = soap_header.xml(nsiframework.nsiHeader)
 
             reserve_response = nsiconnection.ReserveResponseType(connection_id)
