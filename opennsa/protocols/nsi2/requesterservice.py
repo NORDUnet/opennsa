@@ -80,13 +80,11 @@ class RequesterService:
         # dto
         schedule   = nsa.Schedule(start_time, end_time)
 
-        if criteria.serviceType != p2pservices.evts:
+        evts = criteria.serviceDefinitions.values()[0] # add check later
+        if type(evts) is not p2pservices.EthernetVlanType:
             raise ValueError('Only EVTS service supported for now')
 
-        evts = criteria.serviceDefinitions.values()[0] # add check later
-
-        # create DTOs
-        # Missing: ERO, symmetric
+        # Create DTOs (ERO missing)
 
         src_stp = helper.createSTP(evts.sourceSTP)
         dst_stp = helper.createSTP(evts.destSTP)
