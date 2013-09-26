@@ -89,6 +89,8 @@ class FetcherService(service.Service):
         except Exception as e:
             log.msg('Error parsing topology for network %s, url %s. Reason %s' % (network_name, topology_url, str(e)), system=LOG_SYSTEM)
             self.blacklistNetwork(network_name)
+            import traceback
+            traceback.print_exc()
 
 
     def retrievalFailed(self, result, network_name, topology_url):
