@@ -223,7 +223,7 @@ class Aggregator:
 
             # error out if we could not find a path
             if not paths:
-                error_msg = 'Could not find a path for route %s:%s -> %s:%s' % (source_stp.network, source_stp.port, dest_stp.network, dest_stp.port)
+                error_msg = 'Could not find a path for route %s/%s -> %s/%s' % (source_stp.network, source_stp.port, dest_stp.network, dest_stp.port)
                 log.msg(error_msg, system=LOG_SYSTEM)
                 raise error.TopologyError(error_msg)
 
