@@ -109,7 +109,7 @@ class RequesterClient:
                                                         sd.mtu, sd.burst_size, sd.capacity, sd.directionality, sd.symmetric, sd.ero)
 
         else:
-            raise ValueError('Cannot create request for service definition of type %s' % type(service_definition))
+            raise ValueError('Cannot create request for service definition of type %s' % type(sd))
 
 
         schedule_type = nsiconnection.ScheduleType(schedule.start_time.replace(tzinfo=tzutc()).isoformat(),
