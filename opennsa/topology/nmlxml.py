@@ -66,9 +66,8 @@ def topologyXML(network):
     # creates nml:Topology object from a network
 
     URN_NETWORK = nml.URN_OGF_NETWORK + network.name
-    URN_NETWORK_TOPOLOGY = URN_NETWORK + ':topology'
 
-    nml_topology = ET.Element(NML_TOPOLOGY, {ID: URN_NETWORK_TOPOLOGY } )
+    nml_topology = ET.Element(NML_TOPOLOGY, {ID: URN_NETWORK } )
 
     ET.SubElement(nml_topology, NML_NAME).text = network.name
 
@@ -153,15 +152,18 @@ def _baseName(urn_id):
 def parseNMLPort(nml_port):
 
     assert nml_port.tag in (NML_PORT,NML_PORTGROUP), 'Port tag name must be nml:Port or nml:PortGroup, not (%s)' % nml_port.tag
-    port_id = nml_port.attrib[ID]
-    port_name = port_id.split(':')[-1]
+    port_id = _baseName( nml_port.attrib[ID] )
 
-    labels = []
+    port_name      = None
+    labels         = []
     remote_network = None
     remote_port    = None
 
     for pe in nml_port:
-        if pe.tag in (NML_LABEL, NML_LABELGROUP):
+        if pe.tag == NML_NAME:
+            port_name = pe.text
+
+        elif pe.tag in (NML_LABEL, NML_LABELGROUP):
             label_type = pe.attrib[LABEL_TYPE]
             label_value = pe.text
             labels.append( nsa.Label(label_type, label_value) )
@@ -176,6 +178,10 @@ def parseNMLPort(nml_port):
         else:
             log.msg('Unknown port element %s, ignoring' % pe, system=LOG_SYSTEM)
 
+    # make up a name if none is specified
+    if port_name is None:
+        port_name = port_id.split(':')[-1]
+
     port = nml.Port(port_id, port_name, labels, remote_network, remote_port)
     return port
 
@@ -185,9 +191,9 @@ def parseNMLTopology(nml_topology):
 
     assert nml_topology.tag == NML_TOPOLOGY, 'Top level container must be nml:Topology'
 
-    topology_id = nml_topology.attrib[ID]
-    network_name = None
+    topology_id = _baseName( nml_topology.attrib[ID] )
 
+    network_name = None
     inbound_ports   = {}
     outbound_ports  = {}
     bd_ports        = [] # temporary construction
@@ -213,13 +219,14 @@ def parseNMLTopology(nml_topology):
                 outbound_ports[port.id_] = port
 
         elif nte.tag == NML_BIDIRECTIONALPORT:
-            port_id = nte.attrib[ID]
+            port_id = _baseName( nte.attrib[ID] )
+            name = None
             sub_ports = []
             for pel in nte:
                 if pel.tag == NML_NAME:
                     name = pel.text
                 elif pel.tag in (NML_PORT, NML_PORTGROUP):
-                    sub_ports.append( pel.attrib[ID] )
+                    sub_ports.append( _baseName( pel.attrib[ID] ) )
             assert len(sub_ports) == 2, 'The number of ports in a bidirectional port must be 2'
             bd_ports.append( (port_id, name, sub_ports) )
 
@@ -247,13 +254,12 @@ def parseNSIService(nsi_service):
 
     assert nsi_service.tag == NSI_SERVICE, 'Top level container must be nsi:Service (is %s) ' % nsi_service.tag
 
-    service_id = nsi_service.attrib[ID]
-    service_name = _baseName(service_id)
+    service_id = _baseName( nsi_service.attrib[ID] )
     service_type = nsi_service.findtext( str(NSI_TYPE) )
 
     if service_type == cnt.CS2_SERVICE_TYPE:
         endpoint = nsi_service.findtext( str(NSI_LINK) )
-        nsi_agent = nsa.NetworkServiceAgent(service_name, endpoint, service_type)
+        nsi_agent = nsa.NetworkServiceAgent(service_id, endpoint, service_type)
         return nsi_agent
     else:
         print 'Unrecognized service type: %s' % service_type

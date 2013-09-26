@@ -72,8 +72,7 @@ def parseTopologySpec(source, network_name):
 
     inbound_ports, outbound_ports, bidirectional_ports, port_interface_map = parsePortSpec(source, network_name)
 
-    network_id = nml.URN_OGF_NETWORK + network_name + ':topology'
-    network = nml.Network(network_id, network_name, inbound_ports, outbound_ports, bidirectional_ports)
+    network = nml.Network(network_name, network_name, inbound_ports, outbound_ports, bidirectional_ports)
     return network, port_interface_map
 
 
@@ -128,15 +127,15 @@ def parsePortSpec(source, network_name):
             else:
                 if not in_suffix or not out_suffix:
                     raise NRMSpecificationError('Suffix not defined for bidirectional port %s' % port_name)
-                remote_in  = remote_port + in_suffix
-                remote_out = remote_port + out_suffix
+                remote_in  = remote_network + ':' + remote_port + in_suffix
+                remote_out = remote_network + ':' + remote_port + out_suffix
 
             inbound_port_name   = port_name + '-in'
             outbound_port_name  = port_name + '-out'
 
-            port_id             = nml.URN_OGF_NETWORK + network_name + port_name
-            inbound_port_id     = nml.URN_OGF_NETWORK + network_name + inbound_port_name
-            outbound_port_id    = nml.URN_OGF_NETWORK + network_name + outbound_port_name
+            port_id             = network_name + ':' + port_name
+            inbound_port_id     = network_name + ':' + inbound_port_name
+            outbound_port_id    = network_name + ':' + outbound_port_name
 
             inbound_port        = nml.InternalPort(inbound_port_id,  inbound_port_name,  bandwidth, labels, remote_network, remote_out)
             outbound_port       = nml.InternalPort(outbound_port_id, outbound_port_name, bandwidth, labels, remote_network, remote_in)
@@ -146,7 +145,7 @@ def parsePortSpec(source, network_name):
             outbound_ports.append(outbound_port)
             bidirectional_ports.append(bidirectional_port)
 
-            port_interface_map[port_name] = interface
+            port_interface_map[port_id] = interface
 
         elif port_type == UNIDIRECTIONAL_ETHERNET:
             raise NotImplementedError('Unidirectional ethernet ports not implemented yet')

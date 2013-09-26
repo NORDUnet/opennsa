@@ -30,6 +30,7 @@ class Port(object):
 
     def __init__(self, id_, name, labels, remote_network=None, remote_port=None):
 
+        assert not id_.startswith('urn:'), 'URNs are not used in core OpenNSA NML (id: %s)' % id_
         assert ':' not in name, 'Invalid port name %s, must not contain ":"' % name
         if labels:
             assert type(labels) is list, 'labels must be list or None'
@@ -75,13 +76,17 @@ class Port(object):
         return self.remote_network != None
 
 
+    def __repr__(self):
+        return '<Port %s (%s) # %s -> %s/%s>' % (self.id_, self.name, self._labels, self.remote_network, self.remote_port)
+
+
 
 class InternalPort(Port):
     """
     Same as Port, but also has a bandwidth, so the pathfinder can probe for bandwidth.
     """
-    def __init__(self, port_id, name, bandwidth, labels, remote_network=None, remote_port=None):
-        super(InternalPort, self).__init__(port_id, name, labels, remote_network, remote_port)
+    def __init__(self, id_, name, bandwidth, labels, remote_network=None, remote_port=None):
+        super(InternalPort, self).__init__(id_, name, labels, remote_network, remote_port)
         self.bandwidth = bandwidth
 
 
@@ -89,16 +94,22 @@ class InternalPort(Port):
         return desired_bandwidth <= self.bandwidth
 
 
+    def __repr__(self):
+        return '<InternalPort %s (%s) # %s : %i -> %s/%s>' % (self.id_, self.name, self._labels, self.bandwidth, self.remote_network, self.remote_port)
+
+
 
 class BidirectionalPort(object):
 
-    def __init__(self, port_id, name, inbound_port, outbound_port):
-        assert type(name) is str, 'Name must be a string'
+    def __init__(self, id_, name, inbound_port, outbound_port):
+        assert type(id_) is str, 'Port id must be a string'
+        assert type(name) is str, 'Port name must be a string'
         assert isinstance(inbound_port, Port), 'Inbound port must be a <Port>'
         assert isinstance(outbound_port, Port), 'Outbound port must be a <Port>'
         assert [ l.type_ for l in inbound_port.labels() ] == [ l.type_ for l in outbound_port.labels() ], 'Port labels must match each other'
+        assert not id_.startswith('urn:'), 'URNs are not used in core OpenNSA NML (id: %s)' % id_
 
-        self.port_id = port_id
+        self.id_ = id_
         self.name = name
         self.inbound_port  = inbound_port
         self.outbound_port = outbound_port
@@ -128,7 +139,7 @@ class BidirectionalPort(object):
         return self.inbound_port.canProvideBandwidth(desired_bandwidth) and self.outbound_port.canProvideBandwidth(desired_bandwidth)
 
     def __repr__(self):
-        return '<BidirectionalPort %s : %s/%s>' % (self.name, self.inbound_port.name, self.outbound_port.name)
+        return '<BidirectionalPort %s (%s) : %s/%s>' % (self.id_, self.name, self.inbound_port.name, self.outbound_port.name)
 
 
 
@@ -141,6 +152,7 @@ class Network(object):
         assert type(inbound_ports) is list, 'Inbound ports must be a list'
         assert type(outbound_ports) is list, 'Outbound network ports must be a list'
         assert type(bidirectional_ports) is list, 'Bidirectional network ports must be a list'
+        assert not id_.startswith('urn:'), 'URNs are not used in core OpenNSA NML (id: %s)' % id_
 
         # we should perhaps check that no ports has the same name
 
@@ -151,20 +163,20 @@ class Network(object):
         self.bidirectional_ports = bidirectional_ports or []
 
 
-    def getPort(self, port_name):
+    def getPort(self, port_id):
         for port in itertools.chain(self.inbound_ports, self.outbound_ports, self.bidirectional_ports):
-            if port.name == port_name:
+            if port.id_ == port_id:
                 return port
         # better error message
-        ports = list(itertools.chain(self.inbound_ports, self.outbound_ports, self.bidirectional_ports))
-        raise error.TopologyError('No port named %s for network %s (i% options, ports: %s)' %(port_name, self.name, len(ports), str(ports)))
+        ports = [ p.id_ for p in list(itertools.chain(self.inbound_ports, self.outbound_ports, self.bidirectional_ports)) ]
+        raise error.TopologyError('No port named %s for network %s (ports: %s)' %(port_id, self.name, str(ports)))
 
 
     def findPorts(self, bidirectionality, labels=None, exclude=None):
         matching_ports = []
         for port in itertools.chain(self.inbound_ports, self.outbound_ports, self.bidirectional_ports):
             if port.isBidirectional() == bidirectionality and (labels is None or port.canMatchLabels(labels)):
-                if exclude and port.name == exclude:
+                if exclude and port.id_ == exclude:
                     continue
                 matching_ports.append(port)
         return matching_ports
@@ -185,41 +197,41 @@ class Topology(object):
         assert type(network) is Network
         assert type(managing_nsa) is nsa.NetworkServiceAgent
 
-        if network.name in self.networks:
-            raise error.TopologyError('Entry for network named %s already exists' % network.name)
+        if network.id_ in self.networks:
+            raise error.TopologyError('Entry for network with id %s already exists' % network.id_)
 
-        self.networks[network.name] = (network, managing_nsa)
+        self.networks[network.id_] = (network, managing_nsa)
 
 
     def updateNetwork(self, network, managing_nsa):
         # update an existing network entry
-        existing_entry = self.networks.pop(network.name, None) # note - we may get none here (for new network)
+        existing_entry = self.networks.pop(network.id_, None) # note - we may get none here (for new network)
         try:
             self.addNetwork(network, managing_nsa)
         except error.TopologyError as e:
-            log.msg('Error updating network entry for %s. Reason: %s' % (network.name, str(e)))
+            log.msg('Error updating network entry for %s. Reason: %s' % (network.id_, str(e)))
             if existing_entry:
-                self.networks[network.name] = existing_entry # restore old entry
+                self.networks[network.id_] = existing_entry # restore old entry
             raise e
 
 
-    def getNetwork(self, network_name):
+    def getNetwork(self, network_id):
         try:
-            return self.networks[network_name][0]
+            return self.networks[network_id][0]
         except KeyError:
-            raise error.TopologyError('No network named %s' % (network_name))
+            raise error.TopologyError('No network with id %s' % (network_id))
 
 
-    def getNSA(self, network_name):
+    def getNSA(self, network_id):
         try:
-            return self.networks[network_name][1]
+            return self.networks[network_id][1]
         except KeyError as e:
-            raise error.TopologyError('No NSA for network named %s (%s)' % (network_name, str(e)))
+            raise error.TopologyError('No NSA for network with id %s (%s)' % (network_id, str(e)))
 
 
-    def findDemarcationPort(self, network_name, port_name):
+    def findDemarcationPort(self, network_id, port_id):
         # finds - if it exists - the demarcation port of a bidirectional port - have to go through unidirectional model
-        port = self.getNetwork(network_name).getPort(port_name)
+        port = self.getNetwork(network_id).getPort(port_id)
         assert isinstance(port, BidirectionalPort), 'Specified port for demarcation find is not bidirectional'
         if not port.hasRemote():
             return None
@@ -230,8 +242,8 @@ class Topology(object):
         inbound_remote  = port.inbound_port.remote_port
         outbound_remote = port.outbound_port.remote_port
         for rp in remote_network.findPorts(True):
-            if isinstance(rp, BidirectionalPort) and rp.inbound_port.name == outbound_remote and rp.outbound_port.name == inbound_remote:
-                return remote_network.name, rp.name
+            if isinstance(rp, BidirectionalPort) and rp.inbound_port.id_ == outbound_remote and rp.outbound_port.id_ == inbound_remote:
+                return remote_network.id_, rp.id_
         return None
 
 
@@ -253,9 +265,9 @@ class Topology(object):
 
         # these are only really interesting for the initial call, afterwards they just prune
         if not source_port.canMatchLabels(source_stp.labels):
-            raise error.TopologyError('Source port %s (labels %s) cannot match labels for source STP (%s)' % (source_port.name, source_port.labels(), source_stp.labels()))
+            raise error.TopologyError('Source port %s (labels %s) cannot match labels for source STP (%s)' % (source_port.id_, source_port.labels(), source_stp.labels()))
         if not dest_port.canMatchLabels(dest_stp.labels):
-            raise error.TopologyError('Desitination port %s (labels %s) cannot match labels for destination STP %s' % (dest_port.name, dest_port.labels(), dest_stp.labels()))
+            raise error.TopologyError('Desitination port %s (labels %s) cannot match labels for destination STP %s' % (dest_port.id_, dest_port.labels(), dest_stp.labels()))
 #        if not source_port.canProvideBandwidth(bandwidth):
 #            raise error.BandwidthUnavailableError('Source port cannot provide enough bandwidth (%i)' % bandwidth)
 #        if not dest_port.canProvideBandwidth(bandwidth):
@@ -300,7 +312,7 @@ class Topology(object):
                 link_ports = [ port for port in link_ports if port.hasRemote() ] # filter out termination ports
                 links = []
                 for lp in link_ports:
-                    demarcation = self.findDemarcationPort(source_stp.network, lp.name)
+                    demarcation = self.findDemarcationPort(source_stp.network, lp.id_)
                     if demarcation is None:
                         continue
                     if exclude_networks is not None and demarcation[0] in exclude_networks:
@@ -308,7 +320,7 @@ class Topology(object):
 
                     demarcation_label = lp.labels()[0] if source_network.canSwapLabel(source_stp.labels[0].type_) else source_stp.labels[0].intersect(lp.labels()[0])
                     demarcation_stp = nsa.STP(demarcation[0], demarcation[1], [ demarcation_label ] )
-                    sub_exclude_networks = [ source_network.name ] + (exclude_networks or [])
+                    sub_exclude_networks = [ source_network.id_ ] + (exclude_networks or [])
                     sub_links = self._findPathsRecurse(demarcation_stp, dest_stp, bandwidth, sub_exclude_networks)
                     # if we didn't find any sub paths, just continue
                     if not sub_links:
@@ -323,7 +335,7 @@ class Topology(object):
                             source_label = source_port.labels()[0].intersect(source_stp.labels[0]).intersect(lp.labels()[0]).intersect(sl[0].src_labels[0])
                             dest_label   = source_label
 
-                        first_link = nsa.Link(source_stp.network, source_stp.port, lp.name, [source_label], [dest_label])
+                        first_link = nsa.Link(source_stp.network, source_stp.port, lp.id_, [source_label], [dest_label])
                         path = [ first_link ] + sl
                         links.append(path)
 
