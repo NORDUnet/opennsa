@@ -13,7 +13,7 @@ from twisted.python import log, failure
 from twisted.web.error import Error as WebError
 
 from opennsa.interface import INSIProvider
-from opennsa import nsa, error
+from opennsa import constants as cnt, nsa, error
 from opennsa.protocols.shared import minisoap, httpclient
 from opennsa.protocols.nsi2 import helper
 from opennsa.protocols.nsi2.bindings import actions, nsiframework, nsiconnection, p2pservices
@@ -115,8 +115,7 @@ class RequesterClient:
         schedule_type = nsiconnection.ScheduleType(schedule.start_time.replace(tzinfo=tzutc()).isoformat(),
                                                    schedule.end_time.replace(tzinfo=tzutc()).isoformat())
 
-        version = 0 # FIXME
-        criteria = nsiconnection.ReservationRequestCriteriaType(version, schedule_type, str(p2pservices.evts), { p2pservices.evts : service_type } )
+        criteria = nsiconnection.ReservationRequestCriteriaType(criteria.revision, schedule_type, cnt.EVTS_AGOLE, { p2pservices.evts : service_type } )
 
         reservation = nsiconnection.ReserveType(connection_id, global_reservation_id, description, criteria)
 
