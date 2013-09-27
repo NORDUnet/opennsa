@@ -116,6 +116,7 @@ def reserveprovision(client, client_nsa, provider_nsa, src, dst, start_time, end
     try:
         assigned_connection_id = yield client.reserve(nsi_header, connection_id, global_id, 'Test Connection', crt)
         log.msg("Connection created and held. Id %s at %s" % (assigned_connection_id, provider_nsa))
+        nsi_header.newCorrelationId()
         yield client.reserveCommit(nsi_header, assigned_connection_id)
         log.msg("Connection committed at %s" % provider_nsa)
     except error.NSIError, e:
@@ -123,6 +124,7 @@ def reserveprovision(client, client_nsa, provider_nsa, src, dst, start_time, end
         defer.returnValue(None)
 
     try:
+        nsi_header.newCorrelationId()
         yield client.provision(nsi_header, assigned_connection_id)
         log.msg('Connection %s provisioned' % assigned_connection_id)
     except error.NSIError, e:
@@ -149,6 +151,7 @@ def rprt(client, client_nsa, provider_nsa, src, dst, start_time, end_time, capac
     try:
         assigned_connection_id = yield client.reserve(nsi_header, connection_id, global_id, 'Test Connection', crt)
         log.msg("Connection created and held. Id %s at %s" % (assigned_connection_id, provider_nsa))
+        nsi_header.newCorrelationId()
         yield client.reserveCommit(nsi_header, assigned_connection_id)
         log.msg("Connection committed at %s" % provider_nsa)
     except error.NSIError, e:
@@ -156,6 +159,7 @@ def rprt(client, client_nsa, provider_nsa, src, dst, start_time, end_time, capac
         defer.returnValue(None)
 
     try:
+        nsi_header.newCorrelationId()
         yield client.provision(nsi_header, assigned_connection_id)
         log.msg('Connection %s provisioned' % assigned_connection_id)
     except error.NSIError, e:
@@ -163,6 +167,7 @@ def rprt(client, client_nsa, provider_nsa, src, dst, start_time, end_time, capac
         defer.returnValue(None)
 
     try:
+        nsi_header.newCorrelationId()
         yield client.release(nsi_header, assigned_connection_id)
         log.msg('Connection %s released' % assigned_connection_id)
     except error.NSIError, e:
@@ -170,6 +175,7 @@ def rprt(client, client_nsa, provider_nsa, src, dst, start_time, end_time, capac
         defer.returnValue(None)
 
     try:
+        nsi_header.newCorrelationId()
         yield client.terminate(nsi_header, assigned_connection_id)
         log.msg('Connection %s terminated' % assigned_connection_id)
     except error.NSIError, e:
