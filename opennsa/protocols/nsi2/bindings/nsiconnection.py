@@ -121,35 +121,35 @@ class QueryFailedType:
 
 
 class ErrorEventType:
-    def __init__(self, event, additionalInfo, serviceException, connectionId, notificationId, timeStamp):
-        self.event = event  # EventEnumType -> string
-        self.additionalInfo = additionalInfo  # [ TypeValuePairType ]
-        self.serviceException = serviceException  # ServiceExceptionType
+    def __init__(self, connectionId, notificationId, timeStamp, event, additionalInfo, serviceException):
         self.connectionId = connectionId  # ConnectionIdType -> string
         self.notificationId = notificationId  # NotificationIdType -> int
         self.timeStamp = timeStamp  # DateTimeType -> dateTime
+        self.event = event  # EventEnumType -> string
+        self.additionalInfo = additionalInfo  # [ TypeValuePairType ]
+        self.serviceException = serviceException  # ServiceExceptionType
 
     @classmethod
     def build(self, element):
         return ErrorEventType(
-                element.findtext('event'),
-                [ TypeValuePairType.build(e) for e in element.find('additionalInfo') ] if element.find('additionalInfo') is not None else None,
-                ServiceExceptionType.build(element.find('serviceException')) if element.find('serviceException') is not None else None,
                 element.findtext('connectionId'),
                 int(element.findtext('notificationId')),
-                element.findtext('timeStamp')
+                element.findtext('timeStamp'),
+                element.findtext('event'),
+                [ TypeValuePairType.build(e) for e in element.find('additionalInfo') ] if element.find('additionalInfo') is not None else None,
+                ServiceExceptionType.build(element.find('serviceException')) if element.find('serviceException') is not None else None
                )
 
     def xml(self, elementName):
         r = ET.Element(elementName)
+        ET.SubElement(r, 'connectionId').text = self.connectionId
+        ET.SubElement(r, 'notificationId').text = str(self.notificationId)
+        ET.SubElement(r, 'timeStamp').text = str(self.timeStamp)
         ET.SubElement(r, 'event').text = self.event
         if self.additionalInfo:
             ET.SubElement(r, 'additionalInfo').extend( [ e.xml(ET.QName('http://schemas.ogf.org/nsi/2013/07/framework/types', 'additionalInfo')) for e in self.additionalInfo ] )
         if self.serviceException:
             r.append(self.serviceException.xml(ET.QName('http://schemas.ogf.org/nsi/2013/07/framework/types', 'serviceException')))
-        ET.SubElement(r, 'connectionId').text = self.connectionId
-        ET.SubElement(r, 'notificationId').text = str(self.notificationId)
-        ET.SubElement(r, 'timeStamp').text = str(self.timeStamp)
         return r
 
 
