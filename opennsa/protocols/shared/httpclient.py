@@ -51,19 +51,18 @@ def httpRequest(url, payload, headers, method='POST', timeout=DEFAULT_TIMEOUT, c
 
     scheme, netloc, _ , _, _, _ = twhttp.urlparse(url)
     if not ':' in netloc:
-        e = HTTPRequestError('No port specified in URL (URL %s)' % (url))
-        return defer.fail(e)
-
-    host, s_port = netloc.split(':',1)
-    port = int(s_port)
+        host = netloc
+        port = 80 if scheme == 'http' else 443
+    else:
+        host, s_port = netloc.split(':',1)
+        port = int(s_port)
 
     factory = twclient.HTTPClientFactory(url, method, postdata=payload, timeout=timeout)
     factory.noisy = False # stop spewing about factory start/stop
     factory.protocol.handleStatus_204 = lambda _ : None # 204 is an ok reply, needed by NCS VPN backend
 
     # fix missing port in header (bug in twisted.web.client)
-    factory.headers['host'] = host + ':' + s_port
-
+    factory.headers['host'] = host + ':' + str(port)
     factory.headers['User-Agent'] = 'OpenNSA/Twisted'
 
     for header, value in headers.items():
