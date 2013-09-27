@@ -123,8 +123,7 @@ def nsiXML(nsi_agent, network, version=None):
     # top element
 
     URN_NSA = nml.URN_OGF_NETWORK + nsi_agent.identity
-    version = version or datetime.datetime.utcnow().isoformat()
-    nsi_nsa = ET.Element(NSI_NSA, {ID: URN_NSA, VERSION: version } )
+    nsi_nsa = ET.Element(NSI_NSA, {ID: URN_NSA, VERSION: network.version.isoformat() } )
 
     # cs service
     urn_cs_service = URN_NSA + '-cs'

@@ -7,6 +7,7 @@ Copyright: NORDUnet (2011-2013)
 """
 
 import itertools
+import datetime
 
 from twisted.python import log
 
@@ -141,7 +142,7 @@ class BidirectionalPort(object):
 
 class Network(object):
 
-    def __init__(self, id_, name, inbound_ports, outbound_ports, bidirectional_ports):
+    def __init__(self, id_, name, inbound_ports, outbound_ports, bidirectional_ports, version=None):
 
         assert type(id_) is str, 'Network id must be a string'
         assert type(name) is str, 'Network name must be a string'
@@ -157,6 +158,7 @@ class Network(object):
         self.inbound_ports       = inbound_ports or []
         self.outbound_ports      = outbound_ports or []
         self.bidirectional_ports = bidirectional_ports or []
+        self.version             = version or datetime.datetime.utcnow()
 
 
     def getPort(self, port_id):
