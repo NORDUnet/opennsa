@@ -85,8 +85,7 @@ class SSHChannel(ssh.SSHChannel):
 
         try:
             yield self.conn.sendRequest(self, 'shell', '', wantReply=1)
-
-            d = self.waitForLine('[edit]')
+            d = self.waitForLine('>')
             self.write(COMMAND_CONFIGURE + LT)
             yield d
 
@@ -126,7 +125,7 @@ class SSHChannel(ssh.SSHChannel):
 
     def matchLine(self, line):
         if self.wait_line and self.wait_defer:
-            if self.wait_line == line.strip():
+            if self.wait_line in line.strip():
                 d = self.wait_defer
                 self.wait_line  = None
                 self.wait_defer = None
