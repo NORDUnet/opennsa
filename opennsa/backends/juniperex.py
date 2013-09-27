@@ -259,7 +259,7 @@ class JuniperEXConnectionManager:
         assert source_target.vlan == dest_target.vlan, 'VLANs must match'
 
         def linkUp(_):
-            log.msg('Link %s -> %s up' % (source_target, dest_target), system=self.log_system)
+            log.msg('Link %s -> %s up' % (source_target, dest_target), system=LOG_SYSTEM)
 
         d = self.command_sender.setupLink(source_target.port, dest_target.port, dest_target.vlan)
         d.addCallback(linkUp)
@@ -271,7 +271,7 @@ class JuniperEXConnectionManager:
         assert source_target.vlan == dest_target.vlan, 'VLANs must match'
 
         def linkDown(_):
-            log.msg('Link %s -> %s down' % (source_target, dest_target), system=self.log_system)
+            log.msg('Link %s -> %s down' % (source_target, dest_target), system=LOG_SYSTEM)
 
         d = self.command_sender.teardownLink(source_target.port, dest_target.port, dest_target.vlan)
         d.addCallback(linkDown)
