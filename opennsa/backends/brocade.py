@@ -211,7 +211,7 @@ class BrocadeConnectionManager:
 
     def getResource(self, port, label_type, label_value):
         assert label_type == nml.ETHERNET_VLAN, 'Label type must be ethernet-vlan'
-        return label_value
+        return str(label_value)
 
 
     def getTarget(self, port, label_type, label_value):
