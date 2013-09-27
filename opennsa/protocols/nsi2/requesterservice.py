@@ -54,12 +54,18 @@ class RequesterService:
 
         header, generic_failure = helper.parseRequest(soap_data)
 
-        service_exception = generic_failure.serviceException
+        rc = generic_failure.connectionStates
+        rd = rc.dataPlaneStatus
 
-        exception_type = error.lookup(service_exception.errorId)
-        err = exception_type(service_exception.text)
+        dps = (rd.active, rd.version, rd.versionConsistent)
+        cs = (rc.reservationState, rc.provisionState, rc.lifecycleState, dps)
 
-        return header, generic_failure, err
+        se = generic_failure.serviceException
+
+        exception_type = error.lookup(se.errorId)
+        err = exception_type(se.text)
+
+        return header, generic_failure.connectionId, cs, err
 
 
 
@@ -106,8 +112,8 @@ class RequesterService:
 
 
     def reserveFailed(self, soap_data):
-        header, generic_failure, err = self._parseGenericFailure(soap_data)
-        self.requester.reserveFailed(header, generic_failure.connectionId, err)
+        header, connection_id, cs, err = self._parseGenericFailure(soap_data)
+        self.requester.reserveFailed(header, connection_id, cs, err)
         return helper.createGenericAcknowledgement(header)
 
 
@@ -118,8 +124,8 @@ class RequesterService:
 
 
     def reserveCommitFailed(self, soap_data):
-        header, generic_failure, err = self._parseGenericFailure(soap_data)
-        self.requester.reserveCommitFailed(header, generic_failure.connectionId, err)
+        header, connection_id, cs, err = self._parseGenericFailure(soap_data)
+        self.requester.reserveCommitFailed(header, connection_id, cs, err)
         return helper.createGenericAcknowledgement(header)
 
 
@@ -148,9 +154,8 @@ class RequesterService:
 
 
     def terminateFailed(self, soap_data):
-
-        header, generic_failure, err = self._parseGenericFailure(soap_data)
-        self.requester.terminateFailed(header, generic_failure.connectionId, err)
+        header, connection_id, cs, err = self._parseGenericFailure(soap_data)
+        self.requester.terminateFailed(header, connection_id, cs, err)
         return helper.createGenericAcknowledgement(header)
 
 
@@ -166,11 +171,9 @@ class RequesterService:
 
     def querySummaryFailed(self, soap_data):
 
-        header, generic_failure, err = self._parseGenericFailure(soap_data)
-        session_security_attr = None
+        header, connection_id, cs, err = self._parseGenericFailure(soap_data)
 
-        self.requester.queryFailed(header.correlationId, header.requesterNSA, header.providerNSA, session_security_attr,
-                                       generic_failure.connectionId, err)
+        self.requester.queryFailed(header, connection_id, cs, err)
 
         return helper.createGenericAcknowledgement(header)
 

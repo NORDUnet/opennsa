@@ -93,9 +93,9 @@ class Requester:
         self.triggerCall(header.provider_nsa, header.correlation_id, RESERVE, connection_id)
 
 
-    def reserveFailed(self, correlation_id, requester_nsa, provider_nsa, connection_id, session_security_attr, err):
+    def reserveFailed(self, header, connection_id, connection_states, err):
 
-        self.triggerCall(provider_nsa, correlation_id, RESERVE, err)
+        self.triggerCall(header.provider_nsa, header.correlation_id, RESERVE, err)
 
 
     def reserveCommit(self, header, connection_id):
@@ -133,7 +133,7 @@ class Requester:
         self.triggerCall(header.provider_nsa, header.correlation_id, PROVISION, connection_id)
 
 
-    def provisionFailed(self, header, connection_id, err):
+    def provisionFailed(self, header, connection_id, connection_states, err):
 
         self.triggerCall(header.provider_nsa, header.correlation_id, PROVISION, err)
 
@@ -154,7 +154,7 @@ class Requester:
         self.triggerCall(header.provider_nsa, header.correlation_id, RELEASE, connection_id)
 
 
-    def releaseFailed(self, header, connection_id, err):
+    def releaseFailed(self, header, connection_id, conncetion_states, err):
 
         self.triggerCall(header.provider_nsa, header.correlation_id, RELEASE, err)
 
@@ -176,7 +176,7 @@ class Requester:
         self.triggerCall(header.provider_nsa, header.correlation_id, TERMINATE, connection_id)
 
 
-    def terminateFailed(self, header, connection_id, err):
+    def terminateFailed(self, header, connection_id, connection_states, err):
 
         self.triggerCall(header.provider_nsa, header.correlation_id, TERMINATE, err)
 
