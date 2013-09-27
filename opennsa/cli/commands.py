@@ -3,12 +3,11 @@
 from twisted.python import log
 from twisted.internet import defer
 
-from opennsa import nsa, error
-from opennsa.topology import nml
+from opennsa import constants as cnt, nsa, error
 
 
 LABEL_LOOKUP = {
-    'vlan' : nml.ETHERNET_VLAN
+    'vlan' : cnt.ETHERNET_VLAN
 }
 
 # this parser should perhaps be somewhere else
@@ -44,8 +43,8 @@ def _createEVTS(src, dst, capacity, mtu=1500, burst_size=5000000):
     src_stp = _createSTP(src_np)
     dst_stp = _createSTP(dst_np)
 
-    src_stp.labels = [ nsa.Label(nsa.EthernetVLANService.ETHERNET_VLAN, src_vlan) ]
-    dst_stp.labels = [ nsa.Label(nsa.EthernetVLANService.ETHERNET_VLAN, dst_vlan) ]
+    src_stp.labels = [ nsa.Label(cnt.ETHERNET_VLAN, src_vlan) ]
+    dst_stp.labels = [ nsa.Label(cnt.ETHERNET_VLAN, dst_vlan) ]
 
     return nsa.EthernetVLANService(src_stp, dst_stp, capacity, mtu, burst_size)
 

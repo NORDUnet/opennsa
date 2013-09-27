@@ -21,3 +21,6 @@ BIDIRECTIONAL       = 'Bidirectional'
 
 EVTS_AGOLE          = 'http://services.ogf.org/nsi/2013/07/descriptions/EVTS.A-GOLE'
 
+ETHERNET = 'http://schemas.ogf.org/nml/2012/10/ethernet'
+ETHERNET_VLAN = '%s#vlan' % ETHERNET
+

@@ -10,7 +10,7 @@ import itertools
 
 from twisted.python import log
 
-from opennsa import nsa, error
+from opennsa import constants as cnt, nsa, error
 
 
 LOG_SYSTEM = 'opennsa.topology'
@@ -19,10 +19,6 @@ INGRESS = 'ingress'
 EGRESS  = 'egress'
 
 URN_OGF_NETWORK = 'urn:ogf:network:'
-
-# Label types
-ETHERNET = 'http://schemas.ogf.org/nml/2013/05/ethernet'
-ETHERNET_VLAN = '%s#vlan' % ETHERNET
 
 
 
@@ -183,7 +179,7 @@ class Network(object):
 
 
     def canSwapLabel(self, label_type):
-        return label_type == ETHERNET_VLAN and self.name.startswith('urn:ogf:network:nordu.net:')
+        return label_type == cnt.ETHERNET_VLAN and self.name.startswith('urn:ogf:network:nordu.net:')
 
 
 

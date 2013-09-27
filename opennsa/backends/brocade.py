@@ -25,8 +25,7 @@ import random
 from twisted.python import log
 from twisted.internet import defer
 
-from opennsa import config
-from opennsa.topology import nml
+from opennsa import constants as cnt, config
 from opennsa.backends.common import ssh, genericbackend
 
 LOG_SYSTEM = 'opennsa.brocade'
@@ -210,7 +209,7 @@ class BrocadeConnectionManager:
 
 
     def getResource(self, port, label_type, label_value):
-        assert label_type == nml.ETHERNET_VLAN, 'Label type must be ethernet-vlan'
+        assert label_type == cnt.ETHERNET_VLAN, 'Label type must be ethernet-vlan'
         return str(label_value)
 
 

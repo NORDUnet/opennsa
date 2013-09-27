@@ -115,8 +115,8 @@ class ProviderService:
         dst_stp = helper.createSTP(evts.destSTP)
 
         # for evts in r99, STPs are without labels, but this will change in the future, so we set them here
-        src_stp.labels = [ nsa.Label(nsa.EthernetVLANService.ETHERNET_VLAN, str(evts.sourceVLAN)) ]
-        dst_stp.labels = [ nsa.Label(nsa.EthernetVLANService.ETHERNET_VLAN, str(evts.destVLAN))   ]
+        src_stp.labels = [ nsa.Label(cnt.ETHERNET_VLAN, str(evts.sourceVLAN)) ]
+        dst_stp.labels = [ nsa.Label(cnt.ETHERNET_VLAN, str(evts.destVLAN))   ]
 
         if evts.ero:
             err = failure.Failure ( error.PayloadError('ERO not supported, go away.') )

@@ -14,7 +14,7 @@ import random
 import urlparse
 import itertools
 
-from opennsa import error
+from opennsa import error, constants as cnt
 
 
 
@@ -336,14 +336,11 @@ class EthernetService(object):
 
 class EthernetVLANService(EthernetService):
 
-    # remove the entry from nml module sometime, this is the right place
-    ETHERNET_VLAN = 'http://schemas.ogf.org/nml/2013/05/ethernet#vlan'
-
     def _verifySTPs(self, source_stp, dest_stp):
 
         assert source_stp.labels and len(source_stp.labels) == 1,  'Source STP must specify label and exactly one for EthernetVLANService'
         assert dest_stp.labels and len(dest_stp.labels) == 1, 'Destination STP must specify label and exactly one for EthernetVLANService'
 
-        assert source_stp.labels[0].type_ == self.ETHERNET_VLAN, 'Source STP label type must be %s for EthernetVLANService' % self.ETHERNET_VLAN
-        assert dest_stp.labels[0].type_   == self.ETHERNET_VLAN, 'Destination STP label type must be %s for EthernetVLANService' % self.ETHERNET_VLAN
+        assert source_stp.labels[0].type_ == cnt.ETHERNET_VLAN, 'Source STP label type must be %s for EthernetVLANService' % cnt.ETHERNET_VLAN
+        assert dest_stp.labels[0].type_   == cnt.ETHERNET_VLAN, 'Destination STP label type must be %s for EthernetVLANService' % cnt.ETHERNET_VLAN
 

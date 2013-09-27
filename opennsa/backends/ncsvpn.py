@@ -10,10 +10,9 @@ import random
 
 from twisted.python import log
 
-from opennsa import config
+from opennsa import constants as cnt, config
 from opennsa.backends.common import genericbackend
 from opennsa.protocols.shared import httpclient
-from opennsa.topology import nml
 
 
 # basic payload
@@ -139,13 +138,13 @@ class NCSVPNConnectionManager:
 
 
     def getResource(self, port, label_type, label_value):
-        assert label_type in (None, nml.ETHERNET_VLAN), 'Label must be None or VLAN'
+        assert label_type in (None, cnt.ETHERNET_VLAN), 'Label must be None or VLAN'
         return port # this contains router and port
 
 
     def getTarget(self, port, label_type, label_value):
-        assert label_type in (None, nml.ETHERNET_VLAN), 'Label must be None or VLAN'
-        if label_type == nml.ETHERNET_VLAN:
+        assert label_type in (None, cnt.ETHERNET_VLAN), 'Label must be None or VLAN'
+        if label_type == cnt.ETHERNET_VLAN:
             vlan = int(label_value)
             assert 1 <= vlan <= 4095, 'Invalid label value for vlan: %s' % label_value
 
@@ -159,7 +158,7 @@ class NCSVPNConnectionManager:
 
     def canSwapLabel(self, label_type):
         return False
-        #return label_type == nml.ETHERNET_VLAN:
+        #return label_type == cnt.ETHERNET_VLAN:
 
 
     def _createAuthzHeader(self):

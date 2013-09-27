@@ -11,7 +11,7 @@ import StringIO
 
 from twisted.python import log
 
-from opennsa import nsa, error
+from opennsa import constants as cnt, nsa, error
 from opennsa.topology import nml
 
 
@@ -24,7 +24,7 @@ UNIDIRECTIONAL_ETHERNET = 'uni-ethernet'
 PORT_TYPES = [ BIDRECTIONAL_ETHERNET, UNIDIRECTIONAL_ETHERNET ]
 
 LABEL_TYPES = {
-    'vlan'  : nml.ETHERNET_VLAN
+    'vlan'  : cnt.ETHERNET_VLAN
 }
 
 

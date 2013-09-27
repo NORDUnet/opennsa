@@ -25,9 +25,8 @@ import random
 from twisted.python import log
 from twisted.internet import defer
 
-from opennsa import config
+from opennsa import constants as cnt, config
 from opennsa.backends.common import genericbackend, ssh
-from opennsa.topology import nml
 
 
 
@@ -234,13 +233,13 @@ class JuniperEXConnectionManager:
 
 
     def getResource(self, port, label_type, label_value):
-        assert label_type in (None, nml.ETHERNET_VLAN), 'Label must be None or VLAN'
+        assert label_type in (None, cnt.ETHERNET_VLAN), 'Label must be None or VLAN'
         return str(label_value) # vlan is a global resource, only one be used at a time
 
 
     def getTarget(self, port, label_type, label_value):
-        assert label_type in (None, nml.ETHERNET_VLAN), 'Label must be None or VLAN'
-        if label_type == nml.ETHERNET_VLAN:
+        assert label_type in (None, cnt.ETHERNET_VLAN), 'Label must be None or VLAN'
+        if label_type == cnt.ETHERNET_VLAN:
             vlan = int(label_value)
             assert 1 <= vlan <= 4095, 'Invalid label value for vlan: %s' % label_value
 
