@@ -37,7 +37,7 @@ COMMAND_COMMIT                  = 'commit'
 COMMAND_SET_VLAN                = 'set vlans opennsa-%i vlan-id %i'
 COMMAND_SET_INTERFACE_VLAN      = 'set interfaces %s unit 0 family ethernet-switching vlan members opennsa-%i'
 
-COMMAND_DELETE_VLAN             = 'delete vlans opennsa-%i vlan-id %i'
+COMMAND_DELETE_VLAN             = 'delete vlans opennsa-%i'
 COMMAND_DELETE_INTERFACE_VLAN   = 'delete interfaces %s unit 0 family ethernet-switching vlan members opennsa-%i'
 
 
@@ -50,7 +50,7 @@ def createConfigureCommands(source_nrm_port, dest_nrm_port, vlan):
 
     vl = COMMAND_SET_VLAN % (vlan, vlan)
     p1 = COMMAND_SET_INTERFACE_VLAN % (source_nrm_port, vlan)
-    p2 = COMMAND_SET_INTERFACE_VLAN % (source_nrm_port, vlan)
+    p2 = COMMAND_SET_INTERFACE_VLAN % (dest_nrm_port, vlan)
 
     commands = [ vl, p1, p2 ]
     return commands
@@ -58,11 +58,11 @@ def createConfigureCommands(source_nrm_port, dest_nrm_port, vlan):
 
 def createDeleteCommands(source_nrm_port, dest_nrm_port, vlan):
 
-    vl = COMMAND_DELETE_VLAN % (vlan, vlan)
-    p1 = COMMAND_SET_INTERFACE_VLAN % (source_nrm_port, vlan)
-    p2 = COMMAND_SET_INTERFACE_VLAN % (source_nrm_port, vlan)
+    p1 = COMMAND_DELETE_INTERFACE_VLAN % (source_nrm_port, vlan)
+    p2 = COMMAND_DELETE_INTERFACE_VLAN % (dest_nrm_port, vlan)
+    vl = COMMAND_DELETE_VLAN % vlan
 
-    commands = [ vl, p1, p2 ]
+    commands = [ p1, p2, vl ]
     return commands
 
 
