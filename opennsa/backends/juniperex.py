@@ -48,9 +48,9 @@ LOG_SYSTEM = 'JuniperEX'
 
 def createConfigureCommands(source_nrm_port, dest_nrm_port, vlan):
 
-    vl = COMMAND_SET_VLAN % vlan
-    p1 = COMMAND_SET_INTERFACE_VLAN % source_nrm_port
-    p2 = COMMAND_SET_INTERFACE_VLAN % source_nrm_port
+    vl = COMMAND_SET_VLAN % (vlan, vlan)
+    p1 = COMMAND_SET_INTERFACE_VLAN % (source_nrm_port, vlan)
+    p2 = COMMAND_SET_INTERFACE_VLAN % (source_nrm_port, vlan)
 
     commands = [ vl, p1, p2 ]
     return commands
@@ -58,9 +58,9 @@ def createConfigureCommands(source_nrm_port, dest_nrm_port, vlan):
 
 def createDeleteCommands(source_nrm_port, dest_nrm_port, vlan):
 
-    vl = COMMAND_DELETE_VLAN % vlan
-    p1 = COMMAND_SET_INTERFACE_VLAN % source_nrm_port
-    p2 = COMMAND_SET_INTERFACE_VLAN % source_nrm_port
+    vl = COMMAND_DELETE_VLAN % (vlan, vlan)
+    p1 = COMMAND_SET_INTERFACE_VLAN % (source_nrm_port, vlan)
+    p2 = COMMAND_SET_INTERFACE_VLAN % (source_nrm_port, vlan)
 
     commands = [ vl, p1, p2 ]
     return commands
