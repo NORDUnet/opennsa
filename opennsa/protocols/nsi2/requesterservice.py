@@ -10,7 +10,7 @@ from dateutil.tz import tzutc
 
 from twisted.python import failure
 
-from opennsa import nsa, error
+from opennsa import constants as cnt, nsa, error
 
 from opennsa.protocols.nsi2 import helper
 from opennsa.protocols.nsi2.bindings import actions, p2pservices
