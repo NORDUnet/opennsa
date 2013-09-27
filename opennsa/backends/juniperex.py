@@ -281,7 +281,7 @@ class JuniperEXConnectionManager:
 
 def JuniperEXBackend(network_name, network_topology, parent_requester, port_map, cfg):
 
-    name = 'JuniperEX (%s)' % network_name
+    name = 'JuniperEX %s' % network_name
 
     # extract config items
     host             = cfg[config.JUNIPER_HOST]
