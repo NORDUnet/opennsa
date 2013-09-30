@@ -51,7 +51,7 @@ def _parseRemoteSpec(remote_spec):
 
 def _parseLabelSpec(label_spec):
     labels = []
-    for l_entry in label_spec.split(','):
+    for l_entry in label_spec.split('|'):
         if not ':' in l_entry:
             raise error.TopologyError('Invalid label description: %s' % l_entry)
 
