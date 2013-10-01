@@ -44,16 +44,17 @@ backend comes from.
 Authors: Henrik Thostrup Jensen <htj@nordu.net>
          Ralph Koning <R.Koning@uva.nl>
 
-Copyright: NORDUnet (2011-2012)
+Copyright: NORDUnet (2011-2013)
 """
+
+import string
+import random
 
 from twisted.python import log
 from twisted.internet import defer
 
-from opennsa import error, config
-from opennsa.backends.common import calendar as reservationcalendar, simplebackend, ssh
-
-
+from opennsa import constants as cnt, config
+from opennsa.backends.common import ssh, genericbackend
 
 LOG_SYSTEM = 'opennsa.force10'
 
@@ -199,7 +200,7 @@ class Force10CommandSender:
 
 
     @defer.inlineCallbacks
-    def _sendCommands(self, commands):
+    def sendCommands(self, commands):
 
         # Note: FTOS does not allow multiple channels in an SSH connection,
         # so we open a connection for each request. Party like it is 1988.
@@ -221,59 +222,66 @@ class Force10CommandSender:
             ssh_connection.transport.loseConnection()
 
 
-    def setupLink(self, source_nrm_port, dest_nrm_port):
 
-        log.msg('Setting up link: %s-%s' % (source_nrm_port, dest_nrm_port), debug=True, system=LOG_SYSTEM)
-        commands = _createSetupCommands(source_nrm_port, dest_nrm_port)
-        return self._sendCommands(commands)
+class Force10ConnectionManager:
 
+    def __init__(self, log_system, port_map, cfg):
+        self.log_system = log_system
+        self.port_map   = port_map
 
-    def teardownLink(self, source_nrm_port, dest_nrm_port):
-
-        log.msg('Tearing down link: %s-%s' % (source_nrm_port, dest_nrm_port), debug=True, system=LOG_SYSTEM)
-        commands = _createTeardownCommands(source_nrm_port, dest_nrm_port)
-        return self._sendCommands(commands)
-
-
-
-class Force10Backend:
-
-    def __init__(self, network_name, configuration):
-        self.network_name = network_name
-        self.calendar = reservationcalendar.ReservationCalendar()
-
-        # extract config items
-        cfg_dict = dict(configuration)
-
-        host             = cfg_dict[config.FORCE10_HOST]
-        port             = cfg_dict.get(config.FORCE10_PORT, 22)
-        host_fingerprint = cfg_dict[config.FORCE10_HOST_FINGERPRINT]
-        user             = cfg_dict[config.FORCE10_USER]
-        ssh_public_key   = cfg_dict[config.FORCE10_SSH_PUBLIC_KEY]
-        ssh_private_key  = cfg_dict[config.FORCE10_SSH_PRIVATE_KEY]
+        host             = cfg[config.FORCE10_HOST]
+        port             = cfg.get(config.FORCE10_PORT, 22)
+        host_fingerprint = cfg[config.FORCE10_HOST_FINGERPRINT]
+        user             = cfg[config.FORCE11_USER]
+        ssh_public_key   = cfg[config.FORCE10_SSH_PUBLIC_KEY]
+        ssh_private_key  = cfg[config.FORCE10_SSH_PRIVATE_KEY]
 
         self.command_sender = Force10CommandSender(host, port, host_fingerprint, user, ssh_public_key, ssh_private_key)
 
 
-    def createConnection(self, source_nrm_port, dest_nrm_port, service_parameters):
-
-        self._checkVLANMatch(source_nrm_port, dest_nrm_port)
-
-        # probably need a short hand for this
-        self.calendar.checkReservation(source_nrm_port, service_parameters.start_time, service_parameters.end_time)
-        self.calendar.checkReservation(dest_nrm_port  , service_parameters.start_time, service_parameters.end_time)
-
-        self.calendar.addConnection(source_nrm_port, service_parameters.start_time, service_parameters.end_time)
-        self.calendar.addConnection(dest_nrm_port  , service_parameters.start_time, service_parameters.end_time)
-
-        c = simplebackend.GenericConnection(source_nrm_port, dest_nrm_port, service_parameters, self.network_name, self.calendar,
-                                            'Force10 NRM', LOG_SYSTEM, self.command_sender)
-        return c
+    def getResource(self, port, label_type, label_value):
+        assert label_type == cnt.ETHERNET_VLAN, 'Label type must be ethernet-vlan'
+        return str(label_value)
 
 
-    def _checkVLANMatch(self, source_nrm_port, dest_nrm_port):
-        source_vlan = source_nrm_port.split('.')[-1]
-        dest_vlan = dest_nrm_port.split('.')[-1]
-        if source_vlan != dest_vlan:
-            raise error.VLANInterchangeNotSupportedError('Cannot create connection between different VLANs (%s/%s).' % (source_vlan, dest_vlan) )
+    def getTarget(self, port, label_type, label_value):
+        return self.port_map[port] + '.' + label_value
 
+
+    def createConnectionId(self, source_target, dest_target):
+        return 'F10-' + ''.join( [ random.choice(string.hexdigits[:16]) for _ in range(10) ] )
+
+
+    def canSwapLabel(self, label_type):
+        return False
+
+
+    def setupLink(self, connection_id, source_target, dest_target, bandwidth):
+
+        def linkUp(pt):
+            log.msg('Link %s -> %s up' % (source_target, dest_target), system=self.log_system)
+            return pt
+
+        commands = _createSetupCommands(source_target, dest_target)
+        d = self.command_sender.sendCommands(commands)
+        d.addCallback(linkUp)
+        return d
+
+
+    def teardownLink(self, connection_id, source_target, dest_target, bandwidth):
+
+        def linkDown(pt):
+            log.msg('Link %s -> %s down' % (source_target, dest_target), system=self.log_system)
+            return pt
+
+        commands = _createTeardownCommands(source_target, dest_target)
+        d = self.command_sender.sendCommands(commands)
+        d.addCallback(linkDown)
+        return d
+
+
+
+def Force10Backend(network_name, network_topology, parent_requester, port_map, configuration):
+    name = 'Force10 %s' % network_name
+    cm = Force10ConnectionManager(name, port_map, configuration)
+    return genericbackend.GenericBackend(network_name, network_topology, cm, parent_requester, name)

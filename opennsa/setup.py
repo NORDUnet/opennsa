@@ -26,11 +26,11 @@ def setupBackend(backend_cfg, network_name, network_topology, parent_requester, 
 #    elif backend_type == config.BLOCK_JUNOS:
 #        from opennsa.backends import junos
 #        return junos.JunOSBackend(network_name, parent_requester, port_map, bc.items())
-#
-#    elif backend_type == config.BLOCK_FORCE10:
-#        from opennsa.backends import force10
-#        return force10.Force10Backend(network_name, parent_requester, port_map, bc.items())
-#
+
+    elif backend_type == config.BLOCK_FORCE10:
+        from opennsa.backends import force10
+        BackendConstructer = force10.Force10Backend
+
 #    elif backend_type == config.BLOCK_ARGIA:
 #        from opennsa.backends import argia
 #        return argia.ArgiaBackend(network_name, bc.items())
