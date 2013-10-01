@@ -55,7 +55,10 @@ def createSoapPayload(body_element=None, header_element=None):
     if header_element is not None:
         header.append(header_element)
     if body_element is not None:
-        body.append(body_element)
+        if type(body_element) is list:
+            body.extend(body_element)
+        else:
+            body.append(body_element)
 
     _indent(envelope)
     payload = ET.tostring(envelope, 'utf-8')
