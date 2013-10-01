@@ -415,7 +415,9 @@ class GenericBackend(service.Service):
         for c in conns:
             source_stp = nsa.STP(c.source_network, c.source_port, c.source_labels)
             dest_stp = nsa.STP(c.dest_network, c.dest_port, c.dest_labels)
-            criteria = nsa.ServiceParameters(c.start_time, c.end_time, source_stp, dest_stp, c.bandwidth, version=c.revision)
+            schedule = nsa.Schedule(c.start_time, c.end_time)
+            sd = nsa.EthernetVLANService(source_stp, dest_stp, c.bandwidth, 1, 1)
+            criteria = nsa.Criteria(c.revision, schedule, sd)
             data_plane_status = ( c.data_plane_active, c.revision, True )
             states = (c.reservation_state, c.provision_state, c.lifecycle_state, data_plane_status)
             t = ( c.connection_id, c.global_reservation_id, c.description, [ criteria ], c.requester_nsa, states, self.getNotificationId())
