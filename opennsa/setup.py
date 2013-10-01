@@ -1,6 +1,7 @@
 """
 High-level functionality for creating clients and services in OpenNSA.
 """
+import os
 import hashlib
 
 from twisted.python import log
@@ -119,8 +120,8 @@ class OpenNSAService(twistedservice.MultiService):
         if vc[config.TLS]:
             from opennsa import ctxfactory
             ctx_factory = ctxfactory.ContextFactory(vc[config.KEY], vc[config.CERTIFICATE], vc[config.CERTIFICATE_DIR], vc[config.VERIFY_CERT])
-        elif vc[config.PEERS]:
-            # we need a fetcher that can retrieve stuff over https
+        elif os.path.isdir(vc[config.CERTIFICATE_DIR]):
+            # we can at least create a context
             from opennsa import ctxfactory
             ctx_factory = ctxfactory.RequestContextFactory(vc[config.CERTIFICATE_DIR], vc[config.VERIFY_CERT])
         else:
