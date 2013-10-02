@@ -232,7 +232,7 @@ class Force10ConnectionManager:
         host             = cfg[config.FORCE10_HOST]
         port             = cfg.get(config.FORCE10_PORT, 22)
         host_fingerprint = cfg[config.FORCE10_HOST_FINGERPRINT]
-        user             = cfg[config.FORCE11_USER]
+        user             = cfg[config.FORCE10_USER]
         ssh_public_key   = cfg[config.FORCE10_SSH_PUBLIC_KEY]
         ssh_private_key  = cfg[config.FORCE10_SSH_PRIVATE_KEY]
 
