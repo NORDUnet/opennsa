@@ -67,7 +67,8 @@ def topologyXML(network):
 
     URN_NETWORK = nml.URN_OGF_NETWORK + network.name
 
-    nml_topology = ET.Element(NML_TOPOLOGY, {ID: URN_NETWORK } )
+    topology_id = URN_NETWORK + ':topology'
+    nml_topology = ET.Element(NML_TOPOLOGY, {ID: topology_id } )
 
     ET.SubElement(nml_topology, NML_NAME).text = network.name
 
