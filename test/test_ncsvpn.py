@@ -10,7 +10,7 @@ from opennsa.backends import ncsvpn
 from . import common
 
 
-class DUDBackendTest(unittest.TestCase):
+class NCSVPNBackendTest(unittest.TestCase):
 
     def setUp(self):
 
