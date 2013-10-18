@@ -263,9 +263,9 @@ class Topology(object):
 
         # these are only really interesting for the initial call, afterwards they just prune
         if not source_port.canMatchLabels(source_stp.labels):
-            raise error.TopologyError('Source port %s (labels %s) cannot match labels for source STP (%s)' % (source_port.id_, source_port.labels(), source_stp.labels()))
+            raise error.TopologyError('Source port %s (labels %s) cannot match labels for source STP (%s)' % (source_port.id_, source_port.labels(), source_stp.labels))
         if not dest_port.canMatchLabels(dest_stp.labels):
-            raise error.TopologyError('Desitination port %s (labels %s) cannot match labels for destination STP %s' % (dest_port.id_, dest_port.labels(), dest_stp.labels()))
+            raise error.TopologyError('Desitination port %s (labels %s) cannot match labels for destination STP %s' % (dest_port.id_, dest_port.labels(), dest_stp.labels))
 #        if not source_port.canProvideBandwidth(bandwidth):
 #            raise error.BandwidthUnavailableError('Source port cannot provide enough bandwidth (%i)' % bandwidth)
 #        if not dest_port.canProvideBandwidth(bandwidth):
