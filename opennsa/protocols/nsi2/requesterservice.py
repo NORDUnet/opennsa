@@ -163,7 +163,11 @@ class RequesterService:
 
         header, query_confirmed = helper.parseRequest(soap_data)
 
-        reservations = helper.buildQuerySummaryResult(query_confirmed)
+        if query_confirmed is None: # handle no connection case
+            reservations = []
+        else:
+            reservations = helper.buildQuerySummaryResult(query_confirmed)
+
         self.requester.querySummaryConfirmed(header, reservations)
 
         return helper.createGenericAcknowledgement(header)

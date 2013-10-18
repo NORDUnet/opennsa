@@ -221,31 +221,15 @@ class ProviderClient:
             query_results.append(qsrt)
 
         # --
-
         header_element = helper.createHeader(requester_nsa, provider_nsa)
 
-        query_confirmed = nsiconnection.QuerySummaryConfirmedType(query_results)
-        body_element    = query_confirmed.xml(nsiconnection.querySummaryConfirmed)
-
-        payload = minisoap.createSoapPayload(body_element, header_element)
+        body_elements = [ qr.xml(nsiconnection.querySummaryConfirmed) for qr in query_results ]
+        payload = minisoap.createSoapPayload(body_elements, header_element)
 
         d = httpclient.soapRequest(requester_url, actions.QUERY_SUMMARY_CONFIRMED, payload, ctx_factory=self.ctx_factory)
         return d
 
 
-#        elif operation == "Details":
-#            qdr = self.client.createType('{http://schemas.ogf.org/nsi/2011/10/connection/types}QueryDetailsResultType')
-#            #print qdr
-#            qdr.globalReservationId = '123'
-#            res.reservationDetails = [ qdr ]
-#
-#        else:
-#            raise ValueError('Invalid query operation type')
-#
-#        d = self.client.invoke(requester_url, 'queryConfirmed', correlation_id, res)
-#        return d
-#
-#
 #    def queryFailed(self, requester_url, correlation_id, requester_nsa, provider_nsa, error_msg):
 #
 #        print "CLIENT QUERY FAILED"
