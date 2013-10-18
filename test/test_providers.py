@@ -531,8 +531,8 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
     REQUESTER_PORT = 8280
 
     network     = 'Aruba'
-    source_port = 'ps'
-    dest_port   = 'bon'
+    source_port = 'Aruba:ps'
+    dest_port   = 'Aruba:bon'
 
     # we need to use single values here as the vlans are parsed by int() currently (will switch to labels in the future)
     source_stp = nsa.STP(network, source_port, labels=[ nsa.Label(cnt.ETHERNET_VLAN, '1782') ] )
