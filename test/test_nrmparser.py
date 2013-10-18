@@ -25,10 +25,10 @@ class NRMParserTest(unittest.TestCase):
         source = StringIO.StringIO(NRM_ENTRY)
         network, pim = nrmparser.parseTopologySpec(source, network_name)
 
-        self.assertEquals( pim.get('ps'),           'em0')
-        self.assertEquals( pim.get('netherlight'),  'em1')
-        self.assertEquals( pim.get('somelight'),    'em 8')
-        self.assertEquals( pim.get('uvalight'),     'em2')
+        self.assertEquals( pim.get('dud:ps'),           'em0')
+        self.assertEquals( pim.get('dud:netherlight'),  'em1')
+        self.assertEquals( pim.get('dud:somelight'),    'em 8')
+        self.assertEquals( pim.get('dud:uvalight'),     'em2')
 
         # should test alias as well
 
