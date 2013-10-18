@@ -5,7 +5,7 @@ from twisted.internet import reactor, defer, task
 
 from dateutil.tz import tzutc
 
-from opennsa import nsa, provreg, database, error, aggregator
+from opennsa import nsa, provreg, database, error, aggregator, constants as cnt
 from opennsa.topology import nml, nrmparser
 from opennsa.backends import dud
 
@@ -19,7 +19,7 @@ class GenericProviderTest:
     def testBasicUsage(self):
 
         self.header.newCorrelationId()
-        response_cid = yield self.provider.reserve(self.header, None, None, None, self.service_params)
+        response_cid = yield self.provider.reserve(self.header, None, None, None, self.criteria)
         header, confirm_cid, gid, desc, criteria = yield self.requester.reserve_defer
         self.failUnlessEquals(response_cid, confirm_cid, 'Connection Id from response and confirmation differs')
 
@@ -33,7 +33,7 @@ class GenericProviderTest:
     def testProvisionPostTerminate(self):
 
         self.header.newCorrelationId()
-        cid = yield self.provider.reserve(self.header, None, None, None, self.service_params)
+        cid = yield self.provider.reserve(self.header, None, None, None, self.criteria)
         header, confirm_cid, gid, desc, criteria = yield self.requester.reserve_defer
 
         yield self.provider.reserveCommit(self.header, cid)
@@ -52,12 +52,12 @@ class GenericProviderTest:
     @defer.inlineCallbacks
     def testStartTimeInPast(self):
 
-        start_time = self.start_time - datetime.timedelta(seconds=10)
-        service_params = nsa.ServiceParameters(start_time, self.end_time, self.source_stp, self.dest_stp, self.bandwidth)
+        start_time = self.start_time - datetime.timedelta(seconds=60)
+        criteria   = nsa.Criteria(0, nsa.Schedule(start_time, self.end_time), self.sd)
 
         self.header.newCorrelationId()
         try:
-            yield self.provider.reserve(self.header, None, None, None, service_params)
+            yield self.provider.reserve(self.header, None, None, None, self.criteria)
             self.fail('Should have raised PayloadError') # Error type is somewhat debatable, but this what we use
         except error.PayloadError:
             pass # expected
@@ -66,12 +66,13 @@ class GenericProviderTest:
     @defer.inlineCallbacks
     def testConnectSTPToItself(self):
 
-        stp = nsa.STP('Aruba',   self.source_port, labels=[ nsa.Label(nml.ETHERNET_VLAN, '1782') ] )
-        service_params = nsa.ServiceParameters(self.start_time, self.end_time, stp, stp, self.bandwidth)
+        stp = nsa.STP('Aruba',   self.source_port, labels=[ nsa.Label(cnt.ETHERNET_VLAN, '1782') ] )
+        sd = nsa.EthernetVLANService(stp, stp, self.bandwidth, 1500, 0)
+        criteria = nsa.Criteria(0, self.schedule, sd)
 
         self.header.newCorrelationId()
         try:
-            yield self.provider.reserve(self.header, None, None, None, service_params)
+            yield self.provider.reserve(self.header, None, None, None, criteria)
             self.fail('Should have raised TopologyError')
         except error.TopologyError:
             pass # expected
@@ -81,7 +82,7 @@ class GenericProviderTest:
     def testProvisionUsage(self):
 
         self.header.newCorrelationId()
-        cid = yield self.provider.reserve(self.header, None, None, None, self.service_params)
+        cid = yield self.provider.reserve(self.header, None, None, None, self.criteria)
         yield self.requester.reserve_defer
 
         yield self.provider.reserveCommit(self.header, cid)
@@ -98,7 +99,7 @@ class GenericProviderTest:
     def testProvisionReleaseUsage(self):
 
         self.header.newCorrelationId()
-        acid = yield self.provider.reserve(self.header, None, None, None, self.service_params)
+        acid = yield self.provider.reserve(self.header, None, None, None, self.criteria)
         yield self.requester.reserve_defer
 
         yield self.provider.reserveCommit(self.header, acid)
@@ -129,13 +130,13 @@ class GenericProviderTest:
     @defer.inlineCallbacks
     def testInvalidNetworkReservation(self):
 
-        source_stp  = nsa.STP('Aruba',   self.source_port, labels=[ nsa.Label(nml.ETHERNET_VLAN, '1782') ] )
-        dest_stp    = nsa.STP('NoSuchNetwork', 'whatever', labels=[ nsa.Label(nml.ETHERNET_VLAN, '1782') ] )
-        service_params = nsa.ServiceParameters(self.start_time, self.end_time, source_stp, dest_stp, 200)
+        source_stp  = nsa.STP('Aruba',   self.source_port, labels=[ nsa.Label(cnt.ETHERNET_VLAN, '1782') ] )
+        dest_stp    = nsa.STP('NoSuchNetwork', 'whatever', labels=[ nsa.Label(cnt.ETHERNET_VLAN, '1782') ] )
+        criteria    = nsa.Criteria(0, self.schedule, nsa.EthernetVLANService(source_stp, dest_stp, 200, 1500, 0) )
 
         self.header.newCorrelationId()
         try:
-            yield self.provider.reserve(self.header, None, None, None, service_params)
+            yield self.provider.reserve(self.header, None, None, None, criteria)
             self.fail('Should have raised TopologyError')
         except error.TopologyError:
             pass # expected
@@ -145,12 +146,12 @@ class GenericProviderTest:
     def testDoubleReserve(self):
 
         self.header.newCorrelationId()
-        acid = yield self.provider.reserve(self.header, None, None, None, self.service_params)
+        acid = yield self.provider.reserve(self.header, None, None, None, self.criteria)
         header, cid, gid, desc, sp = yield self.requester.reserve_defer
 
         self.requester.reserve_defer = defer.Deferred() # new defer for new reserve request
         try:
-            acid2 = yield self.provider.reserve(self.header, None, None, None, self.service_params)
+            acid2 = yield self.provider.reserve(self.header, None, None, None, self.criteria)
             self.fail('Should have raised STPUnavailableError')
         except error.STPUnavailableError:
             pass # we expect this
@@ -171,7 +172,7 @@ class GenericProviderTest:
     def testQuerySummary(self):
 
         self.header.newCorrelationId()
-        acid = yield self.provider.reserve(self.header, None, 'gid-123', 'desc2', self.service_params)
+        acid = yield self.provider.reserve(self.header, None, 'gid-123', 'desc2', self.criteria)
         yield self.requester.reserve_defer
 
         yield self.provider.reserveCommit(self.header, acid)
@@ -193,23 +194,23 @@ class GenericProviderTest:
         self.failUnlessEquals(len(crits), 1)
         crit = crits[0]
 
-        src_stp = crit.source_stp
-        dst_stp = crit.dest_stp
+        src_stp = crit.service_def.source_stp
+        dst_stp = crit.service_def.dest_stp
 
         self.failUnlessEquals(src_stp.network, self.network)
         self.failUnlessEquals(src_stp.port,    self.source_port)
         self.failUnlessEquals(len(src_stp.labels), 1)
-        self.failUnlessEquals(src_stp.labels[0].type_, nml.ETHERNET_VLAN)
+        self.failUnlessEquals(src_stp.labels[0].type_, cnt.ETHERNET_VLAN)
         self.failUnlessEquals(src_stp.labels[0].labelValue(), '1782')
 
         self.failUnlessEquals(dst_stp.network, self.network)
         self.failUnlessEquals(dst_stp.port,    self.dest_port)
         self.failUnlessEquals(len(dst_stp.labels), 1)
-        self.failUnlessEquals(dst_stp.labels[0].type_, nml.ETHERNET_VLAN)
+        self.failUnlessEquals(dst_stp.labels[0].type_, cnt.ETHERNET_VLAN)
         self.failUnlessEquals(dst_stp.labels[0].labelValue(), '1782')
 
-        self.failUnlessEqual(crit.bandwidth, self.bandwidth)
-        self.failUnlessEqual(crit.version,   0)
+        self.failUnlessEqual(crit.service_def.capacity, self.bandwidth)
+        self.failUnlessEqual(crit.revision,   0)
 
         from opennsa import state
         rsm, psm, lsm, dps = states
@@ -223,7 +224,7 @@ class GenericProviderTest:
     def testActivation(self):
 
         self.header.newCorrelationId()
-        acid = yield self.provider.reserve(self.header, None, None, None, self.service_params)
+        acid = yield self.provider.reserve(self.header, None, None, None, self.criteria)
         header, cid, gid, desc, sc = yield self.requester.reserve_defer
         self.failUnlessEqual(cid, acid)
 
@@ -255,12 +256,12 @@ class GenericProviderTest:
     def testReserveAbort(self):
 
         # these need to be constructed such that there is only one label option
-        source_stp  = nsa.STP('Aruba', self.source_port, labels=[ nsa.Label(nml.ETHERNET_VLAN, '1782') ] )
-        dest_stp    = nsa.STP('Aruba', self.dest_port,   labels=[ nsa.Label(nml.ETHERNET_VLAN, '1782') ] )
-        service_params = nsa.ServiceParameters(self.start_time, self.end_time, source_stp, dest_stp, 200)
+        source_stp  = nsa.STP('Aruba', self.source_port, labels=[ nsa.Label(cnt.ETHERNET_VLAN, '1782') ] )
+        dest_stp    = nsa.STP('Aruba', self.dest_port,   labels=[ nsa.Label(cnt.ETHERNET_VLAN, '1782') ] )
+        criteria    = nsa.Criteria(0, self.schedule, nsa.EthernetVLANService(source_stp, dest_stp, 200, 1500, 0) )
 
         self.header.newCorrelationId()
-        acid = yield self.provider.reserve(self.header, None, None, None, service_params)
+        acid = yield self.provider.reserve(self.header, None, None, None, criteria)
         header, cid, gid, desc, sp = yield self.requester.reserve_defer
 
         yield self.provider.reserveAbort(self.header, acid)
@@ -269,7 +270,7 @@ class GenericProviderTest:
         self.requester.reserve_defer = defer.Deferred()
 
         # try to reserve the same resources
-        acid2 = yield self.provider.reserve(self.header, None, None, None, service_params)
+        acid2 = yield self.provider.reserve(self.header, None, None, None, criteria)
         header, cid, gid, desc, sp = yield self.requester.reserve_defer
 
 
@@ -277,12 +278,12 @@ class GenericProviderTest:
     def testReserveTimeout(self):
 
         # these need to be constructed such that there is only one label option
-        source_stp  = nsa.STP('Aruba', self.source_port, labels=[ nsa.Label(nml.ETHERNET_VLAN, '1782') ] )
-        dest_stp    = nsa.STP('Aruba', self.dest_port,   labels=[ nsa.Label(nml.ETHERNET_VLAN, '1782') ] )
-        service_params = nsa.ServiceParameters(self.start_time, self.end_time, source_stp, dest_stp, 200)
+        source_stp  = nsa.STP('Aruba', self.source_port, labels=[ nsa.Label(cnt.ETHERNET_VLAN, '1782') ] )
+        dest_stp    = nsa.STP('Aruba', self.dest_port,   labels=[ nsa.Label(cnt.ETHERNET_VLAN, '1782') ] )
+        criteria    = nsa.Criteria(0, self.schedule, nsa.EthernetVLANService(source_stp, dest_stp, 200, 1500, 0) )
 
         self.header.newCorrelationId()
-        acid = yield self.provider.reserve(self.header, None, None, None, service_params)
+        acid = yield self.provider.reserve(self.header, None, None, None, criteria)
         header, cid, gid, desc, sp = yield self.requester.reserve_defer
 
         self.clock.advance(self.backend.TPC_TIMEOUT + 1)
@@ -294,7 +295,7 @@ class GenericProviderTest:
         self.requester.reserve_defer = defer.Deferred()
 
         # try to reserve the same resources
-        acid2 = yield self.provider.reserve(self.header, None, None, None, service_params)
+        acid2 = yield self.provider.reserve(self.header, None, None, None, criteria)
         header, cid, gid, desc, sp = yield self.requester.reserve_defer
 
 
@@ -302,15 +303,15 @@ class GenericProviderTest:
     def testSlowActivate(self):
         # key here is that end time is passed when activation is done
 
-        source_stp  = nsa.STP(self.network, self.source_port, labels=[ nsa.Label(nml.ETHERNET_VLAN, '1780') ] )
-        dest_stp    = nsa.STP(self.network, self.dest_port,   labels=[ nsa.Label(nml.ETHERNET_VLAN, '1780') ] )
+        source_stp  = nsa.STP(self.network, self.source_port, labels=[ nsa.Label(cnt.ETHERNET_VLAN, '1780') ] )
+        dest_stp    = nsa.STP(self.network, self.dest_port,   labels=[ nsa.Label(cnt.ETHERNET_VLAN, '1780') ] )
         ## for backend/aggregator
         #start_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=1)
         #end_time   = datetime.datetime.utcnow() + datetime.timedelta(seconds=2)
         ## remote test
         #start_time = datetime.datetime.now(tzutc()) + datetime.timedelta(seconds=1)
         #end_time   = datetime.datetime.now(tzutc()) + datetime.timedelta(seconds=2)
-        service_params = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, 200)
+        criteria = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, 200)
 
         def setupLink(connection_id, src, dst, bandwidth):
             d = defer.Deferred()
@@ -321,7 +322,7 @@ class GenericProviderTest:
         self.backend.connection_manager.setupLink = setupLink
 
         self.header.newCorrelationId()
-        acid = yield self.provider.reserve(self.header, None, None, None, service_params)
+        acid = yield self.provider.reserve(self.header, None, None, None, criteria)
         header, cid, gid, desc, sp = yield self.requester.reserve_defer
 
         yield self.provider.reserveCommit(self.header, cid)
@@ -361,7 +362,7 @@ class GenericProviderTest:
         self.backend.connection_manager.setupLink = lambda cid, src, dst, bw : defer.fail(error.InternalNRMError('Link setup failed'))
 
         self.header.newCorrelationId()
-        acid = yield self.provider.reserve(self.header, None, None, None, self.service_params)
+        acid = yield self.provider.reserve(self.header, None, None, None, self.criteria)
         header, cid, gid, desc, sp = yield self.requester.reserve_defer
 
         yield self.provider.reserveCommit(self.header, acid)
@@ -385,7 +386,7 @@ class GenericProviderTest:
         self.backend.connection_manager.teardownLink = lambda cid, src, dst, bw : defer.fail(error.InternalNRMError('Link teardown failed'))
 
         self.header.newCorrelationId()
-        acid = yield self.provider.reserve(self.header, None, None, None, self.service_params)
+        acid = yield self.provider.reserve(self.header, None, None, None, self.criteria)
         header, cid, gid, desc, sp = yield self.requester.reserve_defer
 
         yield self.provider.reserveCommit(self.header, cid)
@@ -411,11 +412,11 @@ class GenericProviderTest:
 class DUDBackendTest(GenericProviderTest, unittest.TestCase):
 
     network     = 'Aruba'
-    source_port = 'ps'
-    dest_port   = 'bon'
+    source_port = 'Aruba:ps'
+    dest_port   = 'Aruba:bon'
 
-    source_stp  = nsa.STP(network, source_port, labels=[ nsa.Label(nml.ETHERNET_VLAN, '1781-1782') ] )
-    dest_stp    = nsa.STP(network, dest_port,   labels=[ nsa.Label(nml.ETHERNET_VLAN, '1782-1783') ] )
+    source_stp  = nsa.STP(network, source_port, labels=[ nsa.Label(cnt.ETHERNET_VLAN, '1781-1782') ] )
+    dest_stp    = nsa.STP(network, dest_port,   labels=[ nsa.Label(cnt.ETHERNET_VLAN, '1782-1783') ] )
     bandwidth   = 200
 
     requester_agent = nsa.NetworkServiceAgent('test-requester:nsa', 'dud_endpoint1')
@@ -444,7 +445,10 @@ class DUDBackendTest(GenericProviderTest, unittest.TestCase):
         # request stuff
         self.start_time  = datetime.datetime.utcnow() + datetime.timedelta(seconds=2)
         self.end_time    = datetime.datetime.utcnow() + datetime.timedelta(seconds=10)
-        self.service_params = nsa.ServiceParameters(self.start_time, self.end_time, self.source_stp, self.dest_stp, self.bandwidth)
+
+        self.schedule = nsa.Schedule(self.start_time, self.end_time)
+        self.sd = nsa.EthernetVLANService(self.source_stp, self.dest_stp, self.bandwidth, 1500, 0)
+        self.criteria = nsa.Criteria(0, self.schedule, self.sd)
 
 
     @defer.inlineCallbacks
@@ -463,11 +467,11 @@ class DUDBackendTest(GenericProviderTest, unittest.TestCase):
 class AggregatorTest(GenericProviderTest, unittest.TestCase):
 
     network     = 'Aruba'
-    source_port = 'ps'
-    dest_port   = 'bon'
+    source_port = 'Aruba:ps'
+    dest_port   = 'Aruba:bon'
 
-    source_stp = nsa.STP(network, source_port, labels=[ nsa.Label(nml.ETHERNET_VLAN, '1781-1782') ] )
-    dest_stp   = nsa.STP(network, dest_port,   labels=[ nsa.Label(nml.ETHERNET_VLAN, '1782-1783') ] )
+    source_stp = nsa.STP(network, source_port, labels=[ nsa.Label(cnt.ETHERNET_VLAN, '1781-1782') ] )
+    dest_stp   = nsa.STP(network, dest_port,   labels=[ nsa.Label(cnt.ETHERNET_VLAN, '1782-1783') ] )
     bandwidth = 200
 
     requester_agent = nsa.NetworkServiceAgent('test-requester:nsa', 'dud_endpoint1')
@@ -503,7 +507,9 @@ class AggregatorTest(GenericProviderTest, unittest.TestCase):
         self.start_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=2)
         self.end_time   = datetime.datetime.utcnow() + datetime.timedelta(seconds=10)
 
-        self.service_params = nsa.ServiceParameters(self.start_time, self.end_time, self.source_stp, self.dest_stp, self.bandwidth)
+        self.schedule = nsa.Schedule(self.start_time, self.end_time)
+        self.sd       = nsa.EthernetVLANService(self.source_stp, self.dest_stp, self.bandwidth, 1500, 0)
+        self.criteria = nsa.Criteria(0, self.schedule, self.sd)
 
 
     @defer.inlineCallbacks
@@ -528,8 +534,9 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
     source_port = 'ps'
     dest_port   = 'bon'
 
-    source_stp = nsa.STP(network, source_port, labels=[ nsa.Label(nml.ETHERNET_VLAN, '1781-1782') ] )
-    dest_stp   = nsa.STP(network, dest_port,   labels=[ nsa.Label(nml.ETHERNET_VLAN, '1782-1783') ] )
+    # we need to use single values here as the vlans are parsed by int() currently (will switch to labels in the future)
+    source_stp = nsa.STP(network, source_port, labels=[ nsa.Label(cnt.ETHERNET_VLAN, '1782') ] )
+    dest_stp   = nsa.STP(network, dest_port,   labels=[ nsa.Label(cnt.ETHERNET_VLAN, '1782') ] )
     bandwidth  = 200
 
     requester_agent = nsa.NetworkServiceAgent('test-requester:nsa', 'http://localhost:%i/NSI/services/RequesterService2' % REQUESTER_PORT)
@@ -593,7 +600,9 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
         self.start_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=2)
         self.end_time   = datetime.datetime.utcnow() + datetime.timedelta(seconds=10)
 
-        self.service_params = nsa.ServiceParameters(self.start_time, self.end_time, self.source_stp, self.dest_stp, self.bandwidth)
+        self.schedule = nsa.Schedule(self.start_time, self.end_time)
+        self.sd = nsa.EthernetVLANService(self.source_stp, self.dest_stp, self.bandwidth, 1500, 0)
+        self.criteria = nsa.Criteria(0, self.schedule, self.sd)
 
 
     @defer.inlineCallbacks
@@ -619,7 +628,7 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
         # sync is only available remotely
 
         self.header.newCorrelationId()
-        acid = yield self.provider.reserve(self.header, None, 'gid-123', 'desc2', self.service_params)
+        acid = yield self.provider.reserve(self.header, None, 'gid-123', 'desc2', self.criteria)
         yield self.requester.reserve_defer
 
         yield self.provider.reserveCommit(self.header, acid)
@@ -645,13 +654,13 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
         self.failUnlessEquals(src_stp.network, self.network)
         self.failUnlessEquals(src_stp.port,    self.source_port)
         self.failUnlessEquals(len(src_stp.labels), 1)
-        self.failUnlessEquals(src_stp.labels[0].type_, nml.ETHERNET_VLAN)
+        self.failUnlessEquals(src_stp.labels[0].type_, cnt.ETHERNET_VLAN)
         self.failUnlessEquals(src_stp.labels[0].labelValue(), '1782')
 
         self.failUnlessEquals(dst_stp.network, self.network)
         self.failUnlessEquals(dst_stp.port,    self.dest_port)
         self.failUnlessEquals(len(dst_stp.labels), 1)
-        self.failUnlessEquals(dst_stp.labels[0].type_, nml.ETHERNET_VLAN)
+        self.failUnlessEquals(dst_stp.labels[0].type_, cnt.ETHERNET_VLAN)
         self.failUnlessEquals(dst_stp.labels[0].labelValue(), '1782')
 
         self.failUnlessEqual(crit.bandwidth, self.bandwidth)
