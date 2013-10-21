@@ -52,12 +52,12 @@ class GenericProviderTest:
     @defer.inlineCallbacks
     def testStartTimeInPast(self):
 
-        start_time = self.start_time - datetime.timedelta(seconds=60)
+        start_time = datetime.datetime.utcnow() - datetime.timedelta(seconds=60)
         criteria   = nsa.Criteria(0, nsa.Schedule(start_time, self.end_time), self.sd)
 
         self.header.newCorrelationId()
         try:
-            yield self.provider.reserve(self.header, None, None, None, self.criteria)
+            yield self.provider.reserve(self.header, None, None, None, criteria)
             self.fail('Should have raised PayloadError') # Error type is somewhat debatable, but this what we use
         except error.PayloadError:
             pass # expected
