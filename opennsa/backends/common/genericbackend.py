@@ -39,7 +39,7 @@ class GenericBackend(service.Service):
 
     implements(INSIProvider)
 
-    TPC_TIMEOUT = 30 # seconds
+    TPC_TIMEOUT = 40 # seconds
 
     def __init__(self, network, network_topology, connection_manager, parent_requester, log_system):
 
