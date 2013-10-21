@@ -79,8 +79,8 @@ def parseRequest(soap_data):
     if headers is None:
         raise ValueError('No header specified in payload')
         #raise resource.SOAPFault('No header specified in payload')
-
-    # more checking here...
+    elif len(headers) > 1:
+        raise ValueError('Multiple headers specified in payload')
 
     header = nsiframework.parseElement(headers[0])
     body   = nsiconnection.parseElement(bodies[0])
