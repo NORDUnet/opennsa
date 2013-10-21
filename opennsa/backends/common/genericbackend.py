@@ -205,7 +205,7 @@ class GenericBackend(service.Service):
         if not topo_dest_port.canMatchLabels(dest_stp.labels):
             raise error.TopologyError('Destination port %s cannot match label set %s' % (topo_dest_port.name, dst_label_candidate ) )
 
-        # do the: lets find the labels danace
+        # do the find the labels dance
         if self.connection_manager.canSwapLabel(src_label_candidate.type_):
             for lv in src_label_candidate.enumerateValues():
                 src_resource = self.connection_manager.getResource(source_stp.port, src_label_candidate.type_, lv)
