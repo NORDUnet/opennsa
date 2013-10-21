@@ -83,7 +83,14 @@ def parseRequest(soap_data):
         raise ValueError('Multiple headers specified in payload')
 
     header = nsiframework.parseElement(headers[0])
-    body   = nsiconnection.parseElement(bodies[0])
+
+    if len(bodies) == 0:
+        body = None
+    elif len(bodies) == 1:
+        body = nsiconnection.parseElement(bodies[0])
+    else:
+        body = [ nsiconnection.parseElement(b) for b in bodies ]
+
 
     nsi_header = nsa.NSIHeader(header.requesterNSA, header.providerNSA, None, header.correlationId, header.replyTo)
 
