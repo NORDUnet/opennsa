@@ -287,6 +287,10 @@ class GenericBackend(service.Service):
         yield state.reserved(conn)
         self.logStateUpdate(conn, 'RESERVED')
 
+        # cancel abort and schedule end time call
+        self.scheduler.cancelCall(connection_id)
+        self.scheduler.scheduleCall(conn.connection_id, conn.end_time, self._doEndtime, conn)
+
         yield self.parent_requester.reserveCommitConfirmed(header, connection_id)
 
         defer.returnValue(connection_id)
