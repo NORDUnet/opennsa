@@ -153,7 +153,7 @@ class Provider:
 
         try:
             org_header = self.notifications.pop( (connection_id, TERMINATE_RESPONSE) )
-            return self.provider_client.terminateConfirmed(org_header.reply_to, org_header.requester_nsa, org_header.provider_nsa, org_header.correlation_id, connection_id)
+            return self.provider_client.terminateConfirmed(org_header.reply_to, org_header.correlation_id, org_header.requester_nsa, org_header.provider_nsa, connection_id)
         except KeyError, e:
             log.msg('No entity to notify about terminateConfirmed for %s' % connection_id, system=LOG_SYSTEM)
             return defer.succeed(None)
