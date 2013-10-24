@@ -816,7 +816,7 @@ class Aggregator:
         sub_conns = yield conn.SubConnections.get()
 
         if len(sub_conns) == 1:
-            log.msg("reserveTimeout: One sub connection for connection %s, notifying" % conn.connection_id)
+            log.msg("errorEvent: One sub connection for connection %s, notifying" % conn.connection_id)
             self.doErrorEvent(conn, notification_id, event, info, service_ex)
         else:
             raise NotImplementedError('Cannot handle timeout for connection with more than one sub connection')
