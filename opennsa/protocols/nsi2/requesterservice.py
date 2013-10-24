@@ -100,8 +100,7 @@ class RequesterService:
         dst_stp.labels = [ nsa.Label(cnt.ETHERNET_VLAN, str(evts.destVLAN))   ]
 
         if evts.ero:
-            err = failure.Failure ( error.PayloadError('ERO not supported, go away.') )
-            return self._createSOAPFault(err, header.provider_nsa)
+            print "ERO parsing in reserveConfirmed not implemented yet, full path will not be available"
 
         sd = nsa.EthernetVLANService(src_stp, dst_stp, evts.capacity, evts.mtu, evts.burstsize, evts.directionality, evts.symmetricPath, None)
         crt = nsa.Criteria(criteria.version, schedule, sd)
