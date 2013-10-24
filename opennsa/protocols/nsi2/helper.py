@@ -7,6 +7,9 @@ Copyright: NORDUnet (2012)
 
 from xml.etree import ElementTree as ET
 
+from dateutil import parser
+from dateutil.tz import tzutc
+
 from twisted.python import log
 
 from opennsa import constants as cnt, nsa, error
@@ -101,6 +104,20 @@ def createXMLTime(timestamp):
     # we assume this is without tz info and in utc time, because that is how it should be in opennsa
     assert timestamp.tzinfo is None, 'timestamp must be without time zone information'
     return timestamp.isoformat() + 'Z'
+
+
+def parseXMLTimestamp(xsd_timestamp):
+
+    xtp = parser.parser()
+
+    dt = xtp.parse(xsd_timestamp)
+    if dt.utcoffset() is None:
+        raise error.PayloadError('Timestamp has no time zone information')
+
+    # convert to utc and remove tz info (internal use)
+    utc_dt = dt.astimezone(tzutc()).replace(tzinfo=None)
+    return utc_dt
+
 
 
 def createLabel(type_value_pair):

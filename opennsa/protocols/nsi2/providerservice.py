@@ -8,9 +8,6 @@ Copyright: NORDUnet (2011)
 import time
 from xml.etree import ElementTree as ET
 
-from dateutil import parser
-from dateutil.tz import tzutc
-
 from twisted.python import log, failure
 
 from opennsa import constants as cnt, nsa, error
@@ -40,8 +37,6 @@ class ProviderService:
 
         soap_resource.registerDecoder(actions.QUERY_SUMMARY,     self.querySummary)
         soap_resource.registerDecoder(actions.QUERY_SUMMARY_SYNC,self.querySummarySync)
-
-        self.datetime_parser = parser.parser()
 
         # Some actions still missing
 
@@ -95,20 +90,8 @@ class ProviderService:
 
         # Missing: EROs, symmetric, stp labels
 
-        start_time = self.datetime_parser.parse(criteria.schedule.startTime)
-        if start_time.utcoffset() is None:
-            err = failure.Failure ( error.PayloadError('Start time has no time zone information') )
-            return self._createSOAPFault(err, header.provider_nsa)
-
-        end_time = self.datetime_parser.parse(criteria.schedule.endTime)
-        if end_time.utcoffset() is None:
-            err = failure.Failure ( error.PayloadError('End time has no time zone information') )
-            return self._createSOAPFault(err, header.provider_nsa)
-
-        # convert to utc and remove timezone
-        start_time = start_time.astimezone(tzutc()).replace(tzinfo=None)
-        end_time   = end_time.astimezone(tzutc()).replace(tzinfo=None)
-
+        start_time = helper.parseXMLTimestamp(criteria.schedule.startTime)
+        end_time = helper.parseXMLTimestamp(criteria.schedule.endTime)
         schedule = nsa.Schedule(start_time, end_time)
 
         src_stp = helper.createSTP(evts.sourceSTP)
