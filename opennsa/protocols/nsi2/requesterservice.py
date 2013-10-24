@@ -5,9 +5,6 @@ Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2011)
 """
 
-from dateutil import parser
-from dateutil.tz import tzutc
-
 from twisted.python import failure
 
 from opennsa import constants as cnt, nsa, error
@@ -20,9 +17,6 @@ from opennsa.protocols.nsi2.bindings import actions, p2pservices
 class RequesterService:
 
     def __init__(self, soap_resource, requester):
-
-        self.requester = requester
-        self.datetime_parser = parser.parser()
 
         # consider moving this to __init__ (soap_resource only used in setup)
         soap_resource.registerDecoder(actions.RESERVE_CONFIRMED,        self.reserveConfirmed)
@@ -75,23 +69,17 @@ class RequesterService:
 
         criteria = reservation.criteria
 
-        # This overlaps heavily with the parsing done in providerservice - unify sometime
+        # Create DTOs - this overlaps heavily with the parsing done in providerservice - unify sometime
 
-        # schedule
-        start_time = self.datetime_parser.parse(criteria.schedule.startTime)
-        end_time   = self.datetime_parser.parse(criteria.schedule.endTime)
-        # convert to utc and remove timezone
-        start_time = start_time.astimezone(tzutc()).replace(tzinfo=None)
-        end_time   = end_time.astimezone(tzutc()).replace(tzinfo=None)
-        # dto
+        start_time = helper.parseXMLTimestamp(criteria.schedule.startTime)
+        end_time   = helper.parseXMLTimestamp(criteria.schedule.endTime)
         schedule   = nsa.Schedule(start_time, end_time)
 
         evts = criteria.serviceDefinitions.values()[0] # add check later
         if type(evts) is not p2pservices.EthernetVlanType:
             raise ValueError('Only EVTS service supported for now')
 
-        # Create DTOs (ERO missing)
-
+        # (ERO missing)
         src_stp = helper.createSTP(evts.sourceSTP)
         dst_stp = helper.createSTP(evts.destSTP)
 
