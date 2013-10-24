@@ -18,6 +18,8 @@ class RequesterService:
 
     def __init__(self, soap_resource, requester):
 
+        self.requester = requester
+
         # consider moving this to __init__ (soap_resource only used in setup)
         soap_resource.registerDecoder(actions.RESERVE_CONFIRMED,        self.reserveConfirmed)
         soap_resource.registerDecoder(actions.RESERVE_FAILED,           self.reserveFailed)
