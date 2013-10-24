@@ -508,7 +508,7 @@ class Aggregator:
     @defer.inlineCallbacks
     def querySummary(self, header, connection_ids=None, global_reservation_ids=None):
 
-        log.msg('QuerySummary request from %s' % (header.requester_nsa), system=LOG_SYSTEM)
+        log.msg('QuerySummary request from %s. CID: %s. GID: %s' % (header.requester_nsa, connection_ids, global_reservation_ids), system=LOG_SYSTEM)
 
         try:
             if connection_ids:
