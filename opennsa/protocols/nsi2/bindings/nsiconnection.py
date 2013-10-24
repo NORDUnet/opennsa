@@ -169,7 +169,7 @@ class QuerySummaryResultType:
                 element.findtext('connectionId'),
                 element.findtext('globalReservationId'),
                 element.findtext('description'),
-                [ QuerySummaryResultCriteriaType.build(e) for e in element.findall('schedule') ] if element.find('schedule') is not None else None,
+                [ QuerySummaryResultCriteriaType.build(e) for e in element.findall('criteria') ] if element.find('criteria') is not None else None,
                 element.findtext('requesterNSA'),
                 ConnectionStatesType.build(element.find('connectionStates')) if element.find('connectionStates') is not None else None,
                 int(element.findtext('notificationId'))
@@ -184,10 +184,10 @@ class QuerySummaryResultType:
             ET.SubElement(r, 'description').text = self.description
         if self.criteria:
             for el in self.criteria:
-                ET.SubElement(r, 'criteria').extend( [ e.xml('schedule') for e in el ] )
+                ET.SubElement(r, 'criteria').extend( el.xml('criteria') )
         ET.SubElement(r, 'requesterNSA').text = str(self.requesterNSA)
         r.append(self.connectionStates.xml('connectionStates'))
-        if self.notificationId:
+        if self.notificationId is not None:
             ET.SubElement(r, 'notificationId').text = str(self.notificationId)
         return r
 
@@ -573,8 +573,8 @@ class QueryType:
     @classmethod
     def build(self, element):
         return QueryType(
-                element.findtext('connectionId'),
-                element.findtext('globalReservationId')
+                [ e.text for e in element.findall('connectionId') ],
+                [ e.text for e in element.findall('globalReservationId') ]
                )
 
     def xml(self, elementName):
@@ -759,6 +759,7 @@ class ReserveType:
 terminate = ET.QName('http://schemas.ogf.org/nsi/2013/07/connection/types', 'terminate')
 queryRecursive = ET.QName('http://schemas.ogf.org/nsi/2013/07/connection/types', 'queryRecursive')
 reserve = ET.QName('http://schemas.ogf.org/nsi/2013/07/connection/types', 'reserve')
+reservation = ET.QName('http://schemas.ogf.org/nsi/2013/07/connection/types', 'reservation')
 querySummary = ET.QName('http://schemas.ogf.org/nsi/2013/07/connection/types', 'querySummary')
 serviceException = ET.QName('http://schemas.ogf.org/nsi/2013/07/framework/types', 'serviceException')
 queryNotificationConfirmed = ET.QName('http://schemas.ogf.org/nsi/2013/07/connection/types', 'queryNotificationConfirmed')
@@ -808,6 +809,7 @@ def parseElement(element):
         '{http://schemas.ogf.org/nsi/2013/07/connection/types}terminate' : GenericRequestType,
         '{http://schemas.ogf.org/nsi/2013/07/connection/types}queryRecursive' : QueryType,
         '{http://schemas.ogf.org/nsi/2013/07/connection/types}reserve' : ReserveType,
+        '{http://schemas.ogf.org/nsi/2013/07/connection/types}reservation' :  QuerySummaryResultType,
         '{http://schemas.ogf.org/nsi/2013/07/connection/types}querySummary' : QueryType,
         '{http://schemas.ogf.org/nsi/2013/07/framework/types}serviceException' : ServiceExceptionType,
         '{http://schemas.ogf.org/nsi/2013/07/connection/types}queryNotificationConfirmed' : QueryNotificationConfirmedType,

@@ -180,27 +180,34 @@ def createSTPType(stp):
 
 def buildQuerySummaryResult(query_confirmed):
 
-    reservations = []
-    for resv in query_confirmed.reservations:
+    qc = query_confirmed
 
-        r_states    = resv.connectionStates
-        r_dps       = r_states.dataPlaneStatus
+    r_states    = qc.connectionStates
+    r_dps       = r_states.dataPlaneStatus
 
-        dps = (r_dps.active, r_dps.version, r_dps.versionConsistent)
-        states = (r_states.reservationState, r_states.provisionState, r_states.lifecycleState, dps)
+    dps = (r_dps.active, r_dps.version, r_dps.versionConsistent)
+    states = (r_states.reservationState, r_states.provisionState, r_states.lifecycleState, dps)
 
-        criterias = []
-        if resv.criteria is not None:
-            for rc in resv.criteria:
-                rp = rc.path
-                source_stp = createSTP(rp.sourceSTP)
-                dest_stp   = createSTP(rp.destSTP)
-                crit = nsa.ServiceParameters(rc.schedule.startTime, rc.schedule.endTime, source_stp, dest_stp, rc.bandwidth, directionality=rp.directionality, version=int(rc.version))
-                criterias.append(crit)
+    criterias = []
+    if qc.criteria is not None:
+        for rc in qc.criteria:
 
-        reservations.append( ( resv.connectionId, resv.globalReservationId, resv.description, criterias, resv.requesterNSA, states, resv.notificationId) )
+            start_time = parseXMLTimestamp(rc.schedule.startTime)
+            end_time   = parseXMLTimestamp(rc.schedule.endTime)
+            schedule = nsa.Schedule(start_time, end_time)
 
-    return reservations
+            # service definition stuff not quite done yet
+            #source_stp = createSTP(rp.sourceSTP)
+            #dest_stp   = createSTP(rp.destSTP)
+
+            #sd = nsa.EthernetVLANService(source_stp, dest_stp, c.bandwidth, 1, 1)
+            sd = None
+            crit = nsa.Criteria(rc.version, schedule, sd)
+            criterias.append(crit)
+
+    reservation = ( qc.connectionId, qc.globalReservationId, qc.description, criterias, qc.requesterNSA, states, qc.notificationId)
+    return reservation
+
 
 
 def buildQuerySummaryResultType(reservations):
@@ -214,11 +221,10 @@ def buildQuerySummaryResultType(reservations):
 
         criterias = []
         for crit in crits:
-            schedule   = nsiconnection.ScheduleType( createXMLTime(crit.start_time), createXMLTime(crit.end_time) )
-            source_stp = createSTPType(crit.source_stp)
-            dest_stp   = createSTPType(crit.dest_stp)
-            path       = nsiconnection.PathType('Bidirectional', False, source_stp, dest_stp, None)
-            criteria   = nsiconnection.QuerySummaryResultCriteriaType(crit.version, schedule, crit.bandwidth, None, path, None)
+            schedule = nsiconnection.ScheduleType(createXMLTime(crit.schedule.start_time), createXMLTime(crit.schedule.end_time))
+            service_type = cnt.EVTS_AGOLE if type(crit.service_def) is nsa.EthernetVLANService else 'n/a'
+            children = []
+            criteria = nsiconnection.QuerySummaryResultCriteriaType(crit.revision, schedule, service_type, children)
             criterias.append(criteria)
 
         data_plane_status = nsiconnection.DataPlaneStatusType(dsm[0], dsm[1], dsm[2])
@@ -227,6 +233,5 @@ def buildQuerySummaryResultType(reservations):
         qsrt = nsiconnection.QuerySummaryResultType(cid, gid, desc, criterias, req_nsa, connection_states, nid)
         query_results.append(qsrt)
 
-    qsc = nsiconnection.QuerySummaryConfirmedType(query_results)
-    return qsc
+    return query_results
 
