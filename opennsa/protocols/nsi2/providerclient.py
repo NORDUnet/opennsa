@@ -198,33 +198,12 @@ class ProviderClient:
 
     def querySummaryConfirmed(self, requester_url, requester_nsa, provider_nsa, correlation_id, reservations):
 
-        query_results = []
-
-        for rsv in reservations:
-
-            cid, gid, desc, crits, req_nsa, states, nid = rsv
-            rsm, psm, lsm, dsm = states
-
-            criterias = []
-            for crit in crits:
-                schedule   = nsiconnection.ScheduleType(crit.start_time, crit.end_time)
-                source_stp = helper.createSTPType(crit.source_stp)
-                dest_stp   = helper.createSTPType(crit.dest_stp)
-                path       = nsiconnection.PathType('Bidirectional', False, source_stp, dest_stp, None)
-                criteria   = nsiconnection.QuerySummaryResultCriteriaType(crit.version, schedule, crit.bandwidth, None, path, None)
-                criterias.append(criteria)
-
-            data_plane_status = nsiconnection.DataPlaneStatusType(dsm[0], dsm[1], dsm[2])
-            connection_states = nsiconnection.ConnectionStatesType(rsm, psm, lsm, data_plane_status)
-
-            qsrt = nsiconnection.QuerySummaryResultType(cid, gid, desc, criterias, req_nsa, connection_states, nid)
-            query_results.append(qsrt)
-
-        # --
         header_element = helper.createHeader(requester_nsa, provider_nsa)
 
-        body_elements = [ qr.xml(nsiconnection.querySummaryConfirmed) for qr in query_results ]
-        payload = minisoap.createSoapPayload(body_elements, header_element)
+        query_summary_result = helper.buildQuerySummaryResultType(reservations)
+        qsr_elements = [ qsr.xml(nsiconnection.reservation) for qsr in query_summary_result ]
+
+        payload = minisoap.createSoapPayload(qsr_elements, header_element)
 
         d = httpclient.soapRequest(requester_url, actions.QUERY_SUMMARY_CONFIRMED, payload, ctx_factory=self.ctx_factory)
         return d

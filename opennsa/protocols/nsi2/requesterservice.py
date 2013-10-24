@@ -154,8 +154,10 @@ class RequesterService:
 
         if query_confirmed is None: # handle no connection case
             reservations = []
-        else:
+        elif type(query_confirmed) is list:
             reservations = helper.buildQuerySummaryResult(query_confirmed)
+        else:
+            reservations = [ helper.buildQuerySummaryResult(query_confirmed) ]
 
         self.requester.querySummaryConfirmed(header, reservations)
 
