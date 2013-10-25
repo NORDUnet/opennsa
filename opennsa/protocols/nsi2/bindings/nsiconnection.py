@@ -304,12 +304,12 @@ class ReserveTimeoutRequestType:
     @classmethod
     def build(self, element):
         return ReserveTimeoutRequestType(
-                int(element.findtext('timeoutValue')),
-                element.findtext('originatingConnectionId'),
-                element.findtext('originatingNSA'),
                 element.findtext('connectionId'),
                 int(element.findtext('notificationId')),
-                element.findtext('timeStamp')
+                element.findtext('timeStamp'),
+                int(element.findtext('timeoutValue')),
+                element.findtext('originatingConnectionId'),
+                element.findtext('originatingNSA')
                )
 
     def xml(self, elementName):
