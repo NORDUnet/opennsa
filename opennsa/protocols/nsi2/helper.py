@@ -85,8 +85,8 @@ def parseRequest(soap_data):
         raise ValueError('Multiple headers specified in payload')
 
     header = nsiframework.parseElement(headers[0])
-    if header.protocolVersion != cnt.CS2_SERVICE_TYPE:
-        raise ValueError('Invalid protocol "%s". Only %s supported' % (header.protocolVersion, cnt.CS2_SERVICE_TYPE))
+    #if header.protocolVersion != cnt.CS2_SERVICE_TYPE:
+    #    raise ValueError('Invalid protocol "%s". Only %s supported' % (header.protocolVersion, cnt.CS2_SERVICE_TYPE))
 
     if len(bodies) == 0:
         body = None
