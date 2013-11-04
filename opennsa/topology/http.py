@@ -39,7 +39,7 @@ class TopologyResource(resource.Resource):
     def updateRepresentation(self):
         xml = nmlxml.nsiXML(self.nsi_agent, self.nml_network)
         self.topology_representation = ET.tostring(xml)
-        self.topology_version = self.nml_network.version
+        self.topology_version = self.nml_network.version.replace(microsecond=0)
         self.topology_version_http = datetime.datetime.strftime(self.nml_network.version, self.RFC850_FORMAT)
 
 
