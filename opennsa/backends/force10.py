@@ -193,10 +193,9 @@ class SSHChannel(ssh.SSHChannel):
 
 class Force10CommandSender:
 
-    def __init__(self, host, port, ssh_host_fingerprint, user, ssh_public_key_path, ssh_private_key_path):
+    def __init__(self, ssh_connection_creator):
 
-        self.ssh_connection_creator = \
-             ssh.SSHConnectionCreator(host, port, [ ssh_host_fingerprint ], user, ssh_public_key_path, ssh_private_key_path)
+        self.ssh_connection_creator = ssh_connection_creator
 
 
     @defer.inlineCallbacks
@@ -233,10 +232,18 @@ class Force10ConnectionManager:
         port             = cfg.get(config.FORCE10_PORT, 22)
         host_fingerprint = cfg[config.FORCE10_HOST_FINGERPRINT]
         user             = cfg[config.FORCE10_USER]
-        ssh_public_key   = cfg[config.FORCE10_SSH_PUBLIC_KEY]
-        ssh_private_key  = cfg[config.FORCE10_SSH_PRIVATE_KEY]
 
-        self.command_sender = Force10CommandSender(host, port, host_fingerprint, user, ssh_public_key, ssh_private_key)
+
+        if config.FORCE10_PASSWORD in cfg:
+            password = cfg[config.FORCE10_PASSWORD]
+            ssh_connection_creator = ssh.SSHConnectionCreator(host, port, [ host_fingerprint ], user, password=password)
+
+        else:
+            ssh_public_key   = cfg[config.FORCE10_SSH_PUBLIC_KEY]
+            ssh_private_key  = cfg[config.FORCE10_SSH_PRIVATE_KEY]
+            ssh_connection_creator = ssh.SSHConnectionCreator(host, port, [ host_fingerprint ], user, ssh_public_key, ssh_private_key)
+
+        self.command_sender = Force10CommandSender(ssh_connection_creator)
 
 
     def getResource(self, port, label_type, label_value):
