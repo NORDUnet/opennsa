@@ -6,6 +6,8 @@ Requirements:
 
 * Twisted 12.2.0 or later, http://twistedmatrix.com/trac/
 
+* Psycopg 2.5.0 or later (http://initd.org/psycopg/, 2.4.6 _might_ work)
+
 * Twistar 1.1 or later (https://pypi.python.org/pypi/twistar/ & http://findingscience.com/twistar/ )
 
 * PostgreSQL (just needs a database)
