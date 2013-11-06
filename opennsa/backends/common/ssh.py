@@ -72,7 +72,7 @@ class PasswordUserAuthClient(userauth.SSHUserAuthClient):
         self.password = password
 
     def getPassword(self, prompt=None):
-        return self.password
+        return defer.succeed( self.password )
 
 
 
