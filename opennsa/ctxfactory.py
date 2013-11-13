@@ -73,7 +73,7 @@ class ContextFactory(RequestContextFactory):
         ctx = RequestContextFactory._createContext(self)
 
         ctx.use_privatekey_file(self.private_key_path)
-        ctx.use_certificate_file(self.public_key_path)
+        ctx.use_certificate_chain_file(self.public_key_path)
         ctx.check_privatekey() # sanity check
 
         return ctx
