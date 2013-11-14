@@ -79,9 +79,9 @@ def topologyXML(network):
         for label in port.labels():
             ln = ET.SubElement(nml_port, NML_LABELGROUP, { LABEL_TYPE : label.type_} )
             ln.text = label.labelValue()
-        if port.remote_network is not None:
+        if port.remote_port is not None:
             rpa = ET.SubElement(nml_port, NML_RELATION, { TYPE : NML_ISALIAS} )
-            ET.SubElement(rpa, NML_PORTGROUP, { ID : nml.URN_OGF_NETWORK + port.remote_network + ':' + port.remote_port})
+            ET.SubElement(rpa, NML_PORTGROUP, { ID : nml.URN_OGF_NETWORK + port.remote_port})
 
     for port in network.bidirectional_ports:
         pn = ET.SubElement(nml_topology, NML_BIDIRECTIONALPORT, { ID: portName(port) } )
@@ -156,7 +156,6 @@ def parseNMLPort(nml_port):
 
     port_name      = None
     labels         = []
-    remote_network = None
     remote_port    = None
 
     for pe in nml_port:
@@ -171,8 +170,7 @@ def parseNMLPort(nml_port):
         elif pe.tag == NML_RELATION:
             if pe.attrib[TYPE] == NML_ISALIAS:
                 port_alias = pe[0].attrib[ID]
-                network_port_name = _baseName(port_alias)
-                remote_network, remote_port = network_port_name.rsplit(':',1)
+                remote_port = _baseName(port_alias)
             else:
                 log.msg('Unknown nml relation type %s, ignoring' % pe.attrib[TYPE], system=LOG_SYSTEM)
         else:
@@ -182,7 +180,7 @@ def parseNMLPort(nml_port):
     if port_name is None:
         port_name = port_id.split(':')[-1]
 
-    port = nml.Port(port_id, port_name, labels, remote_network, remote_port)
+    port = nml.Port(port_id, port_name, labels, remote_port)
     return port
 
 

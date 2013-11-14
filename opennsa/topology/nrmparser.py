@@ -128,8 +128,8 @@ def parsePortSpec(source, network_name):
             else:
                 if not in_suffix or not out_suffix:
                     raise NRMSpecificationError('Suffix not defined for bidirectional port %s' % port_name)
-                remote_in  = remote_port + in_suffix
-                remote_out = remote_port + out_suffix
+                remote_in  = remote_network + ':' + remote_port + in_suffix
+                remote_out = remote_network + ':' + remote_port + out_suffix
 
             inbound_port_name   = port_name + '-in'
             outbound_port_name  = port_name + '-out'
@@ -138,8 +138,8 @@ def parsePortSpec(source, network_name):
             inbound_port_id     = network_name + ':' + inbound_port_name
             outbound_port_id    = network_name + ':' + outbound_port_name
 
-            inbound_port        = nml.InternalPort(inbound_port_id,  inbound_port_name,  bandwidth, labels, remote_network, remote_out)
-            outbound_port       = nml.InternalPort(outbound_port_id, outbound_port_name, bandwidth, labels, remote_network, remote_in)
+            inbound_port        = nml.InternalPort(inbound_port_id,  inbound_port_name,  bandwidth, labels, remote_out)
+            outbound_port       = nml.InternalPort(outbound_port_id, outbound_port_name, bandwidth, labels, remote_in)
             bidirectional_port  = nml.BidirectionalPort(port_id, port_name, inbound_port, outbound_port)
 
             inbound_ports.append(inbound_port)

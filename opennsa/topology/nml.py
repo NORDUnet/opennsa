@@ -25,7 +25,7 @@ URN_OGF_NETWORK = 'urn:ogf:network:'
 
 class Port(object):
 
-    def __init__(self, id_, name, labels, remote_network=None, remote_port=None):
+    def __init__(self, id_, name, labels, remote_port=None):
 
         assert not id_.startswith('urn:'), 'URNs are not used in core OpenNSA NML (id: %s)' % id_
         assert ':' not in name, 'Invalid port name %s, must not contain ":"' % name
@@ -33,12 +33,10 @@ class Port(object):
             assert type(labels) is list, 'labels must be list or None'
             for label in labels:
                 assert type(label) is nsa.Label
-        assert (remote_network and remote_port) or not (remote_network and remote_port), 'Must specify remote network and port or none of them'
 
         self.id_            = id_               # The URN of the port
         self.name           = name              # String  ; Base name, no network name or uri prefix
         self._labels        = labels            # [ nsa.Label ]  ; can be empty
-        self.remote_network = remote_network    # String
         self.remote_port    = remote_port       # String
 
 
@@ -70,11 +68,11 @@ class Port(object):
 
 
     def hasRemote(self):
-        return self.remote_network != None
+        return self.remote_port != None
 
 
     def __repr__(self):
-        return '<Port %s (%s) # %s -> %s/%s>' % (self.id_, self.name, self._labels, self.remote_network, self.remote_port)
+        return '<Port %s (%s) # %s -> %s>' % (self.id_, self.name, self._labels, self.remote_port)
 
 
 
@@ -82,8 +80,8 @@ class InternalPort(Port):
     """
     Same as Port, but also has a bandwidth, so the pathfinder can probe for bandwidth.
     """
-    def __init__(self, id_, name, bandwidth, labels, remote_network=None, remote_port=None):
-        super(InternalPort, self).__init__(id_, name, labels, remote_network, remote_port)
+    def __init__(self, id_, name, bandwidth, labels, remote_port=None):
+        super(InternalPort, self).__init__(id_, name, labels, remote_port)
         self.bandwidth = bandwidth
 
 
@@ -92,7 +90,7 @@ class InternalPort(Port):
 
 
     def __repr__(self):
-        return '<InternalPort %s (%s) # %s : %i -> %s/%s>' % (self.id_, self.name, self._labels, self.bandwidth, self.remote_network, self.remote_port)
+        return '<InternalPort %s (%s) # %s : %i -> %s>' % (self.id_, self.name, self._labels, self.bandwidth, self.remote_port)
 
 
 
@@ -220,6 +218,17 @@ class Topology(object):
             raise error.TopologyError('No network with id %s' % (network_id))
 
 
+    def getNetworkPort(self, port_id):
+        for network_id, (network,_) in self.networks.items():
+            try:
+                port = network.getPort(port_id)
+                return network_id, port
+            except error.TopologyError:
+                continue
+        else:
+            raise error.TopologyError('Cannot find port with id %s in topology' % port_id)
+
+
     def getNSA(self, network_id):
         try:
             return self.networks[network_id][1]
@@ -227,26 +236,28 @@ class Topology(object):
             raise error.TopologyError('No NSA for network with id %s (%s)' % (network_id, str(e)))
 
 
-    def findDemarcationPort(self, network_id, port_id):
+    def findDemarcationPort(self, port):
         # finds - if it exists - the demarcation port of a bidirectional port - have to go through unidirectional model
-        port = self.getNetwork(network_id).getPort(port_id)
         assert isinstance(port, BidirectionalPort), 'Specified port for demarcation find is not bidirectional'
         if not port.hasRemote():
             return None
-        if port.inbound_port.remote_network != port.outbound_port.remote_network:
-            log.msg('Bidirectional port leads to multiple networks. Topology screwup?', system=LOG_SYSTEM)
-            return None
 
         try:
-            remote_network  = self.getNetwork(port.inbound_port.remote_network)
+            remote_network_in,  remote_port_in  = self.getNetworkPort(port.outbound_port.remote_port)
+            remote_network_out, remote_port_out = self.getNetworkPort(port.inbound_port.remote_port)
+
+            if remote_network_in != remote_network_out:
+                log.msg('Bidirectional port %s leads to multiple networks. Topology screwup?' % port_id, system=LOG_SYSTEM)
+                return None
+
         except error.TopologyError as e:
             log.msg('Error looking up demarcation port for %s%%%s. Message: %s' % (network_id, port_id, str(e)), system=LOG_SYSTEM)
             return None
 
-        inbound_remote  = port.inbound_port.remote_port
-        outbound_remote = port.outbound_port.remote_port
+        remote_network = self.getNetwork(remote_network_in)
+
         for rp in remote_network.findPorts(True):
-            if isinstance(rp, BidirectionalPort) and rp.inbound_port.id_ == outbound_remote and rp.outbound_port.id_ == inbound_remote:
+            if isinstance(rp, BidirectionalPort) and rp.inbound_port.id_ == remote_port_in.id_ and rp.outbound_port.id_ == remote_port_out.id_:
                 return remote_network.id_, rp.id_
         return None
 
@@ -316,9 +327,12 @@ class Topology(object):
                 link_ports = [ port for port in link_ports if port.hasRemote() ] # filter out termination ports
                 links = []
                 for lp in link_ports:
-                    demarcation = self.findDemarcationPort(source_stp.network, lp.id_)
+                    demarcation = self.findDemarcationPort(lp)
                     if demarcation is None:
                         continue
+
+                    d_network_id, d_port_id = demarcation
+
                     if exclude_networks is not None and demarcation[0] in exclude_networks:
                         continue # don't do loops in path finding
 
