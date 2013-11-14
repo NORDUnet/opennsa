@@ -183,7 +183,7 @@ class STP(object): # Service Termination Point
     def __repr__(self):
         base = '<STP %s %s' % (self.network, self.port)
         if self.labels:
-            base += '#' + ','.join( [ label.type_.split('#')[-1] + '=' + label.labelValue() for label in self.labels ] )
+            base += ' ' + ','.join( [ label.type_.split('#')[-1] + '=' + label.labelValue() for label in self.labels ] )
         return base + '>'
 
 
