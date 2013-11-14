@@ -104,11 +104,12 @@ class OpenNSAService(twistedservice.MultiService):
 
         # setup topology
 
-        network_name = vc[config.NETWORK_NAME]
+        network_name = vc[config.NETWORK_NAME] + ':topology'
+        nsa_name     = vc[config.NETWORK_NAME] + ':nsa'
 
         base_protocol = 'https://' if vc[config.TLS] else 'http://'
         nsa_endpoint = base_protocol + vc[config.HOST] + ':' + str(vc[config.PORT]) + '/NSI/services/CS2' # hardcode for now
-        ns_agent = nsa.NetworkServiceAgent(network_name + ':nsa', nsa_endpoint, 'local')
+        ns_agent = nsa.NetworkServiceAgent(nsa_name, nsa_endpoint, 'local')
 
         # topology
         topo_source = open( vc[config.NRM_MAP_FILE] ) if type(vc[config.NRM_MAP_FILE]) is str else vc[config.NRM_MAP_FILE] # wee bit hackish
