@@ -104,8 +104,8 @@ class OpenNSAService(twistedservice.MultiService):
 
         # setup topology
 
-        network_name = vc[config.NETWORK_NAME] + ':topology'
-        nsa_name     = vc[config.NETWORK_NAME] + ':nsa'
+        base_name = vc[config.NETWORK_NAME]
+        nsa_name  = base_name + ':nsa'
 
         base_protocol = 'https://' if vc[config.TLS] else 'http://'
         nsa_endpoint = base_protocol + vc[config.HOST] + ':' + str(vc[config.PORT]) + '/NSI/services/CS2' # hardcode for now
@@ -113,7 +113,7 @@ class OpenNSAService(twistedservice.MultiService):
 
         # topology
         topo_source = open( vc[config.NRM_MAP_FILE] ) if type(vc[config.NRM_MAP_FILE]) is str else vc[config.NRM_MAP_FILE] # wee bit hackish
-        network_topology, port_map = nrmparser.parseTopologySpec(topo_source, network_name)
+        network_topology, port_map = nrmparser.parseTopologySpec(topo_source, base_name)
         topology = nml.Topology()
         topology.addNetwork(network_topology, ns_agent)
 
@@ -133,7 +133,7 @@ class OpenNSAService(twistedservice.MultiService):
         requester_creator = CS2RequesterCreator(top_resource, None, vc[config.HOST], vc[config.PORT], vc[config.TLS], ctx_factory) # set aggregator later
 
         provider_registry = provreg.ProviderRegistry({}, { cnt.CS2_SERVICE_TYPE : requester_creator.create } )
-        aggr = aggregator.Aggregator(network_name, ns_agent, topology, None, provider_registry) # set parent requester later
+        aggr = aggregator.Aggregator(network_topology.id_, ns_agent, topology, None, provider_registry) # set parent requester later
 
         requester_creator.aggregator = aggr
 
@@ -145,7 +145,7 @@ class OpenNSAService(twistedservice.MultiService):
 
         backend_cfg = backend_configs.values()[0]
 
-        backend_service = setupBackend(backend_cfg, network_name, network_topology, aggr, port_map)
+        backend_service = setupBackend(backend_cfg, network_topology.id_, network_topology, aggr, port_map)
         backend_service.setServiceParent(self)
 
         provider_registry.addProvider(ns_agent.urn(), backend_service)

@@ -43,7 +43,7 @@ class GenericBackend(service.Service):
 
     def __init__(self, network, network_topology, connection_manager, parent_requester, log_system):
 
-        assert network == network_topology.name, 'Network name and network topology name does not match %s != %s' % (network, network_topology.name)
+        assert network == network_topology.id_, 'Network name and network topology name does not match %s != %s' % (network, network_topology.name)
 
         self.network            = network
         self.network_topology   = network_topology

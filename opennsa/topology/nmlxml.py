@@ -65,14 +65,14 @@ VC_TEXT                 = ET.QName('{%s}text'   % VC_NS)
 def topologyXML(network):
     # creates nml:Topology object from a network
 
-    URN_NETWORK = nml.URN_OGF_NETWORK + network.name
+    BASE_URN = nml.URN_OGF_NETWORK + network.name
 
-    topology_id = URN_NETWORK
+    topology_id = nml.URN_OGF_NETWORK + network.id_
     nml_topology = ET.Element(NML_TOPOLOGY, {ID: topology_id } )
 
     ET.SubElement(nml_topology, NML_NAME).text = network.name
 
-    portName = lambda port : URN_NETWORK + ':' + port.name
+    portName = lambda port : BASE_URN + ':' + port.name
 
     def addPort(nml_port_relation, port):
         nml_port = ET.SubElement(nml_port_relation, NML_PORTGROUP, {ID: portName(port)} )
@@ -86,8 +86,8 @@ def topologyXML(network):
     for port in network.bidirectional_ports:
         pn = ET.SubElement(nml_topology, NML_BIDIRECTIONALPORT, { ID: portName(port) } )
         ET.SubElement(pn, NML_NAME).text = port.name
-        ET.SubElement(pn, NML_PORTGROUP, {ID: URN_NETWORK + ':' + port.inbound_port.name} )
-        ET.SubElement(pn, NML_PORTGROUP, {ID: URN_NETWORK + ':' + port.outbound_port.name} )
+        ET.SubElement(pn, NML_PORTGROUP, {ID: BASE_URN + ':' + port.inbound_port.name} )
+        ET.SubElement(pn, NML_PORTGROUP, {ID: BASE_URN + ':' + port.outbound_port.name} )
 
     if network.inbound_ports:
         nml_inbound_ports = ET.SubElement(nml_topology, NML_RELATION, {TYPE: NML_HASINBOUNDPORT})
