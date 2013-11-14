@@ -16,8 +16,10 @@ def _createSTP(stp_desc):
     if '%' in stp_desc:
         network, port = stp_desc.rsplit('%',1)
     else:
-        network, local_part = stp_desc.rsplit(':',1)
-        port = network + ':' + local_part
+        # hack to support the common default
+        base, _ = stp_desc.rsplit(':',1)
+        network = base + ':topology'
+        port = stp_desc
 
 #    if '#' in local_part:
 #        port, label_part = local_part.split('#',1)
