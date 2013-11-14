@@ -34,13 +34,13 @@ class NSIHeader(object):
         self.provider_nsa           = provider_nsa
         self.session_security_attrs = session_security_attrs
         self.reply_to               = reply_to
-        self.correlation_id = correlation_id or _self.createCorrelationId()
+        self.correlation_id = correlation_id or self._createCorrelationId()
 
     def _createCorrelationId(self):
         return URN_UUID_PREFIX + str(uuid.uuid1())
 
     def newCorrelationId(self):
-        self.correlation_id = _self.createCorrelationId()
+        self.correlation_id = self._createCorrelationId()
 
 
     def __repr__(self):
