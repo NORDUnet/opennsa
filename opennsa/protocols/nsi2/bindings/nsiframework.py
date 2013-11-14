@@ -7,6 +7,10 @@ from xml.etree import ElementTree as ET
 
 class CommonHeaderType:
     def __init__(self, protocolVersion, correlationId, requesterNSA, providerNSA, replyTo, sessionSecurityAttr):
+        assert protocolVersion is not None, 'protocolVersion must not be None'
+        assert correlationId   is not None, 'correlationId must not be None'
+        assert requesterNSA    is not None, 'requesterNSA must not be None'
+        assert providerNSA     is not None, 'providerNSA must not be None'
         self.protocolVersion = protocolVersion  # string
         self.correlationId = correlationId  # UuidType -> anyURI
         self.requesterNSA = requesterNSA  # NsaIdType -> anyURI
