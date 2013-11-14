@@ -236,7 +236,13 @@ class Topology(object):
         if port.inbound_port.remote_network != port.outbound_port.remote_network:
             log.msg('Bidirectional port leads to multiple networks. Topology screwup?', system=LOG_SYSTEM)
             return None
-        remote_network  = self.getNetwork(port.inbound_port.remote_network)
+
+        try:
+            remote_network  = self.getNetwork(port.inbound_port.remote_network)
+        except error.TopologyError as e:
+            log.msg('Error looking up demarcation port for %s%%%s. Message: %s' % (network_id, port_id, str(e)), system=LOG_SYSTEM)
+            return None
+
         inbound_remote  = port.inbound_port.remote_port
         outbound_remote = port.outbound_port.remote_port
         for rp in remote_network.findPorts(True):
