@@ -209,7 +209,7 @@ class Provider:
     def dataPlaneStateChange(self, header, connection_id, notification_id, timestamp, data_plane_status):
 
         active, version, consistent = data_plane_status
-        d = self.provider_client.dataPlaneStateChange(header.reply_to, header.requester_nsa, header.provider_nsa,
+        d = self.provider_client.dataPlaneStateChange(header.reply_to, header.correlation_id, header.requester_nsa, header.provider_nsa,
                                                       connection_id, notification_id, timestamp, active, version, consistent)
         d.addErrback(logError, 'dataPlaneStateChange')
         return d

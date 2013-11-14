@@ -161,9 +161,9 @@ class ProviderClient:
         return d
 
 
-    def dataPlaneStateChange(self, requester_url, requester_nsa, provider_nsa, connection_id, notification_id, timestamp, active, version, consistent):
+    def dataPlaneStateChange(self, requester_url, correlation_id, requester_nsa, provider_nsa, connection_id, notification_id, timestamp, active, version, consistent):
 
-        header_element = helper.createHeader(requester_nsa, provider_nsa)
+        header_element = helper.createHeader(requester_nsa, provider_nsa, correlation_id=correlation_id)
 
         data_plane_status = nsiconnection.DataPlaneStatusType(active, version, consistent)
         dps = nsiconnection.DataPlaneStateChangeRequestType(connection_id, notification_id, helper.createXMLTime(timestamp), data_plane_status)
