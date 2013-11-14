@@ -10,6 +10,7 @@
 # -o port (for callback)
 
 # -u service url
+# -m auth header
 
 # -t topology file
 # -n network
@@ -38,7 +39,7 @@
 # -z (skip) verify certificate (default is to verify)
 
 # free switches
-# ijm + 0-9
+# ij + 0-9
 
 # Not all commands will accept all flags and some flags are mutally exclusive
 
@@ -63,6 +64,9 @@ class PortOption(usage.Options):
 
 class ServiceURLOption(usage.Options):
     optParameters = [ [ options.SERVICE_URL, 'u', None, 'Service URL'] ]
+
+class AuthzHeaderOption(usage.Options):
+    optParameters = [ [ options.AUTHZ_HEADER, 'm', None, 'Authorization header'] ]
 
 class TopologyFileOption(usage.Options):
     optParameters = [ [ options.TOPOLOGY_FILE, 't', None, 'Topology File'] ]
@@ -139,7 +143,7 @@ class BaseOptions(DefaultsFileOption):
 
 
 class NetworkBaseOptions(BaseOptions, HostOption, PortOption,
-                         ServiceURLOption, TopologyFileOption, NetworkOption,
+                         ServiceURLOption, AuthzHeaderOption, TopologyFileOption, NetworkOption,
                          TLSFlag, PublicKeyOption, PrivateKeyOption, CertificateDirectoryOption, SkipCertificateVerificationFlag):
 
     def postOptions(self):

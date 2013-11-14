@@ -22,6 +22,7 @@ PORT            = 'port'
 TOPOLOGY_FILE   = 'topology'
 NETWORK         = 'network'
 SERVICE_URL     = 'service'
+AUTHZ_HEADER    = 'authzheader'
 REQUESTER       = 'requester'
 PROVIDER        = 'provider'
 

@@ -28,12 +28,15 @@ class RequesterClient:
 
     implements(INSIProvider)
 
-    def __init__(self, service_url, reply_to, ctx_factory=None):
+    def __init__(self, service_url, reply_to, ctx_factory=None, authz_header=None):
 
         assert type(service_url) in (str,bytes), 'Service URL must be of type string or bytes'
         self.service_url = service_url
         self.reply_to    = reply_to
         self.ctx_factory = ctx_factory
+        self.http_headers = {}
+        if authz_header:
+            self.http_headers['Authorization'] = authz_header
 
 
     def _checkHeader(self, header):
@@ -126,7 +129,7 @@ class RequesterClient:
             header, ack = helper.parseRequest(soap_data)
             return ack.connectionId
 
-        d = httpclient.soapRequest(self.service_url, actions.RESERVE, payload, ctx_factory=self.ctx_factory)
+        d = httpclient.soapRequest(self.service_url, actions.RESERVE, payload, ctx_factory=self.ctx_factory, headers=self.http_headers)
         d.addCallbacks(_handleAck, self._handleErrorReply)
         return d
 
@@ -137,7 +140,7 @@ class RequesterClient:
 
         payload = self._createGenericRequestType(nsiconnection.reserveCommit, header, connection_id)
 
-        d = httpclient.soapRequest(self.service_url, actions.RESERVE_COMMIT, payload, ctx_factory=self.ctx_factory)
+        d = httpclient.soapRequest(self.service_url, actions.RESERVE_COMMIT, payload, ctx_factory=self.ctx_factory, headers=self.http_headers)
         d.addCallbacks(lambda sd : None, self._handleErrorReply)
         return d
 
@@ -148,7 +151,7 @@ class RequesterClient:
 
         payload = self._createGenericRequestType(nsiconnection.reserveAbort, header, connection_id)
 
-        d = httpclient.soapRequest(self.service_url, actions.RESERVE_ABORT, payload, ctx_factory=self.ctx_factory)
+        d = httpclient.soapRequest(self.service_url, actions.RESERVE_ABORT, payload, ctx_factory=self.ctx_factory, headers=self.http_headers)
         d.addCallbacks(lambda sd : None, self._handleErrorReply)
         return d
 
@@ -158,7 +161,7 @@ class RequesterClient:
         self._checkHeader(header)
 
         payload = self._createGenericRequestType(nsiconnection.provision, header, connection_id)
-        d = httpclient.soapRequest(self.service_url, actions.PROVISION, payload, ctx_factory=self.ctx_factory)
+        d = httpclient.soapRequest(self.service_url, actions.PROVISION, payload, ctx_factory=self.ctx_factory, headers=self.http_headers)
         d.addCallbacks(lambda sd : None, self._handleErrorReply)
         return d
 
@@ -168,7 +171,7 @@ class RequesterClient:
         self._checkHeader(header)
 
         payload = self._createGenericRequestType(nsiconnection.release, header, connection_id)
-        d = httpclient.soapRequest(self.service_url, actions.RELEASE, payload, ctx_factory=self.ctx_factory)
+        d = httpclient.soapRequest(self.service_url, actions.RELEASE, payload, ctx_factory=self.ctx_factory, headers=self.http_headers)
         d.addCallbacks(lambda sd : None, self._handleErrorReply)
         return d
 
@@ -178,7 +181,7 @@ class RequesterClient:
         self._checkHeader(header)
 
         payload = self._createGenericRequestType(nsiconnection.terminate, header, connection_id)
-        d = httpclient.soapRequest(self.service_url, actions.TERMINATE, payload, ctx_factory=self.ctx_factory)
+        d = httpclient.soapRequest(self.service_url, actions.TERMINATE, payload, ctx_factory=self.ctx_factory, headers=self.http_headers)
         d.addCallbacks(lambda sd : None, self._handleErrorReply)
         return d
 
@@ -194,7 +197,7 @@ class RequesterClient:
 
         payload = minisoap.createSoapPayload(body_element, header_element)
 
-        d = httpclient.soapRequest(self.service_url, actions.QUERY_SUMMARY, payload, ctx_factory=self.ctx_factory)
+        d = httpclient.soapRequest(self.service_url, actions.QUERY_SUMMARY, payload, ctx_factory=self.ctx_factory, headers=self.http_headers)
         d.addCallbacks(lambda sd : None, self._handleErrorReply)
         return d
 
@@ -219,7 +222,7 @@ class RequesterClient:
 
         payload = minisoap.createSoapPayload(body_element, header_element)
 
-        d = httpclient.soapRequest(self.service_url, actions.QUERY_SUMMARY_SYNC, payload, ctx_factory=self.ctx_factory)
+        d = httpclient.soapRequest(self.service_url, actions.QUERY_SUMMARY_SYNC, payload, ctx_factory=self.ctx_factory, headers=self.http_headers)
         d.addCallbacks(gotReply, self._handleErrorReply)
         return d
 

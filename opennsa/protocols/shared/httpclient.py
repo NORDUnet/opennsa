@@ -24,12 +24,13 @@ class HTTPRequestError(Exception):
     """
 
 
-def soapRequest(url, soap_action, soap_envelope, timeout=DEFAULT_TIMEOUT, ctx_factory=None):
+def soapRequest(url, soap_action, soap_envelope, timeout=DEFAULT_TIMEOUT, ctx_factory=None, headers=None):
 
-    headers = {}
+    if not headers:
+        headers = {}
+
     headers['Content-Type'] = 'text/xml; charset=utf-8' # CXF will complain if this is not set
     headers['soapaction'] = soap_action
-    #headers['Authorization'] = 'Basic bnNpZGVtbzpSaW9QbHVnLUZlc3QyMDExIQ==' # base64.b64encode('nsidemo:RioPlug-Fest2011!')
 
     return httpRequest(url, soap_envelope, headers, ctx_factory=ctx_factory)
 

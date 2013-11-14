@@ -98,6 +98,7 @@ def doMain():
         topology_file   = config.subOptions[options.TOPOLOGY_FILE]  or defaults.get(options.TOPOLOGY_FILE)
         network         = config.subOptions[options.NETWORK]        or defaults.get(options.NETWORK)
         service_url     = config.subOptions[options.SERVICE_URL]    or defaults.get(options.SERVICE_URL)
+        authz_header    = config.subOptions[options.AUTHZ_HEADER]   or defaults.get(options.AUTHZ_HEADER)
 
         requester_nsa   = config.subOptions[options.REQUESTER]      or defaults.get(options.REQUESTER)      or 'OpenNSA-CLI'
         provider_nsa    = config.subOptions[options.PROVIDER]       or defaults.get(options.PROVIDER)
@@ -191,7 +192,7 @@ def doMain():
                 raise usage.UsageError('Connection ID is not defined')
 
         from opennsa.protocols import nsi2
-        client, factory = nsi2.createRequester(host, port, service_url, tls=tls, ctx_factory=ctx_factory, callback_timeout=12)
+        client, factory = nsi2.createRequester(host, port, service_url, tls=tls, ctx_factory=ctx_factory, authz_header=authz_header, callback_timeout=12)
 
         # setup listener port
         if tls:

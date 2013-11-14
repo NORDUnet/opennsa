@@ -27,12 +27,12 @@ def setupProvider(child_provider, top_resource, tls=False, ctx_factory=None):
     return nsi2_provider
 
 
-def setupRequesterClient(top_resource, host, port, service_endpoint, resource_name, tls=False, ctx_factory=None):
+def setupRequesterClient(top_resource, host, port, service_endpoint, resource_name, tls=False, ctx_factory=None, authz_header=None):
 
     proto_scheme = 'https://' if tls else 'http://'
     service_url = proto_scheme + '%s:%i/NSI/services/%s' % (host,port, resource_name)
 
-    requester_client = requesterclient.RequesterClient(service_endpoint, service_url, ctx_factory=ctx_factory)
+    requester_client = requesterclient.RequesterClient(service_endpoint, service_url, ctx_factory=ctx_factory, authz_header=authz_header)
     return requester_client
 
 
@@ -48,13 +48,13 @@ def setupRequesterPair(top_resource, host, port, service_endpoint, nsi_requester
     return requester_client
 
 
-def createRequester(host, port, service_endpoint, resource_name=None, tls=False, ctx_factory=None, callback_timeout=None):
+def createRequester(host, port, service_endpoint, resource_name=None, tls=False, ctx_factory=None, authz_header=None, callback_timeout=None):
 
     resource_name = resource_name or 'RequesterService2'
 
     top_resource = resource.Resource()
 
-    requester_client = setupRequesterClient(top_resource, host, port, service_endpoint, resource_name=resource_name, tls=tls, ctx_factory=ctx_factory)
+    requester_client = setupRequesterClient(top_resource, host, port, service_endpoint, resource_name=resource_name, tls=tls, ctx_factory=ctx_factory, authz_header=authz_header)
 
     nsi_requester = requester.Requester(requester_client, callback_timeout=callback_timeout)
 
