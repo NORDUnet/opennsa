@@ -98,6 +98,8 @@ class Aggregator:
         self.parent_requester   = parent_requester
         self.provider_registry  = provider_registry
 
+        self.conn_prefix = network[:2].upper() + '-T'
+
         self.reservations       = {} # correlation_id -> info
         self.notification_id    = 0
 
@@ -153,7 +155,7 @@ class Aggregator:
                 raise error.ConnectionExistsError('Connection with id %s already exists' % connection_id)
             raise NotImplementedError('Cannot handly modification of existing connections yet')
 
-        connection_id = 'NU-T' + ''.join( [ random.choice(string.hexdigits[:16]) for _ in range(12) ] )
+        connection_id = self.conn_prefix + ''.join( [ random.choice(string.hexdigits[:16]) for _ in range(12) ] )
 
         sd = criteria.service_def
         source_stp = sd.source_stp
