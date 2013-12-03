@@ -10,14 +10,16 @@ from opennsa.protocols.nsi2 import provider, requester
 
 
 class FakeTopology:
-    def __init__(self, name):
+    def __init__(self, name, id_):
         self.name = name
+        self.id_ = id_
 
 
 class InterfaceTest(unittest.TestCase):
 
     def testGenericBackend(self):
-        simple_backend = genericbackend.GenericBackend('network', FakeTopology('network'), None, None, None)
+        ft = FakeTopology('network', 'network')
+        simple_backend = genericbackend.GenericBackend('network', ft, None, None, None)
         verifyObject(INSIProvider, simple_backend)
 
 
