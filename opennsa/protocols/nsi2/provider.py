@@ -200,7 +200,7 @@ class Provider:
 
     def reserveTimeout(self, header, connection_id, notification_id, timestamp, timeout_value, originating_connection_id, originating_nsa):
 
-        d = self.provider_client.reserveTimeout(header.reply_to, header.requester_nsa, header.provider_nsa,
+        d = self.provider_client.reserveTimeout(header.reply_to, header.requester_nsa, header.provider_nsa, header.correlation_id,
                                                 connection_id, notification_id, timestamp, timeout_value, originating_connection_id, originating_nsa)
         d.addErrback(logError, 'reserveTimeout')
         return d
@@ -209,7 +209,7 @@ class Provider:
     def dataPlaneStateChange(self, header, connection_id, notification_id, timestamp, data_plane_status):
 
         active, version, consistent = data_plane_status
-        d = self.provider_client.dataPlaneStateChange(header.reply_to, header.correlation_id, header.requester_nsa, header.provider_nsa,
+        d = self.provider_client.dataPlaneStateChange(header.reply_to, header.requester_nsa, header.provider_nsa, header.correlation_id,
                                                       connection_id, notification_id, timestamp, active, version, consistent)
         d.addErrback(logError, 'dataPlaneStateChange')
         return d
@@ -217,7 +217,7 @@ class Provider:
 
     def errorEvent(self, header, connection_id, notification_id, timestamp, event, info, service_ex):
 
-        d = self.provider_client.errorEvent(header.reply_to, header.requester_nsa, header.provider_nsa,
+        d = self.provider_client.errorEvent(header.reply_to, header.requester_nsa, header.provider_nsa, header.correlation_id,
                                             connection_id, notification_id, timestamp, event, info, service_ex)
         return d
 
