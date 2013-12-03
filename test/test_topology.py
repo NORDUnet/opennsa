@@ -9,9 +9,14 @@ from . import topology
 
 LABEL = nsa.Label(cnt.ETHERNET_VLAN, '1781-1789')
 
-ARUBA_PS   = nsa.STP('aruba',   'aruba:ps',   [LABEL])
-BONAIRE_PS = nsa.STP('bonaire', 'bonaire:ps', [LABEL])
-CURACAO_PS = nsa.STP('curacao', 'curacao:ps', [LABEL])
+ARUBA_NETWORK    = 'aruba:topology'
+BONAIRE_NETWORK  = 'bonaire:topology'
+CURACAO_NETWORK  = 'curacao:topology'
+DOMINICA_NETWORK = 'dominica:topology'
+
+ARUBA_PS   = nsa.STP(ARUBA_NETWORK,   'aruba:ps',   [LABEL])
+BONAIRE_PS = nsa.STP(BONAIRE_NETWORK, 'bonaire:ps', [LABEL])
+CURACAO_PS = nsa.STP(CURACAO_NETWORK, 'curacao:ps', [LABEL])
 
 
 class TopologyTest(unittest.TestCase):
@@ -59,7 +64,7 @@ class TopologyTest(unittest.TestCase):
 
         first_path = paths[0]
         self.assertEquals(len(first_path), 2) # aruba - bonaire
-        self.assertEquals( [ l.network for l in first_path ], ['aruba', 'bonaire'] )
+        self.assertEquals( [ l.network for l in first_path ], [ARUBA_NETWORK, BONAIRE_NETWORK] )
 
         fpl = [ nsa.Label(cnt.ETHERNET_VLAN, '1781-1789') ]
         for link in first_path:
@@ -69,7 +74,7 @@ class TopologyTest(unittest.TestCase):
 
         second_path = paths[1]
         self.assertEquals(len(second_path), 3) # aruba - dominica - bonaire
-        self.assertEquals( [ l.network for l in second_path ], ['aruba', 'dominica', 'bonaire'] )
+        self.assertEquals( [ l.network for l in second_path ], [ARUBA_NETWORK, DOMINICA_NETWORK, BONAIRE_NETWORK] )
 
         spl = [ nsa.Label(cnt.ETHERNET_VLAN, '1781-1782') ]
         for link in second_path:
@@ -79,7 +84,7 @@ class TopologyTest(unittest.TestCase):
 
         third_path = paths[2]
         self.assertEquals(len(third_path), 4) # aruba - dominica - curacao - bonaire
-        self.assertEquals( [ l.network for l in third_path ], ['aruba', 'dominica', 'curacao', 'bonaire'] )
+        self.assertEquals( [ l.network for l in third_path ], [ARUBA_NETWORK, DOMINICA_NETWORK, CURACAO_NETWORK, BONAIRE_NETWORK] )
 
         tpl = [ nsa.Label(cnt.ETHERNET_VLAN, '1783-1786') ]
         for link in third_path:
@@ -98,7 +103,7 @@ class TopologyTest(unittest.TestCase):
 
         fp = paths[0]
         self.assertEquals(len(fp), 2) # aruba - bonaire
-        self.assertEquals( [ l.network for l in fp ], ['aruba', 'bonaire'] )
+        self.assertEquals( [ l.network for l in fp ], [ARUBA_NETWORK, BONAIRE_NETWORK] )
 
         tpl = [ nsa.Label(cnt.ETHERNET_VLAN, '1781-1789') ]
         ipl = [ nsa.Label(cnt.ETHERNET_VLAN, '1780-1789') ]
@@ -112,7 +117,7 @@ class TopologyTest(unittest.TestCase):
 
         sp = paths[1]
         self.assertEquals(len(sp), 3) # aruba - dominica - bonaire
-        self.assertEquals( [ l.network for l in sp ], ['aruba', 'dominica', 'bonaire'] )
+        self.assertEquals( [ l.network for l in sp ], [ARUBA_NETWORK, DOMINICA_NETWORK, BONAIRE_NETWORK] )
 
         tpl = [ nsa.Label(cnt.ETHERNET_VLAN, '1781-1789') ]
         ipl = [ nsa.Label(cnt.ETHERNET_VLAN, '1780-1789') ]
@@ -129,7 +134,7 @@ class TopologyTest(unittest.TestCase):
 
         tp = paths[2]
         self.assertEquals(len(tp), 4) # aruba - dominica - curacao - bonaire
-        self.assertEquals( [ l.network for l in tp ], ['aruba', 'dominica', 'curacao', 'bonaire'] )
+        self.assertEquals( [ l.network for l in tp ], [ARUBA_NETWORK, DOMINICA_NETWORK, CURACAO_NETWORK, BONAIRE_NETWORK] )
 
         tpl = [ nsa.Label(cnt.ETHERNET_VLAN, '1781-1789') ]
         ipl = [ nsa.Label(cnt.ETHERNET_VLAN, '1780-1789') ]
@@ -157,7 +162,7 @@ class TopologyTest(unittest.TestCase):
 
         fp = paths[0]
         self.assertEquals(len(fp), 2) # aruba - bonaire
-        self.assertEquals( [ l.network for l in fp ], ['aruba', 'bonaire'] )
+        self.assertEquals( [ l.network for l in fp ], [ARUBA_NETWORK, BONAIRE_NETWORK] )
 
         tpl = [ nsa.Label(cnt.ETHERNET_VLAN, '1781-1789') ]
 
@@ -170,7 +175,7 @@ class TopologyTest(unittest.TestCase):
 
         sp = paths[1]
         self.assertEquals(len(sp), 3) # aruba - dominica - bonaire
-        self.assertEquals( [ l.network for l in sp ], ['aruba', 'dominica', 'bonaire'] )
+        self.assertEquals( [ l.network for l in sp ], [ARUBA_NETWORK, DOMINICA_NETWORK, BONAIRE_NETWORK] )
 
         tpl = [ nsa.Label(cnt.ETHERNET_VLAN, '1781-1789') ]
         ipl = [ nsa.Label(cnt.ETHERNET_VLAN, '1781-1782') ]
@@ -186,7 +191,7 @@ class TopologyTest(unittest.TestCase):
 
         tp = paths[2]
         self.assertEquals(len(tp), 4) # aruba - dominica - curacao - bonaire
-        self.assertEquals( [ l.network for l in tp ], ['aruba', 'dominica', 'curacao', 'bonaire'] )
+        self.assertEquals( [ l.network for l in tp ], [ARUBA_NETWORK, DOMINICA_NETWORK, CURACAO_NETWORK, BONAIRE_NETWORK] )
 
         tpl = [ nsa.Label(cnt.ETHERNET_VLAN, '1781-1789') ]
         ipl = [ nsa.Label(cnt.ETHERNET_VLAN, '1781-1789') ]
