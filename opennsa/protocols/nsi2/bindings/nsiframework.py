@@ -5,7 +5,7 @@ from xml.etree import ElementTree as ET
 # types
 
 
-class CommonHeaderType:
+class CommonHeaderType(object):
     def __init__(self, protocolVersion, correlationId, requesterNSA, providerNSA, replyTo, sessionSecurityAttr):
         assert protocolVersion is not None, 'protocolVersion must not be None'
         assert correlationId   is not None, 'correlationId must not be None'
@@ -42,7 +42,7 @@ class CommonHeaderType:
         return r
 
 
-class AttributeStatementType:
+class AttributeStatementType(object):
     def __init__(self, Attribute, EncryptedAttribute):
         self.Attribute = Attribute  # AttributeType
 
@@ -59,7 +59,7 @@ class AttributeStatementType:
         return r
 
 
-class AttributeType:
+class AttributeType(object):
     def __init__(self, Name, NameFormat, FriendlyName, AttributeValue):
         self.Name = Name  # string
         self.NameFormat = NameFormat  # anyURI
@@ -81,7 +81,7 @@ class AttributeType:
         return r
 
 
-class TypeValuePairType:
+class TypeValuePairType(object):
     def __init__(self, type, namespace, value):
         self.type = type  # string
         self.namespace = namespace  # anyURI
@@ -103,7 +103,7 @@ class TypeValuePairType:
         return r
 
 
-class ServiceExceptionType:
+class ServiceExceptionType(object):
     def __init__(self, nsaId, connectionId, serviceType, errorId, text, variables, childException):
         self.nsaId = nsaId  # NsaIdType -> anyURI
         self.connectionId = connectionId  # ConnectionIdType -> string
@@ -122,7 +122,7 @@ class ServiceExceptionType:
                 element.findtext('errorId'),
                 element.findtext('text'),
                 [ TypeValuePairType.build(e) for e in element.find('variables') ] if element.find('variables') is not None else None,
-                [ ServiceExceptionType.build(e) for e in element.findall('nsaId') ] if element.find('nsaId') is not None else None
+                [ ServiceExceptionType.build(e) for e in element.findall('childException') ] if element.find('childException') is not None else None
                )
 
     def xml(self, elementName):
@@ -138,7 +138,7 @@ class ServiceExceptionType:
             ET.SubElement(r, 'variables').extend( [ e.xml('variables') for e in self.variables ] )
         if self.childException:
             for el in self.childException:
-                ET.SubElement(r, 'childException').extend( [ e.xml('nsaId') for e in el ] )
+                ET.SubElement(r, 'childException').extend( el.xml('childException') )
         return r
 
 

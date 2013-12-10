@@ -108,8 +108,9 @@ class RequesterClient:
             src_stp.labels = []
             dst_stp.labels = []
 
-            service_type = p2pservices.EthernetVlanType(src_stp, dst_stp, src_vlan, dst_vlan,
-                                                        sd.mtu, sd.burst_size, sd.capacity, sd.directionality, sd.symmetric, sd.ero)
+            service_type = p2pservices.EthernetVlanType(sd.capacity, sd.directionality, sd.symmetric,
+                                                        src_stp, dst_stp, sd.ero,
+                                                        sd.mtu, sd.burst_size, src_vlan, dst_vlan)
 
         else:
             raise ValueError('Cannot create request for service definition of type %s' % type(sd))

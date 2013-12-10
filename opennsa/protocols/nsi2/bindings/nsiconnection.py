@@ -314,12 +314,12 @@ class ReserveTimeoutRequestType:
 
     def xml(self, elementName):
         r = ET.Element(elementName)
-        ET.SubElement(r, 'timeoutValue').text = str(self.timeoutValue)
-        ET.SubElement(r, 'originatingConnectionId').text = self.originatingConnectionId
-        ET.SubElement(r, 'originatingNSA').text = str(self.originatingNSA)
         ET.SubElement(r, 'connectionId').text = self.connectionId
         ET.SubElement(r, 'notificationId').text = str(self.notificationId)
         ET.SubElement(r, 'timeStamp').text = str(self.timeStamp)
+        ET.SubElement(r, 'timeoutValue').text = str(self.timeoutValue)
+        ET.SubElement(r, 'originatingConnectionId').text = self.originatingConnectionId
+        ET.SubElement(r, 'originatingNSA').text = str(self.originatingNSA)
         return r
 
 
@@ -500,7 +500,7 @@ class ServiceExceptionType:
                 element.findtext('errorId'),
                 element.findtext('text'),
                 [ TypeValuePairType.build(e) for e in element.find('variables') ] if element.find('variables') is not None else None,
-                [ ServiceExceptionType.build(e) for e in element.findall('nsaId') ] if element.find('nsaId') is not None else None
+                [ ServiceExceptionType.build(e) for e in element.findall('childException') ] if element.find('childException') is not None else None
                )
 
     def xml(self, elementName):
@@ -516,7 +516,7 @@ class ServiceExceptionType:
             ET.SubElement(r, 'variables').extend( [ e.xml('variables') for e in self.variables ] )
         if self.childException:
             for el in self.childException:
-                ET.SubElement(r, 'childException').extend( [ e.xml('nsaId') for e in el ] )
+                ET.SubElement(r, 'childException').extend( el.xml('childException') )
         return r
 
 
@@ -551,7 +551,7 @@ class ChildRecursiveType:
                 element.findtext('connectionId'),
                 element.findtext('providerNSA'),
                 ConnectionStatesType.build(element.find('connectionStates')) if element.find('connectionStates') is not None else None,
-                [ QueryRecursiveResultCriteriaType.build(e) for e in element.findall('schedule') ] if element.find('schedule') is not None else None
+                [ QueryRecursiveResultCriteriaType.build(e) for e in element.findall('criteria') ] if element.find('criteria') is not None else None
                )
 
     def xml(self, elementName):
@@ -561,7 +561,7 @@ class ChildRecursiveType:
         r.append(self.connectionStates.xml('connectionStates'))
         if self.criteria:
             for el in self.criteria:
-                ET.SubElement(r, 'criteria').extend( [ e.xml('schedule') for e in el ] )
+                ET.SubElement(r, 'criteria').extend( el.xml('criteria') )
         return r
 
 
@@ -604,7 +604,7 @@ class QueryRecursiveResultType:
                 element.findtext('connectionId'),
                 element.findtext('globalReservationId'),
                 element.findtext('description'),
-                [ QueryRecursiveResultCriteriaType.build(e) for e in element.findall('schedule') ] if element.find('schedule') is not None else None,
+                [ QueryRecursiveResultCriteriaType.build(e) for e in element.findall('criteria') ] if element.find('criteria') is not None else None,
                 element.findtext('requesterNSA'),
                 ConnectionStatesType.build(element.find('connectionStates')) if element.find('connectionStates') is not None else None,
                 int(element.findtext('notificationId'))
@@ -619,7 +619,7 @@ class QueryRecursiveResultType:
             ET.SubElement(r, 'description').text = self.description
         if self.criteria:
             for el in self.criteria:
-                ET.SubElement(r, 'criteria').extend( [ e.xml('schedule') for e in el ] )
+                ET.SubElement(r, 'criteria').extend( el.xml('criteria') )
         ET.SubElement(r, 'requesterNSA').text = str(self.requesterNSA)
         r.append(self.connectionStates.xml('connectionStates'))
         if self.notificationId:
@@ -691,27 +691,27 @@ class ChildSummaryType:
 
 
 class MessageDeliveryTimeoutRequestType:
-    def __init__(self, correlationId, connectionId, notificationId, timeStamp):
-        self.correlationId = correlationId  # UuidType -> anyURI
+    def __init__(self, connectionId, notificationId, timeStamp, correlationId):
         self.connectionId = connectionId  # ConnectionIdType -> string
         self.notificationId = notificationId  # NotificationIdType -> int
         self.timeStamp = timeStamp  # DateTimeType -> dateTime
+        self.correlationId = correlationId  # UuidType -> anyURI
 
     @classmethod
     def build(self, element):
         return MessageDeliveryTimeoutRequestType(
-                element.findtext('correlationId'),
                 element.findtext('connectionId'),
                 int(element.findtext('notificationId')),
-                element.findtext('timeStamp')
+                element.findtext('timeStamp'),
+                element.findtext('correlationId')
                )
 
     def xml(self, elementName):
         r = ET.Element(elementName)
-        ET.SubElement(r, 'correlationId').text = str(self.correlationId)
         ET.SubElement(r, 'connectionId').text = self.connectionId
         ET.SubElement(r, 'notificationId').text = str(self.notificationId)
         ET.SubElement(r, 'timeStamp').text = str(self.timeStamp)
+        ET.SubElement(r, 'correlationId').text = str(self.correlationId)
         return r
 
 

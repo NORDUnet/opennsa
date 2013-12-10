@@ -78,8 +78,8 @@ class ProviderClient:
 
         src_vlan = sd.source_stp.labels[0].labelValue()
         dst_vlan = sd.dest_stp.labels[0].labelValue()
- 
-        evts = p2pservices.EthernetVlanType(src_stp, dst_stp, src_vlan, dst_vlan, sd.mtu, sd.burst_size, sd.capacity, sd.directionality, sd.symmetric, None)
+
+        evts = p2pservices.EthernetVlanType(sd.capacity, sd.directionality, sd.symmetric, src_stp, dst_stp, None, sd.mtu, sd.burst_size, src_vlan, dst_vlan)
 
         criteria = nsiconnection.ReservationConfirmCriteriaType(criteria.revision, schedule, str(p2pservices.evts), { p2pservices.evts : evts } )
 

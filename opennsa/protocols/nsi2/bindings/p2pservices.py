@@ -37,7 +37,7 @@ class P2PServiceBaseType(object):
         return r
 
 
-class StpType:
+class StpType(object):
     def __init__(self, networkId, localId, labels):
         self.networkId = networkId  # string
         self.localId = localId  # string
@@ -60,7 +60,7 @@ class StpType:
         return r
 
 
-class TypeValuePairType:
+class TypeValuePairType(object):
     def __init__(self, type, namespace, value):
         self.type = type  # string
         self.namespace = namespace  # anyURI
@@ -82,7 +82,7 @@ class TypeValuePairType:
         return r
 
 
-class ServiceExceptionType:
+class ServiceExceptionType(object):
     def __init__(self, nsaId, connectionId, serviceType, errorId, text, variables, childException):
         self.nsaId = nsaId  # NsaIdType -> anyURI
         self.connectionId = connectionId  # ConnectionIdType -> string
@@ -101,7 +101,7 @@ class ServiceExceptionType:
                 element.findtext('errorId'),
                 element.findtext('text'),
                 [ TypeValuePairType.build(e) for e in element.find('variables') ] if element.find('variables') is not None else None,
-                [ ServiceExceptionType.build(e) for e in element.findall('nsaId') ] if element.find('nsaId') is not None else None
+                [ ServiceExceptionType.build(e) for e in element.findall('childException') ] if element.find('childException') is not None else None
                )
 
     def xml(self, elementName):
@@ -117,36 +117,36 @@ class ServiceExceptionType:
             ET.SubElement(r, 'variables').extend( [ e.xml('variables') for e in self.variables ] )
         if self.childException:
             for el in self.childException:
-                ET.SubElement(r, 'childException').extend( [ e.xml('nsaId') for e in el ] )
+                ET.SubElement(r, 'childException').extend( el.xml('childException') )
         return r
 
 
 class EthernetVlanType(object):
-    def __init__(self, sourceSTP, destSTP, sourceVLAN, destVLAN, mtu, burstsize, capacity, directionality, symmetricPath, ero):
-        self.sourceSTP = sourceSTP  # StpType
-        self.destSTP = destSTP  # StpType
-        self.sourceVLAN = sourceVLAN  # vlanIdType -> int
-        self.destVLAN = destVLAN  # vlanIdType -> int
-        self.mtu = mtu  # int
-        self.burstsize = burstsize  # long
+    def __init__(self, capacity, directionality, symmetricPath, sourceSTP, destSTP, ero, mtu, burstsize, sourceVLAN, destVLAN):
         self.capacity = capacity  # long
         self.directionality = directionality  # DirectionalityType -> string
         self.symmetricPath = symmetricPath  # boolean
+        self.sourceSTP = sourceSTP  # StpType
+        self.destSTP = destSTP  # StpType
         self.ero = ero  # [ OrderedStpType ]
+        self.mtu = mtu  # int
+        self.burstsize = burstsize  # long
+        self.sourceVLAN = sourceVLAN  # vlanIdType -> int
+        self.destVLAN = destVLAN  # vlanIdType -> int
 
     @classmethod
     def build(self, element):
         return EthernetVlanType(
-                StpType.build(element.find('sourceSTP')),
-                StpType.build(element.find('destSTP')),
-                int(element.findtext('sourceVLAN')),
-                int(element.findtext('destVLAN')),
-                int(element.findtext('mtu')) if element.findtext('mtu') else None,
-                int(element.findtext('burstsize')) if element.findtext('burstsize') else None,
                 int(element.findtext('capacity')),
                 element.findtext('directionality'),
                 None if element.find('symmetricPath') is not None else (True if element.findtext('symmetricPath') == 'true' else False),
-                [ OrderedStpType.build(e) for e in element.find('ero') ] if element.find('ero') is not None else None
+                StpType.build(element.find('sourceSTP')),
+                StpType.build(element.find('destSTP')),
+                [ OrderedStpType.build(e) for e in element.find('ero') ] if element.find('ero') is not None else None,
+                int(element.findtext('mtu')) if element.findtext('mtu') else None,
+                int(element.findtext('burstsize')) if element.findtext('burstsize') else None,
+                int(element.findtext('sourceVLAN')),
+                int(element.findtext('destVLAN'))
                )
 
     def xml(self, elementName):
@@ -168,7 +168,7 @@ class EthernetVlanType(object):
         return r
 
 
-class OrderedStpType:
+class OrderedStpType(object):
     def __init__(self, order, stp):
         self.order = order  # int
         self.stp = stp  # StpType
@@ -177,7 +177,7 @@ class OrderedStpType:
     def build(self, element):
         return OrderedStpType(
                 element.get('order'),
-                StpType.build(element.find('stp')) if element.find('stp') is not None else None
+                StpType.build(element.find('stp'))
                )
 
     def xml(self, elementName):
@@ -187,27 +187,27 @@ class OrderedStpType:
 
 
 class EthernetBaseType(object):
-    def __init__(self, mtu, burstsize, capacity, directionality, symmetricPath, sourceSTP, destSTP, ero):
-        self.mtu = mtu  # int
-        self.burstsize = burstsize  # long
+    def __init__(self, capacity, directionality, symmetricPath, sourceSTP, destSTP, ero, mtu, burstsize):
         self.capacity = capacity  # long
         self.directionality = directionality  # DirectionalityType -> string
         self.symmetricPath = symmetricPath  # boolean
         self.sourceSTP = sourceSTP  # StpType
         self.destSTP = destSTP  # StpType
         self.ero = ero  # [ OrderedStpType ]
+        self.mtu = mtu  # int
+        self.burstsize = burstsize  # long
 
     @classmethod
     def build(self, element):
         return EthernetBaseType(
-                int(element.findtext('mtu')) if element.findtext('mtu') else None,
-                int(element.findtext('burstsize')) if element.findtext('burstsize') else None,
                 int(element.findtext('capacity')),
                 element.findtext('directionality'),
                 None if element.find('symmetricPath') is not None else (True if element.findtext('symmetricPath') == 'true' else False),
                 StpType.build(element.find('sourceSTP')),
                 StpType.build(element.find('destSTP')),
-                [ OrderedStpType.build(e) for e in element.find('ero') ] if element.find('ero') is not None else None
+                [ OrderedStpType.build(e) for e in element.find('ero') ] if element.find('ero') is not None else None,
+                int(element.findtext('mtu')) if element.findtext('mtu') else None,
+                int(element.findtext('burstsize')) if element.findtext('burstsize') else None
                )
 
     def xml(self, elementName):
