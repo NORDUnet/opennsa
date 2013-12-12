@@ -4,7 +4,7 @@ from xml.etree import ElementTree as ET
 
 # types
 
-class QueryRecursiveResultCriteriaType:
+class QueryRecursiveResultCriteriaType(object):
     def __init__(self, version, schedule, serviceType, children):
         self.version = version  # int
         self.schedule = schedule  # ScheduleType
@@ -15,22 +15,22 @@ class QueryRecursiveResultCriteriaType:
     def build(self, element):
         return QueryRecursiveResultCriteriaType(
                 element.get('version'),
-                ScheduleType.build(element.find('schedule')) if element.find('schedule') is not None else None,
-                element.findtext('serviceType'),
+                ScheduleType.build(element.find('schedule')),
+                element.findtext('serviceType') if element.find('serviceType') is not None else None,
                 [ ChildRecursiveType.build(e) for e in element.find('children') ] if element.find('children') is not None else None
                )
 
     def xml(self, elementName):
         r = ET.Element(elementName, attrib={'version' : str(self.version)})
         r.append(self.schedule.xml('schedule'))
-        if self.serviceType:
+        if self.serviceType is not None:
             ET.SubElement(r, 'serviceType').text = self.serviceType
-        if self.children:
+        if self.children is not None:
             ET.SubElement(r, 'children').extend( [ e.xml('children') for e in self.children ] )
         return r
 
 
-class QuerySummaryResultCriteriaType:
+class QuerySummaryResultCriteriaType(object):
     def __init__(self, version, schedule, serviceType, children):
         self.version = version  # int
         self.schedule = schedule  # ScheduleType
@@ -41,22 +41,22 @@ class QuerySummaryResultCriteriaType:
     def build(self, element):
         return QuerySummaryResultCriteriaType(
                 element.get('version'),
-                ScheduleType.build(element.find('schedule')) if element.find('schedule') is not None else None,
-                element.findtext('serviceType'),
+                ScheduleType.build(element.find('schedule')),
+                element.findtext('serviceType') if element.find('serviceType') is not None else None,
                 [ ChildSummaryType.build(e) for e in element.find('children') ] if element.find('children') is not None else None
                )
 
     def xml(self, elementName):
         r = ET.Element(elementName, attrib={'version' : str(self.version)})
         r.append(self.schedule.xml('schedule'))
-        if self.serviceType:
+        if self.serviceType is not None:
             ET.SubElement(r, 'serviceType').text = self.serviceType
-        if self.children:
+        if self.children is not None:
             ET.SubElement(r, 'children').extend( [ e.xml('children') for e in self.children ] )
         return r
 
 
-class ScheduleType:
+class ScheduleType(object):
     def __init__(self, startTime, endTime):
         self.startTime = startTime  # DateTimeType -> dateTime
         self.endTime = endTime  # DateTimeType -> dateTime
@@ -64,20 +64,20 @@ class ScheduleType:
     @classmethod
     def build(self, element):
         return ScheduleType(
-                element.findtext('startTime'),
-                element.findtext('endTime')
+                element.findtext('startTime') if element.find('startTime') is not None else None,
+                element.findtext('endTime') if element.find('endTime') is not None else None
                )
 
     def xml(self, elementName):
         r = ET.Element(elementName)
-        if self.startTime:
+        if self.startTime is not None:
             ET.SubElement(r, 'startTime').text = str(self.startTime)
-        if self.endTime:
+        if self.endTime is not None:
             ET.SubElement(r, 'endTime').text = str(self.endTime)
         return r
 
 
-class ReserveConfirmedType:
+class ReserveConfirmedType(object):
     def __init__(self, connectionId, globalReservationId, description, criteria):
         self.connectionId = connectionId  # ConnectionIdType -> string
         self.globalReservationId = globalReservationId  # GlobalReservationIdType -> anyURI
@@ -88,30 +88,30 @@ class ReserveConfirmedType:
     def build(self, element):
         return ReserveConfirmedType(
                 element.findtext('connectionId'),
-                element.findtext('globalReservationId'),
-                element.findtext('description'),
-                ReservationConfirmCriteriaType.build(element.find('criteria')) if element.find('criteria') is not None else None
+                element.findtext('globalReservationId') if element.find('globalReservationId') is not None else None,
+                element.findtext('description') if element.find('description') is not None else None,
+                ReservationConfirmCriteriaType.build(element.find('criteria'))
                )
 
     def xml(self, elementName):
         r = ET.Element(elementName)
         ET.SubElement(r, 'connectionId').text = self.connectionId
-        if self.globalReservationId:
+        if self.globalReservationId is not None:
             ET.SubElement(r, 'globalReservationId').text = str(self.globalReservationId)
-        if self.description:
+        if self.description is not None:
             ET.SubElement(r, 'description').text = self.description
         r.append(self.criteria.xml('criteria'))
         return r
 
 
-class QueryFailedType:
+class QueryFailedType(object):
     def __init__(self, serviceException):
         self.serviceException = serviceException  # ServiceExceptionType
 
     @classmethod
     def build(self, element):
         return QueryFailedType(
-                ServiceExceptionType.build(element.find('serviceException')) if element.find('serviceException') is not None else None
+                ServiceExceptionType.build(element.find('serviceException'))
                )
 
     def xml(self, elementName):
@@ -120,7 +120,7 @@ class QueryFailedType:
         return r
 
 
-class ErrorEventType:
+class ErrorEventType(object):
     def __init__(self, connectionId, notificationId, timeStamp, event, additionalInfo, serviceException):
         self.connectionId = connectionId  # ConnectionIdType -> string
         self.notificationId = notificationId  # NotificationIdType -> int
@@ -137,7 +137,7 @@ class ErrorEventType:
                 element.findtext('timeStamp'),
                 element.findtext('event'),
                 [ TypeValuePairType.build(e) for e in element.find('additionalInfo') ] if element.find('additionalInfo') is not None else None,
-                ServiceExceptionType.build(element.find('serviceException')) if element.find('serviceException') is not None else None
+                ServiceExceptionType.build(element.find('serviceException'))
                )
 
     def xml(self, elementName):
@@ -146,14 +146,14 @@ class ErrorEventType:
         ET.SubElement(r, 'notificationId').text = str(self.notificationId)
         ET.SubElement(r, 'timeStamp').text = str(self.timeStamp)
         ET.SubElement(r, 'event').text = self.event
-        if self.additionalInfo:
+        if self.additionalInfo is not None:
             ET.SubElement(r, 'additionalInfo').extend( [ e.xml(ET.QName('http://schemas.ogf.org/nsi/2013/07/framework/types', 'additionalInfo')) for e in self.additionalInfo ] )
-        if self.serviceException:
+        if self.serviceException is not None:
             r.append(self.serviceException.xml(ET.QName('http://schemas.ogf.org/nsi/2013/07/framework/types', 'serviceException')))
         return r
 
 
-class QuerySummaryResultType:
+class QuerySummaryResultType(object):
     def __init__(self, connectionId, globalReservationId, description, criteria, requesterNSA, connectionStates, notificationId):
         self.connectionId = connectionId  # ConnectionIdType -> string
         self.globalReservationId = globalReservationId  # GlobalReservationIdType -> anyURI
@@ -167,22 +167,22 @@ class QuerySummaryResultType:
     def build(self, element):
         return QuerySummaryResultType(
                 element.findtext('connectionId'),
-                element.findtext('globalReservationId'),
-                element.findtext('description'),
+                element.findtext('globalReservationId') if element.find('globalReservationId') is not None else None,
+                element.findtext('description') if element.find('description') is not None else None,
                 [ QuerySummaryResultCriteriaType.build(e) for e in element.findall('criteria') ] if element.find('criteria') is not None else None,
                 element.findtext('requesterNSA'),
-                ConnectionStatesType.build(element.find('connectionStates')) if element.find('connectionStates') is not None else None,
-                int(element.findtext('notificationId'))
+                ConnectionStatesType.build(element.find('connectionStates')),
+                int(element.findtext('notificationId')) if element.find('notificationId') is not None else None
                )
 
     def xml(self, elementName):
         r = ET.Element(elementName)
         ET.SubElement(r, 'connectionId').text = self.connectionId
-        if self.globalReservationId:
+        if self.globalReservationId is not None:
             ET.SubElement(r, 'globalReservationId').text = str(self.globalReservationId)
-        if self.description:
+        if self.description is not None:
             ET.SubElement(r, 'description').text = self.description
-        if self.criteria:
+        if self.criteria is not None:
             for el in self.criteria:
                 ET.SubElement(r, 'criteria').extend( el.xml('criteria') )
         ET.SubElement(r, 'requesterNSA').text = str(self.requesterNSA)
@@ -192,7 +192,7 @@ class QuerySummaryResultType:
         return r
 
 
-class DataPlaneStateChangeRequestType:
+class DataPlaneStateChangeRequestType(object):
     def __init__(self, connectionId, notificationId, timeStamp, dataPlaneStatus):
         self.connectionId = connectionId  # ConnectionIdType -> string
         self.notificationId = notificationId  # NotificationIdType -> int
@@ -205,7 +205,7 @@ class DataPlaneStateChangeRequestType:
                 element.findtext('connectionId'),
                 int(element.findtext('notificationId')),
                 element.findtext('timeStamp'),
-                DataPlaneStatusType.build(element.find('dataPlaneStatus')) if element.find('dataPlaneStatus') is not None else None
+                DataPlaneStatusType.build(element.find('dataPlaneStatus'))
                )
 
     def xml(self, elementName):
@@ -217,7 +217,7 @@ class DataPlaneStateChangeRequestType:
         return r
 
 
-class GenericFailedType:
+class GenericFailedType(object):
     def __init__(self, connectionId, connectionStates, serviceException):
         self.connectionId = connectionId  # ConnectionIdType -> string
         self.connectionStates = connectionStates  # ConnectionStatesType
@@ -227,8 +227,8 @@ class GenericFailedType:
     def build(self, element):
         return GenericFailedType(
                 element.findtext('connectionId'),
-                ConnectionStatesType.build(element.find('connectionStates')) if element.find('connectionStates') is not None else None,
-                ServiceExceptionType.build(element.find('serviceException')) if element.find('serviceException') is not None else None
+                ConnectionStatesType.build(element.find('connectionStates')),
+                ServiceExceptionType.build(element.find('serviceException'))
                )
 
     def xml(self, elementName):
@@ -239,7 +239,7 @@ class GenericFailedType:
         return r
 
 
-class NotificationBaseType:
+class NotificationBaseType(object):
     def __init__(self, connectionId, notificationId, timeStamp):
         self.connectionId = connectionId  # ConnectionIdType -> string
         self.notificationId = notificationId  # NotificationIdType -> int
@@ -261,7 +261,7 @@ class NotificationBaseType:
         return r
 
 
-class ReservationRequestCriteriaType:
+class ReservationRequestCriteriaType(object):
     def __init__(self, version, schedule, serviceType, serviceDefinitions):
         self.version = version  # int
         self.schedule = schedule  # ScheduleType
@@ -275,16 +275,16 @@ class ReservationRequestCriteriaType:
         service_defs = [ p2pservices.parseElement(e) for e in element if e.tag not in ('schedule', 'serviceType') ]
         return ReservationRequestCriteriaType(
                 element.get('version'),
-                ScheduleType.build(element.find('schedule')) if element.find('schedule') is not None else None,
-                element.findtext('serviceType'),
+                ScheduleType.build(element.find('schedule')),
+                element.findtext('serviceType') if element.find('serviceType') is not None else None,
                 service_defs
                )
 
     def xml(self, elementName):
         r = ET.Element(elementName, attrib={'version' : str(self.version)})
-        if self.schedule:
+        if self.schedule is not None:
             r.append(self.schedule.xml('schedule'))
-        if self.serviceType:
+        if self.serviceType is not None:
             ET.SubElement(r, 'serviceType').text = self.serviceType
         if self.serviceDefinitions:
             for sn, sd in self.serviceDefinitions.items():
@@ -292,7 +292,7 @@ class ReservationRequestCriteriaType:
         return r
 
 
-class ReserveTimeoutRequestType:
+class ReserveTimeoutRequestType(object):
     def __init__(self, connectionId, notificationId, timeStamp, timeoutValue, originatingConnectionId, originatingNSA):
         self.connectionId = connectionId  # ConnectionIdType -> string
         self.notificationId = notificationId  # NotificationIdType -> int
@@ -323,7 +323,7 @@ class ReserveTimeoutRequestType:
         return r
 
 
-class ConnectionStatesType:
+class ConnectionStatesType(object):
     def __init__(self, reservationState, provisionState, lifecycleState, dataPlaneStatus):
         self.reservationState = reservationState  # ReservationStateEnumType -> string
         self.provisionState = provisionState  # ProvisionStateEnumType -> string
@@ -334,22 +334,22 @@ class ConnectionStatesType:
     def build(self, element):
         return ConnectionStatesType(
                 element.findtext('reservationState'),
-                element.findtext('provisionState'),
+                element.findtext('provisionState') if element.find('provisionState') is not None else None,
                 element.findtext('lifecycleState'),
-                DataPlaneStatusType.build(element.find('dataPlaneStatus')) if element.find('dataPlaneStatus') is not None else None
+                DataPlaneStatusType.build(element.find('dataPlaneStatus'))
                )
 
     def xml(self, elementName):
         r = ET.Element(elementName)
         ET.SubElement(r, 'reservationState').text = self.reservationState
-        if self.provisionState:
+        if self.provisionState is not None:
             ET.SubElement(r, 'provisionState').text = self.provisionState
         ET.SubElement(r, 'lifecycleState').text = self.lifecycleState
         r.append(self.dataPlaneStatus.xml('dataPlaneStatus'))
         return r
 
 
-class QueryNotificationConfirmedType:
+class QueryNotificationConfirmedType(object):
     def __init__(self, errorEvent, reserveTimeout, dataPlaneStateChange, messageDeliveryTimeout):
         self.errorEvent = errorEvent  # ErrorEventType
         self.reserveTimeout = reserveTimeout  # ReserveTimeoutRequestType
@@ -359,10 +359,10 @@ class QueryNotificationConfirmedType:
     @classmethod
     def build(self, element):
         return QueryNotificationConfirmedType(
-                ErrorEventType.build(element.find('errorEvent')) if element.find('errorEvent') is not None else None,
-                ReserveTimeoutRequestType.build(element.find('reserveTimeout')) if element.find('reserveTimeout') is not None else None,
-                DataPlaneStateChangeRequestType.build(element.find('dataPlaneStateChange')) if element.find('dataPlaneStateChange') is not None else None,
-                MessageDeliveryTimeoutRequestType.build(element.find('messageDeliveryTimeout')) if element.find('messageDeliveryTimeout') is not None else None
+                ErrorEventType.build(element.find('errorEvent')),
+                ReserveTimeoutRequestType.build(element.find('reserveTimeout')),
+                DataPlaneStateChangeRequestType.build(element.find('dataPlaneStateChange')),
+                MessageDeliveryTimeoutRequestType.build(element.find('messageDeliveryTimeout'))
                )
 
     def xml(self, elementName):
@@ -374,7 +374,7 @@ class QueryNotificationConfirmedType:
         return r
 
 
-class QueryNotificationType:
+class QueryNotificationType(object):
     def __init__(self, connectionId, startNotificationId, endNotificationId):
         self.connectionId = connectionId  # ConnectionIdType -> string
         self.startNotificationId = startNotificationId  # int
@@ -384,21 +384,21 @@ class QueryNotificationType:
     def build(self, element):
         return QueryNotificationType(
                 element.findtext('connectionId'),
-                int(element.findtext('startNotificationId')),
-                int(element.findtext('endNotificationId'))
+                int(element.findtext('startNotificationId')) if element.find('startNotificationId') is not None else None,
+                int(element.findtext('endNotificationId')) if element.find('endNotificationId') is not None else None
                )
 
     def xml(self, elementName):
         r = ET.Element(elementName)
         ET.SubElement(r, 'connectionId').text = self.connectionId
-        if self.startNotificationId:
+        if self.startNotificationId is not None:
             ET.SubElement(r, 'startNotificationId').text = str(self.startNotificationId)
-        if self.endNotificationId:
+        if self.endNotificationId is not None:
             ET.SubElement(r, 'endNotificationId').text = str(self.endNotificationId)
         return r
 
 
-class ReservationConfirmCriteriaType:
+class ReservationConfirmCriteriaType(object):
     def __init__(self, version, schedule, serviceType, serviceDefinitions):
         self.version = version  # int
         self.schedule = schedule  # ScheduleType
@@ -411,15 +411,15 @@ class ReservationConfirmCriteriaType:
         service_defs = dict( [ (e.tag, p2pservices.parseElement(e)) for e in element if e.tag not in ('schedule', 'serviceType') ] )
         return ReservationConfirmCriteriaType(
                 element.get('version'),
-                ScheduleType.build(element.find('schedule')) if element.find('schedule') is not None else None,
-                element.findtext('serviceType'),
+                ScheduleType.build(element.find('schedule')),
+                element.findtext('serviceType') if element.find('serviceType') is not None else None,
                 service_defs
                )
 
     def xml(self, elementName):
         r = ET.Element(elementName, attrib={'version' : str(self.version)})
         r.append(self.schedule.xml('schedule'))
-        if self.serviceType:
+        if self.serviceType is not None:
             ET.SubElement(r, 'serviceType').text = self.serviceType
         if self.serviceDefinitions:
             for sn, sd in self.serviceDefinitions.items():
@@ -427,7 +427,7 @@ class ReservationConfirmCriteriaType:
         return r
 
 
-class ReserveResponseType:
+class ReserveResponseType(object):
     def __init__(self, connectionId):
         self.connectionId = connectionId  # ConnectionIdType -> string
 
@@ -443,7 +443,7 @@ class ReserveResponseType:
         return r
 
 
-class GenericRequestType:
+class GenericRequestType(object):
     def __init__(self, connectionId):
         self.connectionId = connectionId  # ConnectionIdType -> string
 
@@ -459,7 +459,7 @@ class GenericRequestType:
         return r
 
 
-class TypeValuePairType:
+class TypeValuePairType(object):
     def __init__(self, type, namespace, value):
         self.type = type  # string
         self.namespace = namespace  # anyURI
@@ -470,18 +470,18 @@ class TypeValuePairType:
         return TypeValuePairType(
                 element.get('type'),
                 element.get('namespace'),
-                element.findtext('value')
+                element.findtext('value') if element.find('value') is not None else None
                )
 
     def xml(self, elementName):
         r = ET.Element(elementName, attrib={'type' : str(self.type), 'namespace' : str(self.namespace)})
-        if self.value:
+        if self.value is not None:
             for el in self.value:
                 ET.SubElement(r, 'value').text = el
         return r
 
 
-class ServiceExceptionType:
+class ServiceExceptionType(object):
     def __init__(self, nsaId, connectionId, serviceType, errorId, text, variables, childException):
         self.nsaId = nsaId  # NsaIdType -> anyURI
         self.connectionId = connectionId  # ConnectionIdType -> string
@@ -495,8 +495,8 @@ class ServiceExceptionType:
     def build(self, element):
         return ServiceExceptionType(
                 element.findtext('nsaId'),
-                element.findtext('connectionId'),
-                element.findtext('serviceType'),
+                element.findtext('connectionId') if element.find('connectionId') is not None else None,
+                element.findtext('serviceType') if element.find('serviceType') is not None else None,
                 element.findtext('errorId'),
                 element.findtext('text'),
                 [ TypeValuePairType.build(e) for e in element.find('variables') ] if element.find('variables') is not None else None,
@@ -506,21 +506,21 @@ class ServiceExceptionType:
     def xml(self, elementName):
         r = ET.Element(elementName)
         ET.SubElement(r, 'nsaId').text = str(self.nsaId)
-        if self.connectionId:
+        if self.connectionId is not None:
             ET.SubElement(r, 'connectionId').text = self.connectionId
-        if self.serviceType:
+        if self.serviceType is not None:
             ET.SubElement(r, 'serviceType').text = self.serviceType
         ET.SubElement(r, 'errorId').text = self.errorId
         ET.SubElement(r, 'text').text = self.text
-        if self.variables:
+        if self.variables is not None:
             ET.SubElement(r, 'variables').extend( [ e.xml('variables') for e in self.variables ] )
-        if self.childException:
+        if self.childException is not None:
             for el in self.childException:
                 ET.SubElement(r, 'childException').extend( el.xml('childException') )
         return r
 
 
-class GenericConfirmedType:
+class GenericConfirmedType(object):
     def __init__(self, connectionId):
         self.connectionId = connectionId  # ConnectionIdType -> string
 
@@ -536,7 +536,7 @@ class GenericConfirmedType:
         return r
 
 
-class ChildRecursiveType:
+class ChildRecursiveType(object):
     def __init__(self, order, connectionId, providerNSA, connectionStates, criteria):
         self.order = order  # int
         self.connectionId = connectionId  # ConnectionIdType -> string
@@ -550,7 +550,7 @@ class ChildRecursiveType:
                 element.get('order'),
                 element.findtext('connectionId'),
                 element.findtext('providerNSA'),
-                ConnectionStatesType.build(element.find('connectionStates')) if element.find('connectionStates') is not None else None,
+                ConnectionStatesType.build(element.find('connectionStates')),
                 [ QueryRecursiveResultCriteriaType.build(e) for e in element.findall('criteria') ] if element.find('criteria') is not None else None
                )
 
@@ -559,13 +559,13 @@ class ChildRecursiveType:
         ET.SubElement(r, 'connectionId').text = self.connectionId
         ET.SubElement(r, 'providerNSA').text = str(self.providerNSA)
         r.append(self.connectionStates.xml('connectionStates'))
-        if self.criteria:
+        if self.criteria is not None:
             for el in self.criteria:
                 ET.SubElement(r, 'criteria').extend( el.xml('criteria') )
         return r
 
 
-class QueryType:
+class QueryType(object):
     def __init__(self, connectionId, globalReservationId):
         self.connectionId = connectionId  # [ ConnectionIdType -> string ]
         self.globalReservationId = globalReservationId  # [ GlobalReservationIdType -> anyURI ]
@@ -579,16 +579,16 @@ class QueryType:
 
     def xml(self, elementName):
         r = ET.Element(elementName)
-        if self.connectionId:
+        if self.connectionId is not None:
             for el in self.connectionId:
                 ET.SubElement(r, 'connectionId').text = el
-        if self.globalReservationId:
+        if self.globalReservationId is not None:
             for el in self.globalReservationId:
                 ET.SubElement(r, 'globalReservationId').text = str(el)
         return r
 
 
-class QueryRecursiveResultType:
+class QueryRecursiveResultType(object):
     def __init__(self, connectionId, globalReservationId, description, criteria, requesterNSA, connectionStates, notificationId):
         self.connectionId = connectionId  # ConnectionIdType -> string
         self.globalReservationId = globalReservationId  # GlobalReservationIdType -> anyURI
@@ -602,32 +602,32 @@ class QueryRecursiveResultType:
     def build(self, element):
         return QueryRecursiveResultType(
                 element.findtext('connectionId'),
-                element.findtext('globalReservationId'),
-                element.findtext('description'),
+                element.findtext('globalReservationId') if element.find('globalReservationId') is not None else None,
+                element.findtext('description') if element.find('description') is not None else None,
                 [ QueryRecursiveResultCriteriaType.build(e) for e in element.findall('criteria') ] if element.find('criteria') is not None else None,
                 element.findtext('requesterNSA'),
-                ConnectionStatesType.build(element.find('connectionStates')) if element.find('connectionStates') is not None else None,
-                int(element.findtext('notificationId'))
+                ConnectionStatesType.build(element.find('connectionStates')),
+                int(element.findtext('notificationId')) if element.find('notificationId') is not None else None
                )
 
     def xml(self, elementName):
         r = ET.Element(elementName)
         ET.SubElement(r, 'connectionId').text = self.connectionId
-        if self.globalReservationId:
+        if self.globalReservationId is not None:
             ET.SubElement(r, 'globalReservationId').text = str(self.globalReservationId)
-        if self.description:
+        if self.description is not None:
             ET.SubElement(r, 'description').text = self.description
-        if self.criteria:
+        if self.criteria is not None:
             for el in self.criteria:
                 ET.SubElement(r, 'criteria').extend( el.xml('criteria') )
         ET.SubElement(r, 'requesterNSA').text = str(self.requesterNSA)
         r.append(self.connectionStates.xml('connectionStates'))
-        if self.notificationId:
+        if self.notificationId is not None:
             ET.SubElement(r, 'notificationId').text = str(self.notificationId)
         return r
 
 
-class DataPlaneStatusType:
+class DataPlaneStatusType(object):
     def __init__(self, active, version, versionConsistent):
         self.active = active  # boolean
         self.version = version  # int
@@ -649,14 +649,14 @@ class DataPlaneStatusType:
         return r
 
 
-class GenericErrorType:
+class GenericErrorType(object):
     def __init__(self, serviceException):
         self.serviceException = serviceException  # ServiceExceptionType
 
     @classmethod
     def build(self, element):
         return GenericErrorType(
-                ServiceExceptionType.build(element.find('serviceException')) if element.find('serviceException') is not None else None
+                ServiceExceptionType.build(element.find('serviceException'))
                )
 
     def xml(self, elementName):
@@ -665,7 +665,7 @@ class GenericErrorType:
         return r
 
 
-class ChildSummaryType:
+class ChildSummaryType(object):
     def __init__(self, order, connectionId, providerNSA, serviceType):
         self.order = order  # int
         self.connectionId = connectionId  # ConnectionIdType -> string
@@ -678,19 +678,19 @@ class ChildSummaryType:
                 element.get('order'),
                 element.findtext('connectionId'),
                 element.findtext('providerNSA'),
-                element.findtext('serviceType')
+                element.findtext('serviceType') if element.find('serviceType') is not None else None
                )
 
     def xml(self, elementName):
         r = ET.Element(elementName, attrib={'order' : str(self.order)})
         ET.SubElement(r, 'connectionId').text = self.connectionId
         ET.SubElement(r, 'providerNSA').text = str(self.providerNSA)
-        if self.serviceType:
+        if self.serviceType is not None:
             ET.SubElement(r, 'serviceType').text = self.serviceType
         return r
 
 
-class MessageDeliveryTimeoutRequestType:
+class MessageDeliveryTimeoutRequestType(object):
     def __init__(self, connectionId, notificationId, timeStamp, correlationId):
         self.connectionId = connectionId  # ConnectionIdType -> string
         self.notificationId = notificationId  # NotificationIdType -> int
@@ -715,7 +715,7 @@ class MessageDeliveryTimeoutRequestType:
         return r
 
 
-class GenericAcknowledgmentType:
+class GenericAcknowledgmentType(object):
     def __init__(self):
         pass
 
@@ -728,7 +728,7 @@ class GenericAcknowledgmentType:
         return r
 
 
-class ReserveType:
+class ReserveType(object):
     def __init__(self, connectionId, globalReservationId, description, criteria):
         self.connectionId = connectionId  # ConnectionIdType -> string
         self.globalReservationId = globalReservationId  # GlobalReservationIdType -> anyURI
@@ -738,19 +738,19 @@ class ReserveType:
     @classmethod
     def build(self, element):
         return ReserveType(
-                element.findtext('connectionId'),
-                element.findtext('globalReservationId'),
-                element.findtext('description'),
-                ReservationRequestCriteriaType.build(element.find('criteria')) if element.find('criteria') is not None else None
+                element.findtext('connectionId') if element.find('connectionId') is not None else None,
+                element.findtext('globalReservationId') if element.find('globalReservationId') is not None else None,
+                element.findtext('description') if element.find('description') is not None else None,
+                ReservationRequestCriteriaType.build(element.find('criteria'))
                )
 
     def xml(self, elementName):
         r = ET.Element(elementName)
-        if self.connectionId:
+        if self.connectionId is not None:
             ET.SubElement(r, 'connectionId').text = self.connectionId
-        if self.globalReservationId:
+        if self.globalReservationId is not None:
             ET.SubElement(r, 'globalReservationId').text = str(self.globalReservationId)
-        if self.description:
+        if self.description is not None:
             ET.SubElement(r, 'description').text = self.description
         r.append(self.criteria.xml('criteria'))
         return r
