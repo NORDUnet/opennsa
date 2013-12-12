@@ -18,7 +18,7 @@ class P2PServiceBaseType(object):
         return P2PServiceBaseType(
                 int(element.findtext('capacity')),
                 element.findtext('directionality'),
-                None if element.find('symmetricPath') is not None else (True if element.findtext('symmetricPath') == 'true' else False),
+                True if element.findtext('symmetricPath') == 'true' else False if element.find('symmetricPath') is not None else None,
                 StpType.build(element.find('sourceSTP')),
                 StpType.build(element.find('destSTP')),
                 [ OrderedStpType.build(e) for e in element.find('ero') ] if element.find('ero') is not None else None
@@ -28,11 +28,11 @@ class P2PServiceBaseType(object):
         r = ET.Element(elementName)
         ET.SubElement(r, 'capacity').text = str(self.capacity)
         ET.SubElement(r, 'directionality').text = self.directionality
-        if self.symmetricPath:
+        if self.symmetricPath is not None:
             ET.SubElement(r, 'symmetricPath').text = 'true' if self.symmetricPath else 'false'
         r.append(self.sourceSTP.xml('sourceSTP'))
         r.append(self.destSTP.xml('destSTP'))
-        if self.ero:
+        if self.ero is not None:
             ET.SubElement(r, 'ero').extend( [ e.xml('ero') for e in self.ero ] )
         return r
 
@@ -55,7 +55,7 @@ class StpType(object):
         r = ET.Element(elementName)
         ET.SubElement(r, 'networkId').text = self.networkId
         ET.SubElement(r, 'localId').text = self.localId
-        if self.labels:
+        if self.labels is not None:
             ET.SubElement(r, 'labels').extend( [ e.xml('labels') for e in self.labels ] )
         return r
 
@@ -71,12 +71,12 @@ class TypeValuePairType(object):
         return TypeValuePairType(
                 element.get('type'),
                 element.get('namespace'),
-                element.findtext('value')
+                element.findtext('value') if element.find('value') is not None else None
                )
 
     def xml(self, elementName):
         r = ET.Element(elementName, attrib={'type' : str(self.type), 'namespace' : str(self.namespace)})
-        if self.value:
+        if self.value is not None:
             for el in self.value:
                 ET.SubElement(r, 'value').text = el
         return r
@@ -96,8 +96,8 @@ class ServiceExceptionType(object):
     def build(self, element):
         return ServiceExceptionType(
                 element.findtext('nsaId'),
-                element.findtext('connectionId'),
-                element.findtext('serviceType'),
+                element.findtext('connectionId') if element.find('connectionId') is not None else None,
+                element.findtext('serviceType') if element.find('serviceType') is not None else None,
                 element.findtext('errorId'),
                 element.findtext('text'),
                 [ TypeValuePairType.build(e) for e in element.find('variables') ] if element.find('variables') is not None else None,
@@ -107,15 +107,15 @@ class ServiceExceptionType(object):
     def xml(self, elementName):
         r = ET.Element(elementName)
         ET.SubElement(r, 'nsaId').text = str(self.nsaId)
-        if self.connectionId:
+        if self.connectionId is not None:
             ET.SubElement(r, 'connectionId').text = self.connectionId
-        if self.serviceType:
+        if self.serviceType is not None:
             ET.SubElement(r, 'serviceType').text = self.serviceType
         ET.SubElement(r, 'errorId').text = self.errorId
         ET.SubElement(r, 'text').text = self.text
-        if self.variables:
+        if self.variables is not None:
             ET.SubElement(r, 'variables').extend( [ e.xml('variables') for e in self.variables ] )
-        if self.childException:
+        if self.childException is not None:
             for el in self.childException:
                 ET.SubElement(r, 'childException').extend( el.xml('childException') )
         return r
@@ -139,12 +139,12 @@ class EthernetVlanType(object):
         return EthernetVlanType(
                 int(element.findtext('capacity')),
                 element.findtext('directionality'),
-                None if element.find('symmetricPath') is not None else (True if element.findtext('symmetricPath') == 'true' else False),
+                True if element.findtext('symmetricPath') == 'true' else False if element.find('symmetricPath') is not None else None,
                 StpType.build(element.find('sourceSTP')),
                 StpType.build(element.find('destSTP')),
                 [ OrderedStpType.build(e) for e in element.find('ero') ] if element.find('ero') is not None else None,
-                int(element.findtext('mtu')) if element.findtext('mtu') else None,
-                int(element.findtext('burstsize')) if element.findtext('burstsize') else None,
+                int(element.findtext('mtu')) if element.find('mtu') is not None else None,
+                int(element.findtext('burstsize')) if element.find('burstsize') is not None else None,
                 int(element.findtext('sourceVLAN')),
                 int(element.findtext('destVLAN'))
                )
@@ -153,15 +153,15 @@ class EthernetVlanType(object):
         r = ET.Element(elementName)
         ET.SubElement(r, 'capacity').text = str(self.capacity)
         ET.SubElement(r, 'directionality').text = self.directionality
-        if self.symmetricPath:
+        if self.symmetricPath is not None:
             ET.SubElement(r, 'symmetricPath').text = 'true' if self.symmetricPath else 'false'
         r.append(self.sourceSTP.xml('sourceSTP'))
         r.append(self.destSTP.xml('destSTP'))
-        if self.ero:
+        if self.ero is not None:
             ET.SubElement(r, 'ero').extend( [ e.xml('ero') for e in self.ero ] )
-        if self.mtu:
+        if self.mtu is not None:
             ET.SubElement(r, 'mtu').text = str(self.mtu)
-        if self.burstsize:
+        if self.burstsize is not None:
             ET.SubElement(r, 'burstsize').text = str(self.burstsize)
         ET.SubElement(r, 'sourceVLAN').text = str(self.sourceVLAN)
         ET.SubElement(r, 'destVLAN').text = str(self.destVLAN)
@@ -202,27 +202,27 @@ class EthernetBaseType(object):
         return EthernetBaseType(
                 int(element.findtext('capacity')),
                 element.findtext('directionality'),
-                None if element.find('symmetricPath') is not None else (True if element.findtext('symmetricPath') == 'true' else False),
+                True if element.findtext('symmetricPath') == 'true' else False if element.find('symmetricPath') is not None else None,
                 StpType.build(element.find('sourceSTP')),
                 StpType.build(element.find('destSTP')),
                 [ OrderedStpType.build(e) for e in element.find('ero') ] if element.find('ero') is not None else None,
-                int(element.findtext('mtu')) if element.findtext('mtu') else None,
-                int(element.findtext('burstsize')) if element.findtext('burstsize') else None
+                int(element.findtext('mtu')) if element.find('mtu') is not None else None,
+                int(element.findtext('burstsize')) if element.find('burstsize') is not None else None
                )
 
     def xml(self, elementName):
         r = ET.Element(elementName)
         ET.SubElement(r, 'capacity').text = str(self.capacity)
         ET.SubElement(r, 'directionality').text = self.directionality
-        if self.symmetricPath:
+        if self.symmetricPath is not None:
             ET.SubElement(r, 'symmetricPath').text = 'true' if self.symmetricPath else 'false'
         r.append(self.sourceSTP.xml('sourceSTP'))
         r.append(self.destSTP.xml('destSTP'))
-        if self.ero:
+        if self.ero is not None:
             ET.SubElement(r, 'ero').extend( [ e.xml('ero') for e in self.ero ] )
-        if self.mtu:
+        if self.mtu is not None:
             ET.SubElement(r, 'mtu').text = str(self.mtu)
-        if self.burstsize:
+        if self.burstsize is not None:
             ET.SubElement(r, 'burstsize').text = str(self.burstsize)
         return r
 

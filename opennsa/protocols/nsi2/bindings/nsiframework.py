@@ -25,7 +25,7 @@ class CommonHeaderType(object):
                 element.findtext('correlationId'),
                 element.findtext('requesterNSA'),
                 element.findtext('providerNSA'),
-                element.findtext('replyTo'),
+                element.findtext('replyTo') if element.find('replyTo') is not None else None,
                 AttributeStatementType.build(element.find('sessionSecurityAttr')) if element.find('sessionSecurityAttr') is not None else None
                )
 
@@ -92,12 +92,12 @@ class TypeValuePairType(object):
         return TypeValuePairType(
                 element.get('type'),
                 element.get('namespace'),
-                element.findtext('value')
+                element.findtext('value') if element.find('value') is not None else None
                )
 
     def xml(self, elementName):
         r = ET.Element(elementName, attrib={'type' : str(self.type), 'namespace' : str(self.namespace)})
-        if self.value:
+        if self.value is not None:
             for el in self.value:
                 ET.SubElement(r, 'value').text = el
         return r
@@ -117,8 +117,8 @@ class ServiceExceptionType(object):
     def build(self, element):
         return ServiceExceptionType(
                 element.findtext('nsaId'),
-                element.findtext('connectionId'),
-                element.findtext('serviceType'),
+                element.findtext('connectionId') if element.find('connectionId') is not None else None,
+                element.findtext('serviceType') if element.find('serviceType') is not None else None,
                 element.findtext('errorId'),
                 element.findtext('text'),
                 [ TypeValuePairType.build(e) for e in element.find('variables') ] if element.find('variables') is not None else None,
@@ -128,15 +128,15 @@ class ServiceExceptionType(object):
     def xml(self, elementName):
         r = ET.Element(elementName)
         ET.SubElement(r, 'nsaId').text = str(self.nsaId)
-        if self.connectionId:
+        if self.connectionId is not None:
             ET.SubElement(r, 'connectionId').text = self.connectionId
-        if self.serviceType:
+        if self.serviceType is not None:
             ET.SubElement(r, 'serviceType').text = self.serviceType
         ET.SubElement(r, 'errorId').text = self.errorId
         ET.SubElement(r, 'text').text = self.text
-        if self.variables:
+        if self.variables is not None:
             ET.SubElement(r, 'variables').extend( [ e.xml('variables') for e in self.variables ] )
-        if self.childException:
+        if self.childException is not None:
             for el in self.childException:
                 ET.SubElement(r, 'childException').extend( el.xml('childException') )
         return r
