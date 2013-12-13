@@ -650,9 +650,10 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
         self.failUnlessEquals(req_nsa, self.requester_agent.urn())
         self.failUnlessEquals(len(crits), 1)
         crit = crits[0]
+        sd = crit.service_def
 
-        src_stp = crit.source_stp
-        dst_stp = crit.dest_stp
+        src_stp = sd.source_stp
+        dst_stp = sd.dest_stp
 
         self.failUnlessEquals(src_stp.network, self.network)
         self.failUnlessEquals(src_stp.port,    self.source_port)
@@ -666,8 +667,8 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
         self.failUnlessEquals(dst_stp.labels[0].type_, cnt.ETHERNET_VLAN)
         self.failUnlessEquals(dst_stp.labels[0].labelValue(), '1782')
 
-        self.failUnlessEqual(crit.bandwidth, self.bandwidth)
-        self.failUnlessEqual(crit.version,   0)
+        self.failUnlessEqual(sd.capacity, self.bandwidth)
+        self.failUnlessEqual(crit.revision,   0)
 
         from opennsa import state
         rsm, psm, lsm, dps = states

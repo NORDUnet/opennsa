@@ -196,13 +196,23 @@ def buildQuerySummaryResult(query_confirmed):
             end_time   = parseXMLTimestamp(rc.schedule.endTime)
             schedule = nsa.Schedule(start_time, end_time)
 
-            # service definition stuff not quite done yet
-            #source_stp = createSTP(rp.sourceSTP)
-            #dest_stp   = createSTP(rp.destSTP)
+            service_def = None
+            if len(rc.serviceDefinitions) > 1:
+                log.msg('More than one service definition in a criteria, only using the first to build query summary result', system=LOG_SYSTEM)
 
-            #sd = nsa.EthernetVLANService(source_stp, dest_stp, c.bandwidth, 1, 1)
-            sd = None
-            crit = nsa.Criteria(rc.version, schedule, sd)
+            for qname, sd in rc.serviceDefinitions.items():
+                if qname != p2pservices.evts:
+                    log.msg('Got non evts service, cannot build query summary for that yet', system=LOG_SYSTEM)
+                    continue
+
+                source_stp = createSTP(sd.sourceSTP)
+                dest_stp   = createSTP(sd.destSTP)
+                source_stp.labels = [ nsa.Label(cnt.ETHERNET_VLAN, str(sd.sourceVLAN)) ]
+                dest_stp.labels   = [ nsa.Label(cnt.ETHERNET_VLAN, str(sd.destVLAN))   ]
+                # source_stp, dest_stp, capacity, mtu, burst_size,  directionality=BIDIRECTIONAL, symmetric=False, ero=None):
+                service_def = nsa.EthernetVLANService(source_stp, dest_stp, sd.capacity, sd.mtu, sd.burstsize, sd.directionality, sd.symmetricPath, None)
+
+            crit = nsa.Criteria(int(rc.version), schedule, service_def)
             criterias.append(crit)
 
     reservation = ( qc.connectionId, qc.globalReservationId, qc.description, criterias, qc.requesterNSA, states, qc.notificationId)
@@ -211,6 +221,23 @@ def buildQuerySummaryResult(query_confirmed):
 
 
 def buildQuerySummaryResultType(reservations):
+
+    def buildServiceDefinition(service_def):
+        if type(service_def) is nsa.EthernetVLANService:
+            service_type = cnt.EVTS_AGOLE
+            sd = service_def
+            source_stp        = createSTPType(sd.source_stp)
+            dest_stp          = createSTPType(sd.dest_stp)
+            source_vlan       = sd.source_stp.labels[0].labelValue()
+            dest_vlan         = sd.dest_stp.labels[0].labelValue()
+            source_stp.labels = None
+            dest_stp.labels   = None
+            evts = p2pservices.EthernetVlanType(sd.capacity, sd.directionality, sd.symmetric,
+                                                source_stp, dest_stp, None, sd.mtu, sd.burst_size, source_vlan, dest_vlan)
+            return service_type, [ (p2pservices.evts, evts) ]
+        else:
+            return 'N/A', None
+
 
     query_results = []
 
@@ -222,9 +249,9 @@ def buildQuerySummaryResultType(reservations):
         criterias = []
         for crit in crits:
             schedule = nsiconnection.ScheduleType(createXMLTime(crit.schedule.start_time), createXMLTime(crit.schedule.end_time))
-            service_type = cnt.EVTS_AGOLE if type(crit.service_def) is nsa.EthernetVLANService else 'n/a'
+            service_type, service_defs = buildServiceDefinition(crit.service_def)
             children = []
-            criteria = nsiconnection.QuerySummaryResultCriteriaType(crit.revision, schedule, service_type, children)
+            criteria = nsiconnection.QuerySummaryResultCriteriaType(crit.revision, schedule, service_type, children, service_defs )
             criterias.append(criteria)
 
         data_plane_status = nsiconnection.DataPlaneStatusType(dsm[0], dsm[1], dsm[2])
