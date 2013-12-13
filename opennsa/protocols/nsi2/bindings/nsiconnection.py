@@ -31,19 +31,23 @@ class QueryRecursiveResultCriteriaType(object):
 
 
 class QuerySummaryResultCriteriaType(object):
-    def __init__(self, version, schedule, serviceType, children):
+    def __init__(self, version, schedule, serviceType, children, serviceDefinitions):
         self.version = version  # int
         self.schedule = schedule  # ScheduleType
         self.serviceType = serviceType  # string
         self.children = children  # [ ChildSummaryType ]
+        self.serviceDefinitions = serviceDefinitions # [ ( qname, anyType ) ]
 
     @classmethod
     def build(self, element):
+        from . import p2pservices
+        service_defs = dict( [ (e.tag, p2pservices.parseElement(e)) for e in element if e.tag not in ('schedule', 'serviceType', 'children') ] )
         return QuerySummaryResultCriteriaType(
                 element.get('version'),
                 ScheduleType.build(element.find('schedule')),
                 element.findtext('serviceType') if element.find('serviceType') is not None else None,
-                [ ChildSummaryType.build(e) for e in element.find('children') ] if element.find('children') is not None else None
+                [ ChildSummaryType.build(e) for e in element.find('children') ] if element.find('children') is not None else None,
+                service_defs
                )
 
     def xml(self, elementName):
@@ -53,6 +57,9 @@ class QuerySummaryResultCriteriaType(object):
             ET.SubElement(r, 'serviceType').text = self.serviceType
         if self.children is not None:
             ET.SubElement(r, 'children').extend( [ e.xml('children') for e in self.children ] )
+        if self.serviceDefinitions:
+            for sn, sd in self.serviceDefinitions:
+                r.append(sd.xml(sn))
         return r
 
 
