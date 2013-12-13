@@ -137,7 +137,7 @@ class ErrorEventType(object):
                 element.findtext('timeStamp'),
                 element.findtext('event'),
                 [ TypeValuePairType.build(e) for e in element.find('additionalInfo') ] if element.find('additionalInfo') is not None else None,
-                ServiceExceptionType.build(element.find('serviceException'))
+                ServiceExceptionType.build(element.find('serviceException')) if element.find('serviceException') is not None else None
                )
 
     def xml(self, elementName):
@@ -275,7 +275,7 @@ class ReservationRequestCriteriaType(object):
         service_defs = [ p2pservices.parseElement(e) for e in element if e.tag not in ('schedule', 'serviceType') ]
         return ReservationRequestCriteriaType(
                 element.get('version'),
-                ScheduleType.build(element.find('schedule')),
+                ScheduleType.build(element.find('schedule')) if element.find('schedule') is not None else None,
                 element.findtext('serviceType') if element.find('serviceType') is not None else None,
                 service_defs
                )
