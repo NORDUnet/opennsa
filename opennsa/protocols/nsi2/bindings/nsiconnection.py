@@ -191,7 +191,7 @@ class QuerySummaryResultType(object):
             ET.SubElement(r, 'description').text = self.description
         if self.criteria is not None:
             for el in self.criteria:
-                ET.SubElement(r, 'criteria').extend( el.xml('criteria') )
+                r.append( el.xml('criteria') )
         ET.SubElement(r, 'requesterNSA').text = str(self.requesterNSA)
         r.append(self.connectionStates.xml('connectionStates'))
         if self.notificationId is not None:
