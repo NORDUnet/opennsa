@@ -14,7 +14,7 @@ import random
 import urlparse
 import itertools
 
-from opennsa import error, constants as cnt
+from opennsa import error
 
 
 
