@@ -9,7 +9,6 @@ Copyright: NORDUnet (2013)
 from twisted.python import log
 
 from xml.etree import ElementTree as ET
-import datetime
 
 from opennsa import constants as cnt, nsa
 from opennsa.topology import nml

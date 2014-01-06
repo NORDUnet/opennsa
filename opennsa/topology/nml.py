@@ -25,46 +25,45 @@ URN_OGF_NETWORK = 'urn:ogf:network:'
 
 class Port(object):
 
-    def __init__(self, id_, name, labels, remote_port=None):
+    def __init__(self, id_, name, label, remote_port=None):
 
         assert not id_.startswith('urn:'), 'URNs are not used in core OpenNSA NML (id: %s)' % id_
         assert ':' not in name, 'Invalid port name %s, must not contain ":"' % name
-        if labels:
-            assert type(labels) is list, 'labels must be list or None'
-            for label in labels:
-                assert type(label) is nsa.Label
+        if label is not None:
+            assert type(label) is nsa.Label, 'label must be nsa.Label or None, type(%s)' % str(type(label))
 
         self.id_            = id_               # The URN of the port
         self.name           = name              # String  ; Base name, no network name or uri prefix
-        self._labels        = labels            # [ nsa.Label ]  ; can be empty
+        self._label         = label             # nsa.Label ; can be None
         self.remote_port    = remote_port       # String
 
 
-    def canMatchLabels(self, labels):
-        if self._labels is None and labels is None:
+    def canMatchLabel(self, label):
+        if self._label is None and label is None:
             return True
-        elif self._labels is None or labels is None:
+        elif self._label is None or label is None:
             return False
-        elif len(self._labels) != len(labels):
+#        elif len(self._labels) != len(labels):
+#            return False
+#        elif len(self._labels) == 1: # len(labels) is identical
+
+#        if self._label.type_ != label.type_:
+#            return False
+        try:
+            self._label.intersect(label)
+            return True
+        except nsa.EmptyLabelSet:
             return False
-        elif len(self._labels) == 1: # len(labels) is identical
-            if self._labels[0].type_ != labels[0].type_:
-                return False
-            try:
-                self._labels[0].intersect(labels[0])
-                return True
-            except nsa.EmptyLabelSet:
-                return False
-        else:
-            raise NotImplementedError('Multi-label matching not yet implemented')
+#    else:
+#        raise NotImplementedError('Multi-label matching not yet implemented')
 
 
     def isBidirectional(self):
         return False
 
 
-    def labels(self):
-        return self._labels
+    def label(self):
+        return self._label
 
 
     def hasRemote(self):
@@ -72,7 +71,7 @@ class Port(object):
 
 
     def __repr__(self):
-        return '<Port %s (%s) # %s -> %s>' % (self.id_, self.name, self._labels, self.remote_port)
+        return '<Port %s (%s) # %s -> %s>' % (self.id_, self.name, self._label, self.remote_port)
 
 
 
@@ -80,8 +79,8 @@ class InternalPort(Port):
     """
     Same as Port, but also has a bandwidth, so the pathfinder can probe for bandwidth.
     """
-    def __init__(self, id_, name, bandwidth, labels, remote_port=None):
-        super(InternalPort, self).__init__(id_, name, labels, remote_port)
+    def __init__(self, id_, name, bandwidth, label, remote_port=None):
+        super(InternalPort, self).__init__(id_, name, label, remote_port)
         self.bandwidth = bandwidth
 
 
@@ -90,7 +89,7 @@ class InternalPort(Port):
 
 
     def __repr__(self):
-        return '<InternalPort %s (%s) # %s : %i -> %s>' % (self.id_, self.name, self._labels, self.bandwidth, self.remote_port)
+        return '<InternalPort %s (%s) # %s : %i -> %s>' % (self.id_, self.name, self._label, self.bandwidth, self.remote_port)
 
 
 
@@ -101,7 +100,7 @@ class BidirectionalPort(object):
         assert type(name) is str, 'Port name must be a string'
         assert isinstance(inbound_port, Port), 'Inbound port must be a <Port>'
         assert isinstance(outbound_port, Port), 'Outbound port must be a <Port>'
-        assert [ l.type_ for l in inbound_port.labels() ] == [ l.type_ for l in outbound_port.labels() ], 'Port labels must match each other'
+        assert inbound_port.label().type_ == outbound_port.label().type_, 'Port labels must match each other'
         assert not id_.startswith('urn:'), 'URNs are not used in core OpenNSA NML (id: %s)' % id_
 
         self.id_ = id_
@@ -114,16 +113,16 @@ class BidirectionalPort(object):
         return True
 
 
-    def labels(self):
+    def label(self):
         # we only do one label at the moment
-        if self.inbound_port.labels and self.outbound_port.labels:
-            return [ self.inbound_port.labels()[0].intersect(self.outbound_port.labels()[0]) ]
+        if self.inbound_port.label() and self.outbound_port.label():
+            return self.inbound_port.label().intersect(self.outbound_port.label())
         else:
-            return []
+            return None
 
 
-    def canMatchLabels(self, labels):
-        return self.inbound_port.canMatchLabels(labels) and self.outbound_port.canMatchLabels(labels)
+    def canMatchLabel(self, label):
+        return self.inbound_port.canMatchLabel(label) and self.outbound_port.canMatchLabel(label)
 
 
     def hasRemote(self):
@@ -168,10 +167,10 @@ class Network(object):
         raise error.TopologyError('No port named %s for network %s (ports: %s)' %(port_id, self.name, str(ports)))
 
 
-    def findPorts(self, bidirectionality, labels=None, exclude=None):
+    def findPorts(self, bidirectionality, label=None, exclude=None):
         matching_ports = []
         for port in itertools.chain(self.inbound_ports, self.outbound_ports, self.bidirectional_ports):
-            if port.isBidirectional() == bidirectionality and (labels is None or port.canMatchLabels(labels)):
+            if port.isBidirectional() == bidirectionality and (label is None or port.canMatchLabel(label)):
                 if exclude and port.id_ == exclude:
                     continue
                 matching_ports.append(port)
@@ -279,10 +278,10 @@ class Topology(object):
                 raise error.TopologyError('Cannot connect STPs of same unidirectional direction (%s -> %s)' % (source_port.orientation, dest_port.orientation))
 
         # these are only really interesting for the initial call, afterwards they just prune
-        if not source_port.canMatchLabels(source_stp.labels):
-            raise error.TopologyError('Source port %s (labels %s) cannot match labels for source STP (%s)' % (source_port.id_, source_port.labels(), source_stp.labels))
-        if not dest_port.canMatchLabels(dest_stp.labels):
-            raise error.TopologyError('Desitination port %s (labels %s) cannot match labels for destination STP %s' % (dest_port.id_, dest_port.labels(), dest_stp.labels))
+        if not source_port.canMatchLabel(source_stp.label):
+            raise error.TopologyError('Source port %s (label %s) cannot match label for source STP (%s)' % (source_port.id_, source_port.label(), source_stp.label))
+        if not dest_port.canMatchLabel(dest_stp.label):
+            raise error.TopologyError('Desitination port %s (label %s) cannot match label for destination STP %s' % (dest_port.id_, dest_port.label(), dest_stp.label))
 #        if not source_port.canProvideBandwidth(bandwidth):
 #            raise error.BandwidthUnavailableError('Source port cannot provide enough bandwidth (%i)' % bandwidth)
 #        if not dest_port.canProvideBandwidth(bandwidth):
@@ -298,12 +297,10 @@ class Topology(object):
         source_port    = source_network.getPort(source_stp.port)
         dest_port      = dest_network.getPort(dest_stp.port)
 
-        if not (source_port.canMatchLabels(source_stp.labels) or dest_port.canMatchLabels(dest_stp.labels)):
+        if not (source_port.canMatchLabel(source_stp.label) or dest_port.canMatchLabel(dest_stp.label)):
             return []
 #        if not (source_port.canProvideBandwidth(bandwidth) and dest_port.canProvideBandwidth(bandwidth)):
 #            return []
-
-        # this code heavily relies on the assumption that ports only have one label
 
         if source_port.isBidirectional() and dest_port.isBidirectional():
             # bidirectional path finding, easy case first
@@ -311,19 +308,19 @@ class Topology(object):
                 # while it is possible to cross other network in order to connect to intra-network STPs
                 # it is not something we really want to do in the real world, so we don't
                 try:
-                    if source_network.canSwapLabel(source_stp.labels[0].type_):
-                        source_labels = source_port.labels()[0].intersect(source_stp.labels[0])
-                        dest_labels   = dest_port.labels()[0].intersect(dest_stp.labels[0])
+                    if source_network.canSwapLabel(source_stp.label.type_):
+                        source_label = source_port.label().intersect(source_stp.label)
+                        dest_label   = dest_port.label().intersect(dest_stp.label)
                     else:
-                        source_labels = source_port.labels()[0].intersect(dest_port.labels()[0]).intersect(source_stp.labels[0]).intersect(dest_stp.labels[0])
-                        dest_labels   = source_labels
-                    link = nsa.Link(source_stp.network, source_stp.port, dest_stp.port, [source_labels], [dest_labels])
+                        source_label = source_port.label().intersect(dest_port.label()).intersect(source_stp.label).intersect(dest_stp.label)
+                        dest_label   = source_label
+                    link = nsa.Link(source_stp.network, source_stp.port, dest_stp.port, source_label, dest_label)
                     return [ [ link ] ]
                 except nsa.EmptyLabelSet:
                     return [] # no path
             else:
                 # ok, time for real pathfinding
-                link_ports = source_network.findPorts(True, source_stp.labels, source_stp.port)
+                link_ports = source_network.findPorts(True, source_stp.label, source_stp.port)
                 link_ports = [ port for port in link_ports if port.hasRemote() ] # filter out termination ports
                 links = []
                 for lp in link_ports:
@@ -336,8 +333,8 @@ class Topology(object):
                     if exclude_networks is not None and demarcation[0] in exclude_networks:
                         continue # don't do loops in path finding
 
-                    demarcation_label = lp.labels()[0] if source_network.canSwapLabel(source_stp.labels[0].type_) else source_stp.labels[0].intersect(lp.labels()[0])
-                    demarcation_stp = nsa.STP(demarcation[0], demarcation[1], [ demarcation_label ] )
+                    demarcation_label = lp.label() if source_network.canSwapLabel(source_stp.label.type_) else source_stp.label.intersect(lp.label())
+                    demarcation_stp = nsa.STP(demarcation[0], demarcation[1], demarcation_label)
                     sub_exclude_networks = [ source_network.id_ ] + (exclude_networks or [])
                     sub_links = self._findPathsRecurse(demarcation_stp, dest_stp, bandwidth, sub_exclude_networks)
                     # if we didn't find any sub paths, just continue
@@ -346,14 +343,14 @@ class Topology(object):
 
                     for sl in sub_links:
                         # --
-                        if source_network.canSwapLabel(source_stp.labels[0].type_):
-                            source_label = source_port.labels()[0].intersect(source_stp.labels[0])
-                            dest_label   = lp.labels()[0].intersect(sl[0].src_labels[0])
+                        if source_network.canSwapLabel(source_stp.label.type_):
+                            source_label = source_port.label().intersect(source_stp.label)
+                            dest_label   = lp.label().intersect(sl[0].src_label)
                         else:
-                            source_label = source_port.labels()[0].intersect(source_stp.labels[0]).intersect(lp.labels()[0]).intersect(sl[0].src_labels[0])
+                            source_label = source_port.label().intersect(source_stp.label).intersect(lp.label()).intersect(sl[0].src_label)
                             dest_label   = source_label
 
-                        first_link = nsa.Link(source_stp.network, source_stp.port, lp.id_, [source_label], [dest_label])
+                        first_link = nsa.Link(source_stp.network, source_stp.port, lp.id_, source_label, dest_label)
                         path = [ first_link ] + sl
                         links.append(path)
 

@@ -50,22 +50,26 @@ def _parseRemoteSpec(remote_spec):
 
 
 def _parseLabelSpec(label_spec):
-    labels = []
-    for l_entry in label_spec.split('|'):
-        if not ':' in l_entry:
-            raise error.TopologyError('Invalid label description: %s' % l_entry)
+#    labels = []
+#    for l_entry in label_spec.split('|'):
 
-        label_type_alias, label_range = l_entry.split(':', 1)
-        try:
-            label_type = LABEL_TYPES[label_type_alias]
-        except KeyError:
-            raise error.TopologyError('Label type %s does not map to proper label.' % label_type_alias)
+    if not ':' in label_spec:
+        raise error.TopologyError('Invalid label description: %s' % label_spec)
 
-        if label_type in [ label.type_ for label in labels ]:
-            raise error.TopologyError('Multiple labels for type %s' % label_type)
+    label_type_alias, label_range = label_spec.split(':', 1)
+    try:
+        label_type = LABEL_TYPES[label_type_alias]
+    except KeyError:
+        raise error.TopologyError('Label type %s does not map to proper label.' % label_type_alias)
 
-        labels.append( nsa.Label(label_type, label_range) ) # range is parsed in nsa.Label
-    return labels
+#    if label_type in [ label.type_ for label in labels ]:
+#        raise error.TopologyError('Multiple labels for type %s' % label_type)
+
+    return nsa.Label(label_type, label_range) # range is parsed in nsa.Label
+#        labels.append( nsa.Label(label_type, label_range) ) # range is parsed in nsa.Label
+
+#    if labelws
+#    return labels
 
 
 def parseTopologySpec(source, base_name):
