@@ -23,10 +23,10 @@ CREATE TABLE service_connections (
     lifecycle_state         text                        NOT NULL,
     source_network          text                        NOT NULL,
     source_port             text                        NOT NULL,
-    source_labels           label[],
+    source_label            label,
     dest_network            text                        NOT NULL,
     dest_port               text                        NOT NULL,
-    dest_labels             label[],
+    dest_label              label,
     start_time              timestamp                   NOT NULL,
     end_time                timestamp                   NOT NULL,
     bandwidth               integer                     NOT NULL -- mbps
@@ -38,7 +38,6 @@ CREATE TABLE sub_connections (
     service_connection_id   integer                     NOT NULL REFERENCES service_connections(id),
     connection_id           text                        NOT NULL,
     provider_nsa            text                        NOT NULL,
-    local_link              boolean                     NOT NULL,
     revision                integer                     NOT NULL,
     order_id                integer                     NOT NULL,
     reservation_state       text                        NOT NULL,
@@ -49,10 +48,10 @@ CREATE TABLE sub_connections (
     data_plane_consistent   boolean,
     source_network          text                        NOT NULL,
     source_port             text                        NOT NULL,
-    source_labels           label[],
+    source_label            label,
     dest_network            text                        NOT NULL,
     dest_port               text                        NOT NULL,
-    dest_labels             label[],
+    dest_label              label,
     UNIQUE (provider_nsa, connection_id)
 );
 
@@ -72,10 +71,10 @@ CREATE TABLE generic_backend_connections (
     data_plane_active       boolean                     NOT NULL,
     source_network          text                        NOT NULL,
     source_port             text                        NOT NULL,
-    source_labels           label[],
+    source_label            label,
     dest_network            text                        NOT NULL,
     dest_port               text                        NOT NULL,
-    dest_labels             label[],
+    dest_label              label,
     start_time              timestamp                   NOT NULL,
     end_time                timestamp                   NOT NULL,
     bandwidth               integer                     NOT NULL -- mbps
