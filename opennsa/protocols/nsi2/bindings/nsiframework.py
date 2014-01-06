@@ -7,16 +7,12 @@ from xml.etree import ElementTree as ET
 
 class CommonHeaderType(object):
     def __init__(self, protocolVersion, correlationId, requesterNSA, providerNSA, replyTo, sessionSecurityAttr):
-        assert protocolVersion is not None, 'protocolVersion must not be None'
-        assert correlationId   is not None, 'correlationId must not be None'
-        assert requesterNSA    is not None, 'requesterNSA must not be None'
-        assert providerNSA     is not None, 'providerNSA must not be None'
         self.protocolVersion = protocolVersion  # string
         self.correlationId = correlationId  # UuidType -> anyURI
         self.requesterNSA = requesterNSA  # NsaIdType -> anyURI
         self.providerNSA = providerNSA  # NsaIdType -> anyURI
         self.replyTo = replyTo  # anyURI
-        self.sessionSecurityAttr = sessionSecurityAttr  # AttributeStatementType
+        self.sessionSecurityAttr = sessionSecurityAttr  # [ SessionSecurityAttrType ]
 
     @classmethod
     def build(self, element):
@@ -26,7 +22,7 @@ class CommonHeaderType(object):
                 element.findtext('requesterNSA'),
                 element.findtext('providerNSA'),
                 element.findtext('replyTo') if element.find('replyTo') is not None else None,
-                AttributeStatementType.build(element.find('sessionSecurityAttr')) if element.find('sessionSecurityAttr') is not None else None
+                [ SessionSecurityAttrType.build(e) for e in element.findall('sessionSecurityAttr') ] if element.find('sessionSecurityAttr') is not None else None
                )
 
     def xml(self, elementName):
@@ -35,21 +31,46 @@ class CommonHeaderType(object):
         ET.SubElement(r, 'correlationId').text = str(self.correlationId)
         ET.SubElement(r, 'requesterNSA').text = str(self.requesterNSA)
         ET.SubElement(r, 'providerNSA').text = str(self.providerNSA)
-        if self.replyTo:
+        if self.replyTo is not None:
             ET.SubElement(r, 'replyTo').text = str(self.replyTo)
-        if self.sessionSecurityAttr:
-            r.append(self.sessionSecurityAttr.xml(ET.QName('urn:oasis:names:tc:SAML:2.0:assertion', 'sessionSecurityAttr')))
+        if self.sessionSecurityAttr is not None:
+            for el in self.sessionSecurityAttr:
+                ET.SubElement(r, 'sessionSecurityAttr').extend( el.xml('sessionSecurityAttr') )
+        return r
+
+
+class TypeValuePairType(object):
+    def __init__(self, type, namespace, value):
+        self.type = type  # string
+        self.namespace = namespace  # anyURI
+        self.value = value  # [ string ]
+
+    @classmethod
+    def build(self, element):
+        return TypeValuePairType(
+                element.get('type'),
+                element.get('namespace'),
+                element.findtext('value') if element.find('value') is not None else None
+               )
+
+    def xml(self, elementName):
+        r = ET.Element(elementName, attrib={'type' : str(self.type), 'namespace' : str(self.namespace)})
+        if self.value is not None:
+            for el in self.value:
+                ET.SubElement(r, 'value').text = el
         return r
 
 
 class AttributeStatementType(object):
     def __init__(self, Attribute, EncryptedAttribute):
         self.Attribute = Attribute  # AttributeType
+        #self.EncryptedAttribute = EncryptedAttribute  # EncryptedElementType
 
     @classmethod
     def build(self, element):
         return AttributeStatementType(
-                AttributeType.build(element.find('Attribute')) if element.find('Attribute') is not None else None
+                AttributeType.build(element.find('Attribute'))
+                #EncryptedElementType.build(element.find('EncryptedAttribute'))
                )
 
     def xml(self, elementName):
@@ -81,25 +102,22 @@ class AttributeType(object):
         return r
 
 
-class TypeValuePairType(object):
-    def __init__(self, type, namespace, value):
-        self.type = type  # string
-        self.namespace = namespace  # anyURI
-        self.value = value  # [ string ]
+class SessionSecurityAttrType(object):
+    def __init__(self, Attribute, EncryptedAttribute):
+        self.Attribute = Attribute  # AttributeType
+        #self.EncryptedAttribute = EncryptedAttribute  # EncryptedElementType
 
     @classmethod
     def build(self, element):
-        return TypeValuePairType(
-                element.get('type'),
-                element.get('namespace'),
-                element.findtext('value') if element.find('value') is not None else None
+        return SessionSecurityAttrType(
+                AttributeType.build(element.find('Attribute'))
+                #EncryptedElementType.build(element.find('EncryptedAttribute'))
                )
 
     def xml(self, elementName):
-        r = ET.Element(elementName, attrib={'type' : str(self.type), 'namespace' : str(self.namespace)})
-        if self.value is not None:
-            for el in self.value:
-                ET.SubElement(r, 'value').text = el
+        r = ET.Element(elementName)
+        r.append(self.Attribute.xml('Attribute'))
+        r.append(self.EncryptedAttribute.xml('EncryptedAttribute'))
         return r
 
 
@@ -142,17 +160,18 @@ class ServiceExceptionType(object):
         return r
 
 
-AttributeValue = ET.QName('urn:oasis:names:tc:SAML:2.0:assertion', 'AttributeValue')
+
 Attribute = ET.QName('urn:oasis:names:tc:SAML:2.0:assertion', 'Attribute')
-serviceException = ET.QName('http://schemas.ogf.org/nsi/2013/07/framework/types', 'serviceException')
-nsiHeader = ET.QName('http://schemas.ogf.org/nsi/2013/07/framework/headers', 'nsiHeader')
+AttributeValue = ET.QName('urn:oasis:names:tc:SAML:2.0:assertion', 'AttributeValue')
 AttributeStatement = ET.QName('urn:oasis:names:tc:SAML:2.0:assertion', 'AttributeStatement')
+nsiHeader = ET.QName('http://schemas.ogf.org/nsi/2013/12/framework/headers', 'nsiHeader')
+serviceException = ET.QName('http://schemas.ogf.org/nsi/2013/12/framework/types', 'serviceException')
+
 
 
 def parse(input_):
 
     root = ET.fromstring(input_)
-
     return parseElement(root)
 
 
@@ -160,9 +179,9 @@ def parseElement(element):
 
     type_map = {
         '{urn:oasis:names:tc:SAML:2.0:assertion}Attribute' : AttributeType,
-        '{http://schemas.ogf.org/nsi/2013/07/framework/types}serviceException' : ServiceExceptionType,
-        '{http://schemas.ogf.org/nsi/2013/07/framework/headers}nsiHeader' : CommonHeaderType,
         '{urn:oasis:names:tc:SAML:2.0:assertion}AttributeStatement' : AttributeStatementType,
+        '{http://schemas.ogf.org/nsi/2013/12/framework/headers}nsiHeader' : CommonHeaderType,
+        '{http://schemas.ogf.org/nsi/2013/12/framework/types}serviceException' : ServiceExceptionType,
     }
 
     if not element.tag in type_map:

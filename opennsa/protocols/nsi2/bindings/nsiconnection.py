@@ -4,83 +4,211 @@ from xml.etree import ElementTree as ET
 
 # types
 
-class QueryRecursiveResultCriteriaType(object):
-    def __init__(self, version, schedule, serviceType, children):
+class DataPlaneStatusType(object):
+    def __init__(self, active, version, versionConsistent):
+        self.active = active  # boolean
         self.version = version  # int
-        self.schedule = schedule  # ScheduleType
-        self.serviceType = serviceType  # string
-        self.children = children  # [ ChildRecursiveType ]
+        self.versionConsistent = versionConsistent  # boolean
 
     @classmethod
     def build(self, element):
-        return QueryRecursiveResultCriteriaType(
-                element.get('version'),
-                ScheduleType.build(element.find('schedule')),
-                element.findtext('serviceType') if element.find('serviceType') is not None else None,
-                [ ChildRecursiveType.build(e) for e in element.find('children') ] if element.find('children') is not None else None
-               )
-
-    def xml(self, elementName):
-        r = ET.Element(elementName, attrib={'version' : str(self.version)})
-        r.append(self.schedule.xml('schedule'))
-        if self.serviceType is not None:
-            ET.SubElement(r, 'serviceType').text = self.serviceType
-        if self.children is not None:
-            ET.SubElement(r, 'children').extend( [ e.xml('children') for e in self.children ] )
-        return r
-
-
-class QuerySummaryResultCriteriaType(object):
-    def __init__(self, version, schedule, serviceType, children, serviceDefinitions):
-        self.version = version  # int
-        self.schedule = schedule  # ScheduleType
-        self.serviceType = serviceType  # string
-        self.children = children  # [ ChildSummaryType ]
-        self.serviceDefinitions = serviceDefinitions # [ ( qname, anyType ) ]
-
-    @classmethod
-    def build(self, element):
-        from . import p2pservices
-        service_defs = dict( [ (e.tag, p2pservices.parseElement(e)) for e in element if e.tag not in ('schedule', 'serviceType', 'children') ] )
-        return QuerySummaryResultCriteriaType(
-                element.get('version'),
-                ScheduleType.build(element.find('schedule')),
-                element.findtext('serviceType') if element.find('serviceType') is not None else None,
-                [ ChildSummaryType.build(e) for e in element.find('children') ] if element.find('children') is not None else None,
-                service_defs
-               )
-
-    def xml(self, elementName):
-        r = ET.Element(elementName, attrib={'version' : str(self.version)})
-        r.append(self.schedule.xml('schedule'))
-        if self.serviceType is not None:
-            ET.SubElement(r, 'serviceType').text = self.serviceType
-        if self.children is not None:
-            ET.SubElement(r, 'children').extend( [ e.xml('children') for e in self.children ] )
-        if self.serviceDefinitions:
-            for sn, sd in self.serviceDefinitions:
-                r.append(sd.xml(sn))
-        return r
-
-
-class ScheduleType(object):
-    def __init__(self, startTime, endTime):
-        self.startTime = startTime  # DateTimeType -> dateTime
-        self.endTime = endTime  # DateTimeType -> dateTime
-
-    @classmethod
-    def build(self, element):
-        return ScheduleType(
-                element.findtext('startTime') if element.find('startTime') is not None else None,
-                element.findtext('endTime') if element.find('endTime') is not None else None
+        return DataPlaneStatusType(
+                True if element.findtext('active') == 'true' else False,
+                int(element.findtext('version')),
+                True if element.findtext('versionConsistent') == 'true' else False
                )
 
     def xml(self, elementName):
         r = ET.Element(elementName)
-        if self.startTime is not None:
-            ET.SubElement(r, 'startTime').text = str(self.startTime)
-        if self.endTime is not None:
-            ET.SubElement(r, 'endTime').text = str(self.endTime)
+        ET.SubElement(r, 'active').text = 'true' if self.active else 'false'
+        ET.SubElement(r, 'version').text = str(self.version)
+        ET.SubElement(r, 'versionConsistent').text = 'true' if self.versionConsistent else 'false'
+        return r
+
+
+class GenericErrorType(object):
+    def __init__(self, serviceException):
+        self.serviceException = serviceException  # ServiceExceptionType
+
+    @classmethod
+    def build(self, element):
+        return GenericErrorType(
+                ServiceExceptionType.build(element.find('serviceException'))
+
+               )
+
+    def xml(self, elementName):
+        r = ET.Element(elementName)
+        r.append(self.serviceException.xml(ET.QName('http://schemas.ogf.org/nsi/2013/12/framework/types', 'serviceException')))
+        return r
+
+
+class ReserveType(object):
+    def __init__(self, connectionId, globalReservationId, description, criteria):
+        self.connectionId = connectionId  # ConnectionIdType -> string
+        self.globalReservationId = globalReservationId  # GlobalReservationIdType -> anyURI
+        self.description = description  # string
+        self.criteria = criteria  # ReservationRequestCriteriaType
+
+    @classmethod
+    def build(self, element):
+        return ReserveType(
+                element.findtext('connectionId') if element.find('connectionId') is not None else None,
+                element.findtext('globalReservationId') if element.find('globalReservationId') is not None else None,
+                element.findtext('description') if element.find('description') is not None else None,
+                ReservationRequestCriteriaType.build(element.find('criteria'))
+               )
+
+    def xml(self, elementName):
+        r = ET.Element(elementName)
+        if self.connectionId is not None:
+            ET.SubElement(r, 'connectionId').text = self.connectionId
+        if self.globalReservationId is not None:
+            ET.SubElement(r, 'globalReservationId').text = str(self.globalReservationId)
+        if self.description is not None:
+            ET.SubElement(r, 'description').text = self.description
+        r.append(self.criteria.xml('criteria'))
+        return r
+
+
+class MessageDeliveryTimeoutRequestType(object):
+    def __init__(self, connectionId, notificationId, timeStamp, correlationId):
+        self.connectionId = connectionId  # ConnectionIdType -> string
+        self.notificationId = notificationId  # NotificationIdType -> long
+        self.timeStamp = timeStamp  # DateTimeType -> dateTime
+        self.correlationId = correlationId  # UuidType -> anyURI
+
+    @classmethod
+    def build(self, element):
+        return MessageDeliveryTimeoutRequestType(
+                element.findtext('connectionId'),
+                int(element.findtext('notificationId')),
+                element.findtext('timeStamp'),
+                element.findtext('correlationId')
+               )
+
+    def xml(self, elementName):
+        r = ET.Element(elementName)
+        ET.SubElement(r, 'connectionId').text = self.connectionId
+        ET.SubElement(r, 'notificationId').text = str(self.notificationId)
+        ET.SubElement(r, 'timeStamp').text = str(self.timeStamp)
+        ET.SubElement(r, 'correlationId').text = str(self.correlationId)
+        return r
+
+
+class GenericConfirmedType(object):
+    def __init__(self, connectionId):
+        self.connectionId = connectionId  # ConnectionIdType -> string
+
+    @classmethod
+    def build(self, element):
+        return GenericConfirmedType(
+                element.findtext('connectionId')
+               )
+
+    def xml(self, elementName):
+        r = ET.Element(elementName)
+        ET.SubElement(r, 'connectionId').text = self.connectionId
+        return r
+
+
+class ConnectionStatesType(object):
+    def __init__(self, reservationState, provisionState, lifecycleState, dataPlaneStatus):
+        self.reservationState = reservationState  # ReservationStateEnumType -> string
+        self.provisionState = provisionState  # ProvisionStateEnumType -> string
+        self.lifecycleState = lifecycleState  # LifecycleStateEnumType -> string
+        self.dataPlaneStatus = dataPlaneStatus  # DataPlaneStatusType
+
+    @classmethod
+    def build(self, element):
+        return ConnectionStatesType(
+                element.findtext('reservationState'),
+                element.findtext('provisionState') if element.find('provisionState') is not None else None,
+                element.findtext('lifecycleState'),
+                DataPlaneStatusType.build(element.find('dataPlaneStatus'))
+               )
+
+    def xml(self, elementName):
+        r = ET.Element(elementName)
+        ET.SubElement(r, 'reservationState').text = self.reservationState
+        if self.provisionState is not None:
+            ET.SubElement(r, 'provisionState').text = self.provisionState
+        ET.SubElement(r, 'lifecycleState').text = self.lifecycleState
+        r.append(self.dataPlaneStatus.xml('dataPlaneStatus'))
+        return r
+
+
+class ReservationRequestCriteriaType(object):
+    def __init__(self, version, schedule, serviceType, serviceDefinition):
+        self.version = version  # int
+        self.schedule = schedule  # ScheduleType
+        self.serviceType = serviceType  # string
+        self.serviceDefinition = serviceDefinition # xs:any
+
+
+    @classmethod
+    def build(self, element):
+        # we do some manual stuff here
+        from . import p2pservices
+        service_defs = [ p2pservices.parseElement(e) for e in element if e.tag not in ('schedule', 'serviceType') ]
+        return ReservationRequestCriteriaType(
+                element.get('version'),
+                ScheduleType.build(element.find('schedule')) if element.find('schedule') is not None else None,
+                element.findtext('serviceType') if element.find('serviceType') is not None else None,
+                service_defs[0]
+               )
+
+    def xml(self, elementName):
+        r = ET.Element(elementName, attrib={'version' : str(self.version)})
+        if self.schedule is not None:
+            r.append(self.schedule.xml('schedule'))
+        if self.serviceType is not None:
+            ET.SubElement(r, 'serviceType').text = self.serviceType
+        if self.serviceDefinition:
+            r.append(self.serviceDefinition.xml(self.serviceType))
+        return r
+
+
+class QuerySummaryResultType(object):
+    def __init__(self, connectionId, globalReservationId, description, criteria, requesterNSA, connectionStates, notificationId, resultId):
+        self.connectionId = connectionId  # ConnectionIdType -> string
+        self.globalReservationId = globalReservationId  # GlobalReservationIdType -> anyURI
+        self.description = description  # string
+        self.criteria = criteria  # [ QuerySummaryResultCriteriaType ]
+        self.requesterNSA = requesterNSA  # NsaIdType -> anyURI
+        self.connectionStates = connectionStates  # ConnectionStatesType
+        self.notificationId = notificationId  # NotificationIdType -> long
+        self.resultId = resultId  # ResultIdType -> long
+
+    @classmethod
+    def build(self, element):
+        return QuerySummaryResultType(
+                element.findtext('connectionId'),
+                element.findtext('globalReservationId') if element.find('globalReservationId') is not None else None,
+                element.findtext('description') if element.find('description') is not None else None,
+                [ QuerySummaryResultCriteriaType.build(e) for e in element.findall('criteria') ] if element.find('criteria') is not None else None,
+                element.findtext('requesterNSA'),
+                ConnectionStatesType.build(element.find('connectionStates')),
+                int(element.findtext('notificationId')) if element.find('notificationId') is not None else None,
+                int(element.findtext('resultId')) if element.find('resultId') is not None else None
+               )
+
+    def xml(self, elementName):
+        r = ET.Element(elementName)
+        ET.SubElement(r, 'connectionId').text = self.connectionId
+        if self.globalReservationId is not None:
+            ET.SubElement(r, 'globalReservationId').text = str(self.globalReservationId)
+        if self.description is not None:
+            ET.SubElement(r, 'description').text = self.description
+        if self.criteria is not None:
+            for el in self.criteria:
+                r.append(el.xml('criteria'))
+        ET.SubElement(r, 'requesterNSA').text = str(self.requesterNSA)
+        r.append(self.connectionStates.xml('connectionStates'))
+        if self.notificationId is not None:
+            ET.SubElement(r, 'notificationId').text = str(self.notificationId)
+        if self.resultId is not None:
+            ET.SubElement(r, 'resultId').text = str(self.resultId)
         return r
 
 
@@ -111,98 +239,39 @@ class ReserveConfirmedType(object):
         return r
 
 
-class QueryFailedType(object):
-    def __init__(self, serviceException):
-        self.serviceException = serviceException  # ServiceExceptionType
+class GenericAcknowledgmentType(object):
+    def __init__(self):
+        pass
 
     @classmethod
     def build(self, element):
-        return QueryFailedType(
-                ServiceExceptionType.build(element.find('serviceException'))
-               )
+        return GenericAcknowledgmentType( )
 
     def xml(self, elementName):
         r = ET.Element(elementName)
-        r.append(self.serviceException.xml(ET.QName('http://schemas.ogf.org/nsi/2013/07/framework/types', 'serviceException')))
         return r
 
 
-class ErrorEventType(object):
-    def __init__(self, connectionId, notificationId, timeStamp, event, additionalInfo, serviceException):
+class ReserveResponseType(object):
+    def __init__(self, connectionId):
         self.connectionId = connectionId  # ConnectionIdType -> string
-        self.notificationId = notificationId  # NotificationIdType -> int
-        self.timeStamp = timeStamp  # DateTimeType -> dateTime
-        self.event = event  # EventEnumType -> string
-        self.additionalInfo = additionalInfo  # [ TypeValuePairType ]
-        self.serviceException = serviceException  # ServiceExceptionType
 
     @classmethod
     def build(self, element):
-        return ErrorEventType(
-                element.findtext('connectionId'),
-                int(element.findtext('notificationId')),
-                element.findtext('timeStamp'),
-                element.findtext('event'),
-                [ TypeValuePairType.build(e) for e in element.find('additionalInfo') ] if element.find('additionalInfo') is not None else None,
-                ServiceExceptionType.build(element.find('serviceException')) if element.find('serviceException') is not None else None
+        return ReserveResponseType(
+                element.findtext('connectionId')
                )
 
     def xml(self, elementName):
         r = ET.Element(elementName)
         ET.SubElement(r, 'connectionId').text = self.connectionId
-        ET.SubElement(r, 'notificationId').text = str(self.notificationId)
-        ET.SubElement(r, 'timeStamp').text = str(self.timeStamp)
-        ET.SubElement(r, 'event').text = self.event
-        if self.additionalInfo is not None:
-            ET.SubElement(r, 'additionalInfo').extend( [ e.xml(ET.QName('http://schemas.ogf.org/nsi/2013/07/framework/types', 'additionalInfo')) for e in self.additionalInfo ] )
-        if self.serviceException is not None:
-            r.append(self.serviceException.xml(ET.QName('http://schemas.ogf.org/nsi/2013/07/framework/types', 'serviceException')))
-        return r
-
-
-class QuerySummaryResultType(object):
-    def __init__(self, connectionId, globalReservationId, description, criteria, requesterNSA, connectionStates, notificationId):
-        self.connectionId = connectionId  # ConnectionIdType -> string
-        self.globalReservationId = globalReservationId  # GlobalReservationIdType -> anyURI
-        self.description = description  # string
-        self.criteria = criteria  # [ QuerySummaryResultCriteriaType ]
-        self.requesterNSA = requesterNSA  # NsaIdType -> anyURI
-        self.connectionStates = connectionStates  # ConnectionStatesType
-        self.notificationId = notificationId  # NotificationIdType -> int
-
-    @classmethod
-    def build(self, element):
-        return QuerySummaryResultType(
-                element.findtext('connectionId'),
-                element.findtext('globalReservationId') if element.find('globalReservationId') is not None else None,
-                element.findtext('description') if element.find('description') is not None else None,
-                [ QuerySummaryResultCriteriaType.build(e) for e in element.findall('criteria') ] if element.find('criteria') is not None else None,
-                element.findtext('requesterNSA'),
-                ConnectionStatesType.build(element.find('connectionStates')),
-                int(element.findtext('notificationId')) if element.find('notificationId') is not None else None
-               )
-
-    def xml(self, elementName):
-        r = ET.Element(elementName)
-        ET.SubElement(r, 'connectionId').text = self.connectionId
-        if self.globalReservationId is not None:
-            ET.SubElement(r, 'globalReservationId').text = str(self.globalReservationId)
-        if self.description is not None:
-            ET.SubElement(r, 'description').text = self.description
-        if self.criteria is not None:
-            for el in self.criteria:
-                r.append( el.xml('criteria') )
-        ET.SubElement(r, 'requesterNSA').text = str(self.requesterNSA)
-        r.append(self.connectionStates.xml('connectionStates'))
-        if self.notificationId is not None:
-            ET.SubElement(r, 'notificationId').text = str(self.notificationId)
         return r
 
 
 class DataPlaneStateChangeRequestType(object):
     def __init__(self, connectionId, notificationId, timeStamp, dataPlaneStatus):
         self.connectionId = connectionId  # ConnectionIdType -> string
-        self.notificationId = notificationId  # NotificationIdType -> int
+        self.notificationId = notificationId  # NotificationIdType -> long
         self.timeStamp = timeStamp  # DateTimeType -> dateTime
         self.dataPlaneStatus = dataPlaneStatus  # DataPlaneStatusType
 
@@ -224,40 +293,28 @@ class DataPlaneStateChangeRequestType(object):
         return r
 
 
-class GenericFailedType(object):
-    def __init__(self, connectionId, connectionStates, serviceException):
+class ErrorEventType(object):
+    def __init__(self, connectionId, notificationId, timeStamp, event, originatingConnectionId, originatingNSA, additionalInfo, serviceException):
         self.connectionId = connectionId  # ConnectionIdType -> string
-        self.connectionStates = connectionStates  # ConnectionStatesType
+        self.notificationId = notificationId  # NotificationIdType -> long
+        self.timeStamp = timeStamp  # DateTimeType -> dateTime
+        self.event = event  # EventEnumType -> string
+        self.originatingConnectionId = originatingConnectionId  # ConnectionIdType -> string
+        self.originatingNSA = originatingNSA  # NsaIdType -> anyURI
+        self.additionalInfo = additionalInfo  # [ TypeValuePairType ]
         self.serviceException = serviceException  # ServiceExceptionType
 
     @classmethod
     def build(self, element):
-        return GenericFailedType(
-                element.findtext('connectionId'),
-                ConnectionStatesType.build(element.find('connectionStates')),
-                ServiceExceptionType.build(element.find('serviceException'))
-               )
-
-    def xml(self, elementName):
-        r = ET.Element(elementName)
-        ET.SubElement(r, 'connectionId').text = self.connectionId
-        r.append(self.connectionStates.xml('connectionStates'))
-        r.append(self.serviceException.xml(ET.QName('http://schemas.ogf.org/nsi/2013/07/framework/types', 'serviceException')))
-        return r
-
-
-class NotificationBaseType(object):
-    def __init__(self, connectionId, notificationId, timeStamp):
-        self.connectionId = connectionId  # ConnectionIdType -> string
-        self.notificationId = notificationId  # NotificationIdType -> int
-        self.timeStamp = timeStamp  # DateTimeType -> dateTime
-
-    @classmethod
-    def build(self, element):
-        return NotificationBaseType(
+        return ErrorEventType(
                 element.findtext('connectionId'),
                 int(element.findtext('notificationId')),
-                element.findtext('timeStamp')
+                element.findtext('timeStamp'),
+                element.findtext('event'),
+                element.findtext('originatingConnectionId'),
+                element.findtext('originatingNSA'),
+                [ TypeValuePairType.build(e) for e in element.find('additionalInfo') ] if element.find('additionalInfo') is not None else None,
+                ServiceExceptionType.build(element.find('serviceException')) if element.find('serviceException') is not None else None
                )
 
     def xml(self, elementName):
@@ -265,44 +322,93 @@ class NotificationBaseType(object):
         ET.SubElement(r, 'connectionId').text = self.connectionId
         ET.SubElement(r, 'notificationId').text = str(self.notificationId)
         ET.SubElement(r, 'timeStamp').text = str(self.timeStamp)
+        ET.SubElement(r, 'event').text = self.event
+        ET.SubElement(r, 'originatingConnectionId').text = self.originatingConnectionId
+        ET.SubElement(r, 'originatingNSA').text = str(self.originatingNSA)
+        if self.additionalInfo is not None:
+            ET.SubElement(r, 'additionalInfo').extend( [ e.xml(ET.QName('http://schemas.ogf.org/nsi/2013/12/framework/types', 'additionalInfo')) for e in self.additionalInfo ] )
+        if self.serviceException is not None:
+            r.append(self.serviceException.xml(ET.QName('http://schemas.ogf.org/nsi/2013/12/framework/types', 'serviceException')))
         return r
 
 
-class ReservationRequestCriteriaType(object):
-    def __init__(self, version, schedule, serviceType, serviceDefinitions):
-        self.version = version  # int
-        self.schedule = schedule  # ScheduleType
-        self.serviceType = serviceType  # string
-        self.serviceDefinitions = serviceDefinitions # { name : service definitions }
+class QueryResultResponseType(object):
+    def __init__(self, resultId, correlationId, timeStamp, reserveConfirmed, reserveFailed, reserveCommitConfirmed, reserveCommitFailed, reserveAbortConfirmed, provisionConfirmed, releaseConfirmed, terminateConfirmed, error):
+        self.resultId = resultId  # ResultIdType -> long
+        self.correlationId = correlationId  # UuidType -> anyURI
+        self.timeStamp = timeStamp  # DateTimeType -> dateTime
+        self.reserveConfirmed = reserveConfirmed  # ReserveConfirmedType
+        self.reserveFailed = reserveFailed  # GenericFailedType
+        self.reserveCommitConfirmed = reserveCommitConfirmed  # GenericConfirmedType
+        self.reserveCommitFailed = reserveCommitFailed  # GenericFailedType
+        self.reserveAbortConfirmed = reserveAbortConfirmed  # GenericConfirmedType
+        self.provisionConfirmed = provisionConfirmed  # GenericConfirmedType
+        self.releaseConfirmed = releaseConfirmed  # GenericConfirmedType
+        self.terminateConfirmed = terminateConfirmed  # GenericConfirmedType
+        self.error = error  # GenericErrorType
 
     @classmethod
     def build(self, element):
-        # we do some manual stuff here
-        from . import p2pservices
-        service_defs = [ p2pservices.parseElement(e) for e in element if e.tag not in ('schedule', 'serviceType') ]
-        return ReservationRequestCriteriaType(
-                element.get('version'),
-                ScheduleType.build(element.find('schedule')) if element.find('schedule') is not None else None,
-                element.findtext('serviceType') if element.find('serviceType') is not None else None,
-                service_defs
+        return QueryResultResponseType(
+                int(element.findtext('resultId')),
+                element.findtext('correlationId'),
+                element.findtext('timeStamp'),
+                ReserveConfirmedType.build(element.find('reserveConfirmed')),
+                GenericFailedType.build(element.find('reserveFailed')),
+                GenericConfirmedType.build(element.find('reserveCommitConfirmed')),
+                GenericFailedType.build(element.find('reserveCommitFailed')),
+                GenericConfirmedType.build(element.find('reserveAbortConfirmed')),
+                GenericConfirmedType.build(element.find('provisionConfirmed')),
+                GenericConfirmedType.build(element.find('releaseConfirmed')),
+                GenericConfirmedType.build(element.find('terminateConfirmed')),
+                GenericErrorType.build(element.find('error'))
                )
 
     def xml(self, elementName):
-        r = ET.Element(elementName, attrib={'version' : str(self.version)})
-        if self.schedule is not None:
-            r.append(self.schedule.xml('schedule'))
-        if self.serviceType is not None:
-            ET.SubElement(r, 'serviceType').text = self.serviceType
-        if self.serviceDefinitions:
-            for sn, sd in self.serviceDefinitions.items():
-                r.append(sd.xml(sn))
+        r = ET.Element(elementName)
+        ET.SubElement(r, 'resultId').text = str(self.resultId)
+        ET.SubElement(r, 'correlationId').text = str(self.correlationId)
+        ET.SubElement(r, 'timeStamp').text = str(self.timeStamp)
+        r.append(self.reserveConfirmed.xml('reserveConfirmed'))
+        r.append(self.reserveFailed.xml('reserveFailed'))
+        r.append(self.reserveCommitConfirmed.xml('reserveCommitConfirmed'))
+        r.append(self.reserveCommitFailed.xml('reserveCommitFailed'))
+        r.append(self.reserveAbortConfirmed.xml('reserveAbortConfirmed'))
+        r.append(self.provisionConfirmed.xml('provisionConfirmed'))
+        r.append(self.releaseConfirmed.xml('releaseConfirmed'))
+        r.append(self.terminateConfirmed.xml('terminateConfirmed'))
+        r.append(self.error.xml('error'))
+        return r
+
+
+class QueryNotificationType(object):
+    def __init__(self, connectionId, startNotificationId, endNotificationId):
+        self.connectionId = connectionId  # ConnectionIdType -> string
+        self.startNotificationId = startNotificationId  # NotificationIdType -> long
+        self.endNotificationId = endNotificationId  # NotificationIdType -> long
+
+    @classmethod
+    def build(self, element):
+        return QueryNotificationType(
+                element.findtext('connectionId'),
+                int(element.findtext('startNotificationId')) if element.find('startNotificationId') is not None else None,
+                int(element.findtext('endNotificationId')) if element.find('endNotificationId') is not None else None
+               )
+
+    def xml(self, elementName):
+        r = ET.Element(elementName)
+        ET.SubElement(r, 'connectionId').text = self.connectionId
+        if self.startNotificationId is not None:
+            ET.SubElement(r, 'startNotificationId').text = str(self.startNotificationId)
+        if self.endNotificationId is not None:
+            ET.SubElement(r, 'endNotificationId').text = str(self.endNotificationId)
         return r
 
 
 class ReserveTimeoutRequestType(object):
     def __init__(self, connectionId, notificationId, timeStamp, timeoutValue, originatingConnectionId, originatingNSA):
         self.connectionId = connectionId  # ConnectionIdType -> string
-        self.notificationId = notificationId  # NotificationIdType -> int
+        self.notificationId = notificationId  # NotificationIdType -> long
         self.timeStamp = timeStamp  # DateTimeType -> dateTime
         self.timeoutValue = timeoutValue  # int
         self.originatingConnectionId = originatingConnectionId  # ConnectionIdType -> string
@@ -330,123 +436,99 @@ class ReserveTimeoutRequestType(object):
         return r
 
 
-class ConnectionStatesType(object):
-    def __init__(self, reservationState, provisionState, lifecycleState, dataPlaneStatus):
-        self.reservationState = reservationState  # ReservationStateEnumType -> string
-        self.provisionState = provisionState  # ProvisionStateEnumType -> string
-        self.lifecycleState = lifecycleState  # LifecycleStateEnumType -> string
-        self.dataPlaneStatus = dataPlaneStatus  # DataPlaneStatusType
+class ScheduleType(object):
+    def __init__(self, startTime, endTime):
+        self.startTime = startTime  # DateTimeType -> dateTime
+        self.endTime = endTime  # DateTimeType -> dateTime
 
     @classmethod
     def build(self, element):
-        return ConnectionStatesType(
-                element.findtext('reservationState'),
-                element.findtext('provisionState') if element.find('provisionState') is not None else None,
-                element.findtext('lifecycleState'),
-                DataPlaneStatusType.build(element.find('dataPlaneStatus'))
+        return ScheduleType(
+                element.findtext('startTime') if element.find('startTime') is not None else None,
+                element.findtext('endTime') if element.find('endTime') is not None else None
                )
 
     def xml(self, elementName):
         r = ET.Element(elementName)
-        ET.SubElement(r, 'reservationState').text = self.reservationState
-        if self.provisionState is not None:
-            ET.SubElement(r, 'provisionState').text = self.provisionState
-        ET.SubElement(r, 'lifecycleState').text = self.lifecycleState
-        r.append(self.dataPlaneStatus.xml('dataPlaneStatus'))
+        if self.startTime is not None:
+            ET.SubElement(r, 'startTime').text = str(self.startTime)
+        if self.endTime is not None:
+            ET.SubElement(r, 'endTime').text = str(self.endTime)
         return r
 
 
-class QueryNotificationConfirmedType(object):
-    def __init__(self, errorEvent, reserveTimeout, dataPlaneStateChange, messageDeliveryTimeout):
-        self.errorEvent = errorEvent  # ErrorEventType
-        self.reserveTimeout = reserveTimeout  # ReserveTimeoutRequestType
-        self.dataPlaneStateChange = dataPlaneStateChange  # DataPlaneStateChangeRequestType
-        self.messageDeliveryTimeout = messageDeliveryTimeout  # MessageDeliveryTimeoutRequestType
-
-    @classmethod
-    def build(self, element):
-        return QueryNotificationConfirmedType(
-                ErrorEventType.build(element.find('errorEvent')),
-                ReserveTimeoutRequestType.build(element.find('reserveTimeout')),
-                DataPlaneStateChangeRequestType.build(element.find('dataPlaneStateChange')),
-                MessageDeliveryTimeoutRequestType.build(element.find('messageDeliveryTimeout'))
-               )
-
-    def xml(self, elementName):
-        r = ET.Element(elementName)
-        r.append(self.errorEvent.xml('errorEvent'))
-        r.append(self.reserveTimeout.xml('reserveTimeout'))
-        r.append(self.dataPlaneStateChange.xml('dataPlaneStateChange'))
-        r.append(self.messageDeliveryTimeout.xml('messageDeliveryTimeout'))
-        return r
-
-
-class QueryNotificationType(object):
-    def __init__(self, connectionId, startNotificationId, endNotificationId):
+class ChildSummaryType(object):
+    def __init__(self, order, connectionId, providerNSA, serviceType):
+        self.order = order  # int
         self.connectionId = connectionId  # ConnectionIdType -> string
-        self.startNotificationId = startNotificationId  # int
-        self.endNotificationId = endNotificationId  # int
+        self.providerNSA = providerNSA  # NsaIdType -> anyURI
+        self.serviceType = serviceType  # string
 
     @classmethod
     def build(self, element):
-        return QueryNotificationType(
+        return ChildSummaryType(
+                element.get('order'),
                 element.findtext('connectionId'),
-                int(element.findtext('startNotificationId')) if element.find('startNotificationId') is not None else None,
-                int(element.findtext('endNotificationId')) if element.find('endNotificationId') is not None else None
+                element.findtext('providerNSA'),
+                element.findtext('serviceType')
+               )
+
+    def xml(self, elementName):
+        r = ET.Element(elementName, attrib={'order' : str(self.order)})
+        ET.SubElement(r, 'connectionId').text = self.connectionId
+        ET.SubElement(r, 'providerNSA').text = str(self.providerNSA)
+        ET.SubElement(r, 'serviceType').text = self.serviceType
+        return r
+
+
+class QueryResultType(object):
+    def __init__(self, connectionId, startResultId, endResultId):
+        self.connectionId = connectionId  # ConnectionIdType -> string
+        self.startResultId = startResultId  # ResultIdType -> long
+        self.endResultId = endResultId  # ResultIdType -> long
+
+    @classmethod
+    def build(self, element):
+        return QueryResultType(
+                element.findtext('connectionId'),
+                int(element.findtext('startResultId')) if element.find('startResultId') is not None else None,
+                int(element.findtext('endResultId')) if element.find('endResultId') is not None else None
                )
 
     def xml(self, elementName):
         r = ET.Element(elementName)
         ET.SubElement(r, 'connectionId').text = self.connectionId
-        if self.startNotificationId is not None:
-            ET.SubElement(r, 'startNotificationId').text = str(self.startNotificationId)
-        if self.endNotificationId is not None:
-            ET.SubElement(r, 'endNotificationId').text = str(self.endNotificationId)
+        if self.startResultId is not None:
+            ET.SubElement(r, 'startResultId').text = str(self.startResultId)
+        if self.endResultId is not None:
+            ET.SubElement(r, 'endResultId').text = str(self.endResultId)
         return r
 
 
 class ReservationConfirmCriteriaType(object):
-    def __init__(self, version, schedule, serviceType, serviceDefinitions):
+    def __init__(self, version, schedule, serviceType, serviceDefinition):
         self.version = version  # int
         self.schedule = schedule  # ScheduleType
         self.serviceType = serviceType  # string
-        self.serviceDefinitions = serviceDefinitions # [ anyType ]
+        self.serviceDefinition = serviceDefinition # xs:any
 
     @classmethod
     def build(self, element):
         from . import p2pservices
-        service_defs = dict( [ (e.tag, p2pservices.parseElement(e)) for e in element if e.tag not in ('schedule', 'serviceType') ] )
+        service_defs = [ p2pservices.parseElement(e) for e in element if e.tag not in ('schedule', 'serviceType') ]
         return ReservationConfirmCriteriaType(
                 element.get('version'),
                 ScheduleType.build(element.find('schedule')),
-                element.findtext('serviceType') if element.find('serviceType') is not None else None,
-                service_defs
+                element.findtext('serviceType'),
+                service_defs[0]
                )
 
     def xml(self, elementName):
         r = ET.Element(elementName, attrib={'version' : str(self.version)})
         r.append(self.schedule.xml('schedule'))
-        if self.serviceType is not None:
-            ET.SubElement(r, 'serviceType').text = self.serviceType
-        if self.serviceDefinitions:
-            for sn, sd in self.serviceDefinitions.items():
-                r.append(sd.xml(sn))
-        return r
-
-
-class ReserveResponseType(object):
-    def __init__(self, connectionId):
-        self.connectionId = connectionId  # ConnectionIdType -> string
-
-    @classmethod
-    def build(self, element):
-        return ReserveResponseType(
-                element.findtext('connectionId')
-               )
-
-    def xml(self, elementName):
-        r = ET.Element(elementName)
-        ET.SubElement(r, 'connectionId').text = self.connectionId
+        ET.SubElement(r, 'serviceType').text = self.serviceType
+        if self.serviceDefinition:
+            r.append(self.serviceDefinition.xml(self.serviceType))
         return r
 
 
@@ -485,6 +567,49 @@ class TypeValuePairType(object):
         if self.value is not None:
             for el in self.value:
                 ET.SubElement(r, 'value').text = el
+        return r
+
+
+class QueryRecursiveResultType(object):
+    def __init__(self, connectionId, globalReservationId, description, criteria, requesterNSA, connectionStates, notificationId, resultId):
+        self.connectionId = connectionId  # ConnectionIdType -> string
+        self.globalReservationId = globalReservationId  # GlobalReservationIdType -> anyURI
+        self.description = description  # string
+        self.criteria = criteria  # [ QueryRecursiveResultCriteriaType ]
+        self.requesterNSA = requesterNSA  # NsaIdType -> anyURI
+        self.connectionStates = connectionStates  # ConnectionStatesType
+        self.notificationId = notificationId  # NotificationIdType -> long
+        self.resultId = resultId  # ResultIdType -> long
+
+    @classmethod
+    def build(self, element):
+        return QueryRecursiveResultType(
+                element.findtext('connectionId'),
+                element.findtext('globalReservationId') if element.find('globalReservationId') is not None else None,
+                element.findtext('description') if element.find('description') is not None else None,
+                [ QueryRecursiveResultCriteriaType.build(e) for e in element.findall('criteria') ] if element.find('criteria') is not None else None,
+                element.findtext('requesterNSA'),
+                ConnectionStatesType.build(element.find('connectionStates')),
+                int(element.findtext('notificationId')) if element.find('notificationId') is not None else None,
+                int(element.findtext('resultId')) if element.find('resultId') is not None else None
+               )
+
+    def xml(self, elementName):
+        r = ET.Element(elementName)
+        ET.SubElement(r, 'connectionId').text = self.connectionId
+        if self.globalReservationId is not None:
+            ET.SubElement(r, 'globalReservationId').text = str(self.globalReservationId)
+        if self.description is not None:
+            ET.SubElement(r, 'description').text = self.description
+        if self.criteria is not None:
+            for el in self.criteria:
+                ET.SubElement(r, 'criteria').extend( el.xml('criteria') )
+        ET.SubElement(r, 'requesterNSA').text = str(self.requesterNSA)
+        r.append(self.connectionStates.xml('connectionStates'))
+        if self.notificationId is not None:
+            ET.SubElement(r, 'notificationId').text = str(self.notificationId)
+        if self.resultId is not None:
+            ET.SubElement(r, 'resultId').text = str(self.resultId)
         return r
 
 
@@ -527,19 +652,79 @@ class ServiceExceptionType(object):
         return r
 
 
-class GenericConfirmedType(object):
-    def __init__(self, connectionId):
-        self.connectionId = connectionId  # ConnectionIdType -> string
+class QueryNotificationConfirmedType(object):
+    def __init__(self, errorEvent, reserveTimeout, dataPlaneStateChange, messageDeliveryTimeout):
+        self.errorEvent = errorEvent  # ErrorEventType
+        self.reserveTimeout = reserveTimeout  # ReserveTimeoutRequestType
+        self.dataPlaneStateChange = dataPlaneStateChange  # DataPlaneStateChangeRequestType
+        self.messageDeliveryTimeout = messageDeliveryTimeout  # MessageDeliveryTimeoutRequestType
 
     @classmethod
     def build(self, element):
-        return GenericConfirmedType(
-                element.findtext('connectionId')
+        return QueryNotificationConfirmedType(
+                ErrorEventType.build(element.find('errorEvent')),
+                ReserveTimeoutRequestType.build(element.find('reserveTimeout')),
+                DataPlaneStateChangeRequestType.build(element.find('dataPlaneStateChange')),
+                MessageDeliveryTimeoutRequestType.build(element.find('messageDeliveryTimeout'))
+               )
+
+    def xml(self, elementName):
+        r = ET.Element(elementName)
+        r.append(self.errorEvent.xml('errorEvent'))
+        r.append(self.reserveTimeout.xml('reserveTimeout'))
+        r.append(self.dataPlaneStateChange.xml('dataPlaneStateChange'))
+        r.append(self.messageDeliveryTimeout.xml('messageDeliveryTimeout'))
+        return r
+
+
+class QueryRecursiveResultCriteriaType(object):
+    def __init__(self, version, schedule, serviceType, children, serviceDefinition):
+        self.version = version  # int
+        self.schedule = schedule  # ScheduleType
+        self.serviceType = serviceType  # string
+        self.children = children  # [ ChildRecursiveType ]
+        self.serviceDefinition = serviceDefinition # any
+
+    @classmethod
+    def build(self, element):
+        from . import p2pservices
+        service_defs = [ p2pservices.parseElement(e) for e in element if e.tag not in ('schedule', 'serviceType', 'children') ]
+        return QueryRecursiveResultCriteriaType(
+                element.get('version'),
+                ScheduleType.build(element.find('schedule')),
+                element.findtext('serviceType'),
+                [ ChildRecursiveType.build(e) for e in element.find('children') ] if element.find('children') is not None else None,
+                service_defs[0]
+               )
+
+    def xml(self, elementName):
+        r = ET.Element(elementName, attrib={'version' : str(self.version)})
+        r.append(self.schedule.xml('schedule'))
+        ET.SubElement(r, 'serviceType').text = self.serviceType
+        if self.children is not None:
+            ET.SubElement(r, 'children').extend( [ e.xml('children') for e in self.children ] )
+        return r
+
+
+class GenericFailedType(object):
+    def __init__(self, connectionId, connectionStates, serviceException):
+        self.connectionId = connectionId  # ConnectionIdType -> string
+        self.connectionStates = connectionStates  # ConnectionStatesType
+        self.serviceException = serviceException  # ServiceExceptionType
+
+    @classmethod
+    def build(self, element):
+        return GenericFailedType(
+                element.findtext('connectionId'),
+                ConnectionStatesType.build(element.find('connectionStates')),
+                ServiceExceptionType.build(element.find('serviceException'))
                )
 
     def xml(self, elementName):
         r = ET.Element(elementName)
         ET.SubElement(r, 'connectionId').text = self.connectionId
+        r.append(self.connectionStates.xml('connectionStates'))
+        r.append(self.serviceException.xml(ET.QName('http://schemas.ogf.org/nsi/2013/12/framework/types', 'serviceException')))
         return r
 
 
@@ -595,122 +780,48 @@ class QueryType(object):
         return r
 
 
-class QueryRecursiveResultType(object):
-    def __init__(self, connectionId, globalReservationId, description, criteria, requesterNSA, connectionStates, notificationId):
-        self.connectionId = connectionId  # ConnectionIdType -> string
-        self.globalReservationId = globalReservationId  # GlobalReservationIdType -> anyURI
-        self.description = description  # string
-        self.criteria = criteria  # [ QueryRecursiveResultCriteriaType ]
-        self.requesterNSA = requesterNSA  # NsaIdType -> anyURI
-        self.connectionStates = connectionStates  # ConnectionStatesType
-        self.notificationId = notificationId  # NotificationIdType -> int
-
-    @classmethod
-    def build(self, element):
-        return QueryRecursiveResultType(
-                element.findtext('connectionId'),
-                element.findtext('globalReservationId') if element.find('globalReservationId') is not None else None,
-                element.findtext('description') if element.find('description') is not None else None,
-                [ QueryRecursiveResultCriteriaType.build(e) for e in element.findall('criteria') ] if element.find('criteria') is not None else None,
-                element.findtext('requesterNSA'),
-                ConnectionStatesType.build(element.find('connectionStates')),
-                int(element.findtext('notificationId')) if element.find('notificationId') is not None else None
-               )
-
-    def xml(self, elementName):
-        r = ET.Element(elementName)
-        ET.SubElement(r, 'connectionId').text = self.connectionId
-        if self.globalReservationId is not None:
-            ET.SubElement(r, 'globalReservationId').text = str(self.globalReservationId)
-        if self.description is not None:
-            ET.SubElement(r, 'description').text = self.description
-        if self.criteria is not None:
-            for el in self.criteria:
-                ET.SubElement(r, 'criteria').extend( el.xml('criteria') )
-        ET.SubElement(r, 'requesterNSA').text = str(self.requesterNSA)
-        r.append(self.connectionStates.xml('connectionStates'))
-        if self.notificationId is not None:
-            ET.SubElement(r, 'notificationId').text = str(self.notificationId)
-        return r
-
-
-class DataPlaneStatusType(object):
-    def __init__(self, active, version, versionConsistent):
-        self.active = active  # boolean
+class QuerySummaryResultCriteriaType(object):
+    def __init__(self, version, schedule, serviceType, children, serviceDefinition):
         self.version = version  # int
-        self.versionConsistent = versionConsistent  # boolean
-
-    @classmethod
-    def build(self, element):
-        return DataPlaneStatusType(
-                True if element.findtext('active') == 'true' else False,
-                int(element.findtext('version')),
-                True if element.findtext('versionConsistent') == 'true' else False
-               )
-
-    def xml(self, elementName):
-        r = ET.Element(elementName)
-        ET.SubElement(r, 'active').text = 'true' if self.active else 'false'
-        ET.SubElement(r, 'version').text = str(self.version)
-        ET.SubElement(r, 'versionConsistent').text = 'true' if self.versionConsistent else 'false'
-        return r
-
-
-class GenericErrorType(object):
-    def __init__(self, serviceException):
-        self.serviceException = serviceException  # ServiceExceptionType
-
-    @classmethod
-    def build(self, element):
-        return GenericErrorType(
-                ServiceExceptionType.build(element.find('serviceException'))
-               )
-
-    def xml(self, elementName):
-        r = ET.Element(elementName)
-        r.append(self.serviceException.xml(ET.QName('http://schemas.ogf.org/nsi/2013/07/framework/types', 'serviceException')))
-        return r
-
-
-class ChildSummaryType(object):
-    def __init__(self, order, connectionId, providerNSA, serviceType):
-        self.order = order  # int
-        self.connectionId = connectionId  # ConnectionIdType -> string
-        self.providerNSA = providerNSA  # NsaIdType -> anyURI
+        self.schedule = schedule  # ScheduleType
         self.serviceType = serviceType  # string
+        self.children = children  # [ ChildSummaryType ]
+        self.serviceDefinition = serviceDefinition # any
 
     @classmethod
     def build(self, element):
-        return ChildSummaryType(
-                element.get('order'),
-                element.findtext('connectionId'),
-                element.findtext('providerNSA'),
-                element.findtext('serviceType') if element.find('serviceType') is not None else None
+        from . import p2pservices
+        service_defs = [ p2pservices.parseElement(e) for e in element if e.tag not in ('schedule', 'serviceType', 'children') ]
+        return QuerySummaryResultCriteriaType(
+                element.get('version'),
+                ScheduleType.build(element.find('schedule')),
+                element.findtext('serviceType'),
+                [ ChildSummaryType.build(e) for e in element.find('children') ] if element.find('children') is not None else None,
+                service_defs[0]
                )
 
     def xml(self, elementName):
-        r = ET.Element(elementName, attrib={'order' : str(self.order)})
-        ET.SubElement(r, 'connectionId').text = self.connectionId
-        ET.SubElement(r, 'providerNSA').text = str(self.providerNSA)
-        if self.serviceType is not None:
-            ET.SubElement(r, 'serviceType').text = self.serviceType
+        r = ET.Element(elementName, attrib={'version' : str(self.version)})
+        r.append(self.schedule.xml('schedule'))
+        ET.SubElement(r, 'serviceType').text = self.serviceType
+        if self.children is not None:
+            ET.SubElement(r, 'children').extend( [ e.xml('children') for e in self.children ] )
+        r.append(self.serviceDefinition.xml(self.serviceType))
         return r
 
 
-class MessageDeliveryTimeoutRequestType(object):
-    def __init__(self, connectionId, notificationId, timeStamp, correlationId):
+class NotificationBaseType(object):
+    def __init__(self, connectionId, notificationId, timeStamp):
         self.connectionId = connectionId  # ConnectionIdType -> string
-        self.notificationId = notificationId  # NotificationIdType -> int
+        self.notificationId = notificationId  # NotificationIdType -> long
         self.timeStamp = timeStamp  # DateTimeType -> dateTime
-        self.correlationId = correlationId  # UuidType -> anyURI
 
     @classmethod
     def build(self, element):
-        return MessageDeliveryTimeoutRequestType(
+        return NotificationBaseType(
                 element.findtext('connectionId'),
                 int(element.findtext('notificationId')),
-                element.findtext('timeStamp'),
-                element.findtext('correlationId')
+                element.findtext('timeStamp')
                )
 
     def xml(self, elementName):
@@ -718,90 +829,47 @@ class MessageDeliveryTimeoutRequestType(object):
         ET.SubElement(r, 'connectionId').text = self.connectionId
         ET.SubElement(r, 'notificationId').text = str(self.notificationId)
         ET.SubElement(r, 'timeStamp').text = str(self.timeStamp)
-        ET.SubElement(r, 'correlationId').text = str(self.correlationId)
         return r
 
 
-class GenericAcknowledgmentType(object):
-    def __init__(self):
-        pass
-
-    @classmethod
-    def build(self, element):
-        return GenericAcknowledgmentType( )
-
-    def xml(self, elementName):
-        r = ET.Element(elementName)
-        return r
-
-
-class ReserveType(object):
-    def __init__(self, connectionId, globalReservationId, description, criteria):
-        self.connectionId = connectionId  # ConnectionIdType -> string
-        self.globalReservationId = globalReservationId  # GlobalReservationIdType -> anyURI
-        self.description = description  # string
-        self.criteria = criteria  # ReservationRequestCriteriaType
-
-    @classmethod
-    def build(self, element):
-        return ReserveType(
-                element.findtext('connectionId') if element.find('connectionId') is not None else None,
-                element.findtext('globalReservationId') if element.find('globalReservationId') is not None else None,
-                element.findtext('description') if element.find('description') is not None else None,
-                ReservationRequestCriteriaType.build(element.find('criteria'))
-               )
-
-    def xml(self, elementName):
-        r = ET.Element(elementName)
-        if self.connectionId is not None:
-            ET.SubElement(r, 'connectionId').text = self.connectionId
-        if self.globalReservationId is not None:
-            ET.SubElement(r, 'globalReservationId').text = str(self.globalReservationId)
-        if self.description is not None:
-            ET.SubElement(r, 'description').text = self.description
-        r.append(self.criteria.xml('criteria'))
-        return r
-
-
-terminate = ET.QName('http://schemas.ogf.org/nsi/2013/07/connection/types', 'terminate')
-queryRecursive = ET.QName('http://schemas.ogf.org/nsi/2013/07/connection/types', 'queryRecursive')
-reserve = ET.QName('http://schemas.ogf.org/nsi/2013/07/connection/types', 'reserve')
-reservation = ET.QName('http://schemas.ogf.org/nsi/2013/07/connection/types', 'reservation')
-querySummary = ET.QName('http://schemas.ogf.org/nsi/2013/07/connection/types', 'querySummary')
-serviceException = ET.QName('http://schemas.ogf.org/nsi/2013/07/framework/types', 'serviceException')
-queryNotificationConfirmed = ET.QName('http://schemas.ogf.org/nsi/2013/07/connection/types', 'queryNotificationConfirmed')
-reserveAbortConfirmed = ET.QName('http://schemas.ogf.org/nsi/2013/07/connection/types', 'reserveAbortConfirmed')
-querySummarySync = ET.QName('http://schemas.ogf.org/nsi/2013/07/connection/types', 'querySummarySync')
-reserveTimeout = ET.QName('http://schemas.ogf.org/nsi/2013/07/connection/types', 'reserveTimeout')
-reserveConfirmed = ET.QName('http://schemas.ogf.org/nsi/2013/07/connection/types', 'reserveConfirmed')
-reserveCommit = ET.QName('http://schemas.ogf.org/nsi/2013/07/connection/types', 'reserveCommit')
-terminateConfirmed = ET.QName('http://schemas.ogf.org/nsi/2013/07/connection/types', 'terminateConfirmed')
-querySummaryFailed = ET.QName('http://schemas.ogf.org/nsi/2013/07/connection/types', 'querySummaryFailed')
-queryRecursiveFailed = ET.QName('http://schemas.ogf.org/nsi/2013/07/connection/types', 'queryRecursiveFailed')
-queryNotificationSyncFailed = ET.QName('http://schemas.ogf.org/nsi/2013/07/connection/types', 'queryNotificationSyncFailed')
-querySummarySyncConfirmed = ET.QName('http://schemas.ogf.org/nsi/2013/07/connection/types', 'querySummarySyncConfirmed')
-reserveFailed = ET.QName('http://schemas.ogf.org/nsi/2013/07/connection/types', 'reserveFailed')
-reserveAbort = ET.QName('http://schemas.ogf.org/nsi/2013/07/connection/types', 'reserveAbort')
-reserveCommitConfirmed = ET.QName('http://schemas.ogf.org/nsi/2013/07/connection/types', 'reserveCommitConfirmed')
-queryNotificationSyncConfirmed = ET.QName('http://schemas.ogf.org/nsi/2013/07/connection/types', 'queryNotificationSyncConfirmed')
-provisionConfirmed = ET.QName('http://schemas.ogf.org/nsi/2013/07/connection/types', 'provisionConfirmed')
-querySummaryConfirmed = ET.QName('http://schemas.ogf.org/nsi/2013/07/connection/types', 'querySummaryConfirmed')
-queryRecursiveConfirmed = ET.QName('http://schemas.ogf.org/nsi/2013/07/connection/types', 'queryRecursiveConfirmed')
-dataPlaneStateChange = ET.QName('http://schemas.ogf.org/nsi/2013/07/connection/types', 'dataPlaneStateChange')
-releaseConfirmed = ET.QName('http://schemas.ogf.org/nsi/2013/07/connection/types', 'releaseConfirmed')
-queryNotification = ET.QName('http://schemas.ogf.org/nsi/2013/07/connection/types', 'queryNotification')
-acknowledgment = ET.QName('http://schemas.ogf.org/nsi/2013/07/connection/types', 'acknowledgment')
-queryNotificationSync = ET.QName('http://schemas.ogf.org/nsi/2013/07/connection/types', 'queryNotificationSync')
-messageDeliveryTimeout = ET.QName('http://schemas.ogf.org/nsi/2013/07/connection/types', 'messageDeliveryTimeout')
-serviceException = ET.QName('http://schemas.ogf.org/nsi/2013/07/connection/types', 'serviceException')
-reserveCommitFailed = ET.QName('http://schemas.ogf.org/nsi/2013/07/connection/types', 'reserveCommitFailed')
-reserveResponse = ET.QName('http://schemas.ogf.org/nsi/2013/07/connection/types', 'reserveResponse')
-provision = ET.QName('http://schemas.ogf.org/nsi/2013/07/connection/types', 'provision')
-errorEvent = ET.QName('http://schemas.ogf.org/nsi/2013/07/connection/types', 'errorEvent')
-error = ET.QName('http://schemas.ogf.org/nsi/2013/07/connection/types', 'error')
-querySummarySyncFailed = ET.QName('http://schemas.ogf.org/nsi/2013/07/connection/types', 'querySummarySyncFailed')
-queryNotificationFailed = ET.QName('http://schemas.ogf.org/nsi/2013/07/connection/types', 'queryNotificationFailed')
-release = ET.QName('http://schemas.ogf.org/nsi/2013/07/connection/types', 'release')
+querySummaryConfirmed = ET.QName('http://schemas.ogf.org/nsi/2013/12/connection/types', 'querySummaryConfirmed')
+reserveCommitFailed = ET.QName('http://schemas.ogf.org/nsi/2013/12/connection/types', 'reserveCommitFailed')
+terminate = ET.QName('http://schemas.ogf.org/nsi/2013/12/connection/types', 'terminate')
+provisionConfirmed = ET.QName('http://schemas.ogf.org/nsi/2013/12/connection/types', 'provisionConfirmed')
+provision = ET.QName('http://schemas.ogf.org/nsi/2013/12/connection/types', 'provision')
+serviceException = ET.QName('http://schemas.ogf.org/nsi/2013/12/framework/types', 'serviceException')
+release = ET.QName('http://schemas.ogf.org/nsi/2013/12/connection/types', 'release')
+queryResult = ET.QName('http://schemas.ogf.org/nsi/2013/12/connection/types', 'queryResult')
+reserve = ET.QName('http://schemas.ogf.org/nsi/2013/12/connection/types', 'reserve')
+queryResultConfirmed = ET.QName('http://schemas.ogf.org/nsi/2013/12/connection/types', 'queryResultConfirmed')
+messageDeliveryTimeout = ET.QName('http://schemas.ogf.org/nsi/2013/12/connection/types', 'messageDeliveryTimeout')
+reserveAbortConfirmed = ET.QName('http://schemas.ogf.org/nsi/2013/12/connection/types', 'reserveAbortConfirmed')
+reserveResponse = ET.QName('http://schemas.ogf.org/nsi/2013/12/connection/types', 'reserveResponse')
+queryRecursiveConfirmed = ET.QName('http://schemas.ogf.org/nsi/2013/12/connection/types', 'queryRecursiveConfirmed')
+queryResultSyncConfirmed = ET.QName('http://schemas.ogf.org/nsi/2013/12/connection/types', 'queryResultSyncConfirmed')
+querySummarySync = ET.QName('http://schemas.ogf.org/nsi/2013/12/connection/types', 'querySummarySync')
+serviceException = ET.QName('http://schemas.ogf.org/nsi/2013/12/connection/types', 'serviceException')
+querySummary = ET.QName('http://schemas.ogf.org/nsi/2013/12/connection/types', 'querySummary')
+dataPlaneStateChange = ET.QName('http://schemas.ogf.org/nsi/2013/12/connection/types', 'dataPlaneStateChange')
+queryNotification = ET.QName('http://schemas.ogf.org/nsi/2013/12/connection/types', 'queryNotification')
+terminateConfirmed = ET.QName('http://schemas.ogf.org/nsi/2013/12/connection/types', 'terminateConfirmed')
+error = ET.QName('http://schemas.ogf.org/nsi/2013/12/connection/types', 'error')
+reserveAbort = ET.QName('http://schemas.ogf.org/nsi/2013/12/connection/types', 'reserveAbort')
+reserveFailed = ET.QName('http://schemas.ogf.org/nsi/2013/12/connection/types', 'reserveFailed')
+reserveCommitConfirmed = ET.QName('http://schemas.ogf.org/nsi/2013/12/connection/types', 'reserveCommitConfirmed')
+reserveCommit = ET.QName('http://schemas.ogf.org/nsi/2013/12/connection/types', 'reserveCommit')
+acknowledgment = ET.QName('http://schemas.ogf.org/nsi/2013/12/connection/types', 'acknowledgment')
+releaseConfirmed = ET.QName('http://schemas.ogf.org/nsi/2013/12/connection/types', 'releaseConfirmed')
+reserveConfirmed = ET.QName('http://schemas.ogf.org/nsi/2013/12/connection/types', 'reserveConfirmed')
+queryNotificationSync = ET.QName('http://schemas.ogf.org/nsi/2013/12/connection/types', 'queryNotificationSync')
+queryNotificationSyncConfirmed = ET.QName('http://schemas.ogf.org/nsi/2013/12/connection/types', 'queryNotificationSyncConfirmed')
+errorEvent = ET.QName('http://schemas.ogf.org/nsi/2013/12/connection/types', 'errorEvent')
+queryNotificationConfirmed = ET.QName('http://schemas.ogf.org/nsi/2013/12/connection/types', 'queryNotificationConfirmed')
+reserveTimeout = ET.QName('http://schemas.ogf.org/nsi/2013/12/connection/types', 'reserveTimeout')
+queryResultSync = ET.QName('http://schemas.ogf.org/nsi/2013/12/connection/types', 'queryResultSync')
+queryRecursive = ET.QName('http://schemas.ogf.org/nsi/2013/12/connection/types', 'queryRecursive')
+querySummarySyncConfirmed = ET.QName('http://schemas.ogf.org/nsi/2013/12/connection/types', 'querySummarySyncConfirmed')
+reservation = ET.QName('http://schemas.ogf.org/nsi/2013/12/connection/types', 'reservation')
 
 def parse(input_):
 
@@ -813,42 +881,39 @@ def parse(input_):
 def parseElement(element):
 
     type_map = {
-        '{http://schemas.ogf.org/nsi/2013/07/connection/types}terminate' : GenericRequestType,
-        '{http://schemas.ogf.org/nsi/2013/07/connection/types}queryRecursive' : QueryType,
-        '{http://schemas.ogf.org/nsi/2013/07/connection/types}reserve' : ReserveType,
-        '{http://schemas.ogf.org/nsi/2013/07/connection/types}reservation' :  QuerySummaryResultType,
-        '{http://schemas.ogf.org/nsi/2013/07/connection/types}querySummary' : QueryType,
-        '{http://schemas.ogf.org/nsi/2013/07/framework/types}serviceException' : ServiceExceptionType,
-        '{http://schemas.ogf.org/nsi/2013/07/connection/types}queryNotificationConfirmed' : QueryNotificationConfirmedType,
-        '{http://schemas.ogf.org/nsi/2013/07/connection/types}reserveAbortConfirmed' : GenericConfirmedType,
-        '{http://schemas.ogf.org/nsi/2013/07/connection/types}querySummarySync' : QueryType,
-        '{http://schemas.ogf.org/nsi/2013/07/connection/types}reserveTimeout' : ReserveTimeoutRequestType,
-        '{http://schemas.ogf.org/nsi/2013/07/connection/types}reserveConfirmed' : ReserveConfirmedType,
-        '{http://schemas.ogf.org/nsi/2013/07/connection/types}reserveCommit' : GenericRequestType,
-        '{http://schemas.ogf.org/nsi/2013/07/connection/types}terminateConfirmed' : GenericConfirmedType,
-        '{http://schemas.ogf.org/nsi/2013/07/connection/types}querySummaryFailed' : QueryFailedType,
-        '{http://schemas.ogf.org/nsi/2013/07/connection/types}queryRecursiveFailed' : QueryFailedType,
-        '{http://schemas.ogf.org/nsi/2013/07/connection/types}queryNotificationSyncFailed' : QueryFailedType,
-        '{http://schemas.ogf.org/nsi/2013/07/connection/types}reserveFailed' : GenericFailedType,
-        '{http://schemas.ogf.org/nsi/2013/07/connection/types}reserveAbort' : GenericRequestType,
-        '{http://schemas.ogf.org/nsi/2013/07/connection/types}reserveCommitConfirmed' : GenericConfirmedType,
-        '{http://schemas.ogf.org/nsi/2013/07/connection/types}queryNotificationSyncConfirmed' : QueryNotificationConfirmedType,
-        '{http://schemas.ogf.org/nsi/2013/07/connection/types}provisionConfirmed' : GenericConfirmedType,
-        '{http://schemas.ogf.org/nsi/2013/07/connection/types}dataPlaneStateChange' : DataPlaneStateChangeRequestType,
-        '{http://schemas.ogf.org/nsi/2013/07/connection/types}releaseConfirmed' : GenericConfirmedType,
-        '{http://schemas.ogf.org/nsi/2013/07/connection/types}queryNotification' : QueryNotificationType,
-        '{http://schemas.ogf.org/nsi/2013/07/connection/types}acknowledgment' : GenericAcknowledgmentType,
-        '{http://schemas.ogf.org/nsi/2013/07/connection/types}queryNotificationSync' : QueryNotificationType,
-        '{http://schemas.ogf.org/nsi/2013/07/connection/types}messageDeliveryTimeout' : MessageDeliveryTimeoutRequestType,
-        '{http://schemas.ogf.org/nsi/2013/07/connection/types}serviceException' : ServiceExceptionType,
-        '{http://schemas.ogf.org/nsi/2013/07/connection/types}reserveCommitFailed' : GenericFailedType,
-        '{http://schemas.ogf.org/nsi/2013/07/connection/types}reserveResponse' : ReserveResponseType,
-        '{http://schemas.ogf.org/nsi/2013/07/connection/types}provision' : GenericRequestType,
-        '{http://schemas.ogf.org/nsi/2013/07/connection/types}errorEvent' : ErrorEventType,
-        '{http://schemas.ogf.org/nsi/2013/07/connection/types}error' : GenericErrorType,
-        '{http://schemas.ogf.org/nsi/2013/07/connection/types}querySummarySyncFailed' : QueryFailedType,
-        '{http://schemas.ogf.org/nsi/2013/07/connection/types}queryNotificationFailed' : QueryFailedType,
-        '{http://schemas.ogf.org/nsi/2013/07/connection/types}release' : GenericRequestType
+        '{http://schemas.ogf.org/nsi/2013/12/connection/types}reserveCommitFailed' : GenericFailedType,
+        '{http://schemas.ogf.org/nsi/2013/12/connection/types}terminate' : GenericRequestType,
+        '{http://schemas.ogf.org/nsi/2013/12/connection/types}provisionConfirmed' : GenericConfirmedType,
+        '{http://schemas.ogf.org/nsi/2013/12/connection/types}provision' : GenericRequestType,
+        '{http://schemas.ogf.org/nsi/2013/12/framework/types}serviceException' : ServiceExceptionType,
+        '{http://schemas.ogf.org/nsi/2013/12/connection/types}release' : GenericRequestType,
+        '{http://schemas.ogf.org/nsi/2013/12/connection/types}queryResult' : QueryResultType,
+        '{http://schemas.ogf.org/nsi/2013/12/connection/types}reserve' : ReserveType,
+        '{http://schemas.ogf.org/nsi/2013/12/connection/types}messageDeliveryTimeout' : MessageDeliveryTimeoutRequestType,
+        '{http://schemas.ogf.org/nsi/2013/12/connection/types}reserveAbortConfirmed' : GenericConfirmedType,
+        '{http://schemas.ogf.org/nsi/2013/12/connection/types}reserveResponse' : ReserveResponseType,
+        '{http://schemas.ogf.org/nsi/2013/12/connection/types}querySummarySync' : QueryType,
+        '{http://schemas.ogf.org/nsi/2013/12/connection/types}serviceException' : ServiceExceptionType,
+        '{http://schemas.ogf.org/nsi/2013/12/connection/types}querySummary' : QueryType,
+        '{http://schemas.ogf.org/nsi/2013/12/connection/types}dataPlaneStateChange' : DataPlaneStateChangeRequestType,
+        '{http://schemas.ogf.org/nsi/2013/12/connection/types}queryNotification' : QueryNotificationType,
+        '{http://schemas.ogf.org/nsi/2013/12/connection/types}terminateConfirmed' : GenericConfirmedType,
+        '{http://schemas.ogf.org/nsi/2013/12/connection/types}error' : GenericErrorType,
+        '{http://schemas.ogf.org/nsi/2013/12/connection/types}reserveAbort' : GenericRequestType,
+        '{http://schemas.ogf.org/nsi/2013/12/connection/types}reserveFailed' : GenericFailedType,
+        '{http://schemas.ogf.org/nsi/2013/12/connection/types}reserveCommitConfirmed' : GenericConfirmedType,
+        '{http://schemas.ogf.org/nsi/2013/12/connection/types}reserveCommit' : GenericRequestType,
+        '{http://schemas.ogf.org/nsi/2013/12/connection/types}acknowledgment' : GenericAcknowledgmentType,
+        '{http://schemas.ogf.org/nsi/2013/12/connection/types}releaseConfirmed' : GenericConfirmedType,
+        '{http://schemas.ogf.org/nsi/2013/12/connection/types}reserveConfirmed' : ReserveConfirmedType,
+        '{http://schemas.ogf.org/nsi/2013/12/connection/types}queryNotificationSync' : QueryNotificationType,
+        '{http://schemas.ogf.org/nsi/2013/12/connection/types}queryNotificationSyncConfirmed' : QueryNotificationConfirmedType,
+        '{http://schemas.ogf.org/nsi/2013/12/connection/types}errorEvent' : ErrorEventType,
+        '{http://schemas.ogf.org/nsi/2013/12/connection/types}queryNotificationConfirmed' : QueryNotificationConfirmedType,
+        '{http://schemas.ogf.org/nsi/2013/12/connection/types}reserveTimeout' : ReserveTimeoutRequestType,
+        '{http://schemas.ogf.org/nsi/2013/12/connection/types}queryResultSync' : QueryResultType,
+        '{http://schemas.ogf.org/nsi/2013/12/connection/types}queryRecursive' : QueryType,
+        '{http://schemas.ogf.org/nsi/2013/12/connection/types}reservation' : QuerySummaryResultType
     }
 
     if not element.tag in type_map:
