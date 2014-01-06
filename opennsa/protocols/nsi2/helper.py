@@ -20,11 +20,11 @@ from opennsa.protocols.nsi2.bindings import nsiframework, nsiconnection, p2pserv
 LOG_SYSTEM = 'NSI2.Helper'
 
 # don't really fit anywhere, consider cramming them into the bindings
-FRAMEWORK_TYPES_NS   = "http://schemas.ogf.org/nsi/2013/07/framework/types"
-FRAMEWORK_HEADERS_NS = "http://schemas.ogf.org/nsi/2013/07/framework/headers"
-CONNECTION_TYPES_NS  = "http://schemas.ogf.org/nsi/2013/07/connection/types"
-SERVICE_TYPES_NS     = 'http://schemas.ogf.org/nsi/2013/07/services/types'
-P2PSERVICES_TYPES_NS = 'http://schemas.ogf.org/nsi/2013/07/services/point2point'
+FRAMEWORK_TYPES_NS   = "http://schemas.ogf.org/nsi/2013/12/framework/types"
+FRAMEWORK_HEADERS_NS = "http://schemas.ogf.org/nsi/2013/12/framework/headers"
+CONNECTION_TYPES_NS  = "http://schemas.ogf.org/nsi/2013/12/connection/types"
+SERVICE_TYPES_NS     = 'http://schemas.ogf.org/nsi/2013/12/services/types'
+P2PSERVICES_TYPES_NS = 'http://schemas.ogf.org/nsi/2013/12/services/point2point'
 
 URN_NETWORK = 'urn:ogf:network:'
 
@@ -33,6 +33,11 @@ ET.register_namespace('header', FRAMEWORK_HEADERS_NS)
 ET.register_namespace('ctypes', CONNECTION_TYPES_NS)
 ET.register_namespace('stypes', SERVICE_TYPES_NS)
 ET.register_namespace('p2psrv', P2PSERVICES_TYPES_NS)
+
+# Lookup table for urn labels
+LABEL_MAP = {
+    'vlan' : cnt.ETHERNET_VLAN
+}
 
 
 
@@ -120,61 +125,74 @@ def parseXMLTimestamp(xsd_timestamp):
 
 
 
-def createLabel(type_value_pair):
-    if type_value_pair.targetNamespace:
-        label_type = '{%s}%s' % (type_value_pair.targetNamespace, type_value_pair.type_)
-    else:
-        label_type = type_value_pair.type_
-    return nsa.Label(label_type, type_value_pair.value)
+def parseLabel(label_part):
+    if not '=' in label_part:
+        raise PayloadError('No = in urn label part (%s)' % label_part)
+
+    label_short_type, label_value = label_part.split('=')
+    try:
+        label_type = LABEL_MAP[label_short_type]
+    except KeyError:
+        raise PayloadError('Label type %s not recognized')
+
+    return nsa.Label(label_type, label_value)
 
 
-def createSTP(stp_type):
-
-    if not stp_type.networkId.startswith(URN_NETWORK):
-        raise error.PayloadError('STP networkId (%s) did not start with %s' % (stp_type.networkId, URN_NETWORK))
-
-    network_id = stp_type.networkId.replace(URN_NETWORK, '')
-
-    if not stp_type.localId.startswith(URN_NETWORK):
-        raise error.PayloadError('STP localId (%s) did not start with %s' % (stp_type.localId, URN_NETWORK))
-
-    local_id = stp_type.localId.replace(URN_NETWORK, '')
-
-    if stp_type.labels is not None:
-        labels = [ createLabel(tvp) for tvp in stp_type.labels ]
-    else:
-        labels = []
-
-    return nsa.STP(network_id, local_id, labels)
-
-
-def createSTPType(stp):
-
-    def createValue(v1, v2):
-        if v1 == v2:
-            return str(v1)
+def findPrefix(network, port):
+    prefix = ''
+    for x,y in zip(network, port):
+        if x == y:
+            prefix += x
         else:
-            return str(v1) + '-' + str(v2)
+            break
+    return prefix
 
-    def splitLabelType(label_type):
-        if '{' in label_type:
-            ns, tag = label_type.split('}',1)
-            ns = ns[1:]
-        else:
-            ns, tag = None, label_type
-        return ns, tag
 
-    labels = None
-    if stp.labels not in (None, []):
-        labels = []
-        for label in stp.labels:
-            ns, tag = splitLabelType(label.type_)
-            labels.append( nsiconnection.TypeValuePairType(tag, ns, [ label.labelValue() ] ) )
+def createSTP(stp_id):
 
-    network_id = URN_NETWORK + stp.network
-    local_id = URN_NETWORK + stp.port
+    if not stp_id.startswith(URN_NETWORK):
+        raise error.PayloadError('STP Id (%s) did not start with %s' % (stp_id, URN_NETWORK))
 
-    return p2pservices.StpType(network_id, local_id, labels)
+    tsi = stp_id.replace(URN_NETWORK, '')
+
+    if '?' in tsi:
+        loc, lbp = tsi.split('?')
+        label = parseLabel(lbp)
+    else:
+        loc = tsi
+        label = None
+
+    if not ':' in loc:
+        raise error.PayloadError('No : in stp urn (%s)' % loc)
+
+    network, port_short = loc.rsplit(':', 1)
+
+    # HACK ON!
+    base, _ = network.split(':',1)
+    port = base + ':' + port_short
+
+    return nsa.STP(network, port, label)
+
+
+
+def createSTPID(stp):
+
+    label = ''
+    if stp.label:
+        label = '?' + stp.label.type_.split('#')[-1] + '=' + stp.label.labelValue() 
+
+    # HACK ON!
+    prefix = findPrefix(stp.network, stp.port)
+#    prefix = ''
+#    for x,y in zip(stp.network, stp.port):
+#        if x == y:
+#            prefix += x
+#        else:
+#            break
+
+    lp = len(prefix)
+    stp_id = URN_NETWORK + prefix + stp.network[lp:] + ':' + stp.port[lp:] + label
+    return stp_id
 
 
 
@@ -196,21 +214,18 @@ def buildQuerySummaryResult(query_confirmed):
             end_time   = parseXMLTimestamp(rc.schedule.endTime)
             schedule = nsa.Schedule(start_time, end_time)
 
-            service_def = None
-            if len(rc.serviceDefinitions) > 1:
-                log.msg('More than one service definition in a criteria, only using the first to build query summary result', system=LOG_SYSTEM)
+            if rc.serviceDefinition is None:
+                log.msg('Did not get any service definitions, cannot build query summary result', system=LOG_SYSTEM)
+                raise ValueError('Did not get any service definitions, cannot build query summary result')
 
-            for qname, sd in rc.serviceDefinitions.items():
-                if qname != p2pservices.evts:
-                    log.msg('Got non evts service, cannot build query summary for that yet', system=LOG_SYSTEM)
-                    continue
-
+            if type(rc.serviceDefinition) is p2pservices.P2PServiceBaseType:
+                sd = rc.serviceDefinition
                 source_stp = createSTP(sd.sourceSTP)
                 dest_stp   = createSTP(sd.destSTP)
-                source_stp.labels = [ nsa.Label(cnt.ETHERNET_VLAN, str(sd.sourceVLAN)) ]
-                dest_stp.labels   = [ nsa.Label(cnt.ETHERNET_VLAN, str(sd.destVLAN))   ]
-                # source_stp, dest_stp, capacity, mtu, burst_size,  directionality=BIDIRECTIONAL, symmetric=False, ero=None):
-                service_def = nsa.EthernetVLANService(source_stp, dest_stp, sd.capacity, sd.mtu, sd.burstsize, sd.directionality, sd.symmetricPath, None)
+                service_def = nsa.Point2PointService(source_stp, dest_stp, sd.capacity, sd.directionality, sd.symmetricPath, None)
+            else:
+                log.msg('Got non p2ps service, cannot build query summary for that', system=LOG_SYSTEM)
+                service_def = None
 
             crit = nsa.Criteria(int(rc.version), schedule, service_def)
             criterias.append(crit)
@@ -223,18 +238,13 @@ def buildQuerySummaryResult(query_confirmed):
 def buildQuerySummaryResultType(reservations):
 
     def buildServiceDefinition(service_def):
-        if type(service_def) is nsa.EthernetVLANService:
-            service_type = cnt.EVTS_AGOLE
+        if type(service_def) is nsa.Point2PointService:
+            service_type = cnt.P2P_SERVICE
             sd = service_def
-            source_stp        = createSTPType(sd.source_stp)
-            dest_stp          = createSTPType(sd.dest_stp)
-            source_vlan       = sd.source_stp.labels[0].labelValue()
-            dest_vlan         = sd.dest_stp.labels[0].labelValue()
-            source_stp.labels = None
-            dest_stp.labels   = None
-            evts = p2pservices.EthernetVlanType(sd.capacity, sd.directionality, sd.symmetric,
-                                                source_stp, dest_stp, None, sd.mtu, sd.burst_size, source_vlan, dest_vlan)
-            return service_type, [ (p2pservices.evts, evts) ]
+            src_stp_id  = createSTPID(sd.source_stp)
+            dst_stp_id  = createSTPID(sd.dest_stp)
+            p2ps = p2pservices.P2PServiceBaseType(sd.capacity, sd.directionality, sd.symmetric, src_stp_id, dst_stp_id, None, [])
+            return str(p2pservices.p2ps), p2ps
         else:
             return 'N/A', None
 
@@ -249,15 +259,16 @@ def buildQuerySummaryResultType(reservations):
         criterias = []
         for crit in crits:
             schedule = nsiconnection.ScheduleType(createXMLTime(crit.schedule.start_time), createXMLTime(crit.schedule.end_time))
-            service_type, service_defs = buildServiceDefinition(crit.service_def)
+            service_type, service_def = buildServiceDefinition(crit.service_def)
             children = []
-            criteria = nsiconnection.QuerySummaryResultCriteriaType(crit.revision, schedule, service_type, children, service_defs )
+            criteria = nsiconnection.QuerySummaryResultCriteriaType(crit.revision, schedule, service_type, children, service_def)
             criterias.append(criteria)
 
         data_plane_status = nsiconnection.DataPlaneStatusType(dsm[0], dsm[1], dsm[2])
         connection_states = nsiconnection.ConnectionStatesType(rsm, psm, lsm, data_plane_status)
 
-        qsrt = nsiconnection.QuerySummaryResultType(cid, gid, desc, criterias, req_nsa, connection_states, nid)
+        result_id = 0 # FIXME
+        qsrt = nsiconnection.QuerySummaryResultType(cid, gid, desc, criterias, req_nsa, connection_states, nid, result_id)
         query_results.append(qsrt)
 
     return query_results

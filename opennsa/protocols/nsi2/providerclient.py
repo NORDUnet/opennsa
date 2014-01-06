@@ -70,18 +70,21 @@ class ProviderClient:
 
         sd = criteria.service_def
 
-        # we only support evts for now
-        src_stp = helper.createSTPType(sd.source_stp)
-        dst_stp = helper.createSTPType(sd.dest_stp)
-        src_stp.labels = []
-        dst_stp.labels = []
+        # we only support p2p for now
+        #src_stp = helper.createSTPType(sd.source_stp)
+        #dst_stp = helper.createSTPType(sd.dest_stp)
+        #src_stp.labels = []
+        #dst_stp.labels = []
+        #src_vlan = sd.source_stp.label.labelValue()
+        #dst_vlan = sd.dest_stp.label.labelValue()
 
-        src_vlan = sd.source_stp.labels[0].labelValue()
-        dst_vlan = sd.dest_stp.labels[0].labelValue()
+        src_stp_id = helper.createSTPID(sd.source_stp)
+        dst_stp_id = helper.createSTPID(sd.dest_stp)
 
-        evts = p2pservices.EthernetVlanType(sd.capacity, sd.directionality, sd.symmetric, src_stp, dst_stp, None, sd.mtu, sd.burst_size, src_vlan, dst_vlan)
+        p2p = p2pservices.P2PServiceBaseType(sd.capacity, sd.directionality, sd.symmetric, src_stp_id, dst_stp_id, None, [])
 
-        criteria = nsiconnection.ReservationConfirmCriteriaType(criteria.revision, schedule, str(p2pservices.evts), { p2pservices.evts : evts } )
+        #criteria = nsiconnection.ReservationConfirmCriteriaType(criteria.revision, schedule, str(p2pservices.p2ps), { p2pservices.p2ps : p2p } )
+        criteria = nsiconnection.ReservationConfirmCriteriaType(criteria.revision, schedule, str(p2pservices.p2ps), p2p)
 
         reserve_conf = nsiconnection.ReserveConfirmedType(connection_id, global_reservation_id, description, criteria)
 
@@ -189,7 +192,11 @@ class ProviderClient:
         else:
             service_exception = None
 
-        error_event = nsiconnection.ErrorEventType(connection_id, notification_id, helper.createXMLTime(timestamp), event, None, service_exception)
+        org_connection_id = None
+        org_nsa_id = None
+        additional_info = None
+        error_event = nsiconnection.ErrorEventType(connection_id, notification_id, helper.createXMLTime(timestamp), event,
+                                                   org_connection_id, org_nsa_id, additional_info, service_exception)
 
         body_element = error_event.xml(nsiconnection.errorEvent)
 
@@ -207,7 +214,6 @@ class ProviderClient:
         qsr_elements = [ qsr.xml(nsiconnection.reservation) for qsr in query_summary_result ]
 
         payload = minisoap.createSoapPayload(qsr_elements, header_element)
-
         d = httpclient.soapRequest(requester_url, actions.QUERY_SUMMARY_CONFIRMED, payload, ctx_factory=self.ctx_factory)
         return d
 

@@ -71,41 +71,34 @@ class ProviderService:
 
         version      = criteria.version
         service_type = criteria.serviceType # right now we just ignore this, either we know the service type or not
-        service_defs = criteria.serviceDefinitions
+        p2ps         = criteria.serviceDefinition
 
-        if len(service_defs) == 0:
-            err = failure.Failure ( error.PayloadError('No service definition element in message') )
-            return self._createSOAPFault(err, header.provider_nsa, service_type=service_type)
+#        if len(service_defs) == 0:
+#            err = failure.Failure ( error.PayloadError('No service definition element in message') )
+#            return self._createSOAPFault(err, header.provider_nsa, service_type=service_type)
 
-        if len(service_defs) != 1:
-            err = failure.Failure ( error.PayloadError('Only one service definition allowed') )
-            return self._createSOAPFault(err, header.provider_nsa, service_type=service_type)
+#        if len(service_defs) != 1:
+#            err = failure.Failure ( error.PayloadError('Only one service definition allowed') )
+#            return self._createSOAPFault(err, header.provider_nsa, service_type=service_type)
 
-        evts = service_defs[0]
-        if type(evts) is not p2pservices.EthernetVlanType:
+        if type(p2ps) is not p2pservices.P2PServiceBaseType:
             err = failure.Failure ( error.PayloadError('Only support EthernetVlanType service for now.') )
             return self._createSOAPFault(err, header.provider_nsa, service_type=service_type)
 
-        # create DTOs
-
-        # Missing: EROs, symmetric, stp labels
+        # create DTOs (EROs not supported yet)
 
         start_time = helper.parseXMLTimestamp(criteria.schedule.startTime)
         end_time = helper.parseXMLTimestamp(criteria.schedule.endTime)
         schedule = nsa.Schedule(start_time, end_time)
 
-        src_stp = helper.createSTP(evts.sourceSTP)
-        dst_stp = helper.createSTP(evts.destSTP)
+        src_stp = helper.createSTP(p2ps.sourceSTP)
+        dst_stp = helper.createSTP(p2ps.destSTP)
 
-        # for evts in r99, STPs are without labels, but this will change in the future, so we set them here
-        src_stp.labels = [ nsa.Label(cnt.ETHERNET_VLAN, str(evts.sourceVLAN)) ]
-        dst_stp.labels = [ nsa.Label(cnt.ETHERNET_VLAN, str(evts.destVLAN))   ]
-
-        if evts.ero:
+        if p2ps.ero:
             err = failure.Failure ( error.PayloadError('ERO not supported, go away.') )
             return self._createSOAPFault(err, header.provider_nsa)
 
-        sd = nsa.EthernetVLANService(src_stp, dst_stp, evts.capacity, evts.mtu, evts.burstsize, evts.directionality, evts.symmetricPath, None)
+        sd = nsa.Point2PointService(src_stp, dst_stp, p2ps.capacity, p2ps.directionality, p2ps.symmetricPath, None)
 
         crt = nsa.Criteria(criteria.version, schedule, sd)
 

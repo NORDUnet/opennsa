@@ -77,22 +77,19 @@ class RequesterService:
         end_time   = helper.parseXMLTimestamp(criteria.schedule.endTime)
         schedule   = nsa.Schedule(start_time, end_time)
 
-        evts = criteria.serviceDefinitions.values()[0] # add check later
-        if type(evts) is not p2pservices.EthernetVlanType:
-            raise ValueError('Only EVTS service supported for now')
+        # check for service type sometime
+        p2ps = criteria.serviceDefinition
+        if type(p2ps) is not p2pservices.P2PServiceBaseType:
+            raise ValueError('Only P2P service supported.')
 
         # (ERO missing)
-        src_stp = helper.createSTP(evts.sourceSTP)
-        dst_stp = helper.createSTP(evts.destSTP)
+        src_stp = helper.createSTP(p2ps.sourceSTP)
+        dst_stp = helper.createSTP(p2ps.destSTP)
 
-        # for evts in r99, STPs are without labels, but this will change in the future, so we set them here
-        src_stp.labels = [ nsa.Label(cnt.ETHERNET_VLAN, str(evts.sourceVLAN)) ]
-        dst_stp.labels = [ nsa.Label(cnt.ETHERNET_VLAN, str(evts.destVLAN))   ]
-
-        if evts.ero:
+        if p2ps.ero:
             print "ERO parsing in reserveConfirmed not implemented yet, full path will not be available"
 
-        sd = nsa.EthernetVLANService(src_stp, dst_stp, evts.capacity, evts.mtu, evts.burstsize, evts.directionality, evts.symmetricPath, None)
+        sd = nsa.Point2PointService(src_stp, dst_stp, p2ps.capacity, p2ps.directionality, p2ps.symmetricPath, None)
         crt = nsa.Criteria(criteria.version, schedule, sd)
 
         self.requester.reserveConfirmed(header, reservation.connectionId,  reservation.globalReservationId, reservation.description, crt)

@@ -97,33 +97,26 @@ class RequesterClient:
         assert schedule.start_time.tzinfo is None, 'Start time must NOT have time zone'
         assert schedule.end_time.tzinfo   is None, 'End time must NOT have time zone'
 
-        if type(sd) is nsa.EthernetVLANService:
+        if not type(sd) is nsa.Point2PointService:
+            raise ValueError('Cannot create request for service definition of type %s' % str(type(sd)))
 
-            # we pass labels on STPs internally, but not in EVTS service, the latter will change after r99
-            src_vlan = sd.source_stp.labels[0].labelValue()
-            dst_vlan = sd.dest_stp.labels[0].labelValue()
+        src_stp_id = helper.createSTPID(sd.source_stp)
+        dst_stp_id = helper.createSTPID(sd.dest_stp)
 
-            src_stp = helper.createSTPType(sd.source_stp)
-            dst_stp = helper.createSTPType(sd.dest_stp)
-            src_stp.labels = []
-            dst_stp.labels = []
-
-            service_type = p2pservices.EthernetVlanType(sd.capacity, sd.directionality, sd.symmetric,
-                                                        src_stp, dst_stp, sd.ero,
-                                                        sd.mtu, sd.burst_size, src_vlan, dst_vlan)
-
-        else:
-            raise ValueError('Cannot create request for service definition of type %s' % type(sd))
-
+        service_def = p2pservices.P2PServiceBaseType(sd.capacity, sd.directionality, sd.symmetric, src_stp_id, dst_stp_id, sd.ero, None)
 
         schedule_type = nsiconnection.ScheduleType(schedule.start_time.replace(tzinfo=tzutc()).isoformat(),
                                                    schedule.end_time.replace(tzinfo=tzutc()).isoformat())
 
-        criteria = nsiconnection.ReservationRequestCriteriaType(criteria.revision, schedule_type, cnt.EVTS_AGOLE, { p2pservices.evts : service_type } )
+        criteria = nsiconnection.ReservationRequestCriteriaType(criteria.revision, schedule_type, str(p2pservices.p2ps), service_def )
 
         reservation = nsiconnection.ReserveType(connection_id, global_reservation_id, description, criteria)
 
         body_payload   = reservation.xml(nsiconnection.reserve)
+#        print "BP"
+#        from xml.etree import ElementTree as ET
+#        ET.dump(body_payload)
+#        print "--"
         payload = minisoap.createSoapPayload(body_payload, header_payload)
 
         def _handleAck(soap_data):
