@@ -24,3 +24,5 @@ EVTS_AGOLE          = 'http://services.ogf.org/nsi/2013/07/descriptions/EVTS.A-G
 ETHERNET = 'http://schemas.ogf.org/nml/2012/10/ethernet'
 ETHERNET_VLAN = '%s#vlan' % ETHERNET
 
+P2P_SERVICE = 'http://schemas.ogf.org/nsi/2013/12/services/point2point#p2ps'
+
