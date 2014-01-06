@@ -166,64 +166,65 @@ class Label(object):
 
 class STP(object): # Service Termination Point
 
-    def __init__(self, network, port, labels=None):
+    def __init__(self, network, port, label=None):
         assert type(network) is str, 'Invalid network type provided for STP'
         assert type(port) is str, 'Invalid port type provided for STP'
+        assert type(label) is Label, 'Invalid label type provided for STP'
         self.network = network
         self.port = port
-        self.labels = labels or []
+        self.label = label
 
 
     def __eq__(self, other):
         if not type(other) is STP:
             return False
-        return self.network == other.network and self.port == other.port and self.labels == other.labels
+        return self.network == other.network and self.port == other.port and self.label == other.label
 
 
     def __repr__(self):
         base = '<STP %s %s' % (self.network, self.port)
-        if self.labels:
-            base += ' ' + ','.join( [ label.type_.split('#')[-1] + '=' + label.labelValue() for label in self.labels ] )
+        if self.label:
+            base += ' ' + self.label.type_.split('#')[-1] + '=' + self.label.labelValue()
         return base + '>'
 
 
 
 class Link(object): # intra network link
 
-    def __init__(self, network, src_port, dst_port, src_labels=None, dst_labels=None):
-        if src_labels is None:
-            assert dst_labels is None, 'Source and destination labels must either both be None, or both specified'
+    def __init__(self, network, src_port, dst_port, src_label=None, dst_label=None):
+        if src_label is None:
+            assert dst_label is None, 'Source and destination label must either both be None, or both specified'
         else:
-            assert dst_labels is not None, 'Source and destination labels must either both be None, or both specified'
-            assert type(src_labels) is list, 'Source labels must be a list'
-            assert type(dst_labels) is list, 'Dest labels must be a list'
+            assert dst_label is not None, 'Source and destination label must either both be None, or both specified'
+            assert type(src_label) is Label, 'Source label must be a label, not %s' % str(type(src_label))
+            assert type(dst_label) is Label, 'Dest label must be a label, not %s' % str(type(dst_label))
         self.network = network
         self.src_port = src_port
         self.dst_port = dst_port
-        self.src_labels = src_labels
-        self.dst_labels = dst_labels
+        self.src_label = src_label
+        self.dst_label = dst_label
 
 
     def sourceSTP(self):
-        return STP(self.network, self.src_port, None, self.src_labels)
+        return STP(self.network, self.src_port, None, self.src_label)
 
 
     def destSTP(self):
-        return STP(self.network, self.dst_port, None, self.dst_labels)
+        return STP(self.network, self.dst_port, None, self.dst_label)
 
 
     def __eq__(self, other):
         if not type(other) is Link:
             return False
-        return (self.network, self.src_port, self.dst_port, self.src_labels, self.dst_labels) == \
-               (other.network, other.src_port, other.dst_port, other.src_labels, other.dst_labels)
+        return (self.network, self.src_port, self.dst_port, self.src_label, self.dst_label) == \
+               (other.network, other.src_port, other.dst_port, other.src_label, other.dst_label)
 
 
     def __repr__(self):
-        if self.src_labels:
-            src_label_type = self.src_labels[0].type_.split('#')[-1]
-            dst_label_type = self.dst_labels[0].type_.split('#')[-1]
-            return '<Link %s::%s#%s=%s--%s#%s=%s>' % (self.network, self.src_port, src_label_type, self.src_labels[0].labelValue(), self.dst_port, dst_label_type, self.dst_labels[0].labelValue())
+        if self.src_label:
+            src_label_type = self.src_label.type_.split('#')[-1]
+            dst_label_type = self.dst_label.type_.split('#')[-1]
+            return '<Link %s::%s#%s=%s--%s#%s=%s>' % (self.network, self.src_port, src_label_type, self.src_label.labelValue(), self.dst_port, dst_label_type, self.dst_label.labelValue())
         else:
             return '<Link %s::%s=%s>' % (self.network, self.src_port, self.dst_port)
 
