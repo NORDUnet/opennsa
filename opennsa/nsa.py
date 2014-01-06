@@ -312,36 +312,14 @@ class Schedule(object):
 
 
 
-class EthernetService(object):
+class Point2PointService(object):
 
-    def __init__(self, source_stp, dest_stp, capacity, mtu, burst_size,  directionality=BIDIRECTIONAL, symmetric=False, ero=None):
-
-        self._verifySTPs(source_stp, dest_stp)
+    def __init__(self, source_stp, dest_stp, capacity, directionality=BIDIRECTIONAL, symmetric=False, ero=None):
 
         self.source_stp     = source_stp
         self.dest_stp       = dest_stp
         self.capacity       = capacity
-        self.mtu            = mtu
-        self.burst_size     = burst_size
         self.directionality = directionality
         self.symmetric      = symmetric
         self.ero            = ero
-
-
-    def _verifySTPs(self, source_stp, dest_stp):
-
-        assert source_stp.labels == [], 'Source STP must not specify labels in EthernetService'
-        assert dest_stp.labels == [],   'Destination STP must not specify labels in EthernetService'
-
-
-
-class EthernetVLANService(EthernetService):
-
-    def _verifySTPs(self, source_stp, dest_stp):
-
-        assert source_stp.labels and len(source_stp.labels) == 1,  'Source STP must specify label and exactly one for EthernetVLANService'
-        assert dest_stp.labels and len(dest_stp.labels) == 1, 'Destination STP must specify label and exactly one for EthernetVLANService'
-
-        assert source_stp.labels[0].type_ == cnt.ETHERNET_VLAN, 'Source STP label type must be %s for EthernetVLANService' % cnt.ETHERNET_VLAN
-        assert dest_stp.labels[0].type_   == cnt.ETHERNET_VLAN, 'Destination STP label type must be %s for EthernetVLANService' % cnt.ETHERNET_VLAN
 
