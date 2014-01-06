@@ -66,8 +66,8 @@ class GenericProviderTest:
     @defer.inlineCallbacks
     def testConnectSTPToItself(self):
 
-        stp = nsa.STP(self.network, self.source_port, labels=[ nsa.Label(cnt.ETHERNET_VLAN, '1782') ] )
-        sd = nsa.EthernetVLANService(stp, stp, self.bandwidth, 1500, 0)
+        stp = nsa.STP(self.network, self.source_port, nsa.Label(cnt.ETHERNET_VLAN, '1782') )
+        sd = nsa.Point2PointService(stp, stp, self.bandwidth, cnt.BIDIRECTIONAL, False, None)
         criteria = nsa.Criteria(0, self.schedule, sd)
 
         self.header.newCorrelationId()
@@ -130,9 +130,9 @@ class GenericProviderTest:
     @defer.inlineCallbacks
     def testInvalidNetworkReservation(self):
 
-        source_stp  = nsa.STP(self.network, self.source_port, labels=[ nsa.Label(cnt.ETHERNET_VLAN, '1782') ] )
-        dest_stp    = nsa.STP('NoSuchNetwork', 'whatever', labels=[ nsa.Label(cnt.ETHERNET_VLAN, '1782') ] )
-        criteria    = nsa.Criteria(0, self.schedule, nsa.EthernetVLANService(source_stp, dest_stp, 200, 1500, 0) )
+        source_stp  = nsa.STP(self.network, self.source_port, nsa.Label(cnt.ETHERNET_VLAN, '1782') )
+        dest_stp    = nsa.STP('NoSuchNetwork:topology', 'whatever', nsa.Label(cnt.ETHERNET_VLAN, '1782') )
+        criteria    = nsa.Criteria(0, self.schedule, nsa.Point2PointService(source_stp, dest_stp, 200, 'bidirectional', False, None) )
 
         self.header.newCorrelationId()
         try:
@@ -199,15 +199,13 @@ class GenericProviderTest:
 
         self.failUnlessEquals(src_stp.network, self.network)
         self.failUnlessEquals(src_stp.port,    self.source_port)
-        self.failUnlessEquals(len(src_stp.labels), 1)
-        self.failUnlessEquals(src_stp.labels[0].type_, cnt.ETHERNET_VLAN)
-        self.failUnlessEquals(src_stp.labels[0].labelValue(), '1782')
+        self.failUnlessEquals(src_stp.label.type_, cnt.ETHERNET_VLAN)
+        self.failUnlessEquals(src_stp.label.labelValue(), '1782')
 
         self.failUnlessEquals(dst_stp.network, self.network)
         self.failUnlessEquals(dst_stp.port,    self.dest_port)
-        self.failUnlessEquals(len(dst_stp.labels), 1)
-        self.failUnlessEquals(dst_stp.labels[0].type_, cnt.ETHERNET_VLAN)
-        self.failUnlessEquals(dst_stp.labels[0].labelValue(), '1782')
+        self.failUnlessEquals(dst_stp.label.type_, cnt.ETHERNET_VLAN)
+        self.failUnlessEquals(dst_stp.label.labelValue(), '1782')
 
         self.failUnlessEqual(crit.service_def.capacity, self.bandwidth)
         self.failUnlessEqual(crit.revision,   0)
@@ -256,9 +254,9 @@ class GenericProviderTest:
     def testReserveAbort(self):
 
         # these need to be constructed such that there is only one label option
-        source_stp  = nsa.STP(self.network, self.source_port, labels=[ nsa.Label(cnt.ETHERNET_VLAN, '1782') ] )
-        dest_stp    = nsa.STP(self.network, self.dest_port,   labels=[ nsa.Label(cnt.ETHERNET_VLAN, '1782') ] )
-        criteria    = nsa.Criteria(0, self.schedule, nsa.EthernetVLANService(source_stp, dest_stp, 200, 1500, 0) )
+        source_stp  = nsa.STP(self.network, self.source_port, nsa.Label(cnt.ETHERNET_VLAN, '1782') )
+        dest_stp    = nsa.STP(self.network, self.dest_port,   nsa.Label(cnt.ETHERNET_VLAN, '1782') )
+        criteria    = nsa.Criteria(0, self.schedule, nsa.Point2PointService(source_stp, dest_stp, 200, cnt.BIDIRECTIONAL, False, None) )
 
         self.header.newCorrelationId()
         acid = yield self.provider.reserve(self.header, None, None, None, criteria)
@@ -278,9 +276,9 @@ class GenericProviderTest:
     def testReserveTimeout(self):
 
         # these need to be constructed such that there is only one label option
-        source_stp  = nsa.STP(self.network, self.source_port, labels=[ nsa.Label(cnt.ETHERNET_VLAN, '1782') ] )
-        dest_stp    = nsa.STP(self.network, self.dest_port,   labels=[ nsa.Label(cnt.ETHERNET_VLAN, '1782') ] )
-        criteria    = nsa.Criteria(0, self.schedule, nsa.EthernetVLANService(source_stp, dest_stp, 200, 1500, 0) )
+        source_stp  = nsa.STP(self.network, self.source_port, nsa.Label(cnt.ETHERNET_VLAN, '1782') )
+        dest_stp    = nsa.STP(self.network, self.dest_port,   nsa.Label(cnt.ETHERNET_VLAN, '1782') )
+        criteria    = nsa.Criteria(0, self.schedule, nsa.Point2PointService(source_stp, dest_stp, self.bandwidth, cnt.BIDIRECTIONAL, False, None) )
 
         self.header.newCorrelationId()
         acid = yield self.provider.reserve(self.header, None, None, None, criteria)
@@ -303,15 +301,15 @@ class GenericProviderTest:
     def testSlowActivate(self):
         # key here is that end time is passed when activation is done
 
-        source_stp  = nsa.STP(self.network, self.source_port, labels=[ nsa.Label(cnt.ETHERNET_VLAN, '1780') ] )
-        dest_stp    = nsa.STP(self.network, self.dest_port,   labels=[ nsa.Label(cnt.ETHERNET_VLAN, '1780') ] )
+        source_stp  = nsa.STP(self.network, self.source_port, nsa.Label(cnt.ETHERNET_VLAN, '1780') )
+        dest_stp    = nsa.STP(self.network, self.dest_port,   nsa.Label(cnt.ETHERNET_VLAN, '1780') )
         ## for backend/aggregator
         #start_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=1)
         #end_time   = datetime.datetime.utcnow() + datetime.timedelta(seconds=2)
         ## remote test
         #start_time = datetime.datetime.now(tzutc()) + datetime.timedelta(seconds=1)
         #end_time   = datetime.datetime.now(tzutc()) + datetime.timedelta(seconds=2)
-        criteria = nsa.ServiceParameters(start_time, end_time, source_stp, dest_stp, 200)
+        criteria    = nsa.Criteria(0, self.schedule, nsa.Point2PointService(source_stp, dest_stp, 200, cnt.BIDIRECTIONAL, False, None) )
 
         def setupLink(connection_id, src, dst, bandwidth):
             d = defer.Deferred()
@@ -352,7 +350,7 @@ class GenericProviderTest:
         yield self.provider.terminate(self.header, cid)
         yield self.requester.terminate_defer
 
-    testSlowActivate.skip = 'Uses reactor calls and real timings, and is too slow to be a regular test'
+    testSlowActivate.skip = 'Uses reactor calls and real timings, and is too slow to be a regular test (but something is wrong as well)'
 
 
     @defer.inlineCallbacks
@@ -411,13 +409,13 @@ class GenericProviderTest:
 
 class DUDBackendTest(GenericProviderTest, unittest.TestCase):
 
-    base        = 'Aruba'
+    base        = 'aruba'
     network     = base + ':topology'
     source_port = base + ':ps'
     dest_port   = base + ':bon'
 
-    source_stp  = nsa.STP(network, source_port, labels=[ nsa.Label(cnt.ETHERNET_VLAN, '1781-1782') ] )
-    dest_stp    = nsa.STP(network, dest_port,   labels=[ nsa.Label(cnt.ETHERNET_VLAN, '1782-1783') ] )
+    source_stp  = nsa.STP(network, source_port, nsa.Label(cnt.ETHERNET_VLAN, '1781-1782') )
+    dest_stp    = nsa.STP(network, dest_port,   nsa.Label(cnt.ETHERNET_VLAN, '1782-1783') )
     bandwidth   = 200
 
     requester_agent = nsa.NetworkServiceAgent('test-requester:nsa', 'dud_endpoint1')
@@ -448,7 +446,7 @@ class DUDBackendTest(GenericProviderTest, unittest.TestCase):
         self.end_time    = datetime.datetime.utcnow() + datetime.timedelta(seconds=10)
 
         self.schedule = nsa.Schedule(self.start_time, self.end_time)
-        self.sd = nsa.EthernetVLANService(self.source_stp, self.dest_stp, self.bandwidth, 1500, 0)
+        self.sd = nsa.Point2PointService(self.source_stp, self.dest_stp, self.bandwidth, cnt.BIDIRECTIONAL, False ,None)
         self.criteria = nsa.Criteria(0, self.schedule, self.sd)
 
 
@@ -467,13 +465,13 @@ class DUDBackendTest(GenericProviderTest, unittest.TestCase):
 
 class AggregatorTest(GenericProviderTest, unittest.TestCase):
 
-    base        = 'Aruba'
+    base        = 'aruba'
     network     = base + ':topology'
     source_port = base + ':ps'
     dest_port   = base + ':bon'
 
-    source_stp = nsa.STP(network, source_port, labels=[ nsa.Label(cnt.ETHERNET_VLAN, '1781-1782') ] )
-    dest_stp   = nsa.STP(network, dest_port,   labels=[ nsa.Label(cnt.ETHERNET_VLAN, '1782-1783') ] )
+    source_stp = nsa.STP(network, source_port, nsa.Label(cnt.ETHERNET_VLAN, '1781-1782') )
+    dest_stp   = nsa.STP(network, dest_port,   nsa.Label(cnt.ETHERNET_VLAN, '1782-1783') )
     bandwidth = 200
 
     requester_agent = nsa.NetworkServiceAgent('test-requester:nsa', 'dud_endpoint1')
@@ -510,7 +508,7 @@ class AggregatorTest(GenericProviderTest, unittest.TestCase):
         self.end_time   = datetime.datetime.utcnow() + datetime.timedelta(seconds=10)
 
         self.schedule = nsa.Schedule(self.start_time, self.end_time)
-        self.sd       = nsa.EthernetVLANService(self.source_stp, self.dest_stp, self.bandwidth, 1500, 0)
+        self.sd       = nsa.Point2PointService(self.source_stp, self.dest_stp, self.bandwidth, cnt.BIDIRECTIONAL, False, None)
         self.criteria = nsa.Criteria(0, self.schedule, self.sd)
 
 
@@ -532,18 +530,18 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
     PROVIDER_PORT = 8180
     REQUESTER_PORT = 8280
 
-    base        = 'Aruba'
+    base        = 'aruba'
     network     = base + ':topology'
     source_port = base + ':ps'
     dest_port   = base + ':bon'
 
     # we need to use single values here as the vlans are parsed by int() currently (will switch to labels in the future)
-    source_stp = nsa.STP(network, source_port, labels=[ nsa.Label(cnt.ETHERNET_VLAN, '1782') ] )
-    dest_stp   = nsa.STP(network, dest_port,   labels=[ nsa.Label(cnt.ETHERNET_VLAN, '1782') ] )
+    source_stp = nsa.STP(network, source_port, nsa.Label(cnt.ETHERNET_VLAN, '1782') )
+    dest_stp   = nsa.STP(network, dest_port,   nsa.Label(cnt.ETHERNET_VLAN, '1782') )
     bandwidth  = 200
 
     requester_agent = nsa.NetworkServiceAgent('test-requester:nsa', 'http://localhost:%i/NSI/services/RequesterService2' % REQUESTER_PORT)
-    provider_agent  = nsa.NetworkServiceAgent('Aruba:nsa', 'http://localhost:%i/NSI/services/CS2' % PROVIDER_PORT)
+    provider_agent  = nsa.NetworkServiceAgent('aruba:nsa', 'http://localhost:%i/NSI/services/CS2' % PROVIDER_PORT)
 
     header   = nsa.NSIHeader(requester_agent.urn(), provider_agent.urn(), reply_to=requester_agent.endpoint)
 
@@ -604,7 +602,7 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
         self.end_time   = datetime.datetime.utcnow() + datetime.timedelta(seconds=10)
 
         self.schedule = nsa.Schedule(self.start_time, self.end_time)
-        self.sd = nsa.EthernetVLANService(self.source_stp, self.dest_stp, self.bandwidth, 1500, 0)
+        self.sd = nsa.Point2PointService(self.source_stp, self.dest_stp, self.bandwidth, None, None)
         self.criteria = nsa.Criteria(0, self.schedule, self.sd)
 
 
@@ -657,15 +655,13 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
 
         self.failUnlessEquals(src_stp.network, self.network)
         self.failUnlessEquals(src_stp.port,    self.source_port)
-        self.failUnlessEquals(len(src_stp.labels), 1)
-        self.failUnlessEquals(src_stp.labels[0].type_, cnt.ETHERNET_VLAN)
-        self.failUnlessEquals(src_stp.labels[0].labelValue(), '1782')
+        self.failUnlessEquals(src_stp.label.type_, cnt.ETHERNET_VLAN)
+        self.failUnlessEquals(src_stp.label.labelValue(), '1782')
 
         self.failUnlessEquals(dst_stp.network, self.network)
         self.failUnlessEquals(dst_stp.port,    self.dest_port)
-        self.failUnlessEquals(len(dst_stp.labels), 1)
-        self.failUnlessEquals(dst_stp.labels[0].type_, cnt.ETHERNET_VLAN)
-        self.failUnlessEquals(dst_stp.labels[0].labelValue(), '1782')
+        self.failUnlessEquals(dst_stp.label.type_, cnt.ETHERNET_VLAN)
+        self.failUnlessEquals(dst_stp.label.labelValue(), '1782')
 
         self.failUnlessEqual(sd.capacity, self.bandwidth)
         self.failUnlessEqual(crit.revision,   0)

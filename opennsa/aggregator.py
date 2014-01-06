@@ -14,7 +14,7 @@ from twisted.python import log, failure
 from twisted.internet import defer
 
 from opennsa.interface import INSIProvider, INSIRequester
-from opennsa import error, nsa, state, database
+from opennsa import error, nsa, state, database, constants as cnt
 
 
 
@@ -30,16 +30,13 @@ LOG_SYSTEM = 'Aggregator'
 #    return '<%s:%s--%s:%s>' % (source_stp.network, source_stp.endpoint, dest_stp.network, dest_stp.endpoint)
 
 
-def shortLabel(labels):
+def shortLabel(label):
     # create a log friendly string representation of a lbel
-    lbs = []
-    for label in labels:
-        if '}' in label.type_:
-            name = label.type_.split('}',1)[1]
-        else:
-            name = label.type_
-        lbs.append( name + ':' + label.labelValue() )
-    return ','.join(lbs)
+    if '}' in label.type_:
+        name = label.type_.split('}',1)[1]
+    else:
+        name = label.type_
+    return name + ':' + label.labelValue()
 
 
 def _buildErrorMessage(results, action):
@@ -174,8 +171,8 @@ class Aggregator:
         conn = database.ServiceConnection(connection_id=connection_id, revision=0, global_reservation_id=global_reservation_id, description=description,
                             requester_nsa=header.requester_nsa, requester_url=header.reply_to, reserve_time=datetime.datetime.utcnow(),
                             reservation_state=state.RESERVE_START, provision_state=state.RELEASED, lifecycle_state=state.CREATED,
-                            source_network=source_stp.network, source_port=source_stp.port, source_labels=source_stp.labels,
-                            dest_network=dest_stp.network, dest_port=dest_stp.port, dest_labels=dest_stp.labels,
+                            source_network=source_stp.network, source_port=source_stp.port, source_label=source_stp.label,
+                            dest_network=dest_stp.network, dest_port=dest_stp.port, dest_label=dest_stp.label,
                             start_time=criteria.schedule.start_time, end_time=criteria.schedule.end_time, bandwidth=sd.capacity)
         yield conn.save()
 
@@ -212,9 +209,9 @@ class Aggregator:
         yield state.reserveChecking(conn) # this also acts a lock
 
         if conn.source_network == self.network and conn.dest_network == self.network:
-            path_info = ( conn.connection_id, self.network, conn.source_port, shortLabel(conn.source_labels), conn.dest_port, shortLabel(conn.dest_labels) )
+            path_info = ( conn.connection_id, self.network, conn.source_port, shortLabel(conn.source_label), conn.dest_port, shortLabel(conn.dest_label) )
             log.msg('Connection %s: Local link creation: %s %s#%s -> %s#%s' % path_info, system=LOG_SYSTEM)
-            paths = [ [ nsa.Link(self.network, conn.source_port, conn.dest_port, conn.source_labels, conn.dest_labels) ] ]
+            paths = [ [ nsa.Link(self.network, conn.source_port, conn.dest_port, conn.source_label, conn.dest_label) ] ]
 
         else:
             # log about creation and the connection type
@@ -249,9 +246,9 @@ class Aggregator:
             header = nsa.NSIHeader(self.nsa_.urn(), provider_nsa.urn(), [])
 
             # this has to be done more generic sometime
-            sd = nsa.EthernetVLANService(nsa.STP(link.network, link.src_port, labels=link.src_labels),
-                                         nsa.STP(link.network, link.dst_port, labels=link.dst_labels),
-                                         conn.bandwidth, sd.mtu, sd.burst_size, sd.directionality, sd.symmetric)
+            sd = nsa.Point2PointService(nsa.STP(link.network, link.src_port, link.src_label),
+                                        nsa.STP(link.network, link.dst_port, link.dst_label),
+                                        conn.bandwidth, sd.directionality, sd.symmetric)
 
             # save info for db saving
             self.reservations[header.correlation_id] = {
@@ -281,8 +278,8 @@ class Aggregator:
 #                                            connection_id=connection_id, local_link=local_link, revision=0, service_connection_id=conn.id, order_id=order_id,
 #                                            global_reservation_id=global_reservation_id, description=description,
 #                                            reservation_state=state.RESERVE_START, provision_state=state.RELEASED, lifecycle_state=state.CREATED, data_plane_active=False,
-#                                            source_network=sp.source_stp.network, source_port=sp.source_stp.port, source_labels=sp.source_stp.labels,
-#                                            dest_network=sp.dest_stp.network, dest_port=sp.dest_stp.port, dest_labels=sp.dest_stp.labels,
+#                                            source_network=sp.source_stp.network, source_port=sp.source_stp.port, source_label=sp.source_stp.label,
+#                                            dest_network=sp.dest_stp.network, dest_port=sp.dest_stp.port, dest_label=sp.dest_stp.label,
 #                                            start_time=sp.start_time.isoformat(), end_time=sp.end_time.isoformat(), bandwidth=sp.bandwidth)
 #                yield sc.save()
 #                defer.returnValue(sc)
@@ -524,11 +521,11 @@ class Aggregator:
             for c in conns:
                 sub_conns = yield c.SubConnections.get()
 
-                source_stp = nsa.STP(c.source_network, c.source_port, c.source_labels)
-                dest_stp = nsa.STP(c.dest_network, c.dest_port, c.dest_labels)
+                source_stp = nsa.STP(c.source_network, c.source_port, c.source_label)
+                dest_stp = nsa.STP(c.dest_network, c.dest_port, c.dest_label)
 
                 schedule = nsa.Schedule(c.start_time, c.end_time)
-                sd = nsa.EthernetVLANService(source_stp, dest_stp, c.bandwidth, 1, 1)
+                sd = nsa.Point2PointService(source_stp, dest_stp, c.bandwidth, cnt.BIDIRECTIONAL, False, None)
                 criteria = nsa.Criteria(c.revision, schedule, sd)
 
                 aggr_active     = all( [ sc.data_plane_active     for sc in sub_conns ] )
@@ -586,22 +583,22 @@ class Aggregator:
             log.msg('reserveConfirmed: dest network mismatch', system=LOG_SYSTEM)
         if sd.dest_stp.port      != resv_info['dest_port']:
             log.msg('reserveConfirmed: dest port mismatch', system=LOG_SYSTEM)
-        if not sd.source_stp.labels[0].singleValue():
-            log.msg('resourceConfirmed: source label is no a single value', system=LOG_SYSTEM)
-        if not sd.source_stp.labels[0].singleValue():
+        if not sd.source_stp.label.singleValue():
+            log.msg('reserveConfirmed: source label is no a single value', system=LOG_SYSTEM)
+        if not sd.dest_stp.label.singleValue():
             log.msg('reserveConfirmed: dest label is no a single value', system=LOG_SYSTEM)
 
         # skip label check for now
-        #sd.source_stp.labels[0].intersect(sub_connection.source_labels[0])
-        #sd.dest_stp.labels[0].intersect(sub_connection.dest_labels[0])
+        #sd.source_stp.label.intersect(sub_connection.source_label)
+        #sd.dest_stp.label.intersect(sub_connection.dest_label)
 
         # save sub connection in database
         sc = database.SubConnection(provider_nsa=org_provider_nsa, connection_id=connection_id, local_link=False, # remove local link sometime
                                     revision=criteria.revision, service_connection_id=resv_info['service_connection_id'], order_id=resv_info['order_id'],
                                     global_reservation_id=global_reservation_id, description=description,
                                     reservation_state=state.RESERVE_HELD, provision_state=state.RELEASED, lifecycle_state=state.CREATED, data_plane_active=False,
-                                    source_network=sd.source_stp.network, source_port=sd.source_stp.port, source_labels=sd.source_stp.labels,
-                                    dest_network=sd.dest_stp.network, dest_port=sd.dest_stp.port, dest_labels=sd.dest_stp.labels,
+                                    source_network=sd.source_stp.network, source_port=sd.source_stp.port, source_label=sd.source_stp.label,
+                                    dest_network=sd.dest_stp.network, dest_port=sd.dest_stp.port, dest_label=sd.dest_stp.label,
                                     start_time=criteria.schedule.start_time.isoformat(), end_time=criteria.schedule.end_time.isoformat(), bandwidth=sd.capacity)
 
         yield sc.save()
@@ -612,9 +609,9 @@ class Aggregator:
         sub_conns = yield conn.SubConnections.get()
 
         if sc.order_id == 0:
-            conn.source_labels = sd.source_stp.labels
+            conn.source_label = sd.source_stp.label
         if sc.order_id == len(sub_conns)-1:
-            conn.dest_labels = sd.dest_stp.labels
+            conn.dest_label = sd.dest_stp.label
 
         yield conn.save()
 
@@ -627,11 +624,11 @@ class Aggregator:
             log.msg('Connection %s: All sub connections reserve held, can emit reserveConfirmed' % (conn.connection_id), system=LOG_SYSTEM)
             yield state.reserveHeld(conn)
             header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn(), None)
-            source_stp = nsa.STP(conn.source_network, conn.source_port, conn.source_labels)
-            dest_stp   = nsa.STP(conn.dest_network,   conn.dest_port,   conn.dest_labels)
+            source_stp = nsa.STP(conn.source_network, conn.source_port, conn.source_label)
+            dest_stp   = nsa.STP(conn.dest_network,   conn.dest_port,   conn.dest_label)
             schedule = nsa.Schedule(conn.start_time, conn.end_time)
-            evts = nsa.EthernetVLANService(source_stp, dest_stp, conn.bandwidth, 1, 1)
-            conn_criteria = nsa.Criteria(conn.revision, schedule, evts)
+            sd = nsa.Point2PointService(source_stp, dest_stp, conn.bandwidth, cnt.BIDIRECTIONAL, False, None) # we fake some thing that is not yet in the db
+            conn_criteria = nsa.Criteria(conn.revision, schedule, sd)
             self.parent_requester.reserveConfirmed(header, conn.connection_id, conn.global_reservation_id, conn.description, conn_criteria)
 
         else:

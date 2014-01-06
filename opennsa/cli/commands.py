@@ -37,7 +37,7 @@ def _createSTP(stp_desc):
     return nsa.STP(network, port, labels)
 
 
-def _createEVTS(src, dst, capacity, mtu=1500, burst_size=5000000):
+def _createP2PS(src, dst, capacity):
 
     src_np, src_vlan = src.split('#')
     dst_np, dst_vlan = dst.split('#')
@@ -45,10 +45,10 @@ def _createEVTS(src, dst, capacity, mtu=1500, burst_size=5000000):
     src_stp = _createSTP(src_np)
     dst_stp = _createSTP(dst_np)
 
-    src_stp.labels = [ nsa.Label(cnt.ETHERNET_VLAN, src_vlan) ]
-    dst_stp.labels = [ nsa.Label(cnt.ETHERNET_VLAN, dst_vlan) ]
+    src_stp.label = nsa.Label(cnt.ETHERNET_VLAN, src_vlan)
+    dst_stp.label = nsa.Label(cnt.ETHERNET_VLAN, dst_vlan)
 
-    return nsa.EthernetVLANService(src_stp, dst_stp, capacity, mtu, burst_size)
+    return nsa.Point2PointService(src_stp, dst_stp, capacity, cnt.BIDIRECTIONAL, False, None)
 
 
 def _handleEvent(event):
@@ -87,7 +87,7 @@ def reserve(client, client_nsa, provider_nsa, src, dst, start_time, end_time, ca
 
     nsi_header = nsa.NSIHeader(client_nsa.urn(), provider_nsa.urn(), reply_to=provider_nsa.endpoint)
     schedule = nsa.Schedule(start_time, end_time)
-    service_def = _createEVTS(src, dst, capacity)
+    service_def = _createP2PS(src, dst, capacity)
     crt = nsa.Criteria(0, schedule, service_def)
 
     if connection_id or global_id:
@@ -110,7 +110,7 @@ def reserveprovision(client, client_nsa, provider_nsa, src, dst, start_time, end
 
     nsi_header = nsa.NSIHeader(client_nsa.urn(), provider_nsa.urn())
     schedule = nsa.Schedule(start_time, end_time)
-    service_def = _createEVTS(src, dst, capacity)
+    service_def = _createP2PS(src, dst, capacity)
     crt = nsa.Criteria(0, schedule, service_def)
 
     log.msg("Connection id: %s  Global id: %s" % (connection_id, global_id))
@@ -124,6 +124,13 @@ def reserveprovision(client, client_nsa, provider_nsa, src, dst, start_time, end
     except error.NSIError, e:
         log.msg('Error reserving %s, %s : %s' % (connection_id, e.__class__.__name__, str(e)))
         defer.returnValue(None)
+
+    try:
+        nsi_header.newCorrelationId()
+        qr = yield client.querySummary(nsi_header, connection_ids=[assigned_connection_id] )
+        print "QR", qr
+    except error.NSIError, e:
+        log.msg('Error querying %s, %s : %s' % (assigned_connection_id, e.__class__.__name__, str(e)))
 
     try:
         nsi_header.newCorrelationId()
@@ -145,7 +152,7 @@ def rprt(client, client_nsa, provider_nsa, src, dst, start_time, end_time, capac
     # reserve, provision, release,  terminate
     nsi_header = nsa.NSIHeader(client_nsa.urn(), provider_nsa.urn())
     schedule = nsa.Schedule(start_time, end_time)
-    service_def = _createEVTS(src, dst, capacity)
+    service_def = _createP2PS(src, dst, capacity)
     crt = nsa.Criteria(0, schedule, service_def)
 
     log.msg("Connection id: %s  Global id: %s" % (connection_id, global_id))
