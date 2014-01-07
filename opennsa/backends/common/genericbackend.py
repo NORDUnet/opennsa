@@ -126,8 +126,9 @@ class GenericBackend(service.Service):
                     log.msg('Unhandled provision state %s for connection %s in scheduler building' % (conn.provision_state, conn.connection_id))
 
             else:
-                log.msg('Unhandled start/end time configuration for connection %s' % conn.connection_id)
+                log.msg('Unhandled start/end time configuration for connection %s' % conn.connection_id, system=self.log_system)
 
+        log.msg('Scheduled calls restored', system=self.log_system)
         self.restore_defer.callback(None)
 
 
