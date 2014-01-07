@@ -286,6 +286,8 @@ class GenericBackend(service.Service):
         # cancel abort and schedule end time call
         self.scheduler.cancelCall(connection_id)
         self.scheduler.scheduleCall(conn.connection_id, conn.end_time, self._doEndtime, conn)
+        td = conn.end_time - datetime.datetime.utcnow()
+        log.msg('Connection %s: End and teardown scheduled for %s UTC (%i seconds)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
 
         yield self.parent_requester.reserveCommitConfirmed(header, connection_id)
 
