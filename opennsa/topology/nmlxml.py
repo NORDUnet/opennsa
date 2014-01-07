@@ -154,9 +154,9 @@ def parseNMLPort(nml_port):
     assert nml_port.tag in (NML_PORT,NML_PORTGROUP), 'Port tag name must be nml:Port or nml:PortGroup, not (%s)' % nml_port.tag
     port_id = _baseName( nml_port.attrib[ID] )
 
-    port_name      = None
-    labels         = []
-    remote_port    = None
+    port_name   = None
+    label       = None
+    remote_port = None
 
     for pe in nml_port:
         if pe.tag == NML_NAME:
@@ -165,7 +165,7 @@ def parseNMLPort(nml_port):
         elif pe.tag in (NML_LABEL, NML_LABELGROUP):
             label_type = pe.attrib[LABEL_TYPE]
             label_value = pe.text
-            labels.append( nsa.Label(label_type, label_value) )
+            label = nsa.Label(label_type, label_value)
 
         elif pe.tag == NML_RELATION:
             if pe.attrib[TYPE] == NML_ISALIAS:
@@ -180,7 +180,7 @@ def parseNMLPort(nml_port):
     if port_name is None:
         port_name = port_id.split(':')[-1]
 
-    port = nml.Port(port_id, port_name, labels, remote_port)
+    port = nml.Port(port_id, port_name, label, remote_port)
     return port
 
 
