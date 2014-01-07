@@ -363,7 +363,7 @@ class GenericBackend(service.Service):
 
             if conn.data_plane_active:
                 try:
-                    yield self._doTeardown(conn)
+                    yield self._doTeardown(conn) # we don't have to block here
                 except Exception as e:
                     log.msg('Connection %s: Error tearing down link: %s' % (conn.connection_id, e))
 
@@ -606,7 +606,10 @@ class GenericBackend(service.Service):
         if conn.lifecycle_state != state.CREATED:
             raise error.InvalidTransitionError('Cannot end connection in state: %s' % conn.lifecycle_state)
 
-        self.scheduler.cancelCall(conn.connection_id)
+        self.scheduler.cancelCall(conn.connection_id) # not sure about this one, there might some cases though
+
+        yield state.passedEndtime(conn)
+        self.logStateUpdate(conn, 'PASSED END TIME')
 
         if conn.data_plane_active:
             try:
@@ -619,6 +622,4 @@ class GenericBackend(service.Service):
             except Exception as e:
                 log.msg('Error ending connection: %s' % e)
                 raise e
-
-        yield state.passedEndtime(conn)
 
