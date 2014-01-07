@@ -75,7 +75,8 @@ def topologyXML(network):
 
     def addPort(nml_port_relation, port):
         nml_port = ET.SubElement(nml_port_relation, NML_PORTGROUP, {ID: portName(port)} )
-        for label in port.labels():
+        label = port.label()
+        if label:
             ln = ET.SubElement(nml_port, NML_LABELGROUP, { LABEL_TYPE : label.type_} )
             ln.text = label.labelValue()
         if port.remote_port is not None:

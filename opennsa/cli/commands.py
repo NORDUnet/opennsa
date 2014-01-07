@@ -33,8 +33,8 @@ def _createSTP(stp_desc):
 #        port = local_part
 #        labels = None
 
-    labels = None
-    return nsa.STP(network, port, labels)
+    label = None
+    return nsa.STP(network, port, label)
 
 
 def _createP2PS(src, dst, capacity):

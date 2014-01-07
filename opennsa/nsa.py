@@ -169,7 +169,7 @@ class STP(object): # Service Termination Point
     def __init__(self, network, port, label=None):
         assert type(network) is str, 'Invalid network type provided for STP'
         assert type(port) is str, 'Invalid port type provided for STP'
-        assert type(label) is Label, 'Invalid label type provided for STP'
+        assert label is None or type(label) is Label, 'Invalid label type provided for STP'
         self.network = network
         self.port = port
         self.label = label
