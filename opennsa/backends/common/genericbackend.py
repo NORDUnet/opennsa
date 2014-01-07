@@ -390,7 +390,8 @@ class GenericBackend(service.Service):
         if conn.lifecycle_state == state.TERMINATED:
             defer.returnValue(conn.cid)
 
-        yield self._doEndtime(conn)
+        if conn.lifecycle_state == state.CREATED:
+            yield self._doEndtime(conn)
 
         yield state.terminating(conn)
         self.logStateUpdate(conn, 'TERMINATING')
