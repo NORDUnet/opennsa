@@ -301,15 +301,13 @@ class GenericProviderTest:
     def testSlowActivate(self):
         # key here is that end time is passed when activation is done
 
+        start_time  = datetime.datetime.utcnow() + datetime.timedelta(seconds=2)
+        end_time    = datetime.datetime.utcnow() + datetime.timedelta(seconds=4)
+        schedule = nsa.Schedule(start_time, end_time)
+
         source_stp  = nsa.STP(self.network, self.source_port, nsa.Label(cnt.ETHERNET_VLAN, '1780') )
         dest_stp    = nsa.STP(self.network, self.dest_port,   nsa.Label(cnt.ETHERNET_VLAN, '1780') )
-        ## for backend/aggregator
-        #start_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=1)
-        #end_time   = datetime.datetime.utcnow() + datetime.timedelta(seconds=2)
-        ## remote test
-        #start_time = datetime.datetime.now(tzutc()) + datetime.timedelta(seconds=1)
-        #end_time   = datetime.datetime.now(tzutc()) + datetime.timedelta(seconds=2)
-        criteria    = nsa.Criteria(0, self.schedule, nsa.Point2PointService(source_stp, dest_stp, 200, cnt.BIDIRECTIONAL, False, None) )
+        criteria    = nsa.Criteria(0, schedule, nsa.Point2PointService(source_stp, dest_stp, 200, cnt.BIDIRECTIONAL, False, None) )
 
         def setupLink(connection_id, src, dst, bandwidth):
             d = defer.Deferred()
@@ -323,13 +321,15 @@ class GenericProviderTest:
         acid = yield self.provider.reserve(self.header, None, None, None, criteria)
         header, cid, gid, desc, sp = yield self.requester.reserve_defer
 
+        self.failUnlessEqual(cid, acid)
+
         yield self.provider.reserveCommit(self.header, cid)
         yield self.requester.reserve_commit_defer
 
         yield self.provider.provision(self.header, cid)
         yield self.requester.provision_defer
 
-        self.clock.advance(2)
+        self.clock.advance(3)
 
         header, cid, nid, timestamp, dps = yield self.requester.data_plane_change_defer
         active, version, consistent = dps
@@ -341,7 +341,7 @@ class GenericProviderTest:
         self.requester.data_plane_change_defer = defer.Deferred()
 
         self.clock.advance(2)
-        header, cid, nid, timestamp, dps = yield self.requester.data_plane_change_defer
+        header, cid, nid, timestamp, dps =  yield self.requester.data_plane_change_defer
         active, version, consistent = dps
 
         self.failUnlessEqual(cid, acid)
@@ -350,7 +350,8 @@ class GenericProviderTest:
         yield self.provider.terminate(self.header, cid)
         yield self.requester.terminate_defer
 
-    testSlowActivate.skip = 'Uses reactor calls and real timings, and is too slow to be a regular test (but something is wrong as well)'
+    testSlowActivate.timeout = 15
+    testSlowActivate.skip = 'Too slow to be a regular test (uses reactor calls and real timings)'
 
 
     @defer.inlineCallbacks
