@@ -30,7 +30,7 @@ class Port(object):
         assert not id_.startswith('urn:'), 'URNs are not used in core OpenNSA NML (id: %s)' % id_
         assert ':' not in name, 'Invalid port name %s, must not contain ":"' % name
         if label is not None:
-            assert type(label) is nsa.Label, 'label must be nsa.Label or None, type(%s)' % str(type(label))
+            assert type(label) is nsa.Label, 'label must be nsa.Label or None, not type(%s)' % str(type(label))
 
         self.id_            = id_               # The URN of the port
         self.name           = name              # String  ; Base name, no network name or uri prefix
