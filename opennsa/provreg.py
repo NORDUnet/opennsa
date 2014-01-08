@@ -43,7 +43,7 @@ class ProviderRegistry(object):
         """
         if nsi_agent.urn() in self.providers:
             log.msg('Skipping provider spawn for %s' % nsi_agent, system=LOG_SYSTEM)
-            return
+            return self.providers[nsi_agent.urn()]
 
         fac = self.provider_factories[ nsi_agent.getServiceType() ]
         prov = fac(nsi_agent)
