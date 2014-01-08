@@ -1,3 +1,6 @@
+##
+ Better debugging on SSH backends
+
 Current issues:
 
 - Make replyTo optional (assuming sync. query)
