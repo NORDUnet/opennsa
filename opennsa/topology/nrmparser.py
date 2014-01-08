@@ -106,7 +106,7 @@ def parsePortSpec(source, network_name):
             raise error.TopologyError('Port type %s is not a valid port type' % port_type)
 
         remote_network, remote_port, in_suffix, out_suffix = _parseRemoteSpec(remote_spec)
-        labels = _parseLabelSpec(label_spec)
+        label = _parseLabelSpec(label_spec)
 
         try:
             bandwidth = int(bandwidth)
@@ -133,8 +133,8 @@ def parsePortSpec(source, network_name):
             inbound_port_id     = network_name + ':' + inbound_port_name
             outbound_port_id    = network_name + ':' + outbound_port_name
 
-            inbound_port        = nml.InternalPort(inbound_port_id,  inbound_port_name,  bandwidth, labels, remote_out)
-            outbound_port       = nml.InternalPort(outbound_port_id, outbound_port_name, bandwidth, labels, remote_in)
+            inbound_port        = nml.InternalPort(inbound_port_id,  inbound_port_name,  bandwidth, label, remote_out)
+            outbound_port       = nml.InternalPort(outbound_port_id, outbound_port_name, bandwidth, label, remote_in)
             bidirectional_port  = nml.BidirectionalPort(port_id, port_name, inbound_port, outbound_port)
 
             inbound_ports.append(inbound_port)
