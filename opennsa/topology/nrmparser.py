@@ -50,8 +50,6 @@ def _parseRemoteSpec(remote_spec):
 
 
 def _parseLabelSpec(label_spec):
-#    labels = []
-#    for l_entry in label_spec.split('|'):
 
     if not ':' in label_spec:
         raise error.TopologyError('Invalid label description: %s' % label_spec)
@@ -62,14 +60,7 @@ def _parseLabelSpec(label_spec):
     except KeyError:
         raise error.TopologyError('Label type %s does not map to proper label.' % label_type_alias)
 
-#    if label_type in [ label.type_ for label in labels ]:
-#        raise error.TopologyError('Multiple labels for type %s' % label_type)
-
     return nsa.Label(label_type, label_range) # range is parsed in nsa.Label
-#        labels.append( nsa.Label(label_type, label_range) ) # range is parsed in nsa.Label
-
-#    if labelws
-#    return labels
 
 
 def parseTopologySpec(source, base_name):
