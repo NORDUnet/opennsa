@@ -102,7 +102,7 @@ class Label(object):
 
 
     def intersect(self, other):
-        # get the common labels between two label set - I hate you nml
+        # get the common values between two labels
         assert type(other) is Label, 'Cannot intersect label with something that is not a label (other was %s)' % type(other)
         assert self.type_ == other.type_, 'Cannot insersect label of different types'
 

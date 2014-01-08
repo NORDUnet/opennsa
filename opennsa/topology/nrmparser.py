@@ -76,7 +76,7 @@ def parsePortSpec(source, network_name):
 
     # Parse the entries like the following:
 
-    ## type          name            remote                         labels              interface
+    ## type          name            remote                         label               interface
     #
     #bi-ethernet     ps              -                              vlan:1780-1783      em0
     #bi-ethernet     netherlight     netherlight#nordunet-(in|out)  vlan:1780-1783      em1

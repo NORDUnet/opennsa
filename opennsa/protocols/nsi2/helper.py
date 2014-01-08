@@ -34,7 +34,7 @@ ET.register_namespace('ctypes', CONNECTION_TYPES_NS)
 ET.register_namespace('stypes', SERVICE_TYPES_NS)
 ET.register_namespace('p2psrv', P2PSERVICES_TYPES_NS)
 
-# Lookup table for urn labels
+# Lookup table for urn label
 LABEL_MAP = {
     'vlan' : cnt.ETHERNET_VLAN
 }
