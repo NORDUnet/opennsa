@@ -10,8 +10,9 @@ LABEL_LOOKUP = {
     'vlan' : cnt.ETHERNET_VLAN
 }
 
-# this parser should perhaps be somewhere else
-def _createSTP(stp_desc):
+def _createSTP(stp_arg):
+
+    stp_desc, vlan = stp_arg.split('#')
 
     if '%' in stp_desc:
         network, port = stp_desc.rsplit('%',1)
@@ -21,32 +22,14 @@ def _createSTP(stp_desc):
         network = base + ':topology'
         port = stp_desc
 
-#    if '#' in local_part:
-#        port, label_part = local_part.split('#',1)
-#        labels = []
-#        for tvl in label_part.split(';'):
-#            if not '=' in tvl:
-#                raise ValueError('Invalid label type-value: %s' % tvl)
-#            type_, values = tvl.split('=')
-#            labels.append( nsa.Label( LABEL_LOOKUP.get(type_, type_), values ) )
-#    else:
-#        port = local_part
-#        labels = None
-
-    label = None
+    label = nsa.Label(cnt.ETHERNET_VLAN, vlan)
     return nsa.STP(network, port, label)
 
 
 def _createP2PS(src, dst, capacity):
 
-    src_np, src_vlan = src.split('#')
-    dst_np, dst_vlan = dst.split('#')
-
-    src_stp = _createSTP(src_np)
-    dst_stp = _createSTP(dst_np)
-
-    src_stp.label = nsa.Label(cnt.ETHERNET_VLAN, src_vlan)
-    dst_stp.label = nsa.Label(cnt.ETHERNET_VLAN, dst_vlan)
+    src_stp = _createSTP(src)
+    dst_stp = _createSTP(dst)
 
     return nsa.Point2PointService(src_stp, dst_stp, capacity, cnt.BIDIRECTIONAL, False, None)
 
