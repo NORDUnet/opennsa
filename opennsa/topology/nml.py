@@ -43,19 +43,11 @@ class Port(object):
             return True
         elif self._label is None or label is None:
             return False
-#        elif len(self._labels) != len(labels):
-#            return False
-#        elif len(self._labels) == 1: # len(labels) is identical
-
-#        if self._label.type_ != label.type_:
-#            return False
         try:
-            self._label.intersect(label)
+            self._label.intersect(label) # this checks type as well as range
             return True
         except nsa.EmptyLabelSet:
             return False
-#    else:
-#        raise NotImplementedError('Multi-label matching not yet implemented')
 
 
     def isBidirectional(self):
