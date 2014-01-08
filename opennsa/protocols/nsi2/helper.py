@@ -127,13 +127,13 @@ def parseXMLTimestamp(xsd_timestamp):
 
 def parseLabel(label_part):
     if not '=' in label_part:
-        raise PayloadError('No = in urn label part (%s)' % label_part)
+        raise error.PayloadError('No = in urn label part (%s)' % label_part)
 
     label_short_type, label_value = label_part.split('=')
     try:
         label_type = LABEL_MAP[label_short_type]
     except KeyError:
-        raise PayloadError('Label type %s not recognized')
+        raise error.PayloadError('Label type %s not recognized')
 
     return nsa.Label(label_type, label_value)
 
