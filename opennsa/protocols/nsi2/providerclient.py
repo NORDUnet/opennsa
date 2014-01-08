@@ -70,20 +70,12 @@ class ProviderClient:
 
         sd = criteria.service_def
 
-        # we only support p2p for now
-        #src_stp = helper.createSTPType(sd.source_stp)
-        #dst_stp = helper.createSTPType(sd.dest_stp)
-        #src_stp.labels = []
-        #dst_stp.labels = []
-        #src_vlan = sd.source_stp.label.labelValue()
-        #dst_vlan = sd.dest_stp.label.labelValue()
-
         src_stp_id = helper.createSTPID(sd.source_stp)
         dst_stp_id = helper.createSTPID(sd.dest_stp)
 
+        # we only support p2p for now
         p2p = p2pservices.P2PServiceBaseType(sd.capacity, sd.directionality, sd.symmetric, src_stp_id, dst_stp_id, None, [])
 
-        #criteria = nsiconnection.ReservationConfirmCriteriaType(criteria.revision, schedule, str(p2pservices.p2ps), { p2pservices.p2ps : p2p } )
         criteria = nsiconnection.ReservationConfirmCriteriaType(criteria.revision, schedule, str(p2pservices.p2ps), p2p)
 
         reserve_conf = nsiconnection.ReserveConfirmedType(connection_id, global_reservation_id, description, criteria)
