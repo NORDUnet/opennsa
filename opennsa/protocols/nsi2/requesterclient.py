@@ -112,11 +112,7 @@ class RequesterClient:
 
         reservation = nsiconnection.ReserveType(connection_id, global_reservation_id, description, criteria)
 
-        body_payload   = reservation.xml(nsiconnection.reserve)
-#        print "BP"
-#        from xml.etree import ElementTree as ET
-#        ET.dump(body_payload)
-#        print "--"
+        body_payload = reservation.xml(nsiconnection.reserve)
         payload = minisoap.createSoapPayload(body_payload, header_payload)
 
         def _handleAck(soap_data):
