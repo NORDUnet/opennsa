@@ -19,8 +19,6 @@ LOG_SYSTEM = 'opennsa.topology'
 INGRESS = 'ingress'
 EGRESS  = 'egress'
 
-URN_OGF_NETWORK = 'urn:ogf:network:'
-
 
 
 class Port(object):
