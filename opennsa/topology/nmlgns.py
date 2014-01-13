@@ -49,6 +49,7 @@ class RouteVectors:
 
 
     def updateVector(self, nsa_urn, nsa_cost, topology_urns, vectors):
+        # we need a way to keep the local topology urns out of this
 
         self.vectors[nsa_urn] = _NSAVector(nsa_cost, topology_urns, vectors)
         self._calculateVectors()
@@ -79,9 +80,15 @@ class RouteVectors:
 
 
     def vector(self, topology_urn):
+        # typical usage for path finding
         try:
             nsa_urn, cost = self._shortest_paths[topology_urn]
             return nsa_urn
         except KeyError:
             return None # or do we need an exception here?
+
+
+    def listVectors(self):
+        # needed for exporting topologies
+        return { topo : cost for (topo, (_, cost) ) in self._shortest_paths.items() }
 

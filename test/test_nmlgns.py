@@ -24,17 +24,21 @@ class NMLGNSTest(unittest.TestCase):
 
     def testBasicPathfindingVector(self):
 
-        vec1 = { BONAIRE_TOPO : 1 , CURACAO_TOPO : 2 }
-        self.rv.updateVector(ARUBA_NSA, 1, [ ARUBA_TOPO ], vec1)
+        self.rv.updateVector(ARUBA_NSA, 1, [ ARUBA_TOPO ], { BONAIRE_TOPO : 1 , CURACAO_TOPO : 2 } )
 
         self.failUnlessEqual( self.rv.vector(ARUBA_TOPO),   ARUBA_NSA)
         self.failUnlessEqual( self.rv.vector(BONAIRE_TOPO), ARUBA_NSA)
         self.failUnlessEqual( self.rv.vector(CURACAO_TOPO), ARUBA_NSA)
 
-        vec2 = { CURACAO_TOPO : 1 }
-        self.rv.updateVector(BONAIRE_NSA, 1, [ BONAIRE_TOPO ], vec1)
+        self.failUnlessEquals( self.rv.listVectors(), {
+            ARUBA_TOPO   : 1, BONAIRE_TOPO : 2, CURACAO_TOPO : 3 } )
+
+        self.rv.updateVector(BONAIRE_NSA, 1, [ BONAIRE_TOPO ], { CURACAO_TOPO : 1 } )
 
         self.failUnlessEqual( self.rv.vector(ARUBA_TOPO),   ARUBA_NSA)
         self.failUnlessEqual( self.rv.vector(BONAIRE_TOPO), BONAIRE_NSA)
         self.failUnlessEqual( self.rv.vector(CURACAO_TOPO), BONAIRE_NSA)
+
+        self.failUnlessEquals( self.rv.listVectors(),
+                               { ARUBA_TOPO   : 1, BONAIRE_TOPO : 1, CURACAO_TOPO : 2 } )
 
