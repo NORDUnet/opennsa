@@ -16,7 +16,7 @@ class _NSAVector:
 
     def __init__(self, cost, topology_urns, vectors):
         assert type(cost) is int, 'cost param must be integer'
-        assert cost > 0, 'cost param must be plus-zero'
+        assert cost >= 0, 'cost param must be plus-zero'
         assert type(topology_urns) is list, 'topology urns must be a list'
         assert type(vectors) is dict, 'reachable_urns_cost must be a dict'
         self.cost = cost
@@ -44,12 +44,26 @@ class RouteVectors:
         # this is the calculated shortest paths, should be recalculated when new information gets available
         self._shortest_paths = {} # topology_urn -> ( nsa_urn, cost)
 
+        self.subscribers = []
+
+    # -- updates
+
+    def callOnUpdate(self, f):
+        self.subscribers.append(f)
+
+
+    def updated(self):
+        for f in self.subscribers:
+            f()
+
+    # -- vector stuff
 
     def updateVector(self, nsa_urn, nsa_cost, topology_urns, vectors):
         # we need a way to keep the local topology urns out of this
 
         self.vectors[nsa_urn] = _NSAVector(nsa_cost, topology_urns, vectors)
         self._calculateVectors()
+        self.updated()
 
 
     def deleteVector(self, nsa_urn):

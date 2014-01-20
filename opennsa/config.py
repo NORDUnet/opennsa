@@ -111,6 +111,14 @@ class ConfigurationError(Exception):
     """
 
 
+class Peer(object):
+
+    def __init__(self, url, cost):
+        self.url = url
+        self.cost = cost
+
+
+
 def readConfig(filename):
 
     cfg = ConfigParser.SafeConfigParser()
@@ -156,7 +164,7 @@ def readVerifyConfig(cfg):
 
     try:
         peers_raw = cfg.get(BLOCK_SERVICE, PEERS)
-        vc[PEERS] = peer_pairs = peers_raw.split('\n')
+        vc[PEERS] = [ Peer(purl, 1) for purl in  peers_raw.split('\n') ]
     except ConfigParser.NoOptionError:
         vc[PEERS] = None
 

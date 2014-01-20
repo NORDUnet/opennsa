@@ -27,17 +27,21 @@ class TopologyResource(resource.Resource):
     LAST_MODIFIED       = 'Last-modified'
     IF_MODIFIED_SINCE   = 'if-modified-since'
 
-    def __init__(self, nsi_agent, nml_network):
+    def __init__(self, nsi_agent, nml_network, route_vectors=None):
         resource.Resource.__init__(self)
 
-        self.nsi_agent   = nsi_agent
-        self.nml_network = nml_network
+        self.nsi_agent     = nsi_agent
+        self.nml_network   = nml_network
+        self.route_vectors = route_vectors
+
+        if route_vectors:
+            route_vectors.callOnUpdate(self.updateRepresentation)
 
         self.updateRepresentation()
 
 
     def updateRepresentation(self):
-        xml = nmlxml.nsiXML(self.nsi_agent, self.nml_network)
+        xml = nmlxml.nsiXML(self.nsi_agent, self.nml_network, self.route_vectors)
         self.topology_representation = ET.tostring(xml)
         self.topology_version = self.nml_network.version.replace(microsecond=0)
         self.topology_version_http = datetime.datetime.strftime(self.nml_network.version, self.RFC850_FORMAT)

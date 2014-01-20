@@ -9,7 +9,7 @@ from twisted.web import resource, server
 from twisted.application import internet, service as twistedservice
 
 from opennsa import config, logging, constants as cnt, nsa, provreg, database, aggregator, viewresource
-from opennsa.topology import nrmparser, nml, http as nmlhttp, fetcher
+from opennsa.topology import nrmparser, nml, nmlgns, http as nmlhttp, fetcher
 from opennsa.protocols import nsi2
 
 
@@ -150,9 +150,12 @@ class OpenNSAService(twistedservice.MultiService):
 
         provider_registry.addProvider(ns_agent.urn(), backend_service)
 
+        route_vectors = nmlgns.RouteVectors()
+        route_vectors.updateVector(nsa_name, 0, [ network_topology.id_ ], {})
+
         # fetcher
         if vc[config.PEERS]:
-            fetcher_service = fetcher.FetcherService(vc[config.PEERS], topology, provider_registry, ctx_factory=ctx_factory)
+            fetcher_service = fetcher.FetcherService(route_vectors, vc[config.PEERS], provider_registry, ctx_factory=ctx_factory)
             fetcher_service.setServiceParent(self)
 
         # wire up the http stuff
@@ -164,7 +167,7 @@ class OpenNSAService(twistedservice.MultiService):
         top_resource.children['NSI'].putChild('connections', vr)
 
         topology_resource = resource.Resource()
-        topology_resource.putChild(vc[config.NETWORK_NAME] + '.xml', nmlhttp.TopologyResource(ns_agent, network_topology))
+        topology_resource.putChild(vc[config.NETWORK_NAME] + '.xml', nmlhttp.TopologyResource(ns_agent, network_topology, route_vectors))
 
         top_resource.children['NSI'].putChild('topology', topology_resource)
 

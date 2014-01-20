@@ -19,10 +19,12 @@ LOG_SYSTEM = 'topology.nmlxml'
 
 
 NML_NS = 'http://schemas.ogf.org/nml/2013/05/base#'
+GNS_NS = 'http://nordu.net/namespaces/2013/12/gnsbod'
 NSI_NS = 'http://schemas.ogf.org/nsi/2013/09/topology#'
 VC_NS  = 'urn:ietf:params:xml:ns:vcard-4.0'
 
 ET.register_namespace('nml', NML_NS)
+ET.register_namespace('gns', GNS_NS)
 ET.register_namespace('nsi', NSI_NS)
 ET.register_namespace('vc',  VC_NS)
 
@@ -46,6 +48,9 @@ NML_HASINBOUNDPORT      = NML_NS + 'hasInboundPort'
 NML_HASOUTBOUNDPORT     = NML_NS + 'hasOutboundPort'
 NML_MANAGEDBY           = NML_NS + 'managedBy'
 NML_ISALIAS             = NML_NS + 'isAlias'
+
+GNS_TOPOLOGY_REACHABILITY = ET.QName('{%s}TopologyReachability' % GNS_NS)
+GNS_COST                  = ET.QName('{%s}cost' % GNS_NS)
 
 NSI_NSA                 = ET.QName('{%s}NSA'            % NSI_NS)
 
@@ -103,7 +108,7 @@ def topologyXML(network):
 
 
 
-def nsiXML(nsi_agent, network, version=None):
+def nsiXML(nsi_agent, network, route_vectors=None, version=None):
 
     #<?xml version="1.0" encoding="UTF-8"?>
     #    <nsi:NSA xmlns:nml="http://schemas.ogf.org/nml/2013/05/base#"
@@ -135,6 +140,12 @@ def nsiXML(nsi_agent, network, version=None):
     # nml topology
     nml_network = topologyXML(network)
     nsi_nsa.append(nml_network)
+
+    # reachability vectors
+    if route_vectors:
+        gnsr = ET.SubElement(nsi_nsa, GNS_TOPOLOGY_REACHABILITY)
+        for topo, cost in route_vectors.listVectors().items():
+            ET.SubElement(gnsr, NML_TOPOLOGY, attrib={ ID: cnt.URN_OGF_PREFIX + topo, GNS_COST: str(cost) } )
 
     return nsi_nsa
 
@@ -264,6 +275,22 @@ def parseNSIService(nsi_service):
 
 
 
+def parseTopologyReachability(gns_topo_reach):
+
+    vectors = {}
+
+    assert gns_topo_reach.tag == GNS_TOPOLOGY_REACHABILITY, 'Element must be gns:TopologyReachability, not %s' % gns_topo_reach.tag
+
+    for nml_topo in gns_topo_reach:
+        assert nml_topo.tag == NML_TOPOLOGY, 'Reachablity sub-element must be nml:Topology, not %s' % nml_topo.tag
+        topology_id = _baseName( nml_topo.attrib[ID] )
+        cost = nml_topo.attrib[GNS_COST]
+        vectors[topology_id] = int(cost)
+
+    return vectors
+
+
+
 def parseNSITopology(nsi_topology_source):
 
     tree = ET.parse(nsi_topology_source)
@@ -271,26 +298,32 @@ def parseNSITopology(nsi_topology_source):
     nsi_nsa = tree.getroot()
     assert nsi_nsa.tag == NSI_NSA, 'Top level container must be a nsi:NSA tag'
 
-    ## we currently don't use these for anything
-    # nsa_id  = nsi_nsa.attrib[ID]
-    # version = nsi_nsa.attrib[VERSION]
+    nsa_id  = _baseName( nsi_nsa.attrib[ID] )
+    # version = nsi_nsa.attrib[VERSION] # currently not used for anything
 
     nsi_agent = None
-    network_topo = None
+    topologies = []
+    vectors = {}
 
     for ele in nsi_nsa:
 
         if ele.tag == NSI_SERVICE:
             # we only support nsi agent service type for now
+            if nsi_agent is not None:
+                raise ValueError('NSA description listed more than one CS service')
             nsi_agent = parseNSIService(ele)
 
         elif ele.tag == NML_TOPOLOGY:
-            network_topo = parseNMLTopology(ele)
+            topologies.append( parseNMLTopology(ele))
+
+        elif ele.tag == GNS_TOPOLOGY_REACHABILITY:
+            vectors = parseTopologyReachability(ele)
 
     if nsi_agent is None:
-        raise ValueError('NSI Topology does not specify an NSI agent')
-    if network_topo is None:
-        raise ValueError('NSI Topology does not specify an NML topology')
+        raise ValueError('NSA description does not specify an NSI agent')
+    if len(topologies) == 0:
+        # there can be pure aggregaters where this is not a real error....
+        raise ValueError('NSA description does not specify an NML topology')
 
-    return nsi_agent, network_topo
+    return nsa_id, nsi_agent, topologies, vectors
 
