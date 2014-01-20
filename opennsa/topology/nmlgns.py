@@ -8,6 +8,10 @@ Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2011-2014)
 """
 
+from twisted.python import log
+
+
+
 LOG_SYSTEM = 'opennsa.topology.gns'
 
 
