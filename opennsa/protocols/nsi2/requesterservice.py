@@ -5,9 +5,7 @@ Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2011)
 """
 
-from twisted.python import failure
-
-from opennsa import constants as cnt, nsa, error
+from opennsa import nsa, error
 
 from opennsa.protocols.nsi2 import helper
 from opennsa.protocols.nsi2.bindings import actions, p2pservices

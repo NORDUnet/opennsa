@@ -69,7 +69,7 @@ class ProviderService:
 
         criteria = reservation.criteria
 
-        version      = criteria.version
+        #version      = criteria.version # not used at the moment
         service_type = criteria.serviceType # right now we just ignore this, either we know the service type or not
         p2ps         = criteria.serviceDefinition
 
@@ -132,7 +132,6 @@ class ProviderService:
 
     def reserveAbort(self, soap_data):
         header, request = helper.parseRequest(soap_data)
-        session_security_attr = None
         d = self.provider.reserveAbort(header, request.connectionId)
         d.addCallbacks(lambda _ : helper.createGenericAcknowledgement(header), self._createSOAPFault, errbackArgs=(header.provider_nsa, request.connectionId))
         return d

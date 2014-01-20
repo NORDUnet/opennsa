@@ -233,7 +233,6 @@ def buildQuerySummaryResultType(reservations):
 
     def buildServiceDefinition(service_def):
         if type(service_def) is nsa.Point2PointService:
-            service_type = cnt.P2P_SERVICE
             sd = service_def
             src_stp_id  = createSTPID(sd.source_stp)
             dst_stp_id  = createSTPID(sd.dest_stp)

@@ -13,13 +13,12 @@ from twisted.python import log, failure
 from twisted.web.error import Error as WebError
 
 from opennsa.interface import INSIProvider
-from opennsa import constants as cnt, nsa, error
+from opennsa import nsa, error
 from opennsa.protocols.shared import minisoap, httpclient
 from opennsa.protocols.nsi2 import helper
 from opennsa.protocols.nsi2.bindings import actions, nsiframework, nsiconnection, p2pservices
 
 
-URN_NETWORK = 'urn:ogf:network:'
 LOG_SYSTEM  = 'nsi2.RequesterClient'
 
 

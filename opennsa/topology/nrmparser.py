@@ -9,8 +9,6 @@ Copyright: NORDUnet (2011-2012)
 import re
 import StringIO
 
-from twisted.python import log
-
 from opennsa import constants as cnt, nsa, error
 from opennsa.topology import nml
 
