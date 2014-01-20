@@ -14,13 +14,12 @@ import random
 import urlparse
 import itertools
 
-from opennsa import error
+from opennsa import error, constants as cnt
 
 
 
 LOG_SYSTEM = 'opennsa.nsa'
 
-OGF_PREFIX = 'urn:ogf:network:'
 URN_UUID_PREFIX = 'urn:uuid:'
 
 BIDIRECTIONAL   = 'Bidirectional'
@@ -273,7 +272,7 @@ class NetworkServiceAgent(object):
 
 
     def urn(self):
-        return OGF_PREFIX + self.identity
+        return cnt.URN_OGF_PREFIX + self.identity
 
 
     def getServiceType(self):

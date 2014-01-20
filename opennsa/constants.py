@@ -13,7 +13,7 @@ also the same in the code base.
 """
 
 
-OGF_PREFIX          = 'urn:ogf:network:'
+URN_OGF_PREFIX      = 'urn:ogf:network:'
 
 CS2_SERVICE_TYPE    = 'application/vnd.org.ogf.nsi.cs.v2+soap'
 

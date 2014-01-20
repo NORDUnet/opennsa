@@ -64,9 +64,9 @@ VC_TEXT                 = ET.QName('{%s}text'   % VC_NS)
 def topologyXML(network):
     # creates nml:Topology object from a network
 
-    BASE_URN = nml.URN_OGF_NETWORK + network.name
+    BASE_URN = cnt.URN_OGF_PREFIX + network.name
 
-    topology_id = nml.URN_OGF_NETWORK + network.id_
+    topology_id = cnt.URN_OGF_PREFIX + network.id_
     nml_topology = ET.Element(NML_TOPOLOGY, {ID: topology_id } )
 
     ET.SubElement(nml_topology, NML_NAME).text = network.name
@@ -81,7 +81,7 @@ def topologyXML(network):
             ln.text = label.labelValue()
         if port.remote_port is not None:
             rpa = ET.SubElement(nml_port, NML_RELATION, { TYPE : NML_ISALIAS} )
-            ET.SubElement(rpa, NML_PORTGROUP, { ID : nml.URN_OGF_NETWORK + port.remote_port})
+            ET.SubElement(rpa, NML_PORTGROUP, { ID : cnt.URN_OGF_PREFIX + port.remote_port})
 
     for port in network.bidirectional_ports:
         pn = ET.SubElement(nml_topology, NML_BIDIRECTIONALPORT, { ID: portName(port) } )
@@ -123,7 +123,7 @@ def nsiXML(nsi_agent, network, version=None):
 
     # top element
 
-    URN_NSA = nml.URN_OGF_NETWORK + nsi_agent.identity
+    URN_NSA = cnt.URN_OGF_PREFIX + nsi_agent.identity
     nsi_nsa = ET.Element(NSI_NSA, {ID: URN_NSA, VERSION: network.version.isoformat() } )
 
     # cs service
