@@ -8,9 +8,6 @@ Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2011-2014)
 """
 
-from opennsa.topology.nml import Port, InternalPort, BidirectionalPort, Network, INGRESS, EGRESS
-
-
 LOG_SYSTEM = 'opennsa.topology.gns'
 
 
