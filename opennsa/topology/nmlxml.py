@@ -144,8 +144,8 @@ def nsiXML(nsi_agent, network, version=None):
 
 
 def _baseName(urn_id):
-    assert urn_id.startswith(nml.URN_OGF_NETWORK), 'Identifier %s must start with urn ogf network prefix' % urn_id
-    base_name = urn_id[len(nml.URN_OGF_NETWORK):]
+    assert urn_id.startswith(cnt.URN_OGF_PREFIX), 'Identifier %s must start with urn ogf network prefix' % urn_id
+    base_name = urn_id[len(cnt.URN_OGF_PREFIX):]
     return base_name
 
 
