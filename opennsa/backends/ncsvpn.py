@@ -195,20 +195,16 @@ class NCSVPNConnectionManager:
         return d
 
 
-# --
 
+def NCSVPNBackend(network_name, network_topology, parent_requester, port_map, cfg): 
 
-class NCSVPNBackend(genericbackend.GenericBackend):
+    name = 'NCS VPN (%s)' % network_name
 
-    def __init__(self, network_name, parent_requester, cfg):
+    # extract config items
+    ncs_services_url = str(cfg[config.NCS_SERVICES_URL]) # convert from unicode
+    user             = cfg[config.NCS_USER]
+    password         = cfg[config.NCS_PASSWORD]
 
-        name = 'NCS VPN (%s)' % network_name
-
-        # extract config items
-        ncs_services_url = str(cfg[config.NCS_SERVICES_URL])
-        user             = cfg[config.NCS_USER]
-        password         = cfg[config.NCS_PASSWORD]
-
-        cm = NCSVPNConnectionManager(ncs_services_url, user, password, name)
-        genericbackend.GenericBackend.__init__(self, network_name, cm, parent_requester, name)
+    cm = NCSVPNConnectionManager(ncs_services_url, user, password, name)
+    return genericbackend.GenericBackend(network_name, network_topology, cm, parent_requester, name)
 
