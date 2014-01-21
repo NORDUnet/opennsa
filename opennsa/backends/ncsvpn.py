@@ -130,10 +130,11 @@ def createVPNPayload(service_name, source_target, dest_target):
 
 class NCSVPNConnectionManager:
 
-    def __init__(self, ncs_services_url, user, password, log_system):
+    def __init__(self, ncs_services_url, user, password, port_map, log_system):
         self.ncs_services_url = ncs_services_url
         self.user             = user
         self.password         = password
+        self.port_map         = port_map
         self.log_system       = log_system
 
 
@@ -148,7 +149,8 @@ class NCSVPNConnectionManager:
             vlan = int(label_value)
             assert 1 <= vlan <= 4095, 'Invalid label value for vlan: %s' % label_value
 
-        router, interface = port.split(':')
+        ri = self.port_map[port]
+        router, interface = ri.split(':')
         return NCSVPNTarget(router, interface, vlan)
 
 
@@ -157,7 +159,7 @@ class NCSVPNConnectionManager:
 
 
     def canSwapLabel(self, label_type):
-        return False
+        return False # not yet
         #return label_type == cnt.ETHERNET_VLAN:
 
 
@@ -205,6 +207,6 @@ def NCSVPNBackend(network_name, network_topology, parent_requester, port_map, cf
     user             = cfg[config.NCS_USER]
     password         = cfg[config.NCS_PASSWORD]
 
-    cm = NCSVPNConnectionManager(ncs_services_url, user, password, name)
+    cm = NCSVPNConnectionManager(ncs_services_url, user, password, port_map, name)
     return genericbackend.GenericBackend(network_name, network_topology, cm, parent_requester, name)
 
