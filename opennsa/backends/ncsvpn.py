@@ -198,7 +198,7 @@ class NCSVPNConnectionManager:
 
 def NCSVPNBackend(network_name, network_topology, parent_requester, port_map, cfg): 
 
-    name = 'NCS VPN (%s)' % network_name
+    name = 'NCS VPN %s' % network_name
 
     # extract config items
     ncs_services_url = str(cfg[config.NCS_SERVICES_URL]) # convert from unicode
