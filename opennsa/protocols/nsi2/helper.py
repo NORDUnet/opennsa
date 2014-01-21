@@ -165,13 +165,9 @@ def createSTP(stp_id):
     if not ':' in loc:
         raise error.PayloadError('No : in stp urn (%s)' % loc)
 
-    network, port_short = loc.rsplit(':', 1)
+    network, _ = loc.rsplit(':', 1)
 
-    # HACK ON!
-    base, _ = network.split(':',1)
-    port = base + ':' + port_short
-
-    return nsa.STP(network, port, label)
+    return nsa.STP(network, loc, label)
 
 
 
