@@ -29,7 +29,6 @@ from opennsa.protocols.shared import httpclient
 #        <router></router>
 #        <interface>ge-1/0/1</interface>
 #      </side-b>
-#      <encapsulation-type>ethernet-vlan</encapsulation-type>
 #      <vlan>1720</vlan>
 #    </vpn>
 #  </type>
@@ -60,7 +59,6 @@ ETHERNET_VPN_PAYLOAD_BASE = """
         <router>%(router_b)s</router>
         <interface>%(interface_b)s</interface>
       </side-b>
-      <encapsulation-type>ethernet</encapsulation-type>
     </vpn>
   </type>
 </service>
@@ -79,7 +77,6 @@ ETHERNET_VLAN_VPN_PAYLOAD_BASE = """
         <router>%(router_b)s</router>
         <interface>%(interface_b)s</interface>
       </side-b>
-      <encapsulation-type>ethernet-vlan</encapsulation-type>
       <vlan>%(vlan)i</vlan>
     </vpn>
   </type>
