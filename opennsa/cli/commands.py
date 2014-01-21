@@ -6,21 +6,16 @@ from twisted.internet import defer
 from opennsa import constants as cnt, nsa, error
 
 
-LABEL_LOOKUP = {
-    'vlan' : cnt.ETHERNET_VLAN
-}
 
 def _createSTP(stp_arg):
 
+    # no generic label stuff for now
     stp_desc, vlan = stp_arg.split('#')
 
     if '%' in stp_desc:
         network, port = stp_desc.rsplit('%',1)
     else:
-        # hack to support the common default
-        base, _ = stp_desc.rsplit(':',1)
-        network = base + ':topology'
-        port = stp_desc
+        network, port = stp_desc.rsplit(':',1)
 
     label = nsa.Label(cnt.ETHERNET_VLAN, vlan)
     return nsa.STP(network, port, label)
