@@ -154,7 +154,7 @@ class Network(object):
                 return port
         # better error message
         ports = [ p.id_ for p in list(itertools.chain(self.inbound_ports, self.outbound_ports, self.bidirectional_ports)) ]
-        raise error.TopologyError('No port named %s for network %s (ports: %s)' %(port_id, self.name, str(ports)))
+        raise error.TopologyError('No port named %s for network %s (ports: %s)' %(port_id, self.id_, str(ports)))
 
 
     def findPorts(self, bidirectionality, label=None, exclude=None):
@@ -168,7 +168,7 @@ class Network(object):
 
 
     def canSwapLabel(self, label_type):
-        return label_type == cnt.ETHERNET_VLAN and self.name.startswith('urn:ogf:network:nordu.net:')
+        return label_type == cnt.ETHERNET_VLAN and self.id_.startswith('urn:ogf:network:nordu.net:')
 
 
 

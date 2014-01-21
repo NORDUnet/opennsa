@@ -69,7 +69,7 @@ VC_TEXT                 = ET.QName('{%s}text'   % VC_NS)
 def topologyXML(network):
     # creates nml:Topology object from a network
 
-    BASE_URN = cnt.URN_OGF_PREFIX + network.name
+    BASE_URN = cnt.URN_OGF_PREFIX + network.id_
 
     topology_id = cnt.URN_OGF_PREFIX + network.id_
     nml_topology = ET.Element(NML_TOPOLOGY, {ID: topology_id } )
