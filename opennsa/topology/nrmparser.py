@@ -61,12 +61,10 @@ def _parseLabelSpec(label_spec):
     return nsa.Label(label_type, label_range) # range is parsed in nsa.Label
 
 
-def parseTopologySpec(source, base_name):
+def parseTopologySpec(source, network_name):
 
-    inbound_ports, outbound_ports, bidirectional_ports, port_interface_map = parsePortSpec(source, base_name)
-
-    network_name = base_name + ':topology'
-    network = nml.Network(network_name, base_name, inbound_ports, outbound_ports, bidirectional_ports)
+    inbound_ports, outbound_ports, bidirectional_ports, port_interface_map = parsePortSpec(source, network_name)
+    network = nml.Network(network_name, 'nml-name', inbound_ports, outbound_ports, bidirectional_ports)
     return network, port_interface_map
 
 

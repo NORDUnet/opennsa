@@ -105,6 +105,7 @@ class OpenNSAService(twistedservice.MultiService):
         # setup topology
 
         base_name = vc[config.NETWORK_NAME]
+        network_name = base_name + ':topology' # because we say so
         nsa_name  = base_name + ':nsa'
 
         base_protocol = 'https://' if vc[config.TLS] else 'http://'
@@ -113,7 +114,7 @@ class OpenNSAService(twistedservice.MultiService):
 
         # topology
         topo_source = open( vc[config.NRM_MAP_FILE] ) if type(vc[config.NRM_MAP_FILE]) is str else vc[config.NRM_MAP_FILE] # wee bit hackish
-        network_topology, port_map = nrmparser.parseTopologySpec(topo_source, base_name)
+        network_topology, port_map = nrmparser.parseTopologySpec(topo_source, network_name)
         topology = nml.Topology()
         topology.addNetwork(network_topology, ns_agent)
 
