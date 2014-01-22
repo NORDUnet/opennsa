@@ -49,17 +49,20 @@ Copyright: NORDUnet (2011-2013)
 
 import string
 import random
+import os
 
 from twisted.python import log
 from twisted.internet import defer
+from twisted.conch.ssh import session
 
 from opennsa import constants as cnt, config
 from opennsa.backends.common import ssh, genericbackend
 
-LOG_SYSTEM = 'opennsa.force10'
+LOG_SYSTEM = 'Force10'
 
 
 
+COMMAND_ENABLE          = 'enable'
 COMMAND_CONFIGURE       = 'configure'
 COMMAND_END             = 'end'
 COMMAND_EXIT            = 'exit'
@@ -127,16 +130,39 @@ class SSHChannel(ssh.SSHChannel):
 
 
     @defer.inlineCallbacks
-    def sendCommands(self, commands):
+    def sendCommands(self, commands, enable_password):
         LT = '\r' # line termination
 
         try:
             log.msg('Requesting shell for sending commands', debug=True, system=LOG_SYSTEM)
+            term = os.environ.get('TERM', 'xterm')
+	    winSize = (25,80,0,0)
+	    ptyReqData = session.packRequest_pty_req(term, winSize, '')
+            yield self.conn.sendRequest(self, 'pty-req', ptyReqData, wantReply=1)
             yield self.conn.sendRequest(self, 'shell', '', wantReply=1)
+            log.msg('Got shell', system=LOG_SYSTEM, debug=True)
+
+            d = self.waitForData('>')
+            yield d
+            log.msg('Got shell ready', system=LOG_SYSTEM, debug=True)
+
+            # so far so good
+
+            d = self.waitForData(':')
+            self.write(COMMAND_ENABLE + LT) # This one fails for some reason
+            yield d
+            log.msg('Got enable password prompt', system=LOG_SYSTEM, debug=True)
 
             d = self.waitForData('#')
-            self.write(COMMAND_CONFIGURE + LT)
+            self.write(enable_password + LT)
             yield d
+
+            log.msg('Entered enabled mode', debug=True, system=LOG_SYSTEM)
+
+            d = self.waitForData('#')
+            self.write(COMMAND_CONFIGURE + LT) # This one fails for some reason
+            yield d
+
             log.msg('Entered configure mode', debug=True, system=LOG_SYSTEM)
 
             for cmd in commands:
@@ -145,11 +171,7 @@ class SSHChannel(ssh.SSHChannel):
                 self.write(cmd + LT)
                 yield d
 
-            # not quite sure how to handle failure here
-            log.msg('Commands send, sending end command.', debug=True, system=LOG_SYSTEM)
-            d = self.waitForData('#')
-            self.write(COMMAND_END + LT)
-            yield d
+            # Superfluous COMMAND_END has been removed by hopet
 
             log.msg('Configuration done, writing configuration.', debug=True, system=LOG_SYSTEM)
             d = self.waitForData('#')
@@ -157,9 +179,8 @@ class SSHChannel(ssh.SSHChannel):
             yield d
 
             log.msg('Configuration written. Exiting.', debug=True, system=LOG_SYSTEM)
-            d = self.waitForData('#')
             self.write(COMMAND_EXIT + LT)
-            yield d
+            # Waiting for the prompt removed by hopet - we could wait forever here! :(
 
         except Exception, e:
             log.msg('Error sending commands: %s' % str(e))
@@ -177,6 +198,7 @@ class SSHChannel(ssh.SSHChannel):
 
 
     def dataReceived(self, data):
+        log.msg("DATA:" + data, system=LOG_SYSTEM, debug=True)
         if len(data) == 0:
             pass
         else:
@@ -193,9 +215,10 @@ class SSHChannel(ssh.SSHChannel):
 
 class Force10CommandSender:
 
-    def __init__(self, ssh_connection_creator):
+    def __init__(self, ssh_connection_creator, enable_password):
 
         self.ssh_connection_creator = ssh_connection_creator
+        self.enable_password = enable_password
 
 
     @defer.inlineCallbacks
@@ -213,9 +236,11 @@ class Force10CommandSender:
         try:
             channel = SSHChannel(conn=ssh_connection)
             ssh_connection.openChannel(channel)
+            log.msg("Opening channel", system=LOG_SYSTEM, debug=True)
 
             yield channel.channel_open
-            yield channel.sendCommands(commands)
+            log.msg("Channel open, sending commands", system=LOG_SYSTEM, debug=True)
+            yield channel.sendCommands(commands, self.enable_password)
 
         finally:
             ssh_connection.transport.loseConnection()
@@ -243,7 +268,8 @@ class Force10ConnectionManager:
             ssh_private_key  = cfg[config.FORCE10_SSH_PRIVATE_KEY]
             ssh_connection_creator = ssh.SSHConnectionCreator(host, port, [ host_fingerprint ], user, ssh_public_key, ssh_private_key)
 
-        self.command_sender = Force10CommandSender(ssh_connection_creator)
+        # this will blow up when used with ssh keys
+        self.command_sender = Force10CommandSender(ssh_connection_creator, enable_password=password)
 
 
     def getResource(self, port, label_type, label_value):
