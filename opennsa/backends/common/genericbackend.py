@@ -397,7 +397,7 @@ class GenericBackend(service.Service):
         self.logStateUpdate(conn, 'TERMINATING')
 
         # here the reply will practially always come before the ack
-        header = nsa.NSIHeader(conn.requester_nsa, conn.requester_nsa, []) # The NSA is both requester and provider in the backend, but this might be problematic without aggregator
+        header = nsa.NSIHeader(conn.requester_nsa, conn.requester_nsa) # The NSA is both requester and provider in the backend, but this might be problematic without aggregator
         yield self.parent_requester.terminateConfirmed(header, conn.connection_id)
 
         yield state.terminated(conn)

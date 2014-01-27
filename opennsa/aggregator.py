@@ -243,7 +243,7 @@ class Aggregator:
             provider_nsa = self.topology.getNSA(link.network)
             provider     = self.getProvider(provider_nsa.urn())
 
-            header = nsa.NSIHeader(self.nsa_.urn(), provider_nsa.urn(), [])
+            header = nsa.NSIHeader(self.nsa_.urn(), provider_nsa.urn())
 
             # this has to be done more generic sometime
             sd = nsa.Point2PointService(nsa.STP(link.network, link.src_port, link.src_label),
@@ -302,7 +302,7 @@ class Aggregator:
             for (sc_id, provider_nsa) in reserved_connections:
 
                 provider = self.getProvider(provider_nsa.urn())
-                header = nsa.NSIHeader(self.nsa_.urn(), provider_nsa.urn(), [])
+                header = nsa.NSIHeader(self.nsa_.urn(), provider_nsa.urn())
 
                 d = provider.terminate(header, sc_id)
                 d.addCallbacks(
@@ -336,7 +336,7 @@ class Aggregator:
         for sc in sub_connections:
             # we assume a provider is available
             provider = self.getProvider(sc.provider_nsa)
-            req_header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa, [])
+            req_header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa)
             # we should probably mark as committing before sending message...
             d = provider.reserveCommit(req_header, sc.connection_id)
             defs.append(d)
@@ -373,7 +373,7 @@ class Aggregator:
         for sc in sub_connections:
             save_defs.append( state.reserveAbort(sc) )
             provider = self.getProvider(sc.provider_nsa)
-            header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa, [])
+            header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa)
             d = provider.reserveAbort(header, sc.connection_id)
             defs.append(d)
 
@@ -411,7 +411,7 @@ class Aggregator:
         for sc in sub_connections:
             save_defs.append( state.provisioning(sc) )
             provider = self.getProvider(sc.provider_nsa)
-            header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa, [])
+            header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa)
             d = provider.provision(header, sc.connection_id)
             defs.append(d)
 
@@ -447,7 +447,7 @@ class Aggregator:
         for sc in sub_connections:
             save_defs.append( state.releasing(sc) )
             provider = self.getProvider(sc.provider_nsa)
-            header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa, [])
+            header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa)
             d = provider.release(header, sc.connection_id)
             defs.append(d)
 
@@ -483,7 +483,7 @@ class Aggregator:
         for sc in sub_connections:
             # we assume a provider is available
             provider = self.getProvider(sc.provider_nsa)
-            header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa, [])
+            header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa)
             d = provider.terminate(header, sc.connection_id)
             defs.append(d)
 
@@ -623,7 +623,7 @@ class Aggregator:
         if all( [ sc.reservation_state == state.RESERVE_HELD for sc in sub_conns ] ):
             log.msg('Connection %s: All sub connections reserve held, can emit reserveConfirmed' % (conn.connection_id), system=LOG_SYSTEM)
             yield state.reserveHeld(conn)
-            header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn(), None)
+            header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn())
             source_stp = nsa.STP(conn.source_network, conn.source_port, conn.source_label)
             dest_stp   = nsa.STP(conn.dest_network,   conn.dest_port,   conn.dest_label)
             schedule = nsa.Schedule(conn.start_time, conn.end_time)
@@ -650,7 +650,7 @@ class Aggregator:
 
         if all( [ sc.reservation_state == state.RESERVE_START for sc in sub_conns ] ):
             yield state.reserved(conn)
-            header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn(), None)
+            header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn())
             self.parent_requester.reserveCommitConfirmed(header, conn.connection_id)
 
 
@@ -669,7 +669,7 @@ class Aggregator:
 
         if all( [ sc.reservation_state == state.RESERVE_START for sc in sub_conns ] ):
             yield state.reserved(conn)
-            header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn(), None)
+            header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn())
             self.parent_requester.reserveAbortConfirmed(header, conn.connection_id)
 
 
@@ -688,7 +688,7 @@ class Aggregator:
 
         if all( [ sc.provision_state == state.PROVISIONED for sc in sub_conns ] ):
             yield state.provisioned(conn)
-            req_header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn(), None)
+            req_header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn())
             self.parent_requester.provisionConfirmed(req_header, conn.connection_id)
 
 
@@ -707,7 +707,7 @@ class Aggregator:
 
         if all( [ sc.provision_state == state.RELEASED for sc in sub_conns ] ):
             yield state.released(conn)
-            req_header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn(), None)
+            req_header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn())
             self.parent_requester.releaseConfirmed(req_header, conn.connection_id)
 
 
@@ -723,7 +723,7 @@ class Aggregator:
 
         if all( [ sc.reservation_state == state.TERMINATED for sc in sub_conns ] ):
             yield state.terminated(conn) # we always allow, even though the canonical NSI state machine does not
-            header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn(), None)
+            header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn())
             self.parent_requester.terminateConfirmed(header, conn.connection_id)
 
     # --

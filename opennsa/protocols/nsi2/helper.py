@@ -100,7 +100,7 @@ def parseRequest(soap_data):
     else:
         body = [ nsiconnection.parseElement(b) for b in bodies ]
 
-    nsi_header = nsa.NSIHeader(header.requesterNSA, header.providerNSA, None, header.correlationId, header.replyTo)
+    nsi_header = nsa.NSIHeader(header.requesterNSA, header.providerNSA, header.correlationId, header.replyTo)
 
     return nsi_header, body
 

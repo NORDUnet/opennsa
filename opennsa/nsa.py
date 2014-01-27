@@ -28,12 +28,13 @@ BIDIRECTIONAL   = 'Bidirectional'
 
 class NSIHeader(object):
 
-    def __init__(self, requester_nsa, provider_nsa, session_security_attrs=None, correlation_id=None, reply_to=None):
+    def __init__(self, requester_nsa, provider_nsa, correlation_id=None, reply_to=None, session_security_attrs=None, connection_trace=None):
         self.requester_nsa          = requester_nsa
         self.provider_nsa           = provider_nsa
-        self.session_security_attrs = session_security_attrs
+        self.correlation_id         = correlation_id or self._createCorrelationId()
         self.reply_to               = reply_to
-        self.correlation_id = correlation_id or self._createCorrelationId()
+        self.session_security_attrs = session_security_attrs
+        self.connection_trace       = connection_trace
 
     def _createCorrelationId(self):
         return URN_UUID_PREFIX + str(uuid.uuid1())
@@ -43,7 +44,7 @@ class NSIHeader(object):
 
 
     def __repr__(self):
-        return '<NSIHeader: %s, %s, %s, %s, %s>' % (self.requester_nsa, self.provider_nsa, self.session_security_attrs, self.reply_to, self.correlation_id)
+        return '<NSIHeader: %s, %s, %s, %s, %s>' % (self.requester_nsa, self.provider_nsa, self.correlation_id, self.reply_to, self.session_security_attrs)
 
 
 
