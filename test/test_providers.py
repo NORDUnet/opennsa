@@ -412,8 +412,8 @@ class DUDBackendTest(GenericProviderTest, unittest.TestCase):
 
     base        = 'aruba'
     network     = base + ':topology'
-    source_port = base + ':ps'
-    dest_port   = base + ':bon'
+    source_port = network + ':ps'
+    dest_port   = network + ':bon'
 
     source_stp  = nsa.STP(network, source_port, nsa.Label(cnt.ETHERNET_VLAN, '1781-1782') )
     dest_stp    = nsa.STP(network, dest_port,   nsa.Label(cnt.ETHERNET_VLAN, '1782-1783') )
@@ -430,7 +430,7 @@ class DUDBackendTest(GenericProviderTest, unittest.TestCase):
 
         self.requester = common.DUDRequester()
 
-        aruba_topo, pm = nrmparser.parseTopologySpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY), self.base)
+        aruba_topo, pm = nrmparser.parseTopologySpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY), self.network)
 
         self.backend = dud.DUDNSIBackend(self.network, aruba_topo, self.requester, pm, {})
 
@@ -468,8 +468,8 @@ class AggregatorTest(GenericProviderTest, unittest.TestCase):
 
     base        = 'aruba'
     network     = base + ':topology'
-    source_port = base + ':ps'
-    dest_port   = base + ':bon'
+    source_port = network + ':ps'
+    dest_port   = network + ':bon'
 
     source_stp = nsa.STP(network, source_port, nsa.Label(cnt.ETHERNET_VLAN, '1781-1782') )
     dest_stp   = nsa.STP(network, dest_port,   nsa.Label(cnt.ETHERNET_VLAN, '1782-1783') )
@@ -489,7 +489,7 @@ class AggregatorTest(GenericProviderTest, unittest.TestCase):
 
         self.clock = task.Clock()
 
-        aruba_topo, pm = nrmparser.parseTopologySpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY), self.base)
+        aruba_topo, pm = nrmparser.parseTopologySpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY), self.network)
 
         self.backend = dud.DUDNSIBackend(self.network, aruba_topo, self.requester, pm, {})
         self.backend.scheduler.clock = self.clock
@@ -533,8 +533,8 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
 
     base        = 'aruba'
     network     = base + ':topology'
-    source_port = base + ':ps'
-    dest_port   = base + ':bon'
+    source_port = network + ':ps'
+    dest_port   = network + ':bon'
 
     # we need to use single values here as the vlans are parsed by int() currently (will switch to labels in the future)
     source_stp = nsa.STP(network, source_port, nsa.Label(cnt.ETHERNET_VLAN, '1782') )
@@ -542,7 +542,7 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
     bandwidth  = 200
 
     requester_agent = nsa.NetworkServiceAgent('test-requester:nsa', 'http://localhost:%i/NSI/services/RequesterService2' % REQUESTER_PORT)
-    provider_agent  = nsa.NetworkServiceAgent('aruba:nsa', 'http://localhost:%i/NSI/services/CS2' % PROVIDER_PORT)
+    provider_agent  = nsa.NetworkServiceAgent(base + ':nsa', 'http://localhost:%i/NSI/services/CS2' % PROVIDER_PORT)
 
     header   = nsa.NSIHeader(requester_agent.urn(), provider_agent.urn(), reply_to=requester_agent.endpoint)
 
@@ -561,7 +561,7 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
 
         self.clock = task.Clock()
 
-        aruba_topo, pm = nrmparser.parseTopologySpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY), self.base)
+        aruba_topo, pm = nrmparser.parseTopologySpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY), self.network)
 
         self.backend = dud.DUDNSIBackend(self.network, aruba_topo, None, pm, {}) # we set the parent later
         self.backend.scheduler.clock = self.clock
