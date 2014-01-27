@@ -24,7 +24,7 @@ class CommonHeaderType(object):
                 element.findtext('providerNSA'),
                 element.findtext('replyTo') if element.find('replyTo') is not None else None,
                 [ SessionSecurityAttrType.build(e) for e in element.findall('sessionSecurityAttr') ] if element.find('sessionSecurityAttr') is not None else None,
-                [ e for e in element.find(ConnectionTrace).findall(Connection) ] if element.find(ConnectionTrace) is not None else None
+                [ e for e in element.find(str(ConnectionTrace)).findall(str(Connection)) ] if element.find(str(ConnectionTrace)) is not None else None
                )
 
     def xml(self, elementName):
