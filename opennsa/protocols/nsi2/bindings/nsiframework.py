@@ -6,13 +6,14 @@ from xml.etree import ElementTree as ET
 
 
 class CommonHeaderType(object):
-    def __init__(self, protocolVersion, correlationId, requesterNSA, providerNSA, replyTo, sessionSecurityAttr):
+    def __init__(self, protocolVersion, correlationId, requesterNSA, providerNSA, replyTo, sessionSecurityAttr, connectionTrace=None):
         self.protocolVersion = protocolVersion  # string
         self.correlationId = correlationId  # UuidType -> anyURI
         self.requesterNSA = requesterNSA  # NsaIdType -> anyURI
         self.providerNSA = providerNSA  # NsaIdType -> anyURI
         self.replyTo = replyTo  # anyURI
         self.sessionSecurityAttr = sessionSecurityAttr  # [ SessionSecurityAttrType ]
+        self.connectionTrace = connectionTrace # [ string ]
 
     @classmethod
     def build(self, element):
@@ -22,7 +23,8 @@ class CommonHeaderType(object):
                 element.findtext('requesterNSA'),
                 element.findtext('providerNSA'),
                 element.findtext('replyTo') if element.find('replyTo') is not None else None,
-                [ SessionSecurityAttrType.build(e) for e in element.findall('sessionSecurityAttr') ] if element.find('sessionSecurityAttr') is not None else None
+                [ SessionSecurityAttrType.build(e) for e in element.findall('sessionSecurityAttr') ] if element.find('sessionSecurityAttr') is not None else None,
+                [ e for e in element.find(ConnectionTrace).findall(Connection) ] if element.find(ConnectionTrace) is not None else None
                )
 
     def xml(self, elementName):
@@ -36,6 +38,10 @@ class CommonHeaderType(object):
         if self.sessionSecurityAttr is not None:
             for el in self.sessionSecurityAttr:
                 ET.SubElement(r, 'sessionSecurityAttr').extend( el.xml('sessionSecurityAttr') )
+        if self.connectionTrace:
+            s = ET.SubElement(r, ConnectionTrace)
+            for c in self.connectionTrace:
+                ET.SubElement(s, Connection).text = c
         return r
 
 
@@ -166,6 +172,10 @@ AttributeValue = ET.QName('urn:oasis:names:tc:SAML:2.0:assertion', 'AttributeVal
 AttributeStatement = ET.QName('urn:oasis:names:tc:SAML:2.0:assertion', 'AttributeStatement')
 nsiHeader = ET.QName('http://schemas.ogf.org/nsi/2013/12/framework/headers', 'nsiHeader')
 serviceException = ET.QName('http://schemas.ogf.org/nsi/2013/12/framework/types', 'serviceException')
+
+GNS_NAMESPACE   = "http://nordu.net/namespaces/2013/12/gnsbod"
+ConnectionTrace = ET.QName(GNS_NAMESPACE, 'ConnectionTrace')
+Connection      = ET.QName(GNS_NAMESPACE, 'Connection')
 
 
 
