@@ -63,8 +63,9 @@ def _parseLabelSpec(label_spec):
 
 def parseTopologySpec(source, network_name):
 
+    network_readable_name = network_name.split(':')[0]
     inbound_ports, outbound_ports, bidirectional_ports, port_interface_map = parsePortSpec(source, network_name)
-    network = nml.Network(network_name, 'nml-name', inbound_ports, outbound_ports, bidirectional_ports)
+    network = nml.Network(network_name, network_readable_name, inbound_ports, outbound_ports, bidirectional_ports)
     return network, port_interface_map
 
 
