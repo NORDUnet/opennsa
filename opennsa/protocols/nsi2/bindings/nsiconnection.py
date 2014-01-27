@@ -131,8 +131,7 @@ class ConnectionStatesType(object):
     def xml(self, elementName):
         r = ET.Element(elementName)
         ET.SubElement(r, 'reservationState').text = self.reservationState
-        if self.provisionState is not None:
-            ET.SubElement(r, 'provisionState').text = self.provisionState
+        ET.SubElement(r, 'provisionState').text = self.provisionState
         ET.SubElement(r, 'lifecycleState').text = self.lifecycleState
         r.append(self.dataPlaneStatus.xml('dataPlaneStatus'))
         return r
