@@ -220,12 +220,18 @@ class Link(object): # intra network link
 
 
     def __repr__(self):
+        if self.src_port.startswith(self.network) and self.dst_port.startswith(self.network):
+            src = self.src_port
+        else:
+            src = '%s::%s' % (self.network, self.src_port)
+        dst = self.dst_port
+
         if self.src_label:
             src_label_type = self.src_label.type_.split('#')[-1]
             dst_label_type = self.dst_label.type_.split('#')[-1]
-            return '<Link %s::%s#%s=%s--%s#%s=%s>' % (self.network, self.src_port, src_label_type, self.src_label.labelValue(), self.dst_port, dst_label_type, self.dst_label.labelValue())
+            return '<Link %s#%s=%s--%s#%s=%s>' % (src, src_label_type, self.src_label.labelValue(), dst, dst_label_type, self.dst_label.labelValue())
         else:
-            return '<Link %s::%s=%s>' % (self.network, self.src_port, self.dst_port)
+            return '<Link %s--%s>' % (src, dst)
 
 
 
