@@ -45,6 +45,8 @@ from opennsa.protocols.shared import httpclient
 #
 # The connection id -> object-id mapping is hence rather important to remember, but it can be the
 
+NCS_TIMEOUT = 45 # ncs often spends around 30 seconds creating/deleting a vpn
+
 
 ETHERNET_VPN_PAYLOAD_BASE = """
 <service xmlns="http://tail-f.com/ns/ncs" >
@@ -177,7 +179,7 @@ class NCSVPNConnectionManager:
         def linkUp(_):
             log.msg('Link %s -> %s up' % (source_target, dest_target), system=self.log_system)
 
-        d = httpclient.httpRequest(self.ncs_services_url, payload, headers, method='POST')
+        d = httpclient.httpRequest(self.ncs_services_url, payload, headers, method='POST', timeout=NCS_TIMEOUT)
         d.addCallback(linkUp)
         return d
 
@@ -189,7 +191,7 @@ class NCSVPNConnectionManager:
         def linkDown(_):
             log.msg('Link %s -> %s down' % (source_target, dest_target), system=self.log_system)
 
-        d = httpclient.httpRequest(service_url, None, headers, method='DELETE')
+        d = httpclient.httpRequest(service_url, None, headers, method='DELETE', timeout=NCS_TIMEOUT)
         d.addCallback(linkDown)
         return d
 
