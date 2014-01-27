@@ -18,7 +18,7 @@ def _createSTP(stp_arg):
         network, port = stp_desc.rsplit(':',1)
 
     label = nsa.Label(cnt.ETHERNET_VLAN, vlan)
-    return nsa.STP(network, port, label)
+    return nsa.STP(network, stp_desc, label)
 
 
 def _createP2PS(src, dst, capacity):
