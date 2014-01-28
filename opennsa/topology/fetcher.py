@@ -65,7 +65,7 @@ class FetcherService(service.Service):
             topology_ids = [ nt.id_ for nt in nml_topos ]
             self.route_vectors.updateVector(nsa_id, peer.cost, topology_ids, vectors)
             for topo in nml_topos:
-                self.topology.addNetwork(topo, nsi_agent)
+                self.topology.updateNetwork(topo, nsi_agent)
             self.provider_registry.spawnProvider(nsi_agent)
 
         except Exception as e:
