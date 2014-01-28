@@ -42,7 +42,7 @@ class ProviderRegistry(object):
         ServiceType must exist on the NSI agent, and a factory for the type available.
         """
         if nsi_agent.urn() in self.providers:
-            log.msg('Skipping provider spawn for %s' % nsi_agent, system=LOG_SYSTEM)
+            log.msg('Skipping provider spawn for %s' % nsi_agent, debug=True, system=LOG_SYSTEM)
             return self.providers[nsi_agent.urn()]
 
         fac = self.provider_factories[ nsi_agent.getServiceType() ]
