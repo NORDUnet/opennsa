@@ -263,7 +263,7 @@ class GenericBackend(service.Service):
                                          source_network=source_stp.network, source_port=source_stp.port, source_label=src_label,
                                          dest_network=dest_stp.network, dest_port=dest_stp.port, dest_label=dst_label,
                                          start_time=schedule.start_time, end_time=schedule.end_time,
-                                         bandwidth=sd.capacity)
+                                         symmetrical=sd.symmetric, directionality=sd.directionality, bandwidth=sd.capacity)
         yield conn.save()
         reactor.callWhenRunning(self._doReserve, conn, header.correlation_id)
         defer.returnValue(connection_id)

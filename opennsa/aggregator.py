@@ -185,7 +185,8 @@ class Aggregator:
                             reservation_state=state.RESERVE_START, provision_state=state.RELEASED, lifecycle_state=state.CREATED,
                             source_network=source_stp.network, source_port=source_stp.port, source_label=source_stp.label,
                             dest_network=dest_stp.network, dest_port=dest_stp.port, dest_label=dest_stp.label,
-                            start_time=criteria.schedule.start_time, end_time=criteria.schedule.end_time, bandwidth=sd.capacity)
+                            start_time=criteria.schedule.start_time, end_time=criteria.schedule.end_time,
+                            symmetrical=sd.symmetric, directionality=sd.directionality, bandwidth=sd.capacity, connection_trace=header.connection_trace)
         yield conn.save()
 
         # Here we should return / callback and spawn off the path creation

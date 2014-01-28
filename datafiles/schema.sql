@@ -7,6 +7,8 @@ CREATE TYPE label AS (
     label_value     text
 );
 
+CREATE TYPE directionality AS ENUM ('Bidirectional', 'Unidirectional');
+
 
 -- publically reachable connections
 CREATE TABLE service_connections (
@@ -29,7 +31,10 @@ CREATE TABLE service_connections (
     dest_label              label,
     start_time              timestamp                   NOT NULL,
     end_time                timestamp                   NOT NULL,
-    bandwidth               integer                     NOT NULL -- mbps
+    symmetrical             boolean                     NOT NULL,
+    directionality          directionality              NOT NULL,
+    bandwidth               integer                     NOT NULL, -- mbps
+    connection_trace        text[]
 );
 
 -- internal references to connections that are part of a service connection
@@ -77,6 +82,8 @@ CREATE TABLE generic_backend_connections (
     dest_label              label,
     start_time              timestamp                   NOT NULL,
     end_time                timestamp                   NOT NULL,
+    symmetrical             boolean                     NOT NULL,
+    directionality          directionality              NOT NULL,
     bandwidth               integer                     NOT NULL -- mbps
 );
 
