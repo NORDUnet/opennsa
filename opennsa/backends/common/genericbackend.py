@@ -529,7 +529,7 @@ class GenericBackend(service.Service):
             yield self.connection_manager.setupLink(conn.connection_id, src_target, dst_target, conn.bandwidth)
         except Exception, e:
             # We need to mark failure in state machine here somehow....
-            log.msg('Connection %s: Error setting up connection: %s' % (conn.connection_id, str(e)), system=self.log_system)
+            log.msg('Connection %s: Error activating data plane: %s' % (conn.connection_id, str(e)), system=self.log_system)
             # should include stack trace
             conn.data_plane_active = False
             yield conn.save()
@@ -575,7 +575,7 @@ class GenericBackend(service.Service):
             yield self.connection_manager.teardownLink(conn.connection_id, src_target, dst_target, conn.bandwidth)
         except Exception, e:
             # We need to mark failure in state machine here somehow....
-            log.msg('Connection %s: Error deactivating connection: %s' % (conn.connection_id, str(e)), system=self.log_system)
+            log.msg('Connection %s: Error deactivating data plane: %s' % (conn.connection_id, str(e)), system=self.log_system)
             # should include stack trace
             conn.data_plane_active = False # technically we don't know, but for NSI that means not active
             yield conn.save()
