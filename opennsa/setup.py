@@ -118,6 +118,9 @@ class OpenNSAService(twistedservice.MultiService):
         topology = nml.Topology()
         topology.addNetwork(network_topology, ns_agent)
 
+        route_vectors = nmlgns.RouteVectors()
+        route_vectors.updateVector(nsa_name, 0, [ network_topology.id_ ], {})
+
         # ssl/tls contxt
         if vc[config.TLS]:
             from opennsa import ctxfactory
@@ -151,12 +154,9 @@ class OpenNSAService(twistedservice.MultiService):
 
         provider_registry.addProvider(ns_agent.urn(), backend_service)
 
-        route_vectors = nmlgns.RouteVectors()
-        route_vectors.updateVector(nsa_name, 0, [ network_topology.id_ ], {})
-
         # fetcher
         if vc[config.PEERS]:
-            fetcher_service = fetcher.FetcherService(route_vectors, vc[config.PEERS], provider_registry, ctx_factory=ctx_factory)
+            fetcher_service = fetcher.FetcherService(route_vectors, topology, vc[config.PEERS], provider_registry, ctx_factory=ctx_factory)
             fetcher_service.setServiceParent(self)
 
         # wire up the http stuff

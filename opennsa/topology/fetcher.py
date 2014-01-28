@@ -18,11 +18,12 @@ FETCH_INTERVAL = 1200 # seconds
 
 class FetcherService(service.Service):
 
-    def __init__(self, route_vectors, peers, provider_registry, ctx_factory=None):
+    def __init__(self, route_vectors, topology, peers, provider_registry, ctx_factory=None):
         for peer in peers:
             assert peer.url.startswith('http'), 'Peer URL %s does not start with http' % peer.url
 
         self.route_vectors = route_vectors
+        self.topology = topology
         self.peers = peers
         self.provider_registry = provider_registry
         self.ctx_factory = ctx_factory
@@ -63,6 +64,8 @@ class FetcherService(service.Service):
 
             topology_ids = [ nt.id_ for nt in nml_topos ]
             self.route_vectors.updateVector(nsa_id, peer.cost, topology_ids, vectors)
+            for topo in nml_topos:
+                self.topology.addNetwork(topo, nsi_agent)
             self.provider_registry.spawnProvider(nsi_agent)
 
         except Exception as e:
