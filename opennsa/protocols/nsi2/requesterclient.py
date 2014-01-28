@@ -88,7 +88,8 @@ class RequesterClient:
 
         # payload construction
 
-        header_payload = helper.createHeader(header.requester_nsa, header.provider_nsa, reply_to=self.reply_to, correlation_id=header.correlation_id)
+        header_payload = helper.createHeader(header.requester_nsa, header.provider_nsa, reply_to=self.reply_to,
+                                             correlation_id=header.correlation_id, connection_trace=header.connection_trace)
 
         schedule = criteria.schedule
         sd = criteria.service_def

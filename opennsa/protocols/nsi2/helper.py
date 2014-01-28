@@ -41,9 +41,9 @@ LABEL_MAP = {
 
 
 
-def createHeader(requester_nsa_urn, provider_nsa_urn, session_security_attrs=None, reply_to=None, correlation_id=None):
+def createHeader(requester_nsa_urn, provider_nsa_urn, session_security_attrs=None, reply_to=None, correlation_id=None, connection_trace=None):
 
-    header = nsiframework.CommonHeaderType(cnt.CS2_SERVICE_TYPE, correlation_id, requester_nsa_urn, provider_nsa_urn, reply_to, session_security_attrs)
+    header = nsiframework.CommonHeaderType(cnt.CS2_SERVICE_TYPE, correlation_id, requester_nsa_urn, provider_nsa_urn, reply_to, session_security_attrs, connection_trace)
     header_element = header.xml(nsiframework.nsiHeader)
     return header_element
 
@@ -100,7 +100,7 @@ def parseRequest(soap_data):
     else:
         body = [ nsiconnection.parseElement(b) for b in bodies ]
 
-    nsi_header = nsa.NSIHeader(header.requesterNSA, header.providerNSA, header.correlationId, header.replyTo)
+    nsi_header = nsa.NSIHeader(header.requesterNSA, header.providerNSA, header.correlationId, header.replyTo, connection_trace=header.connectionTrace)
 
     return nsi_header, body
 

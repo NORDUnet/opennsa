@@ -291,7 +291,8 @@ class Aggregator:
             provider_nsa = self.topology.getNSA(link.network)
             provider     = self.getProvider(provider_nsa.urn())
 
-            header = nsa.NSIHeader(self.nsa_.urn(), provider_nsa.urn())
+            conn_trace = header.connection_trace or [] + [ self.nsa_.urn() + ':' + conn.connection_id ]
+            c_header = nsa.NSIHeader(self.nsa_.urn(), provider_nsa.urn(), connection_trace=conn_trace)
 
             # this has to be done more generic sometime
             sd = nsa.Point2PointService(nsa.STP(link.network, link.src_port, link.src_label),
@@ -299,7 +300,7 @@ class Aggregator:
                                         conn.bandwidth, sd.directionality, sd.symmetric)
 
             # save info for db saving
-            self.reservations[header.correlation_id] = {
+            self.reservations[c_header.correlation_id] = {
                                                         'provider_nsa'  : provider_nsa.urn(),
                                                         'service_connection_id' : conn.id,
                                                         'order_id'       : idx,
@@ -310,7 +311,7 @@ class Aggregator:
 
             crt = nsa.Criteria(criteria.revision, criteria.schedule, sd)
 
-            d = provider.reserve(header, None, conn.global_reservation_id, conn.description, crt)
+            d = provider.reserve(c_header, None, conn.global_reservation_id, conn.description, crt)
             conn_info.append( (d, provider_nsa) )
 
             # Don't bother trying to save connection here, wait for reserveConfirmed
@@ -350,9 +351,9 @@ class Aggregator:
             for (sc_id, provider_nsa) in reserved_connections:
 
                 provider = self.getProvider(provider_nsa.urn())
-                header = nsa.NSIHeader(self.nsa_.urn(), provider_nsa.urn())
+                t_header = nsa.NSIHeader(self.nsa_.urn(), provider_nsa.urn())
 
-                d = provider.terminate(header, sc_id)
+                d = provider.terminate(t_header, sc_id)
                 d.addCallbacks(
                     lambda c : log.msg('Succesfully terminated sub connection %s at %s after partial reservation failure.' % (sc_id, provider_nsa.urn()) , system=LOG_SYSTEM),
                     lambda f : log.msg('Error terminating connection after partial-reservation failure: %s' % str(f), system=LOG_SYSTEM)
