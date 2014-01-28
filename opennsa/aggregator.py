@@ -87,10 +87,12 @@ class Aggregator:
 
     implements(INSIProvider, INSIRequester)
 
-    def __init__(self, network, nsa_, topology, parent_requester, provider_registry):
+    def __init__(self, network, nsa_, topology, route_vectors, parent_requester, provider_registry):
         self.network = network
         self.nsa_ = nsa_
         self.topology = topology
+        self.network_topology = self.topology.getNetwork(self.network)
+        self.route_vectors = route_vectors
 
         self.parent_requester   = parent_requester
         self.provider_registry  = provider_registry
@@ -158,9 +160,19 @@ class Aggregator:
         source_stp = sd.source_stp
         dest_stp   = sd.dest_stp
 
+        # policy check: one endpoint must be in local network
+        if not (source_stp.network == self.network or dest_stp.network == self.network):
+            raise error.ConnectionCreateError('The connection does not terminate in the network, rejecting request')
+
         # check that we know the networks
-        self.topology.getNetwork(source_stp.network)
-        self.topology.getNetwork(dest_stp.network)
+        #self.topology.getNetwork(source_stp.network)
+        #self.topology.getNetwork(dest_stp.network)
+
+        # check that we have path vectors to topologies
+        if self.route_vectors.vector(source_stp.network) is None:
+            raise error.ConnectionCreateError('No know routes to network %s' % source_stp.network)
+        if self.route_vectors.vector(dest_stp.network) is None:
+            raise error.ConnectionCreateError('No know routes to network %s' % dest_stp.network)
 
         # if the link terminates at our network, check that ports exists
         if source_stp.network == self.network:
@@ -217,15 +229,51 @@ class Aggregator:
             # log about creation and the connection type
             log.msg('Connection %s: Aggregate path creation: %s -> %s' % (conn.connection_id, str(source_stp), str(dest_stp)), system=LOG_SYSTEM)
             # making the connection is the same for all though :-)
-            paths = self.topology.findPaths(source_stp, dest_stp, conn.bandwidth)
 
-            # error out if we could not find a path
-            if not paths:
-                error_msg = 'Could not find a path for route %s/%s -> %s/%s' % (source_stp.network, source_stp.port, dest_stp.network, dest_stp.port)
-                log.msg(error_msg, system=LOG_SYSTEM)
-                raise error.TopologyError(error_msg)
+#            paths = self.topology.findPaths(source_stp, dest_stp, conn.bandwidth)
+#            # error out if we could not find a path
+#            if not paths:
+#                error_msg = 'Could not find a path for route %s/%s -> %s/%s' % (source_stp.network, source_stp.port, dest_stp.network, dest_stp.port)
+#                log.msg(error_msg, system=LOG_SYSTEM)
+#                raise error.TopologyError(error_msg)
+#            paths.sort(key=lambda e : len(e))
 
-            paths.sort(key=lambda e : len(e))
+            # -- vector chain path selection
+
+            # how to this with path vector
+            # 1. find topology to use from vector
+            # 2. create abstracted path: local link + rest
+
+            if source_stp.network == self.network:
+                local_stp      = source_stp
+                remote_stp     = dest_stp
+            else:
+                local_stp      = dest_stp
+                remote_stp     = source_stp
+
+            vector = self.route_vectors.vector(remote_stp.network)
+            log.msg('Vector to %s via %s' % (remote_stp.network, vector), system=LOG_SYSTEM)
+            ports = self.network_topology.findPorts(True)
+            demarc_ports = []
+            for p in ports:
+                if p.outbound_port.remote_port is None or p.inbound_port.remote_port is None:
+                    continue # filter out local termination ports
+                if p.outbound_port.remote_port.startswith(remote_stp.network) and p.inbound_port.remote_port.startswith(remote_stp.network):
+                    demarc_ports.append(p)
+
+            if not demarc_ports:
+                raise error.ConnectionCreateError('Could not find a demarction port to network topology %s' % remote_stp.network)
+
+            ldp = demarc_ports[0] # most of the time we will only have one anyway, should iterate and build multiple paths
+
+            rd = self.topology.findDemarcationPort(ldp)
+            if not rd:
+                raise error.ConnectionCreateError('Could not find a demarction port for port %s' % ldp)
+            rdn, rdp = rd
+
+            paths = [ [ nsa.Link(local_stp.network, local_stp.port, ldp.id_, local_stp.label, ldp.label()),
+                        nsa.Link(remote_stp.network, rdp, remote_stp.port, ldp.label(), remote_stp.label) ] ] # the ldp label here isn't quite correct
+
 
         selected_path = paths[0] # shortest path
         log_path = ' -> '.join( [ str(p) for p in selected_path ] )
