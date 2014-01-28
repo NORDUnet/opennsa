@@ -104,7 +104,6 @@ class BidirectionalPort(object):
 
 
     def label(self):
-        # we only do one label at the moment
         if self.inbound_port.label() and self.outbound_port.label():
             return self.inbound_port.label().intersect(self.outbound_port.label())
         else:
