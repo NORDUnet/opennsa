@@ -9,6 +9,7 @@ import base64
 import random
 
 from twisted.python import log
+from twisted.web.error import Error as WebError
 
 from opennsa import constants as cnt, config
 from opennsa.backends.common import genericbackend
@@ -127,6 +128,15 @@ def createVPNPayload(service_name, source_target, dest_target):
 
 
 
+def _extractErrorMessage(failure):
+    # used to extract error messages from http requests
+    if isinstance(failure.value, WebError):
+        return failure.value.response
+    else:
+        return failure.getErrorMessage()
+
+
+
 class NCSVPNConnectionManager:
 
     def __init__(self, ncs_services_url, user, password, port_map, log_system):
@@ -179,8 +189,13 @@ class NCSVPNConnectionManager:
         def linkUp(_):
             log.msg('Link %s -> %s up' % (source_target, dest_target), system=self.log_system)
 
+        def error(failure):
+            log.msg('Error bringing up link %s -> %s' % (source_target, dest_target), system=self.log_system)
+            log.msg('Message: %s' % _extractErrorMessage(failure), system=self.log_system)
+            return failure
+
         d = httpclient.httpRequest(self.ncs_services_url, payload, headers, method='POST', timeout=NCS_TIMEOUT)
-        d.addCallback(linkUp)
+        d.addCallbacks(linkUp, error)
         return d
 
 
@@ -191,8 +206,13 @@ class NCSVPNConnectionManager:
         def linkDown(_):
             log.msg('Link %s -> %s down' % (source_target, dest_target), system=self.log_system)
 
+        def error(failure):
+            log.msg('Error bringing down link %s -> %s' % (source_target, dest_target), system=self.log_system)
+            log.msg('Message: %s' % _extractErrorMessage(failure), system=self.log_system)
+            return failure
+
         d = httpclient.httpRequest(service_url, None, headers, method='DELETE', timeout=NCS_TIMEOUT)
-        d.addCallback(linkDown)
+        d.addCallbacks(linkDown, error)
         return d
 
 
