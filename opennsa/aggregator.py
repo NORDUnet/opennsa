@@ -10,7 +10,7 @@ import datetime
 
 from zope.interface import implements
 
-from twisted.python import log, failure
+from twisted.python import log
 from twisted.internet import defer
 
 from opennsa.interface import INSIProvider, INSIRequester
@@ -20,14 +20,6 @@ from opennsa import error, nsa, state, database, constants as cnt
 
 LOG_SYSTEM = 'Aggregator'
 
-
-
-#def connPath(conn):
-#    """
-#    Utility function for getting a string with the source and dest STP of connection.
-#    """
-#    source_stp, dest_stp = conn.stps()
-#    return '<%s:%s--%s:%s>' % (source_stp.network, source_stp.endpoint, dest_stp.network, dest_stp.endpoint)
 
 
 def shortLabel(label):
