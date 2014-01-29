@@ -84,7 +84,7 @@ def httpRequest(url, payload, headers, method='POST', timeout=DEFAULT_TIMEOUT, c
             log.msg(' -- Received Reply (fault) --\n%s\n -- END. Received Reply (fault) --' % data, system=LOG_SYSTEM, payload=True)
             return err
         elif isinstance(err.value, ConnectionRefusedError):
-            log.msg('Connection refused while issuing http request to %s' % url, system=LOG_SYSTEM)
+            log.msg('Connection refused for %s:%i. Request URL: %s' % (host, port, url), system=LOG_SYSTEM)
             return err
         else:
             return err
