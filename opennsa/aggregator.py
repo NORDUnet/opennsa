@@ -39,15 +39,13 @@ def shortLabel(label):
     return name + ':' + label.labelValue()
 
 
-def _buildErrorMessage(results, action):
+def _buildErrorMessage(connection_id, action, results):
 
-    # should probably seperate loggin somehow
+    # should probably seperate logging somehow
     failures = [ fail for (success, fail) in results if success is False ]
-    for f in failures:
-        print f
     failure_msgs = [ f.getErrorMessage() for f in failures ]
 
-    log.msg('Connection ... %i failures' % len(failures), system=LOG_SYSTEM)
+    log.msg('Connection %s: %i failures' % (connection_id, len(failures)), system=LOG_SYSTEM)
     for msg in failure_msgs:
         log.msg('* Failure: ' + msg, system=LOG_SYSTEM)
 
@@ -62,7 +60,7 @@ def _buildErrorMessage(results, action):
     return error_msg
 
 
-def _createAggregateException(results, action, default_error=error.InternalServerError):
+def _createAggregateException(connection_id, action, results, default_error=error.InternalServerError):
 
     # need to handle multi-errors better, but infrastructure isn't there yet
     failures = [ conn for success,conn in results if not success ]
@@ -72,14 +70,8 @@ def _createAggregateException(results, action, default_error=error.InternalServe
     if len(results) == 1 and len(failures) == 1:
         return failures[0]
     else:
-        error_msg = _buildErrorMessage(results, action)
+        error_msg = _buildErrorMessage(connection_id, action, results)
         return default_error(error_msg)
-
-
-def _createAggregateFailure(results, action):
-
-    err = _createAggregateException(results, action)
-    return failure.Failure(err)
 
 
 
@@ -216,8 +208,8 @@ class Aggregator:
     #            dl = defer.DeferredList(defs)
     #            dl.addCallback( self.state.terminatedFailed )
     #
-    #            err = self._createAggregateFailure(results, 'reservations', error.ConnectionCreateError)
-    #            return err
+    #            err = self._createAggregateException(results, 'reservations', error.ConnectionCreateError)
+    #            raise err
 
         yield state.reserveChecking(conn) # this also acts a lock
 
@@ -364,7 +356,7 @@ class Aggregator:
             yield dl
             yield state.terminated(conn)
 
-            err = _createAggregateException(results, 'reservations', error.ConnectionCreateError)
+            err = _createAggregateException(connection_id, 'reservations', results, error.ConnectionCreateError)
             raise err
 
 
@@ -401,7 +393,7 @@ class Aggregator:
         else:
             n_success = sum( [ 1 for s in successes if s ] )
             log.msg('Connection %s. Only %i of %i commit acked successfully' % (connection_id, n_success, len(defs)), system=LOG_SYSTEM)
-            raise _createAggregateException(results, 'committed', error.ConnectionError)
+            raise _createAggregateException(connection_id, 'committed', results, error.ConnectionError)
 
 
     @defer.inlineCallbacks
@@ -439,7 +431,7 @@ class Aggregator:
         else:
             n_success = sum( [ 1 for s in successes if s ] )
             log.msg('Connection %s. Only %i of %i connections aborted' % (self.connection_id, len(n_success), len(defs)), system=LOG_SYSTEM)
-            raise self._createAggregateException(results, 'aborted', error.ConnectionError)
+            raise self._createAggregateException(connection_id, 'aborted', results, error.ConnectionError)
 
 
     @defer.inlineCallbacks
@@ -475,7 +467,7 @@ class Aggregator:
         else:
             n_success = sum( [ 1 for s in successes if s ] )
             log.msg('Connection %s. Provision failure. %i of %i connections successfully acked' % (connection_id, n_success, len(defs)), system=LOG_SYSTEM)
-            raise _createAggregateException(results, 'provision', error.ConnectionError)
+            raise _createAggregateException(connection_id, 'provision', results, error.ConnectionError)
 
 
     @defer.inlineCallbacks
@@ -512,7 +504,7 @@ class Aggregator:
         else:
             n_success = sum( [ 1 for s in successes if s ] )
             log.msg('Connection %s. Only %i of %i connections successfully released' % (self.connection_id, n_success, len(defs)), system=LOG_SYSTEM)
-            raise self._createAggregateException(results, 'release', error.ConnectionError)
+            raise self._createAggregateException(connection_id, 'release', results, error.ConnectionError)
 
 
     @defer.inlineCallbacks
@@ -548,7 +540,7 @@ class Aggregator:
             # we are now in an inconsistent state...
             n_success = sum( [ 1 for s in successes if s ] )
             log.msg('Connection %s. Only %i of %i connections successfully terminated' % (conn.connection_id, n_success, len(defs)), system=LOG_SYSTEM)
-            raise _createAggregateException(results, 'terminate', error.ConnectionError)
+            raise _createAggregateException(connection_id, 'terminate', results, error.ConnectionError)
 
         defer.returnValue(connection_id)
 
