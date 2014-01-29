@@ -56,6 +56,14 @@ class NSIError(Exception):
     It should not be instantiated directly.
     """
     errorId = None
+    nsaId   = None
+    connectionId = None
+
+    def __init__(self, value, nsa_id=None, connection_id=None):
+        Exception.__init__(self, value)
+        self.nsaId = nsa_id
+        self.connectionId = connection_id
+
 
 
 class PayloadError(NSIError):
@@ -126,6 +134,11 @@ class InternalServerError(NSIError):
 class InternalNRMError(InternalServerError):
 
     errorId = '00501'
+
+
+class DownstreamNSAError(InternalServerError):
+
+    errorId = '00505' # NOT OFFICAL ERROR CODE
 
 
 class ResourceUnavailableError(NSIError):
