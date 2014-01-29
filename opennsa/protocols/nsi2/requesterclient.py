@@ -11,6 +11,7 @@ from zope.interface import implements
 
 from twisted.python import log, failure
 from twisted.web.error import Error as WebError
+from twisted.internet.error import ConnectionRefusedError
 
 from opennsa.interface import INSIProvider
 from opennsa import nsa, error
@@ -54,11 +55,17 @@ class RequesterClient:
 
 
 
-    def _handleErrorReply(self, err):
+    def _handleErrorReply(self, err, header):
 
-        # is this isn't a web error we cannot do anything about it here
         if err.check(WebError) is None:
-            return err
+            if err.check(ConnectionRefusedError):
+                # could not contact NSA
+                msg = 'Could not contact NSA %s. Reason: %s' % (header.provider_nsa, err.getErrorMessage())
+                ex = error.DownstreamNSAError(msg, nsa_id=header.provider_nsa)
+                return failure.Failure(ex)
+            else:
+                # cannot handle it here
+                return err
 
         if err.value.status != '500':
             log.msg("Got error with non-500 status. Message: %s" % err.getErrorMessage(), system=LOG_SYSTEM)
@@ -75,7 +82,7 @@ class RequesterClient:
             ex = error.InternalServerError(fault_string)
         else:
             ext = error.lookup(service_exception.errorId)
-            ex = ext(service_exception.text)
+            ex = ext(service_exception.text, header.provider_nsa)
 
         err = failure.Failure(ex)
 
@@ -120,7 +127,7 @@ class RequesterClient:
             return ack.connectionId
 
         d = httpclient.soapRequest(self.service_url, actions.RESERVE, payload, ctx_factory=self.ctx_factory, headers=self.http_headers)
-        d.addCallbacks(_handleAck, self._handleErrorReply)
+        d.addCallbacks(_handleAck, self._handleErrorReply, errbackArgs=(header,))
         return d
 
 
@@ -131,7 +138,7 @@ class RequesterClient:
         payload = self._createGenericRequestType(nsiconnection.reserveCommit, header, connection_id)
 
         d = httpclient.soapRequest(self.service_url, actions.RESERVE_COMMIT, payload, ctx_factory=self.ctx_factory, headers=self.http_headers)
-        d.addCallbacks(lambda sd : None, self._handleErrorReply)
+        d.addCallbacks(lambda sd : None, self._handleErrorReply, errbackArgs=(header,))
         return d
 
 
@@ -142,7 +149,8 @@ class RequesterClient:
         payload = self._createGenericRequestType(nsiconnection.reserveAbort, header, connection_id)
 
         d = httpclient.soapRequest(self.service_url, actions.RESERVE_ABORT, payload, ctx_factory=self.ctx_factory, headers=self.http_headers)
-        d.addCallbacks(lambda sd : None, self._handleErrorReply)
+        d.addCallbacks(lambda sd : None, self._handleErrorReply, errbackArgs=(header,))
+
         return d
 
 
@@ -152,7 +160,8 @@ class RequesterClient:
 
         payload = self._createGenericRequestType(nsiconnection.provision, header, connection_id)
         d = httpclient.soapRequest(self.service_url, actions.PROVISION, payload, ctx_factory=self.ctx_factory, headers=self.http_headers)
-        d.addCallbacks(lambda sd : None, self._handleErrorReply)
+        d.addCallbacks(lambda sd : None, self._handleErrorReply, errbackArgs=(header,))
+
         return d
 
 
@@ -162,7 +171,7 @@ class RequesterClient:
 
         payload = self._createGenericRequestType(nsiconnection.release, header, connection_id)
         d = httpclient.soapRequest(self.service_url, actions.RELEASE, payload, ctx_factory=self.ctx_factory, headers=self.http_headers)
-        d.addCallbacks(lambda sd : None, self._handleErrorReply)
+        d.addCallbacks(lambda sd : None, self._handleErrorReply, errbackArgs=(header,))
         return d
 
 
@@ -172,7 +181,7 @@ class RequesterClient:
 
         payload = self._createGenericRequestType(nsiconnection.terminate, header, connection_id)
         d = httpclient.soapRequest(self.service_url, actions.TERMINATE, payload, ctx_factory=self.ctx_factory, headers=self.http_headers)
-        d.addCallbacks(lambda sd : None, self._handleErrorReply)
+        d.addCallbacks(lambda sd : None, self._handleErrorReply, errbackArgs=(header,))
         return d
 
 
@@ -188,7 +197,7 @@ class RequesterClient:
         payload = minisoap.createSoapPayload(body_element, header_element)
 
         d = httpclient.soapRequest(self.service_url, actions.QUERY_SUMMARY, payload, ctx_factory=self.ctx_factory, headers=self.http_headers)
-        d.addCallbacks(lambda sd : None, self._handleErrorReply)
+        d.addCallbacks(lambda sd : None, self._handleErrorReply, errbackArgs=(header,))
         return d
 
 
@@ -213,7 +222,7 @@ class RequesterClient:
         payload = minisoap.createSoapPayload(body_element, header_element)
 
         d = httpclient.soapRequest(self.service_url, actions.QUERY_SUMMARY_SYNC, payload, ctx_factory=self.ctx_factory, headers=self.http_headers)
-        d.addCallbacks(gotReply, self._handleErrorReply)
+        d.addCallbacks(gotReply, self._handleErrorReply, errbackArgs=(header,))
         return d
 
 
