@@ -79,7 +79,7 @@ def reserve(client, client_nsa, provider_nsa, src, dst, start_time, end_time, ca
         log.msg("Reservation committed at %s" % provider_nsa)
 
     except error.NSIError, e:
-        log.msg('Error reserving %s, %s : %s' % (connection_id, e.__class__.__name__, str(e)))
+        log.msg('Error reserving, %s: %s' % (e.__class__.__name__, str(e)))
 
 
 
@@ -100,7 +100,7 @@ def reserveprovision(client, client_nsa, provider_nsa, src, dst, start_time, end
         yield client.reserveCommit(nsi_header, assigned_connection_id)
         log.msg("Connection committed at %s" % provider_nsa)
     except error.NSIError, e:
-        log.msg('Error reserving %s, %s : %s' % (connection_id, e.__class__.__name__, str(e)))
+        log.msg('Error reserving, %s : %s' % (e.__class__.__name__, str(e)))
         defer.returnValue(None)
 
     try:
@@ -115,7 +115,7 @@ def reserveprovision(client, client_nsa, provider_nsa, src, dst, start_time, end
         yield client.provision(nsi_header, assigned_connection_id)
         log.msg('Connection %s provisioned' % assigned_connection_id)
     except error.NSIError, e:
-        log.msg('Error provisioning %s, %s : %s' % (assigned_connection_id, e.__class__.__name__, str(e)))
+        log.msg('Error provisioning, %s : %s' % (e.__class__.__name__, str(e)))
 
     while notification_wait:
         event = yield client.notifications.get()
