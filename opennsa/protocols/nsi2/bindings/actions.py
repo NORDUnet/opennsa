@@ -1,5 +1,5 @@
 """
-SOAP Actions for NSI ConnectionService version 2.
+SOAP Actions for NSI ConnectionService version 2, WSDL revision 117
 """
 
 # Provider
@@ -18,8 +18,10 @@ QUERY_RECURSIVE                 = '"http://schemas.ogf.org/nsi/2013/12/connectio
 QUERY_NOTIFICATION              = '"http://schemas.ogf.org/nsi/2013/12/connection/service/queryNotification"'
 QUERY_NOTIFICATION_SYNC         = '"http://schemas.ogf.org/nsi/2013/12/connection/service/queryNotificationSync"'
 
-# Reqeuster
+QUERY_RESULT                    = '"http://schemas.ogf.org/nsi/2013/12/connection/service/queryResult"'
+QUERY_RESULT_SYNC               = '"http://schemas.ogf.org/nsi/2013/12/connection/service/queryResultSync"'
 
+# Requester
 
 RESERVE_CONFIRMED               = '"http://schemas.ogf.org/nsi/2013/12/connection/service/reserveConfirmed"'
 RESERVE_FAILED                  = '"http://schemas.ogf.org/nsi/2013/12/connection/service/reserveFailed"'
@@ -32,13 +34,11 @@ RELEASE_CONFIRMED               = '"http://schemas.ogf.org/nsi/2013/12/connectio
 TERMINATE_CONFIRMED             = '"http://schemas.ogf.org/nsi/2013/12/connection/service/terminateConfirmed"'
 
 QUERY_SUMMARY_CONFIRMED         = '"http://schemas.ogf.org/nsi/2013/12/connection/service/querySummaryConfirmed"'
-QUERY_SUMMARY_FAILED            = '"http://schemas.ogf.org/nsi/2013/12/connection/service/querySummaryFailed"'
-
 QUERY_RECURSIVE_CONFIRMED       = '"http://schemas.ogf.org/nsi/2013/12/connection/service/queryRecursiveConfirmed"'
-QUERY_RECURSIVE_FAILED          = '"http://schemas.ogf.org/nsi/2013/12/connection/service/queryRecursiveFailed"'
 QUERY_NOTIFICATION_CONFIRMED    = '"http://schemas.ogf.org/nsi/2013/12/connection/service/queryNotificationConfirmed"'
-QUERY_NOTIFICATION_FAILED       = '"http://schemas.ogf.org/nsi/2013/12/connection/service/queryNotificationFailed"'
+QUERY_RESULT_CONFIRMED          = '"soapAction="http://schemas.ogf.org/nsi/2013/12/connection/service/queryResultConfirmed"'
 
+ERROR                           = '"http://schemas.ogf.org/nsi/2013/12/connection/service/error"'
 ERROR_EVENT                     = '"http://schemas.ogf.org/nsi/2013/12/connection/service/errorEvent"'
 DATA_PLANE_STATE_CHANGE         = '"http://schemas.ogf.org/nsi/2013/12/connection/service/dataPlaneStateChange"'
 RESERVE_TIMEOUT                 = '"http://schemas.ogf.org/nsi/2013/12/connection/service/reserveTimeout"'
