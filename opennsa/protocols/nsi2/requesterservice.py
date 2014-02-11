@@ -30,7 +30,6 @@ class RequesterService:
         soap_resource.registerDecoder(actions.TERMINATE_CONFIRMED,      self.terminateConfirmed)
 
         soap_resource.registerDecoder(actions.QUERY_SUMMARY_CONFIRMED,  self.querySummaryConfirmed)
-        soap_resource.registerDecoder(actions.QUERY_SUMMARY_FAILED,     self.querySummaryFailed)
 
 #        actions.QUERY_RECURSIVE_CONFIRMED
 #        actions.QUERY_RECURSIVE_FAILED
