@@ -68,14 +68,14 @@ class TypeValuePairType(object):
 
 
 class AttributeStatementType(object):
-    def __init__(self, Attribute, EncryptedAttribute):
-        self.Attribute = Attribute  # AttributeType
+    def __init__(self, Attribute): #, EncryptedAttribute):
+        self.Attribute = Attribute  # [ AttributeType ]
         #self.EncryptedAttribute = EncryptedAttribute  # EncryptedElementType
 
     @classmethod
     def build(self, element):
         return AttributeStatementType(
-                AttributeType.build(element.find('Attribute'))
+                AttributeType.build(element.findall('Attribute'))
                 #EncryptedElementType.build(element.find('EncryptedAttribute'))
                )
 
@@ -109,14 +109,14 @@ class AttributeType(object):
 
 
 class SessionSecurityAttrType(object):
-    def __init__(self, Attribute, EncryptedAttribute):
-        self.Attribute = Attribute  # AttributeType
-        #self.EncryptedAttribute = EncryptedAttribute  # EncryptedElementType
+    def __init__(self, Attributes): #, EncryptedAttribute):
+        self.Attribute = Attribute  # [ AttributeType ]
+        #self.EncryptedAttribute = EncryptedAttribute  # [ EncryptedElementType ]
 
     @classmethod
     def build(self, element):
         return SessionSecurityAttrType(
-                AttributeType.build(element.find('Attribute'))
+                [ AttributeType.build(e) for e in element.findall('{urn:oasis:names:tc:SAML:2.0:assertion}Attribute') ]
                 #EncryptedElementType.build(element.find('EncryptedAttribute'))
                )
 
