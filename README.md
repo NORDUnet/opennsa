@@ -1,3 +1,6 @@
+OpenNSA
+-------
+
 OpenNSA is an implementation of the Network Service Interface (NSI).
 
 NSI (Network Service Interface) is a technology agnostic protocol for
@@ -8,7 +11,7 @@ OpenNSA is currently in a state of heavy development, and many features are
 only partially implemented.
 
 
-OpenNSA features:
+#### OpenNSA features
 
 * Open-source NSI implementation
 * Pluggable backends to support different equipment
@@ -21,12 +24,16 @@ OpenNSA features:
 * Includes command line tool for basic operations
 
 
-License: NORDUnet License (3-clause BSD). See LICENSE for more details.
+#### License 
 
-Contact:
+NORDUnet License (3-clause BSD). See LICENSE for more details.
 
-Developer: Henrik Thostrup Jensen   htj <at> nordu.net
-Project  : Jerry Sobiesky           jerry <at> nordu.net
+#### Contact
 
-Copyright: NORDUnet (2011-2013)
+* Developer: Henrik Thostrup Jensen   htj <at> nordu.net
+* Project  : Jerry Sobiesky           jerry <at> nordu.net
+
+#### Copyright
+
+[NORDUnet](http://www.nordu.net) (2011-2013)
 
