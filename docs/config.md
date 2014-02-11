@@ -1,7 +1,10 @@
 OpenNSA configuration
+---------------------
 
-* Example configuration
 
+**Example configuration:**
+
+```
 [service]
 network=Aruba
 logfile=nsalog.log
@@ -29,4 +32,4 @@ topology    : Path to topology files.
 
 wsdl        : Directory for the wsdl files.
               Defaults to /usr/share/nsi/wsdl.
-
+```
