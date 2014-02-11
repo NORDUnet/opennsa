@@ -158,15 +158,6 @@ class RequesterService:
         return helper.createGenericAcknowledgement(header)
 
 
-    def querySummaryFailed(self, soap_data):
-
-        header, connection_id, cs, err = self._parseGenericFailure(soap_data)
-
-        self.requester.queryFailed(header, connection_id, cs, err)
-
-        return helper.createGenericAcknowledgement(header)
-
-
     def errorEvent(self, soap_data):
 
         header, error_event = helper.parseRequest(soap_data)

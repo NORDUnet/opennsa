@@ -75,9 +75,6 @@ class INSIRequester(Interface):
     def querySummaryConfirmed(header, summary_result):
         pass
 
-    def querySummaryFailed(header, service_exception):
-        pass
-
     def queryRecursiveConfirmed(header, recursive_result):
         pass
 
