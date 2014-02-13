@@ -10,6 +10,7 @@ from twisted.application import internet, service as twistedservice
 
 from opennsa import config, logging, constants as cnt, nsa, provreg, database, aggregator, viewresource
 from opennsa.topology import nrmparser, nml, nmlgns, http as nmlhttp, fetcher
+from opennsa.protocols.shared import httplog
 from opennsa.protocols import nsi2
 
 
@@ -176,7 +177,8 @@ class OpenNSAService(twistedservice.MultiService):
         log.msg('Provider URL: %s://%s:%s/NSI/services/CS2' % (proto_scheme, vc[config.HOST], vc[config.PORT] ) )
         log.msg('Topology URL: %s://%s:%s/NSI/topology/%s.xml' % (proto_scheme, vc[config.HOST], vc[config.PORT], vc[config.NETWORK_NAME]) )
 
-        factory = server.Site(top_resource, logPath='/dev/null')
+        factory = server.Site(top_resource)
+        factory.log = httplog.logRequest # default logging is weird, so we do our own
 
         if vc[config.TLS]:
             internet.SSLServer(vc[config.PORT], factory, ctx_factory).setServiceParent(self)
