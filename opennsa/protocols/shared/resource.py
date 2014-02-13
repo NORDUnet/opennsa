@@ -96,7 +96,7 @@ class SOAPResource(resource.Resource):
         if not soap_action in self.soap_actions:
             log.msg('Got request with unknown SOAP action: %s' % soap_action, system=LOG_SYSTEM)
             request.setResponseCode(406) # Not acceptable
-            return 'Invalid SOAP Action for this resource'
+            return 'Invalid SOAP Action for this resource\r\n'
 
         log.msg('Received SOAP request. Action: %s. Length: %i' % (soap_action, len(soap_data)), system=LOG_SYSTEM, debug=True)
 
