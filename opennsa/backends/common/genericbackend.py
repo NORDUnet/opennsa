@@ -104,7 +104,7 @@ class GenericBackend(service.Service):
                 elif conn.provision_state == state.RELEASED:
                     self.scheduler.scheduleCall(conn.connection_id, conn.end_time, self._doEndtime, conn)
                     td = conn.end_time - now
-                    log.msg('Connection %s: End scheduled for %s UTC (%i seconds) (buildSchedule' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
+                    log.msg('Connection %s: End scheduled for %s UTC (%i seconds) (buildSchedule)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
                 else:
                     log.msg('Unhandled provision state %s for connection %s in scheduler building' % (conn.provision_state, conn.connection_id))
 
