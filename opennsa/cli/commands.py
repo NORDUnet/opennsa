@@ -26,7 +26,7 @@ def _createP2PS(src, dst, capacity):
     src_stp = _createSTP(src)
     dst_stp = _createSTP(dst)
 
-    return nsa.Point2PointService(src_stp, dst_stp, capacity, cnt.BIDIRECTIONAL, False, None)
+    return nsa.Point2PointService(src_stp, dst_stp, capacity, cnt.BIDIRECTIONAL, None, None)
 
 
 def _handleEvent(event):

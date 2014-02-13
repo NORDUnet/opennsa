@@ -320,7 +320,7 @@ class Schedule(object):
 
 class Point2PointService(object):
 
-    def __init__(self, source_stp, dest_stp, capacity, directionality=BIDIRECTIONAL, symmetric=False, ero=None):
+    def __init__(self, source_stp, dest_stp, capacity, directionality=BIDIRECTIONAL, symmetric=None, ero=None):
 
         self.source_stp     = source_stp
         self.dest_stp       = dest_stp

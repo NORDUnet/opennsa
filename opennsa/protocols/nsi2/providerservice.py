@@ -98,7 +98,8 @@ class ProviderService:
             err = failure.Failure ( error.PayloadError('ERO not supported, go away.') )
             return self._createSOAPFault(err, header.provider_nsa)
 
-        sd = nsa.Point2PointService(src_stp, dst_stp, p2ps.capacity, p2ps.directionality, p2ps.symmetricPath, None)
+        symmetric = p2ps.symmetricPath or False # the p2p service specifies default behaviour as false, but doesn't specify default
+        sd = nsa.Point2PointService(src_stp, dst_stp, p2ps.capacity, p2ps.directionality, symmetric, None)
 
         crt = nsa.Criteria(criteria.version, schedule, sd)
 
