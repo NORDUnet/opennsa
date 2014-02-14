@@ -29,7 +29,10 @@ class TypeValueType(object):
 
     @classmethod
     def build(self, element):
-        return TypeValueType( )
+        return TypeValueType(
+                element.get('type'),
+                element.text
+               )
 
     def xml(self, elementName):
         r = ET.Element(elementName, attrib={'type' : self.type_})
