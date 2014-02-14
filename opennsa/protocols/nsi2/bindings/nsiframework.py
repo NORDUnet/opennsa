@@ -166,16 +166,17 @@ class ServiceExceptionType(object):
         return r
 
 
-SAML_NS             = 'urn:oasis:names:tc:SAML:2.0:assertion'
-NSI_FRAMEWORK_NS    = 'http://schemas.ogf.org/nsi/2013/12/framework/headers'
-GNS_NAMESPACE       = "http://nordu.net/namespaces/2013/12/gnsbod"
+SAML_NS                 = 'urn:oasis:names:tc:SAML:2.0:assertion'
+NSI_FRAMEWORK_NS        = 'http://schemas.ogf.org/nsi/2013/12/framework/headers'
+NSI_FRAMEWORK_TYPES_NS  = 'http://schemas.ogf.org/nsi/2013/12/framework/types'
+GNS_NAMESPACE           = "http://nordu.net/namespaces/2013/12/gnsbod"
 
 Attribute           = ET.QName(SAML_NS, 'Attribute')
 AttributeValue      = ET.QName(SAML_NS, 'AttributeValue')
 AttributeStatement  = ET.QName(SAML_NS, 'AttributeStatement')
 
 nsiHeader           = ET.QName(NSI_FRAMEWORK_NS, 'nsiHeader')
-serviceException    = ET.QName(NSI_FRAMEWORK_NS, 'serviceException')
+serviceException    = ET.QName(NSI_FRAMEWORK_TYPES_NS, 'serviceException')
 
 ConnectionTrace     = ET.QName(GNS_NAMESPACE, 'ConnectionTrace')
 Connection          = ET.QName(GNS_NAMESPACE, 'Connection')
