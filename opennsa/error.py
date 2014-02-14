@@ -76,6 +76,11 @@ class MissingParameterError(PayloadError):
     errorId = '00101'
 
 
+class UnsupportedParameter(PayloadError):
+
+    errorId = '00102'
+
+
 class ConnectionError(NSIError):
 
     errorId = '00200'
