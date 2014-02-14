@@ -98,6 +98,11 @@ class ProviderService:
             err = failure.Failure ( error.PayloadError('ERO not supported, go away.') )
             return self._createSOAPFault(err, header.provider_nsa)
 
+        if p2ps.parameter:
+            p = p2ps.parameter[0]
+            err = failure.Failure ( error.UnsupportedParameter('Unsupported parameter: %s/%s' % (p.type_, p.value) ) )
+            return self._createSOAPFault(err, header.provider_nsa)
+
         symmetric = p2ps.symmetricPath or False # the p2p service specifies default behaviour as false, but doesn't specify default
         sd = nsa.Point2PointService(src_stp, dst_stp, p2ps.capacity, p2ps.directionality, symmetric, None)
 
