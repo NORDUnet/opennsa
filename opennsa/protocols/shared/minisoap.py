@@ -71,7 +71,7 @@ def parseSoapPayload(payload):
 
     envelope = ET.fromstring(payload)
 
-    assert envelope.tag == SOAP_ENV, 'Top element in soap payload is not SOAP:Envelope'
+    assert envelope.tag == SOAP_ENV, 'Top element in soap payload is not SOAP:Envelope (got %s)' % envelope.tag
 
     header_elements = None
 
