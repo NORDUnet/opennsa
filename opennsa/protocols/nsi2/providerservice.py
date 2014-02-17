@@ -85,6 +85,10 @@ class ProviderService:
             err = failure.Failure ( error.PayloadError('Only support EthernetVlanType service for now.') )
             return self._createSOAPFault(err, header.provider_nsa, service_type=service_type)
 
+        if p2ps.directionality in (None, ''):
+            err = failure.Failure ( error.MissingParameterError('Directionality parameter not defined'))
+            return self._createSOAPFault(err, header.provider_nsa)
+
         # create DTOs (EROs not supported yet)
 
         start_time = helper.parseXMLTimestamp(criteria.schedule.startTime)
