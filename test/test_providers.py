@@ -609,7 +609,7 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
         self.end_time   = datetime.datetime.utcnow() + datetime.timedelta(seconds=10)
 
         self.schedule = nsa.Schedule(self.start_time, self.end_time)
-        self.sd = nsa.Point2PointService(self.source_stp, self.dest_stp, self.bandwidth, None, None)
+        self.sd = nsa.Point2PointService(self.source_stp, self.dest_stp, self.bandwidth)
         self.criteria = nsa.Criteria(0, self.schedule, self.sd)
 
 
