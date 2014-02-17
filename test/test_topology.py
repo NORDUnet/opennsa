@@ -14,18 +14,18 @@ BONAIRE_NETWORK  = 'bonaire:topology'
 CURACAO_NETWORK  = 'curacao:topology'
 DOMINICA_NETWORK = 'dominica:topology'
 
-ARUBA_PS   = nsa.STP(ARUBA_NETWORK,   'aruba:ps',   LABEL)
-BONAIRE_PS = nsa.STP(BONAIRE_NETWORK, 'bonaire:ps', LABEL)
-CURACAO_PS = nsa.STP(CURACAO_NETWORK, 'curacao:ps', LABEL)
+ARUBA_PS   = nsa.STP(ARUBA_NETWORK,   'ps',   LABEL)
+BONAIRE_PS = nsa.STP(BONAIRE_NETWORK, 'ps', LABEL)
+CURACAO_PS = nsa.STP(CURACAO_NETWORK, 'ps', LABEL)
 
 
 class TopologyTest(unittest.TestCase):
 
     def setUp(self):
-        an,_ = nrmparser.parseTopologySpec(StringIO(topology.ARUBA_TOPOLOGY),    'aruba')
-        bn,_ = nrmparser.parseTopologySpec(StringIO(topology.BONAIRE_TOPOLOGY),  'bonaire')
-        cn,_ = nrmparser.parseTopologySpec(StringIO(topology.CURACAO_TOPOLOGY),  'curacao')
-        dn,_ = nrmparser.parseTopologySpec(StringIO(topology.DOMINICA_TOPOLOGY), 'dominica')
+        an,_ = nrmparser.parseTopologySpec(StringIO(topology.ARUBA_TOPOLOGY),    ARUBA_NETWORK)
+        bn,_ = nrmparser.parseTopologySpec(StringIO(topology.BONAIRE_TOPOLOGY),  BONAIRE_NETWORK)
+        cn,_ = nrmparser.parseTopologySpec(StringIO(topology.CURACAO_TOPOLOGY),  CURACAO_NETWORK)
+        dn,_ = nrmparser.parseTopologySpec(StringIO(topology.DOMINICA_TOPOLOGY), DOMINICA_NETWORK)
 
         a_nsa = nsa.NetworkServiceAgent('aruba:nsa',    'a-endpoint')
         b_nsa = nsa.NetworkServiceAgent('bonaire:nsa',  'b-endpoint')
@@ -56,6 +56,7 @@ class TopologyTest(unittest.TestCase):
         #paths = self.topology.findPaths(ARUBA_PS, BONAIRE_PS, 800)
         #self.assertEquals(len(paths), 1)
 
+    testBasicPathfinding.skip = 'NML module is not used'
 
     def testNoSwapPathfinding(self):
 
@@ -90,6 +91,8 @@ class TopologyTest(unittest.TestCase):
         for link in third_path:
             self.assertEquals(link.src_label, tpl)
             self.assertEquals(link.dst_label, tpl)
+
+    testNoSwapPathfinding.skip = 'NML module is not used'
 
 
     def testFullSwapPathfinding(self):
@@ -150,6 +153,8 @@ class TopologyTest(unittest.TestCase):
         self.assertEquals(tp[3].src_label, kpl)
         self.assertEquals(tp[3].dst_label, tpl)
 
+    testFullSwapPathfinding.skip = 'NML module is not used'
+
 
     def testPartialSwapPathfinding(self):
 
@@ -206,6 +211,7 @@ class TopologyTest(unittest.TestCase):
         self.assertEquals(tp[3].src_label, jpl)
         self.assertEquals(tp[3].dst_label, tpl)
 
+    testPartialSwapPathfinding.skip = 'NML module is not used'
 
     def testNoAvailableBandwidth(self):
         self.failUnlessRaises(error.BandwidthUnavailableError, self.topology.findPaths, ARUBA_PS, BONAIRE_PS, 1200)
