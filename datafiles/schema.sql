@@ -7,6 +7,11 @@ CREATE TYPE label AS (
     label_value     text
 );
 
+CREATE TYPE parameter AS (
+    label_type      text,
+    label_value     text
+);
+
 CREATE TYPE directionality AS ENUM ('Bidirectional', 'Unidirectional');
 
 
@@ -34,6 +39,7 @@ CREATE TABLE service_connections (
     symmetrical             boolean                     NOT NULL,
     directionality          directionality              NOT NULL,
     bandwidth               integer                     NOT NULL, -- mbps
+    parameter               parameter[],
     connection_trace        text[]
 );
 
@@ -84,6 +90,8 @@ CREATE TABLE generic_backend_connections (
     end_time                timestamp                   NOT NULL,
     symmetrical             boolean                     NOT NULL,
     directionality          directionality              NOT NULL,
-    bandwidth               integer                     NOT NULL -- mbps
+    bandwidth               integer                     NOT NULL, -- mbps
+    parameter               parameter[],
+    allocated               boolean                     NOT NULL  -- indicated if the resources are actually allocated
 );
 

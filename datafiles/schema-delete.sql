@@ -5,5 +5,6 @@ DROP TABLE generic_backend_connections;
 DROP TABLE sub_connections;
 DROP TABLE service_connections;
 DROP TYPE directionality;
+DROP TYPE parameter;
 DROP TYPE label;
 

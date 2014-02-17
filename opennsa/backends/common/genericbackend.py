@@ -263,7 +263,7 @@ class GenericBackend(service.Service):
                                          source_network=source_stp.network, source_port=source_stp.port, source_label=src_label,
                                          dest_network=dest_stp.network, dest_port=dest_stp.port, dest_label=dst_label,
                                          start_time=schedule.start_time, end_time=schedule.end_time,
-                                         symmetrical=sd.symmetric, directionality=sd.directionality, bandwidth=sd.capacity)
+                                         symmetrical=sd.symmetric, directionality=sd.directionality, bandwidth=sd.capacity, allocated=False)
         yield conn.save()
         reactor.callWhenRunning(self._doReserve, conn, header.correlation_id)
         defer.returnValue(connection_id)
@@ -278,10 +278,17 @@ class GenericBackend(service.Service):
         if conn.lifecycle_state in (state.TERMINATING, state.TERMINATED):
             raise error.ConnectionGoneError('Connection %s has been terminated')
 
-        yield state.reserveCommit(conn)
-        self.logStateUpdate(conn, 'RESERVE COMMIT')
-        yield state.reserved(conn)
-        self.logStateUpdate(conn, 'RESERVED')
+        # this it not the nicest code in the world, but the double state write is silly
+        # further the switch to reserve start and allocated must be in same transaction
+        state._switchState(state.RESERVE_TRANSITIONS, conn.reservation_state, state.RESERVE_COMMITTING)
+        conn.reservation_state = state.RESERVE_COMMITTING
+
+        state._switchState(state.RESERVE_TRANSITIONS, conn.reservation_state, state.RESERVE_START)
+        conn.reservation_state = state.RESERVE_START
+
+        conn.allocated = True
+        yield conn.save()
+        self.logStateUpdate(conn, 'COMMIT/RESERVED')
 
         # cancel abort and schedule end time call
         self.scheduler.cancelCall(connection_id)
@@ -319,6 +326,9 @@ class GenericBackend(service.Service):
         conn = yield self._getConnection(connection_id, header.requester_nsa)
         if conn.lifecycle_state in (state.TERMINATING, state.TERMINATED):
             raise error.ConnectionGoneError('Connection %s has been terminated')
+
+        if not conn.allocated:
+            raise error.ConnectionError('No resource allocated to the connection, cannot provision')
 
         if conn.reservation_state != state.RESERVE_START:
             raise error.InvalidTransitionError('Cannot provision connection in a non-reserved state')
