@@ -482,7 +482,7 @@ class GenericBackend(service.Service):
 
             header = nsa.NSIHeader(conn.requester_nsa, conn.requester_nsa) # The NSA is both requester and provider in the backend, but this might be problematic without aggregator
             now = datetime.datetime.utcnow()
-            # the conn.requesteR_nsa is somewhat problematic - the backend should really know its identity
+            # the conn.requester_nsa is somewhat problematic - the backend should really know its identity
             self.parent_requester.reserveTimeout(header, conn.connection_id, self.getNotificationId(), now, self.TPC_TIMEOUT, conn.connection_id, conn.requester_nsa)
 
         except Exception as e:
