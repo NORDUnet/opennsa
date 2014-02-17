@@ -325,7 +325,7 @@ class GenericBackend(service.Service):
 
         now = datetime.datetime.utcnow()
         if conn.end_time <= now:
-            raise error.ConnectionGone('Cannot provision connection after end time (end time: %s, current time: %s).' % (conn.end_time, now))
+            raise error.ConnectionGoneError('Cannot provision connection after end time (end time: %s, current time: %s).' % (conn.end_time, now))
 
         yield state.provisioning(conn)
         self.logStateUpdate(conn, 'PROVISIONING')
