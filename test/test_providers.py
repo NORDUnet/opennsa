@@ -6,7 +6,7 @@ from twisted.internet import reactor, defer, task
 from dateutil.tz import tzutc
 
 from opennsa import nsa, provreg, database, error, aggregator, constants as cnt
-from opennsa.topology import nml, nrmparser
+from opennsa.topology import nml, nmlgns, nrmparser
 from opennsa.backends import dud
 
 from . import topology, common
@@ -138,7 +138,7 @@ class GenericProviderTest:
         try:
             yield self.provider.reserve(self.header, None, None, None, criteria)
             self.fail('Should have raised TopologyError')
-        except error.TopologyError:
+        except error.ConnectionCreateError:
             pass # expected
 
 
@@ -497,8 +497,11 @@ class AggregatorTest(GenericProviderTest, unittest.TestCase):
         self.topology = nml.Topology()
         self.topology.addNetwork(aruba_topo, self.provider_agent)
 
+        route_vectors = nmlgns.RouteVectors()
+        route_vectors.updateVector(self.provider_agent.identity, 0, [ self.network ], {})
+
         pr = provreg.ProviderRegistry( { self.provider_agent.urn() : self.backend }, {} )
-        self.provider = aggregator.Aggregator(self.network, self.provider_agent, self.topology, self.requester, pr)
+        self.provider = aggregator.Aggregator(self.network, self.provider_agent, self.topology, route_vectors, self.requester, pr)
 
         # set parent for backend, we need to create the aggregator before this can be done
         self.backend.parent_requester = self.provider
@@ -569,8 +572,11 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
         self.topology = nml.Topology()
         self.topology.addNetwork(aruba_topo, self.provider_agent)
 
+        route_vectors = nmlgns.RouteVectors()
+        route_vectors.updateVector(self.provider_agent.identity, 0, [ self.network ], {})
+
         pr = provreg.ProviderRegistry( { self.provider_agent.urn() : self.backend }, {} )
-        self.aggregator = aggregator.Aggregator(self.network, self.provider_agent, self.topology, None, pr) # we set the parent later
+        self.aggregator = aggregator.Aggregator(self.network, self.provider_agent, self.topology, route_vectors, None, pr) # we set the parent later
 
         self.backend.parent_requester = self.aggregator
 
