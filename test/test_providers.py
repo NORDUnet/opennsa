@@ -79,6 +79,23 @@ class GenericProviderTest:
 
 
     @defer.inlineCallbacks
+    def testProvisionWithoutCommit(self):
+
+        self.header.newCorrelationId()
+        cid = yield self.provider.reserve(self.header, None, None, None, self.criteria)
+        header, cid, gid, desc, sp = yield self.requester.reserve_defer
+
+        self.clock.advance(self.backend.TPC_TIMEOUT + 1)
+        header, cid, notification_id, timestamp, timeout_value, org_cid, org_nsa = yield self.requester.reserve_timeout_defer
+
+        try:
+            # provision without committing first...
+            yield self.provider.provision(self.header, cid)
+        except error.ConnectionError:
+            pass # expected
+
+
+    @defer.inlineCallbacks
     def testProvisionUsage(self):
 
         self.header.newCorrelationId()
