@@ -82,7 +82,7 @@ class ProviderService:
 #            return self._createSOAPFault(err, header.provider_nsa, service_type=service_type)
 
         if type(p2ps) is not p2pservices.P2PServiceBaseType:
-            err = failure.Failure ( error.PayloadError('Only support EthernetVlanType service for now.') )
+            err = failure.Failure ( error.PayloadError('Only supports Point2PointService service for now.') )
             return self._createSOAPFault(err, header.provider_nsa, service_type=service_type)
 
         if p2ps.directionality in (None, ''):
