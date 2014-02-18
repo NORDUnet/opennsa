@@ -97,6 +97,13 @@ def reserved(conn):
     conn.reservation_state = RESERVE_START
     return conn.save()
 
+def reserveMultiSwitch(conn, *states):
+    # switch through multiple states in one go, note this does not save the state (because it is often needed with allocation switch)
+    for s in states:
+        _switchState(RESERVE_TRANSITIONS, conn.reservation_state, s)
+        conn.reservation_state = s
+
+
 # Provision
 
 def provisioning(conn):

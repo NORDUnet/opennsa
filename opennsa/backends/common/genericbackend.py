@@ -297,14 +297,8 @@ class GenericBackend(service.Service):
         if conn.lifecycle_state in (state.TERMINATING, state.TERMINATED):
             raise error.ConnectionGoneError('Connection %s has been terminated')
 
-        # this it not the nicest code in the world, but the double state write is silly
-        # further the switch to reserve start and allocated must be in same transaction
-        state._switchState(state.RESERVE_TRANSITIONS, conn.reservation_state, state.RESERVE_COMMITTING)
-        conn.reservation_state = state.RESERVE_COMMITTING
-
-        state._switchState(state.RESERVE_TRANSITIONS, conn.reservation_state, state.RESERVE_START)
-        conn.reservation_state = state.RESERVE_START
-
+        # the switch to reserve start and allocated must be in same transaction
+        state.reserveMultiSwitch(conn, state.RESERVE_COMMITTING, state.RESERVE_START)
         conn.allocated = True
         yield conn.save()
         self.logStateUpdate(conn, 'COMMIT/RESERVED')
@@ -480,11 +474,10 @@ class GenericBackend(service.Service):
     @defer.inlineCallbacks
     def _doReserve(self, conn, correlation_id):
 
-        yield state.reserveChecking(conn)
-        self.logStateUpdate(conn, 'RESERVE CHECKING')
-
-        yield state.reserveHeld(conn)
-        self.logStateUpdate(conn, 'RESERVE HELD')
+        # we have already checked resource availability, so can progress directly through checking
+        state.reserveMultiSwitch(conn, state.RESERVE_CHECKING, state.RESERVE_HELD)
+        yield conn.save()
+        self.logStateUpdate(conn, 'RESERVE CHECKING/HELD')
 
         # schedule 2PC timeout
         if self.scheduler.hasScheduledCall(conn.connection_id):
