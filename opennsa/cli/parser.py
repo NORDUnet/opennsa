@@ -193,7 +193,9 @@ class ProvisionReleaseTerminateOptions(NetworkCommandOptions):
 class Options(usage.Options):
     subCommands = [
         ['discover',        None,   DiscoveryOptions,       'Discover services at an NSA.'],
-        ['reserve',         None,   ReserveOptions,         'Create a reservation.'],
+        ['reserve',         None,   ReserveOptions,         'Create and commit a reservation.'],
+        ['reserveonly',     None,   ReserveOptions,         'Create a reservation without comitting it.'],
+        ['reservecommit',   None,   ProvisionOptions,       'Commit a held reservation.'],
         ['reserveprovision',None,   ReserveProvisionOptions,'Create a reservation and provision the connection.'],
         ['rprt',            None,   ReserveOptions,         'Create a reservation and provision, release and terminate the connection.'],
         ['provision',       None,   ProvisionOptions,       'Provision a connection.'],

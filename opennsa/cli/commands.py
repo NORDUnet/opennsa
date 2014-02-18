@@ -61,6 +61,25 @@ def discover(client, service_url):
 
 
 @defer.inlineCallbacks
+def reserveonly(client, client_nsa, provider_nsa, src, dst, start_time, end_time, capacity, connection_id, global_id):
+
+    nsi_header = nsa.NSIHeader(client_nsa.urn(), provider_nsa.urn(), reply_to=provider_nsa.endpoint)
+    schedule = nsa.Schedule(start_time, end_time)
+    service_def = _createP2PS(src, dst, capacity)
+    crt = nsa.Criteria(0, schedule, service_def)
+
+    if connection_id:
+        log.msg("Connection id: %s  Global id: %s" % (connection_id, global_id))
+
+    try:
+        assigned_connection_id = yield client.reserve(nsi_header, connection_id, global_id, 'Test Connection', crt)
+        log.msg("Connection created and held. Id %s at %s" % (assigned_connection_id, provider_nsa))
+
+    except error.NSIError, e:
+        log.msg('Error reserving, %s: %s' % (e.__class__.__name__, str(e)))
+
+
+@defer.inlineCallbacks
 def reserve(client, client_nsa, provider_nsa, src, dst, start_time, end_time, capacity, connection_id, global_id):
 
     nsi_header = nsa.NSIHeader(client_nsa.urn(), provider_nsa.urn(), reply_to=provider_nsa.endpoint)
@@ -80,7 +99,6 @@ def reserve(client, client_nsa, provider_nsa, src, dst, start_time, end_time, ca
 
     except error.NSIError, e:
         log.msg('Error reserving, %s: %s' % (e.__class__.__name__, str(e)))
-
 
 
 @defer.inlineCallbacks
@@ -171,10 +189,27 @@ def rprt(client, client_nsa, provider_nsa, src, dst, start_time, end_time, capac
 
 
 @defer.inlineCallbacks
-def provision(client, client_nsa, provider_nsa, connection_id, notification_wait):
+def reservecommit(client, client_nsa, provider_nsa, connection_id):
+
+    nsi_header = nsa.NSIHeader(client_nsa.urn(), provider_nsa.urn(), reply_to=provider_nsa.endpoint)
+
+    log.msg("Connection id: %s" % connection_id)
 
     try:
-        yield client.provision(client_nsa, provider_nsa, None, connection_id)
+        yield client.reserveCommit(nsi_header, connection_id)
+        log.msg("Reservation committed at %s" % provider_nsa)
+
+    except error.NSIError, e:
+        log.msg('Error comitting, %s: %s' % (e.__class__.__name__, str(e)))
+
+
+@defer.inlineCallbacks
+def provision(client, client_nsa, provider_nsa, connection_id, notification_wait):
+
+    nsi_header = nsa.NSIHeader(client_nsa.urn(), provider_nsa.urn(), reply_to=provider_nsa.endpoint)
+
+    try:
+        yield client.provision(nsi_header, connection_id)
         log.msg('Connection %s provisioned' % connection_id)
     except error.NSIError, e:
         log.msg('Error provisioning %s, %s : %s' % (connection_id, e.__class__.__name__, str(e)))
@@ -186,8 +221,9 @@ def provision(client, client_nsa, provider_nsa, connection_id, notification_wait
 @defer.inlineCallbacks
 def release(client, client_nsa, provider_nsa, connection_id, notification_wait):
 
+    header = nsa.NSIHeader(client_nsa.urn(), provider_nsa.urn())
     try:
-        yield client.release(client_nsa, provider_nsa, None, connection_id)
+        yield client.release(header, connection_id)
         log.msg('Connection %s released' % connection_id)
     except error.NSIError, e:
         log.msg('Error releasing %s, %s : %s' % (connection_id, e.__class__.__name__, str(e)))
@@ -199,8 +235,9 @@ def release(client, client_nsa, provider_nsa, connection_id, notification_wait):
 @defer.inlineCallbacks
 def terminate(client, client_nsa, provider_nsa, connection_id):
 
+    header = nsa.NSIHeader(client_nsa.urn(), provider_nsa.urn())
     try:
-        yield client.terminate(client_nsa, provider_nsa, None, connection_id)
+        yield client.terminate(header, connection_id)
         log.msg('Connection %s terminated' % connection_id)
     except error.NSIError, e:
         log.msg('Error terminating %s, %s : %s' % (connection_id, e.__class__.__name__, str(e)))
