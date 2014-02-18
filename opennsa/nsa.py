@@ -323,7 +323,7 @@ class Point2PointService(object):
     def __init__(self, source_stp, dest_stp, capacity, directionality=BIDIRECTIONAL, symmetric=None, ero=None, parameters=None):
 
         if directionality is None:
-            raise MissingParameterError('directionality must be defined, must not be None')
+            raise error.MissingParameterError('directionality must be defined, must not be None')
 
         self.source_stp     = source_stp
         self.dest_stp       = dest_stp
