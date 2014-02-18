@@ -309,6 +309,12 @@ class GenericProviderTest:
 
         self.requester.reserve_defer = defer.Deferred()
 
+        # new criteria
+        start_time  = datetime.datetime.utcnow() + datetime.timedelta(seconds=2)
+        end_time    = datetime.datetime.utcnow() + datetime.timedelta(seconds=6)
+        schedule    = nsa.Schedule(start_time, end_time)
+        criteria    = nsa.Criteria(0, schedule, nsa.Point2PointService(source_stp, dest_stp, self.bandwidth, cnt.BIDIRECTIONAL, False, None) )
+
         # try to reserve the same resources
         acid2 = yield self.provider.reserve(self.header, None, None, None, criteria)
         header, cid, gid, desc, sp = yield self.requester.reserve_defer
