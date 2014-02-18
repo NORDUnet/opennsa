@@ -93,7 +93,7 @@ def doMain():
 
 
     # network commands, listener port created in this block
-    elif config.subCommand in ['reserve', 'reserveprovision', 'rprt', 'provision', 'release', 'terminate', 'querysummary', 'querydetails']:
+    elif config.subCommand in ['reserve', 'reserveonly', 'reservecommit', 'reserveprovision', 'rprt', 'provision', 'release', 'terminate', 'querysummary', 'querydetails']:
 
         topology_file   = config.subOptions[options.TOPOLOGY_FILE]  or defaults.get(options.TOPOLOGY_FILE)
         network         = config.subOptions[options.NETWORK]        or defaults.get(options.NETWORK)
@@ -164,7 +164,7 @@ def doMain():
         if config.subCommand in ('reserveprovision', 'provision', 'release'):
             notification_wait = config.subOptions[options.NOTIFICATION_WAIT] or False
 
-        if config.subCommand in ('reserve', 'reserveprovision', 'rprt'):
+        if config.subCommand in ('reserve', 'reserveonly', 'reserveprovision', 'rprt'):
 
             source_stp = config.subOptions[options.SOURCE_STP]  or defaults.get(options.SOURCE_STP)
             dest_stp   = config.subOptions[options.DEST_STP]    or defaults.get(options.DEST_STP)
@@ -186,10 +186,8 @@ def doMain():
 
             bandwidth = config.subOptions[options.BANDWIDTH] or defaults.get(options.BANDWIDTH)
 
-        if config.subCommand in ('provision', 'release', 'terminate'):
-
-            if connection_id is None:
-                raise usage.UsageError('Connection ID is not defined')
+        if config.subCommand in ('provision', 'release', 'terminate') and connection_id is None:
+            raise usage.UsageError('Connection ID is not defined')
 
         from opennsa.protocols import nsi2
         client, factory = nsi2.createRequester(host, port, service_url, tls=tls, ctx_factory=ctx_factory, authz_header=authz_header, callback_timeout=12)
@@ -207,6 +205,10 @@ def doMain():
 
         yield commands.reserve(client, client_nsa, provider_nsa, source_stp, dest_stp, start_time, end_time, bandwidth, connection_id, global_id)
 
+    elif config.subCommand == 'reserveonly':
+
+        yield commands.reserveonly(client, client_nsa, provider_nsa, source_stp, dest_stp, start_time, end_time, bandwidth, connection_id, global_id)
+
     elif config.subCommand == 'reserveprovision':
 
         yield commands.reserveprovision(client, client_nsa, provider_nsa, source_stp, dest_stp, start_time, end_time, bandwidth, connection_id, global_id, notification_wait)
@@ -214,6 +216,10 @@ def doMain():
     elif config.subCommand == 'rprt':
 
         yield commands.rprt(client, client_nsa, provider_nsa, source_stp, dest_stp, start_time, end_time, bandwidth, connection_id, global_id)
+
+    elif config.subCommand == 'reservecommit':
+
+        yield commands.reservecommit(client, client_nsa, provider_nsa, connection_id, notification_wait)
 
     elif config.subCommand == 'provision':
 
