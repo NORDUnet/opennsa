@@ -291,7 +291,7 @@ class GenericBackend(service.Service):
     @defer.inlineCallbacks
     def reserveCommit(self, header, connection_id):
 
-        log.msg('ReserveCommit request. Connection ID: %s' % connection_id, system=self.log_system)
+        log.msg('ReserveCommit request from %s. Connection ID: %s' % (header.requester_nsa, connection_id), system=self.log_system)
 
         conn = yield self._getConnection(connection_id, header.requester_nsa)
         if conn.lifecycle_state in (state.TERMINATING, state.TERMINATED):
@@ -323,6 +323,8 @@ class GenericBackend(service.Service):
     @defer.inlineCallbacks
     def reserveAbort(self, header, connection_id):
 
+        log.msg('ReserveAbort request from %s. Connection ID: %s' % (header.requester_nsa, connection_id), system=self.log_system)
+
         try:
             log.msg('ReserveAbort request. Connection ID: %s' % connection_id, system=self.log_system)
 
@@ -341,6 +343,8 @@ class GenericBackend(service.Service):
 
     @defer.inlineCallbacks
     def provision(self, header, connection_id):
+
+        log.msg('Provision request from %s. Connection ID: %s' % (header.requester_nsa, connection_id), system=self.log_system)
 
         conn = yield self._getConnection(connection_id, header.requester_nsa)
         if conn.lifecycle_state in (state.TERMINATING, state.TERMINATED):
@@ -380,6 +384,8 @@ class GenericBackend(service.Service):
     @defer.inlineCallbacks
     def release(self, header, connection_id):
 
+        log.msg('Release request from %s. Connection ID: %s' % (header.requester_nsa, connection_id), system=self.log_system)
+
         try:
             conn = yield self._getConnection(connection_id, header.requester_nsa)
             if conn.lifecycle_state in (state.TERMINATING, state.TERMINATED):
@@ -413,6 +419,8 @@ class GenericBackend(service.Service):
     @defer.inlineCallbacks
     def terminate(self, header, connection_id):
         # return defer.fail( error.InternalNRMError('test termination failure') )
+
+        log.msg('Terminate request from %s. Connection ID: %s' % (header.requester_nsa, connection_id), system=self.log_system)
 
         conn = yield self._getConnection(connection_id, header.requester_nsa)
 
