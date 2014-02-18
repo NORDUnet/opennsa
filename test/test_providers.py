@@ -467,6 +467,8 @@ class DUDBackendTest(GenericProviderTest, unittest.TestCase):
         self.sd = nsa.Point2PointService(self.source_stp, self.dest_stp, self.bandwidth, cnt.BIDIRECTIONAL, False ,None)
         self.criteria = nsa.Criteria(0, self.schedule, self.sd)
 
+        return self.backend.restore_defer
+
 
     @defer.inlineCallbacks
     def tearDown(self):
