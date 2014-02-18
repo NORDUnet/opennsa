@@ -68,7 +68,11 @@ class GenericBackend(service.Service):
 
     def stopService(self):
         service.Service.stopService(self)
-        return self.restore_defer.addCallback( lambda _ : self.scheduler.cancelAllCalls() )
+        if self.restore_defer.called:
+            self.scheduler.cancelAllCalls()
+            return defer.succeed(None)
+        else:
+            return self.restore_defer.addCallback( lambda _ : self.scheduler.cancelAllCalls() )
 
 
     def getNotificationId(self):
