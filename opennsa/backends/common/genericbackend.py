@@ -93,14 +93,29 @@ class GenericBackend(service.Service):
             now = datetime.datetime.utcnow()
 
             if conn.lifecycle_state in (state.PASSED_ENDTIME, state.TERMINATED):
-                pass # This connection has already lived it life to the fullest :-)
+                continue # This connection has already lived it life to the fullest :-)
 
-            elif conn.end_time < now and conn.lifecycle_state not in (state.PASSED_ENDTIME, state.TERMINATED):
+            # add reservation, some of the following code will remove the reservation again
+            src_resource = self.connection_manager.getResource(conn.source_port, conn.source_label.type_, conn.source_label.labelValue())
+            dst_resource = self.connection_manager.getResource(conn.dest_port,   conn.dest_label.type_,   conn.dest_label.labelValue())
+            self.calendar.addReservation(  src_resource, conn.start_time, conn.end_time)
+            self.calendar.addReservation(  dst_resource, conn.start_time, conn.end_time)
+
+            if conn.end_time < now and conn.lifecycle_state not in (state.PASSED_ENDTIME, state.TERMINATED):
                 log.msg('Connection %s: Immediate end during buildSchedule' % conn.connection_id, system=self.log_system)
                 yield self._doEndtime(conn)
+                continue
+
+            elif conn.reservation_state == state.RESERVE_HELD:
+                timeout_time = min(now + datetime.timedelta(seconds=self.TPC_TIMEOUT), conn.end_time)
+                if timeout_time > now:
+                    # we have passed the time when timeout should occur
+                    yield self._doReserveRollback(conn) # will remove reservation
+                else:
+                    self.scheduler.scheduleCall(conn.connection_id, timeout_time, self._doReserveTimeout, conn)
 
             elif conn.start_time > now:
-                # start time has not yet passed, we most schedule activate or schedule terminate depending on state
+                # start time has not yet passed, we must schedule activate or schedule terminate depending on state
                 if conn.provision_state == state.PROVISIONED and conn.data_plane_active == False:
                     self.scheduler.scheduleCall(conn.connection_id, conn.start_time, self._doActivate, conn)
                     td = conn.start_time - now
@@ -637,4 +652,9 @@ class GenericBackend(service.Service):
             except Exception as e:
                 log.msg('Error ending connection: %s' % e)
                 raise e
+        else:
+            src_resource = self.connection_manager.getResource(conn.source_port, conn.source_label.type_, conn.source_label.labelValue())
+            dst_resource = self.connection_manager.getResource(conn.dest_port,   conn.dest_label.type_,   conn.dest_label.labelValue())
+            self.calendar.removeReservation(src_resource, conn.start_time, conn.end_time)
+            self.calendar.removeReservation(dst_resource, conn.start_time, conn.end_time)
 
