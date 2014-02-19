@@ -7,12 +7,10 @@ Copyright: NORDUnet (2012)
 
 from xml.etree import ElementTree as ET
 
-from dateutil import parser
-from dateutil.tz import tzutc
-
 from twisted.python import log
 
 from opennsa import constants as cnt, nsa, error
+from opennsa.shared.xmlhelper import createXMLTime, parseXMLTimestamp # these were moved
 from opennsa.protocols.shared import minisoap
 from opennsa.protocols.nsi2.bindings import nsiframework, nsiconnection, p2pservices
 
@@ -103,26 +101,6 @@ def parseRequest(soap_data):
     nsi_header = nsa.NSIHeader(header.requesterNSA, header.providerNSA, header.correlationId, header.replyTo, connection_trace=header.connectionTrace)
 
     return nsi_header, body
-
-
-def createXMLTime(timestamp):
-    # we assume this is without tz info and in utc time, because that is how it should be in opennsa
-    assert timestamp.tzinfo is None, 'timestamp must be without time zone information'
-    return timestamp.isoformat() + 'Z'
-
-
-def parseXMLTimestamp(xsd_timestamp):
-
-    xtp = parser.parser()
-
-    dt = xtp.parse(xsd_timestamp)
-    if dt.utcoffset() is None:
-        raise error.PayloadError('Timestamp has no time zone information')
-
-    # convert to utc and remove tz info (internal use)
-    utc_dt = dt.astimezone(tzutc()).replace(tzinfo=None)
-    return utc_dt
-
 
 
 def parseLabel(label_part):
