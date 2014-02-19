@@ -177,11 +177,12 @@ class OpenNSAService(twistedservice.MultiService):
         # wire up the http stuff
 
         # discovery service
+        name = base_name.split(':')[0] if ':' in base_name else base_name
         interfaces = [ ( cnt.CS2_SERVICE_TYPE, provider_endpoint, None) ]
         features = [ (cnt.FEATURE_AGGREGATOR, None), (cnt.FEATURE_UPA, None) ]
         peers_with = [ ] # needs to be changed
         topology_reachability = [ ] # needs to be changed
-        ds = discoveryservice.DiscoveryService(ns_agent.urn(), now, base_name, opennsa_version, now, [ network_name ], interfaces, features, peers_with, topology_reachability)
+        ds = discoveryservice.DiscoveryService(ns_agent.urn(), now, name, opennsa_version, now, [ network_name ], interfaces, features, peers_with, topology_reachability)
 
         top_resource.children['NSI'].putChild('discovery.xml', ds.resource())
 
