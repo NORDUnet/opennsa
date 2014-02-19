@@ -100,7 +100,7 @@ class OpenNSAService(twistedservice.MultiService):
 
         vc = self.vc
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.utcnow().replace(microsecond=0)
 
         if vc[config.HOST] is None:
             # guess name if not configured

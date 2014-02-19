@@ -35,7 +35,7 @@ class ModifiableResource(resource.Resource):
         # if no update time is given the current time will be used
         self.representation = representation
         if update_time is None:
-            update_time = datetime.datetime.utcnow()
+            update_time = datetime.datetime.utcnow().replace(microsecond=0)
 
         self.last_modified_timestamp = datetime.datetime.strftime(update_time, RFC850_FORMAT)
 
