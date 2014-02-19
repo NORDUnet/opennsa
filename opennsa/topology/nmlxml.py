@@ -19,14 +19,8 @@ LOG_SYSTEM = 'topology.nmlxml'
 
 
 NML_NS = 'http://schemas.ogf.org/nml/2013/05/base#'
-GNS_NS = 'http://nordu.net/namespaces/2013/12/gnsbod'
-NSI_NS = 'http://schemas.ogf.org/nsi/2013/09/topology#'
-VC_NS  = 'urn:ietf:params:xml:ns:vcard-4.0'
 
 ET.register_namespace('nml', NML_NS)
-ET.register_namespace('gns', GNS_NS)
-ET.register_namespace('nsi', NSI_NS)
-ET.register_namespace('vc',  VC_NS)
 
 ID = 'id'
 VERSION = 'version'
@@ -49,25 +43,10 @@ NML_HASOUTBOUNDPORT     = NML_NS + 'hasOutboundPort'
 NML_MANAGEDBY           = NML_NS + 'managedBy'
 NML_ISALIAS             = NML_NS + 'isAlias'
 
-GNS_TOPOLOGY_REACHABILITY = ET.QName('{%s}TopologyReachability' % GNS_NS)
-GNS_COST                  = ET.QName('{%s}cost' % GNS_NS)
-
-NSI_NSA                 = ET.QName('{%s}NSA'            % NSI_NS)
-
-NSI_SERVICE             = ET.QName('{%s}Service'        % NSI_NS)
-NSI_LINK                = ET.QName('{%s}link'           % NSI_NS)
-
-NSI_DESCRIBEDBY         = ET.QName('{%s}describedBy'    % NSI_NS)
-NSI_TYPE                = ET.QName('{%s}type'           % NSI_NS)
-NSI_ADMINCONTACT        = ET.QName('{%s}adminContact'   % NSI_NS)
-
-VC_VCARD                = ET.QName('{%s}vcard'  % VC_NS)
-VC_FN                   = ET.QName('{%s}fn'     % VC_NS)
-VC_TEXT                 = ET.QName('{%s}text'   % VC_NS)
 
 
 def topologyXML(network):
-    # creates nml:Topology object from a network
+    # creates nml:Topology object from an nml network
 
     BASE_URN = cnt.URN_OGF_PREFIX + network.id_
 
@@ -105,49 +84,6 @@ def topologyXML(network):
             addPort(nml_outbound_ports, port)
 
     return nml_topology
-
-
-
-def nsiXML(nsi_agent, network, route_vectors=None, version=None):
-
-    #<?xml version="1.0" encoding="UTF-8"?>
-    #    <nsi:NSA xmlns:nml="http://schemas.ogf.org/nml/2013/05/base#"
-    #             xmlns:nsi="http://schemas.ogf.org/nsi/2013/09/topology#"
-    #             xmlns:vc="urn:ietf:params:xml:ns:vcard-4.0"
-    #             id="urn:ogf:network:example.org:2013:nsa"
-    #             version="2013-05-29T12:11:12">
-
-    #<nsi:Service id="urn:ogf:network:example.com:2013:nsa-provserv">
-    #    <nsi:link>http://nsa.example.com/provisioning</nsi:link>
-    #    <nsi:describedBy>http://nsa.example.com/provisioning/wsdl</nsi:describedBy>
-    #    <nsi:type>application/vnd.org.ogf.nsi.cs.v2+soap</nsi:type>
-    #    <nsi:Relation type="http://schemas.ogf.org/nsi/2013/09/topology#providedBy">
-    #        <nsi:NSA id="urn:ogf:network:example.com:2013:nsa"/>
-    #    </nsi:Relation>
-    #</nsi:Service>
-
-    # top element
-
-    URN_NSA = cnt.URN_OGF_PREFIX + nsi_agent.identity
-    nsi_nsa = ET.Element(NSI_NSA, {ID: URN_NSA, VERSION: network.version.isoformat() } )
-
-    # cs service
-    urn_cs_service = URN_NSA + '-cs'
-    nsi_cs_service = ET.SubElement(nsi_nsa, NSI_SERVICE, { ID : urn_cs_service } )
-    ET.SubElement(nsi_cs_service, NSI_LINK).text = nsi_agent.endpoint
-    ET.SubElement(nsi_cs_service, NSI_TYPE).text = cnt.CS2_SERVICE_TYPE
-
-    # nml topology
-    nml_network = topologyXML(network)
-    nsi_nsa.append(nml_network)
-
-    # reachability vectors
-    if route_vectors:
-        gnsr = ET.SubElement(nsi_nsa, GNS_TOPOLOGY_REACHABILITY)
-        for topo, cost in route_vectors.listVectors().items():
-            ET.SubElement(gnsr, NML_TOPOLOGY, attrib={ ID: cnt.URN_OGF_PREFIX + topo, GNS_COST: str(cost) } )
-
-    return nsi_nsa
 
 
 

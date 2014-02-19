@@ -12,7 +12,7 @@ from twisted.application import internet, service as twistedservice
 from opennsa import __version__ as version
 
 from opennsa import config, logging, constants as cnt, nsa, provreg, database, aggregator, viewresource
-from opennsa.topology import nrmparser, nml, nmlgns, http as nmlhttp, fetcher
+from opennsa.topology import nrmparser, nml, nmlgns, service as nmlservice, fetcher
 from opennsa.protocols.shared import httplog
 from opennsa.discovery import service as discoveryservice
 from opennsa.protocols import nsi2
@@ -176,6 +176,9 @@ class OpenNSAService(twistedservice.MultiService):
 
         # wire up the http stuff
 
+        discovery_resource_name = 'discovery.xml'
+        nml_resource_name       = base_name + '.nml.xml'
+
         # discovery service
         name = base_name.split(':')[0] if ':' in base_name else base_name
         opennsa_version = 'OpenNSA-' + version
@@ -186,22 +189,20 @@ class OpenNSAService(twistedservice.MultiService):
         topology_reachability = [ ] # needs to be changed
         ds = discoveryservice.DiscoveryService(ns_agent.urn(), now, name, opennsa_version, now, networks, interfaces, features, peers_with, topology_reachability)
 
-        top_resource.children['NSI'].putChild('discovery.xml', ds.resource())
+        top_resource.children['NSI'].putChild(discovery_resource_name, ds.resource())
 
         # view resource
         vr = viewresource.ConnectionListResource(aggr)
         top_resource.children['NSI'].putChild('connections', vr)
 
         # topology
-        topology_resource = resource.Resource()
-        topology_resource.putChild(vc[config.NETWORK_NAME] + '.xml', nmlhttp.TopologyResource(ns_agent, network_topology, route_vectors))
-
-        top_resource.children['NSI'].putChild('topology', topology_resource)
+        nml_service = nmlservice.NMLService(network_topology)
+        top_resource.children['NSI'].putChild(nml_resource_name, nml_service.resource() )
 
         proto_scheme = 'https' if vc[config.TLS] else 'http'
         log.msg('Provider  URL: %s' % provider_endpoint )
-        log.msg('Discovery URL: %s/NSI/discovery.xml' % base_url)
-        log.msg('Topology  URL: %s/NSI/topology/%s.xml' % (base_url, vc[config.NETWORK_NAME]) )
+        log.msg('Discovery URL: %s/NSI/%s' % (base_url, discovery_resource_name) )
+        log.msg('Topology  URL: %s/NSI/%s' % (base_url, nml_resource_name) )
 
         factory = server.Site(top_resource)
         factory.log = httplog.logRequest # default logging is weird, so we do our own
