@@ -178,12 +178,13 @@ class OpenNSAService(twistedservice.MultiService):
 
         discovery_resource_name = 'discovery.xml'
         nml_resource_name       = base_name + '.nml.xml'
+        nml_resource_url        = '%s/NSI/%s' % (base_url, nml_resource_name)
 
         # discovery service
         name = base_name.split(':')[0] if ':' in base_name else base_name
         opennsa_version = 'OpenNSA-' + version
         networks    = [ cnt.URN_OGF_PREFIX + network_name ]
-        interfaces  = [ ( cnt.CS2_SERVICE_TYPE, provider_endpoint, None) ]
+        interfaces  = [ ( cnt.CS2_SERVICE_TYPE, provider_endpoint, None), (cnt.NML_SERVICE_TYPE, nml_resource_url, None) ]
         features    = [ (cnt.FEATURE_AGGREGATOR, None), (cnt.FEATURE_UPA, None) ]
         peers_with  = [ ] # needs to be changed
         topology_reachability = [ ] # needs to be changed
@@ -202,7 +203,7 @@ class OpenNSAService(twistedservice.MultiService):
         proto_scheme = 'https' if vc[config.TLS] else 'http'
         log.msg('Provider  URL: %s' % provider_endpoint )
         log.msg('Discovery URL: %s/NSI/%s' % (base_url, discovery_resource_name) )
-        log.msg('Topology  URL: %s/NSI/%s' % (base_url, nml_resource_name) )
+        log.msg('Topology  URL: %s' % (nml_resource_url) )
 
         factory = server.Site(top_resource)
         factory.log = httplog.logRequest # default logging is weird, so we do our own
