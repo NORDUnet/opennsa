@@ -9,7 +9,7 @@ from twisted.python import log
 from twisted.web import resource, server
 from twisted.application import internet, service as twistedservice
 
-from opennsa import __version__ as opennsa_version
+from opennsa import __version__ as version
 
 from opennsa import config, logging, constants as cnt, nsa, provreg, database, aggregator, viewresource
 from opennsa.topology import nrmparser, nml, nmlgns, http as nmlhttp, fetcher
@@ -178,11 +178,13 @@ class OpenNSAService(twistedservice.MultiService):
 
         # discovery service
         name = base_name.split(':')[0] if ':' in base_name else base_name
-        interfaces = [ ( cnt.CS2_SERVICE_TYPE, provider_endpoint, None) ]
-        features = [ (cnt.FEATURE_AGGREGATOR, None), (cnt.FEATURE_UPA, None) ]
-        peers_with = [ ] # needs to be changed
+        opennsa_version = 'OpenNSA-' + version
+        networks    = [ cnt.URN_OGF_PREFIX + network_name ]
+        interfaces  = [ ( cnt.CS2_SERVICE_TYPE, provider_endpoint, None) ]
+        features    = [ (cnt.FEATURE_AGGREGATOR, None), (cnt.FEATURE_UPA, None) ]
+        peers_with  = [ ] # needs to be changed
         topology_reachability = [ ] # needs to be changed
-        ds = discoveryservice.DiscoveryService(ns_agent.urn(), now, name, opennsa_version, now, [ network_name ], interfaces, features, peers_with, topology_reachability)
+        ds = discoveryservice.DiscoveryService(ns_agent.urn(), now, name, opennsa_version, now, networks, interfaces, features, peers_with, topology_reachability)
 
         top_resource.children['NSI'].putChild('discovery.xml', ds.resource())
 
