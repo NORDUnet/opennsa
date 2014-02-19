@@ -3,14 +3,18 @@ High-level functionality for creating clients and services in OpenNSA.
 """
 import os
 import hashlib
+import datetime
 
 from twisted.python import log
 from twisted.web import resource, server
 from twisted.application import internet, service as twistedservice
 
+from opennsa import __version__ as opennsa_version
+
 from opennsa import config, logging, constants as cnt, nsa, provreg, database, aggregator, viewresource
 from opennsa.topology import nrmparser, nml, nmlgns, http as nmlhttp, fetcher
 from opennsa.protocols.shared import httplog
+from opennsa.discovery import service as discoveryservice
 from opennsa.protocols import nsi2
 
 
@@ -96,22 +100,28 @@ class OpenNSAService(twistedservice.MultiService):
 
         vc = self.vc
 
+        now = datetime.datetime.utcnow()
+
         if vc[config.HOST] is None:
+            # guess name if not configured
             import socket
             vc[config.HOST] = socket.getfqdn()
 
         # database
         database.setupDatabase(vc[config.DATABASE], vc[config.DATABASE_USER], vc[config.DATABASE_PASSWORD])
 
-        # setup topology
-
+        # base names
         base_name = vc[config.NETWORK_NAME]
         network_name = base_name + ':topology' # because we say so
         nsa_name  = base_name + ':nsa'
 
+        # url stuffs
         base_protocol = 'https://' if vc[config.TLS] else 'http://'
-        nsa_endpoint = base_protocol + vc[config.HOST] + ':' + str(vc[config.PORT]) + '/NSI/services/CS2' # hardcode for now
-        ns_agent = nsa.NetworkServiceAgent(nsa_name, nsa_endpoint, 'local')
+        base_url = base_protocol + vc[config.HOST] + ':' + str(vc[config.PORT])
+
+        # nsi agent
+        provider_endpoint = base_url + '/NSI/services/CS2' # hardcode for now
+        ns_agent = nsa.NetworkServiceAgent(nsa_name, provider_endpoint, 'local')
 
         # topology
         topo_source = open( vc[config.NRM_MAP_FILE] ) if type(vc[config.NRM_MAP_FILE]) is str else vc[config.NRM_MAP_FILE] # wee bit hackish
@@ -119,8 +129,9 @@ class OpenNSAService(twistedservice.MultiService):
         topology = nml.Topology()
         topology.addNetwork(network_topology, ns_agent)
 
+        # route vectors
         route_vectors = nmlgns.RouteVectors()
-        route_vectors.updateVector(nsa_name, 0, [ network_topology.id_ ], {})
+        route_vectors.updateVector(nsa_name, 0, [ network_name ], {})
 
         # ssl/tls contxt
         if vc[config.TLS]:
@@ -142,6 +153,9 @@ class OpenNSAService(twistedservice.MultiService):
 
         requester_creator.aggregator = aggr
 
+        pc = nsi2.setupProvider(aggr, top_resource, ctx_factory=ctx_factory)
+        aggr.parent_requester = pc
+
         # setup backend(s) - for now we only support one
 
         backend_configs = vc['backend']
@@ -162,20 +176,29 @@ class OpenNSAService(twistedservice.MultiService):
 
         # wire up the http stuff
 
-        pc = nsi2.setupProvider(aggr, top_resource, ctx_factory=ctx_factory)
-        aggr.parent_requester = pc
+        # discovery service
+        interfaces = [ ( cnt.CS2_SERVICE_TYPE, provider_endpoint, None) ]
+        features = [ (cnt.FEATURE_AGGREGATOR, None), (cnt.FEATURE_UPA, None) ]
+        peers_with = [ ] # needs to be changed
+        topology_reachability = [ ] # needs to be changed
+        ds = discoveryservice.DiscoveryService(ns_agent.urn(), now, base_name, opennsa_version, now, [ network_name ], interfaces, features, peers_with, topology_reachability)
 
+        top_resource.children['NSI'].putChild('discovery.xml', ds.resource())
+
+        # view resource
         vr = viewresource.ConnectionListResource(aggr)
         top_resource.children['NSI'].putChild('connections', vr)
 
+        # topology
         topology_resource = resource.Resource()
         topology_resource.putChild(vc[config.NETWORK_NAME] + '.xml', nmlhttp.TopologyResource(ns_agent, network_topology, route_vectors))
 
         top_resource.children['NSI'].putChild('topology', topology_resource)
 
         proto_scheme = 'https' if vc[config.TLS] else 'http'
-        log.msg('Provider URL: %s://%s:%s/NSI/services/CS2' % (proto_scheme, vc[config.HOST], vc[config.PORT] ) )
-        log.msg('Topology URL: %s://%s:%s/NSI/topology/%s.xml' % (proto_scheme, vc[config.HOST], vc[config.PORT], vc[config.NETWORK_NAME]) )
+        log.msg('Provider  URL: %s' % provider_endpoint )
+        log.msg('Discovery URL: %s/NSI/discovery.xml' % base_url)
+        log.msg('Topology  URL: %s/NSI/topology/%s.xml' % (base_url, vc[config.NETWORK_NAME]) )
 
         factory = server.Site(top_resource)
         factory.log = httplog.logRequest # default logging is weird, so we do our own
