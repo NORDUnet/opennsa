@@ -14,6 +14,7 @@ also the same in the code base.
 URN_OGF_PREFIX      = 'urn:ogf:network:'
 
 CS2_SERVICE_TYPE    = 'application/vnd.org.ogf.nsi.cs.v2+soap'
+NML_SERVICE_TYPE    = 'application/vnd.ogf.nsi.topology.v1+xml'
 
 BIDIRECTIONAL       = 'Bidirectional'
 
