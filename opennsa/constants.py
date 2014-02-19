@@ -1,4 +1,3 @@
-
 """
 Module for constants in OpenNSA.
 
@@ -9,7 +8,6 @@ problem.
 
 It is recommend to import this module as 'cnt' to keep the prefix short, but
 also the same in the code base.
-
 """
 
 
