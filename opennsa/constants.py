@@ -19,8 +19,11 @@ BIDIRECTIONAL       = 'Bidirectional'
 
 EVTS_AGOLE          = 'http://services.ogf.org/nsi/2013/07/descriptions/EVTS.A-GOLE'
 
-ETHERNET = 'http://schemas.ogf.org/nml/2012/10/ethernet'
-ETHERNET_VLAN = '%s#vlan' % ETHERNET
+ETHERNET            = 'http://schemas.ogf.org/nml/2012/10/ethernet'
+ETHERNET_VLAN       = '%s#vlan' % ETHERNET
+
+FEATURE_AGGREGATOR  = 'vnd.ogf.nsi.cs.v2.role.aggregator'
+FEATURE_UPA         = 'vnd.ogf.nsi.cs.v2.role.uPA'
 
 P2P_SERVICE = 'http://schemas.ogf.org/nsi/2013/12/services/point2point#p2ps'
 
