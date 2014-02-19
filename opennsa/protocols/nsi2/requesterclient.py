@@ -110,7 +110,8 @@ class RequesterClient:
         src_stp_id = helper.createSTPID(sd.source_stp)
         dst_stp_id = helper.createSTPID(sd.dest_stp)
 
-        service_def = p2pservices.P2PServiceBaseType(sd.capacity, sd.directionality, sd.symmetric, src_stp_id, dst_stp_id, sd.ero, None)
+        params = [ p2pservices.TypeValueType(p[0], p[1]) for p in sd.parameters ] if sd.parameters else None
+        service_def = p2pservices.P2PServiceBaseType(sd.capacity, sd.directionality, sd.symmetric, src_stp_id, dst_stp_id, sd.ero, params)
 
         schedule_type = nsiconnection.ScheduleType(schedule.start_time.replace(tzinfo=tzutc()).isoformat(),
                                                    schedule.end_time.replace(tzinfo=tzutc()).isoformat())

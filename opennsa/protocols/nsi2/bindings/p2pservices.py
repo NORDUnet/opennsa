@@ -73,8 +73,8 @@ class P2PServiceBaseType(object):
         if self.ero is not None:
             ET.SubElement(r, 'ero').extend( [ e.xml('ero') for e in self.ero ] )
         if self.parameter is not None:
-            for el in self.parameter:
-                ET.SubElement(r, ET.QName('http://schemas.ogf.org/nsi/2013/12/services/types', 'parameter')).extend( el.xml('parameter') )
+            for p in self.parameter:
+                ET.SubElement(r, 'parameter',  attrib={'type': p.type_}).text = p.value
         return r
 
 
