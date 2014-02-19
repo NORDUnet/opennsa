@@ -78,7 +78,7 @@ class NsaType(object):
         if self.peersWith is not None:
             for el in self.peersWith:
                 ET.SubElement(r, 'peersWith').text = str(el)
-        if self.topologyReachability is not None:
+        if self.topologyReachability not in (None, []):
             tr = ET.SubElement(r, topology_reachability)
             for uri, cost in self.topologyReachability:
                 ET.SubElement(tr, nml_topology, attrib={'id':uri, 'cost':str(cost)})
