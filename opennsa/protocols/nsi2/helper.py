@@ -155,11 +155,7 @@ def createSTPID(stp):
     if stp.label:
         label = '?' + stp.label.type_.split('#')[-1] + '=' + stp.label.labelValue() 
 
-    # HACK ON!
-    prefix = findPrefix(stp.network, stp.port)
-    lp = len(prefix)
-
-    stp_id = URN_NETWORK + prefix + stp.network[lp:] + ':' + stp.port[lp+1:] + label
+    stp_id = URN_NETWORK + stp.network + ':' + stp.port + label
     return stp_id
 
 

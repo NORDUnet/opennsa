@@ -10,15 +10,15 @@ from opennsa import constants as cnt, nsa, error
 def _createSTP(stp_arg):
 
     # no generic label stuff for now
-    stp_desc, vlan = stp_arg.split('#')
-
-    if '%' in stp_desc:
-        network, port = stp_desc.rsplit('%',1)
-    else:
+    if '#' in stp_arg:
+        stp_desc, vlan = stp_arg.split('#')
         network, port = stp_desc.rsplit(':',1)
+        label = nsa.Label(cnt.ETHERNET_VLAN, vlan)
+    else:
+        network, port = stp_arg.rsplit(':',1)
+        label = None
 
-    label = nsa.Label(cnt.ETHERNET_VLAN, vlan)
-    return nsa.STP(network, stp_desc, label)
+    return nsa.STP(network, port, label)
 
 
 def _createP2PS(src, dst, capacity):
