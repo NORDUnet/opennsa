@@ -155,6 +155,9 @@ class Aggregator:
         #self.topology.getNetwork(source_stp.network)
         #self.topology.getNetwork(dest_stp.network)
 
+        if (source_stp.label is None and dest_stp.label) or (source_stp.label and dest_stp.label is None):
+            raise error.ConnectionCreateError('Cannot create connection with label only defined in one end (maybe possible in the future)')
+
         # check that we have path vectors to topologies
         if self.route_vectors.vector(source_stp.network) is None:
             raise error.ConnectionCreateError('No know routes to network %s' % source_stp.network)
