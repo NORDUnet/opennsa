@@ -24,6 +24,9 @@ LOG_SYSTEM = 'Aggregator'
 
 def shortLabel(label):
     # create a log friendly string representation of a lbel
+    if label is None: # it happens
+        return ''
+
     if '}' in label.type_:
         name = label.type_.split('}',1)[1]
     else:
