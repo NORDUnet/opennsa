@@ -83,7 +83,7 @@ def parsePortSpec(source, network_name):
 
     assert isinstance(source, file) or isinstance(source, StringIO.StringIO), 'Topology source must be file or StringIO instance'
 
-    port_interface_map = {}
+    port_interface_map  = {}
     inbound_ports       = []
     outbound_ports      = []
     bidirectional_ports = []
@@ -138,7 +138,7 @@ def parsePortSpec(source, network_name):
             outbound_ports.append(outbound_port)
             bidirectional_ports.append(bidirectional_port)
 
-            port_interface_map[port_id] = interface
+            port_interface_map[port_name] = interface
 
         elif port_type == UNIDIRECTIONAL_ETHERNET:
             raise NotImplementedError('Unidirectional ethernet ports not implemented yet')

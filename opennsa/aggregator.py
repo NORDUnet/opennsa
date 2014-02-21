@@ -162,9 +162,9 @@ class Aggregator:
 
         # if the link terminates at our network, check that ports exists
         if source_stp.network == self.network:
-            self.topology.getNetwork(self.network).getPort(source_stp.port)
+            self.topology.getNetwork(self.network).getPort(source_stp.network + ':' + source_stp.port)
         if dest_stp.network == self.network:
-            self.topology.getNetwork(self.network).getPort(dest_stp.port)
+            self.topology.getNetwork(self.network).getPort(dest_stp.network + ':' + dest_stp.port)
 
         conn = database.ServiceConnection(connection_id=connection_id, revision=0, global_reservation_id=global_reservation_id, description=description,
                             requester_nsa=header.requester_nsa, requester_url=header.reply_to, reserve_time=datetime.datetime.utcnow(),

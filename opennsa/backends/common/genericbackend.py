@@ -196,9 +196,9 @@ class GenericBackend(service.Service):
         if dest_stp.network != self.network:
             raise error.ConnectionCreateError('Destination network does not match network this NSA is managing (%s != %s)' % (dest_stp.network, self.network) )
 
-        # ensure that ports actually exists
-        topo_source_port = self.network_topology.getPort(source_stp.port)
-        topo_dest_port   = self.network_topology.getPort(dest_stp.port)
+        # ensure that ports actually exists, hack do deal with nml
+        topo_source_port = self.network_topology.getPort(source_stp.network + ':' + source_stp.port)
+        topo_dest_port   = self.network_topology.getPort(dest_stp.network   + ':' + dest_stp.port)
 
         # basic label check
         if source_stp.label is None:

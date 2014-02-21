@@ -435,8 +435,8 @@ class DUDBackendTest(GenericProviderTest, unittest.TestCase):
 
     base        = 'aruba'
     network     = base + ':topology'
-    source_port = network + ':ps'
-    dest_port   = network + ':bon'
+    source_port = 'ps'
+    dest_port   = 'bon'
 
     source_stp  = nsa.STP(network, source_port, nsa.Label(cnt.ETHERNET_VLAN, '1781-1782') )
     dest_stp    = nsa.STP(network, dest_port,   nsa.Label(cnt.ETHERNET_VLAN, '1782-1783') )
@@ -493,8 +493,8 @@ class AggregatorTest(GenericProviderTest, unittest.TestCase):
 
     base        = 'aruba'
     network     = base + ':topology'
-    source_port = network + ':ps'
-    dest_port   = network + ':bon'
+    source_port = 'ps'
+    dest_port   = 'bon'
 
     source_stp = nsa.STP(network, source_port, nsa.Label(cnt.ETHERNET_VLAN, '1781-1782') )
     dest_stp   = nsa.STP(network, dest_port,   nsa.Label(cnt.ETHERNET_VLAN, '1782-1783') )
@@ -561,8 +561,8 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
 
     base        = 'aruba'
     network     = base + ':topology'
-    source_port = network + ':ps'
-    dest_port   = network + ':bon'
+    source_port = 'ps'
+    dest_port   = 'bon'
 
     # we need to use single values here as the vlans are parsed by int() currently (will switch to labels in the future)
     source_stp = nsa.STP(network, source_port, nsa.Label(cnt.ETHERNET_VLAN, '1782') )
