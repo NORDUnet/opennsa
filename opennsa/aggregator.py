@@ -151,10 +151,6 @@ class Aggregator:
         if not (source_stp.network == self.network or dest_stp.network == self.network):
             raise error.ConnectionCreateError('The connection does not terminate in the network, rejecting request')
 
-        # check that we know the networks
-        #self.topology.getNetwork(source_stp.network)
-        #self.topology.getNetwork(dest_stp.network)
-
         if (source_stp.label is None and dest_stp.label) or (source_stp.label and dest_stp.label is None):
             raise error.ConnectionCreateError('Cannot create connection with label only defined in one end (maybe possible in the future)')
 
