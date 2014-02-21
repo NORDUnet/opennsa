@@ -116,15 +116,6 @@ def parseLabel(label_part):
     return nsa.Label(label_type, label_value)
 
 
-def findPrefix(network, port):
-    prefix = ''
-    for x,y in zip(network, port):
-        if x == y:
-            prefix += x
-        else:
-            break
-    return prefix
-
 
 def createSTP(stp_id):
 
