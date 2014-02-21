@@ -78,9 +78,11 @@ class P2PServiceBaseType(object):
         return r
 
 
-p2ps = ET.QName('http://schemas.ogf.org/nsi/2013/12/services/point2point', 'p2ps')
-capacity = ET.QName('http://schemas.ogf.org/nsi/2013/12/services/point2point', 'capacity')
-parameter = ET.QName('http://schemas.ogf.org/nsi/2013/12/services/point2point', 'parameter')
+POINT2POINT_NS = 'http://schemas.ogf.org/nsi/2013/12/services/point2point'
+
+p2ps        = ET.QName(POINT2POINT_NS, 'p2ps')
+capacity    = ET.QName(POINT2POINT_NS, 'capacity')
+parameter   = ET.QName(POINT2POINT_NS, 'parameter')
 
 def parse(input_):
 
@@ -92,8 +94,8 @@ def parse(input_):
 def parseElement(element):
 
     type_map = {
-        '{http://schemas.ogf.org/nsi/2013/12/services/point2point}p2ps' : P2PServiceBaseType,
-        '{http://schemas.ogf.org/nsi/2013/12/services/point2point}parameter' : TypeValueType
+        str(p2ps)       : P2PServiceBaseType,
+        str(parameter)  : TypeValueType
     }
 
     if not element.tag in type_map:
