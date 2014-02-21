@@ -15,6 +15,17 @@ from . import topology, common
 
 class GenericProviderTest:
 
+    # basic values we need when testing
+    base        = 'aruba'
+    network     = base + ':topology'
+    source_port = 'ps'
+    dest_port   = 'bon'
+
+    source_stp  = nsa.STP(network, source_port, nsa.Label(cnt.ETHERNET_VLAN, '1781-1782') )
+    dest_stp    = nsa.STP(network, dest_port,   nsa.Label(cnt.ETHERNET_VLAN, '1782-1783') )
+    bandwidth   = 200
+
+
     @defer.inlineCallbacks
     def testBasicUsage(self):
 
@@ -433,17 +444,8 @@ class GenericProviderTest:
 
 class DUDBackendTest(GenericProviderTest, unittest.TestCase):
 
-    base        = 'aruba'
-    network     = base + ':topology'
-    source_port = 'ps'
-    dest_port   = 'bon'
-
-    source_stp  = nsa.STP(network, source_port, nsa.Label(cnt.ETHERNET_VLAN, '1781-1782') )
-    dest_stp    = nsa.STP(network, dest_port,   nsa.Label(cnt.ETHERNET_VLAN, '1782-1783') )
-    bandwidth   = 200
-
     requester_agent = nsa.NetworkServiceAgent('test-requester:nsa', 'dud_endpoint1')
-    provider_agent  = nsa.NetworkServiceAgent(base + ':nsa', 'dud_endpoint2')
+    provider_agent  = nsa.NetworkServiceAgent(GenericProviderTest.base + ':nsa', 'dud_endpoint2')
 
     header      = nsa.NSIHeader(requester_agent.urn(), provider_agent.urn())
 
@@ -491,17 +493,8 @@ class DUDBackendTest(GenericProviderTest, unittest.TestCase):
 
 class AggregatorTest(GenericProviderTest, unittest.TestCase):
 
-    base        = 'aruba'
-    network     = base + ':topology'
-    source_port = 'ps'
-    dest_port   = 'bon'
-
-    source_stp = nsa.STP(network, source_port, nsa.Label(cnt.ETHERNET_VLAN, '1781-1782') )
-    dest_stp   = nsa.STP(network, dest_port,   nsa.Label(cnt.ETHERNET_VLAN, '1782-1783') )
-    bandwidth = 200
-
     requester_agent = nsa.NetworkServiceAgent('test-requester:nsa', 'dud_endpoint1')
-    provider_agent  = nsa.NetworkServiceAgent(base + ':nsa', 'dud_endpoint2')
+    provider_agent  = nsa.NetworkServiceAgent(GenericProviderTest.base + ':nsa', 'dud_endpoint2')
     header          = nsa.NSIHeader(requester_agent.urn(), provider_agent.urn())
 
     def setUp(self):
@@ -559,18 +552,8 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
     PROVIDER_PORT = 8180
     REQUESTER_PORT = 8280
 
-    base        = 'aruba'
-    network     = base + ':topology'
-    source_port = 'ps'
-    dest_port   = 'bon'
-
-    # we need to use single values here as the vlans are parsed by int() currently (will switch to labels in the future)
-    source_stp = nsa.STP(network, source_port, nsa.Label(cnt.ETHERNET_VLAN, '1782') )
-    dest_stp   = nsa.STP(network, dest_port,   nsa.Label(cnt.ETHERNET_VLAN, '1782') )
-    bandwidth  = 200
-
     requester_agent = nsa.NetworkServiceAgent('test-requester:nsa', 'http://localhost:%i/NSI/services/RequesterService2' % REQUESTER_PORT)
-    provider_agent  = nsa.NetworkServiceAgent(base + ':nsa', 'http://localhost:%i/NSI/services/CS2' % PROVIDER_PORT)
+    provider_agent  = nsa.NetworkServiceAgent(GenericProviderTest.base + ':nsa', 'http://localhost:%i/NSI/services/CS2' % PROVIDER_PORT)
 
     header   = nsa.NSIHeader(requester_agent.urn(), provider_agent.urn(), reply_to=requester_agent.endpoint)
 
