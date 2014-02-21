@@ -26,5 +26,3 @@ ETHERNET_VLAN       = '%s#vlan' % ETHERNET
 FEATURE_AGGREGATOR  = 'vnd.ogf.nsi.cs.v2.role.aggregator'
 FEATURE_UPA         = 'vnd.ogf.nsi.cs.v2.role.uPA'
 
-P2P_SERVICE = 'http://schemas.ogf.org/nsi/2013/12/services/point2point#p2ps'
-
