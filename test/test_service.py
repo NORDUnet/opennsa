@@ -13,8 +13,6 @@ from twisted.trial import unittest
 from twisted.internet import defer, reactor
 from twisted.application import service as twistedservice 
 
-from dateutil.tz import tzutc
-
 from opennsa import config, setup, nsa, error
 from opennsa.protocols import nsi2
 

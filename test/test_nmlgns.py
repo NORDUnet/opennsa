@@ -1,6 +1,5 @@
 from twisted.trial import unittest
 
-from opennsa import nsa, error, constants as cnt
 from opennsa.topology import nmlgns
 
 

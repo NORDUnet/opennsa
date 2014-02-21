@@ -2,7 +2,6 @@ import StringIO
 
 from twisted.trial import unittest
 
-from opennsa import nsa, error
 from opennsa.topology import nrmparser
 
 

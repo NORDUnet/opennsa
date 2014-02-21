@@ -3,8 +3,6 @@ import os, datetime, json, StringIO
 from twisted.trial import unittest
 from twisted.internet import reactor, defer, task
 
-from dateutil.tz import tzutc
-
 from opennsa import nsa, provreg, database, error, aggregator, constants as cnt
 from opennsa.topology import nml, nmlgns, nrmparser
 from opennsa.backends import dud
@@ -562,7 +560,7 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
         from twisted.application import internet
         from opennsa.protocols import nsi2
         from opennsa.protocols.shared import resource as soapresource
-        from opennsa.protocols.nsi2 import requesterservice, requesterclient, requester
+        from opennsa.protocols.nsi2 import requesterservice, requesterclient
 
         tcf = os.path.expanduser('~/.opennsa-test.json')
         tc = json.load( open(tcf) )
