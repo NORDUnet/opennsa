@@ -184,7 +184,7 @@ NSI_ERROR_CODE_TABLE = {
 
 def lookup(error_code):
 
-    assert type(error_code) is str and len(error_code) == 5, 'Invalid Error Code (type or length is wrong'
+    assert type(error_code) is str and len(error_code) == 5, 'Invalid Error Code (type or length is wrong). Error code: %s' % error_code
 
     ex = NSI_ERROR_CODE_TABLE.get(error_code)
     if ex is None:
