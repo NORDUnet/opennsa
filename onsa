@@ -143,7 +143,10 @@ def doMain():
         ctx_factory = None
         if public_key or private_key or certificate_dir:
 
-            if public_key and private_key and certificate_dir:
+            if public_key == '.' and private_key == '.':
+                from opennsa import ctxfactory
+                ctx_factory = ctxfactory.RequestContextFactory(certificate_dir, verify_cert)
+            elif public_key and private_key and certificate_dir:
                 from opennsa import ctxfactory
                 ctx_factory = ctxfactory.ContextFactory(private_key, public_key, certificate_dir, verify_cert)
             elif tls:
