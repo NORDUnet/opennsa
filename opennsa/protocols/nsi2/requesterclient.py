@@ -75,7 +75,7 @@ class RequesterClient:
 
         service_exception = None
         if detail:
-            service_exception = nsiframework.parse(detail)
+            service_exception = nsiconnection.parse(detail)
 
         if service_exception is None:
             # this is not entirely correct, but it isn't really wrong either

@@ -46,7 +46,7 @@ class ProviderService:
         log.msg('Request error: %s. Returning error to remote client.' % err.getErrorMessage(), system=LOG_SYSTEM)
 
         se = helper.createServiceException(err, provider_nsa, connection_id)
-        element = se.xml(nsiframework.serviceException)
+        element = se.xml(nsiconnection.serviceException)
         detail = ET.tostring(element)
 
         soap_fault = resource.SOAPFault( err.getErrorMessage(), detail )
