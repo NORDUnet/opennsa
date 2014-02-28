@@ -158,13 +158,14 @@ class ReservationRequestCriteriaType(object):
                )
 
     def xml(self, elementName):
+        from . import p2pservices
         r = ET.Element(elementName, attrib={'version' : str(self.version)})
         if self.schedule is not None:
             r.append(self.schedule.xml('schedule'))
         if self.serviceType is not None:
             ET.SubElement(r, 'serviceType').text = self.serviceType
         if self.serviceDefinition:
-            r.append(self.serviceDefinition.xml(self.serviceType))
+            r.append(self.serviceDefinition.xml( str(p2pservices.p2ps) ))
         return r
 
 
