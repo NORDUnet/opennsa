@@ -37,6 +37,7 @@ class ModifiableResource(resource.Resource):
         if update_time is None:
             update_time = datetime.datetime.utcnow().replace(microsecond=0)
 
+        self.last_update_time = update_time
         self.last_modified_timestamp = datetime.datetime.strftime(update_time, RFC850_FORMAT)
 
 
@@ -52,7 +53,7 @@ class ModifiableResource(resource.Resource):
         if msd_header:
             try:
                 msd = datetime.datetime.strptime(msd_header, RFC850_FORMAT)
-                if msd >= self.update_time:
+                if msd >= self.last_update_time:
                     request.setResponseCode(304)
                     return ''
             except ValueError:
