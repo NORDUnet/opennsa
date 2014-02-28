@@ -200,7 +200,6 @@ class OpenNSAService(twistedservice.MultiService):
         nml_service = nmlservice.NMLService(network_topology)
         top_resource.children['NSI'].putChild(nml_resource_name, nml_service.resource() )
 
-        proto_scheme = 'https' if vc[config.TLS] else 'http'
         log.msg('Provider  URL: %s' % provider_endpoint )
         log.msg('Discovery URL: %s/NSI/%s' % (base_url, discovery_resource_name) )
         log.msg('Topology  URL: %s' % (nml_resource_url) )
