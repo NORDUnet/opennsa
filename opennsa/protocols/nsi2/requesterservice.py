@@ -5,10 +5,15 @@ Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2011)
 """
 
+from twisted.python import log
+
 from opennsa import nsa, error
 
 from opennsa.protocols.nsi2 import helper
 from opennsa.protocols.nsi2.bindings import actions, p2pservices
+
+
+LOG_SYSTEM = 'RequesterService'
 
 
 
@@ -53,12 +58,16 @@ class RequesterService:
         dps = (rd.active, rd.version, rd.versionConsistent)
         cs = (rc.reservationState, rc.provisionState, rc.lifecycleState, dps)
 
-        se = generic_failure.serviceException
+        service_exception = generic_failure.serviceException
 
-        exception_type = error.lookup(se.errorId)
-        err = exception_type(se.text)
+        try:
+            exception_type = error.lookup(service_exception.errorId)
+            ex = exception_type(service_exception.text, header.provider_nsa)
+        except AssertionError as e:
+            log.msg('Error looking up error id: %s. Message: %s' % (service_exception.errorId, str(e)), system=LOG_SYSTEM)
+            ex = error.InternalServerError(service_exception.text)
 
-        return header, generic_failure.connectionId, cs, err
+        return header, generic_failure.connectionId, cs, ex
 
 
 
