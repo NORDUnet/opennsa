@@ -81,7 +81,7 @@ class AttributeStatementType(object):
 
     def xml(self, elementName):
         r = ET.Element(elementName)
-        r.append(self.Attribute.xml('Attribute'))
+        r.append(self.Attribute.xml(Attribute))
         r.append(self.EncryptedAttribute.xml('EncryptedAttribute'))
         return r
 
@@ -103,14 +103,20 @@ class AttributeType(object):
                )
 
     def xml(self, elementName):
-        r = ET.Element(elementName, attrib={'Name' : str(self.Name), 'NameFormat' : str(self.NameFormat), 'FriendlyName' : str(self.FriendlyName)})
-        pass # anyType not handled
+        attribs = {'Name' : self.Name }
+        if self.NameFormat is not None:
+            attribs['NameFormat'] = self.NameFormat
+        if self.FriendlyName is not None:
+            attribs['FriendlyName'] = self.FriendlyName
+        r = ET.Element(elementName, attribs)
+        #ET.SubElement(r, str(SecurityValue)).text = self.AttributeValue
+        ET.SubElement(r, str(AttributeValue)).text = self.AttributeValue
         return r
 
 
 class SessionSecurityAttrType(object):
     def __init__(self, Attributes): #, EncryptedAttribute):
-        self.Attribute = Attribute  # [ AttributeType ]
+        self.Attributes = Attributes  # [ AttributeType ]
         #self.EncryptedAttribute = EncryptedAttribute  # [ EncryptedElementType ]
 
     @classmethod
@@ -122,8 +128,9 @@ class SessionSecurityAttrType(object):
 
     def xml(self, elementName):
         r = ET.Element(elementName)
-        r.append(self.Attribute.xml('Attribute'))
-        r.append(self.EncryptedAttribute.xml('EncryptedAttribute'))
+        for e in self.Attributes:
+            r.append(e.xml(Attribute))
+        #r.append(self.EncryptedAttribute.xml('EncryptedAttribute'))
         return r
 
 
