@@ -39,9 +39,16 @@ LABEL_MAP = {
 
 
 
-def createHeader(requester_nsa_urn, provider_nsa_urn, session_security_attrs=None, reply_to=None, correlation_id=None, connection_trace=None):
+def createHeader(requester_nsa_urn, provider_nsa_urn, session_security_attrs=None, reply_to=None, correlation_id=None,
+                 session_security_attributes=None, connection_trace=None):
 
-    header = nsiframework.CommonHeaderType(cnt.CS2_SERVICE_TYPE, correlation_id, requester_nsa_urn, provider_nsa_urn, reply_to, session_security_attrs, connection_trace)
+    ssats = []
+    if session_security_attributes:
+        for at, av in session_security_attributes:
+            at = nsiframework.AttributeType(at, None, None, av)
+            ssats.append( nsiframework.SessionSecurityAttrType( [ at ] ) )
+
+    header = nsiframework.CommonHeaderType(cnt.CS2_SERVICE_TYPE, correlation_id, requester_nsa_urn, provider_nsa_urn, reply_to, ssats, connection_trace)
     header_element = header.xml(nsiframework.nsiHeader)
     return header_element
 
