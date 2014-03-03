@@ -25,6 +25,7 @@ SERVICE_URL     = 'service'
 AUTHZ_HEADER    = 'authzheader'
 REQUESTER       = 'requester'
 PROVIDER        = 'provider'
+SECURITY_ATTRIBUTES = 'securityattributes'
 
 CONNECTION_ID   = 'connection-id'
 GLOBAL_ID       = 'global-id'

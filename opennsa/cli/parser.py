@@ -27,6 +27,7 @@
 # -e end time
 # -b bandwidth (megabits)
 
+# -j security attributes
 # -l certificate (signed public key)
 # -k key (private key)
 # -i certificate directory
@@ -39,7 +40,7 @@
 # -z (skip) verify certificate (default is to verify)
 
 # free switches
-# ij + 0-9
+# 0-9
 
 # Not all commands will accept all flags and some flags are mutally exclusive
 
@@ -104,6 +105,16 @@ class EndTimeOption(usage.Options):
         if self[options.END_TIME] is not None:
             self[options.END_TIME] = options.parseTimestamp( self[options.END_TIME] )
 
+class SecurityAttributeOptions(usage.Options):
+    optParameters = [ [ options.SECURITY_ATTRIBUTES, 'j', None, 'Security attributes (format attr1=value1,attr2=value2)'] ]
+    def postOptions(self):
+        key_values = []
+        for kv_split in self[options.SECURITY_ATTRIBUTES].split(','):
+            if not '=' in kv_split:
+                raise usage.UsageError('No = in key-value attribute %s' % kv_split)
+            key_values.append( kv_split.split('=',1) )
+        self[options.SECURITY_ATTRIBUTES] = key_values
+
 class BandwidthOption(usage.Options):
     optParameters = [ [ options.BANDWIDTH, 'b', None, 'Bandwidth (Megabits)'] ]
 
@@ -143,11 +154,12 @@ class BaseOptions(DefaultsFileOption):
 
 
 class NetworkBaseOptions(BaseOptions, HostOption, PortOption,
-                         ServiceURLOption, AuthzHeaderOption, TopologyFileOption, NetworkOption,
+                         ServiceURLOption, AuthzHeaderOption, TopologyFileOption, NetworkOption, SecurityAttributeOptions,
                          TLSFlag, PublicKeyOption, PrivateKeyOption, CertificateDirectoryOption, SkipCertificateVerificationFlag):
 
     def postOptions(self):
-        # technically we should do this for all superclasses, but this is the only one that has anything to do
+        # technically we should do this for all superclasses, but these are the only ones that has anything to do
+        SecurityAttributeOptions.postOptions(self)
         if self[options.SERVICE_URL] and (self[options.TOPOLOGY_FILE] or self[options.NETWORK]):
             raise usage.UsageError('Cannot set service url while having topology file or network.')
 
