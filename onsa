@@ -106,6 +106,9 @@ def doMain():
         connection_id   = config.subOptions[options.CONNECTION_ID]  or defaults.get(options.CONNECTION_ID)
         global_id       = config.subOptions[options.GLOBAL_ID]      or defaults.get(options.GLOBAL_ID)
 
+        # can only be specified on command line for now
+        security_attributes = config.subOptions[options.SECURITY_ATTRIBUTES]
+
         if topology_file and network:
             from opennsa.topology import gole
             topo, _ = gole.parseTopology( [ open(topology_file) ] )
@@ -124,6 +127,8 @@ def doMain():
         client_nsa      = nsa.NetworkServiceAgent(requester_nsa, requester_url)
 
         log.msg("Requester URL: %s" % requester_url)
+
+        nsi_header = nsa.NSIHeader(client_nsa.urn(), provider_nsa.urn(), reply_to=provider_nsa.endpoint, session_security_attrs=security_attributes)
 
         tls = config.subOptions[options.TLS] or defaults.get(options.TLS) or False
 
@@ -205,12 +210,10 @@ def doMain():
     # start over on commands, now we do the actual dispatch
 
     if config.subCommand == 'reserve':
-
-        yield commands.reserve(client, client_nsa, provider_nsa, source_stp, dest_stp, start_time, end_time, bandwidth, connection_id, global_id)
+        yield commands.reserve(client, nsi_header, source_stp, dest_stp, start_time, end_time, bandwidth, connection_id, global_id)
 
     elif config.subCommand == 'reserveonly':
-
-        yield commands.reserveonly(client, client_nsa, provider_nsa, source_stp, dest_stp, start_time, end_time, bandwidth, connection_id, global_id)
+        yield commands.reserveonly(client, nsi_header, source_stp, dest_stp, start_time, end_time, bandwidth, connection_id, global_id)
 
     elif config.subCommand == 'reserveprovision':
 

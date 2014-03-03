@@ -61,9 +61,8 @@ def discover(client, service_url):
 
 
 @defer.inlineCallbacks
-def reserveonly(client, client_nsa, provider_nsa, src, dst, start_time, end_time, capacity, connection_id, global_id):
+def reserveonly(client, nsi_header, src, dst, start_time, end_time, capacity, connection_id, global_id):
 
-    nsi_header = nsa.NSIHeader(client_nsa.urn(), provider_nsa.urn(), reply_to=provider_nsa.endpoint)
     schedule = nsa.Schedule(start_time, end_time)
     service_def = _createP2PS(src, dst, capacity)
     crt = nsa.Criteria(0, schedule, service_def)
@@ -73,16 +72,15 @@ def reserveonly(client, client_nsa, provider_nsa, src, dst, start_time, end_time
 
     try:
         assigned_connection_id = yield client.reserve(nsi_header, connection_id, global_id, 'Test Connection', crt)
-        log.msg("Connection created and held. Id %s at %s" % (assigned_connection_id, provider_nsa))
+        log.msg("Connection created and held. Id %s at %s" % (assigned_connection_id, nsi_header.provider_nsa))
 
     except error.NSIError, e:
         log.msg('Error reserving, %s: %s' % (e.__class__.__name__, str(e)))
 
 
 @defer.inlineCallbacks
-def reserve(client, client_nsa, provider_nsa, src, dst, start_time, end_time, capacity, connection_id, global_id):
+def reserve(client, nsi_header, src, dst, start_time, end_time, capacity, connection_id, global_id):
 
-    nsi_header = nsa.NSIHeader(client_nsa.urn(), provider_nsa.urn(), reply_to=provider_nsa.endpoint)
     schedule = nsa.Schedule(start_time, end_time)
     service_def = _createP2PS(src, dst, capacity)
     crt = nsa.Criteria(0, schedule, service_def)
@@ -90,12 +88,11 @@ def reserve(client, client_nsa, provider_nsa, src, dst, start_time, end_time, ca
     if connection_id or global_id:
         log.msg("Connection id: %s  Global id: %s" % (connection_id, global_id))
 
-
     try:
         assigned_connection_id = yield client.reserve(nsi_header, connection_id, global_id, 'Test Connection', crt)
-        log.msg("Connection created and held. Id %s at %s" % (assigned_connection_id, provider_nsa))
+        log.msg("Connection created and held. Id %s at %s" % (assigned_connection_id, nsi_header.provider_nsa))
         yield client.reserveCommit(nsi_header, assigned_connection_id)
-        log.msg("Reservation committed at %s" % provider_nsa)
+        log.msg("Reservation committed at %s" % nsi_header.provider_nsa)
 
     except error.NSIError, e:
         log.msg('Error reserving, %s: %s' % (e.__class__.__name__, str(e)))
