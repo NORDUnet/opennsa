@@ -222,7 +222,7 @@ class RequesterClient:
         header_element = helper.createHeader(header.requester_nsa, header.provider_nsa, reply_to=self.reply_to, correlation_id=header.correlation_id)
 
         query_type = nsiconnection.QueryType(connection_ids, global_reservation_ids)
-        body_element = query_type.xml(nsiconnection.querySummary)
+        body_element = query_type.xml(nsiconnection.querySummarySync)
 
         payload = minisoap.createSoapPayload(body_element, header_element)
 
