@@ -99,9 +99,8 @@ def reserve(client, nsi_header, src, dst, start_time, end_time, capacity, connec
 
 
 @defer.inlineCallbacks
-def reserveprovision(client, client_nsa, provider_nsa, src, dst, start_time, end_time, capacity, connection_id, global_id, notification_wait):
+def reserveprovision(client, nsi_header, src, dst, start_time, end_time, capacity, connection_id, global_id, notification_wait):
 
-    nsi_header = nsa.NSIHeader(client_nsa.urn(), provider_nsa.urn())
     schedule = nsa.Schedule(start_time, end_time)
     service_def = _createP2PS(src, dst, capacity)
     crt = nsa.Criteria(0, schedule, service_def)
@@ -110,10 +109,10 @@ def reserveprovision(client, client_nsa, provider_nsa, src, dst, start_time, end
 
     try:
         assigned_connection_id = yield client.reserve(nsi_header, connection_id, global_id, 'Test Connection', crt)
-        log.msg("Connection created and held. Id %s at %s" % (assigned_connection_id, provider_nsa))
+        log.msg("Connection created and held. Id %s at %s" % (assigned_connection_id, nsi_header.provider_nsa))
         nsi_header.newCorrelationId()
         yield client.reserveCommit(nsi_header, assigned_connection_id)
-        log.msg("Connection committed at %s" % provider_nsa)
+        log.msg("Connection committed at %s" % nsi_header.provider_nsa)
     except error.NSIError, e:
         log.msg('Error reserving, %s : %s' % (e.__class__.__name__, str(e)))
         defer.returnValue(None)
@@ -141,9 +140,8 @@ def reserveprovision(client, client_nsa, provider_nsa, src, dst, start_time, end
 
 
 @defer.inlineCallbacks
-def rprt(client, client_nsa, provider_nsa, src, dst, start_time, end_time, capacity, connection_id, global_id):
+def rprt(client, nsi_header, src, dst, start_time, end_time, capacity, connection_id, global_id):
     # reserve, provision, release,  terminate
-    nsi_header = nsa.NSIHeader(client_nsa.urn(), provider_nsa.urn())
     schedule = nsa.Schedule(start_time, end_time)
     service_def = _createP2PS(src, dst, capacity)
     crt = nsa.Criteria(0, schedule, service_def)
@@ -152,10 +150,10 @@ def rprt(client, client_nsa, provider_nsa, src, dst, start_time, end_time, capac
 
     try:
         assigned_connection_id = yield client.reserve(nsi_header, connection_id, global_id, 'Test Connection', crt)
-        log.msg("Connection created and held. Id %s at %s" % (assigned_connection_id, provider_nsa))
+        log.msg("Connection created and held. Id %s at %s" % (assigned_connection_id, nsi_header.provider_nsa))
         nsi_header.newCorrelationId()
         yield client.reserveCommit(nsi_header, assigned_connection_id)
-        log.msg("Connection committed at %s" % provider_nsa)
+        log.msg("Connection committed at %s" % nsi_header.provider_nsa)
     except error.NSIError, e:
         log.msg('Error reserving %s, %s : %s' % (connection_id, e.__class__.__name__, str(e)))
         defer.returnValue(None)
@@ -186,24 +184,20 @@ def rprt(client, client_nsa, provider_nsa, src, dst, start_time, end_time, capac
 
 
 @defer.inlineCallbacks
-def reservecommit(client, client_nsa, provider_nsa, connection_id):
-
-    nsi_header = nsa.NSIHeader(client_nsa.urn(), provider_nsa.urn(), reply_to=provider_nsa.endpoint)
+def reservecommit(client, nsi_header, connection_id):
 
     log.msg("Connection id: %s" % connection_id)
 
     try:
         yield client.reserveCommit(nsi_header, connection_id)
-        log.msg("Reservation committed at %s" % provider_nsa)
+        log.msg("Reservation committed at %s" % nsi_header.provider_nsa)
 
     except error.NSIError, e:
         log.msg('Error comitting, %s: %s' % (e.__class__.__name__, str(e)))
 
 
 @defer.inlineCallbacks
-def provision(client, client_nsa, provider_nsa, connection_id, notification_wait):
-
-    nsi_header = nsa.NSIHeader(client_nsa.urn(), provider_nsa.urn(), reply_to=provider_nsa.endpoint)
+def provision(client, nsi_header, connection_id, notification_wait):
 
     try:
         yield client.provision(nsi_header, connection_id)
@@ -216,11 +210,10 @@ def provision(client, client_nsa, provider_nsa, connection_id, notification_wait
 
 
 @defer.inlineCallbacks
-def release(client, client_nsa, provider_nsa, connection_id, notification_wait):
+def release(client, nsi_header, connection_id, notification_wait):
 
-    header = nsa.NSIHeader(client_nsa.urn(), provider_nsa.urn())
     try:
-        yield client.release(header, connection_id)
+        yield client.release(nsi_header, connection_id)
         log.msg('Connection %s released' % connection_id)
     except error.NSIError, e:
         log.msg('Error releasing %s, %s : %s' % (connection_id, e.__class__.__name__, str(e)))
@@ -230,22 +223,20 @@ def release(client, client_nsa, provider_nsa, connection_id, notification_wait):
 
 
 @defer.inlineCallbacks
-def terminate(client, client_nsa, provider_nsa, connection_id):
+def terminate(client, nsi_header, connection_id):
 
-    header = nsa.NSIHeader(client_nsa.urn(), provider_nsa.urn())
     try:
-        yield client.terminate(header, connection_id)
+        yield client.terminate(nsi_header.header, connection_id)
         log.msg('Connection %s terminated' % connection_id)
     except error.NSIError, e:
         log.msg('Error terminating %s, %s : %s' % (connection_id, e.__class__.__name__, str(e)))
 
 
 @defer.inlineCallbacks
-def querysummary(client, client_nsa, provider_nsa, connection_ids, global_reservation_ids):
+def querysummary(client, nsi_header, connection_ids, global_reservation_ids):
 
-    header = nsa.NSIHeader(client_nsa.urn(), provider_nsa.urn())
     try:
-        qc = yield client.querySummary(header, connection_ids, global_reservation_ids)
+        qc = yield client.querySummary(nsi_header, connection_ids, global_reservation_ids)
         log.msg('Query results:')
         for qr in qc:
             cid, gid, desc, crits, requester, states, children = qr
@@ -280,10 +271,10 @@ def querysummary(client, client_nsa, provider_nsa, connection_ids, global_reserv
 
 
 @defer.inlineCallbacks
-def querydetails(client, client_nsa, provider_nsa, connection_ids, global_reservation_ids):
+def querydetails(client, nsi_header, connection_ids, global_reservation_ids):
 
     try:
-        qc = yield client.query(client_nsa, provider_nsa, None, "Details", connection_ids, global_reservation_ids)
+        qc = yield client.queryDetails(nsi_header, connection_ids, global_reservation_ids)
         log.msg('Query results:')
         for qr in qc:
             log.msg('Connection: %s' % qr.connectionId)

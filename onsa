@@ -2,9 +2,7 @@
 
 import os
 import sys
-import uuid
 import socket
-import random
 
 from twisted.python import log, usage
 from twisted.internet import reactor, defer
@@ -216,41 +214,34 @@ def doMain():
         yield commands.reserveonly(client, nsi_header, source_stp, dest_stp, start_time, end_time, bandwidth, connection_id, global_id)
 
     elif config.subCommand == 'reserveprovision':
-
-        yield commands.reserveprovision(client, client_nsa, provider_nsa, source_stp, dest_stp, start_time, end_time, bandwidth, connection_id, global_id, notification_wait)
+        yield commands.reserveprovision(client, nsi_header, source_stp, dest_stp, start_time, end_time, bandwidth, connection_id, global_id, notification_wait)
 
     elif config.subCommand == 'rprt':
-
-        yield commands.rprt(client, client_nsa, provider_nsa, source_stp, dest_stp, start_time, end_time, bandwidth, connection_id, global_id)
+        yield commands.rprt(client, nsi_header, source_stp, dest_stp, start_time, end_time, bandwidth, connection_id, global_id)
 
     elif config.subCommand == 'reservecommit':
-
-        yield commands.reservecommit(client, client_nsa, provider_nsa, connection_id, notification_wait)
+        yield commands.reservecommit(client, nsi_header, connection_id)
 
     elif config.subCommand == 'provision':
-
-        yield commands.provision(client, client_nsa, provider_nsa, connection_id, notification_wait)
+        yield commands.provision(client, nsi_header, connection_id, notification_wait)
 
     elif config.subCommand == 'release':
-
-        yield commands.release(client, client_nsa, provider_nsa, connection_id, notification_wait)
+        yield commands.release(client, nsi_header, connection_id, notification_wait)
 
     elif config.subCommand == 'terminate':
-
-        yield commands.terminate(client, client_nsa, provider_nsa, connection_id)
+        yield commands.terminate(client, nsi_header, connection_id)
 
     elif config.subCommand == 'querysummary':
-
         connection_ids  = [ connection_id   ] if connection_id  else None
         global_ids      = [ global_id       ] if global_id      else None
-        yield commands.querysummary(client, client_nsa, provider_nsa, connection_ids, global_ids)
+        yield commands.querysummary(client, nsi_header, connection_ids, global_ids)
 
     elif config.subCommand == 'querydetails':
-
         connection_ids  = [ connection_id   ] if connection_id  else None
         global_ids      = [ global_id       ] if global_id      else None
-        yield commands.querydetails(client, client_nsa, provider_nsa, connection_ids, global_ids)
+        yield commands.querydetails(client, nsi_header, connection_ids, global_ids)
 
+    # these are old an unmaintained
     elif config.subCommand == 'path':
 
         topology_file   = config.subOptions[options.TOPOLOGY_FILE]  or defaults.get(options.TOPOLOGY_FILE)
