@@ -210,12 +210,7 @@ class RequesterClient:
 
         def gotReply(soap_data):
             header, query_confirmed = helper.parseRequest(soap_data)
-            if query_confirmed is None:
-                return []
-            elif type(query_confirmed) is list:
-                return [ helper.buildQuerySummaryResult(qc) for qc in query_confirmed ]
-            else:
-                return [ helper.buildQuerySummaryResult(query_confirmed) ]
+            return [ helper.buildQuerySummaryResult(resv) for resv in query_confirmed.reservations ]
 
         # don't need to check header here
 

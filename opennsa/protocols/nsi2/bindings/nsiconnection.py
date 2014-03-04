@@ -212,6 +212,25 @@ class QuerySummaryResultType(object):
         return r
 
 
+
+class QuerySummaryConfirmedType(object):
+    def __init__(self, reservations):
+        self.reservations = reservations  # [ QuerySummaryResultType  ]
+
+    @classmethod
+    def build(self, element):
+        return QuerySummaryConfirmedType(
+                [ QuerySummaryResultType.build(e) for e in element.findall('reservation') ]
+               )
+
+    def xml(self, elementName):
+        r = ET.Element(elementName)
+        for e in self.reservations:
+            r.append( e.xml('reservation') )
+        return r
+
+
+
 class ReserveConfirmedType(object):
     def __init__(self, connectionId, globalReservationId, description, criteria):
         self.connectionId = connectionId  # ConnectionIdType -> string
@@ -913,7 +932,8 @@ def parseElement(element):
         '{http://schemas.ogf.org/nsi/2013/12/connection/types}reserveTimeout' : ReserveTimeoutRequestType,
         '{http://schemas.ogf.org/nsi/2013/12/connection/types}queryResultSync' : QueryResultType,
         '{http://schemas.ogf.org/nsi/2013/12/connection/types}queryRecursive' : QueryType,
-        '{http://schemas.ogf.org/nsi/2013/12/connection/types}reservation' : QuerySummaryResultType
+        '{http://schemas.ogf.org/nsi/2013/12/connection/types}reservation' : QuerySummaryResultType,
+        '{http://schemas.ogf.org/nsi/2013/12/connection/types}querySummarySyncConfirmed' : QuerySummaryConfirmedType
     }
 
     if not element.tag in type_map:

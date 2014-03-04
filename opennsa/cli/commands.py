@@ -239,6 +239,7 @@ def terminate(client, client_nsa, provider_nsa, connection_id):
     except error.NSIError, e:
         log.msg('Error terminating %s, %s : %s' % (connection_id, e.__class__.__name__, str(e)))
 
+
 @defer.inlineCallbacks
 def querysummary(client, client_nsa, provider_nsa, connection_ids, global_reservation_ids):
 
@@ -257,10 +258,17 @@ def querysummary(client, client_nsa, provider_nsa, connection_ids, global_reserv
 
             if crits:
                 crit = crits[0]
-                log.msg('  Start time  : %s, End time: %s' % (crit.start_time, crit.end_time))
-                log.msg('  Source STP  : %s' % crit.source_stp)
-                log.msg('  Dest   STP  : %s' % crit.dest_stp)
-                log.msg('  Bandwidth   : %s' % crit.bandwidth)
+                log.msg('  Start time  : %s, End time: %s' % (crit.schedule.start_time, crit.schedule.end_time))
+                if type(crit.service_def) is nsa.Point2PointService:
+                    sd = crit.service_def
+                    log.msg('  Source STP  : %s' % sd.source_stp)
+                    log.msg('  Dest   STP  : %s' % sd.dest_stp)
+                    log.msg('  Bandwidth   : %s' % sd.capacity)
+                    log.msg('  Direction   : %s' % sd.directionality)
+                    log.msg('  Symmetric   : %s' % sd.symmetric)
+                    log.msg('  Params      : %s' % sd.parameters)
+                else:
+                    log.msg('  Unrecognized service definition: %s' % str(crit.service_def))
 
             log.msg('  States      : %s' % ', '.join(states[0:3]))
             log.msg('  Dataplane   : Active : %s, Version: %s, Consistent %s' % dps)

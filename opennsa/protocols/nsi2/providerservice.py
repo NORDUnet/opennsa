@@ -184,10 +184,10 @@ class ProviderService:
             soap_header = nsiframework.CommonHeaderType(cnt.CS2_SERVICE_TYPE, header.correlation_id, header.requester_nsa, header.provider_nsa, None, header.session_security_attrs)
             soap_header_element = soap_header.xml(nsiframework.nsiHeader)
 
-            query_summary_result = helper.buildQuerySummaryResultType(reservations)
-            qsr_elements = [ qsr.xml(nsiconnection.reservation) for qsr in query_summary_result ]
+            qs_reservations = helper.buildQuerySummaryResultType(reservations)
+            qssc = nsiconnection.QuerySummaryConfirmedType(qs_reservations)
 
-            payload = minisoap.createSoapPayload(qsr_elements, soap_header_element)
+            payload = minisoap.createSoapPayload(qssc.xml(nsiconnection.querySummarySyncConfirmed), soap_header_element)
             return payload
 
         header, query = helper.parseRequest(soap_data)
