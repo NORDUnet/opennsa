@@ -89,6 +89,10 @@ class Aggregator:
         self.reservations       = {} # correlation_id -> info
         self.notification_id    = 0
 
+        # db orm cache, needed to avoid concurrent updates stepping on each other
+        self.db_connections = {}
+        self.db_sub_connections = {}
+
 
     def getNotificationId(self):
         nid = self.notification_id
@@ -108,9 +112,27 @@ class Aggregator:
             # we should get 0 or 1 here since connection id is unique
             if len(connections) == 0:
                 return defer.fail( error.ConnectionNonExistentError('No connection with id %s' % connection_id) )
+            self.db_connections[connection_id] = connections[0]
             return connections[0]
 
+        if connection_id in self.db_connections:
+            return defer.succeed(self.db_connections[connection_id])
+
         d = database.ServiceConnection.findBy(connection_id=connection_id)
+        d.addCallback(gotResult)
+        return d
+
+
+    def getConnectionByKey(self, connection_key):
+
+        def gotResult(connections):
+            # we should get 0 or 1 here since connection id is unique
+            if len(connections) == 0:
+                return defer.fail( error.ConnectionNonExistentError('No connection with id %s' % connection_id) )
+            conn = connections[0]
+            return self.getConnection(conn.requester_nsa, conn.connection_id)
+
+        d = database.ServiceConnection.findBy(id=connection_key)
         d.addCallback(gotResult)
         return d
 
@@ -121,9 +143,31 @@ class Aggregator:
             # we should get 0 or 1 here since provider_nsa + connection id is unique
             if len(connections) == 0:
                 return defer.fail( error.ConnectionNonExistentError('No sub connection with connection id %s at provider %s' % (connection_id, provider_nsa) ) )
+            self.db_sub_connections[connection_id] = connections[0]
             return connections[0]
 
+        if connection_id in self.db_sub_connections:
+            return defer.succeed(self.db_sub_connections[connection_id])
+
         d = database.SubConnection.findBy(provider_nsa=provider_nsa, connection_id=connection_id)
+        d.addCallback(gotResult)
+        return d
+
+
+    def getSubConnectionsByConnectionKey(self, service_connection_key):
+
+        def gotResult(rows):
+            def gotSubConns(results):
+                if all( [ r[0] for r in results ] ):
+                    return [ r[1] for r in results ]
+                else:
+                    return defer.fail('Error retrieving one or more subconnections: %s' % str(results))
+
+            defs = [ self.getSubConnection(r['provider_nsa'], r['connection_id']) for r in rows ]
+            return defer.DeferredList(defs).addCallback(gotSubConns)
+
+        dbconfig = database.Registry.getConfig()
+        d = dbconfig.select('sub_connections', where=['service_connection_id = ?', service_connection_key], select='provider_nsa, connection_id')
         d.addCallback(gotResult)
         return d
 
@@ -368,7 +412,8 @@ class Aggregator:
         yield state.reserveCommit(conn)
 
         defs = []
-        sub_connections = yield conn.SubConnections.get()
+        sub_connections = yield self.getSubConnectionsByConnectionKey(conn.id)
+
         for sc in sub_connections:
             # we assume a provider is available
             provider = self.getProvider(sc.provider_nsa)
@@ -405,7 +450,8 @@ class Aggregator:
 
         save_defs = []
         defs = []
-        sub_connections = yield conn.SubConnections.get()
+        sub_connections = yield self.getSubConnectionsByConnectionKey(conn.id)
+
         for sc in sub_connections:
             save_defs.append( state.reserveAbort(sc) )
             provider = self.getProvider(sc.provider_nsa)
@@ -443,15 +489,18 @@ class Aggregator:
 
         save_defs = []
         defs = []
-        sub_connections = yield conn.SubConnections.get()
+
+        sub_connections = yield self.getSubConnectionsByConnectionKey(conn.id)
+
         for sc in sub_connections:
             save_defs.append( state.provisioning(sc) )
+        yield defer.DeferredList(save_defs) #, consumeErrors=True)
+
+        for sc in sub_connections:
             provider = self.getProvider(sc.provider_nsa)
             header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa)
             d = provider.provision(header, sc.connection_id)
             defs.append(d)
-
-        yield defer.DeferredList(save_defs, consumeErrors=True)
 
         results = yield defer.DeferredList(defs, consumeErrors=True)
         successes = [ r[0] for r in results ]
@@ -479,9 +528,14 @@ class Aggregator:
 
         save_defs = []
         defs = []
-        sub_connections = yield conn.SubConnections.get()
+
+        sub_connections = yield self.getSubConnectionsByConnectionKey(conn.id)
+
         for sc in sub_connections:
             save_defs.append( state.releasing(sc) )
+        yield defer.DeferredList(save_defs) #, consumeErrors=True)
+
+        for sc in sub_connections:
             provider = self.getProvider(sc.provider_nsa)
             header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa)
             d = provider.release(header, sc.connection_id)
@@ -515,7 +569,8 @@ class Aggregator:
         yield state.terminating(conn)
 
         defs = []
-        sub_connections = yield conn.SubConnections.get()
+        sub_connections = yield self.getSubConnectionsByConnectionKey(conn.id)
+
         for sc in sub_connections:
             # we assume a provider is available
             provider = self.getProvider(sc.provider_nsa)
@@ -527,16 +582,14 @@ class Aggregator:
 
         successes = [ r[0] for r in results ]
         if all(successes):
-            yield state.terminated(conn)
-            log.msg('Connection %s: Terminate succeeded' % conn.connection_id, system=LOG_SYSTEM)
-            log.msg('Connection %s: All sub connections(%i) terminated' % (conn.connection_id, len(defs)), system=LOG_SYSTEM)
+            log.msg('Connection %s: All sub connections(%i) acked terminated' % (conn.connection_id, len(defs)), system=LOG_SYSTEM)
+            defer.returnValue(connection_id)
         else:
             # we are now in an inconsistent state...
             n_success = sum( [ 1 for s in successes if s ] )
             log.msg('Connection %s. Only %i of %i connections successfully terminated' % (conn.connection_id, n_success, len(defs)), system=LOG_SYSTEM)
             raise _createAggregateException(connection_id, 'terminate', results, error.ConnectionError)
 
-        defer.returnValue(connection_id)
 
 
     @defer.inlineCallbacks
@@ -555,7 +608,7 @@ class Aggregator:
             # largely copied from genericbackend, merge later
             reservations = []
             for c in conns:
-                sub_conns = yield c.SubConnections.get()
+                sub_conns = yield self.getSubConnectionsByConnectionKey(c.id)
 
                 source_stp = nsa.STP(c.source_network, c.source_port, c.source_label)
                 dest_stp = nsa.STP(c.dest_network, c.dest_port, c.dest_label)
@@ -641,8 +694,8 @@ class Aggregator:
 
         # figure out if we can aggregate upwards
 
-        conn = yield sc.ServiceConnection.get()
-        sub_conns = yield conn.SubConnections.get()
+        conn = yield self.getConnectionByKey(sc.service_connection_id)
+        sub_conns = yield self.getSubConnectionsByConnectionKey(conn.id)
 
         if sc.order_id == 0:
             conn.source_label = sd.source_stp.label
@@ -681,8 +734,8 @@ class Aggregator:
         sub_connection.reservation_state = state.RESERVE_START
         yield sub_connection.save()
 
-        conn = yield sub_connection.ServiceConnection.get()
-        sub_conns = yield conn.SubConnections.get()
+        conn = yield self.getConnectionByKey(sub_connection.service_connection_id)
+        sub_conns = yield self.getSubConnectionsByConnectionKey(conn.id)
 
         if all( [ sc.reservation_state == state.RESERVE_START for sc in sub_conns ] ):
             yield state.reserved(conn)
@@ -700,8 +753,8 @@ class Aggregator:
         sub_connection.reservation_state = state.RESERVE_START
         yield sub_connection.save()
 
-        conn = yield sub_connection.ServiceConnection.get()
-        sub_conns = yield conn.SubConnections.get()
+        conn = yield self.getConnectionByKey(sub_connection.service_connection_id)
+        sub_conns = yield self.getSubConnectionsByConnectionKey(conn.id)
 
         if all( [ sc.reservation_state == state.RESERVE_START for sc in sub_conns ] ):
             yield state.reserved(conn)
@@ -717,10 +770,9 @@ class Aggregator:
 
         sub_connection = yield self.getSubConnection(header.provider_nsa, connection_id)
         yield state.provisioned(sub_connection)
-        yield sub_connection.save()
 
-        conn = yield sub_connection.ServiceConnection.get()
-        sub_conns = yield conn.SubConnections.get()
+        conn = yield self.getConnectionByKey(sub_connection.service_connection_id)
+        sub_conns = yield self.getSubConnectionsByConnectionKey(conn.id)
 
         if all( [ sc.provision_state == state.PROVISIONED for sc in sub_conns ] ):
             yield state.provisioned(conn)
@@ -736,10 +788,9 @@ class Aggregator:
 
         sub_connection = yield self.getSubConnection(header.provider_nsa, connection_id)
         yield state.released(sub_connection)
-        yield sub_connection.save()
 
-        conn = yield sub_connection.ServiceConnection.get()
-        sub_conns = yield conn.SubConnections.get()
+        conn = yield self.getConnectionByKey(sub_connection.service_connection_id)
+        sub_conns = yield self.getSubConnectionsByConnectionKey(conn.id)
 
         if all( [ sc.provision_state == state.RELEASED for sc in sub_conns ] ):
             yield state.released(conn)
@@ -754,8 +805,8 @@ class Aggregator:
         sub_connection.reservation_state = state.TERMINATED
         yield sub_connection.save()
 
-        conn = yield sub_connection.ServiceConnection.get()
-        sub_conns = yield conn.SubConnections.get()
+        conn = yield self.getConnectionByKey(sub_connection.service_connection_id)
+        sub_conns = yield self.getSubConnectionsByConnectionKey(conn.id)
 
         if all( [ sc.reservation_state == state.TERMINATED for sc in sub_conns ] ):
             yield state.terminated(conn) # we always allow, even though the canonical NSI state machine does not
@@ -779,25 +830,14 @@ class Aggregator:
     # --
 
     @defer.inlineCallbacks
-    def findSubConnection(self, provider_nsa, connection_id):
-
-        sub_conns_match = yield database.SubConnection.findBy(connection_id=connection_id)
-
-        if len(sub_conns_match) == 0:
-            log.msg('No subconnection with id %s found' % connection_id)
-        elif len(sub_conns_match) == 1:
-            defer.returnValue(sub_conns_match[0])
-        else:
-            log.msg('More than one subconnection with id %s found.' % connection_id)
-            raise NotImplementedError('Cannot handle that situation yet, as there is no matching on NSA yet')
-
-
-    @defer.inlineCallbacks
     def reserveTimeout(self, header, connection_id, notification_id, timestamp, timeout_value, org_connection_id, org_nsa):
 
-        sub_conn = yield self.findSubConnection(header.provider_nsa, connection_id)
-        conn = yield sub_conn.ServiceConnection.get()
-        sub_conns = yield conn.SubConnections.get()
+        #sub_conn = yield self.findSubConnection(header.provider_nsa, connection_id)
+
+        sub_conn = yield self.getSubConnection(header.provider_nsa, connection_id)
+
+        conn = yield self.getConnectionByKey(sub_conn.service_connection_id)
+        sub_conns = yield self.getSubConnectionsByConnectionKey(conn.id)
 
         if len(sub_conns) == 1:
             log.msg("reserveTimeout: One sub connection for connection %s, notifying" % conn.connection_id)
@@ -813,7 +853,7 @@ class Aggregator:
         log.msg("Data plane change for sub connection: %s Active: %s, version %i, consistent: %s" % \
                  (connection_id, active, version, consistent), system=LOG_SYSTEM)
 
-        sub_conn = yield self.findSubConnection(header.provider_nsa, connection_id)
+        sub_conn = yield self.getSubConnection(header.provider_nsa, connection_id)
 
         sub_conn.data_plane_active      = active
         sub_conn.data_plane_version     = version
@@ -821,8 +861,8 @@ class Aggregator:
 
         yield sub_conn.save()
 
-        conn = yield sub_conn.ServiceConnection.get()
-        sub_conns = yield conn.SubConnections.get()
+        conn = yield self.getConnectionByKey(sub_conn.service_connection_id)
+        sub_conns = yield self.getSubConnectionsByConnectionKey(conn.id)
 
         # At some point we should check if data plane aggregated state actually changes and only emit for those that change
 
@@ -830,12 +870,13 @@ class Aggregator:
         actives  = [ sc.data_plane_active     for sc in sub_conns ]
         aggr_active     = all( actives )
         aggr_version    = max( [ sc.data_plane_version    for sc in sub_conns ] )
-        aggr_consistent = all( [ sc.data_plane_consistent for sc in sub_conns ] ) and all( [ a == actives[0] for a in actives ] ) # we need version here i think
+        aggr_consistent = all( [ sc.data_plane_consistent for sc in sub_conns ] ) and all( [ a == actives[0] for a in actives ] ) # we need version here
 
         header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn(), reply_to=conn.requester_url)
         now = datetime.datetime.utcnow()
         data_plane_status = (aggr_active, aggr_version, aggr_consistent)
-        log.msg("Connection %s: Aggregated data plane status: Active %s, version %i, consistent %s" % \
+
+        log.msg("Connection %s: Aggregated data plane status: Active %s, version %s, consistent %s" % \
             (conn.connection_id, aggr_active, aggr_version, aggr_consistent), system=LOG_SYSTEM)
 
         self.parent_requester.dataPlaneStateChange(header, conn.connection_id, 0, now, data_plane_status)
@@ -845,9 +886,10 @@ class Aggregator:
     def errorEvent(self, header, connection_id, notification_id, timestamp, event, info, service_ex):
 
         # should mark sub connection as terminated / failed
-        sub_conn = yield self.findSubConnection(header.provider_nsa, connection_id)
-        conn = yield sub_conn.ServiceConnection.get()
-        sub_conns = yield conn.SubConnections.get()
+        sub_conn = yield self.getSubConnection(header.provider_nsa, connection_id)
+
+        conn = yield self.getConnectionByKey(sub_conn.service_connection_id)
+        sub_conns = yield self.getSubConnectionsByConnectionKey(conn.id)
 
         if len(sub_conns) == 1:
             log.msg("errorEvent: One sub connection for connection %s, notifying" % conn.connection_id)
