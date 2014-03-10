@@ -193,7 +193,8 @@ class Aggregator:
 
         # policy check: one endpoint must be in local network
         if not (source_stp.network == self.network or dest_stp.network == self.network):
-            raise error.ConnectionCreateError('The connection does not terminate in the network, rejecting request')
+            raise error.ConnectionCreateError('None of the endpoints terminate in the network, rejecting request (network: %s + %s, nsa network %s)' %
+                (source_stp.network, dest_stp.network, self.network))
 
         if (source_stp.label is None and dest_stp.label) or (source_stp.label and dest_stp.label is None):
             raise error.ConnectionCreateError('Cannot create connection with label only defined in one end (maybe possible in the future)')
