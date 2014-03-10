@@ -47,7 +47,9 @@ class RequesterClient:
 
     def _createGenericRequestType(self, body_element_name, header, connection_id):
 
-        header_element = helper.createHeader(header.requester_nsa, header.provider_nsa, reply_to=self.reply_to, correlation_id=header.correlation_id)
+        header_element = helper.createHeader(header.requester_nsa, header.provider_nsa, reply_to=self.reply_to, correlation_id=header.correlation_id,
+                                             session_security_attributes=header.session_security_attrs, connection_trace=header.connection_trace)
+
         body_element = nsiconnection.GenericRequestType(connection_id).xml(body_element_name)
 
         payload = minisoap.createSoapPayload(body_element, header_element)
@@ -99,7 +101,7 @@ class RequesterClient:
 
         # payload construction
 
-        header_payload = helper.createHeader(header.requester_nsa, header.provider_nsa, reply_to=self.reply_to, correlation_id=header.correlation_id,
+        header_element = helper.createHeader(header.requester_nsa, header.provider_nsa, reply_to=self.reply_to, correlation_id=header.correlation_id,
                                              session_security_attributes=header.session_security_attrs, connection_trace=header.connection_trace)
 
         schedule = criteria.schedule
@@ -125,7 +127,7 @@ class RequesterClient:
         reservation = nsiconnection.ReserveType(connection_id, global_reservation_id, description, criteria)
 
         body_payload = reservation.xml(nsiconnection.reserve)
-        payload = minisoap.createSoapPayload(body_payload, header_payload)
+        payload = minisoap.createSoapPayload(body_payload, header_element)
 
         def _handleAck(soap_data):
             header, ack = helper.parseRequest(soap_data)
@@ -194,7 +196,8 @@ class RequesterClient:
 
         self._checkHeader(header)
 
-        header_element = helper.createHeader(header.requester_nsa, header.provider_nsa, reply_to=self.reply_to, correlation_id=header.correlation_id)
+        header_element = helper.createHeader(header.requester_nsa, header.provider_nsa, reply_to=self.reply_to, correlation_id=header.correlation_id,
+                                             session_security_attributes=header.session_security_attrs, connection_trace=header.connection_trace)
 
         query_type = nsiconnection.QueryType(connection_ids, global_reservation_ids)
         body_element = query_type.xml(nsiconnection.querySummary)
@@ -213,8 +216,8 @@ class RequesterClient:
             return [ helper.buildQuerySummaryResult(resv) for resv in query_confirmed.reservations ]
 
         # don't need to check header here
-
-        header_element = helper.createHeader(header.requester_nsa, header.provider_nsa, reply_to=self.reply_to, correlation_id=header.correlation_id)
+        header_element = helper.createHeader(header.requester_nsa, header.provider_nsa, reply_to=self.reply_to, correlation_id=header.correlation_id,
+                                             session_security_attributes=header.session_security_attrs, connection_trace=header.connection_trace)
 
         query_type = nsiconnection.QueryType(connection_ids, global_reservation_ids)
         body_element = query_type.xml(nsiconnection.querySummarySync)
