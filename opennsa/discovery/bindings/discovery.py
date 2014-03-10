@@ -28,32 +28,33 @@ class InterfaceType(object):
 
 
 class NsaType(object):
-    def __init__(self, id_, version, name, softwareVersion, startTime, location, networkId, interface, feature, peersWith, topologyReachability):
+    def __init__(self, id_, version, expires, name, softwareVersion, startTime, networkId, interface, feature, peersWith, other):
         self.id_ = id_  # anyURI
         self.version = version  # dateTime
+        self.expires = expires  # dateTime
         self.name = name  # string
         self.softwareVersion = softwareVersion  # string
         self.startTime = startTime  # dateTime
-        self.location = location  # LocationType
         self.networkId = networkId  # [ anyURI ]
         self.interface = interface  # [ InterfaceType ]
         self.feature = feature  # [ FeatureType ]
         self.peersWith = peersWith  # [ anyURI ]
-        self.topologyReachability = topologyReachability # [ (uri, int) ]
+        self.other = other  # [ HolderType ]
 
     @classmethod
     def build(self, element):
         return NsaType(
                 element.get('id'),
                 element.get('version'),
+                element.get('expires'),
                 element.findtext('name') if element.find('name') is not None else None,
                 element.findtext('softwareVersion') if element.find('softwareVersion') is not None else None,
                 element.findtext('startTime') if element.find('startTime') is not None else None,
-                LocationType.build(element.find('location')) if element.find('location') is not None else None,
                 element.findtext('networkId') if element.find('networkId') is not None else None,
                 [ InterfaceType.build(e) for e in element.findall('interface') ] if element.find('interface') is not None else None,
                 [ FeatureType.build(e) for e in element.findall('feature') ] if element.find('feature') is not None else None,
-                element.findtext('peersWith') if element.find('peersWith') is not None else None
+                element.findtext('peersWith') if element.find('peersWith') is not None else None,
+                [ HolderType.build(e) for e in element.findall('other') ] if element.find('other') is not None else None
                )
 
     def xml(self, elementName):
@@ -64,8 +65,6 @@ class NsaType(object):
             ET.SubElement(r, 'softwareVersion').text = self.softwareVersion
         if self.startTime is not None:
             ET.SubElement(r, 'startTime').text = str(self.startTime)
-        if self.location is not None:
-            r.append(self.location.xml('location'))
         if self.networkId is not None:
             for el in self.networkId:
                 ET.SubElement(r, 'networkId').text = str(el)
@@ -78,10 +77,8 @@ class NsaType(object):
         if self.peersWith is not None:
             for el in self.peersWith:
                 ET.SubElement(r, 'peersWith').text = str(el)
-        if self.topologyReachability not in (None, []):
-            tr = ET.SubElement(r, topology_reachability)
-            for uri, cost in self.topologyReachability:
-                ET.SubElement(tr, nml_topology, attrib={'id':uri, 'cost':str(cost)})
+        if self.other is not None:
+            r.append( self.other.xml('other') )
         return r
 
 
@@ -103,16 +100,24 @@ class FeatureType(object):
         return r
 
 
-class LocationType(object):
-    def __init__(self):
-        pass
+class HolderType(object):
+    def __init__(self, topologyReachability):
+        self.topologyReachability = topologyReachability # [ (uri, int) ]
+
 
     @classmethod
     def build(self, element):
-        return LocationType( )
+        return HolderType(
+                element.findtext('peersWith') if element.find('peersWith') is not None else None,
+               )
 
     def xml(self, elementName):
         r = ET.Element(elementName)
+        if self.topologyReachability is not None:
+            tr = ET.SubElement(r, topology_reachability)
+            for uri, cost in self.topologyReachability:
+                ET.SubElement(tr, nml_topology, attrib={'id':uri, 'cost':str(cost)})
+
         return r
 
 

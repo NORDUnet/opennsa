@@ -35,22 +35,25 @@ class DiscoveryService:
 
     def xml(self):
 
-        location = None # not supported yet
+        # location not really supported yet
         interface_types = [ discovery.InterfaceType(i[0], i[1], i[2]) for i in self.interfaces ]
         feature_types   = [ discovery.FeatureType(f[0], f[1]) for f in self.features ]
+        other = None
+        if self.topology_reachability:
+            other = discovery.HolderType(self.topology_reachability)
 
         nsa_element = discovery.NsaType(
             self.nsa_id,
             xmlhelper.createXMLTime(self.version),
+            None,
             self.name,
             self.software_version,
             xmlhelper.createXMLTime(self.start_time),
-            location,
             self.network_ids,
             interface_types,
             feature_types,
             self.peers_with,
-            self.topology_reachability
+            other,
            )
 
         e = nsa_element.xml(discovery.nsa)
