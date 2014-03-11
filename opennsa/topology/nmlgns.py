@@ -66,6 +66,14 @@ class RouteVectors:
 
     # -- vector stuff
 
+    def getProvider(self, topology_urn):
+
+        for nsa_urn, nsa_vector in self.vectors.items():
+            print 'tt', topology_urn, nsa_vector.topology_urns
+            if topology_urn in nsa_vector.topology_urns:
+                return nsa_urn
+
+
     def updateVector(self, nsa_urn, nsa_cost, topology_urns, vectors):
         # we need a way to keep the local topology urns out of this
 
