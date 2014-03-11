@@ -18,7 +18,7 @@ class NMLGNSTest(unittest.TestCase):
 
     def setUp(self):
 
-        self.rv = nmlgns.RouteVectors()
+        self.rv = nmlgns.RouteVectors( [] )
 
 
     def testBasicPathfindingVector(self):
@@ -40,4 +40,16 @@ class NMLGNSTest(unittest.TestCase):
 
         self.failUnlessEquals( self.rv.listVectors(),
                                { ARUBA_TOPO   : 1, BONAIRE_TOPO : 1, CURACAO_TOPO : 2 } )
+
+
+    def testLocalNetworkExclusion(self):
+
+        self.rv = nmlgns.RouteVectors( [ BONAIRE_TOPO ] )
+
+        self.rv.updateVector(ARUBA_NSA, 1, [ ARUBA_TOPO ], { BONAIRE_TOPO : 1 , CURACAO_TOPO : 2 } )
+
+        self.failUnlessEqual( self.rv.vector(ARUBA_TOPO),   ARUBA_NSA)
+        self.failUnlessEqual( self.rv.vector(BONAIRE_TOPO), None)
+        self.failUnlessEqual( self.rv.vector(CURACAO_TOPO), ARUBA_NSA)
+
 

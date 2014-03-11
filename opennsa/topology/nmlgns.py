@@ -40,7 +40,11 @@ class _NSAVector:
 
 class RouteVectors:
 
-    def __init__(self):
+    def __init__(self, local_networks):
+
+        # networks hosted by the nsa itself, we want these in the vectors (though currently not used for anything),
+        # but don't want to export/use them in reachability
+        self.local_networks = local_networks
 
         # this is a set of vectors we keep for each peer
         self.vectors = {} # nsa_urn -> _NSAVector
@@ -85,6 +89,8 @@ class RouteVectors:
             topo_vectors = nsa_vector.getVectors()
 
             for topo_urn, cost in topo_vectors.items():
+                if topo_urn in self.local_networks:
+                    continue # skip local networks
                 if not topo_urn in paths:
                     paths[topo_urn] = (nsa_urn, cost)
                 elif cost < paths[topo_urn]:

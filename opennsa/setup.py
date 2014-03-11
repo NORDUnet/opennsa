@@ -12,9 +12,9 @@ from twisted.application import internet, service as twistedservice
 from opennsa import __version__ as version
 
 from opennsa import config, logging, constants as cnt, nsa, provreg, database, aggregator, viewresource
-from opennsa.topology import nrmparser, nml, nmlgns, service as nmlservice, fetcher
+from opennsa.topology import nrmparser, nml, nmlgns, service as nmlservice
 from opennsa.protocols.shared import httplog
-from opennsa.discovery import service as discoveryservice
+from opennsa.discovery import service as discoveryservice, fetcher
 from opennsa.protocols import nsi2
 
 
@@ -130,8 +130,7 @@ class OpenNSAService(twistedservice.MultiService):
         topology.addNetwork(network_topology, ns_agent)
 
         # route vectors
-        route_vectors = nmlgns.RouteVectors()
-        route_vectors.updateVector(nsa_name, 0, [ network_name ], {})
+        route_vectors = nmlgns.RouteVectors( [ cnt.URN_OGF_PREFIX + network_name ] )
 
         # ssl/tls contxt
         if vc[config.TLS]:
@@ -188,9 +187,11 @@ class OpenNSAService(twistedservice.MultiService):
         features    = [ (cnt.FEATURE_AGGREGATOR, None), (cnt.FEATURE_UPA, None) ]
         peers_with  = [ ] # needs to be changed
         topology_reachability = [ ] # needs to be changed
-        ds = discoveryservice.DiscoveryService(ns_agent.urn(), now, name, opennsa_version, now, networks, interfaces, features, peers_with, topology_reachability)
+        ds = discoveryservice.DiscoveryService(ns_agent.urn(), now, name, opennsa_version, now, networks, interfaces, features, peers_with, route_vectors)
 
-        top_resource.children['NSI'].putChild(discovery_resource_name, ds.resource())
+        discovery_resource = ds.resource()
+        top_resource.children['NSI'].putChild(discovery_resource_name, discovery_resource)
+        route_vectors.callOnUpdate( lambda : discovery_resource.updateResource ( ds.xml() ))
 
         # view resource
         vr = viewresource.ConnectionListResource(aggr)

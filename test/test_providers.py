@@ -513,7 +513,7 @@ class AggregatorTest(GenericProviderTest, unittest.TestCase):
         self.topology = nml.Topology()
         self.topology.addNetwork(aruba_topo, self.provider_agent)
 
-        route_vectors = nmlgns.RouteVectors()
+        route_vectors = nmlgns.RouteVectors( [ cnt.URN_OGF_PREFIX + self.network ] )
         route_vectors.updateVector(self.provider_agent.identity, 0, [ self.network ], {})
 
         pr = provreg.ProviderRegistry( { self.provider_agent.urn() : self.backend }, {} )
@@ -578,7 +578,7 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
         self.topology = nml.Topology()
         self.topology.addNetwork(aruba_topo, self.provider_agent)
 
-        route_vectors = nmlgns.RouteVectors()
+        route_vectors = nmlgns.RouteVectors( [ cnt.URN_OGF_PREFIX + self.network ] )
         route_vectors.updateVector(self.provider_agent.identity, 0, [ self.network ], {})
 
         pr = provreg.ProviderRegistry( { self.provider_agent.urn() : self.backend }, {} )
