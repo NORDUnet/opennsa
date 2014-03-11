@@ -69,7 +69,6 @@ class RouteVectors:
     def getProvider(self, topology_urn):
 
         for nsa_urn, nsa_vector in self.vectors.items():
-            print 'tt', topology_urn, nsa_vector.topology_urns
             if topology_urn in nsa_vector.topology_urns:
                 return nsa_urn
 
