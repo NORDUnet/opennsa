@@ -1,7 +1,7 @@
 from zope.interface import implements
 
 from twisted.python import log
-from twisted.internet import defer
+from twisted.internet import defer, error
 
 from opennsa.interface import INSIRequester
 
@@ -22,7 +22,8 @@ QUERY_SUMMARY_SYNC_RESPONSE = 'query_summary_sync_response'
 def logError(err, message_type):
 
     log.msg('Error during %s request: %s' % (message_type, err.getErrorMessage()), system=LOG_SYSTEM)
-    log.err(err, system=LOG_SYSTEM)
+    if err.type not in [error.ConnectionRefusedError]: # occurs so often we don't want to look at it
+        log.err(err, system=LOG_SYSTEM)
 
 
 
