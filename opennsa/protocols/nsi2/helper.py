@@ -95,6 +95,12 @@ def parseRequest(soap_data):
         raise ValueError('Multiple headers specified in payload')
 
     header = nsiframework.parseElement(headers[0])
+    security_attributes = []
+    if header.sessionSecurityAttr:
+        for ssa in header.sessionSecurityAttr:
+            for attr in ssa.Attributes:
+                security_attributes.append( (attr.Name, attr.AttributeValue) )
+
     #if header.protocolVersion != cnt.CS2_SERVICE_TYPE:
     #    raise ValueError('Invalid protocol "%s". Only %s supported' % (header.protocolVersion, cnt.CS2_SERVICE_TYPE))
 
@@ -105,7 +111,8 @@ def parseRequest(soap_data):
     else:
         body = [ nsiconnection.parseElement(b) for b in bodies ]
 
-    nsi_header = nsa.NSIHeader(header.requesterNSA, header.providerNSA, header.correlationId, header.replyTo, connection_trace=header.connectionTrace)
+    nsi_header = nsa.NSIHeader(header.requesterNSA, header.providerNSA, header.correlationId, header.replyTo,
+                               session_security_attrs=security_attributes, connection_trace=header.connectionTrace)
 
     return nsi_header, body
 
