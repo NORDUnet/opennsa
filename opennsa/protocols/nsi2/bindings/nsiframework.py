@@ -99,7 +99,7 @@ class AttributeType(object):
                 element.get('Name'),
                 element.get('NameFormat'),
                 element.get('FriendlyName'),
-                None
+                [ element[0].text if len(element) > 0 else None ]
                )
 
     def xml(self, elementName):
