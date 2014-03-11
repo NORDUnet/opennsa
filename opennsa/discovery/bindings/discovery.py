@@ -50,7 +50,7 @@ class NsaType(object):
                 element.findtext('name') if element.find('name') is not None else None,
                 element.findtext('softwareVersion') if element.find('softwareVersion') is not None else None,
                 element.findtext('startTime') if element.find('startTime') is not None else None,
-                element.findtext('networkId') if element.find('networkId') is not None else None,
+                [ e.text for e in element.findall('networkId') ] if element.find('networkId') is not None else [],
                 [ InterfaceType.build(e) for e in element.findall('interface') ] if element.find('interface') is not None else None,
                 [ FeatureType.build(e) for e in element.findall('feature') ] if element.find('feature') is not None else None,
                 element.findtext('peersWith') if element.find('peersWith') is not None else None,
@@ -102,22 +102,42 @@ class FeatureType(object):
 
 class HolderType(object):
     def __init__(self, topologyReachability):
-        self.topologyReachability = topologyReachability # [ (uri, int) ]
+        self.topologyReachability = topologyReachability # [ Topology ]
 
 
     @classmethod
     def build(self, element):
         return HolderType(
-                element.findtext('peersWith') if element.find('peersWith') is not None else None,
+                [ Topology.build(e) for e in element.find(str(topology_reachability)) ] if element.find(str(topology_reachability)) is not None else None
                )
 
     def xml(self, elementName):
         r = ET.Element(elementName)
-        if self.topologyReachability is not None:
-            tr = ET.SubElement(r, topology_reachability)
-            for uri, cost in self.topologyReachability:
-                ET.SubElement(tr, nml_topology, attrib={'id':uri, 'cost':str(cost)})
+        if self.topologyReachability:
+            e = ET.SubElement(r, topology_reachability)
+            for t in self.topologyReachability:
+                e.append( t.xml(nml_topology) )
+        return r
 
+
+
+# Created manually
+class Topology:
+
+    def __init__(self, uri, cost):
+        self.uri = uri   # string
+        self.cost = cost # int
+
+
+    @classmethod
+    def build(self, element):
+        return Topology(
+                element.attrib.get('id'),
+                int( element.attrib.get('cost') )
+               )
+
+    def xml(self, elementName):
+        r = ET.Element(elementName, attrib={'id':self.uri, 'cost':str(self.cost) } )
         return r
 
 

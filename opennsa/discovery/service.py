@@ -14,12 +14,16 @@ from opennsa.shared import xmlhelper, modifiableresource
 from opennsa.discovery.bindings import discovery
 
 
+ET.register_namespace('nsi', discovery.NSI_DISCOVERY_NS)
+ET.register_namespace('gns', discovery.GNS_NS)
+
+
 
 class DiscoveryService:
 
     def __init__(self, nsa_id, version=None, name=None, software_version=None, start_time=None,
                  network_ids=None, interfaces=None, features=None, peers_with=None,
-                 topology_reachability=None):
+                 route_vectors=None):
 
         self.nsa_id                 = nsa_id                # string
         self.version                = version               # datetime
@@ -30,7 +34,7 @@ class DiscoveryService:
         self.interfaces             = interfaces            # [ (type, url, described_by) ]
         self.features               = features              # [ (type, value) ]
         self.peers_with             = peers_with            # [ string ]
-        self.topology_reachability  = topology_reachability # [ ( string, int ) ]
+        self.route_vectors          = route_vectors         # nmlgns.RouteVectors
 
 
     def xml(self):
@@ -38,9 +42,7 @@ class DiscoveryService:
         # location not really supported yet
         interface_types = [ discovery.InterfaceType(i[0], i[1], i[2]) for i in self.interfaces ]
         feature_types   = [ discovery.FeatureType(f[0], f[1]) for f in self.features ]
-        other = None
-        if self.topology_reachability:
-            other = discovery.HolderType(self.topology_reachability)
+        other = discovery.HolderType( [ discovery.Topology(t,c) for (t,c) in self.route_vectors.listVectors().items() ] )
 
         nsa_element = discovery.NsaType(
             self.nsa_id,
@@ -59,7 +61,6 @@ class DiscoveryService:
         e = nsa_element.xml(discovery.nsa)
         payload = ET.tostring(e, 'utf-8')
         return payload
-
 
 
     def resource(self):
