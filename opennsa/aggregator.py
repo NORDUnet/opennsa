@@ -288,9 +288,9 @@ class Aggregator:
             ports = self.network_topology.findPorts(True)
             demarc_ports = []
             for p in ports:
-                if p.outbound_port.remote_port is None or p.inbound_port.remote_port is None:
+                if p.remote_port is None:
                     continue # filter out local termination ports
-                if p.outbound_port.remote_port.startswith(remote_stp.network) and p.inbound_port.remote_port.startswith(remote_stp.network):
+                if p.remote_port.startswith(remote_stp.network): # not quite correct, but should work
                     demarc_ports.append(p)
 
             if not demarc_ports:
@@ -298,13 +298,11 @@ class Aggregator:
 
             ldp = demarc_ports[0] # most of the time we will only have one anyway, should iterate and build multiple paths
 
-            rd = self.topology.findDemarcationPort(ldp)
-            if not rd:
-                raise error.ConnectionCreateError('Could not find a demarction port for port %s' % ldp)
-            rdn, rdp = rd
+            local_demarc_port  = ldp.id_.rsplit(':', 1)[1]
+            remote_demarc_port = ldp.remote_port.rsplit(':', 1)[1]
 
-            paths = [ [ nsa.Link(local_stp.network, local_stp.port, ldp.id_, local_stp.label, ldp.label()),
-                        nsa.Link(remote_stp.network, rdp, remote_stp.port, ldp.label(), remote_stp.label) ] ] # the ldp label here isn't quite correct
+            paths = [ [ nsa.Link(local_stp.network, local_stp.port, local_demarc_port, local_stp.label, ldp.label()),
+                        nsa.Link(remote_stp.network, remote_demarc_port, remote_stp.port, ldp.label(), remote_stp.label) ] ] # the ldp label here isn't quite correct
 
 
         selected_path = paths[0] # shortest path
@@ -312,19 +310,22 @@ class Aggregator:
         log.msg('Attempting to create path %s' % log_path, system=LOG_SYSTEM)
 
         for link in selected_path:
-            try:
-                self.topology.getNSA(link.network)
-            except error.TopologyError:
-                raise error.ConnectionCreateError('No provider for network %s. Cannot create link' % link.network)
+            if link.network == self.network:
+                continue # we got this..
+            p = self.route_vectors.getProvider( cnt.URN_OGF_PREFIX + link.network )
+            if p is None:
+                raise error.ConnectionCreateError('No provider for network %s. Cannot create link.' % link.network)
 
         conn_info = []
         for idx, link in enumerate(selected_path):
 
-            provider_nsa = self.topology.getNSA(link.network)
-            provider     = self.getProvider(provider_nsa.urn())
+            if link.network == self.network:
+                provider_urn = self.nsa_.urn()
+            else:
+                provider_urn = cnt.URN_OGF_PREFIX + self.route_vectors.getProvider( cnt.URN_OGF_PREFIX + link.network )
 
             conn_trace = header.connection_trace or [] + [ self.nsa_.urn() + ':' + conn.connection_id ]
-            c_header = nsa.NSIHeader(self.nsa_.urn(), provider_nsa.urn(), connection_trace=conn_trace)
+            c_header = nsa.NSIHeader(self.nsa_.urn(), provider_urn, connection_trace=conn_trace)
 
             # this has to be done more generic sometime
             sd = nsa.Point2PointService(nsa.STP(link.network, link.src_port, link.src_label),
@@ -333,7 +334,7 @@ class Aggregator:
 
             # save info for db saving
             self.reservations[c_header.correlation_id] = {
-                                                        'provider_nsa'  : provider_nsa.urn(),
+                                                        'provider_nsa'  : provider_urn,
                                                         'service_connection_id' : conn.id,
                                                         'order_id'       : idx,
                                                         'source_network' : link.network,
@@ -343,8 +344,9 @@ class Aggregator:
 
             crt = nsa.Criteria(criteria.revision, criteria.schedule, sd)
 
+            provider = self.getProvider(provider_urn)
             d = provider.reserve(c_header, None, conn.global_reservation_id, conn.description, crt)
-            conn_info.append( (d, provider_nsa) )
+            conn_info.append( (d, provider_urn) )
 
             # Don't bother trying to save connection here, wait for reserveConfirmed
 
@@ -379,15 +381,15 @@ class Aggregator:
             # currently we don't try and be too clever about cleaning, just do it, and switch state
             yield state.terminating(conn)
             defs = []
-            reserved_connections = [ (sc_id, provider_nsa) for (success,sc_id),(_,provider_nsa) in zip(results, conn_info) if success ]
-            for (sc_id, provider_nsa) in reserved_connections:
+            reserved_connections = [ (sc_id, provider_urn) for (success,sc_id),(_,provider_urn) in zip(results, conn_info) if success ]
+            for (sc_id, provider_urn) in reserved_connections:
 
-                provider = self.getProvider(provider_nsa.urn())
-                t_header = nsa.NSIHeader(self.nsa_.urn(), provider_nsa.urn())
+                provider = self.getProvider(provider_urn)
+                t_header = nsa.NSIHeader(self.nsa_.urn(), provider_urn)
 
                 d = provider.terminate(t_header, sc_id)
                 d.addCallbacks(
-                    lambda c : log.msg('Succesfully terminated sub connection %s at %s after partial reservation failure.' % (sc_id, provider_nsa.urn()) , system=LOG_SYSTEM),
+                    lambda c : log.msg('Succesfully terminated sub connection %s at %s after partial reservation failure.' % (sc_id, provider_urn) , system=LOG_SYSTEM),
                     lambda f : log.msg('Error terminating connection after partial-reservation failure: %s' % str(f), system=LOG_SYSTEM)
                 )
                 defs.append(d)
