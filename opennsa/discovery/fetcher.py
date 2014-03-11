@@ -9,6 +9,7 @@ from twisted.application import service
 from opennsa import nsa, constants as cnt
 from opennsa.protocols.shared import httpclient
 from opennsa.discovery.bindings import discovery
+from opennsa.topology.nmlxml import _baseName # nasty but I need it
 
 
 LOG_SYSTEM = 'discovery.Fetcher'
@@ -74,7 +75,7 @@ class FetcherService(service.Service):
                 log.msg('NSA description does not have CS interface url, discarding description', system=LOG_SYSTEM)
                 return
 
-            nsi_agent = nsa.NetworkServiceAgent(nsa_id, cs_service_url, cnt.CS2_SERVICE_TYPE)
+            nsi_agent = nsa.NetworkServiceAgent( _baseName(nsa_id), cs_service_url, cnt.CS2_SERVICE_TYPE)
             self.provider_registry.spawnProvider(nsi_agent)
 
             vectors = {}
@@ -83,7 +84,7 @@ class FetcherService(service.Service):
                     for tr in other.topologyReachability:
                         vectors[tr.uri] = tr.cost
 
-            self.route_vectors.updateVector(nsa_id, peer.cost, nsa_description.networkId, vectors )
+            self.route_vectors.updateVector(_baseName(nsa_id), peer.cost, nsa_description.networkId, vectors )
 
             # there is lots of other stuff in the nsa description but we don't really use it
 
