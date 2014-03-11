@@ -85,7 +85,7 @@ class InternalPort(Port):
 
 class BidirectionalPort(object):
 
-    def __init__(self, id_, name, inbound_port, outbound_port):
+    def __init__(self, id_, name, inbound_port, outbound_port, remote_port=None):
         assert type(id_) is str, 'Port id must be a string'
         assert type(name) is str, 'Port name must be a string'
         assert isinstance(inbound_port, Port), 'Inbound port must be a <Port>'
@@ -97,6 +97,7 @@ class BidirectionalPort(object):
         self.name = name
         self.inbound_port  = inbound_port
         self.outbound_port = outbound_port
+        self.remote_port   = remote_port # hack on!
 
 
     def isBidirectional(self):

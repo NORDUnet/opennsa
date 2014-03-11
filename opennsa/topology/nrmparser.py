@@ -115,13 +115,15 @@ def parsePortSpec(source, network_name):
 
         if port_type == BIDRECTIONAL_ETHERNET:
             if remote_network is None:
-                remote_in  = None
-                remote_out = None
+                remote_bd_port  = None
+                remote_in       = None
+                remote_out      = None
             else:
                 if not in_suffix or not out_suffix:
                     raise NRMSpecificationError('Suffix not defined for bidirectional port %s' % port_name)
-                remote_in  = remote_network + ':' + remote_port + in_suffix
-                remote_out = remote_network + ':' + remote_port + out_suffix
+                remote_bd_port  = remote_network + ':' + remote_port
+                remote_in       = remote_network + ':' + remote_port + in_suffix
+                remote_out      = remote_network + ':' + remote_port + out_suffix
 
             inbound_port_name   = port_name + '-in'
             outbound_port_name  = port_name + '-out'
@@ -132,7 +134,7 @@ def parsePortSpec(source, network_name):
 
             inbound_port        = nml.InternalPort(inbound_port_id,  inbound_port_name,  bandwidth, label, remote_out)
             outbound_port       = nml.InternalPort(outbound_port_id, outbound_port_name, bandwidth, label, remote_in)
-            bidirectional_port  = nml.BidirectionalPort(port_id, port_name, inbound_port, outbound_port)
+            bidirectional_port  = nml.BidirectionalPort(port_id, port_name, inbound_port, outbound_port, remote_bd_port)
 
             inbound_ports.append(inbound_port)
             outbound_ports.append(outbound_port)
