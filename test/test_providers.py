@@ -158,7 +158,7 @@ class GenericProviderTest:
 
         source_stp  = nsa.STP(self.network, self.source_port, nsa.Label(cnt.ETHERNET_VLAN, '1782') )
         dest_stp    = nsa.STP('NoSuchNetwork:topology', 'whatever', nsa.Label(cnt.ETHERNET_VLAN, '1782') )
-        criteria    = nsa.Criteria(0, self.schedule, nsa.Point2PointService(source_stp, dest_stp, 200, 'bidirectional', False, None) )
+        criteria    = nsa.Criteria(0, self.schedule, nsa.Point2PointService(source_stp, dest_stp, 200, 'Bidirectional', False, None) )
 
         self.header.newCorrelationId()
         try:
