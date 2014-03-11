@@ -835,18 +835,21 @@ class Aggregator:
     @defer.inlineCallbacks
     def reserveTimeout(self, header, connection_id, notification_id, timestamp, timeout_value, org_connection_id, org_nsa):
 
-        #sub_conn = yield self.findSubConnection(header.provider_nsa, connection_id)
+        log.msg("reserveTimeout from %s:%s" % (header.provider_nsa, connection_id), system=LOG_SYSTEM)
 
         sub_conn = yield self.getSubConnection(header.provider_nsa, connection_id)
+
+        yield state.reserveTimeout(sub_conn)
 
         conn = yield self.getConnectionByKey(sub_conn.service_connection_id)
         sub_conns = yield self.getSubConnectionsByConnectionKey(conn.id)
 
-        if len(sub_conns) == 1:
-            log.msg("reserveTimeout: One sub connection for connection %s, notifying" % conn.connection_id)
-            self.doTimeout(conn, timeout_value, org_connection_id, org_nsa)
+        if sum ( [ 1 if sc.reservation_state == state.RESERVE_TIMEOUT else 0 for sc in sub_conns ] ) == 1:
+            log.msg("Connection %s: reserveTimeout, first occurance, notifying parent" % conn.connection_id, system=LOG_SYSTEM)
+            header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn(), reply_to=conn.requester_url)
+            self.parent_requester.reserveTimeout(header, conn.connection_id, notification_id, timestamp, timeout_value, org_connection_id, org_nsa)
         else:
-            raise NotImplementedError('Cannot handle timeout for connection with more than one sub connection')
+            log.msg("Connection %s: reserveTimeout: Second or later reserveTimeout, not notifying parent" % conn.connection_id, system=LOG_SYSTEM)
 
 
     @defer.inlineCallbacks
