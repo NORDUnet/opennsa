@@ -122,7 +122,9 @@ class RequesterClient:
         schedule_type = nsiconnection.ScheduleType(schedule.start_time.replace(tzinfo=tzutc()).isoformat(),
                                                    schedule.end_time.replace(tzinfo=tzutc()).isoformat())
 
-        criteria = nsiconnection.ReservationRequestCriteriaType(criteria.revision, schedule_type, str(p2pservices.p2ps), service_def )
+        #service_type = str(p2pservices.p2ps)
+        service_type = 'http://services.ogf.org/nsi/2013/12/descriptions/EVTS.A-GOLE'
+        criteria = nsiconnection.ReservationRequestCriteriaType(criteria.revision, schedule_type, service_type, service_def)
 
         reservation = nsiconnection.ReserveType(connection_id, global_reservation_id, description, criteria)
 
