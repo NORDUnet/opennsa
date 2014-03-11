@@ -128,7 +128,7 @@ class Aggregator:
         def gotResult(connections):
             # we should get 0 or 1 here since connection id is unique
             if len(connections) == 0:
-                return defer.fail( error.ConnectionNonExistentError('No connection with id %s' % connection_id) )
+                return defer.fail( error.ConnectionNonExistentError('No connection with key %s' % connection_key) )
             conn = connections[0]
             return self.getConnection(conn.requester_nsa, conn.connection_id)
 
