@@ -118,8 +118,8 @@ class ProviderService:
         d = self.provider.reserve(header, reservation.connectionId, reservation.globalReservationId, reservation.description, crt)
 
         def createReserveAcknowledgement(connection_id):
-            soap_header = nsiframework.CommonHeaderType(cnt.CS2_SERVICE_TYPE, header.correlation_id, header.requester_nsa, header.provider_nsa, None, header.session_security_attrs)
-            soap_header_element = soap_header.xml(nsiframework.nsiHeader)
+            # no reply to / security attrs / trace
+            soap_header_element = helper.createHeader(header.requester_nsa, header.provider_nsa, None, header.correlation_id)
 
             reserve_response = nsiconnection.ReserveResponseType(connection_id)
             reserve_response_element = reserve_response.xml(nsiconnection.reserveResponse)

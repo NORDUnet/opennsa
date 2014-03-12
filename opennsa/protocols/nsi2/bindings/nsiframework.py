@@ -91,7 +91,7 @@ class AttributeType(object):
         self.Name = Name  # string
         self.NameFormat = NameFormat  # anyURI
         self.FriendlyName = FriendlyName  # string
-        self.AttributeValue = AttributeValue  # anyType
+        self.AttributeValue = AttributeValue  # [ string ] # technically anyType, but we don't use that
 
     @classmethod
     def build(self, element):
@@ -99,7 +99,7 @@ class AttributeType(object):
                 element.get('Name'),
                 element.get('NameFormat'),
                 element.get('FriendlyName'),
-                [ element[0].text if len(element) > 0 else None ]
+                [ e.text for e in element ] if len(element) > 0 else None
                )
 
     def xml(self, elementName):
@@ -109,8 +109,9 @@ class AttributeType(object):
         if self.FriendlyName is not None:
             attribs['FriendlyName'] = self.FriendlyName
         r = ET.Element(elementName, attribs)
-        #ET.SubElement(r, str(SecurityValue)).text = self.AttributeValue
-        ET.SubElement(r, str(AttributeValue)).text = self.AttributeValue
+        if self.AttributeValue:
+            for av in self.AttributeValue:
+                ET.SubElement(r, str(AttributeValue)).text = av
         return r
 
 

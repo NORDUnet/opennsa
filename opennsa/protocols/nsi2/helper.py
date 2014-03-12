@@ -39,13 +39,12 @@ LABEL_MAP = {
 
 
 
-def createHeader(requester_nsa_urn, provider_nsa_urn, session_security_attrs=None, reply_to=None, correlation_id=None,
-                 session_security_attributes=None, connection_trace=None):
+def createHeader(requester_nsa_urn, provider_nsa_urn, reply_to=None, correlation_id=None, session_security_attributes=None, connection_trace=None):
 
     ssats = []
     if session_security_attributes:
-        for at, av in session_security_attributes:
-            at = nsiframework.AttributeType(at, None, None, av)
+        for at, avs in session_security_attributes:
+            at = nsiframework.AttributeType(at, None, None, avs)
             ssats.append( nsiframework.SessionSecurityAttrType( [ at ] ) )
 
     header = nsiframework.CommonHeaderType(cnt.CS2_SERVICE_TYPE, correlation_id, requester_nsa_urn, provider_nsa_urn, reply_to, ssats, connection_trace)
@@ -55,8 +54,8 @@ def createHeader(requester_nsa_urn, provider_nsa_urn, session_security_attrs=Non
 
 def createGenericAcknowledgement(header):
 
-    soap_header = nsiframework.CommonHeaderType(cnt.CS2_SERVICE_TYPE, header.correlation_id, header.requester_nsa, header.provider_nsa, None, header.session_security_attrs)
-    soap_header_element = soap_header.xml(nsiframework.nsiHeader)
+    # we do not put reply to, security attributes or connection traces in the acknowledgement
+    soap_header_element = createHeader(header.requester_nsa, header.provider_nsa, correlation_id=header.correlation_id)
 
     generic_confirm = nsiconnection.GenericAcknowledgmentType()
     generic_confirm_element = generic_confirm.xml(nsiconnection.acknowledgment)

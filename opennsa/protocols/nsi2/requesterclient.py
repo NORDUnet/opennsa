@@ -47,8 +47,8 @@ class RequesterClient:
 
     def _createGenericRequestType(self, body_element_name, header, connection_id):
 
-        header_element = helper.createHeader(header.requester_nsa, header.provider_nsa, reply_to=self.reply_to, correlation_id=header.correlation_id,
-                                             session_security_attributes=header.session_security_attrs, connection_trace=header.connection_trace)
+        header_element = helper.createHeader(header.requester_nsa, header.provider_nsa, self.reply_to, header.correlation_id,
+                                             header.session_security_attrs, header.connection_trace)
 
         body_element = nsiconnection.GenericRequestType(connection_id).xml(body_element_name)
 

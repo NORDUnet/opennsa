@@ -113,7 +113,8 @@ class SecurityAttributeOptions(usage.Options):
             for kv_split in self[options.SECURITY_ATTRIBUTES].split(','):
                 if not '=' in kv_split:
                     raise usage.UsageError('No = in key-value attribute %s' % kv_split)
-                key_values.append( kv_split.split('=',1) )
+                key, value = kv_split.split('=',1)
+                key_values.append( (key, [value]) )
             self[options.SECURITY_ATTRIBUTES] = key_values
 
 class BandwidthOption(usage.Options):

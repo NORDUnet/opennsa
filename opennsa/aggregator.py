@@ -325,7 +325,7 @@ class Aggregator:
                 provider_urn = cnt.URN_OGF_PREFIX + self.route_vectors.getProvider( cnt.URN_OGF_PREFIX + link.network )
 
             conn_trace = header.connection_trace or [] + [ self.nsa_.urn() + ':' + conn.connection_id ]
-            c_header = nsa.NSIHeader(self.nsa_.urn(), provider_urn, connection_trace=conn_trace)
+            c_header = nsa.NSIHeader(self.nsa_.urn(), provider_urn, session_security_attrs=header.session_security_attrs, connection_trace=conn_trace)
 
             # this has to be done more generic sometime
             sd = nsa.Point2PointService(nsa.STP(link.network, link.src_port, link.src_label),
@@ -385,7 +385,7 @@ class Aggregator:
             for (sc_id, provider_urn) in reserved_connections:
 
                 provider = self.getProvider(provider_urn)
-                t_header = nsa.NSIHeader(self.nsa_.urn(), provider_urn)
+                t_header = nsa.NSIHeader(self.nsa_.urn(), provider_urn, session_security_attrs=header.session_security_attrs)
 
                 d = provider.terminate(t_header, sc_id)
                 d.addCallbacks(
@@ -420,7 +420,7 @@ class Aggregator:
         for sc in sub_connections:
             # we assume a provider is available
             provider = self.getProvider(sc.provider_nsa)
-            req_header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa)
+            req_header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa, session_security_attrs=header.session_security_attrs)
             # we should probably mark as committing before sending message...
             d = provider.reserveCommit(req_header, sc.connection_id)
             defs.append(d)
@@ -458,7 +458,7 @@ class Aggregator:
         for sc in sub_connections:
             save_defs.append( state.reserveAbort(sc) )
             provider = self.getProvider(sc.provider_nsa)
-            header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa)
+            header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa, session_security_attrs=header.session_security_attrs)
             d = provider.reserveAbort(header, sc.connection_id)
             defs.append(d)
 
@@ -501,7 +501,7 @@ class Aggregator:
 
         for sc in sub_connections:
             provider = self.getProvider(sc.provider_nsa)
-            header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa)
+            header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa, session_security_attrs=header.session_security_attrs)
             d = provider.provision(header, sc.connection_id)
             defs.append(d)
 
@@ -540,7 +540,7 @@ class Aggregator:
 
         for sc in sub_connections:
             provider = self.getProvider(sc.provider_nsa)
-            header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa)
+            header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa, session_security_attrs=header.session_security_attrs)
             d = provider.release(header, sc.connection_id)
             defs.append(d)
 
@@ -577,7 +577,7 @@ class Aggregator:
         for sc in sub_connections:
             # we assume a provider is available
             provider = self.getProvider(sc.provider_nsa)
-            header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa)
+            header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa, session_security_attrs=header.session_security_attrs)
             d = provider.terminate(header, sc.connection_id)
             defs.append(d)
 
