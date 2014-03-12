@@ -29,9 +29,11 @@ def shortLabel(label):
 
     if '}' in label.type_:
         name = label.type_.split('}',1)[1]
+    elif '#' in label.type_:
+        name = label.type_.split('#',1)[1]
     else:
         name = label.type_
-    return name + ':' + label.labelValue()
+    return name + '=' + label.labelValue()
 
 
 def _buildErrorMessage(connection_id, action, results):
@@ -254,7 +256,7 @@ class Aggregator:
 
         if conn.source_network == self.network and conn.dest_network == self.network:
             path_info = ( conn.connection_id, self.network, conn.source_port, shortLabel(conn.source_label), conn.dest_port, shortLabel(conn.dest_label) )
-            log.msg('Connection %s: Local link creation: %s %s#%s -> %s#%s' % path_info, system=LOG_SYSTEM)
+            log.msg('Connection %s: Local link creation: %s %s?%s == %s?%s' % path_info, system=LOG_SYSTEM)
             paths = [ [ nsa.Link(self.network, conn.source_port, conn.dest_port, conn.source_label, conn.dest_label) ] ]
 
         else:

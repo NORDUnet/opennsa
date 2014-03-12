@@ -182,9 +182,9 @@ class STP(object): # Service Termination Point
 
 
     def __repr__(self):
-        base = '<STP %s %s' % (self.network, self.port)
+        base = '<STP %s:%s' % (self.network, self.port)
         if self.label:
-            base += ' ' + self.label.type_.split('#')[-1] + '=' + self.label.labelValue()
+            base += '?' + self.label.type_.split('#')[-1] + '=' + self.label.labelValue()
         return base + '>'
 
 
@@ -230,9 +230,9 @@ class Link(object): # intra network link
         if self.src_label:
             src_label_type = self.src_label.type_.split('#')[-1]
             dst_label_type = self.dst_label.type_.split('#')[-1]
-            return '<Link %s#%s=%s--%s#%s=%s>' % (src, src_label_type, self.src_label.labelValue(), dst, dst_label_type, self.dst_label.labelValue())
+            return '<Link %s?%s=%s == %s?%s=%s>' % (src, src_label_type, self.src_label.labelValue(), dst, dst_label_type, self.dst_label.labelValue())
         else:
-            return '<Link %s--%s>' % (src, dst)
+            return '<Link %s == %s>' % (src, dst)
 
 
 
