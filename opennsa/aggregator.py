@@ -613,7 +613,6 @@ class Aggregator:
             # largely copied from genericbackend, merge later
             reservations = []
             for c in conns:
-                sub_conns = yield self.getSubConnectionsByConnectionKey(c.id)
 
                 source_stp = nsa.STP(c.source_network, c.source_port, c.source_label)
                 dest_stp = nsa.STP(c.dest_network, c.dest_port, c.dest_label)
@@ -622,10 +621,14 @@ class Aggregator:
                 sd = nsa.Point2PointService(source_stp, dest_stp, c.bandwidth, cnt.BIDIRECTIONAL, False, None)
                 criteria = nsa.Criteria(c.revision, schedule, sd)
 
-                aggr_active     = all( [ sc.data_plane_active     for sc in sub_conns ] )
-                aggr_version    = max( [ sc.data_plane_version    for sc in sub_conns ] ) or 0 # can be None otherwise
-                aggr_consistent = all( [ sc.data_plane_consistent for sc in sub_conns ] )
-                data_plane_status = (aggr_active, aggr_version, aggr_consistent)
+                sub_conns = yield self.getSubConnectionsByConnectionKey(c.id)
+                if len(sub_conns) == 0: # apparently this can happen
+                    data_plane_status = (False, 0, False)
+                else:
+                    aggr_active     = all( [ sc.data_plane_active     for sc in sub_conns ] )
+                    aggr_version    = max( [ sc.data_plane_version    for sc in sub_conns ] ) or 0 # can be None otherwise
+                    aggr_consistent = all( [ sc.data_plane_consistent for sc in sub_conns ] )
+                    data_plane_status = (aggr_active, aggr_version, aggr_consistent)
 
                 states = (c.reservation_state, c.provision_state, c.lifecycle_state, data_plane_status)
                 t = ( c.connection_id, c.global_reservation_id, c.description, [ criteria ], c.requester_nsa, states, self.getNotificationId())
@@ -635,6 +638,7 @@ class Aggregator:
 
         except Exception as e:
             log.msg('Error during querySummary request: %s' % str(e), system=LOG_SYSTEM)
+            raise e
 
 
     def queryRecursive(self, header, connection_ids, global_reservation_ids):
