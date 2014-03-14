@@ -85,9 +85,10 @@ class Requester:
         return rd
 
 
-    def reserveConfirmed(self, header, connection_id, global_reservation_id, description, service_parameter):
+    def reserveConfirmed(self, header, connection_id, global_reservation_id, description, criteria):
 
-        self.triggerCall(header.provider_nsa, header.correlation_id, RESERVE, connection_id)
+        res = (connection_id, global_reservation_id, description, criteria)
+        self.triggerCall(header.provider_nsa, header.correlation_id, RESERVE, res)
 
 
     def reserveFailed(self, header, connection_id, connection_states, err):

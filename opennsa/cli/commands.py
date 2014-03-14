@@ -68,8 +68,10 @@ def reserveonly(client, nsi_header, src, dst, start_time, end_time, capacity, co
     crt = nsa.Criteria(0, schedule, service_def)
 
     try:
-        assigned_connection_id = yield client.reserve(nsi_header, connection_id, global_id, 'Test Connection', crt)
-        log.msg("Connection created and held. Id %s at %s" % (assigned_connection_id, nsi_header.provider_nsa))
+        connection_id, _,_,criteria  = yield client.reserve(nsi_header, connection_id, global_id, 'Test Connection', crt)
+        sd = criteria.service_def[0]
+        log.msg("Connection created and held. Id %s at %s" % (connection_id, nsi_header.provider_nsa))
+        log.msg("Source - Destination: %s - %s" % (sd.source_stp, sd.dest_stp))
 
     except error.NSIError, e:
         log.msg('Error reserving, %s: %s' % (e.__class__.__name__, str(e)))
@@ -83,9 +85,12 @@ def reserve(client, nsi_header, src, dst, start_time, end_time, capacity, connec
     crt = nsa.Criteria(0, schedule, service_def)
 
     try:
-        assigned_connection_id = yield client.reserve(nsi_header, connection_id, global_id, 'Test Connection', crt)
-        log.msg("Connection created and held. Id %s at %s" % (assigned_connection_id, nsi_header.provider_nsa))
-        yield client.reserveCommit(nsi_header, assigned_connection_id)
+        connection_id, global_reservation_id, description, criteria = yield client.reserve(nsi_header, connection_id, global_id, 'Test Connection', crt)
+        log.msg("Connection created and held. Id %s at %s" % (connection_id, nsi_header.provider_nsa))
+        log.msg("Source - Destination: %s - %s" % (sd.source_stp, sd.dest_stp))
+
+        nsi_header.newCorrelationId()
+        yield client.reserveCommit(nsi_header, connection_id)
         log.msg("Reservation committed at %s" % nsi_header.provider_nsa)
 
     except error.NSIError, e:
@@ -100,10 +105,13 @@ def reserveprovision(client, nsi_header, src, dst, start_time, end_time, capacit
     crt = nsa.Criteria(0, schedule, service_def)
 
     try:
-        assigned_connection_id = yield client.reserve(nsi_header, connection_id, global_id, 'Test Connection', crt)
-        log.msg("Connection created and held. Id %s at %s" % (assigned_connection_id, nsi_header.provider_nsa))
+        connection_id, _,_, criteria = yield client.reserve(nsi_header, connection_id, global_id, 'Test Connection', crt)
+        sd = criteria.service_def[0]
+        log.msg("Connection created and held. Id %s at %s" % (connection_id, nsi_header.provider_nsa))
+        log.msg("Source - Destination: %s - %s" % (sd.source_stp, sd.dest_stp))
+
         nsi_header.newCorrelationId()
-        yield client.reserveCommit(nsi_header, assigned_connection_id)
+        yield client.reserveCommit(nsi_header, connection_id)
         log.msg("Connection committed at %s" % nsi_header.provider_nsa)
     except error.NSIError, e:
         log.msg('Error reserving, %s : %s' % (e.__class__.__name__, str(e)))
@@ -111,15 +119,15 @@ def reserveprovision(client, nsi_header, src, dst, start_time, end_time, capacit
 
     try:
         nsi_header.newCorrelationId()
-        qr = yield client.querySummary(nsi_header, connection_ids=[assigned_connection_id] )
+        qr = yield client.querySummary(nsi_header, connection_ids=[connection_id] )
         print "QR", qr
     except error.NSIError, e:
-        log.msg('Error querying %s, %s : %s' % (assigned_connection_id, e.__class__.__name__, str(e)))
+        log.msg('Error querying %s, %s : %s' % (connection_id, e.__class__.__name__, str(e)))
 
     try:
         nsi_header.newCorrelationId()
-        yield client.provision(nsi_header, assigned_connection_id)
-        log.msg('Connection %s provisioned' % assigned_connection_id)
+        yield client.provision(nsi_header, connection_id)
+        log.msg('Connection %s provisioned' % connection_id)
     except error.NSIError, e:
         log.msg('Error provisioning, %s : %s' % (e.__class__.__name__, str(e)))
 
@@ -139,10 +147,13 @@ def rprt(client, nsi_header, src, dst, start_time, end_time, capacity, connectio
     crt = nsa.Criteria(0, schedule, service_def)
 
     try:
-        assigned_connection_id = yield client.reserve(nsi_header, connection_id, global_id, 'Test Connection', crt)
-        log.msg("Connection created and held. Id %s at %s" % (assigned_connection_id, nsi_header.provider_nsa))
+        connection_id, _,_, criteria = yield client.reserve(nsi_header, connection_id, global_id, 'Test Connection', crt)
+        sd = criteria.service_def[0]
+        log.msg("Connection created and held. Id %s at %s" % (connection_id, nsi_header.provider_nsa))
+        log.msg("Source - Destination: %s - %s" % (sd.source_stp, sd.dest_stp))
+
         nsi_header.newCorrelationId()
-        yield client.reserveCommit(nsi_header, assigned_connection_id)
+        yield client.reserveCommit(nsi_header, connection_id)
         log.msg("Connection committed at %s" % nsi_header.provider_nsa)
     except error.NSIError, e:
         log.msg('Error reserving %s, %s : %s' % (connection_id, e.__class__.__name__, str(e)))
@@ -150,26 +161,26 @@ def rprt(client, nsi_header, src, dst, start_time, end_time, capacity, connectio
 
     try:
         nsi_header.newCorrelationId()
-        yield client.provision(nsi_header, assigned_connection_id)
-        log.msg('Connection %s provisioned' % assigned_connection_id)
+        yield client.provision(nsi_header, connection_id)
+        log.msg('Connection %s provisioned' % connection_id)
     except error.NSIError, e:
-        log.msg('Error provisioning %s, %s : %s' % (assigned_connection_id, e.__class__.__name__, str(e)))
+        log.msg('Error provisioning %s, %s : %s' % (connection_id, e.__class__.__name__, str(e)))
         defer.returnValue(None)
 
     try:
         nsi_header.newCorrelationId()
-        yield client.release(nsi_header, assigned_connection_id)
-        log.msg('Connection %s released' % assigned_connection_id)
+        yield client.release(nsi_header, connection_id)
+        log.msg('Connection %s released' % connection_id)
     except error.NSIError, e:
-        log.msg('Error releasing %s, %s : %s' % (assigned_connection_id, e.__class__.__name__, str(e)))
+        log.msg('Error releasing %s, %s : %s' % (connection_id, e.__class__.__name__, str(e)))
         defer.returnValue(None)
 
     try:
         nsi_header.newCorrelationId()
-        yield client.terminate(nsi_header, assigned_connection_id)
-        log.msg('Connection %s terminated' % assigned_connection_id)
+        yield client.terminate(nsi_header, connection_id)
+        log.msg('Connection %s terminated' % connection_id)
     except error.NSIError, e:
-        log.msg('Error terminating %s, %s : %s' % (assigned_connection_id, e.__class__.__name__, str(e)))
+        log.msg('Error terminating %s, %s : %s' % (connection_id, e.__class__.__name__, str(e)))
         defer.returnValue(None)
 
 
