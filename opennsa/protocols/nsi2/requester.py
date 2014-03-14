@@ -74,9 +74,6 @@ class Requester:
 
     def reserve(self, header, connection_id, global_reservation_id, description, criteria):
 
-        if header.reply_to is not None:
-            log.msg('Reserve ignoring reply to', system=LOG_SYSTEM)
-
         def reserveRequestFailed(err):
             # invocation failed, so we error out immediately
             log.msg('Reserve invocation failed: %s' % err.getErrorMessage(), debug=True, system=LOG_SYSTEM)
