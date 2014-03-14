@@ -169,6 +169,33 @@ class GenericProviderTest:
 
 
     @defer.inlineCallbacks
+    def testLabelRangeMultiReservation(self):
+
+        source_stp  = nsa.STP(self.network, self.source_port, nsa.Label(cnt.ETHERNET_VLAN, '1781-1783') )
+        dest_stp    = nsa.STP(self.network, self.dest_port,   nsa.Label(cnt.ETHERNET_VLAN, '1781-1783') )
+        criteria    = nsa.Criteria(0, self.schedule, nsa.Point2PointService(source_stp, dest_stp, 100, 'Bidirectional', False, None) )
+
+        self.header.newCorrelationId()
+        acid = yield self.provider.reserve(self.header, None, None, None, criteria)
+        yield self.requester.reserve_defer
+
+        self.header.newCorrelationId()
+        yield self.provider.reserveCommit(self.header, acid)
+        yield self.requester.reserve_commit_defer
+
+        self.requester.reserve_defer        = defer.Deferred()
+        self.requester.reserve_commit_defer = defer.Deferred()
+
+        self.header.newCorrelationId()
+        acid2 = yield self.provider.reserve(self.header, None, None, None, criteria)
+        yield self.requester.reserve_defer
+
+        self.header.newCorrelationId()
+        yield self.provider.reserveCommit(self.header, acid2)
+        yield self.requester.reserve_commit_defer
+
+
+    @defer.inlineCallbacks
     def testDoubleReserve(self):
 
         self.header.newCorrelationId()
