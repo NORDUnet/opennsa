@@ -67,9 +67,6 @@ def reserveonly(client, nsi_header, src, dst, start_time, end_time, capacity, co
     service_def = _createP2PS(src, dst, capacity)
     crt = nsa.Criteria(0, schedule, service_def)
 
-    if connection_id:
-        log.msg("Connection id: %s  Global id: %s" % (connection_id, global_id))
-
     try:
         assigned_connection_id = yield client.reserve(nsi_header, connection_id, global_id, 'Test Connection', crt)
         log.msg("Connection created and held. Id %s at %s" % (assigned_connection_id, nsi_header.provider_nsa))
@@ -84,9 +81,6 @@ def reserve(client, nsi_header, src, dst, start_time, end_time, capacity, connec
     schedule = nsa.Schedule(start_time, end_time)
     service_def = _createP2PS(src, dst, capacity)
     crt = nsa.Criteria(0, schedule, service_def)
-
-    if connection_id or global_id:
-        log.msg("Connection id: %s  Global id: %s" % (connection_id, global_id))
 
     try:
         assigned_connection_id = yield client.reserve(nsi_header, connection_id, global_id, 'Test Connection', crt)
@@ -104,8 +98,6 @@ def reserveprovision(client, nsi_header, src, dst, start_time, end_time, capacit
     schedule = nsa.Schedule(start_time, end_time)
     service_def = _createP2PS(src, dst, capacity)
     crt = nsa.Criteria(0, schedule, service_def)
-
-    log.msg("Connection id: %s  Global id: %s" % (connection_id, global_id))
 
     try:
         assigned_connection_id = yield client.reserve(nsi_header, connection_id, global_id, 'Test Connection', crt)
@@ -146,8 +138,6 @@ def rprt(client, nsi_header, src, dst, start_time, end_time, capacity, connectio
     service_def = _createP2PS(src, dst, capacity)
     crt = nsa.Criteria(0, schedule, service_def)
 
-    log.msg("Connection id: %s  Global id: %s" % (connection_id, global_id))
-
     try:
         assigned_connection_id = yield client.reserve(nsi_header, connection_id, global_id, 'Test Connection', crt)
         log.msg("Connection created and held. Id %s at %s" % (assigned_connection_id, nsi_header.provider_nsa))
@@ -185,8 +175,6 @@ def rprt(client, nsi_header, src, dst, start_time, end_time, capacity, connectio
 
 @defer.inlineCallbacks
 def reservecommit(client, nsi_header, connection_id):
-
-    log.msg("Connection id: %s" % connection_id)
 
     try:
         yield client.reserveCommit(nsi_header, connection_id)
