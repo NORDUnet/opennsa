@@ -96,7 +96,7 @@ class RequesterService:
             print "ERO parsing in reserveConfirmed not implemented yet, full path will not be available"
 
         sd = nsa.Point2PointService(src_stp, dst_stp, p2ps.capacity, p2ps.directionality, p2ps.symmetricPath, None)
-        crt = nsa.Criteria(criteria.version, schedule, sd)
+        crt = nsa.Criteria(criteria.version, schedule, [sd])
 
         self.requester.reserveConfirmed(header, reservation.connectionId,  reservation.globalReservationId, reservation.description, crt)
 
