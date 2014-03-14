@@ -31,11 +31,11 @@ class DUDConnectionManager:
 
 
     def getResource(self, port, label_type, label_value):
-        return self.port_map[port]
+        return self.port_map[port] + ':' + str(label_value)
 
 
     def getTarget(self, port, label_type, label_value):
-        return self.port_map[port] + '#' + label_value
+        return self.port_map[port] + '#' + str(label_value)
 
 
     def createConnectionId(self, source_target, dest_target):

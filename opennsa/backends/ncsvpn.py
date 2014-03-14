@@ -149,7 +149,7 @@ class NCSVPNConnectionManager:
 
     def getResource(self, port, label_type, label_value):
         assert label_type in (None, cnt.ETHERNET_VLAN), 'Label must be None or VLAN'
-        return port # this contains router and port
+        return port + ':' + str(label_value) # port contains router and port
 
 
     def getTarget(self, port, label_type, label_value):
