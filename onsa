@@ -124,7 +124,7 @@ def doMain():
         requester_url   = REQUESTER_URL_BASE % (host, port)
         client_nsa      = nsa.NetworkServiceAgent(requester_nsa, requester_url)
 
-        log.msg("Requester URL: %s" % requester_url)
+        log.msg("Requester URL: %s" % requester_url, debug=True)
 
         nsi_header = nsa.NSIHeader(client_nsa.urn(), provider_nsa.urn(), reply_to=provider_nsa.endpoint, session_security_attrs=security_attributes)
 
