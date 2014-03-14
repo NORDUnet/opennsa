@@ -181,9 +181,7 @@ class ProviderService:
 
         def gotReservations(reservations):
             # do reply inline
-            soap_header = nsiframework.CommonHeaderType(cnt.CS2_SERVICE_TYPE, header.correlation_id, header.requester_nsa, header.provider_nsa, None, header.session_security_attrs)
-            soap_header_element = soap_header.xml(nsiframework.nsiHeader)
-
+            soap_header_element = helper.createHeader(header.requester_nsa, header.provider_nsa)
             qs_reservations = helper.buildQuerySummaryResultType(reservations)
             qssc = nsiconnection.QuerySummaryConfirmedType(qs_reservations)
 
