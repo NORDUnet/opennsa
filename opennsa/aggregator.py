@@ -904,10 +904,10 @@ class Aggregator:
         sub_conns = yield self.getSubConnectionsByConnectionKey(conn.id)
 
         if len(sub_conns) == 1:
-            log.msg("errorEvent: One sub connection for connection %s, notifying" % conn.connection_id)
+            log.msg("errorEvent: One sub connection for connection %s, notifying" % conn.connection_id, system=LOG_SYSTEM)
             self.doErrorEvent(conn, notification_id, event, info, service_ex)
         else:
-            raise NotImplementedError('Cannot handle timeout for connection with more than one sub connection')
+            raise NotImplementedError('Cannot handle errorEvent for connection with more than one sub connection')
 
 
     def querySummaryConfirmed(self, header, summary_results):
