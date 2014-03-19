@@ -42,6 +42,7 @@ class RequesterService:
 #        actions.QUERY_NOTIFICATION_FAILED
 
         # notifications
+        soap_resource.registerDecoder(actions.ERROR,                    self.error)
         soap_resource.registerDecoder(actions.ERROR_EVENT,              self.errorEvent)
         soap_resource.registerDecoder(actions.DATA_PLANE_STATE_CHANGE,  self.dataPlaneStateChange)
         soap_resource.registerDecoder(actions.RESERVE_TIMEOUT,          self.reserveTimeout)
@@ -163,6 +164,26 @@ class RequesterService:
             reservations = [ helper.buildQuerySummaryResult(query_confirmed) ]
 
         self.requester.querySummaryConfirmed(header, reservations)
+
+        return helper.createGenericAcknowledgement(header)
+
+
+    def error(self, soap_data):
+
+        header, error = helper.parseRequest(soap_data)
+        se = error.serviceException
+        # service exception fields, we are not quite there yet...
+        # nsaId  # NsaIdType -> anyURI
+        # connectionId  # ConnectionIdType -> string
+        # serviceType  # string
+        # errorId  # string
+        # text  # string
+        # variables  # [ TypeValuePairType ]
+        # childException  # [ ServiceException ]
+        variables = [ (tvp.type, tvp.value) for tvp in se.variables ]
+        child_ex = None
+
+        self.requester.error(header, se.nsaId, se.connectionId, se.serviceType, se.errorId, se.text, variables, child_ex)
 
         return helper.createGenericAcknowledgement(header)
 

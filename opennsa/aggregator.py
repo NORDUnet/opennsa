@@ -893,6 +893,24 @@ class Aggregator:
 
         self.parent_requester.dataPlaneStateChange(header, conn.connection_id, 0, now, data_plane_status)
 
+    #@defer.inlineCallbacks
+    def error(self, header, nsa_id, connection_id, service_type, error_id, text, variables, child_ex):
+
+        log.msg("errorEvent: Connection %s from %s: %s, %s" % (connection_id, nsa_id, text, str(variables)), system=LOG_SYSTEM)
+
+        if header.provider_nsa != nsa_id:
+            log.msg("errorEvent: NSA Id for error is different from provider (provider: %s, nsa: %s, cannot handle error, due to protocol design issue." % \
+                    (header.provider_nsa, nsa_id), system=LOG_SYSTEM)
+            return
+            #defer.returnValue(None)
+
+        # do we need to do anything here?
+        #sub_conn = yield self.getSubConnection(header.provider_nsa, connection_id)
+        #conn = yield self.getConnectionByKey(sub_conn.service_connection_id)
+
+        # this is wrong....
+        self.parent_requester.error(header, nsa_id, connection_id, service_type, error_id, text, variables, None)
+
 
     @defer.inlineCallbacks
     def errorEvent(self, header, connection_id, notification_id, timestamp, event, info, service_ex):
