@@ -1,6 +1,4 @@
-# Fetches topology representations from other
-
-import StringIO
+# Fetches discovory documents from other nsas
 
 from twisted.python import log
 from twisted.internet import defer, task, reactor
@@ -30,7 +28,7 @@ class FetcherService(service.Service):
         self.provider_registry = provider_registry
         self.ctx_factory = ctx_factory
 
-        self.call = task.LoopingCall(self.fetchTopologies)
+        self.call = task.LoopingCall(self.fetchDocuments)
 
 
     def startService(self):
@@ -45,8 +43,8 @@ class FetcherService(service.Service):
         service.Service.stopService(self)
 
 
-    def fetchTopologies(self):
-        log.msg('Fetching %i topologies.' % len(self.peers), system=LOG_SYSTEM)
+    def fetchDocuments(self):
+        log.msg('Fetching %i documents.' % len(self.peers), system=LOG_SYSTEM)
 
         defs = []
         for peer in self.peers:
