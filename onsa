@@ -12,7 +12,7 @@ from opennsa.cli import options, parser, commands, logobserver
 
 
 CLI_DEFAULTS            = '.opennsa-cli'
-REQUESTER_URL_BASE      = 'http://%s:%i/NSI/services/ConnectionService'
+REQUESTER_URL_BASE      = '%s://%s:%i/NSI/services/ConnectionService'
 HELP_MESSAGE            = '%s: Try --help or <command> --help for usage details.'
 
 
@@ -119,16 +119,17 @@ def doMain():
         else:
             raise usage.UsageError('Neither topology file+network or service URL defined')
 
+        tls             = config.subOptions[options.TLS] or defaults.get(options.TLS) or False
+        scheme          = 'https' if tls else 'http'
         host            = config.subOptions[options.HOST]           or defaults.get(options.HOST)   or getHostname(provider_nsa)
-        port            = config.subOptions[options.PORT]           or defaults.get(options.PORT)   or 7080
-        requester_url   = REQUESTER_URL_BASE % (host, port)
+        port            = config.subOptions[options.PORT]           or defaults.get(options.PORT)   or (7443 if tls else 7080)
+
+        requester_url   = REQUESTER_URL_BASE % (scheme, host, port)
         client_nsa      = nsa.NetworkServiceAgent(requester_nsa, requester_url)
 
-        log.msg("Requester URL: %s" % requester_url, debug=True)
+        log.msg("Requester URL: %s" % requester_url)
 
         nsi_header = nsa.NSIHeader(client_nsa.urn(), provider_nsa.urn(), reply_to=provider_nsa.endpoint, session_security_attrs=security_attributes)
-
-        tls = config.subOptions[options.TLS] or defaults.get(options.TLS) or False
 
         # setup ssl context
         public_key          = config.subOptions[options.CERTIFICATE]        or defaults.get(options.CERTIFICATE)
