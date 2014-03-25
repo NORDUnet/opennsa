@@ -12,7 +12,7 @@ from opennsa.topology.nmlxml import _baseName # nasty but I need it
 
 LOG_SYSTEM = 'discovery.Fetcher'
 
-FETCH_INTERVAL = 1200 # seconds
+FETCH_INTERVAL = 3600 # seconds - 3600 seconds = 1 hour
 
 
 
