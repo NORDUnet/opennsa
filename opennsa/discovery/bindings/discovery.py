@@ -116,7 +116,7 @@ class HolderType(object):
         if self.topologyReachability:
             e = ET.SubElement(r, topology_reachability)
             for t in self.topologyReachability:
-                e.append('Topology')
+                e.append( t.xml('Topology') )
         return r
 
 
