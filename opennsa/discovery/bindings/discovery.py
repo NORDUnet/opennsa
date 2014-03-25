@@ -116,7 +116,8 @@ class HolderType(object):
         if self.topologyReachability:
             e = ET.SubElement(r, topology_reachability)
             for t in self.topologyReachability:
-                e.append( t.xml(nml_topology) )
+                e.append( t.xml(gns_topology) )
+                #e.append( t.xml(nml_topology) )
         return r
 
 
@@ -148,6 +149,7 @@ NML_NS = 'http://schemas.ogf.org/nml/2013/05/base#'
 
 nsa = ET.QName(NSI_DISCOVERY_NS, 'nsa')
 topology_reachability = ET.QName('{%s}TopologyReachability' % GNS_NS)
+gns_topology = ET.QName('{%s}Topology'   % GNS_NS)
 nml_topology = ET.QName('{%s}Topology'   % NML_NS)
 
 
