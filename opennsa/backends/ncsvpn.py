@@ -87,6 +87,27 @@ ETHERNET_VLAN_VPN_PAYLOAD_BASE = """
 """
 
 
+ETHERNET_VLAN_REWRITE_VPN_PAYLOAD_BASE = """
+<service xmlns="http://tail-f.com/ns/ncs" >
+  <object-id>%(service_name)s</object-id>
+  <type>
+    <vpn xmlns="http://nordu.net/ns/ncs/vpn">
+      <side-a>
+        <router>%(router_a)s</router>
+        <interface>%(interface_a)s</interface>
+      </side-a>
+      <side-b>
+        <router>%(router_b)s</router>
+        <interface>%(interface_b)s</interface>
+      </side-b>
+      <vlan-side-a>%(vlan_a)i</vlan-side-a>
+      <vlan-side-b>%(vlan_b)i</vlan-side-b>
+    </vpn>
+  </type>
+</service>
+"""
+
+
 
 LOG_SYSTEM = 'opennsa.ncsvpn'
 
@@ -118,9 +139,14 @@ def createVPNPayload(service_name, source_target, dest_target):
     }
 
     if source_target.vlan and dest_target.vlan:
-        assert source_target.vlan == dest_target.vlan, 'VLANs must match (until we get rewrite in place)'
-        intps['vlan'] = source_target.vlan
-        payload = ETHERNET_VLAN_VPN_PAYLOAD_BASE % intps
+        #assert source_target.vlan == dest_target.vlan, 'VLANs must match (until we get rewrite in place)'
+        if source_target.vlan == dest_target.vlan:
+            intps['vlan'] = source_target.vlan
+            payload = ETHERNET_VLAN_VPN_PAYLOAD_BASE % intps
+        else:
+            intps['vlan_a'] = source_target.vlan
+            intps['vlan_b'] = dest_target.vlan
+            payload = ETHERNET_VLAN_VPN_PAYLOAD_BASE % intps
     else:
         payload = ETHERNET_VPN_PAYLOAD_BASE % intps
 
@@ -168,8 +194,7 @@ class NCSVPNConnectionManager:
 
 
     def canSwapLabel(self, label_type):
-        return False # not yet
-        #return label_type == cnt.ETHERNET_VLAN:
+        return label_type == cnt.ETHERNET_VLAN
 
 
     def _createAuthzHeader(self):
