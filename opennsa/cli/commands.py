@@ -226,7 +226,7 @@ def release(client, nsi_header, connection_id, notification_wait):
 def terminate(client, nsi_header, connection_id):
 
     try:
-        yield client.terminate(nsi_header.header, connection_id)
+        yield client.terminate(nsi_header, connection_id)
         log.msg('Connection %s terminated' % connection_id)
     except error.NSIError, e:
         log.msg('Error terminating %s, %s : %s' % (connection_id, e.__class__.__name__, str(e)))
