@@ -196,7 +196,7 @@ class Requester:
         self.triggerCall(provider_nsa, correlation_id, 'query', error.QueryError(error_message))
 
 
-    def error(self, nsa_id, connection_id, service_type, error_id, text, variables, child_ex):
+    def error(self, header, nsa_id, connection_id, service_type, error_id, text, variables, child_ex):
 
         se = (nsa_id, connection_id, service_type, error_id, text, variables, child_ex)
         return self.notifications.put( ('error', header, se) )

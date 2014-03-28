@@ -183,7 +183,7 @@ class RequesterService:
         variables = [ (tvp.type, tvp.value) for tvp in se.variables ]
         child_ex = None
 
-        self.requester.error(header, se.nsaId, se.connectionId, se.serviceType, se.errorId, se.text, variables, child_ex)
+        self.requester.error(header, header, se.nsaId, se.connectionId, se.serviceType, se.errorId, se.text, variables, child_ex)
 
         return helper.createGenericAcknowledgement(header)
 
