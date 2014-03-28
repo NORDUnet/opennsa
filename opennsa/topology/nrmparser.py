@@ -16,23 +16,36 @@ from opennsa.topology import nml
 LOG_SYSTEM = 'topology.nrmparser'
 
 
-BIDRECTIONAL_ETHERNET   = 'bi-ethernet'
-UNIDIRECTIONAL_ETHERNET = 'uni-ethernet'
+ETHERNET   = 'ethernet' # implied bidirectional
 
-PORT_TYPES = [ BIDRECTIONAL_ETHERNET, UNIDIRECTIONAL_ETHERNET ]
+PORT_TYPES = [ ETHERNET ] # OpenNSA doesn't really do unidirectional at the moment
 
 LABEL_TYPES = {
     'vlan'  : cnt.ETHERNET_VLAN
 }
 
 
-TOPO_RX = re.compile('(.+?)\s+(.+?)\s+(.+?)\s+(.+?)\s+(.+?)\s+(.+)')
 # format: network#port OR network#port-(in|out)
 PORT_RX = re.compile('([^#]+)#([^\(]+)(?:\((.+?)\|(.+?)\))?')
 
 
 class NRMSpecificationError(Exception):
     pass
+
+
+
+class NRMPort(object):
+
+    def __init__(self, port_type, name, remote_name, remote_in, remote_out, label, bandwidth, interface, authz):
+        self.port_type      = port_type     # string
+        self.name           = name          # string
+        self.remote_name    = remote_name   # topology:port
+        self.remote_in      = remote_in     # topology:port
+        self.remote_out     = remote_out    # topology:port
+        self.label          = label         # nsa.Label
+        self.bandwidth      = bandwidth     # int
+        self.interface      = interface     # string
+        self.authz          = authz         # [ (attr,value) ]
 
 
 
@@ -64,8 +77,14 @@ def _parseLabelSpec(label_spec):
 def parseTopologySpec(source, network_name):
 
     network_readable_name = network_name.split(':')[0]
-    inbound_ports, outbound_ports, bidirectional_ports, port_interface_map = parsePortSpec(source, network_name)
-    network = nml.Network(network_name, network_readable_name, inbound_ports, outbound_ports, bidirectional_ports)
+
+    nrm_ports = parsePortSpec(source, network_name)
+
+    network = createNMLNetwork(nrm_ports, network_name, network_readable_name)
+
+    # until we get the nrm ports to the backend... (to do authz)
+    port_interface_map  = dict( [ (p.name, p.interface) for p in nrm_ports ] )
+
     return network, port_interface_map
 
 
@@ -73,31 +92,28 @@ def parsePortSpec(source, network_name):
 
     # Parse the entries like the following:
 
-    ## type          name            remote                         label               interface
+    ## type       name            remote                         label               bandwidth interface  authz
     #
-    #bi-ethernet     ps              -                              vlan:1780-1783      em0
-    #bi-ethernet     netherlight     netherlight#nordunet-(in|out)  vlan:1780-1783      em1
-    #bi-ethernet     uvalight        uvalight#nordunet-(in|out)     vlan:1780-1783      em2
+    #ethernet     ps              -                              vlan:1780-1783      1000       em0        user=user@example.org
+    #ethernet     netherlight     netherlight#nordunet-(in|out)  vlan:1780-1783      1000       em1        -
+    #ethernet     uvalight        uvalight#nordunet-(in|out)     vlan:1780-1783      1000       em2        nsa=aruba.net:nsa
 
     # Line starting with # and blank lines should be ignored
 
     assert isinstance(source, file) or isinstance(source, StringIO.StringIO), 'Topology source must be file or StringIO instance'
 
-    port_interface_map  = {}
-    inbound_ports       = []
-    outbound_ports      = []
-    bidirectional_ports = []
+    nrm_ports = []
 
     for line in source:
         line = line.strip()
         if not line or line.startswith('#'):
             continue
 
-        match = TOPO_RX.match(line)
-        if not match:
-            raise NRMSpecificationError('No match for entry: %s' % line)
+        tokens = [ t for t in line.split(' ') if t != '' ]
+        if len(tokens) != 7:
+            raise NRMSpecificationError('Invalid number of entries for entry: %s' % line)
 
-        port_type, port_name, remote_spec, label_spec, bandwidth, interface = match.groups()
+        port_type, port_name, remote_spec, label_spec, bandwidth, interface, authz = tokens
 
         if not port_type in PORT_TYPES:
             raise error.TopologyError('Port type %s is not a valid port type' % port_type)
@@ -110,10 +126,7 @@ def parsePortSpec(source, network_name):
         except ValueError as e:
             raise NRMSpecificationError('Invalid bandwidth: %s' % str(e))
 
-        if interface.startswith('"') and interface.endswith('"'):
-            interface = interface[1:-1]
-
-        if port_type == BIDRECTIONAL_ETHERNET:
+        if port_type == ETHERNET:
             if remote_network is None:
                 remote_bd_port  = None
                 remote_in       = None
@@ -124,26 +137,45 @@ def parsePortSpec(source, network_name):
                 remote_bd_port  = remote_network + ':' + remote_port
                 remote_in       = remote_network + ':' + remote_port + in_suffix
                 remote_out      = remote_network + ':' + remote_port + out_suffix
+        else:
+            raise AssertionError('do not know what to with port of type %s' % port_type)
 
-            inbound_port_name   = port_name + '-in'
-            outbound_port_name  = port_name + '-out'
+        if authz == '-':
+            authz_attributes = []
+        else:
+            authz_attributes = [ av.split('=',2) for av in authz.split(',') ]
 
-            port_id             = network_name + ':' + port_name
-            inbound_port_id     = network_name + ':' + inbound_port_name
-            outbound_port_id    = network_name + ':' + outbound_port_name
+        nrm_ports.append( NRMPort(port_type, port_name, remote_bd_port, remote_in, remote_out, label, bandwidth, interface, authz_attributes) )
 
-            inbound_port        = nml.InternalPort(inbound_port_id,  inbound_port_name,  bandwidth, label, remote_out)
-            outbound_port       = nml.InternalPort(outbound_port_id, outbound_port_name, bandwidth, label, remote_in)
-            bidirectional_port  = nml.BidirectionalPort(port_id, port_name, inbound_port, outbound_port, remote_bd_port)
+    return nrm_ports
 
-            inbound_ports.append(inbound_port)
-            outbound_ports.append(outbound_port)
-            bidirectional_ports.append(bidirectional_port)
 
-            port_interface_map[port_name] = interface
 
-        elif port_type == UNIDIRECTIONAL_ETHERNET:
-            raise NotImplementedError('Unidirectional ethernet ports not implemented yet')
+# this could probably go another module, but for now it is here
+def createNMLNetwork(nrm_ports, network_name, network_readable_name):
 
-    return inbound_ports, outbound_ports, bidirectional_ports, port_interface_map
+    inbound_ports       = []
+    outbound_ports      = []
+    bidirectional_ports = []
+
+    for port in nrm_ports:
+
+        assert port.port_type == ETHERNET, 'Sorry can only do ethernet ports for now'
+
+        inbound_port_name   = port.name + '-in'
+        outbound_port_name  = port.name + '-out'
+
+        port_id             = network_name + ':' + port.name
+        inbound_port_id     = network_name + ':' + inbound_port_name
+        outbound_port_id    = network_name + ':' + outbound_port_name
+
+        inbound_port        = nml.InternalPort(inbound_port_id,  inbound_port_name,  port.bandwidth, port.label, port.remote_out)
+        outbound_port       = nml.InternalPort(outbound_port_id, outbound_port_name, port.bandwidth, port.label, port.remote_in)
+        bidirectional_port  = nml.BidirectionalPort(port_id, port.name, inbound_port, outbound_port, port.remote_name)
+
+        inbound_ports.append(inbound_port)
+        outbound_ports.append(outbound_port)
+        bidirectional_ports.append(bidirectional_port)
+
+    return nml.Network(network_name, network_readable_name, inbound_ports, outbound_ports, bidirectional_ports)
 
