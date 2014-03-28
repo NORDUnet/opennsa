@@ -185,7 +185,8 @@ class Provider:
         dc = defer.Deferred()
         self.notifications[(header.correlation_id, QUERY_SUMMARY_SYNC_RESPONSE)] = dc
 
-        d = self.service_provider.querySummary(header, connection_ids, global_reservation_ids)
+        # returns a deferred, but we don't use it (indicates message receival only), should it be chained?
+        self.service_provider.querySummary(header, connection_ids, global_reservation_ids)
         return dc
 
 

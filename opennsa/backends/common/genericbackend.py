@@ -360,7 +360,7 @@ class GenericBackend(service.Service):
         self.scheduler.cancelCall(connection_id)
 
         if conn.start_time <= now:
-            d = self._doActivate(conn)
+            self._doActivate(conn) # returns a deferred, but isn't used
         else:
             self.scheduler.scheduleCall(connection_id, conn.start_time, self._doActivate, conn)
             td = conn.start_time - now
