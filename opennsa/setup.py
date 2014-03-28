@@ -186,7 +186,6 @@ class OpenNSAService(twistedservice.MultiService):
         interfaces  = [ ( cnt.CS2_SERVICE_TYPE, provider_endpoint, None), (cnt.NML_SERVICE_TYPE, nml_resource_url, None) ]
         features    = [ (cnt.FEATURE_AGGREGATOR, None), (cnt.FEATURE_UPA, None) ]
         peers_with  = [ ] # needs to be changed
-        topology_reachability = [ ] # needs to be changed
         ds = discoveryservice.DiscoveryService(ns_agent.urn(), now, name, opennsa_version, now, networks, interfaces, features, peers_with, route_vectors)
 
         discovery_resource = ds.resource()

@@ -17,7 +17,7 @@ from opennsa.interface import INSIProvider
 from opennsa import nsa, error
 from opennsa.protocols.shared import minisoap, httpclient
 from opennsa.protocols.nsi2 import helper
-from opennsa.protocols.nsi2.bindings import actions, nsiframework, nsiconnection, p2pservices
+from opennsa.protocols.nsi2.bindings import actions, nsiconnection, p2pservices
 
 
 LOG_SYSTEM  = 'nsi2.RequesterClient'

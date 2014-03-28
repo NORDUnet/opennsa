@@ -10,10 +10,10 @@ from xml.etree import ElementTree as ET
 
 from twisted.python import log, failure
 
-from opennsa import constants as cnt, nsa, error
+from opennsa import constants as nsa, error
 from opennsa.protocols.shared import minisoap, resource
 from opennsa.protocols.nsi2 import  helper
-from opennsa.protocols.nsi2.bindings import actions, nsiframework, nsiconnection, p2pservices
+from opennsa.protocols.nsi2.bindings import actions, nsiconnection, p2pservices
 
 
 
