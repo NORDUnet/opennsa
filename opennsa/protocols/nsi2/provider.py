@@ -62,7 +62,7 @@ class Provider:
             d = self.provider_client.reserveConfirmed(nsi_header, connection_id, global_reservation_id, description, service_parameters)
             d.addErrback(logError, 'reserveConfirmed')
             return d
-        except KeyError, e:
+        except KeyError:
             log.msg('No entity to notify about reserveConfirmed for %s' % connection_id, system=LOG_SYSTEM)
             return defer.succeed(None)
 
@@ -81,7 +81,7 @@ class Provider:
             d = self.provider_client.reserveCommitConfirmed(org_header.reply_to, org_header.requester_nsa, org_header.provider_nsa, org_header.correlation_id, connection_id)
             d.addErrback(logError, 'reserveCommitConfirmed')
             return d
-        except KeyError, e:
+        except KeyError:
             log.msg('No entity to notify about reserveCommitConfirmed for %s' % connection_id, system=LOG_SYSTEM)
             return defer.succeed(None)
 
@@ -100,7 +100,7 @@ class Provider:
             d = self.provider_client.reserveAbortConfirmed(org_header.reply_to, org_header.requester_nsa, org_header.provider_nsa, org_header.correlation_id, connection_id)
             d.addErrback(logError, 'reserveAbortConfirmed')
             return d
-        except KeyError, e:
+        except KeyError:
             log.msg('No entity to notify about reserveAbortConfirmed for %s' % connection_id, system=LOG_SYSTEM)
             return defer.succeed(None)
 
@@ -119,7 +119,7 @@ class Provider:
             d = self.provider_client.provisionConfirmed(org_header.reply_to, org_header.correlation_id, org_header.requester_nsa, org_header.provider_nsa, connection_id)
             d.addErrback(logError, 'provisionConfirmed')
             return d
-        except KeyError, e:
+        except KeyError:
             log.msg('No entity to notify about provisionConfirmed for %s' % connection_id, system=LOG_SYSTEM)
             return defer.succeed(None)
 
@@ -138,7 +138,7 @@ class Provider:
             d = self.provider_client.releaseConfirmed(org_header.reply_to, org_header.correlation_id, org_header.requester_nsa, org_header.provider_nsa, connection_id)
             d.addErrback(logError, 'releaseConfirmed')
             return d
-        except KeyError, e:
+        except KeyError:
             log.msg('No entity to notify about releaseConfirmed for %s' % connection_id, system=LOG_SYSTEM)
             return defer.succeed(None)
 
@@ -155,7 +155,7 @@ class Provider:
         try:
             org_header = self.notifications.pop( (connection_id, TERMINATE_RESPONSE) )
             return self.provider_client.terminateConfirmed(org_header.reply_to, org_header.correlation_id, org_header.requester_nsa, org_header.provider_nsa, connection_id)
-        except KeyError, e:
+        except KeyError:
             log.msg('No entity to notify about terminateConfirmed for %s' % connection_id, system=LOG_SYSTEM)
             return defer.succeed(None)
 
