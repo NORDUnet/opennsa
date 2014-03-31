@@ -84,6 +84,21 @@ def createServiceException(err, provider_nsa, connection_id=None, service_type=N
     return se
 
 
+def createException(service_exception, provider_nsa):
+    # nsiconnection.ServiceException (binding) -> error.NSIError
+
+    try:
+        exception_type = error.lookup(service_exception.errorId)
+        variables = [ (tvp.type, tvp.value) for tvp in service_exception.variables ] if service_exception.variables else None
+        ex = exception_type(service_exception.text, provider_nsa, service_exception.connectionId, variables)
+    except AssertionError as e:
+        log.msg('Error looking up error id: %s. Message: %s' % (service_exception.errorId, str(e)), system=LOG_SYSTEM)
+        ex = error.InternalServerError(service_exception.text)
+
+    return ex
+
+
+
 def parseRequest(soap_data):
 
     headers, bodies = minisoap.parseSoapPayload(soap_data)

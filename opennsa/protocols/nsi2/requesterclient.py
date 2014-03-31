@@ -83,12 +83,7 @@ class RequesterClient:
             # this is not entirely correct, but it isn't really wrong either
             ex = error.InternalServerError(fault_string)
         else:
-            try:
-                ext = error.lookup(service_exception.errorId)
-                ex = ext(service_exception.text, header.provider_nsa)
-            except AssertionError as e:
-                log.msg('Error looking up error id: %s. Message: %s' % (service_exception.errorId, str(e)))
-                ex = error.InternalServerError(fault_string)
+            ex = helper.createException(service_exception, header.provider_nsa)
 
         err = failure.Failure(ex)
 

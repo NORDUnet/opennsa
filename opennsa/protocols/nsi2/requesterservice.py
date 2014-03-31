@@ -5,9 +5,7 @@ Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2011)
 """
 
-from twisted.python import log
-
-from opennsa import nsa, error
+from opennsa import nsa
 
 from opennsa.protocols.nsi2 import helper
 from opennsa.protocols.nsi2.bindings import actions, p2pservices
@@ -59,17 +57,8 @@ class RequesterService:
         dps = (rd.active, rd.version, rd.versionConsistent)
         cs = (rc.reservationState, rc.provisionState, rc.lifecycleState, dps)
 
-        service_exception = generic_failure.serviceException
-
-        try:
-            exception_type = error.lookup(service_exception.errorId)
-            ex = exception_type(service_exception.text, header.provider_nsa)
-        except AssertionError as e:
-            log.msg('Error looking up error id: %s. Message: %s' % (service_exception.errorId, str(e)), system=LOG_SYSTEM)
-            ex = error.InternalServerError(service_exception.text)
-
+        ex = helper.createException(generic_failure.service_exception, header.provider_nsa)
         return header, generic_failure.connectionId, cs, ex
-
 
 
     def reserveConfirmed(self, soap_data):
