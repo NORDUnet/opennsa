@@ -51,6 +51,14 @@ def _handleEvent(event):
         return False
 
 
+def _logError(e):
+
+    error_type = e.__class__.__name__
+    variables = '. Variables: ' + ' '.join ( [ ': '.join(tvp) for tvp in e.variables ] ) if e.variables else ''
+    log.msg('Error: %s: %s%s' % (error_type, str(e), variables))
+
+
+
 @defer.inlineCallbacks
 def discover(client, service_url):
 
@@ -74,7 +82,7 @@ def reserveonly(client, nsi_header, src, dst, start_time, end_time, capacity, co
         log.msg("Source - Destination: %s - %s" % (sd.source_stp, sd.dest_stp))
 
     except error.NSIError, e:
-        log.msg('Error reserving, %s: %s' % (e.__class__.__name__, str(e)))
+        _logError(e)
 
 
 @defer.inlineCallbacks
@@ -95,7 +103,7 @@ def reserve(client, nsi_header, src, dst, start_time, end_time, capacity, connec
         log.msg("Reservation committed at %s" % nsi_header.provider_nsa)
 
     except error.NSIError, e:
-        log.msg('Error reserving, %s: %s' % (e.__class__.__name__, str(e)))
+        _logError(e)
 
 
 @defer.inlineCallbacks
@@ -114,29 +122,25 @@ def reserveprovision(client, nsi_header, src, dst, start_time, end_time, capacit
         nsi_header.newCorrelationId()
         yield client.reserveCommit(nsi_header, connection_id)
         log.msg("Connection committed at %s" % nsi_header.provider_nsa)
-    except error.NSIError, e:
-        log.msg('Error reserving, %s : %s' % (e.__class__.__name__, str(e)))
-        defer.returnValue(None)
 
-    try:
+        # query
         nsi_header.newCorrelationId()
         qr = yield client.querySummary(nsi_header, connection_ids=[connection_id] )
-        print "QR", qr
-    except error.NSIError, e:
-        log.msg('Error querying %s, %s : %s' % (connection_id, e.__class__.__name__, str(e)))
+        print "Query result:", qr
 
-    try:
+        # provision
         nsi_header.newCorrelationId()
         yield client.provision(nsi_header, connection_id)
         log.msg('Connection %s provisioned' % connection_id)
-    except error.NSIError, e:
-        log.msg('Error provisioning, %s : %s' % (e.__class__.__name__, str(e)))
 
-    while notification_wait:
-        event = yield client.notifications.get()
-        exit = _handleEvent(event)
-        if exit:
-            break
+        while notification_wait:
+            event = yield client.notifications.get()
+            exit = _handleEvent(event)
+            if exit:
+                break
+
+    except error.NSIError, e:
+        _logError(e)
 
 
 
@@ -153,36 +157,28 @@ def rprt(client, nsi_header, src, dst, start_time, end_time, capacity, connectio
         log.msg("Connection created and held. Id %s at %s" % (connection_id, nsi_header.provider_nsa))
         log.msg("Source - Destination: %s - %s" % (sd.source_stp, sd.dest_stp))
 
+        # commit
         nsi_header.newCorrelationId()
         yield client.reserveCommit(nsi_header, connection_id)
         log.msg("Connection committed at %s" % nsi_header.provider_nsa)
-    except error.NSIError, e:
-        log.msg('Error reserving %s, %s : %s' % (connection_id, e.__class__.__name__, str(e)))
-        defer.returnValue(None)
 
-    try:
+        # provision
         nsi_header.newCorrelationId()
         yield client.provision(nsi_header, connection_id)
         log.msg('Connection %s provisioned' % connection_id)
-    except error.NSIError, e:
-        log.msg('Error provisioning %s, %s : %s' % (connection_id, e.__class__.__name__, str(e)))
-        defer.returnValue(None)
 
-    try:
+        # release
         nsi_header.newCorrelationId()
         yield client.release(nsi_header, connection_id)
         log.msg('Connection %s released' % connection_id)
-    except error.NSIError, e:
-        log.msg('Error releasing %s, %s : %s' % (connection_id, e.__class__.__name__, str(e)))
-        defer.returnValue(None)
 
-    try:
+        # terminate
         nsi_header.newCorrelationId()
         yield client.terminate(nsi_header, connection_id)
         log.msg('Connection %s terminated' % connection_id)
+
     except error.NSIError, e:
-        log.msg('Error terminating %s, %s : %s' % (connection_id, e.__class__.__name__, str(e)))
-        defer.returnValue(None)
+        _logError(e)
 
 
 @defer.inlineCallbacks
@@ -193,7 +189,7 @@ def reservecommit(client, nsi_header, connection_id):
         log.msg("Reservation committed at %s" % nsi_header.provider_nsa)
 
     except error.NSIError, e:
-        log.msg('Error comitting, %s: %s' % (e.__class__.__name__, str(e)))
+        _logError(e)
 
 
 @defer.inlineCallbacks
@@ -203,7 +199,7 @@ def provision(client, nsi_header, connection_id, notification_wait):
         yield client.provision(nsi_header, connection_id)
         log.msg('Connection %s provisioned' % connection_id)
     except error.NSIError, e:
-        log.msg('Error provisioning %s, %s : %s' % (connection_id, e.__class__.__name__, str(e)))
+        _logError(e)
 
     if notification_wait:
         log.msg("Notification wait not added to provision yet")
@@ -216,7 +212,7 @@ def release(client, nsi_header, connection_id, notification_wait):
         yield client.release(nsi_header, connection_id)
         log.msg('Connection %s released' % connection_id)
     except error.NSIError, e:
-        log.msg('Error releasing %s, %s : %s' % (connection_id, e.__class__.__name__, str(e)))
+        _logError(e)
 
     if notification_wait:
         log.msg("Notification wait not added to release yet")
@@ -229,7 +225,7 @@ def terminate(client, nsi_header, connection_id):
         yield client.terminate(nsi_header, connection_id)
         log.msg('Connection %s terminated' % connection_id)
     except error.NSIError, e:
-        log.msg('Error terminating %s, %s : %s' % (connection_id, e.__class__.__name__, str(e)))
+        _logError(e)
 
 
 @defer.inlineCallbacks
@@ -267,7 +263,7 @@ def querysummary(client, nsi_header, connection_ids, global_reservation_ids):
             if children:
                 log.msg('  Children    : %s' % children)
     except error.NSIError, e:
-        log.msg('Error querying %s, %s : %s' % (connection_ids, e.__class__.__name__, str(e)))
+        _logError(e)
 
 
 @defer.inlineCallbacks
@@ -280,7 +276,7 @@ def querydetails(client, nsi_header, connection_ids, global_reservation_ids):
             log.msg('Connection: %s' % qr.connectionId)
             log.msg('  States: %s' % qr.connectionStates)
     except error.NSIError, e:
-        log.msg('Error querying %s, %s : %s' % (connection_ids, e.__class__.__name__, str(e)))
+        _logError(e)
 
 
 def path(topology_file, source_stp, dest_stp):
