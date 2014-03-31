@@ -100,7 +100,7 @@ def parseRequest(soap_data):
             for attr in ssa.Attributes:
                 security_attributes.append( (attr.Name, attr.AttributeValue) )
 
-    #if header.protocolVersion != cnt.CS2_SERVICE_TYPE:
+    #if header.protocolVersion not in [ cnt.CS2_REQUESTER, cnt.CS2_PROVIDER ]:
     #    raise ValueError('Invalid protocol "%s". Only %s supported' % (header.protocolVersion, cnt.CS2_SERVICE_TYPE))
 
     if len(bodies) == 0:
