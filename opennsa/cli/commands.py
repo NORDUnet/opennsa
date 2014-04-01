@@ -94,7 +94,7 @@ def reserve(client, nsi_header, src, dst, start_time, end_time, capacity, connec
 
     try:
         connection_id, global_reservation_id, description, criteria = yield client.reserve(nsi_header, connection_id, global_id, 'Test Connection', crt)
-        sd = criteria.service_def[0]
+        sd = criteria.service_def
         log.msg("Connection created and held. Id %s at %s" % (connection_id, nsi_header.provider_nsa))
         log.msg("Source - Destination: %s - %s" % (sd.source_stp, sd.dest_stp))
 
@@ -115,7 +115,7 @@ def reserveprovision(client, nsi_header, src, dst, start_time, end_time, capacit
 
     try:
         connection_id, _,_, criteria = yield client.reserve(nsi_header, connection_id, global_id, 'Test Connection', crt)
-        sd = criteria.service_def[0]
+        sd = criteria.service_def
         log.msg("Connection created and held. Id %s at %s" % (connection_id, nsi_header.provider_nsa))
         log.msg("Source - Destination: %s - %s" % (sd.source_stp, sd.dest_stp))
 
@@ -153,7 +153,7 @@ def rprt(client, nsi_header, src, dst, start_time, end_time, capacity, connectio
 
     try:
         connection_id, _,_, criteria = yield client.reserve(nsi_header, connection_id, global_id, 'Test Connection', crt)
-        sd = criteria.service_def[0]
+        sd = criteria.service_def
         log.msg("Connection created and held. Id %s at %s" % (connection_id, nsi_header.provider_nsa))
         log.msg("Source - Destination: %s - %s" % (sd.source_stp, sd.dest_stp))
 
