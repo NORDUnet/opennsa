@@ -1,3 +1,10 @@
+NSIv2 BOD Service
+ - Check nsidev logs and improve them
+ - Better error messages on bindings (sigh...)
+
+
+
+
 ##
  Better debugging on SSH backends
 
