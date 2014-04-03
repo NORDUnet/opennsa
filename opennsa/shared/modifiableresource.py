@@ -12,6 +12,7 @@ from twisted.web import resource
 
 
 RFC850_FORMAT       = '%a, %d %b %Y %H:%M:%S GMT'
+CONTENT_TYPE        = 'Content-type'
 LAST_MODIFIED       = 'Last-modified'
 IF_MODIFIED_SINCE   = 'if-modified-since'
 
@@ -61,5 +62,8 @@ class ModifiableResource(resource.Resource):
 
         log.msg('Request from %s. Sending %i bytes' % (request.getClient(), len(self.representation)), system=self.log_system)
         request.setHeader(LAST_MODIFIED, self.last_modified_timestamp)
+        if self.mime_type:
+            request.setHeader(CONTENT_TYPE, self.mime_type)
+
         return self.representation
 
