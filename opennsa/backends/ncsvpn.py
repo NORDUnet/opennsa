@@ -46,65 +46,55 @@ from opennsa.protocols.shared import httpclient
 #
 # The connection id -> object-id mapping is hence rather important to remember, but it can be the
 
-NCS_TIMEOUT = 45 # ncs often spends around 30 seconds creating/deleting a vpn
+NCS_TIMEOUT = 45 # ncs typically spends 28-31 seconds creating/deleting a vpn
 
 
 ETHERNET_VPN_PAYLOAD_BASE = """
-<service xmlns="http://tail-f.com/ns/ncs" >
-  <object-id>%(service_name)s</object-id>
-  <type>
-    <vpn xmlns="http://nordu.net/ns/ncs/vpn">
-      <side-a>
+<bod xmlns="http://nordu.net/ns/ncs/vpn">
+    <service-name>%(service_name)s</service-name>
+    <side-a>
         <router>%(router_a)s</router>
         <interface>%(interface_a)s</interface>
-      </side-a>
-      <side-b>
+    </side-a>
+    <side-b>
         <router>%(router_b)s</router>
         <interface>%(interface_b)s</interface>
-      </side-b>
-    </vpn>
-  </type>
-</service>
+  </side-b>
+  <vlan>%(vlan)i</vlan>
+</bod>
 """
 
+
 ETHERNET_VLAN_VPN_PAYLOAD_BASE = """
-<service xmlns="http://tail-f.com/ns/ncs" >
-  <object-id>%(service_name)s</object-id>
-  <type>
-    <vpn xmlns="http://nordu.net/ns/ncs/vpn">
-      <side-a>
+<bod xmlns="http://nordu.net/ns/ncs/vpn">
+    <service-name>%(service_name)s</service-name>
+    <side-a>
         <router>%(router_a)s</router>
         <interface>%(interface_a)s</interface>
-      </side-a>
-      <side-b>
+    </side-a>
+    <side-b>
         <router>%(router_b)s</router>
         <interface>%(interface_b)s</interface>
-      </side-b>
-      <vlan>%(vlan)i</vlan>
-    </vpn>
-  </type>
-</service>
+  </side-b>
+  <vlan>%(vlan)i</vlan>
+</bod>
 """
 
 
 ETHERNET_VLAN_REWRITE_VPN_PAYLOAD_BASE = """
-<service xmlns="http://tail-f.com/ns/ncs" >
-  <object-id>%(service_name)s</object-id>
-  <type>
-    <vpn xmlns="http://nordu.net/ns/ncs/vpn">
-      <side-a>
+<bod xmlns="http://nordu.net/ns/ncs/vpn">
+    <service-name>%(service_name)s</service-name>
+    <side-a>
         <router>%(router_a)s</router>
         <interface>%(interface_a)s</interface>
-      </side-a>
-      <side-b>
+    </side-a>
+    <side-b>
         <router>%(router_b)s</router>
         <interface>%(interface_b)s</interface>
-      </side-b>
-      <vlan-side-a>%(vlan_a)i</vlan-side-a>
-      <vlan-side-b>%(vlan_b)i</vlan-side-b>
-    </vpn>
-  </type>
-</service>
+    </side-b>
+    <vlan-side-a>%(vlan_a)i</vlan-side-a>
+    <vlan-side-b>%(vlan_b)i</vlan-side-b>
+</bod>
 """
 
 
@@ -146,7 +136,7 @@ def createVPNPayload(service_name, source_target, dest_target):
         else:
             intps['vlan_a'] = source_target.vlan
             intps['vlan_b'] = dest_target.vlan
-            payload = ETHERNET_VLAN_VPN_PAYLOAD_BASE % intps
+            payload = ETHERNET_VLAN_REWRITE_VPN_PAYLOAD_BASE % intps
     else:
         payload = ETHERNET_VPN_PAYLOAD_BASE % intps
 
@@ -225,7 +215,7 @@ class NCSVPNConnectionManager:
 
 
     def teardownLink(self, connection_id, source_target, dest_target, bandwidth):
-        service_url = self.ncs_services_url + '/service/' + connection_id
+        service_url = self.ncs_services_url + '/bod/' + connection_id
         headers = self._createHeaders()
 
         def linkDown(_):
