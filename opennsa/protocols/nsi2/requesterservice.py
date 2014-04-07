@@ -57,7 +57,7 @@ class RequesterService:
         dps = (rd.active, rd.version, rd.versionConsistent)
         cs = (rc.reservationState, rc.provisionState, rc.lifecycleState, dps)
 
-        ex = helper.createException(generic_failure.service_exception, header.provider_nsa)
+        ex = helper.createException(generic_failure.serviceException, header.provider_nsa)
         return header, generic_failure.connectionId, cs, ex
 
 
