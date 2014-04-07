@@ -11,6 +11,7 @@ from twisted.python import log
 from xml.etree import ElementTree as ET
 
 from opennsa import constants as cnt, nsa
+from opennsa.shared import xmlhelper
 from opennsa.topology import nml
 
 
@@ -51,7 +52,7 @@ def topologyXML(network):
     BASE_URN = cnt.URN_OGF_PREFIX + network.id_
 
     topology_id = cnt.URN_OGF_PREFIX + network.id_
-    nml_topology = ET.Element(NML_TOPOLOGY, {ID: topology_id } )
+    nml_topology = ET.Element(NML_TOPOLOGY, {ID: topology_id, VERSION: xmlhelper.createXMLTime(network.version) } )
 
     ET.SubElement(nml_topology, NML_NAME).text = network.name
 

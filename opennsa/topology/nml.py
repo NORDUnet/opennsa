@@ -145,7 +145,7 @@ class Network(object):
         self.inbound_ports       = inbound_ports or []
         self.outbound_ports      = outbound_ports or []
         self.bidirectional_ports = bidirectional_ports or []
-        self.version             = version or datetime.datetime.utcnow()
+        self.version             = version or datetime.datetime.utcnow().replace(microsecond=0)
 
 
     def getPort(self, port_id):
