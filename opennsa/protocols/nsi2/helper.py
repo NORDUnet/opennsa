@@ -39,7 +39,18 @@ LABEL_MAP = {
 
 
 
-def createHeader(requester_nsa_urn, provider_nsa_urn, reply_to=None, correlation_id=None, session_security_attributes=None, connection_trace=None):
+def createProviderHeader(requester_nsa_urn, provider_nsa_urn, reply_to=None, correlation_id=None, session_security_attributes=None, connection_trace=None):
+    return _createHeader(requester_nsa_urn, provider_nsa_urn, reply_to, correlation_id, session_security_attributes, connection_trace, protocol_type=cnt.CS2_PROVIDER)
+
+
+def createRequesterHeader(requester_nsa_urn, provider_nsa_urn, reply_to=None, correlation_id=None, session_security_attributes=None, connection_trace=None):
+    return _createHeader(requester_nsa_urn, provider_nsa_urn, reply_to, correlation_id, session_security_attributes, connection_trace, protocol_type=cnt.CS2_REQUESTER)
+
+
+def _createHeader(requester_nsa_urn, provider_nsa_urn, reply_to=None, correlation_id=None, session_security_attributes=None, connection_trace=None, protocol_type=None):
+
+    if protocol_type is None:
+        raise AssertionError('Requester or provider protocol type must be specified')
 
     ssats = []
     if session_security_attributes:
@@ -47,21 +58,31 @@ def createHeader(requester_nsa_urn, provider_nsa_urn, reply_to=None, correlation
             at = nsiframework.AttributeType(at, None, None, avs)
             ssats.append( nsiframework.SessionSecurityAttrType( [ at ] ) )
 
-    header = nsiframework.CommonHeaderType(cnt.CS2_SERVICE_TYPE, correlation_id, requester_nsa_urn, provider_nsa_urn, reply_to, ssats, connection_trace)
+    header = nsiframework.CommonHeaderType(protocol_type, correlation_id, requester_nsa_urn, provider_nsa_urn, reply_to, ssats, connection_trace)
     header_element = header.xml(nsiframework.nsiHeader)
     return header_element
 
 
-def createGenericAcknowledgement(header):
+
+def createGenericProviderAcknowledgement(header):
+    return _createGenericAcknowledgement(header, cnt.CS2_PROVIDER)
+
+
+def createGenericRequesterAcknowledgement(header):
+    return _createGenericAcknowledgement(header, cnt.CS2_REQUESTER)
+
+
+def _createGenericAcknowledgement(header, protocol_type=None):
 
     # we do not put reply to, security attributes or connection traces in the acknowledgement
-    soap_header_element = createHeader(header.requester_nsa, header.provider_nsa, correlation_id=header.correlation_id)
+    soap_header_element = _createHeader(header.requester_nsa, header.provider_nsa, correlation_id=header.correlation_id, protocol_type=protocol_type)
 
     generic_confirm = nsiconnection.GenericAcknowledgmentType()
     generic_confirm_element = generic_confirm.xml(nsiconnection.acknowledgment)
 
     payload = minisoap.createSoapPayload(generic_confirm_element, soap_header_element)
     return payload
+
 
 
 def createServiceException(err, provider_nsa, connection_id=None, service_type=None):

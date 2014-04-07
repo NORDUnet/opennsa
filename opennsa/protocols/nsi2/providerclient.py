@@ -1,6 +1,8 @@
 """
 Web Service protocol for OpenNSA.
 
+Note: This is the provider client, i.e. it speak to requester services
+
 Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2011-2013)
 """
@@ -20,7 +22,7 @@ class ProviderClient:
 
     def _genericConfirm(self, element_name, requester_url, action, correlation_id, requester_nsa, provider_nsa, connection_id):
 
-        header_element = helper.createHeader(requester_nsa, provider_nsa, correlation_id=correlation_id)
+        header_element = helper.createRequesterHeader(requester_nsa, provider_nsa, correlation_id=correlation_id)
 
         confirm = nsiconnection.GenericConfirmedType(connection_id)
         body_element   = confirm.xml(element_name)
@@ -39,7 +41,7 @@ class ProviderClient:
     def _genericFailure(self, requester_url, action, message_name, requester_nsa, provider_nsa, correlation_id,
                         connection_id, connection_states, err):
 
-        header_element = helper.createHeader(requester_nsa, provider_nsa, correlation_id=correlation_id)
+        header_element = helper.createRequesterHeader(requester_nsa, provider_nsa, correlation_id=correlation_id)
 
         active, version, consistent = connection_states[3]
         data_plane_state = nsiconnection.DataPlaneStatusType(active, version, consistent)
@@ -64,7 +66,7 @@ class ProviderClient:
 
     def reserveConfirmed(self, nsi_header, connection_id, global_reservation_id, description, criteria):
 
-        header_element = helper.createHeader(nsi_header.requester_nsa, nsi_header.provider_nsa, correlation_id=nsi_header.correlation_id)
+        header_element = helper.createRequesterHeader(nsi_header.requester_nsa, nsi_header.provider_nsa, correlation_id=nsi_header.correlation_id)
 
         schedule = nsiconnection.ScheduleType( helper.createXMLTime(criteria.schedule.start_time) ,helper.createXMLTime(criteria.schedule.end_time) )
 
@@ -145,7 +147,7 @@ class ProviderClient:
     def reserveTimeout(self, requester_url, requester_nsa, provider_nsa, correlation_id,
                        connection_id, notification_id, timestamp, timeout_value, originating_connection_id, originating_nsa):
 
-        header_element = helper.createHeader(requester_nsa, provider_nsa, correlation_id=correlation_id)
+        header_element = helper.createRequesterHeader(requester_nsa, provider_nsa, correlation_id=correlation_id)
 
         reserve_timeout = nsiconnection.ReserveTimeoutRequestType(connection_id, notification_id, helper.createXMLTime(timestamp), timeout_value, originating_connection_id, originating_nsa)
 
@@ -160,7 +162,7 @@ class ProviderClient:
     def dataPlaneStateChange(self, requester_url, requester_nsa, provider_nsa, correlation_id,
                              connection_id, notification_id, timestamp, active, version, consistent):
 
-        header_element = helper.createHeader(requester_nsa, provider_nsa, correlation_id=correlation_id)
+        header_element = helper.createRequesterHeader(requester_nsa, provider_nsa, correlation_id=correlation_id)
 
         data_plane_status = nsiconnection.DataPlaneStatusType(active, version, consistent)
         dps = nsiconnection.DataPlaneStateChangeRequestType(connection_id, notification_id, helper.createXMLTime(timestamp), data_plane_status)
@@ -176,7 +178,7 @@ class ProviderClient:
     def errorEvent(self, requester_url, requester_nsa, provider_nsa, correlation_id,
                    connection_id, notification_id, timestamp, event, info, service_ex):
 
-        header_element = helper.createHeader(requester_nsa, provider_nsa, correlation_id=correlation_id)
+        header_element = helper.createRequesterHeader(requester_nsa, provider_nsa, correlation_id=correlation_id)
 
         if service_ex:
             nsa_id, connection_id, error_id, text, variables, child_ex = service_ex
@@ -200,7 +202,7 @@ class ProviderClient:
 
     def querySummaryConfirmed(self, requester_url, requester_nsa, provider_nsa, correlation_id, reservations):
 
-        header_element = helper.createHeader(requester_nsa, provider_nsa, correlation_id=correlation_id)
+        header_element = helper.createRequesterHeader(requester_nsa, provider_nsa, correlation_id=correlation_id)
 
         query_summary_result = helper.buildQuerySummaryResultType(reservations)
         qsr_elements = [ qsr.xml(nsiconnection.reservation) for qsr in query_summary_result ]
