@@ -17,6 +17,10 @@ class CommonHeaderType(object):
 
     @classmethod
     def build(self, element):
+        # build trace first, as it is a bit complicated
+        trace = [ ConnectionType.build(e) for e in element.find(str(ConnectionTrace)).findall('Connection') ] if element.find(str(ConnectionTrace)) is not None else None
+        if trace:
+            trace = [ ct.connectionId for ct in sorted(trace, key=lambda ct : ct.index ) ]
         return CommonHeaderType(
                 element.findtext('protocolVersion'),
                 element.findtext('correlationId'),
@@ -24,7 +28,7 @@ class CommonHeaderType(object):
                 element.findtext('providerNSA'),
                 element.findtext('replyTo') if element.find('replyTo') is not None else None,
                 [ SessionSecurityAttrType.build(e) for e in element.findall('sessionSecurityAttr') ] if element.find('sessionSecurityAttr') is not None else None,
-                [ e.text for e in element.find(str(ConnectionTrace)).findall(str(Connection)) ] if element.find(str(ConnectionTrace)) is not None else None
+                trace
                )
 
     def xml(self, elementName):
@@ -40,8 +44,8 @@ class CommonHeaderType(object):
                 ET.SubElement(r, 'sessionSecurityAttr').extend( el.xml('sessionSecurityAttr') )
         if self.connectionTrace:
             s = ET.SubElement(r, ConnectionTrace)
-            for c in self.connectionTrace:
-                ET.SubElement(s, Connection).text = c
+            for idx, c in enumerate(self.connectionTrace):
+                s.append( ConnectionType(c, idx).xml('Connection') )
         return r
 
 
@@ -174,6 +178,27 @@ class ServiceExceptionType(object):
         return r
 
 
+
+
+class ConnectionType(object):
+    def __init__(self, connectionId, index):
+        self.connectionId = connectionId  # string / anyURI
+        self.index = index  # int
+
+    @classmethod
+    def build(self, element):
+        return ConnectionType(
+                element.text,
+                int(element.get('index'))
+               )
+
+    def xml(self, elementName):
+        r = ET.Element(elementName, { 'index' : str(self.index) } )
+        r.text = self.connectionId
+        return r
+
+
+
 SAML_NS                 = 'urn:oasis:names:tc:SAML:2.0:assertion'
 NSI_FRAMEWORK_NS        = 'http://schemas.ogf.org/nsi/2013/12/framework/headers'
 NSI_FRAMEWORK_TYPES_NS  = 'http://schemas.ogf.org/nsi/2013/12/framework/types'
@@ -187,7 +212,6 @@ nsiHeader           = ET.QName(NSI_FRAMEWORK_NS, 'nsiHeader')
 serviceException    = ET.QName(NSI_FRAMEWORK_TYPES_NS, 'serviceException')
 
 ConnectionTrace     = ET.QName(GNS_NAMESPACE, 'ConnectionTrace')
-Connection          = ET.QName(GNS_NAMESPACE, 'Connection')
 
 
 

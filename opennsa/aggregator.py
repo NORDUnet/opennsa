@@ -178,7 +178,7 @@ class Aggregator:
     def reserve(self, header, connection_id, global_reservation_id, description, criteria):
 
         log.msg('', system=LOG_SYSTEM)
-        log.msg('Reserve request. NSA: %s. Connection ID: %s' % (header.requester_nsa, connection_id), system=LOG_SYSTEM)
+        log.msg('Reserve request from %s. Trace: %s' % (header.requester_nsa, header.connection_trace), system=LOG_SYSTEM)
 
         # rethink with modify
         if connection_id != None:
@@ -186,6 +186,10 @@ class Aggregator:
             if connection_exists:
                 raise error.ConnectionExistsError('Connection with id %s already exists' % connection_id)
             raise NotImplementedError('Cannot handly modification of existing connections yet')
+
+        if not header.connection_trace:
+            log.msg('Rejecting reserve request without connection trace')
+            raise error.ConnectionCreateError('This NSA (%s) requires a connection trace in the header to create a reservation.' % self.nsa_.urn() )
 
         connection_id = self.conn_prefix + ''.join( [ random.choice(string.hexdigits[:16]) for _ in range(12) ] )
 
@@ -318,7 +322,9 @@ class Aggregator:
             if p is None:
                 raise error.ConnectionCreateError('No provider for network %s. Cannot create link.' % link.network)
 
+        conn_trace = (header.connection_trace or []) + [ self.nsa_.urn() + ':' + conn.connection_id ]
         conn_info = []
+
         for idx, link in enumerate(selected_path):
 
             if link.network == self.network:
@@ -326,7 +332,6 @@ class Aggregator:
             else:
                 provider_urn = cnt.URN_OGF_PREFIX + self.route_vectors.getProvider( cnt.URN_OGF_PREFIX + link.network )
 
-            conn_trace = header.connection_trace or [] + [ self.nsa_.urn() + ':' + conn.connection_id ]
             c_header = nsa.NSIHeader(self.nsa_.urn(), provider_urn, session_security_attrs=header.session_security_attrs, connection_trace=conn_trace)
 
             # this has to be done more generic sometime
