@@ -558,6 +558,7 @@ class GenericBackend(service.Service):
         src_target = self.connection_manager.getTarget(conn.source_port, conn.source_label.type_, conn.source_label.labelValue())
         dst_target = self.connection_manager.getTarget(conn.dest_port,   conn.dest_label.type_,  conn.dest_label.labelValue())
         try:
+            log.msg('Connection %s: Activating data plane...' % conn.connection_id, system=self.log_system)
             yield self.connection_manager.setupLink(conn.connection_id, src_target, dst_target, conn.bandwidth)
         except Exception, e:
             # We need to mark failure in state machine here somehow....
