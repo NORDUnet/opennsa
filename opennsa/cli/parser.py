@@ -115,7 +115,7 @@ class SecurityAttributeOptions(usage.Options):
                     raise usage.UsageError('No = in key-value attribute %s' % kv_split)
                 key, value = kv_split.split('=',1)
                 sats.append( (key, value) )
-            self[options.SECURITY_ATTRIBUTES] = sats
+        self[options.SECURITY_ATTRIBUTES] = sats
 
 class BandwidthOption(usage.Options):
     optParameters = [ [ options.BANDWIDTH, 'b', None, 'Bandwidth (Megabits)'] ]
