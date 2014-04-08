@@ -421,11 +421,13 @@ class GenericBackend(service.Service):
         if conn.lifecycle_state == state.TERMINATED:
             defer.returnValue(conn.cid)
 
-        if conn.lifecycle_state == state.CREATED:
-            yield self._doEndtime(conn)
+        self.scheduler.cancelCall(conn.connection_id) # cancel end time tear down
 
         yield state.terminating(conn)
         self.logStateUpdate(conn, 'TERMINATING')
+
+        if conn.lifecycle_state == state.CREATED:
+            yield self._doTeardown(conn)
 
         # here the reply will practially always come before the ack
         header = nsa.NSIHeader(conn.requester_nsa, conn.requester_nsa) # The NSA is both requester and provider in the backend, but this might be problematic without aggregator
@@ -641,6 +643,11 @@ class GenericBackend(service.Service):
 
         yield state.passedEndtime(conn)
         self.logStateUpdate(conn, 'PASSED END TIME')
+        yield self._doLinkShutdown(conn)
+
+
+    @defer.inlineCallbacks
+    def _doLinkShutdown(self, conn):
 
         if conn.data_plane_active:
             try:
