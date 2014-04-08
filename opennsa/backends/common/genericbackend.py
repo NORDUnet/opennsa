@@ -426,8 +426,7 @@ class GenericBackend(service.Service):
         yield state.terminating(conn)
         self.logStateUpdate(conn, 'TERMINATING')
 
-        if conn.lifecycle_state == state.CREATED:
-            yield self._doFreeResource(conn)
+        yield self._doFreeResource(conn)
 
         # here the reply will practially always come before the ack
         header = nsa.NSIHeader(conn.requester_nsa, conn.requester_nsa) # The NSA is both requester and provider in the backend, but this might be problematic without aggregator
