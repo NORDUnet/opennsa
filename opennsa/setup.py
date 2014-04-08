@@ -183,7 +183,7 @@ class OpenNSAService(twistedservice.MultiService):
         name = base_name.split(':')[0] if ':' in base_name else base_name
         opennsa_version = 'OpenNSA-' + version
         networks    = [ cnt.URN_OGF_PREFIX + network_name ]
-        interfaces  = [ ( cnt.CS2_SERVICE_TYPE, provider_endpoint, None), (cnt.NML_SERVICE_TYPE, nml_resource_url, None) ]
+        interfaces  = [ ( cnt.CS2_PROVIDER, provider_endpoint, None), ( cnt.CS2_SERVICE_TYPE, provider_endpoint, None), (cnt.NML_SERVICE_TYPE, nml_resource_url, None) ]
         features    = [ (cnt.FEATURE_AGGREGATOR, None), (cnt.FEATURE_UPA, None) ]
         peers_with  = [ ] # needs to be changed
         ds = discoveryservice.DiscoveryService(ns_agent.urn(), now, name, opennsa_version, now, networks, interfaces, features, peers_with, route_vectors)
