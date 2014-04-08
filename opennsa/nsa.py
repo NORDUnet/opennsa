@@ -28,12 +28,12 @@ BIDIRECTIONAL   = 'Bidirectional'
 
 class NSIHeader(object):
 
-    def __init__(self, requester_nsa, provider_nsa, correlation_id=None, reply_to=None, session_security_attrs=None, connection_trace=None):
+    def __init__(self, requester_nsa, provider_nsa, correlation_id=None, reply_to=None, security_attributes=None, connection_trace=None):
         self.requester_nsa          = requester_nsa
         self.provider_nsa           = provider_nsa
         self.correlation_id         = correlation_id or self._createCorrelationId()
         self.reply_to               = reply_to
-        self.session_security_attrs = session_security_attrs
+        self.security_attributes    = security_attributes or []
         self.connection_trace       = connection_trace
 
     def _createCorrelationId(self):
@@ -44,7 +44,21 @@ class NSIHeader(object):
 
 
     def __repr__(self):
-        return '<NSIHeader: %s, %s, %s, %s, %s>' % (self.requester_nsa, self.provider_nsa, self.correlation_id, self.reply_to, self.session_security_attrs)
+        return '<NSIHeader: %s, %s, %s, %s, %s, %s>' % (self.requester_nsa, self.provider_nsa, self.correlation_id, self.reply_to, self.security_attributes, self.connection_trace)
+
+
+
+class SecurityAttribute(object):
+    # a better name would be AuthZAttribute, but we are keeping the NSI lingo
+
+    def __init__(self, type_, value):
+        assert type(type_) is str, 'SecurityAttribute type must be a string'
+        assert type(value) is str, 'SecurityAttribute value must be a string'
+        self.type_ = type_
+        self.value = value
+
+    def __repr__(self):
+        return '<SecurityAttribute: %s, %s>' % (self.type_, self.value)
 
 
 

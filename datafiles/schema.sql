@@ -12,6 +12,11 @@ CREATE TYPE parameter AS (
     label_value     text
 );
 
+CREATE TYPE security_attribute AS (
+    attribute_type  text,
+    atribute_value  text
+);
+
 CREATE TYPE directionality AS ENUM ('Bidirectional', 'Unidirectional');
 
 
@@ -40,6 +45,7 @@ CREATE TABLE service_connections (
     directionality          directionality              NOT NULL,
     bandwidth               integer                     NOT NULL, -- mbps
     parameter               parameter[],
+    security_attributes     security_attribute[],
     connection_trace        text[]
 );
 

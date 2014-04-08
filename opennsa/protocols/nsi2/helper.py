@@ -39,26 +39,31 @@ LABEL_MAP = {
 
 
 
-def createProviderHeader(requester_nsa_urn, provider_nsa_urn, reply_to=None, correlation_id=None, session_security_attributes=None, connection_trace=None):
-    return _createHeader(requester_nsa_urn, provider_nsa_urn, reply_to, correlation_id, session_security_attributes, connection_trace, protocol_type=cnt.CS2_PROVIDER)
+def createProviderHeader(requester_nsa_urn, provider_nsa_urn, reply_to=None, correlation_id=None, security_attributes=None, connection_trace=None):
+    return _createHeader(requester_nsa_urn, provider_nsa_urn, reply_to, correlation_id, security_attributes, connection_trace, protocol_type=cnt.CS2_PROVIDER)
 
 
-def createRequesterHeader(requester_nsa_urn, provider_nsa_urn, reply_to=None, correlation_id=None, session_security_attributes=None, connection_trace=None):
-    return _createHeader(requester_nsa_urn, provider_nsa_urn, reply_to, correlation_id, session_security_attributes, connection_trace, protocol_type=cnt.CS2_REQUESTER)
+def createRequesterHeader(requester_nsa_urn, provider_nsa_urn, reply_to=None, correlation_id=None, security_attributes=None, connection_trace=None):
+    return _createHeader(requester_nsa_urn, provider_nsa_urn, reply_to, correlation_id, security_attributes, connection_trace, protocol_type=cnt.CS2_REQUESTER)
 
 
-def _createHeader(requester_nsa_urn, provider_nsa_urn, reply_to=None, correlation_id=None, session_security_attributes=None, connection_trace=None, protocol_type=None):
+def _createHeader(requester_nsa_urn, provider_nsa_urn, reply_to=None, correlation_id=None, security_attributes=None, connection_trace=None, protocol_type=None):
 
     if protocol_type is None:
         raise AssertionError('Requester or provider protocol type must be specified')
 
-    ssats = []
-    if session_security_attributes:
-        for at, avs in session_security_attributes:
-            at = nsiframework.AttributeType(at, None, None, avs)
-            ssats.append( nsiframework.SessionSecurityAttrType( [ at ] ) )
+    sat = []
+    if security_attributes:
+        # group by name to adhere to gns spec
+        grouped_sats = {}
+        for sa in security_attributes:
+            grouped_sats.setdefault(sa.type_, []).append(sa.value)
 
-    header = nsiframework.CommonHeaderType(protocol_type, correlation_id, requester_nsa_urn, provider_nsa_urn, reply_to, ssats, connection_trace)
+        for name, values in grouped_sats.items():
+            at = nsiframework.AttributeType(name, None, None, values )
+            sat.append( nsiframework.SessionSecurityAttrType( [ at ] ) )
+
+    header = nsiframework.CommonHeaderType(protocol_type, correlation_id, requester_nsa_urn, provider_nsa_urn, reply_to, sat, connection_trace)
     header_element = header.xml(nsiframework.nsiHeader)
     return header_element
 
@@ -134,7 +139,8 @@ def parseRequest(soap_data):
     if header.sessionSecurityAttr:
         for ssa in header.sessionSecurityAttr:
             for attr in ssa.Attributes:
-                security_attributes.append( (attr.Name, attr.AttributeValue) )
+                for av in attr.AttributeValue:
+                    security_attributes.append( nsa.SecurityAttribute(attr.Name, av) )
 
     #if header.protocolVersion not in [ cnt.CS2_REQUESTER, cnt.CS2_PROVIDER ]:
     #    raise ValueError('Invalid protocol "%s". Only %s supported' % (header.protocolVersion, cnt.CS2_SERVICE_TYPE))
@@ -147,7 +153,7 @@ def parseRequest(soap_data):
         body = [ nsiconnection.parseElement(b) for b in bodies ]
 
     nsi_header = nsa.NSIHeader(header.requesterNSA, header.providerNSA, header.correlationId, header.replyTo,
-                               session_security_attrs=security_attributes, connection_trace=header.connectionTrace)
+                               security_attributes=security_attributes, connection_trace=header.connectionTrace)
 
     return nsi_header, body
 

@@ -51,7 +51,7 @@ class RequesterClient:
     def _createGenericRequestType(self, body_element_name, header, connection_id):
 
         header_element = helper.createProviderHeader(header.requester_nsa, header.provider_nsa, self.reply_to, header.correlation_id,
-                                                     header.session_security_attrs, header.connection_trace)
+                                                     header.security_attributes, header.connection_trace)
 
         body_element = nsiconnection.GenericRequestType(connection_id).xml(body_element_name)
 
@@ -100,7 +100,7 @@ class RequesterClient:
         # payload construction
 
         header_element = helper.createProviderHeader(header.requester_nsa, header.provider_nsa, self.reply_to, header.correlation_id,
-                                                     header.session_security_attrs, header.connection_trace)
+                                                     header.security_attributes, header.connection_trace)
 
         schedule = criteria.schedule
         sd = criteria.service_def
@@ -197,7 +197,7 @@ class RequesterClient:
         self._checkHeader(header)
 
         header_element = helper.createProviderHeader(header.requester_nsa, header.provider_nsa, reply_to=self.reply_to, correlation_id=header.correlation_id,
-                                                     session_security_attributes=header.session_security_attrs, connection_trace=header.connection_trace)
+                                                     security_attributes=header.security_attributes, connection_trace=header.connection_trace)
 
         query_type = nsiconnection.QueryType(connection_ids, global_reservation_ids)
         body_element = query_type.xml(nsiconnection.querySummary)
@@ -217,7 +217,7 @@ class RequesterClient:
 
         # don't need to check header here
         header_element = helper.createProviderHeader(header.requester_nsa, header.provider_nsa, reply_to=self.reply_to, correlation_id=header.correlation_id,
-                                                     session_security_attributes=header.session_security_attrs, connection_trace=header.connection_trace)
+                                                     security_attributes=header.security_attributes, connection_trace=header.connection_trace)
 
         query_type = nsiconnection.QueryType(connection_ids, global_reservation_ids)
         body_element = query_type.xml(nsiconnection.querySummarySync)

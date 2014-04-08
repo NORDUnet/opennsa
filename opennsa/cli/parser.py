@@ -108,14 +108,14 @@ class EndTimeOption(usage.Options):
 class SecurityAttributeOptions(usage.Options):
     optParameters = [ [ options.SECURITY_ATTRIBUTES, 'j', None, 'Security attributes (format attr1=value1,attr2=value2)'] ]
     def postOptions(self):
-        key_values = []
+        sats = []
         if self[options.SECURITY_ATTRIBUTES]:
             for kv_split in self[options.SECURITY_ATTRIBUTES].split(','):
                 if not '=' in kv_split:
                     raise usage.UsageError('No = in key-value attribute %s' % kv_split)
                 key, value = kv_split.split('=',1)
-                key_values.append( (key, [value]) )
-            self[options.SECURITY_ATTRIBUTES] = key_values
+                sats.append( (key, value) )
+            self[options.SECURITY_ATTRIBUTES] = sats
 
 class BandwidthOption(usage.Options):
     optParameters = [ [ options.BANDWIDTH, 'b', None, 'Bandwidth (Megabits)'] ]

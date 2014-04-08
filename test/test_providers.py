@@ -520,7 +520,8 @@ class AggregatorTest(GenericProviderTest, unittest.TestCase):
 
     requester_agent = nsa.NetworkServiceAgent('test-requester:nsa', 'dud_endpoint1')
     provider_agent  = nsa.NetworkServiceAgent(GenericProviderTest.base + ':nsa', 'dud_endpoint2')
-    header          = nsa.NSIHeader(requester_agent.urn(), provider_agent.urn(), connection_trace= [ requester_agent.urn() + ':1' ])
+    header          = nsa.NSIHeader(requester_agent.urn(), provider_agent.urn(), connection_trace= [ requester_agent.urn() + ':1' ],
+                                    security_attributes = [ nsa.SecurityAttribute('user', 'testuser') ] )
 
     def setUp(self):
 
@@ -579,7 +580,8 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
 
     requester_agent = nsa.NetworkServiceAgent('test-requester:nsa', 'http://localhost:%i/NSI/services/RequesterService2' % REQUESTER_PORT)
     provider_agent  = nsa.NetworkServiceAgent(GenericProviderTest.base + ':nsa', 'http://localhost:%i/NSI/services/CS2' % PROVIDER_PORT)
-    header   = nsa.NSIHeader(requester_agent.urn(), provider_agent.urn(), reply_to=requester_agent.endpoint, connection_trace=requester_agent.urn() + ':1')
+    header   = nsa.NSIHeader(requester_agent.urn(), provider_agent.urn(), reply_to=requester_agent.endpoint, connection_trace=requester_agent.urn() + ':1',
+                             security_attributes = [ nsa.SecurityAttribute('user', 'testuser') ] )
 
     def setUp(self):
         from twisted.web import resource, server

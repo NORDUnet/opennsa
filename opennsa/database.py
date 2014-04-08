@@ -31,17 +31,26 @@ LOG_SYSTEM = 'opennsa.Database'
 def adaptLabel(label):
     return AsIs("(%s, %s)::label" % (adapt(label.type_), adapt(label.labelValue())))
 
+def adaptSecuritAttribute(label):
+    return AsIs("(%s, %s)::security_attribute" % (adapt(label.type_), adapt(label.value)))
+
 def adaptDatetime(dt):
     return AsIs("%s" % adapt(dt.isoformat()))
 
 
 register_adapter(nsa.Label, adaptLabel)
+register_adapter(nsa.SecurityAttribute, adaptSecuritAttribute)
 register_adapter(datetime.datetime, adaptDatetime)
 
 
 class LabelComposite(CompositeCaster):
     def make(self, values):
         return nsa.Label(*values)
+
+
+class SecuritAttributeComposite(CompositeCaster):
+    def make(self, values):
+        return nsa.SecurityAttribute(*values)
 
 
 def castDatetime(value, cur):
@@ -57,6 +66,7 @@ def setupDatabase(database, user, password=None):
     conn = psycopg2.connect(user=user, password=password, database=database)
     cur = conn.cursor()
     register_composite('label', cur, globally=True, factory=LabelComposite)
+    register_composite('security_attribute', cur, globally=True, factory=SecuritAttributeComposite)
 
     cur.execute("SELECT oid FROM pg_type WHERE typname = 'timestamptz';")
     timestamptz_oid = cur.fetchone()[0]
