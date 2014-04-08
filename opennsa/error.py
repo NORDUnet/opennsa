@@ -25,17 +25,26 @@ Copyright: NORDUnet (2011-2012)
 #   UNAUTHORIZED              00302
 #
 # TOPOLOGY_ERROR              00400
-#   UNKNOWN_STP               00401
-#   STP_RESOLUTION_ERROR      00402
+#   UNKNOWN_STP               00401             # DEPRECATED 00701
+#   STP_RESOLUTION_ERROR      00402             # DEPRECATED 00702
 #   NO_PATH_FOUND             00403
-#   VLANID_INTERCANGE_NOT_SUPPORTED 00404
+#   VLANID_INTERCANGE_NOT_SUPPORTED 00404       # DEPRECATED 00703
 #
 # INTERNAL_ERROR              00500
 #   INTERNAL_NRM_ERROR        00501
 #
 # RESOURCE_UNAVAILABLE        00600
-#   STP_UNAVALABLE            00601
-#   BANDWIDTH_UNAVAILABLE     00602
+#   STP_UNAVALABLE            00601             # DEPRECATED 00704
+#   BANDWIDTH_UNAVAILABLE     00602             # DEPRECATED 00705
+
+# P2P Service Specific Errors
+#
+# SERVICE_ERROR 00700
+#   UNKNOWN_STP 00701
+#   STP_RESOLUTION_ERROR 00702
+#   VLANID_INTERCANGE_NOT_SUPPORTED 00703
+#   STP_UNAVALABLE 00704
+#   CAPACITY_UNAVAILABLE 00705
 
 
 ## Errors which are/should only be used internally
@@ -123,16 +132,6 @@ class TopologyError(NSIError):
     errorId = '00400'
 
 
-class STPResolutionError(NSIError):
-
-    errorId = '00402'
-
-
-class VLANInterchangeNotSupportedError(TopologyError):
-
-    errorId = '00404'
-
-
 class InternalServerError(NSIError):
 
     errorId = '00500'
@@ -153,14 +152,34 @@ class ResourceUnavailableError(NSIError):
     errorId = '00600'
 
 
-class STPUnavailableError(ResourceUnavailableError):
+class ServiceError(NSIError): # please do not use this ugly mf
 
-    errorId = '00601'
+    errorId = '00700'
 
 
-class BandwidthUnavailableError(ResourceUnavailableError):
+class UnknownSTPError(ServiceError):
 
-    errorId = '00602'
+    errorId = '00701'
+
+
+class STPResolutionError(NSIError):
+
+    errorId = '00702'
+
+
+class VLANInterchangeNotSupportedError(TopologyError):
+
+    errorId = '00703'
+
+
+class STPUnavailableError(ServiceError, TopologyError): # need this to be a topology error internally
+
+    errorId = '00704'
+
+
+class BandwidthUnavailableError(ServiceError): # NSI error name is CAPACITY_UNAVAILABLE
+
+    errorId = '00705'
 
 
 
@@ -175,12 +194,19 @@ NSI_ERROR_CODE_TABLE = {
     '00205' : ConnectionCreateError,
     '00300' : SecurityError,
     '00400' : TopologyError,
-    '00404' : VLANInterchangeNotSupportedError,
+    '00401' : UnknownSTPError,                      # compat
+    '00402' : STPResolutionError,                   # compat
+    '00404' : VLANInterchangeNotSupportedError,     # compat
     '00500' : InternalServerError,
     '00501' : InternalNRMError,
     '00600' : ResourceUnavailableError,
-    '00601' : STPUnavailableError,
-    '00602' : BandwidthUnavailableError
+    '00601' : STPUnavailableError,                  # compat
+    '00602' : BandwidthUnavailableError,            # compat
+    '00701' : UnknownSTPError,
+    '00702' : STPResolutionError,
+    '00703' : VLANInterchangeNotSupportedError,
+    '00704' : STPUnavailableError,
+    '00705' : BandwidthUnavailableError             # compat
 }
 
 
