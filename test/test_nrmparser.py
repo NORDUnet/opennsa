@@ -2,7 +2,7 @@ import StringIO
 
 from twisted.trial import unittest
 
-from opennsa.topology import nrmparser
+from opennsa.topology import nrm
 
 
 NRM_ENTRY = \
@@ -19,7 +19,7 @@ class NRMParserTest(unittest.TestCase):
 
     def testPortMapping(self):
 
-        nrm_ports = nrmparser.parsePortSpec( StringIO.StringIO(NRM_ENTRY) )
+        nrm_ports = nrm.parsePortSpec( StringIO.StringIO(NRM_ENTRY) )
 
         port_map = dict( [ (p.name, p.interface) for p in nrm_ports ] )
 

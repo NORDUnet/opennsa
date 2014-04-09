@@ -13,7 +13,7 @@ from opennsa import constants as cnt, nsa, error
 from opennsa.topology import nml
 
 
-LOG_SYSTEM = 'topology.nrmparser'
+LOG_SYSTEM = 'topology.nrm'
 
 
 ETHERNET   = 'ethernet' # implied bidirectional

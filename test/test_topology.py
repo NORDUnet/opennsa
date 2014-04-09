@@ -3,7 +3,7 @@ from StringIO import StringIO
 from twisted.trial import unittest
 
 from opennsa import nsa, error, constants as cnt
-from opennsa.topology import nml, nrmparser
+from opennsa.topology import nml, nrm
 from . import topology
 
 
@@ -22,10 +22,10 @@ CURACAO_PS = nsa.STP(CURACAO_NETWORK, 'ps', LABEL)
 class TopologyTest(unittest.TestCase):
 
     def setUp(self):
-        an,_ = nrmparser.parseTopologySpec(StringIO(topology.ARUBA_TOPOLOGY),    ARUBA_NETWORK)
-        bn,_ = nrmparser.parseTopologySpec(StringIO(topology.BONAIRE_TOPOLOGY),  BONAIRE_NETWORK)
-        cn,_ = nrmparser.parseTopologySpec(StringIO(topology.CURACAO_TOPOLOGY),  CURACAO_NETWORK)
-        dn,_ = nrmparser.parseTopologySpec(StringIO(topology.DOMINICA_TOPOLOGY), DOMINICA_NETWORK)
+        an,_ = nrm.parseTopologySpec(StringIO(topology.ARUBA_TOPOLOGY),    ARUBA_NETWORK)
+        bn,_ = nrm.parseTopologySpec(StringIO(topology.BONAIRE_TOPOLOGY),  BONAIRE_NETWORK)
+        cn,_ = nrm.parseTopologySpec(StringIO(topology.CURACAO_TOPOLOGY),  CURACAO_NETWORK)
+        dn,_ = nrm.parseTopologySpec(StringIO(topology.DOMINICA_TOPOLOGY), DOMINICA_NETWORK)
 
         a_nsa = nsa.NetworkServiceAgent('aruba:nsa',    'a-endpoint')
         b_nsa = nsa.NetworkServiceAgent('bonaire:nsa',  'b-endpoint')

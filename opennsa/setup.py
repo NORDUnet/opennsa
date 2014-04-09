@@ -12,7 +12,7 @@ from twisted.application import internet, service as twistedservice
 from opennsa import __version__ as version
 
 from opennsa import config, logging, constants as cnt, nsa, provreg, database, aggregator, viewresource
-from opennsa.topology import nrmparser, nml, nmlgns, service as nmlservice
+from opennsa.topology import nrm, nml, nmlgns, service as nmlservice
 from opennsa.protocols.shared import httplog
 from opennsa.discovery import service as discoveryservice, fetcher
 from opennsa.protocols import nsi2
@@ -124,8 +124,8 @@ class OpenNSAService(twistedservice.MultiService):
         ns_agent = nsa.NetworkServiceAgent(nsa_name, provider_endpoint, 'local')
 
         # topology
-        nrm_ports = nrmparser.parsePortSpec( open( vc[config.NRM_MAP_FILE] ) )
-        network_topology = nrmparser.createNMLTopology(nrm_ports, network_name)
+        nrm_ports = nrm.parsePortSpec( open( vc[config.NRM_MAP_FILE] ) )
+        network_topology = nrm.createNMLTopology(nrm_ports, network_name)
         topology = nml.Topology()
         topology.addNetwork(network_topology, ns_agent)
 

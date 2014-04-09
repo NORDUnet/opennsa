@@ -4,7 +4,7 @@ from twisted.trial import unittest
 from twisted.internet import reactor, defer, task
 
 from opennsa import nsa, provreg, database, error, aggregator, constants as cnt
-from opennsa.topology import nml, nmlgns, nrmparser
+from opennsa.topology import nml, nmlgns, nrm
 from opennsa.backends import dud
 
 from . import topology, common
@@ -480,8 +480,7 @@ class DUDBackendTest(GenericProviderTest, unittest.TestCase):
 
         self.requester = common.DUDRequester()
 
-#        aruba_topo, pm = nrmparser.parseTopologySpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY), self.network)
-        nrm_ports = nrmparser.parsePortSpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY))
+        nrm_ports = nrm.parsePortSpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY))
 
         self.backend = dud.DUDNSIBackend(self.network, nrm_ports, self.requester, {})
 
@@ -534,8 +533,8 @@ class AggregatorTest(GenericProviderTest, unittest.TestCase):
 
         self.clock = task.Clock()
 
-        nrm_ports = nrmparser.parsePortSpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY))
-        network_topology = nrmparser.createNMLTopology(nrm_ports, self.network)
+        nrm_ports = nrm.parsePortSpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY))
+        network_topology = nrm.createNMLTopology(nrm_ports, self.network)
 
         self.backend = dud.DUDNSIBackend(self.network, nrm_ports, self.requester, {})
         self.backend.scheduler.clock = self.clock
@@ -600,8 +599,8 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
 
         self.clock = task.Clock()
 
-        nrm_ports = nrmparser.parsePortSpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY))
-        network_topology = nrmparser.createNMLTopology(nrm_ports, self.network)
+        nrm_ports = nrm.parsePortSpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY))
+        network_topology = nrm.createNMLTopology(nrm_ports, self.network)
 
         self.backend = dud.DUDNSIBackend(self.network, nrm_ports, None, {}) # we set the parent later
         self.backend.scheduler.clock = self.clock
