@@ -45,7 +45,14 @@ class NRMPort(object):
         self.label          = label         # nsa.Label
         self.bandwidth      = bandwidth     # int
         self.interface      = interface     # string
-        self.authz          = authz         # [ (attr,value) ]
+        self.authz          = authz         # [ nsa.SecuritAttribte ]
+
+
+    def isAuthorized(self, security_attributes):
+        for port_sa in self.authz:
+            if not any( [ port_sa.match(rsa) for rsa in security_attributes] ):
+                return False
+        return True
 
 
 
@@ -143,7 +150,7 @@ def parsePortSpec(source, network_name):
         if authz == '-':
             authz_attributes = []
         else:
-            authz_attributes = [ av.split('=',2) for av in authz.split(',') ]
+            authz_attributes = [ nsa.SecurityAttribute(*av.split('=',2)) for av in authz.split(',') ]
 
         nrm_ports.append( NRMPort(port_type, port_name, remote_bd_port, remote_in, remote_out, label, bandwidth, interface, authz_attributes) )
 
