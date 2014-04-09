@@ -207,6 +207,10 @@ class STP(object): # Service Termination Point
         self.label = label
 
 
+    def baseURN(self):
+        return cnt.URN_OGF_PREFIX + self.network + ':' + self.port
+
+
     def __eq__(self, other):
         if not type(other) is STP:
             return False
