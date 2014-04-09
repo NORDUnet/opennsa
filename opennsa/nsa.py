@@ -172,6 +172,18 @@ class Label(object):
         label_range = random.choice(self.values)
         return random.randint(label_range[0], label_range[1]+1)
 
+    @staticmethod
+    def canMatch(l1, l2):
+        if l1 is None and l2 is None:
+            return True
+        elif l1 is None or l2 is None:
+            return False
+        try:
+            l1.intersect(l2) # this checks type as well as range
+            return True
+        except nsa.EmptyLabelSet:
+            return False
+
 
     def __eq__(self, other):
         if not type(other) is Label:

@@ -37,15 +37,7 @@ class Port(object):
 
 
     def canMatchLabel(self, label):
-        if self._label is None and label is None:
-            return True
-        elif self._label is None or label is None:
-            return False
-        try:
-            self._label.intersect(label) # this checks type as well as range
-            return True
-        except nsa.EmptyLabelSet:
-            return False
+        return nsa.Label.canMatch(self, label)
 
 
     def isBidirectional(self):
