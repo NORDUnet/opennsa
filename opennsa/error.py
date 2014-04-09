@@ -127,6 +127,11 @@ class SecurityError(NSIError):
     errorId = '00300'
 
 
+class UnauthorizedError(SecurityError):
+
+    errorId = '00302'
+
+
 class TopologyError(NSIError):
 
     errorId = '00400'
@@ -193,6 +198,7 @@ NSI_ERROR_CODE_TABLE = {
     '00204' : ConnectionGoneError,
     '00205' : ConnectionCreateError,
     '00300' : SecurityError,
+    '00302' : UnauthorizedError,
     '00400' : TopologyError,
     '00401' : UnknownSTPError,                      # compat
     '00402' : STPResolutionError,                   # compat
