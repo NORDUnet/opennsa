@@ -19,7 +19,7 @@ from opennsa.protocols import nsi2
 
 
 
-def setupBackend(backend_cfg, network_name, network_topology, parent_requester, port_map):
+def setupBackend(backend_cfg, network_name, nrm_ports, parent_requester):
 
     bc = backend_cfg.copy()
     backend_type = backend_cfg.pop('_backend_type')
@@ -60,7 +60,7 @@ def setupBackend(backend_cfg, network_name, network_topology, parent_requester, 
     else:
         raise config.ConfigurationError('No backend specified')
 
-    b = BackendConstructer(network_name, network_topology, parent_requester, port_map, bc)
+    b = BackendConstructer(network_name, nrm_ports, parent_requester, bc)
     return b
 
 
@@ -124,8 +124,8 @@ class OpenNSAService(twistedservice.MultiService):
         ns_agent = nsa.NetworkServiceAgent(nsa_name, provider_endpoint, 'local')
 
         # topology
-        topo_source = open( vc[config.NRM_MAP_FILE] ) if type(vc[config.NRM_MAP_FILE]) is str else vc[config.NRM_MAP_FILE] # wee bit hackish
-        network_topology, port_map = nrmparser.parseTopologySpec(topo_source, network_name)
+        nrm_ports = nrmparser.parsePortSpec( open( vc[config.NRM_MAP_FILE] ) )
+        network_topology = nrmparser.createNMLTopology(nrm_ports, network_name)
         topology = nml.Topology()
         topology.addNetwork(network_topology, ns_agent)
 
@@ -163,7 +163,7 @@ class OpenNSAService(twistedservice.MultiService):
 
         backend_cfg = backend_configs.values()[0]
 
-        backend_service = setupBackend(backend_cfg, network_topology.id_, network_topology, aggr, port_map)
+        backend_service = setupBackend(backend_cfg, network_topology.id_, nrm_ports, aggr)
         backend_service.setServiceParent(self)
 
         provider_registry.addProvider(ns_agent.urn(), backend_service)

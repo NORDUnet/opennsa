@@ -232,9 +232,11 @@ class NCSVPNConnectionManager:
 
 
 
-def NCSVPNBackend(network_name, network_topology, parent_requester, port_map, cfg): 
+def NCSVPNBackend(network_name, nrm_ports, parent_requester, cfg): 
 
     name = 'NCS VPN %s' % network_name
+    nrm_map  = dict( [ (p.name, p) for p in nrm_ports ] ) # for the generic backend
+    port_map = dict( [ (p.name, p.interface) for p in nrm_ports ] ) # for the nrm backend
 
     # extract config items
     ncs_services_url = str(cfg[config.NCS_SERVICES_URL]) # convert from unicode
@@ -242,5 +244,5 @@ def NCSVPNBackend(network_name, network_topology, parent_requester, port_map, cf
     password         = cfg[config.NCS_PASSWORD]
 
     cm = NCSVPNConnectionManager(ncs_services_url, user, password, port_map, name)
-    return genericbackend.GenericBackend(network_name, network_topology, cm, parent_requester, name)
+    return genericbackend.GenericBackend(network_name, nrm_map, cm, parent_requester, name)
 

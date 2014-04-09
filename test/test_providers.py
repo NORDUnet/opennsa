@@ -480,9 +480,10 @@ class DUDBackendTest(GenericProviderTest, unittest.TestCase):
 
         self.requester = common.DUDRequester()
 
-        aruba_topo, pm = nrmparser.parseTopologySpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY), self.network)
+#        aruba_topo, pm = nrmparser.parseTopologySpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY), self.network)
+        nrm_ports = nrmparser.parsePortSpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY))
 
-        self.backend = dud.DUDNSIBackend(self.network, aruba_topo, self.requester, pm, {})
+        self.backend = dud.DUDNSIBackend(self.network, nrm_ports, self.requester, {})
 
         self.provider = self.backend
         self.provider.scheduler.clock = self.clock
@@ -533,13 +534,14 @@ class AggregatorTest(GenericProviderTest, unittest.TestCase):
 
         self.clock = task.Clock()
 
-        aruba_topo, pm = nrmparser.parseTopologySpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY), self.network)
+        nrm_ports = nrmparser.parsePortSpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY))
+        network_topology = nrmparser.createNMLTopology(nrm_ports, self.network)
 
-        self.backend = dud.DUDNSIBackend(self.network, aruba_topo, self.requester, pm, {})
+        self.backend = dud.DUDNSIBackend(self.network, nrm_ports, self.requester, {})
         self.backend.scheduler.clock = self.clock
 
         self.topology = nml.Topology()
-        self.topology.addNetwork(aruba_topo, self.provider_agent)
+        self.topology.addNetwork(network_topology, self.provider_agent)
 
         route_vectors = nmlgns.RouteVectors( [ cnt.URN_OGF_PREFIX + self.network ] )
         route_vectors.updateVector(self.provider_agent.identity, 0, [ self.network ], {})
@@ -598,13 +600,14 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
 
         self.clock = task.Clock()
 
-        aruba_topo, pm = nrmparser.parseTopologySpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY), self.network)
+        nrm_ports = nrmparser.parsePortSpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY))
+        network_topology = nrmparser.createNMLTopology(nrm_ports, self.network)
 
-        self.backend = dud.DUDNSIBackend(self.network, aruba_topo, None, pm, {}) # we set the parent later
+        self.backend = dud.DUDNSIBackend(self.network, nrm_ports, None, {}) # we set the parent later
         self.backend.scheduler.clock = self.clock
 
         self.topology = nml.Topology()
-        self.topology.addNetwork(aruba_topo, self.provider_agent)
+        self.topology.addNetwork(network_topology, self.provider_agent)
 
         route_vectors = nmlgns.RouteVectors( [ cnt.URN_OGF_PREFIX + self.network ] )
         route_vectors.updateVector(self.provider_agent.identity, 0, [ self.network ], {})

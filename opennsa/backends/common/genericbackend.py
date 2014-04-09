@@ -41,12 +41,10 @@ class GenericBackend(service.Service):
 
     TPC_TIMEOUT = 40 # seconds
 
-    def __init__(self, network, network_topology, connection_manager, parent_requester, log_system):
-
-        assert network == network_topology.id_, 'Network name and network topology name does not match %s != %s' % (network, network_topology.id_)
+    def __init__(self, network, nrm_ports, connection_manager, parent_requester, log_system):
 
         self.network            = network
-        self.network_topology   = network_topology
+        self.nrm_ports          = nrm_ports
         self.connection_manager = connection_manager
         self.parent_requester   = parent_requester
         self.log_system         = log_system
@@ -196,9 +194,20 @@ class GenericBackend(service.Service):
         if dest_stp.network != self.network:
             raise error.ConnectionCreateError('Destination network does not match network this NSA is managing (%s != %s)' % (dest_stp.network, self.network) )
 
-        # ensure that ports actually exists, hack do deal with nml
-        topo_source_port = self.network_topology.getPort(source_stp.network + ':' + source_stp.port)
-        topo_dest_port   = self.network_topology.getPort(dest_stp.network   + ':' + dest_stp.port)
+        # ensure that ports actually exists
+        if not source_stp.port in self.nrm_ports:
+            raise error.STPUnavailableError('No port named %s for network %s (ports: %s)' %(source_stp.port, self.id_, str(self.nrm_ports.keys()) ))
+        if not dest_stp.port in self.nrm_ports:
+            raise error.STPUnavailableError('No port named %s for network %s (ports: %s)' %(dest_stp.port, self.id_, str(self.nrm_ports.keys()) ))
+
+        nrm_source_port = self.nrm_ports[source_stp.port]
+        nrm_dest_port   = self.nrm_ports[dest_stp.port]
+
+        # authz check
+        if not nrm_source_port.isAuthorized(header.security_attributes):
+            raise error.UnauthorizedError('Request does not have any valid credentials for port %s' % source_stp.baseURN())
+        if not nrm_dest_port.isAuthorized(header.security_attributes):
+            raise error.UnauthorizedError('Request does not have any valid credentials for port %s' % dest_stp.baseURN())
 
         # basic label check
         if source_stp.label is None:
@@ -215,10 +224,10 @@ class GenericBackend(service.Service):
             raise error.TopologyError('Cannot connect STP %s to itself.' % source_stp)
 
         # now check that the ports have (some of) the specified label values
-        if not topo_source_port.canMatchLabel(source_stp.label):
-            raise error.TopologyError('Source port %s cannot match label set %s' % (topo_source_port.name, src_label_candidate ) )
-        if not topo_dest_port.canMatchLabel(dest_stp.label):
-            raise error.TopologyError('Destination port %s cannot match label set %s' % (topo_dest_port.name, dst_label_candidate ) )
+        if not nsa.Label.canMatch(nrm_source_port.label, src_label_candidate):
+            raise error.TopologyError('Source port %s cannot match label set %s' % (nrm_source_port.name, src_label_candidate ) )
+        if not nsa.Label.canMatch(nrm_dest_port.label, dst_label_candidate):
+            raise error.TopologyError('Destination port %s cannot match label set %s' % (nrm_dest_port.name, dst_label_candidate ) )
 
         # do the find the label value dance
         if self.connection_manager.canSwapLabel(src_label_candidate.type_):

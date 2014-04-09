@@ -81,21 +81,14 @@ def _parseLabelSpec(label_spec):
     return nsa.Label(label_type, label_range) # range is parsed in nsa.Label
 
 
-def parseTopologySpec(source, network_name):
 
+def createNMLTopology(nrm_ports, network_name):
     network_readable_name = network_name.split(':')[0]
-
-    nrm_ports = parsePortSpec(source, network_name)
-
-    network = createNMLNetwork(nrm_ports, network_name, network_readable_name)
-
-    # until we get the nrm ports to the backend... (to do authz)
-    port_interface_map  = dict( [ (p.name, p.interface) for p in nrm_ports ] )
-
-    return network, port_interface_map
+    return createNMLNetwork(nrm_ports, network_name, network_readable_name)
 
 
-def parsePortSpec(source, network_name):
+
+def parsePortSpec(source):
 
     # Parse the entries like the following:
 
