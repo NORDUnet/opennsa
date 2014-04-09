@@ -125,7 +125,7 @@ class OpenNSAService(twistedservice.MultiService):
 
         # topology
         nrm_ports = nrm.parsePortSpec( open( vc[config.NRM_MAP_FILE] ) )
-        network_topology = nrm.createNMLTopology(nrm_ports, network_name)
+        network_topology = nml.createNMLNetwork(nrm_ports, network_name, base_name)
         topology = nml.Topology()
         topology.addNetwork(network_topology, ns_agent)
 

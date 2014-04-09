@@ -26,6 +26,8 @@ EVTS_AGOLE          = 'http://services.ogf.org/nsi/2013/07/descriptions/EVTS.A-G
 ETHERNET            = 'http://schemas.ogf.org/nml/2012/10/ethernet'
 ETHERNET_VLAN       = '%s#vlan' % ETHERNET
 
+NRM_ETHERNET        = 'ethernet' # bidirectional implied
+
 FEATURE_AGGREGATOR  = 'vnd.ogf.nsi.cs.v2.role.aggregator'
 FEATURE_UPA         = 'vnd.ogf.nsi.cs.v2.role.uPA'
 

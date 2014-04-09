@@ -16,9 +16,7 @@ from opennsa.topology import nml
 LOG_SYSTEM = 'topology.nrm'
 
 
-ETHERNET   = 'ethernet' # implied bidirectional
-
-PORT_TYPES = [ ETHERNET ] # OpenNSA doesn't really do unidirectional at the moment
+PORT_TYPES = [ cnt.NRM_ETHERNET ] # OpenNSA doesn't really do unidirectional at the moment
 
 LABEL_TYPES = {
     'vlan'  : cnt.ETHERNET_VLAN
@@ -82,12 +80,6 @@ def _parseLabelSpec(label_spec):
 
 
 
-def createNMLTopology(nrm_ports, network_name):
-    network_readable_name = network_name.split(':')[0]
-    return createNMLNetwork(nrm_ports, network_name, network_readable_name)
-
-
-
 def parsePortSpec(source):
 
     # Parse the entries like the following:
@@ -126,7 +118,7 @@ def parsePortSpec(source):
         except ValueError as e:
             raise NRMSpecificationError('Invalid bandwidth: %s' % str(e))
 
-        if port_type == ETHERNET:
+        if port_type == cnt.NRM_ETHERNET:
             if remote_network is None:
                 remote_bd_port  = None
                 remote_in       = None
@@ -148,34 +140,4 @@ def parsePortSpec(source):
         nrm_ports.append( NRMPort(port_type, port_name, remote_bd_port, remote_in, remote_out, label, bandwidth, interface, authz_attributes) )
 
     return nrm_ports
-
-
-
-# this could probably go another module, but for now it is here
-def createNMLNetwork(nrm_ports, network_name, network_readable_name):
-
-    inbound_ports       = []
-    outbound_ports      = []
-    bidirectional_ports = []
-
-    for port in nrm_ports:
-
-        assert port.port_type == ETHERNET, 'Sorry can only do ethernet ports for now'
-
-        inbound_port_name   = port.name + '-in'
-        outbound_port_name  = port.name + '-out'
-
-        port_id             = network_name + ':' + port.name
-        inbound_port_id     = network_name + ':' + inbound_port_name
-        outbound_port_id    = network_name + ':' + outbound_port_name
-
-        inbound_port        = nml.InternalPort(inbound_port_id,  inbound_port_name,  port.bandwidth, port.label, port.remote_out)
-        outbound_port       = nml.InternalPort(outbound_port_id, outbound_port_name, port.bandwidth, port.label, port.remote_in)
-        bidirectional_port  = nml.BidirectionalPort(port_id, port.name, inbound_port, outbound_port, port.remote_name)
-
-        inbound_ports.append(inbound_port)
-        outbound_ports.append(outbound_port)
-        bidirectional_ports.append(bidirectional_port)
-
-    return nml.Network(network_name, network_readable_name, inbound_ports, outbound_ports, bidirectional_ports)
 

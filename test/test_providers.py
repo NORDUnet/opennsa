@@ -534,7 +534,7 @@ class AggregatorTest(GenericProviderTest, unittest.TestCase):
         self.clock = task.Clock()
 
         nrm_ports = nrm.parsePortSpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY))
-        network_topology = nrm.createNMLTopology(nrm_ports, self.network)
+        network_topology = nml.createNMLNetwork(nrm_ports, self.network, self.network)
 
         self.backend = dud.DUDNSIBackend(self.network, nrm_ports, self.requester, {})
         self.backend.scheduler.clock = self.clock
@@ -600,7 +600,7 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
         self.clock = task.Clock()
 
         nrm_ports = nrm.parsePortSpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY))
-        network_topology = nrm.createNMLTopology(nrm_ports, self.network)
+        network_topology = nml.createNMLNetwork(nrm_ports, self.network, self.network)
 
         self.backend = dud.DUDNSIBackend(self.network, nrm_ports, None, {}) # we set the parent later
         self.backend.scheduler.clock = self.clock

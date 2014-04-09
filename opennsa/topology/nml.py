@@ -341,3 +341,33 @@ class Topology(object):
         else:
             raise error.TopologyError('Unidirectional path-finding not implemented yet')
 
+
+
+def createNMLNetwork(nrm_ports, network_name, network_readable_name):
+    # create an nml network (topology) from a list of nrm ports
+
+    inbound_ports       = []
+    outbound_ports      = []
+    bidirectional_ports = []
+
+    for port in nrm_ports:
+
+        assert port.port_type == cnt.NRM_ETHERNET, 'Sorry can only do ethernet ports for now'
+
+        inbound_port_name   = port.name + '-in'
+        outbound_port_name  = port.name + '-out'
+
+        port_id             = network_name + ':' + port.name
+        inbound_port_id     = network_name + ':' + inbound_port_name
+        outbound_port_id    = network_name + ':' + outbound_port_name
+
+        inbound_port        = InternalPort(inbound_port_id,  inbound_port_name,  port.bandwidth, port.label, port.remote_out)
+        outbound_port       = InternalPort(outbound_port_id, outbound_port_name, port.bandwidth, port.label, port.remote_in)
+        bidirectional_port  = BidirectionalPort(port_id, port.name, inbound_port, outbound_port, port.remote_name)
+
+        inbound_ports.append(inbound_port)
+        outbound_ports.append(outbound_port)
+        bidirectional_ports.append(bidirectional_port)
+
+    return Network(network_name, network_readable_name, inbound_ports, outbound_ports, bidirectional_ports)
+
