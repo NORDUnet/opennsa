@@ -76,7 +76,7 @@ class Requester:
 
         def reserveRequestFailed(err):
             # invocation failed, so we error out immediately
-            log.msg('Reserve invocation failed: %s' % err.getErrorMessage(), system=LOG_SYSTEM)
+            log.msg('Reserve invocation failed: %s' % err.getErrorMessage(), debug=True, system=LOG_SYSTEM)
             self.triggerCall(header.provider_nsa, header.correlation_id, RESERVE, err.value)
 
         rd = self.addCall(header.provider_nsa, header.correlation_id, RESERVE)
