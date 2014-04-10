@@ -209,6 +209,10 @@ class GenericBackend(service.Service):
         if not nrm_dest_port.isAuthorized(header.security_attributes):
             raise error.UnauthorizedError('Request does not have any valid credentials for port %s' % dest_stp.baseURN())
 
+        # transit restriction
+        if nrm_source_port.transit_restricted and nrm_dest_port.transit_restricted:
+            raise error.ConnectionCreateError('Cannot connect two transit restricted STPs.')
+
         # basic label check
         if source_stp.label is None:
             raise error.TopologyError('Source STP must specify a label')

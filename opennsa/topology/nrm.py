@@ -17,6 +17,7 @@ LOG_SYSTEM = 'topology.nrm'
 
 
 PORT_TYPES = [ cnt.NRM_ETHERNET ] # OpenNSA doesn't really do unidirectional at the moment
+ATTRIBUTES = [ cnt.NRM_RESTRICTTRANSIT ]
 
 LABEL_TYPES = {
     'vlan'  : cnt.ETHERNET_VLAN
@@ -34,7 +35,7 @@ class NRMSpecificationError(Exception):
 
 class NRMPort(object):
 
-    def __init__(self, port_type, name, remote_name, remote_in, remote_out, label, bandwidth, interface, authz):
+    def __init__(self, port_type, name, remote_name, remote_in, remote_out, label, bandwidth, interface, authz, transit_restricted=False):
         self.port_type      = port_type     # string
         self.name           = name          # string
         self.remote_name    = remote_name   # topology:port
@@ -43,7 +44,8 @@ class NRMPort(object):
         self.label          = label         # nsa.Label
         self.bandwidth      = bandwidth     # int
         self.interface      = interface     # string
-        self.authz          = authz         # [ nsa.SecuritAttribte ]
+        self.authz          = authz         # [ nsa.SecurityAttribute ]
+        self.transit_restricted = transit_restricted
 
 
     def isAuthorized(self, security_attributes):
@@ -132,12 +134,18 @@ def parsePortSpec(source):
         else:
             raise AssertionError('do not know what to with port of type %s' % port_type)
 
-        if authz == '-':
-            authz_attributes = []
-        else:
-            authz_attributes = [ nsa.SecurityAttribute(*av.split('=',2)) for av in authz.split(',') ]
+        authz_attributes = []
+        transit_restricted = False
+        if authz != '-':
+            for aa in authz.split(','):
+                if '=' in aa:
+                    authz_attributes.append( nsa.SecurityAttribute(*aa.split('=',2)) )
+                elif aa in ATTRIBUTES and aa == cnt.NRM_RESTRICTTRANSIT:
+                    transit_restricted = True
+                else:
+                    raise config.ConfigurationError('Invalid attribute: %s' % aa)
 
-        nrm_ports.append( NRMPort(port_type, port_name, remote_bd_port, remote_in, remote_out, label, bandwidth, interface, authz_attributes) )
+        nrm_ports.append( NRMPort(port_type, port_name, remote_bd_port, remote_in, remote_out, label, bandwidth, interface, authz_attributes, transit_restricted) )
 
     return nrm_ports
 
