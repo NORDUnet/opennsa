@@ -22,7 +22,7 @@ def DUDNSIBackend(network_name, nrm_ports, parent_requester, configuration):
     port_map = dict( [ (p.name, p.interface) for p in nrm_ports ] ) # for the nrm backend
 
     cm = DUDConnectionManager(name, port_map)
-    return genericbackend.GenericBackend(network_name, nrm_map, cm, parent_requester, name)
+    return genericbackend.GenericBackend(network_name, nrm_map, cm, parent_requester, name, minimum_duration=1)
 
 
 

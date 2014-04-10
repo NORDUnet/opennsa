@@ -231,7 +231,7 @@ def readVerifyConfig(cfg):
                 allowed_hosts_cfg = cfg.get(BLOCK_SERVICE, ALLOWED_HOSTS)
                 vc[ALLOWED_HOSTS] = allowed_hosts_cfg.split(',')
             except:
-                vc[ALLOWED_HOSTS] = None
+                pass
 
         except ConfigParser.NoOptionError, e:
             # Not enough options for configuring tls context

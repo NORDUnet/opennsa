@@ -41,13 +41,14 @@ class GenericBackend(service.Service):
 
     TPC_TIMEOUT = 40 # seconds
 
-    def __init__(self, network, nrm_ports, connection_manager, parent_requester, log_system):
+    def __init__(self, network, nrm_ports, connection_manager, parent_requester, log_system, minimum_duration=60):
 
         self.network            = network
         self.nrm_ports          = nrm_ports
         self.connection_manager = connection_manager
         self.parent_requester   = parent_requester
         self.log_system         = log_system
+        self.minimum_duration   = minimum_duration
 
         self.notification_id = 0
 
@@ -199,6 +200,10 @@ class GenericBackend(service.Service):
             raise error.STPUnavailableError('No STP named %s (ports: %s)' %(source_stp.baseURN(), str(self.nrm_ports.keys()) ))
         if not dest_stp.port in self.nrm_ports:
             raise error.STPUnavailableError('No STP named %s (ports: %s)' %(dest_stp.baseURN(), str(self.nrm_ports.keys()) ))
+
+        duration = (schedule.end_time - schedule.start_time).total_seconds()
+        if duration < self.minimum_duration:
+            raise error.ConnectionCreateError('Duration too short, minimum duration is %i seconds (%i specified)' % (self.minimum_duration, duration), self.network)
 
         nrm_source_port = self.nrm_ports[source_stp.port]
         nrm_dest_port   = self.nrm_ports[dest_stp.port]
