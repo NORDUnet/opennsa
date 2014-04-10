@@ -170,7 +170,7 @@ class OpenNSAService(twistedservice.MultiService):
 
         # fetcher
         if vc[config.PEERS]:
-            fetcher_service = fetcher.FetcherService(route_vectors, topology, vc[config.PEERS], provider_registry, ctx_factory=ctx_factory)
+            fetcher_service = fetcher.FetcherService(route_vectors, vc[config.PEERS], provider_registry, ctx_factory=ctx_factory)
             fetcher_service.setServiceParent(self)
 
         # wire up the http stuff

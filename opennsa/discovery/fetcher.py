@@ -18,12 +18,11 @@ FETCH_INTERVAL = 3600 # seconds - 3600 seconds = 1 hour
 
 class FetcherService(service.Service):
 
-    def __init__(self, route_vectors, topology, peers, provider_registry, ctx_factory=None):
+    def __init__(self, route_vectors, peers, provider_registry, ctx_factory=None):
         for peer in peers:
             assert peer.url.startswith('http'), 'Peer URL %s does not start with http' % peer.url
 
         self.route_vectors = route_vectors
-        self.topology = topology
         self.peers = peers
         self.provider_registry = provider_registry
         self.ctx_factory = ctx_factory
