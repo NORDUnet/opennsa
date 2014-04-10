@@ -196,9 +196,9 @@ class GenericBackend(service.Service):
 
         # ensure that ports actually exists
         if not source_stp.port in self.nrm_ports:
-            raise error.STPUnavailableError('No port named %s for network %s (ports: %s)' %(source_stp.port, self.id_, str(self.nrm_ports.keys()) ))
+            raise error.STPUnavailableError('No STP named %s (ports: %s)' %(source_stp.baseURN(), str(self.nrm_ports.keys()) ))
         if not dest_stp.port in self.nrm_ports:
-            raise error.STPUnavailableError('No port named %s for network %s (ports: %s)' %(dest_stp.port, self.id_, str(self.nrm_ports.keys()) ))
+            raise error.STPUnavailableError('No STP named %s (ports: %s)' %(dest_stp.baseURN(), str(self.nrm_ports.keys()) ))
 
         nrm_source_port = self.nrm_ports[source_stp.port]
         nrm_dest_port   = self.nrm_ports[dest_stp.port]
