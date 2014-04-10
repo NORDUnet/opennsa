@@ -160,7 +160,7 @@ class Network(object):
 
 
     def canSwapLabel(self, label_type):
-        return label_type == cnt.ETHERNET_VLAN and self.id_.startswith('urn:ogf:network:nordu.net:')
+        return False # not really clear how nml expresses this yet
 
 
 
