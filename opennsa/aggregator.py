@@ -52,7 +52,7 @@ def _buildErrorMessage(connection_id, action, results):
         error_msg = failures[0][1].getErrorMessage()
     else:
         # multiple failures, here we build a more complicated error string
-        error_msg = '%i/%i %s failed: %s' % (len(failures), len(results), action, '. '.join(failure_msgs))
+        error_msg = '%i/%i %s failed:\n  %s' % (len(failures), len(results), action, '\n  '.join(failure_msgs))
 
     return error_msg
 
