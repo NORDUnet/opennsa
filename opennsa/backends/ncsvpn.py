@@ -46,7 +46,7 @@ from opennsa.protocols.shared import httpclient
 #
 # The connection id -> object-id mapping is hence rather important to remember, but it can be the
 
-NCS_TIMEOUT = 45 # ncs typically spends 28-31 seconds creating/deleting a vpn
+NCS_TIMEOUT = 60 # ncs typically spends 25-32 seconds creating/deleting a vpn, sometimes a bit more
 
 
 ETHERNET_VPN_PAYLOAD_BASE = """
