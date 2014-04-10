@@ -181,7 +181,7 @@ class Label(object):
         try:
             l1.intersect(l2) # this checks type as well as range
             return True
-        except nsa.EmptyLabelSet:
+        except EmptyLabelSet:
             return False
 
 

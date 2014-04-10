@@ -9,8 +9,7 @@ Copyright: NORDUnet (2011-2012)
 import re
 import StringIO
 
-from opennsa import constants as cnt, nsa, error
-from opennsa.topology import nml
+from opennsa import constants as cnt, nsa, error, config
 
 
 LOG_SYSTEM = 'topology.nrm'
