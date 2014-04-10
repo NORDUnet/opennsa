@@ -1,6 +1,6 @@
 from twisted.trial import unittest
 
-from opennsa.topology import nmlgns
+from opennsa.topology import gns
 
 
 ARUBA_NSA       = 'aruba:nsa'
@@ -14,11 +14,11 @@ CURACAO_TOPO    = 'curacao:topo'
 DOMINCA_TOPO    = 'dominica:topo'
 
 
-class NMLGNSTest(unittest.TestCase):
+class GNSTest(unittest.TestCase):
 
     def setUp(self):
 
-        self.rv = nmlgns.RouteVectors( [] )
+        self.rv = gns.RouteVectors( [] )
 
 
     def testBasicPathfindingVector(self):
@@ -44,7 +44,7 @@ class NMLGNSTest(unittest.TestCase):
 
     def testLocalNetworkExclusion(self):
 
-        self.rv = nmlgns.RouteVectors( [ BONAIRE_TOPO ] )
+        self.rv = gns.RouteVectors( [ BONAIRE_TOPO ] )
 
         self.rv.updateVector(ARUBA_NSA, 1, [ ARUBA_TOPO ], { BONAIRE_TOPO : 1 , CURACAO_TOPO : 2 } )
 

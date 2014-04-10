@@ -4,7 +4,7 @@ from twisted.trial import unittest
 from twisted.internet import reactor, defer, task
 
 from opennsa import nsa, provreg, database, error, aggregator, constants as cnt
-from opennsa.topology import nml, nmlgns, nrm
+from opennsa.topology import nml, gns, nrm
 from opennsa.backends import dud
 
 from . import topology, common
@@ -539,7 +539,7 @@ class AggregatorTest(GenericProviderTest, unittest.TestCase):
         self.backend = dud.DUDNSIBackend(self.network, nrm_ports, self.requester, {})
         self.backend.scheduler.clock = self.clock
 
-        route_vectors = nmlgns.RouteVectors( [ cnt.URN_OGF_PREFIX + self.network ] )
+        route_vectors = gns.RouteVectors( [ cnt.URN_OGF_PREFIX + self.network ] )
         route_vectors.updateVector(self.provider_agent.identity, 0, [ self.network ], {})
 
         pr = provreg.ProviderRegistry( { self.provider_agent.urn() : self.backend }, {} )
@@ -602,7 +602,7 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
         self.backend = dud.DUDNSIBackend(self.network, nrm_ports, None, {}) # we set the parent later
         self.backend.scheduler.clock = self.clock
 
-        route_vectors = nmlgns.RouteVectors( [ cnt.URN_OGF_PREFIX + self.network ] )
+        route_vectors = gns.RouteVectors( [ cnt.URN_OGF_PREFIX + self.network ] )
         route_vectors.updateVector(self.provider_agent.identity, 0, [ self.network ], {})
 
         pr = provreg.ProviderRegistry( { self.provider_agent.urn() : self.backend }, {} )

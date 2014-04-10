@@ -34,7 +34,7 @@ class DiscoveryService:
         self.interfaces             = interfaces            # [ (type, url, described_by) ]
         self.features               = features              # [ (type, value) ]
         self.peers_with             = peers_with            # [ string ]
-        self.route_vectors          = route_vectors         # nmlgns.RouteVectors
+        self.route_vectors          = route_vectors         # gns.RouteVectors
 
 
     def xml(self):
