@@ -76,10 +76,10 @@ class Aggregator:
 
     implements(INSIProvider, INSIRequester)
 
-    def __init__(self, network, nsa_, topology, route_vectors, parent_requester, provider_registry):
+    def __init__(self, network, nsa_, network_topology, route_vectors, parent_requester, provider_registry):
         self.network = network
         self.nsa_ = nsa_
-        self.network_topology = topology.getNetwork(self.network)
+        self.network_topology = network_topology
         self.route_vectors = route_vectors
 
         self.parent_requester   = parent_requester

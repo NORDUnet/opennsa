@@ -539,14 +539,11 @@ class AggregatorTest(GenericProviderTest, unittest.TestCase):
         self.backend = dud.DUDNSIBackend(self.network, nrm_ports, self.requester, {})
         self.backend.scheduler.clock = self.clock
 
-        self.topology = nml.Topology()
-        self.topology.addNetwork(network_topology, self.provider_agent)
-
         route_vectors = nmlgns.RouteVectors( [ cnt.URN_OGF_PREFIX + self.network ] )
         route_vectors.updateVector(self.provider_agent.identity, 0, [ self.network ], {})
 
         pr = provreg.ProviderRegistry( { self.provider_agent.urn() : self.backend }, {} )
-        self.provider = aggregator.Aggregator(self.network, self.provider_agent, self.topology, route_vectors, self.requester, pr)
+        self.provider = aggregator.Aggregator(self.network, self.provider_agent, network_topology, route_vectors, self.requester, pr)
 
         # set parent for backend, we need to create the aggregator before this can be done
         self.backend.parent_requester = self.provider
@@ -605,14 +602,11 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
         self.backend = dud.DUDNSIBackend(self.network, nrm_ports, None, {}) # we set the parent later
         self.backend.scheduler.clock = self.clock
 
-        self.topology = nml.Topology()
-        self.topology.addNetwork(network_topology, self.provider_agent)
-
         route_vectors = nmlgns.RouteVectors( [ cnt.URN_OGF_PREFIX + self.network ] )
         route_vectors.updateVector(self.provider_agent.identity, 0, [ self.network ], {})
 
         pr = provreg.ProviderRegistry( { self.provider_agent.urn() : self.backend }, {} )
-        self.aggregator = aggregator.Aggregator(self.network, self.provider_agent, self.topology, route_vectors, None, pr) # we set the parent later
+        self.aggregator = aggregator.Aggregator(self.network, self.provider_agent, network_topology, route_vectors, None, pr) # we set the parent later
 
         self.backend.parent_requester = self.aggregator
 

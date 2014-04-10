@@ -126,8 +126,6 @@ class OpenNSAService(twistedservice.MultiService):
         # topology
         nrm_ports = nrm.parsePortSpec( open( vc[config.NRM_MAP_FILE] ) )
         network_topology = nml.createNMLNetwork(nrm_ports, network_name, base_name)
-        topology = nml.Topology()
-        topology.addNetwork(network_topology, ns_agent)
 
         # route vectors
         route_vectors = nmlgns.RouteVectors( [ cnt.URN_OGF_PREFIX + network_name ] )
@@ -148,7 +146,7 @@ class OpenNSAService(twistedservice.MultiService):
         requester_creator = CS2RequesterCreator(top_resource, None, vc[config.HOST], vc[config.PORT], vc[config.TLS], ctx_factory) # set aggregator later
 
         provider_registry = provreg.ProviderRegistry({}, { cnt.CS2_SERVICE_TYPE : requester_creator.create } )
-        aggr = aggregator.Aggregator(network_topology.id_, ns_agent, topology, route_vectors, None, provider_registry) # set parent requester later
+        aggr = aggregator.Aggregator(network_topology.id_, ns_agent, network_topology, route_vectors, None, provider_registry) # set parent requester later
 
         requester_creator.aggregator = aggr
 
