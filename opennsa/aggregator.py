@@ -79,8 +79,7 @@ class Aggregator:
     def __init__(self, network, nsa_, topology, route_vectors, parent_requester, provider_registry):
         self.network = network
         self.nsa_ = nsa_
-        self.topology = topology
-        self.network_topology = self.topology.getNetwork(self.network)
+        self.network_topology = topology.getNetwork(self.network)
         self.route_vectors = route_vectors
 
         self.parent_requester   = parent_requester
@@ -218,9 +217,9 @@ class Aggregator:
 
         # if the link terminates at our network, check that ports exists
         if source_stp.network == self.network:
-            self.topology.getNetwork(self.network).getPort(source_stp.network + ':' + source_stp.port)
+            self.network_topology.getPort(source_stp.network + ':' + source_stp.port)
         if dest_stp.network == self.network:
-            self.topology.getNetwork(self.network).getPort(dest_stp.network + ':' + dest_stp.port)
+            self.network_topology.getPort(dest_stp.network + ':' + dest_stp.port)
 
         conn = database.ServiceConnection(connection_id=connection_id, revision=0, global_reservation_id=global_reservation_id, description=description,
                             requester_nsa=header.requester_nsa, requester_url=header.reply_to, reserve_time=datetime.datetime.utcnow(),
