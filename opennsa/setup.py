@@ -150,7 +150,7 @@ class OpenNSAService(twistedservice.MultiService):
 
         requester_creator.aggregator = aggr
 
-        pc = nsi2.setupProvider(aggr, top_resource, ctx_factory=ctx_factory)
+        pc = nsi2.setupProvider(aggr, top_resource, ctx_factory=ctx_factory, allowed_hosts=vc[config.ALLOWED_HOSTS])
         aggr.parent_requester = pc
 
         # setup backend(s) - for now we only support one

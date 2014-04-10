@@ -51,6 +51,7 @@ KEY                     = 'key'         # mandatory, if tls is set
 CERTIFICATE             = 'certificate' # mandatory, if tls is set
 CERTIFICATE_DIR         = 'certdir'     # mandatory (but dir can be empty)
 VERIFY_CERT             = 'verify'
+ALLOWED_HOSTS           = 'allowedhosts' # comma seperated list
 
 # generic ssh stuff, don't use directly
 _SSH_HOST               = 'host'
@@ -225,6 +226,12 @@ def readVerifyConfig(cfg):
 
             vc[KEY] = hostkey
             vc[CERTIFICATE] = hostcert
+
+            try:
+                allowed_hosts_cfg = cfg.get(BLOCK_SERVICE, ALLOWED_HOSTS)
+                vc[ALLOWED_HOSTS] = allowed_hosts_cfg.split(',')
+            except:
+                vc[ALLOWED_HOSTS] = None
 
         except ConfigParser.NoOptionError, e:
             # Not enough options for configuring tls context

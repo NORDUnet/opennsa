@@ -69,9 +69,10 @@ class SOAPResource(resource.Resource):
 
     isLeaf = True
 
-    def __init__(self):
+    def __init__(self, allowed_hosts=None):
         resource.Resource.__init__(self)
         self.soap_actions = {}
+        self.allowed_hosts = allowed_hosts # certificate dns
 
 
     def registerDecoder(self, soap_action, decoder):
@@ -81,12 +82,33 @@ class SOAPResource(resource.Resource):
 
     def render_POST(self, request):
 
-        # log peer identity if using ssl/tls at some point we should probably do something with the identity
-        if request.isSecure():
+        if self.allowed_hosts is not None:
+            if not request.isSecure():
+                request.setResponseCode(401) # Not Authorized
+                log.msg('Rejecting request, not secure (no ssl/tls)', system=LOG_SYSTEM)
+                return 'Insecure requests not allowed for this resource\r\n'
+
+            cert = request.transport.getPeerCertificate()
+            if not cert:
+                request.setResponseCode(401) # Not Authorized
+                log.msg('Rejecting request, no client certificate presented', system=LOG_SYSTEM)
+                return 'Requests without client certificate not allowed\r\n'
+
+            log.msg('Certificate subject %s' % cert.get_subject(), system=LOG_SYSTEM)
+            host_dn = cert.get_subject().get_components()[-1][1]
+            log.msg('Host DN: %s' % host_dn, system=LOG_SYSTEM)
+
+            if not host_dn in self.allowed_hosts:
+                request.setResponseCode(401) # Not Authorized
+                log.msg('Rejecting request, certificate host dn does not match allowed hosts', system=LOG_SYSTEM)
+                return 'Requests without certificate not allowed\r\n'
+
+        elif request.isSecure():
+            # log certificate subject
             cert = request.transport.getPeerCertificate()
             if cert:
-                subject = '/' + '/'.join([ '='.join(c) for c in cert.get_subject().get_components() ])
-                log.msg('Certificate subject: %s' % subject, system=LOG_SYSTEM)
+                log.msg('Certificate subject %s' % cert.get_subject(), system=LOG_SYSTEM)
+
 
         soap_action = request.requestHeaders.getRawHeaders('soapaction',[None])[0]
 
@@ -137,9 +159,9 @@ class SOAPResource(resource.Resource):
 
 
 
-def setupSOAPResource(top_resource, resource_name, subpath=None):
+def setupSOAPResource(top_resource, resource_name, subpath=None, allowed_hosts=None):
 
-    # Default path: NSI/services/ConnectionService
+    # Default path: NSI/services/{resource_name}
     if subpath is None:
         subpath = ['NSI', 'services' ]
 
@@ -156,7 +178,7 @@ def setupSOAPResource(top_resource, resource_name, subpath=None):
     if resource_name in ir.children:
         raise AssertionError, 'Trying to insert several SOAP resource in same leaf. Go away.'
 
-    soap_resource = SOAPResource()
+    soap_resource = SOAPResource(allowed_hosts=allowed_hosts)
     ir.putChild(resource_name, soap_resource)
     return soap_resource
 
