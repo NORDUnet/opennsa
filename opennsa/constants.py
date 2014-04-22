@@ -23,6 +23,9 @@ BIDIRECTIONAL       = 'Bidirectional'
 
 EVTS_AGOLE          = 'http://services.ogf.org/nsi/2013/07/descriptions/EVTS.A-GOLE'
 
+ETHERNET_NS         = 'http://schemas.ogf.org/nml/2012/10/ethernet'
+NML_ETHERNET_VLAN   = '%s#vlan' % ETHERNET_NS
+
 ETHERNET_VLAN       = 'vlan'
 
 NRM_ETHERNET        = 'ethernet' # bidirectional implied

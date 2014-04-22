@@ -44,6 +44,10 @@ NML_HASOUTBOUNDPORT     = NML_NS + 'hasOutboundPort'
 NML_MANAGEDBY           = NML_NS + 'managedBy'
 NML_ISALIAS             = NML_NS + 'isAlias'
 
+NML_LABEL_MAPPING = {
+    cnt.ETHERNET_VLAN : cnt.NML_ETHERNET_VLAN
+}
+
 
 
 def topologyXML(network):
@@ -62,7 +66,7 @@ def topologyXML(network):
         nml_port = ET.SubElement(nml_port_relation, NML_PORTGROUP, {ID: portName(port)} )
         label = port.label()
         if label:
-            ln = ET.SubElement(nml_port, NML_LABELGROUP, { LABEL_TYPE : label.type_} )
+            ln = ET.SubElement(nml_port, NML_LABELGROUP, { LABEL_TYPE : NML_LABEL_MAPPING[label.type_] } )
             ln.text = label.labelValue()
         if port.remote_port is not None:
             rpa = ET.SubElement(nml_port, NML_RELATION, { TYPE : NML_ISALIAS} )
