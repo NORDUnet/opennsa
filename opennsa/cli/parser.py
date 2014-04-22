@@ -12,8 +12,8 @@
 # -u service url
 # -m auth header
 
-# -t topology file
-# -n network
+# -t topology file  # no longer used
+# -n network        # no longer used
 
 # -p provider nsa
 # -r requester nsa
@@ -68,12 +68,6 @@ class ServiceURLOption(usage.Options):
 
 class AuthzHeaderOption(usage.Options):
     optParameters = [ [ options.AUTHZ_HEADER, 'm', None, 'Authorization header'] ]
-
-class TopologyFileOption(usage.Options):
-    optParameters = [ [ options.TOPOLOGY_FILE, 't', None, 'Topology File'] ]
-
-class NetworkOption(usage.Options):
-    optParameters = [ [ options.NETWORK, 'n', None, 'Provider Network'] ]
 
 class ProviderNSAOption(usage.Options):
     optParameters = [ [ options.PROVIDER, 'p', None, 'Provider NSA Identity'] ]
@@ -156,14 +150,12 @@ class BaseOptions(DefaultsFileOption):
 
 
 class NetworkBaseOptions(BaseOptions, HostOption, PortOption,
-                         ServiceURLOption, AuthzHeaderOption, TopologyFileOption, NetworkOption, SecurityAttributeOptions,
+                         ServiceURLOption, AuthzHeaderOption, SecurityAttributeOptions,
                          TLSFlag, PublicKeyOption, PrivateKeyOption, CertificateDirectoryOption, SkipCertificateVerificationFlag):
 
     def postOptions(self):
         # technically we should do this for all superclasses, but these are the only ones that has anything to do
         SecurityAttributeOptions.postOptions(self)
-        if self[options.SERVICE_URL] and (self[options.TOPOLOGY_FILE] or self[options.NETWORK]):
-            raise usage.UsageError('Cannot set service url while having topology file or network.')
 
 
 class NetworkCommandOptions(NetworkBaseOptions, ProviderNSAOption, RequesterNSAOption, ConnectionIDOption, GlobalIDOption):
@@ -171,9 +163,6 @@ class NetworkCommandOptions(NetworkBaseOptions, ProviderNSAOption, RequesterNSAO
 
 
 class ProvisionOptions(NetworkCommandOptions, NotificationWaitFlag):
-    pass
-
-class DiscoveryOptions(NetworkBaseOptions):
     pass
 
 
@@ -184,19 +173,8 @@ class ReserveOptions(NetworkCommandOptions, SourceSTPOption, DestSTPOption, Star
         StartTimeOption.postOptions(self)
         EndTimeOption.postOptions(self)
 
+
 class ReserveProvisionOptions(ReserveOptions, NotificationWaitFlag):
-    pass
-
-
-class PathOptions(BaseOptions, SourceSTPOption, DestSTPOption, TopologyFileOption):
-    pass
-
-
-class TopologyOptions(BaseOptions, TopologyFileOption):
-    pass
-
-
-class TopologyGraphOptions(TopologyOptions, FullGraphFlag):
     pass
 
 
@@ -206,7 +184,6 @@ class ProvisionReleaseTerminateOptions(NetworkCommandOptions):
 
 class Options(usage.Options):
     subCommands = [
-        ['discover',        None,   DiscoveryOptions,       'Discover services at an NSA.'],
         ['reserve',         None,   ReserveOptions,         'Create and commit a reservation.'],
         ['reserveonly',     None,   ReserveOptions,         'Create a reservation without comitting it.'],
         ['reservecommit',   None,   ProvisionOptions,       'Commit a held reservation.'],
@@ -216,10 +193,7 @@ class Options(usage.Options):
         ['release',         None,   ProvisionOptions,       'Release a connection.'],
         ['terminate',       None,   NetworkCommandOptions,  'Terminate a connection.'],
         ['querysummary',    None,   NetworkCommandOptions,  'Query a connection (summary).'],
-        ['querydetails',    None,   NetworkCommandOptions,  'Query a connection (recursive).'],
-        ['path',            None,   PathOptions,            'Print possible paths from source STP to destination STP.'],
-        ['topology',        None,   TopologyOptions,        'Print (known) topology information.'],
-        ['topology-graph',  None,   TopologyGraphOptions,   'Print a machine parsable network topology (Graphviz).']
+        ['querydetails',    None,   NetworkCommandOptions,  'Query a connection (recursive).']
     ]
 
     def postOptions(self):
