@@ -163,7 +163,7 @@ class Provider:
         d.addErrback(logError, 'terminateConfirmed')
         return d
 
-    # Need to think about how to do sync / async query
+    # Query
 
     def querySummary(self, header, connection_ids=None, global_reservation_ids=None):
 
