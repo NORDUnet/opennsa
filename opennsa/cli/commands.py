@@ -256,8 +256,8 @@ def querysummary(client, nsi_header, connection_ids, global_reservation_ids):
                 log.msg('  Start time  : %s, End time: %s' % (crit.schedule.start_time, crit.schedule.end_time))
                 if type(crit.service_def) is nsa.Point2PointService:
                     sd = crit.service_def
-                    log.msg('  Source STP  : %s' % sd.source_stp)
-                    log.msg('  Dest   STP  : %s' % sd.dest_stp)
+                    log.msg('  Source STP  : %s' % sd.source_stp.shortName())
+                    log.msg('  Dest   STP  : %s' % sd.dest_stp.shortName())
                     log.msg('  Bandwidth   : %s' % sd.capacity)
                     log.msg('  Direction   : %s' % sd.directionality)
                     log.msg('  Symmetric   : %s' % sd.symmetric)

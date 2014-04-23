@@ -207,6 +207,13 @@ class STP(object): # Service Termination Point
         self.label = label
 
 
+    def shortName(self):
+        base = '%s:%s' % (self.network, self.port)
+        if self.label:
+            base += '?' + self.label.type_.split('#')[-1] + '=' + self.label.labelValue()
+        return base
+ 
+
     def baseURN(self):
         return cnt.URN_OGF_PREFIX + self.network + ':' + self.port
 
@@ -218,10 +225,7 @@ class STP(object): # Service Termination Point
 
 
     def __repr__(self):
-        base = '<STP %s:%s' % (self.network, self.port)
-        if self.label:
-            base += '?' + self.label.type_.split('#')[-1] + '=' + self.label.labelValue()
-        return base + '>'
+        return '<STP %s>' % self.shortName()
 
 
 
