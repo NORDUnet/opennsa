@@ -204,8 +204,7 @@ class Options(usage.Options):
     def opt_version(self):
         from opennsa import __version__
         from twisted import copyright
-        print "OpenNSA version %s. " % __version__ + \
-              "Running on Twisted version", copyright.version
+        print "OpenNSA version %s. Running on Twisted version %s." % (__version__, copyright.version)
         raise SystemExit
 
 
