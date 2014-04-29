@@ -65,7 +65,9 @@ class FetcherService(service.Service):
 
             cs_service_url = None
             for i in nsa_description.interface:
-                if i.type_ == cnt.CS2_SERVICE_TYPE:
+                if i.type_ == cnt.CS2_PROVIDER:
+                    cs_service_url = i.href
+                elif i.type_ == cnt.CS2_SERVICE_TYPE and cs_service_url is None: # compat, only overwrite if cs prov not specified
                     cs_service_url = i.href
 
             if cs_service_url is None:
