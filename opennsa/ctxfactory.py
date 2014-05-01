@@ -42,7 +42,12 @@ class RequestContextFactory:
             else:
                 return 1 # allow everything which has a cert
 
-        ctx = SSL.Context(SSL.TLSv1_METHOD) # only tls v1 (its almost 2012, should be okay
+        ctx = SSL.Context(SSL.TLSv1_METHOD) # only tls v1
+
+        # disable tls session id, as the twisted tls protocol seems to break on them
+        ctx.set_session_cache_mode(SSL.SESS_CACHE_OFF)
+        ctx.set_options(SSL.OP_NO_TICKET)
+
         ctx.set_verify(SSL.VERIFY_PEER, verify_callback)
 
         calist = [ ca for ca in os.listdir(self.certificate_dir) if ca.endswith('.0') ]
