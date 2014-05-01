@@ -278,9 +278,11 @@ class JuniperEXConnectionManager:
 
 
 
-def JuniperEXBackend(network_name, network_topology, parent_requester, port_map, cfg):
+def JuniperEXBackend(network_name, nrm_ports, parent_requester, cfg):
 
     name = 'JuniperEX %s' % network_name
+    nrm_map  = dict( [ (p.name, p) for p in nrm_ports ] ) # for the generic backend
+    port_map = dict( [ (p.name, p.interface) for p in nrm_ports ] ) # for the nrm backend
 
     # extract config items
     host             = cfg[config.JUNIPER_HOST]
@@ -291,5 +293,4 @@ def JuniperEXBackend(network_name, network_topology, parent_requester, port_map,
     ssh_private_key  = cfg[config.JUNIPER_SSH_PRIVATE_KEY]
 
     cm = JuniperEXConnectionManager(port_map, host, port, host_fingerprint, user, ssh_public_key, ssh_private_key)
-    return genericbackend.GenericBackend(network_name, network_topology, cm, parent_requester, name)
-
+    return genericbackend.GenericBackend(network_name, nrm_map, cm, parent_requester, name)
