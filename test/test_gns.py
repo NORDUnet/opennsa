@@ -53,3 +53,25 @@ class GNSTest(unittest.TestCase):
         self.failUnlessEqual( self.rv.vector(CURACAO_TOPO), ARUBA_NSA)
 
 
+    def testBlackList(self):
+
+        self.rv = gns.RouteVectors( [ BONAIRE_TOPO ], blacklist_networks = [ CURACAO_TOPO ] )
+
+        self.rv.updateVector(ARUBA_NSA, 1, [ ARUBA_TOPO ], { BONAIRE_TOPO : 1 , CURACAO_TOPO : 2 } )
+
+        self.failUnlessEqual( self.rv.vector(ARUBA_TOPO),   ARUBA_NSA)
+        self.failUnlessEqual( self.rv.vector(BONAIRE_TOPO), None)
+        self.failUnlessEqual( self.rv.vector(CURACAO_TOPO), None)
+
+
+    def testMaxCost(self):
+
+        self.rv = gns.RouteVectors( [ BONAIRE_TOPO ], max_cost=4 )
+
+        self.rv.updateVector(ARUBA_NSA, 1, [ ARUBA_TOPO ], { BONAIRE_TOPO : 1 , CURACAO_TOPO : 4 } )
+
+        self.failUnlessEqual( self.rv.vector(ARUBA_TOPO),   ARUBA_NSA)
+        self.failUnlessEqual( self.rv.vector(BONAIRE_TOPO), None)
+        self.failUnlessEqual( self.rv.vector(CURACAO_TOPO), None)
+
+

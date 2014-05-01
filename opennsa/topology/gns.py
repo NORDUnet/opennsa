@@ -14,6 +14,8 @@ from twisted.python import log
 
 LOG_SYSTEM = 'opennsa.topology.gns'
 
+DEFAULT_MAX_COST = 5
+
 
 
 class _NSAVector:
@@ -40,11 +42,13 @@ class _NSAVector:
 
 class RouteVectors:
 
-    def __init__(self, local_networks):
+    def __init__(self, local_networks, blacklist_networks=None, max_cost=DEFAULT_MAX_COST):
 
         # networks hosted by the nsa itself, we want these in the vectors (though currently not used for anything),
         # but don't want to export/use them in reachability
         self.local_networks = local_networks
+        self.blacklist_networks = blacklist_networks if not blacklist_networks is None else []
+        self.max_cost = max_cost
 
         # this is a set of vectors we keep for each peer
         self.vectors = {} # nsa_urn -> _NSAVector
@@ -98,6 +102,12 @@ class RouteVectors:
             for topo_urn, cost in topo_vectors.items():
                 if topo_urn in self.local_networks:
                     continue # skip local networks
+                if topo_urn in self.blacklist_networks:
+                    log.msg('Skipping network %s in vector calculation, is blacklisted' % topo_urn, system=LOG_SYSTEM)
+                    continue
+                if cost > self.max_cost:
+                    log.msg('Skipping network %s in vector calculation, cost %i exceeds max cost %i' % (topo_urn, cost, self.max_cost), system=LOG_SYSTEM)
+                    continue
                 if not topo_urn in paths:
                     paths[topo_urn] = (nsa_urn, cost)
                 elif cost < paths[topo_urn]:
