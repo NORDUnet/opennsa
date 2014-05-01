@@ -12,7 +12,7 @@ from twisted.python import log
 
 
 
-LOG_SYSTEM = 'opennsa.topology.gns'
+LOG_SYSTEM = 'topology.gns'
 
 DEFAULT_MAX_COST = 5
 
