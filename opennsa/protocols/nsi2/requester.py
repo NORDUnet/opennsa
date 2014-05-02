@@ -16,6 +16,7 @@ RESERVE_COMMIT  = 'reserve_commit'
 PROVISION       = 'provision'
 RELEASE         = 'release'
 TERMINATE       = 'terminate'
+QUERY_RECURSIVE = 'query_recursive'
 
 
 
@@ -186,14 +187,37 @@ class Requester:
         return d
 
 
-    def queryConfirmed(self, correlation_id, requester_nsa, provider_nsa, query_result):
+## As we use the sync version of querySummary these are not needed
+##    def queryConfirmed(self, correlation_id, requester_nsa, provider_nsa, query_result):
+##
+##        self.triggerCall(provider_nsa, correlation_id, 'query', query_result)
+##
+##
+##    def queryFailed(self, correlation_id, requester_nsa, provider_nsa, error_message):
+##
+##        self.triggerCall(provider_nsa, correlation_id, 'query', error.QueryError(error_message))
 
-        self.triggerCall(provider_nsa, correlation_id, 'query', query_result)
+
+    def queryRecursive(self, header, connection_ids, global_reservation_ids):
+
+        def queryRecursiveFailed(err):
+            # invocation failed, so we error out immediately
+            self.triggerCall(header.provider_nsa, header.correlation_id, QUERY_RECURSIVE, err.value)
+
+        rd = self.addCall(header.provider_nsa, header.correlation_id, QUERY_RECURSIVE)
+        cd = self.requester_client.queryRecursive(header, connection_ids, global_reservation_ids)
+        cd.addErrback(queryRecursiveFailed)
+        return rd
 
 
-    def queryFailed(self, correlation_id, requester_nsa, provider_nsa, error_message):
+    def queryRecursiveConfirmed(self, header, result):
 
-        self.triggerCall(provider_nsa, correlation_id, 'query', error.QueryError(error_message))
+        self.triggerCall(header.provider_nsa, header.correlation_id, QUERY_RECURSIVE, result)
+
+
+    def queryRecursiveFailed(self, header, err):
+
+        self.triggerCall(header.provider_nsa, header.correlation_id, QUERY_RECURSIVE, err)
 
 
     def error(self, header, nsa_id, connection_id, service_type, error_id, text, variables, child_ex):

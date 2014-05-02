@@ -231,6 +231,24 @@ class QuerySummaryConfirmedType(object):
 
 
 
+class QueryRecursiveConfirmedType(object):
+    def __init__(self, reservations):
+        self.reservations = reservations  # [ QueryRecursiveResultType  ]
+
+    @classmethod
+    def build(self, element):
+        return QueryRecursiveConfirmedType(
+                [ QueryRecursiveResultType.build(e) for e in element.findall('reservation') ]
+               )
+
+    def xml(self, elementName):
+        r = ET.Element(elementName)
+        for e in self.reservations:
+            r.append( e.xml('reservation') )
+        return r
+
+
+
 class ReserveConfirmedType(object):
     def __init__(self, connectionId, globalReservationId, description, criteria):
         self.connectionId = connectionId  # ConnectionIdType -> string
@@ -620,9 +638,8 @@ class QueryRecursiveResultType(object):
             ET.SubElement(r, 'globalReservationId').text = str(self.globalReservationId)
         if self.description is not None:
             ET.SubElement(r, 'description').text = self.description
-        if self.criteria is not None:
-            for el in self.criteria:
-                ET.SubElement(r, 'criteria').extend( el.xml('criteria') )
+        for el in self.criteria:
+            r.append( el.xml('criteria') )
         ET.SubElement(r, 'requesterNSA').text = str(self.requesterNSA)
         r.append(self.connectionStates.xml('connectionStates'))
         if self.notificationId is not None:
@@ -721,7 +738,8 @@ class QueryRecursiveResultCriteriaType(object):
         r.append(self.schedule.xml('schedule'))
         ET.SubElement(r, 'serviceType').text = self.serviceType
         if self.children is not None:
-            ET.SubElement(r, 'children').extend( [ e.xml('children') for e in self.children ] )
+            ET.SubElement(r, 'children').extend( [ e.xml('child') for e in self.children ] )
+        r.append(self.serviceDefinition.xml(self.serviceType))
         return r
 
 
@@ -770,9 +788,8 @@ class ChildRecursiveType(object):
         ET.SubElement(r, 'connectionId').text = self.connectionId
         ET.SubElement(r, 'providerNSA').text = str(self.providerNSA)
         r.append(self.connectionStates.xml('connectionStates'))
-        if self.criteria is not None:
-            for el in self.criteria:
-                ET.SubElement(r, 'criteria').extend( el.xml('criteria') )
+        for el in self.criteria:
+            r.append( el.xml('criteria') )
         return r
 
 
@@ -932,8 +949,9 @@ def parseElement(element):
         '{http://schemas.ogf.org/nsi/2013/12/connection/types}reserveTimeout' : ReserveTimeoutRequestType,
         '{http://schemas.ogf.org/nsi/2013/12/connection/types}queryResultSync' : QueryResultType,
         '{http://schemas.ogf.org/nsi/2013/12/connection/types}queryRecursive' : QueryType,
-        '{http://schemas.ogf.org/nsi/2013/12/connection/types}reservation' : QuerySummaryResultType,
-        '{http://schemas.ogf.org/nsi/2013/12/connection/types}querySummarySyncConfirmed' : QuerySummaryConfirmedType
+        '{http://schemas.ogf.org/nsi/2013/12/connection/types}querySummarySyncConfirmed' : QuerySummaryConfirmedType,
+        '{http://schemas.ogf.org/nsi/2013/12/connection/types}querySummaryConfirmed' : QuerySummaryConfirmedType,
+        '{http://schemas.ogf.org/nsi/2013/12/connection/types}queryRecursiveConfirmed' : QueryRecursiveConfirmedType
     }
 
     if not element.tag in type_map:

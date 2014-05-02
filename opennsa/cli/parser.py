@@ -192,8 +192,8 @@ class Options(usage.Options):
         ['provision',       None,   ProvisionOptions,       'Provision a connection.'],
         ['release',         None,   ProvisionOptions,       'Release a connection.'],
         ['terminate',       None,   NetworkCommandOptions,  'Terminate a connection.'],
-        ['querysummary',    None,   NetworkCommandOptions,  'Query a connection (summary).'],
-        ['querydetails',    None,   NetworkCommandOptions,  'Query a connection (recursive).']
+        ['query',           None,   NetworkCommandOptions,  'Query a connection (provider summary).'],
+        ['queryrec',        None,   NetworkCommandOptions,  'Query a connection (recursive).']
     ]
 
     def postOptions(self):

@@ -6,8 +6,8 @@ Copyright: NORDUnet (2011)
 """
 
 from opennsa import nsa
-
-from opennsa.protocols.nsi2 import helper
+from opennsa.shared import xmlhelper
+from opennsa.protocols.nsi2 import helper, queryhelper
 from opennsa.protocols.nsi2.bindings import actions, p2pservices
 
 
@@ -33,6 +33,7 @@ class RequesterService:
         soap_resource.registerDecoder(actions.TERMINATE_CONFIRMED,      self.terminateConfirmed)
 
         soap_resource.registerDecoder(actions.QUERY_SUMMARY_CONFIRMED,  self.querySummaryConfirmed)
+        soap_resource.registerDecoder(actions.QUERY_RECURSIVE_CONFIRMED,self.queryRecursiveConfirmed)
 
 #        actions.QUERY_RECURSIVE_CONFIRMED
 #        actions.QUERY_RECURSIVE_FAILED
@@ -69,8 +70,8 @@ class RequesterService:
 
         # Create DTOs - this overlaps heavily with the parsing done in providerservice - unify sometime
 
-        start_time = helper.parseXMLTimestamp(criteria.schedule.startTime)
-        end_time   = helper.parseXMLTimestamp(criteria.schedule.endTime)
+        start_time = xmlhelper.parseXMLTimestamp(criteria.schedule.startTime)
+        end_time   = xmlhelper.parseXMLTimestamp(criteria.schedule.endTime)
         schedule   = nsa.Schedule(start_time, end_time)
 
         # check for service type sometime
@@ -143,16 +144,22 @@ class RequesterService:
 
     def querySummaryConfirmed(self, soap_data):
 
-        header, query_confirmed = helper.parseRequest(soap_data)
+        header, query_result = helper.parseRequest(soap_data)
 
-        if query_confirmed is None: # handle no connection case
-            reservations = []
-        elif type(query_confirmed) is list:
-            reservations = helper.buildQuerySummaryResult(query_confirmed)
-        else:
-            reservations = [ helper.buildQuerySummaryResult(query_confirmed) ]
+        reservations = [ queryhelper.buildQueryResult(res) for res in query_result.reservations ]
 
         self.requester.querySummaryConfirmed(header, reservations)
+
+        return helper.createGenericRequesterAcknowledgement(header)
+
+
+    def queryRecursiveConfirmed(self, soap_data):
+
+        header, query_result = helper.parseRequest(soap_data)
+
+        reservations = [ queryhelper.buildQueryResult(res, include_children=True) for res in query_result.reservations ]
+
+        self.requester.queryRecursiveConfirmed(header, reservations)
 
         return helper.createGenericRequesterAcknowledgement(header)
 

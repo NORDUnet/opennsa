@@ -236,53 +236,77 @@ def terminate(client, nsi_header, connection_id):
         _logError(e)
 
 
+
+
+def _emitQueryResult(query_result, i=''):
+
+    qr = query_result
+
+    log.msg('')
+    log.msg(i + 'Connection  : %s' % qr.connection_id)
+    if qr.global_reservation_id:
+        log.msg(i + 'Global ID   : %s' % qr.global_reservation_id)
+    if qr.description:
+        log.msg(i + 'Description : %s' % qr.description)
+
+    states = qr.states
+    dps = states[3]
+    log.msg(i + 'States      : %s' % ', '.join(states[0:3]))
+    log.msg(i + 'Dataplane   : Active : %s, Version: %s, Consistent %s' % dps)
+
+    if qr.criterias:
+        crit = qr.criterias[0]
+        log.msg(i + 'Start-End   : %s - %s' % (crit.schedule.start_time, crit.schedule.end_time))
+        if type(crit.service_def) is nsa.Point2PointService:
+            sd = crit.service_def
+            log.msg(i + 'Source      : %s' % sd.source_stp.shortName())
+            log.msg(i + 'Destination : %s' % sd.dest_stp.shortName())
+            log.msg(i + 'Bandwidth   : %s' % sd.capacity)
+            log.msg(i + 'Direction   : %s' % sd.directionality)
+            log.msg(i + 'Symmetric   : %s' % sd.symmetric)
+            if sd.parameters:
+                log.msg(i + 'Params      : %s' % sd.parameters)
+        else:
+            log.msg(i + 'Unrecognized service definition: %s' % str(crit.service_def))
+
+        if crit.children:
+            log.msg(i + 'Children    :') # %s' % crit.children)
+        for c in crit.children:
+            _emitQueryResult(c, i + '  ')
+
+
+
+
 @defer.inlineCallbacks
-def querysummary(client, nsi_header, connection_ids, global_reservation_ids):
+def querySummary(client, nsi_header, connection_ids, global_reservation_ids):
 
     try:
         qc = yield client.querySummary(nsi_header, connection_ids, global_reservation_ids)
+        if not qc:
+            log.msg('No results from query')
+            defer.returnValue(None)
+
         log.msg('Query results:')
         for qr in qc:
-            cid, gid, desc, crits, requester, states, children = qr
-            dps = states[3]
-            log.msg('Connection    : %s' % cid)
-            if gid:
-                log.msg('  Global ID   : %s' % gid)
-            if desc:
-                log.msg('  Description : %s' % desc)
+            _emitQueryResult(qr)
 
-            if crits:
-                crit = crits[0]
-                log.msg('  Start time  : %s, End time: %s' % (crit.schedule.start_time, crit.schedule.end_time))
-                if type(crit.service_def) is nsa.Point2PointService:
-                    sd = crit.service_def
-                    log.msg('  Source STP  : %s' % sd.source_stp.shortName())
-                    log.msg('  Dest   STP  : %s' % sd.dest_stp.shortName())
-                    log.msg('  Bandwidth   : %s' % sd.capacity)
-                    log.msg('  Direction   : %s' % sd.directionality)
-                    log.msg('  Symmetric   : %s' % sd.symmetric)
-                    log.msg('  Params      : %s' % sd.parameters)
-                else:
-                    log.msg('  Unrecognized service definition: %s' % str(crit.service_def))
-
-            log.msg('  States      : %s' % ', '.join(states[0:3]))
-            log.msg('  Dataplane   : Active : %s, Version: %s, Consistent %s' % dps)
-
-            if children:
-                log.msg('  Children    : %s' % children)
     except error.NSIError, e:
         _logError(e)
 
 
 @defer.inlineCallbacks
-def querydetails(client, nsi_header, connection_ids, global_reservation_ids):
+def queryRecursive(client, nsi_header, connection_ids, global_reservation_ids):
 
     try:
-        qc = yield client.queryDetails(nsi_header, connection_ids, global_reservation_ids)
+        qc = yield client.queryRecursive(nsi_header, connection_ids, global_reservation_ids)
+        if not qc:
+            log.msg('No results from query')
+            defer.returnValue(None)
+
         log.msg('Query results:')
         for qr in qc:
-            log.msg('Connection: %s' % qr.connectionId)
-            log.msg('  States: %s' % qr.connectionStates)
+            _emitQueryResult(qr)
+
     except error.NSIError, e:
         _logError(e)
 

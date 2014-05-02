@@ -19,7 +19,7 @@ from twisted.internet.error import ConnectionRefusedError
 from opennsa.interface import INSIProvider
 from opennsa import nsa, error
 from opennsa.protocols.shared import minisoap, httpclient
-from opennsa.protocols.nsi2 import helper
+from opennsa.protocols.nsi2 import helper, queryhelper
 from opennsa.protocols.nsi2.bindings import actions, nsiconnection, p2pservices
 
 
@@ -213,7 +213,7 @@ class RequesterClient:
 
         def gotReply(soap_data):
             header, query_confirmed = helper.parseRequest(soap_data)
-            return [ helper.buildQuerySummaryResult(resv) for resv in query_confirmed.reservations ]
+            return [ queryhelper.buildQueryResult(resv) for resv in query_confirmed.reservations ]
 
         # don't need to check header here
         header_element = helper.createProviderHeader(header.requester_nsa, header.provider_nsa, reply_to=self.reply_to, correlation_id=header.correlation_id,
@@ -228,4 +228,20 @@ class RequesterClient:
         d.addCallbacks(gotReply, self._handleErrorReply, errbackArgs=(header,))
         return d
 
+
+    def queryRecursive(self, header, connection_ids, global_reservation_ids=None):
+
+        self._checkHeader(header)
+
+        header_element = helper.createProviderHeader(header.requester_nsa, header.provider_nsa, reply_to=self.reply_to, correlation_id=header.correlation_id,
+                                                     security_attributes=header.security_attributes, connection_trace=header.connection_trace)
+
+        query_type = nsiconnection.QueryType(connection_ids, global_reservation_ids)
+        body_element = query_type.xml(nsiconnection.queryRecursive)
+
+        payload = minisoap.createSoapPayload(body_element, header_element)
+
+        d = httpclient.soapRequest(self.service_url, actions.QUERY_RECURSIVE, payload, ctx_factory=self.ctx_factory, headers=self.http_headers)
+        d.addCallbacks(lambda sd : None, self._handleErrorReply, errbackArgs=(header,))
+        return d
 

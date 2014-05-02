@@ -15,7 +15,9 @@ RESERVE_ABORT_RESPONSE  = 'reserve_commit_response'
 PROVISION_RESPONSE      = 'provision_response'
 RELEASE_RESPONSE        = 'release_response'
 TERMINATE_RESPONSE      = 'terminate_response'
-QUERY_SUMMARY_SYNC_RESPONSE = 'query_summary_sync_response'
+
+QUERY_SUMMARY_RESPONSE  = 'query_summary_response'
+QUERY_RECURSIVE_RESPONSE = 'query_recursive_response'
 
 
 
@@ -183,7 +185,7 @@ class Provider:
             raise ValueError('Cannot perform querySummary request without a correlationId field in the header')
 
         dc = defer.Deferred()
-        self.notifications[(header.correlation_id, QUERY_SUMMARY_SYNC_RESPONSE)] = dc
+        self.notifications[(header.correlation_id, QUERY_SUMMARY_RESPONSE)] = dc
 
         # returns a deferred, but we don't use it (indicates message receival only), should it be chained?
         self.service_provider.querySummary(header, connection_ids, global_reservation_ids)
@@ -192,11 +194,31 @@ class Provider:
 
     def querySummaryConfirmed(self, header, reservations):
 
-        if (header.correlation_id, QUERY_SUMMARY_SYNC_RESPONSE) in self.notifications:
-            dc = self.notifications.pop( (header.correlation_id, QUERY_SUMMARY_SYNC_RESPONSE) )
+        if (header.correlation_id, QUERY_SUMMARY_RESPONSE) in self.notifications:
+            dc = self.notifications.pop( (header.correlation_id, QUERY_SUMMARY_RESPONSE) )
             dc.callback( reservations )
         else:
             return self.provider_client.querySummaryConfirmed(header.reply_to, header.requester_nsa, header.provider_nsa, header.correlation_id, reservations)
+
+
+    def queryRecursive(self, header, connection_ids=None, global_reservation_ids=None):
+
+        if not header.reply_to:
+            raise ValueError('Cannot perform queryRecursive request without a replyTo field in the header')
+        if not header.correlation_id:
+            raise ValueError('Cannot perform queryRecursive request without a correlationId field in the header')
+
+        return self.service_provider.queryRecursive(header, connection_ids, global_reservation_ids)
+
+
+    def queryRecursiveConfirmed(self, header, reservations):
+
+        if (header.correlation_id, QUERY_RECURSIVE_RESPONSE) in self.notifications:
+            dc = self.notifications.pop( (header.correlation_id, QUERY_RECURSIVE_RESPONSE) )
+            dc.callback( reservations )
+        else:
+            return self.provider_client.queryRecursiveConfirmed(header.reply_to, header.requester_nsa, header.provider_nsa, header.correlation_id, reservations)
+
 
     # requester interface
 

@@ -72,7 +72,7 @@ def doMain():
 
     # network commands, listener port created in this block
     # note: we currently only have network commands, but they may change in the future
-    if config.subCommand in ['reserve', 'reserveonly', 'reservecommit', 'reserveprovision', 'rprt', 'provision', 'release', 'terminate', 'querysummary', 'querydetails']:
+    if config.subCommand in ['reserve', 'reserveonly', 'reservecommit', 'reserveprovision', 'rprt', 'provision', 'release', 'terminate', 'query', 'queryrec']:
 
         service_url     = config.subOptions[options.SERVICE_URL]    or defaults.get(options.SERVICE_URL)
         authz_header    = config.subOptions[options.AUTHZ_HEADER]   or defaults.get(options.AUTHZ_HEADER)
@@ -206,15 +206,15 @@ def doMain():
     elif config.subCommand == 'terminate':
         yield commands.terminate(client, nsi_header, connection_id)
 
-    elif config.subCommand == 'querysummary':
+    elif config.subCommand == 'query':
         connection_ids  = [ connection_id   ] if connection_id  else None
         global_ids      = [ global_id       ] if global_id      else None
-        yield commands.querysummary(client, nsi_header, connection_ids, global_ids)
+        yield commands.querySummary(client, nsi_header, connection_ids, global_ids)
 
-    elif config.subCommand == 'querydetails':
+    elif config.subCommand == 'queryrec':
         connection_ids  = [ connection_id   ] if connection_id  else None
         global_ids      = [ global_id       ] if global_id      else None
-        yield commands.querydetails(client, nsi_header, connection_ids, global_ids)
+        yield commands.queryRecursive(client, nsi_header, connection_ids, global_ids)
 
     else:
         print "Invalid subcommand specified"

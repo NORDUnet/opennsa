@@ -236,16 +236,15 @@ class GenericProviderTest:
         header, reservations = yield self.requester.query_summary_defer
 
         self.failUnlessEquals(len(reservations), 1)
+        ci = reservations[0]
 
-        cid, gid, desc, crits, req_nsa, states, nid = reservations[0]
+        self.failUnlessEquals(ci.connection_id, acid)
+        self.failUnlessEquals(ci.global_reservation_id, 'gid-123')
+        self.failUnlessEquals(ci.description, 'desc2')
 
-        self.failUnlessEquals(cid, acid)
-        self.failUnlessEquals(gid, 'gid-123')
-        self.failUnlessEquals(desc, 'desc2')
-
-        self.failUnlessEquals(req_nsa, self.requester_agent.urn())
-        self.failUnlessEquals(len(crits), 1)
-        crit = crits[0]
+        self.failUnlessEquals(ci.requester_nsa, self.requester_agent.urn())
+        self.failUnlessEquals(len(ci.criterias), 1)
+        crit = ci.criterias[0]
 
         src_stp = crit.service_def.source_stp
         dst_stp = crit.service_def.dest_stp
@@ -264,7 +263,7 @@ class GenericProviderTest:
         self.failUnlessEqual(crit.revision,   0)
 
         from opennsa import state
-        rsm, psm, lsm, dps = states
+        rsm, psm, lsm, dps = ci.states
         self.failUnlessEquals(rsm, state.RESERVE_START)
         self.failUnlessEquals(psm, state.RELEASED)
         self.failUnlessEquals(lsm, state.CREATED)
@@ -676,15 +675,15 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
 
         self.failUnlessEquals(len(reservations), 1)
 
-        cid, gid, desc, crits, req_nsa, states, nid = reservations[0]
+        ci = reservations[0]
 
-        self.failUnlessEquals(cid, acid)
-        self.failUnlessEquals(gid, 'gid-123')
-        self.failUnlessEquals(desc, 'desc2')
+        self.failUnlessEquals(ci.connection_id, acid)
+        self.failUnlessEquals(ci.global_reservation_id, 'gid-123')
+        self.failUnlessEquals(ci.description, 'desc2')
 
-        self.failUnlessEquals(req_nsa, self.requester_agent.urn())
-        self.failUnlessEquals(len(crits), 1)
-        crit = crits[0]
+        self.failUnlessEquals(ci.requester_nsa, self.requester_agent.urn())
+        self.failUnlessEquals(len(ci.criterias), 1)
+        crit = ci.criterias[0]
         sd = crit.service_def
 
         src_stp = sd.source_stp
@@ -704,7 +703,7 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
         self.failUnlessEqual(crit.revision,   0)
 
         from opennsa import state
-        rsm, psm, lsm, dps = states
+        rsm, psm, lsm, dps = ci.states
         self.failUnlessEquals(rsm, state.RESERVE_START)
         self.failUnlessEquals(psm, state.RELEASED)
         self.failUnlessEquals(lsm, state.CREATED)

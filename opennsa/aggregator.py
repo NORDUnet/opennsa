@@ -94,6 +94,10 @@ class Aggregator:
         self.db_connections = {}
         self.db_sub_connections = {}
 
+        # these are for query recursive, due to nsi being extremely crappy design
+        self.query_requests = {}
+        self.query_calls = {}
+
 
     def getNotificationId(self):
         nid = self.notification_id
@@ -624,12 +628,11 @@ class Aggregator:
             reservations = []
             for c in conns:
 
-                source_stp = nsa.STP(c.source_network, c.source_port, c.source_label)
-                dest_stp = nsa.STP(c.dest_network, c.dest_port, c.dest_label)
-
-                schedule = nsa.Schedule(c.start_time, c.end_time)
-                sd = nsa.Point2PointService(source_stp, dest_stp, c.bandwidth, cnt.BIDIRECTIONAL, False, None)
-                criteria = nsa.Criteria(c.revision, schedule, sd)
+                source_stp  = nsa.STP(c.source_network, c.source_port, c.source_label)
+                dest_stp    = nsa.STP(c.dest_network, c.dest_port, c.dest_label)
+                schedule    = nsa.Schedule(c.start_time, c.end_time)
+                sd          = nsa.Point2PointService(source_stp, dest_stp, c.bandwidth, cnt.BIDIRECTIONAL, False, None)
+                criteria    = nsa.QueryCriteria(c.revision, schedule, sd)
 
                 sub_conns = yield self.getSubConnectionsByConnectionKey(c.id)
                 if len(sub_conns) == 0: # apparently this can happen
@@ -641,8 +644,12 @@ class Aggregator:
                     data_plane_status = (aggr_active, aggr_version, aggr_consistent)
 
                 states = (c.reservation_state, c.provision_state, c.lifecycle_state, data_plane_status)
-                t = ( c.connection_id, c.global_reservation_id, c.description, [ criteria ], c.requester_nsa, states, self.getNotificationId())
-                reservations.append(t)
+                notification_id = self.getNotificationId()
+                result_id = 0
+
+                ci = nsa.ConnectionInfo(c.connection_id, c.global_reservation_id, c.description, cnt.EVTS_AGOLE, [ criteria ],
+                                        self.nsa_.urn(), c.requester_nsa, states, notification_id, result_id)
+                reservations.append(ci)
 
             self.parent_requester.querySummaryConfirmed(header, reservations)
 
@@ -651,10 +658,134 @@ class Aggregator:
             raise e
 
 
+    @defer.inlineCallbacks
     def queryRecursive(self, header, connection_ids, global_reservation_ids):
-        raise NotImplementedError('queryRecursive not yet implemented in aggregator')
+
+        log.msg('QueryRecursive request from %s. CID: %s. GID: %s' % (header.requester_nsa, connection_ids, global_reservation_ids), system=LOG_SYSTEM)
+
+        # the semantics for global reservation id and query recursive is extremely wonky, so we don't do it
+        if global_reservation_ids:
+            raise error.UnsupportedParameter("Global Reservation Id not supported in queryRecursive (has wonky-monkey-on-acid semantics, don't use it)")
+
+        # recursive queries for all connections is a bad idea, say no to that
+        if not connection_ids:
+            raise error.MissingParameterError("At least one connection id must be specified, refusing to do recursive query for all connections")
+
+        # because segmenting the requests is a PITA
+        if len(connection_ids) > 1:
+            raise error.UnsupportedParameter("Can only perform queryRecursive for a single connection id.")
+
+        try:
+            conn = yield self.getConnection(header.requester_nsa, connection_ids[0])
+
+            sub_connections = yield self.getSubConnectionsByConnectionKey(conn.id)
+
+            cb_header = nsa.NSIHeader(header.requester_nsa, self.nsa_.urn(), header.correlation_id, reply_to=header.reply_to, security_attributes=header.security_attributes)
+            self.query_requests[cb_header.correlation_id]  = (cb_header, conn, len(sub_connections) )
+
+            defs = []
+            for sc in sub_connections:
+                provider = self.getProvider(sc.provider_nsa)
+                sch = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa, security_attributes=header.security_attributes)
+                d = provider.queryRecursive(sch, [ sc.connection_id ] , None)
+                defs.append(d)
+
+                self.query_calls[sch.correlation_id] = (cb_header.correlation_id, None)
+
+            results = yield defer.DeferredList(defs, consumeErrors=True)
+            successes = [ r[0] for r in results ]
+            if all(successes):
+                # this just means we got an ack from all children
+                defer.returnValue(None)
+
+            else:
+                n_success = sum( [ 1 for s in successes if s ] )
+                log.msg('QueryRecursive failure. %i of %i connections successfully replied' % (n_success, len(defs)), system=LOG_SYSTEM)
+                # we should really clear out the temporary state here...
+                raise _createAggregateException('', 'queryRecursive', results, error.ConnectionError)
+
+        except ValueError as e:
+            log.msg('Error during queryRecursive request: %s' % str(e), system=LOG_SYSTEM)
+            raise e
+
+
+    @defer.inlineCallbacks
+    def queryRecursiveConfirmed(self, header, sub_result):
+
+        @defer.inlineCallbacks
+        def createCQR(conn, children=None):
+            # can we make this generic?
+            c = conn
+
+            source_stp = nsa.STP(c.source_network, c.source_port, c.source_label)
+            dest_stp = nsa.STP(c.dest_network, c.dest_port, c.dest_label)
+
+            schedule = nsa.Schedule(c.start_time, c.end_time)
+            sd = nsa.Point2PointService(source_stp, dest_stp, c.bandwidth, cnt.BIDIRECTIONAL, False, None)
+
+            criteria = nsa.QueryCriteria(c.revision, schedule, sd, children)
+
+            sub_conns = yield self.getSubConnectionsByConnectionKey(c.id)
+            if len(sub_conns) == 0: # apparently this can happen
+                data_plane_status = (False, 0, False)
+            else:
+                aggr_active     = all( [ sc.data_plane_active     for sc in sub_conns ] )
+                aggr_version    = max( [ sc.data_plane_version    for sc in sub_conns ] ) or 0 # can be None otherwise
+                aggr_consistent = all( [ sc.data_plane_consistent for sc in sub_conns ] )
+                data_plane_status = (aggr_active, aggr_version, aggr_consistent)
+
+            states = (c.reservation_state, c.provision_state, c.lifecycle_state, data_plane_status)
+            notification_id = self.getNotificationId()
+            result_id = notification_id
+
+            ci = nsa.ConnectionInfo(c.connection_id, c.global_reservation_id, c.description, cnt.EVTS_AGOLE, [ criteria ],
+                                    self.nsa_.urn(), c.requester_nsa, states, notification_id, result_id)
+            defer.returnValue(ci)
+
+        # ---
+
+        log.msg('queryRecursiveConfirmed from %s.' % (header.provider_nsa,), system=LOG_SYSTEM)
+
+        if not header.correlation_id in self.query_calls:
+            log.msg('queryRecursiveConfirmed could not match correlation id %s' % header.correlation_id, system=LOG_SYSTEM)
+            return
+
+        cbh_correlation_id, res = self.query_calls[header.correlation_id]
+        if res:
+            log.msg('queryRecursiveConfirmed : Already have result for correlation id %s' % header.correlation_id, system=LOG_SYSTEM)
+            return
+
+        # update temporary result structure
+
+        self.query_calls[header.correlation_id] = cbh_correlation_id, sub_result
+
+        # done updating
+
+        # check if all sub results have been received
+        cb_header, conn, count = self.query_requests[cbh_correlation_id]
+        scr = [ res[0] for cbhci, res in self.query_calls.values() if res and cbhci == cbh_correlation_id ]
+
+        if len(scr) == count:
+            # all results back, can emit
+
+            # clear temporary structure
+            self.query_requests.pop(cbh_correlation_id)
+            for k,v in self.query_calls.items():
+                cbhci, res = v
+                if cbhci == cbh_correlation_id:
+                    self.query_calls.pop(k)
+
+            log.msg('QueryRecursive : Emitting to parent requester', system=LOG_SYSTEM)
+            results = yield createCQR(conn, scr)
+            self.parent_requester.queryRecursiveConfirmed(cb_header, [ results ] )
+
+        else:
+            log.msg('QueryRecursive : Still neeed %i/%i results to emit result' % (count-len(scr), count), system=LOG_SYSTEM)
+
 
     def queryNotification(self, header, connection_id, start_notification, end_notification):
+
+        log.msg('QueryNotification request from %s. CID: %s. %s-%s' % (header.requester_nsa, connection_id, start_notification, end_notification), system=LOG_SYSTEM)
         raise NotImplementedError('queryNotification not yet implemented in aggregator')
 
     # --
@@ -941,8 +1072,6 @@ class Aggregator:
     def querySummaryConfirmed(self, header, summary_results):
         raise NotImplementedError('querySummaryConfirmed is not yet implemented in aggregater')
 
-    def queryRecursiveConfirmed(self, header, recursive_results):
-        raise NotImplementedError('queryRecursiveConfirmed is not yet implemented in aggregater')
 
     def queryNotificationFailed(self, header, service_exception):
         raise NotImplementedError('queryNotificationFailed is not yet implemented in aggregater')

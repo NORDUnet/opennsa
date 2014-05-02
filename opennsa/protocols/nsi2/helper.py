@@ -10,9 +10,8 @@ from xml.etree import ElementTree as ET
 from twisted.python import log
 
 from opennsa import constants as cnt, nsa, error
-from opennsa.shared.xmlhelper import createXMLTime, parseXMLTimestamp # these were moved
 from opennsa.protocols.shared import minisoap
-from opennsa.protocols.nsi2.bindings import nsiframework, nsiconnection, p2pservices
+from opennsa.protocols.nsi2.bindings import nsiframework, nsiconnection
 
 
 LOG_SYSTEM = 'NSI2.Helper'
@@ -203,82 +202,4 @@ def createSTPID(stp):
 
     stp_id = URN_NETWORK + stp.network + ':' + stp.port + label
     return stp_id
-
-
-
-def buildQuerySummaryResult(query_confirmed):
-
-    qc = query_confirmed
-
-    r_states    = qc.connectionStates
-    r_dps       = r_states.dataPlaneStatus
-
-    dps = (r_dps.active, r_dps.version, r_dps.versionConsistent)
-    states = (r_states.reservationState, r_states.provisionState, r_states.lifecycleState, dps)
-
-    criterias = []
-    if qc.criteria is not None:
-        for rc in qc.criteria:
-
-            start_time = parseXMLTimestamp(rc.schedule.startTime)
-            end_time   = parseXMLTimestamp(rc.schedule.endTime)
-            schedule = nsa.Schedule(start_time, end_time)
-
-            if rc.serviceDefinition is None:
-                log.msg('Did not get any service definitions, cannot build query summary result', system=LOG_SYSTEM)
-                raise ValueError('Did not get any service definitions, cannot build query summary result')
-
-            if type(rc.serviceDefinition) is p2pservices.P2PServiceBaseType:
-                sd = rc.serviceDefinition
-                source_stp = createSTP(sd.sourceSTP)
-                dest_stp   = createSTP(sd.destSTP)
-                service_def = nsa.Point2PointService(source_stp, dest_stp, sd.capacity, sd.directionality, sd.symmetricPath, None)
-            else:
-                log.msg('Got non p2ps service, cannot build query summary for that', system=LOG_SYSTEM)
-                service_def = None
-
-            crit = nsa.Criteria(int(rc.version), schedule, service_def)
-            criterias.append(crit)
-
-    reservation = ( qc.connectionId, qc.globalReservationId, qc.description, criterias, qc.requesterNSA, states, qc.notificationId)
-    return reservation
-
-
-
-def buildQuerySummaryResultType(reservations):
-
-    def buildServiceDefinition(service_def):
-        if type(service_def) is nsa.Point2PointService:
-            sd = service_def
-            src_stp_id  = createSTPID(sd.source_stp)
-            dst_stp_id  = createSTPID(sd.dest_stp)
-            p2ps = p2pservices.P2PServiceBaseType(sd.capacity, sd.directionality, sd.symmetric, src_stp_id, dst_stp_id, None, [])
-            return str(p2pservices.p2ps), p2ps
-        else:
-            return 'N/A', None
-
-
-    query_results = []
-
-    for rsv in reservations:
-
-        cid, gid, desc, crits, req_nsa, states, nid = rsv
-        rsm, psm, lsm, dsm = states
-
-        criterias = []
-        for crit in crits:
-            schedule = nsiconnection.ScheduleType(createXMLTime(crit.schedule.start_time), createXMLTime(crit.schedule.end_time))
-            service_type, service_def = buildServiceDefinition(crit.service_def)
-            children = []
-            criteria = nsiconnection.QuerySummaryResultCriteriaType(crit.revision, schedule, service_type, children, service_def)
-            criterias.append(criteria)
-
-        data_plane_status = nsiconnection.DataPlaneStatusType(dsm[0], dsm[1], dsm[2])
-        connection_states = nsiconnection.ConnectionStatesType(rsm, psm, lsm, data_plane_status)
-
-        result_id = 0 # FIXME
-        qsrt = nsiconnection.QuerySummaryResultType(cid, gid, desc, criterias, req_nsa, connection_states, nid, result_id)
-        query_results.append(qsrt)
-
-    return query_results
 

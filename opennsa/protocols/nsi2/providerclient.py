@@ -7,8 +7,9 @@ Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2011-2013)
 """
 
+from opennsa.shared import xmlhelper
 from opennsa.protocols.shared import minisoap, httpclient
-from opennsa.protocols.nsi2 import helper
+from opennsa.protocols.nsi2 import helper, queryhelper
 from opennsa.protocols.nsi2.bindings import actions, nsiconnection, p2pservices
 
 
@@ -68,7 +69,7 @@ class ProviderClient:
 
         header_element = helper.createRequesterHeader(nsi_header.requester_nsa, nsi_header.provider_nsa, correlation_id=nsi_header.correlation_id)
 
-        schedule = nsiconnection.ScheduleType( helper.createXMLTime(criteria.schedule.start_time) ,helper.createXMLTime(criteria.schedule.end_time) )
+        schedule = nsiconnection.ScheduleType( xmlhelper.createXMLTime(criteria.schedule.start_time), xmlhelper.createXMLTime(criteria.schedule.end_time) )
 
         sd = criteria.service_def
 
@@ -149,7 +150,7 @@ class ProviderClient:
 
         header_element = helper.createRequesterHeader(requester_nsa, provider_nsa, correlation_id=correlation_id)
 
-        reserve_timeout = nsiconnection.ReserveTimeoutRequestType(connection_id, notification_id, helper.createXMLTime(timestamp), timeout_value, originating_connection_id, originating_nsa)
+        reserve_timeout = nsiconnection.ReserveTimeoutRequestType(connection_id, notification_id, xmlhelper.createXMLTime(timestamp), timeout_value, originating_connection_id, originating_nsa)
 
         body_element = reserve_timeout.xml(nsiconnection.reserveTimeout)
 
@@ -165,7 +166,7 @@ class ProviderClient:
         header_element = helper.createRequesterHeader(requester_nsa, provider_nsa, correlation_id=correlation_id)
 
         data_plane_status = nsiconnection.DataPlaneStatusType(active, version, consistent)
-        dps = nsiconnection.DataPlaneStateChangeRequestType(connection_id, notification_id, helper.createXMLTime(timestamp), data_plane_status)
+        dps = nsiconnection.DataPlaneStateChangeRequestType(connection_id, notification_id, xmlhelper.createXMLTime(timestamp), data_plane_status)
 
         body_element = dps.xml(nsiconnection.dataPlaneStateChange)
 
@@ -189,7 +190,7 @@ class ProviderClient:
         org_connection_id = None
         org_nsa_id = None
         additional_info = None
-        error_event = nsiconnection.ErrorEventType(connection_id, notification_id, helper.createXMLTime(timestamp), event,
+        error_event = nsiconnection.ErrorEventType(connection_id, notification_id, xmlhelper.createXMLTime(timestamp), event,
                                                    org_connection_id, org_nsa_id, additional_info, service_exception)
 
         body_element = error_event.xml(nsiconnection.errorEvent)
@@ -204,11 +205,23 @@ class ProviderClient:
 
         header_element = helper.createRequesterHeader(requester_nsa, provider_nsa, correlation_id=correlation_id)
 
-        query_summary_result = helper.buildQuerySummaryResultType(reservations)
-        qsr_elements = [ qsr.xml(nsiconnection.reservation) for qsr in query_summary_result ]
+        qs_reservations = queryhelper.buildQuerySummaryResultType(reservations)
+        qsct = nsiconnection.QuerySummaryConfirmedType(qs_reservations)
 
-        payload = minisoap.createSoapPayload(qsr_elements, header_element)
+        payload = minisoap.createSoapPayload(qsct.xml(nsiconnection.querySummaryConfirmed), header_element)
         d = httpclient.soapRequest(requester_url, actions.QUERY_SUMMARY_CONFIRMED, payload, ctx_factory=self.ctx_factory)
+        return d
+
+
+    def queryRecursiveConfirmed(self, requester_url, requester_nsa, provider_nsa, correlation_id, reservations):
+
+        header_element = helper.createRequesterHeader(requester_nsa, provider_nsa, correlation_id=correlation_id)
+
+        qr_reservations = queryhelper.buildQueryRecursiveResultType(reservations)
+        qrct = nsiconnection.QueryRecursiveConfirmedType(qr_reservations)
+
+        payload = minisoap.createSoapPayload(qrct.xml(nsiconnection.queryRecursiveConfirmed), header_element)
+        d = httpclient.soapRequest(requester_url, actions.QUERY_RECURSIVE_CONFIRMED, payload, ctx_factory=self.ctx_factory)
         return d
 
 

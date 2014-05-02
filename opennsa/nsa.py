@@ -332,6 +332,24 @@ class NetworkServiceAgent(object):
         return '<NetworkServiceAgent %s>' % self.identity
 
 
+class ConnectionInfo(object):
+    # only used for query results
+
+    def __init__(self, connection_id, global_reservation_id, description, service_type, criterias, provider_nsa, requester_nsa, states, notification_id, result_id):
+        assert type(criterias) is list, 'Invalid criterias type: %s' % str(type(criterias))
+        for criteria in criterias:
+            assert type(criteria) is QueryCriteria, 'Invalid criteria type: %s' % str(type(criteria))
+        self.connection_id          = connection_id
+        self.global_reservation_id  = global_reservation_id
+        self.description            = description
+        self.service_type           = service_type
+        self.criterias              = criterias
+        self.provider_nsa           = provider_nsa
+        self.requester_nsa          = requester_nsa
+        self.states                 = states
+        self.notification_id        = notification_id
+        self.result_id              = result_id
+
 
 class Criteria(object):
 
@@ -339,6 +357,17 @@ class Criteria(object):
         self.revision    = revision
         self.schedule    = schedule
         self.service_def = service_def
+
+
+class QueryCriteria(Criteria):
+    # only used for query summary and recursive (but not really used in summary)
+
+    def __init__(self, revision, schedule, service_def, children=None):
+        assert children is None or type(children) is list, 'Invalid QueryCriteria type: %s' % str(type(children))
+        for child in children or []:
+            assert type(child) is ConnectionInfo, 'Invalid QueryCriteria child: %s' % str(type(child))
+        Criteria.__init__(self, revision, schedule, service_def)
+        self.children = children or []
 
 
 

@@ -11,8 +11,9 @@ from xml.etree import ElementTree as ET
 from twisted.python import log, failure
 
 from opennsa import nsa, error
+from opennsa.shared import xmlhelper
 from opennsa.protocols.shared import minisoap, resource
-from opennsa.protocols.nsi2 import  helper
+from opennsa.protocols.nsi2 import helper, queryhelper
 from opennsa.protocols.nsi2.bindings import actions, nsiconnection, p2pservices
 
 
@@ -37,6 +38,7 @@ class ProviderService:
 
         soap_resource.registerDecoder(actions.QUERY_SUMMARY,     self.querySummary)
         soap_resource.registerDecoder(actions.QUERY_SUMMARY_SYNC,self.querySummarySync)
+        soap_resource.registerDecoder(actions.QUERY_RECURSIVE,   self.queryRecursive)
 
         # Some actions still missing
 
@@ -91,8 +93,8 @@ class ProviderService:
 
         # create DTOs (EROs not supported yet)
 
-        start_time = helper.parseXMLTimestamp(criteria.schedule.startTime)
-        end_time = helper.parseXMLTimestamp(criteria.schedule.endTime)
+        start_time = xmlhelper.parseXMLTimestamp(criteria.schedule.startTime)
+        end_time = xmlhelper.parseXMLTimestamp(criteria.schedule.endTime)
         schedule = nsa.Schedule(start_time, end_time)
 
         src_stp = helper.createSTP(p2ps.sourceSTP)
@@ -182,14 +184,24 @@ class ProviderService:
         def gotReservations(reservations, header):
             # do reply inline
             soap_header_element = helper.createProviderHeader(header.requester_nsa, header.provider_nsa, correlation_id=header.correlation_id)
-            qs_reservations = helper.buildQuerySummaryResultType(reservations)
-            qssc = nsiconnection.QuerySummaryConfirmedType(qs_reservations)
 
-            payload = minisoap.createSoapPayload(qssc.xml(nsiconnection.querySummarySyncConfirmed), soap_header_element)
+            qs_reservations = queryhelper.buildQuerySummaryResultType(reservations)
+
+            qsct = nsiconnection.QuerySummaryConfirmedType(qs_reservations)
+
+            payload = minisoap.createSoapPayload(qsct.xml(nsiconnection.querySummarySyncConfirmed), soap_header_element)
             return payload
 
         header, query = helper.parseRequest(soap_data)
         d = self.provider.querySummarySync(header, query.connectionId, query.globalReservationId)
         d.addCallbacks(gotReservations, self._createSOAPFault, callbackArgs=(header,), errbackArgs=(header.provider_nsa,))
+        return d
+
+
+    def queryRecursive(self, soap_data):
+
+        header, query = helper.parseRequest(soap_data)
+        d = self.provider.queryRecursive(header, query.connectionId, query.globalReservationId)
+        d.addCallbacks(lambda _ : helper.createGenericProviderAcknowledgement(header), self._createSOAPFault, errbackArgs=(header.provider_nsa,))
         return d
 

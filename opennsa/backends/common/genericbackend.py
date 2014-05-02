@@ -454,34 +454,48 @@ class GenericBackend(service.Service):
         self.logStateUpdate(conn, 'TERMINATED')
 
 
+
     @defer.inlineCallbacks
     def querySummary(self, header, connection_ids=None, global_reservation_ids=None):
 
+        reservations = yield self._query(header.requester_nsa, connection_ids, global_reservation_ids)
+        self.parent_requester.querySummaryConfirmed(header, reservations)
+
+
+    @defer.inlineCallbacks
+    def queryRecursive(self, header, connection_ids, global_reservation_ids):
+
+        reservations = yield self._query(header.requester_nsa, connection_ids, global_reservation_ids)
+        self.parent_requester.queryRecursiveConfirmed(header, reservations)
+
+
+    @defer.inlineCallbacks
+    def _query(self, requester_nsa, connection_ids, global_reservation_ids):
+        # generic query mechanism for summary and recursive
+
         if connection_ids:
-            conns = yield GenericBackendConnections.find(where=['requester_nsa = ? AND connection_id IN ?', header.requester_nsa, tuple(connection_ids) ])
+            conns = yield GenericBackendConnections.find(where=['requester_nsa = ? AND connection_id IN ?', requester_nsa, tuple(connection_ids) ])
         elif global_reservation_ids:
-            conns = yield GenericBackendConnections.find(where=['requester_nsa = ? AND global_reservation_ids IN ?', header.requester_nsa, tuple(global_reservation_ids) ])
+            conns = yield GenericBackendConnections.find(where=['requester_nsa = ? AND global_reservation_ids IN ?', requester_nsa, tuple(global_reservation_ids) ])
         else:
             raise error.MissingParameterError('Must specify connectionId or globalReservationId')
 
         reservations = []
         for c in conns:
             source_stp = nsa.STP(c.source_network, c.source_port, c.source_label)
-            dest_stp = nsa.STP(c.dest_network, c.dest_port, c.dest_label)
-            schedule = nsa.Schedule(c.start_time, c.end_time)
-            sd = nsa.Point2PointService(source_stp, dest_stp, c.bandwidth, cnt.BIDIRECTIONAL, False, None)
-            criteria = nsa.Criteria(c.revision, schedule, sd)
+            dest_stp   = nsa.STP(c.dest_network, c.dest_port, c.dest_label)
+            schedule   = nsa.Schedule(c.start_time, c.end_time)
+            sd         = nsa.Point2PointService(source_stp, dest_stp, c.bandwidth, cnt.BIDIRECTIONAL, False, None)
+            criteria   = nsa.QueryCriteria(c.revision, schedule, sd)
             data_plane_status = ( c.data_plane_active, c.revision, True )
             states = (c.reservation_state, c.provision_state, c.lifecycle_state, data_plane_status)
-            t = ( c.connection_id, c.global_reservation_id, c.description, [ criteria ], c.requester_nsa, states, self.getNotificationId())
-            reservations.append(t)
+            notification_id = self.getNotificationId()
+            result_id = notification_id # whatever
+            provider_nsa = self.network.replace('topology', 'nsa') # hack on
+            reservations.append( nsa.ConnectionInfo(c.connection_id, c.global_reservation_id, c.description, cnt.EVTS_AGOLE, [ criteria ],
+                                                    provider_nsa, c.requester_nsa, states, notification_id, result_id) )
 
-        self.parent_requester.querySummaryConfirmed(header, reservations)
-
-
-    @defer.inlineCallbacks
-    def queryRecursive(self, header, connection_ids, global_reservation_ids):
-        raise NotImplementedError('QueryRecursive not implemented in generic backend.')
+        defer.returnValue(reservations)
 
 
     @defer.inlineCallbacks
