@@ -291,6 +291,7 @@ def querySummary(client, nsi_header, connection_ids, global_reservation_ids):
         log.msg('Query results:')
         for qr in qc:
             _emitQueryResult(qr)
+        log.msg('')
 
     except error.NSIError, e:
         _logError(e)
@@ -308,6 +309,7 @@ def queryRecursive(client, nsi_header, connection_ids, global_reservation_ids):
         log.msg('Query results:')
         for qr in qc:
             _emitQueryResult(qr)
+        log.msg('')
 
     except error.NSIError, e:
         _logError(e)
