@@ -238,41 +238,43 @@ def terminate(client, nsi_header, connection_id):
 
 
 
-def _emitQueryResult(query_result, i=''):
+def _emitQueryResult(query_result, i='', child=False):
 
     qr = query_result
 
     log.msg('')
-    log.msg(i + 'Connection  : %s' % qr.connection_id)
+    log.msg(i + 'Connection   %s' % qr.connection_id)
     if qr.global_reservation_id:
-        log.msg(i + 'Global ID   : %s' % qr.global_reservation_id)
+        log.msg(i + 'Global ID    %s' % qr.global_reservation_id)
     if qr.description:
-        log.msg(i + 'Description : %s' % qr.description)
+        log.msg(i + 'Description  %s' % qr.description)
 
     states = qr.states
     dps = states[3]
-    log.msg(i + 'States      : %s' % ', '.join(states[0:3]))
-    log.msg(i + 'Dataplane   : Active : %s, Version: %s, Consistent %s' % dps)
+    log.msg(i + 'States       %s' % ', '.join(states[0:3]))
+    log.msg(i + 'Dataplane    Active : %s, Version: %s, Consistent %s' % dps)
 
     if qr.criterias:
         crit = qr.criterias[0]
-        log.msg(i + 'Start-End   : %s - %s' % (crit.schedule.start_time, crit.schedule.end_time))
+        if not child:
+            log.msg(i + 'Start-End    %s - %s' % (crit.schedule.start_time, crit.schedule.end_time))
         if type(crit.service_def) is nsa.Point2PointService:
             sd = crit.service_def
-            log.msg(i + 'Source      : %s' % sd.source_stp.shortName())
-            log.msg(i + 'Destination : %s' % sd.dest_stp.shortName())
-            log.msg(i + 'Bandwidth   : %s' % sd.capacity)
-            log.msg(i + 'Direction   : %s' % sd.directionality)
-            log.msg(i + 'Symmetric   : %s' % sd.symmetric)
-            if sd.parameters:
-                log.msg(i + 'Params      : %s' % sd.parameters)
+            #log.msg(i + 'Source      : %s' % sd.source_stp.shortName())
+            #log.msg(i + 'Destination : %s' % sd.dest_stp.shortName())
+            log.msg(i + 'Path         %s -- %s' % (sd.source_stp.shortName(), sd.dest_stp.shortName()) )
+            if not child: # these should be the same everywhere
+                log.msg(i + 'Bandwidth    %s' % sd.capacity)
+                log.msg(i + 'Direction    %s' % sd.directionality)
+                if sd.symmetric: # only show symmetric if set
+                    log.msg(i + 'Symmetric    %s' % sd.symmetric)
+                if sd.parameters:
+                    log.msg(i + 'Params       %s' % sd.parameters)
         else:
             log.msg(i + 'Unrecognized service definition: %s' % str(crit.service_def))
 
-        if crit.children:
-            log.msg(i + 'Children    :') # %s' % crit.children)
         for c in crit.children:
-            _emitQueryResult(c, i + '  ')
+            _emitQueryResult(c, i + '  ', True)
 
 
 
