@@ -77,14 +77,16 @@ class FetcherService(service.Service):
             nsi_agent = nsa.NetworkServiceAgent( _baseName(nsa_id), cs_service_url, cnt.CS2_SERVICE_TYPE)
             self.provider_registry.spawnProvider(nsi_agent)
 
+            network_ids = [ _baseName(nid) for nid in nsa_description.networkId if nid.startswith(cnt.URN_OGF_PREFIX) ] # silent discard weird stuff
             vectors = {}
             if nsa_description.other is not None:
                 for other in nsa_description.other:
                     if other.topologyReachability:
                         for tr in other.topologyReachability:
-                            vectors[tr.uri] = tr.cost
+                            if tr.uri.startswith(cnt.URN_OGF_PREFIX): # silent discard weird stuff
+                                vectors[_baseName(tr.uri)] = tr.cost
 
-            self.route_vectors.updateVector(_baseName(nsa_id), peer.cost, nsa_description.networkId, vectors )
+            self.route_vectors.updateVector(_baseName(nsa_id), peer.cost, network_ids, vectors )
 
             # there is lots of other stuff in the nsa description but we don't really use it
 

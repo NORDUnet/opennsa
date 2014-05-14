@@ -128,7 +128,7 @@ class OpenNSAService(twistedservice.MultiService):
         network_topology = nml.createNMLNetwork(nrm_ports, network_name, base_name)
 
         # route vectors
-        route_vectors = gns.RouteVectors( [ cnt.URN_OGF_PREFIX + network_name ] )
+        route_vectors = gns.RouteVectors( [ network_name ] )
 
         # ssl/tls contxt
         if vc[config.TLS]:
