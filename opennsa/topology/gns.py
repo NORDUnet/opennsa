@@ -110,7 +110,7 @@ class RouteVectors:
                     continue
                 if not topo_urn in paths:
                     paths[topo_urn] = (nsa_urn, cost)
-                elif cost < paths[topo_urn]:
+                elif cost < paths[topo_urn][1]:
                     paths[topo_urn] = (nsa_urn, cost) # overwrite
                 # no else, it means we have a cheaper path
 
