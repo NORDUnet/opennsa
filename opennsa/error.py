@@ -78,7 +78,7 @@ class NSIError(Exception):
 
 class UnknownNSIError(NSIError):
     # used when we get a bad error id - it happens
-
+    pass
 
 
 class PayloadError(NSIError):
@@ -222,7 +222,7 @@ NSI_ERROR_CODE_TABLE = {
 
 def lookup(error_code):
 
-    if not (type(error_code) is str and len(error_code) == 5)
+    if not (type(error_code) is str and len(error_code) == 5):
         log.msg('Invalid Error Code (type or length is wrong). Error code: %s' % error_code)
         return UnknownNSIError
 
