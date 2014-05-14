@@ -53,7 +53,8 @@ class SecurityAttribute(object):
 
     def __init__(self, type_, value):
         assert type(type_) is str, 'SecurityAttribute type must be a string, not %s' % type(type_)
-        assert type(value) is str, 'SecurityAttribute value must be a string, not %s' % type(value)
+        # temporary disabled as surfnet sometimes sends empty elements here
+        #assert type(value) is str, 'SecurityAttribute value must be a string, not %s' % type(value)
         self.type_ = type_
         self.value = value
 
