@@ -243,7 +243,7 @@ def _emitQueryResult(query_result, i='', child=False):
     qr = query_result
 
     log.msg('')
-    log.msg(i + 'Connection   %s' % qr.connection_id)
+    log.msg(i + 'Connection   %s (%s)' % (qr.connection_id, qr.provider_nsa) )
     if qr.global_reservation_id:
         log.msg(i + 'Global ID    %s' % qr.global_reservation_id)
     if qr.description:
