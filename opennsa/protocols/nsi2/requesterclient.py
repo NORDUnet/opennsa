@@ -213,7 +213,7 @@ class RequesterClient:
 
         def gotReply(soap_data):
             header, query_confirmed = helper.parseRequest(soap_data)
-            return [ queryhelper.buildQueryResult(resv) for resv in query_confirmed.reservations ]
+            return [ queryhelper.buildQueryResult(resv, header.provider_nsa) for resv in query_confirmed.reservations ]
 
         # don't need to check header here
         header_element = helper.createProviderHeader(header.requester_nsa, header.provider_nsa, reply_to=self.reply_to, correlation_id=header.correlation_id,

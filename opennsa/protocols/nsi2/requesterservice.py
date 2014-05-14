@@ -146,7 +146,7 @@ class RequesterService:
 
         header, query_result = helper.parseRequest(soap_data)
 
-        reservations = [ queryhelper.buildQueryResult(res) for res in query_result.reservations ]
+        reservations = [ queryhelper.buildQueryResult(res, header.provider_nsa) for res in query_result.reservations ]
 
         self.requester.querySummaryConfirmed(header, reservations)
 
@@ -157,7 +157,7 @@ class RequesterService:
 
         header, query_result = helper.parseRequest(soap_data)
 
-        reservations = [ queryhelper.buildQueryResult(res, include_children=True) for res in query_result.reservations ]
+        reservations = [ queryhelper.buildQueryResult(res, header.provider_nsa, include_children=True) for res in query_result.reservations ]
 
         self.requester.queryRecursiveConfirmed(header, reservations)
 

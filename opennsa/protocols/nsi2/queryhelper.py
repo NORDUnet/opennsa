@@ -157,7 +157,7 @@ def buildCriteria(r_criteria, include_children=False):
 
 
 
-def buildQueryResult(query_confirmed, include_children=False):
+def buildQueryResult(query_confirmed, provider_nsa, include_children=False):
 
     qc = query_confirmed
 
@@ -168,5 +168,5 @@ def buildQueryResult(query_confirmed, include_children=False):
         crit = buildCriteria(rc, include_children)
         criterias.append(crit)
 
-    return nsa.ConnectionInfo(qc.connectionId, qc.globalReservationId, qc.description, cnt.EVTS_AGOLE, criterias, None, qc.requesterNSA, states, qc.notificationId, qc.resultId)
+    return nsa.ConnectionInfo(qc.connectionId, qc.globalReservationId, qc.description, cnt.EVTS_AGOLE, criterias, provider_nsa, qc.requesterNSA, states, qc.notificationId, qc.resultId)
 
