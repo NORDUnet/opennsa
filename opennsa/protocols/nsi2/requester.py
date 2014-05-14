@@ -188,14 +188,13 @@ class Requester:
 
 
 ## As we use the sync version of querySummary these are not needed
-##    def queryConfirmed(self, correlation_id, requester_nsa, provider_nsa, query_result):
+##    def queryConfirmed(self, header, result):
 ##
-##        self.triggerCall(provider_nsa, correlation_id, 'query', query_result)
+##        self.triggerCall(header.provider_nsa, header.correlation_id, QUERY_SUMMARY, result)
 ##
+##    def queryFailed(self, header, err):
 ##
-##    def queryFailed(self, correlation_id, requester_nsa, provider_nsa, error_message):
-##
-##        self.triggerCall(provider_nsa, correlation_id, 'query', error.QueryError(error_message))
+##        self.triggerCall(header.provider_nsa, header.correlation_id, QUERY_SUMMARY, err)
 
 
     def queryRecursive(self, header, connection_ids, global_reservation_ids):
