@@ -330,7 +330,7 @@ class Aggregator:
         for link in selected_path:
             if link.network == self.network:
                 continue # we got this..
-            p = self.route_vectors.getProvider( cnt.URN_OGF_PREFIX + link.network )
+            p = self.route_vectors.getProvider(link.network)
             if p is None:
                 raise error.ConnectionCreateError('No provider for network %s. Cannot create link.' % link.network)
 
@@ -342,7 +342,7 @@ class Aggregator:
             if link.network == self.network:
                 provider_urn = self.nsa_.urn()
             else:
-                provider_urn = cnt.URN_OGF_PREFIX + self.route_vectors.getProvider( cnt.URN_OGF_PREFIX + link.network )
+                provider_urn = cnt.URN_OGF_PREFIX + self.route_vectors.getProvider( link.network )
 
             c_header = nsa.NSIHeader(self.nsa_.urn(), provider_urn, security_attributes=header.security_attributes, connection_trace=conn_trace)
 
