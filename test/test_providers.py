@@ -710,3 +710,62 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
         self.failUnlessEquals(lsm, state.CREATED)
         self.failUnlessEquals(dps[:2], (False, 0) )  # we cannot really expect a consistent result for consistent here
 
+
+    @defer.inlineCallbacks
+    def testQueryRecursive(self):
+        # only available on aggregator and remote, we just do remote for now
+
+        self.header.newCorrelationId()
+        acid = yield self.provider.reserve(self.header, None, 'gid-123', 'desc2', self.criteria)
+        yield self.requester.reserve_defer
+
+        yield self.provider.reserveCommit(self.header, acid)
+        yield self.requester.reserve_commit_defer
+
+        self.header.newCorrelationId()
+        yield self.provider.queryRecursive(self.header, connection_ids = [ acid ] )
+        header, reservations = yield self.requester.query_recursive_defer
+
+        self.failUnlessEquals(len(reservations), 1)
+        ci = reservations[0]
+
+        self.failUnlessEquals(ci.connection_id, acid)
+        self.failUnlessEquals(ci.global_reservation_id, 'gid-123')
+        self.failUnlessEquals(ci.description, 'desc2')
+
+        self.failUnlessEquals(ci.requester_nsa, self.requester_agent.urn())
+        self.failUnlessEquals(len(ci.criterias), 1)
+        crit = ci.criterias[0]
+
+        src_stp = crit.service_def.source_stp
+        dst_stp = crit.service_def.dest_stp
+
+        self.failUnlessEquals(src_stp.network, self.network)
+        self.failUnlessEquals(src_stp.port,    self.source_port)
+        self.failUnlessEquals(src_stp.label.type_, cnt.ETHERNET_VLAN)
+        self.failUnlessEquals(src_stp.label.labelValue(), '1782')
+
+        self.failUnlessEquals(dst_stp.network, self.network)
+        self.failUnlessEquals(dst_stp.port,    self.dest_port)
+        self.failUnlessEquals(dst_stp.label.type_, cnt.ETHERNET_VLAN)
+        self.failUnlessEquals(dst_stp.label.labelValue(), '1782')
+
+        self.failUnlessEqual(crit.service_def.capacity, self.bandwidth)
+        self.failUnlessEqual(crit.revision,   0)
+
+        from opennsa import state
+        rsm, psm, lsm, dps = ci.states
+        self.failUnlessEquals(rsm, state.RESERVE_START)
+        self.failUnlessEquals(psm, state.RELEASED)
+        self.failUnlessEquals(lsm, state.CREATED)
+        self.failUnlessEquals(dps[:2], (False, 0) )  # we cannot really expect a consistent result for consistent here
+
+        self.failUnlessEqual(len(crit.children), 1)
+        child = crit.children[0]
+
+        rsm, psm, lsm, dps = ci.states # overwrite
+        self.failUnlessEquals(rsm, state.RESERVE_START)
+        self.failUnlessEquals(psm, state.RELEASED)
+        self.failUnlessEquals(lsm, state.CREATED)
+        self.failUnlessEquals(dps[:2], (False, 0) )  # we cannot really expect a consistent result for consistent here
+
