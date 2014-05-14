@@ -52,8 +52,8 @@ class SecurityAttribute(object):
     # a better name would be AuthZAttribute, but we are keeping the NSI lingo
 
     def __init__(self, type_, value):
-        assert type(type_) is str, 'SecurityAttribute type must be a string'
-        assert type(value) is str, 'SecurityAttribute value must be a string'
+        assert type(type_) is str, 'SecurityAttribute type must be a string, not %s' % type(type_)
+        assert type(value) is str, 'SecurityAttribute value must be a string, not %s' % type(value)
         self.type_ = type_
         self.value = value
 
