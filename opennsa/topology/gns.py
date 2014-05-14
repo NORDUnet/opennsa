@@ -95,6 +95,7 @@ class RouteVectors:
 
     def _calculateVectors(self):
 
+        log.msg(' * Calculating shortest-path vectors', debug=True, system=LOG_SYSTEM)
         paths = {}
         for nsa_urn, nsa_vector in self.vectors.items():
             topo_vectors = nsa_vector.getVectors()
@@ -110,8 +111,10 @@ class RouteVectors:
                     continue
                 if not topo_urn in paths:
                     paths[topo_urn] = (nsa_urn, cost)
+                    log.msg('Added path to %s via %s. Cost %i' % (topo_urn, nsa_urn, cost), debug=True, system=LOG_SYSTEM)
                 elif cost < paths[topo_urn][1]:
                     paths[topo_urn] = (nsa_urn, cost) # overwrite
+                    log.msg('Updated path to %s via %s. Cost %i' % (topo_urn, nsa_urn, cost), debug=True, system=LOG_SYSTEM)
                 # no else, it means we have a cheaper path
 
         self._shortest_paths = paths
