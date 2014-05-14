@@ -77,6 +77,11 @@ def reserveHeld(conn):
     conn.reservation_state = RESERVE_HELD
     return conn.save()
 
+def reserveFailed(conn):
+    _switchState(RESERVE_TRANSITIONS, conn.reservation_state, RESERVE_FAILED)
+    conn.reservation_state = RESERVE_FAILED
+    return conn.save()
+
 def reserveCommit(conn):
     _switchState(RESERVE_TRANSITIONS, conn.reservation_state, RESERVE_COMMITTING)
     conn.reservation_state = RESERVE_COMMITTING

@@ -878,6 +878,36 @@ class Aggregator:
 
 
     @defer.inlineCallbacks
+    def reserveFailed(self, header, connection_id, connection_states, err):
+
+        log.msg('', system=LOG_SYSTEM)
+        log.msg('reserveConfirm from %s. Connection ID: %s' % (header.provider_nsa, connection_id), system=LOG_SYSTEM)
+
+        if not header.correlation_id in self.reservations:
+            msg = 'Unrecognized correlation id %s in reserveConfirmed. Connection ID %s. NSA %s' % (header.correlation_id, connection_id, header.provider_nsa)
+            log.msg(msg, system=LOG_SYSTEM)
+            raise error.ConnectionNonExistentError(msg)
+
+        org_provider_nsa = self.reservations[header.correlation_id]['provider_nsa']
+        if header.provider_nsa != org_provider_nsa:
+            log.msg('Provider NSA in header %s for reserveConfirmed does not match saved identity %s' % (header.provider_nsa, org_provider_nsa), system=LOG_SYSTEM)
+            raise error.SecurityError('Provider NSA for connection does not match saved identity')
+
+        resv_info = self.reservations.pop(header.correlation_id)
+
+        # TODO: Finish this mess
+
+        service_connection_id=resv_info['service_connection_id']
+
+        conn = yield self.getConnection(self, 'whatever', connection_id)
+        if conn.state != state.RESERVE_FAILED: # since we can fail multiple times
+            yield state.reserveFailed(conn)
+
+        header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn())
+        self.parent_requester.reserveFailed(header, service_connection_id, connection_states, err)
+
+
+    @defer.inlineCallbacks
     def reserveCommitConfirmed(self, header, connection_id):
 
         log.msg('', system=LOG_SYSTEM)
