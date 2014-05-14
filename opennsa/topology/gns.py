@@ -95,7 +95,7 @@ class RouteVectors:
 
     def _calculateVectors(self):
 
-        log.msg(' * Calculating shortest-path vectors', debug=True, system=LOG_SYSTEM)
+        log.msg('* Calculating shortest-path vectors', debug=True, system=LOG_SYSTEM)
         paths = {}
         for nsa_urn, nsa_vector in self.vectors.items():
             topo_vectors = nsa_vector.getVectors()
