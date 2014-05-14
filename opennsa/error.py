@@ -236,27 +236,3 @@ def lookup(error_code):
 
     return ex
 
-
-# These should really be replaced with proper errors
-
-
-class ReserveError(Exception):
-    pass
-
-
-class ProvisionError(Exception):
-    pass
-
-
-class ReleaseError(Exception):
-    pass
-
-
-class TerminateError(Exception):
-    pass
-
-
-class QueryError(Exception):
-    pass
-
-
