@@ -5,6 +5,10 @@ Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2011-2012)
 """
 
+from twisted.python import log
+
+LOG_SYSTEM = 'error'
+
 # NSI Error codes:
 #
 # PAYLOAD_ERROR               00100
@@ -223,7 +227,7 @@ NSI_ERROR_CODE_TABLE = {
 def lookup(error_code):
 
     if not (type(error_code) is str and len(error_code) == 5):
-        log.msg('Invalid Error Code (type or length is wrong). Error code: %s' % error_code)
+        log.msg('Invalid Error Code (type or length is wrong). Error code: %s' % error_code, system=LOG_SYSTEM)
         return UnknownNSIError
 
     ex = NSI_ERROR_CODE_TABLE.get(error_code)
