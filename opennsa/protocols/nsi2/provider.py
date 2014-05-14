@@ -69,6 +69,17 @@ class Provider:
             return defer.succeed(None)
 
 
+    def reserveFailed(self, nsi_header, connection_id, connection_states, err):
+        try:
+            nsi_header = self.notifications.pop( (connection_id, RESERVE_RESPONSE) )
+            d = self.provider_client.reserveFailed(nsi_header, connection_id, connection_states, err)
+            d.addErrback(logError, 'reserveFailed')
+            return d
+        except KeyError:
+            log.msg('No entity to notify about reserveFailed for %s' % connection_id, system=LOG_SYSTEM)
+            return defer.succeed(None)
+
+
     def reserveCommit(self, nsi_header, connection_id):
 
         if nsi_header.reply_to:

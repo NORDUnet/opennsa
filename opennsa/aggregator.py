@@ -897,14 +897,14 @@ class Aggregator:
 
         # TODO: Finish this mess
 
-        service_connection_id=resv_info['service_connection_id']
+        service_connection_key = resv_info['service_connection_id']
 
-        conn = yield self.getConnection('whatever', service_connection_id)
-        if conn.state != state.RESERVE_FAILED: # since we can fail multiple times
+        conn = yield self.getConnectionByKey(service_connection_key)
+        if conn.reservation_state != state.RESERVE_FAILED: # since we can fail multiple times
             yield state.reserveFailed(conn)
 
         header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn())
-        self.parent_requester.reserveFailed(header, service_connection_id, connection_states, err)
+        self.parent_requester.reserveFailed(header, conn.connection_id, connection_states, err)
 
 
     @defer.inlineCallbacks
