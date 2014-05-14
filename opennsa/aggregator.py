@@ -899,7 +899,7 @@ class Aggregator:
 
         service_connection_id=resv_info['service_connection_id']
 
-        conn = yield self.getConnection(self, 'whatever', connection_id)
+        conn = yield self.getConnection('whatever', connection_id)
         if conn.state != state.RESERVE_FAILED: # since we can fail multiple times
             yield state.reserveFailed(conn)
 
