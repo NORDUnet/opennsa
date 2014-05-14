@@ -491,7 +491,7 @@ class GenericBackend(service.Service):
             states = (c.reservation_state, c.provision_state, c.lifecycle_state, data_plane_status)
             notification_id = self.getNotificationId()
             result_id = notification_id # whatever
-            provider_nsa = self.network.replace('topology', 'nsa') # hack on
+            provider_nsa = cnt.URN_OGF_PREFIX + self.network.replace('topology', 'nsa') # hack on
             reservations.append( nsa.ConnectionInfo(c.connection_id, c.global_reservation_id, c.description, cnt.EVTS_AGOLE, [ criteria ],
                                                     provider_nsa, c.requester_nsa, states, notification_id, result_id) )
 
