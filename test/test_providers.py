@@ -164,7 +164,8 @@ class GenericProviderTest:
         try:
             yield self.provider.reserve(self.header, None, None, None, criteria)
             self.fail('Should have raised TopologyError')
-        except error.ConnectionCreateError:
+        except (error.ConnectionCreateError, error.STPResolutionError):
+            # we raise ConnectionCreateError in backends, and STPResolutionError in aggregator
             pass # expected
 
 

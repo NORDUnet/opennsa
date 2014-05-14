@@ -299,6 +299,9 @@ class Aggregator:
                 remote_stp     = source_stp
 
             vector = self.route_vectors.vector(remote_stp.network)
+            if vector is None:
+                raise error.STPResolutionError('No vector to network %s, cannot create circuit' % remote_stp.network)
+
             log.msg('Vector to %s via %s' % (remote_stp.network, vector), system=LOG_SYSTEM)
             ports = self.network_topology.findPorts(True)
             demarc_ports = []
