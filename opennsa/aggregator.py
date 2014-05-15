@@ -881,16 +881,16 @@ class Aggregator:
     def reserveFailed(self, header, connection_id, connection_states, err):
 
         log.msg('', system=LOG_SYSTEM)
-        log.msg('reserveConfirm from %s. Connection ID: %s' % (header.provider_nsa, connection_id), system=LOG_SYSTEM)
+        log.msg('reserveFailed from %s. Connection ID: %s' % (header.provider_nsa, connection_id), system=LOG_SYSTEM)
 
         if not header.correlation_id in self.reservations:
-            msg = 'Unrecognized correlation id %s in reserveConfirmed. Connection ID %s. NSA %s' % (header.correlation_id, connection_id, header.provider_nsa)
+            msg = 'Unrecognized correlation id %s in reserveFailed. Connection ID %s. NSA %s' % (header.correlation_id, connection_id, header.provider_nsa)
             log.msg(msg, system=LOG_SYSTEM)
             raise error.ConnectionNonExistentError(msg)
 
         org_provider_nsa = self.reservations[header.correlation_id]['provider_nsa']
         if header.provider_nsa != org_provider_nsa:
-            log.msg('Provider NSA in header %s for reserveConfirmed does not match saved identity %s' % (header.provider_nsa, org_provider_nsa), system=LOG_SYSTEM)
+            log.msg('Provider NSA in header %s for reserveFailed does not match saved identity %s' % (header.provider_nsa, org_provider_nsa), system=LOG_SYSTEM)
             raise error.SecurityError('Provider NSA for connection does not match saved identity')
 
         resv_info = self.reservations.pop(header.correlation_id)
