@@ -139,6 +139,8 @@ def parseRequest(soap_data):
         for ssa in header.sessionSecurityAttr:
             for attr in ssa.Attributes:
                 for av in attr.AttributeValue:
+                    if av is None:
+                        continue
                     security_attributes.append( nsa.SecurityAttribute(attr.Name, av) )
 
     #if header.protocolVersion not in [ cnt.CS2_REQUESTER, cnt.CS2_PROVIDER ]:
