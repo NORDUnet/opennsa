@@ -216,7 +216,7 @@ class Aggregator:
         # check that we have path vectors to topologies
         if source_stp.network != self.network and self.route_vectors.vector(source_stp.network) is None:
             raise error.ConnectionCreateError('No known routes to network %s' % source_stp.network)
-        if source_stp.network != self.network and self.route_vectors.vector(dest_stp.network) is None:
+        if dest_stp.network != self.network and self.route_vectors.vector(dest_stp.network) is None:
             raise error.ConnectionCreateError('No known routes to network %s' % dest_stp.network)
 
         # if the link terminates at our network, check that ports exists
