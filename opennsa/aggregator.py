@@ -272,20 +272,13 @@ class Aggregator:
             log.msg('Connection %s: Local link creation: %s %s?%s == %s?%s' % path_info, system=LOG_SYSTEM)
             paths = [ [ nsa.Link(self.network, conn.source_port, conn.dest_port, conn.source_label, conn.dest_label) ] ]
 
+            # we should probably specify the connection id to the backend,
+            # to make it seem like the aggregator isn't here
+
         else:
             # log about creation and the connection type
             log.msg('Connection %s: Aggregate path creation: %s -> %s' % (conn.connection_id, str(source_stp), str(dest_stp)), system=LOG_SYSTEM)
             # making the connection is the same for all though :-)
-
-#            paths = self.topology.findPaths(source_stp, dest_stp, conn.bandwidth)
-#            # error out if we could not find a path
-#            if not paths:
-#                error_msg = 'Could not find a path for route %s/%s -> %s/%s' % (source_stp.network, source_stp.port, dest_stp.network, dest_stp.port)
-#                log.msg(error_msg, system=LOG_SYSTEM)
-#                raise error.TopologyError(error_msg)
-#            paths.sort(key=lambda e : len(e))
-
-            # -- vector chain path selection
 
             # how to this with path vector
             # 1. find topology to use from vector
@@ -369,24 +362,6 @@ class Aggregator:
 
             # Don't bother trying to save connection here, wait for reserveConfirmed
 
-#            @defer.inlineCallbacks
-#            def reserveResponse(connection_id, link_provider_nsa, order_id):
-#                # need to collapse the label values when getting reserveConfirm
-#                log.msg('Connection reservation for %s via %s acked' % (connection_id, link_provider_nsa), debug=True, system=LOG_SYSTEM)
-#                # should probably do some sanity checks here
-#                sp = service_params
-#                local_link = True if link_provider_nsa == self.nsa_ else False
-#                sc = database.SubConnection(provider_nsa=link_provider_nsa.urn(),
-#                                            connection_id=connection_id, local_link=local_link, revision=0, service_connection_id=conn.id, order_id=order_id,
-#                                            global_reservation_id=global_reservation_id, description=description,
-#                                            reservation_state=state.RESERVE_START, provision_state=state.RELEASED, lifecycle_state=state.CREATED, data_plane_active=False,
-#                                            source_network=sp.source_stp.network, source_port=sp.source_stp.port, source_label=sp.source_stp.label,
-#                                            dest_network=sp.dest_stp.network, dest_port=sp.dest_stp.port, dest_label=sp.dest_stp.label,
-#                                            start_time=sp.start_time.isoformat(), end_time=sp.end_time.isoformat(), bandwidth=sp.bandwidth)
-#                yield sc.save()
-#                defer.returnValue(sc)
-#
-#            d.addCallback(reserveResponse, provider_nsa, idx)
 
         results = yield defer.DeferredList( [ c[0] for c in conn_info ], consumeErrors=True) # doesn't errback
         successes = [ r[0] for r in results ]
