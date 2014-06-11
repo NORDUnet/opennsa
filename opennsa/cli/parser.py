@@ -88,13 +88,13 @@ class GlobalIDOption(usage.Options):
     optParameters = [ [ options.GLOBAL_ID, 'g', None, 'Global id'] ]
 
 class StartTimeOption(usage.Options):
-    optParameters = [ [ options.START_TIME, 'a', None, 'Start time'] ]
+    optParameters = [ [ options.START_TIME, 'a', None, 'Start time (UTC time)'] ]
     def postOptions(self):
         if self[options.START_TIME] is not None:
             self[options.START_TIME] = options.parseTimestamp( self[options.START_TIME] )
 
 class EndTimeOption(usage.Options):
-    optParameters = [ [ options.END_TIME, 'e', None, 'End time'] ]
+    optParameters = [ [ options.END_TIME, 'e', None, 'End time (UTC time)'] ]
     def postOptions(self):
         if self[options.END_TIME] is not None:
             self[options.END_TIME] = options.parseTimestamp( self[options.END_TIME] )
