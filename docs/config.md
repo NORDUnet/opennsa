@@ -10,6 +10,8 @@ network=Aruba
 logfile=nsalog.log
 nrmfile=ports.nrm
 
+peers=http://host.example.org:9080/NSI/discovery.xml
+
 policies=requiretrace,requireuser
 
 [dud]
@@ -24,6 +26,9 @@ logfile     : File to log to.
               Defaults to /var/log/opennsa.log
 
 nrmmap      : Path to port/topology NRM description file
+
+peers       : URLs to NSAs to peer with control-plane wise.
+              Seperate multiple entries with newline.
 
 policies    : What policies are required. Currently requiretrace and
               requireuser are the possible options. These require a connection
