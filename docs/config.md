@@ -8,9 +8,9 @@ OpenNSA configuration
 [service]
 network=Aruba
 logfile=nsalog.log
-topology=/home/htj/nsi/opennsa/local-topo.owl
-#topology=/home/htj/nsi/opennsa/SC2011-Topo-v5f.owl
-wsdl=/home/htj/nsi/opennsa/wsdl
+nrmfile=ports.nrm
+
+policies=requiretrace,requireuser
 
 [dud]
 
@@ -23,15 +23,11 @@ network     : The network name managed by OpenNSA.
 logfile     : File to log to.
               Defaults to /var/log/opennsa.log
 
-topology    : Path to topology files.
-              It is possible to have multiple topology files (handy for
-              joining global and local topology) by specifying multiple
-              topology files (comma-seperated). XML (RDF/OWL) and N3
-              formats supported.
-              Defaults to /usr/share/nsi/topology.owl
+nrmmap      : Path to port/topology NRM description file
 
-wsdl        : Directory for the wsdl files.
-              Defaults to /usr/share/nsi/wsdl.
+policies    : What policies are required. Currently requiretrace and
+              requireuser are the possible options. These require a connection
+              trace and user security attribute respecitively.
 ```
 
 
