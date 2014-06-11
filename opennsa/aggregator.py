@@ -967,7 +967,7 @@ class Aggregator:
         sub_conns = yield self.getSubConnectionsByConnectionKey(conn.id)
 
         if all( [ sc.reservation_state == state.TERMINATED for sc in sub_conns ] ):
-            yield state.terminated(conn) # we always allow, even though the canonical NSI state machine does not
+            yield state.terminated(conn)
             header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn())
             self.parent_requester.terminateConfirmed(header, conn.connection_id)
 
