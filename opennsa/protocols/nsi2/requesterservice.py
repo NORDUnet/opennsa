@@ -70,7 +70,7 @@ class RequesterService:
 
         # Create DTOs - this overlaps heavily with the parsing done in providerservice - unify sometime
 
-        start_time = xmlhelper.parseXMLTimestamp(criteria.schedule.startTime)
+        start_time = xmlhelper.parseXMLTimestamp(criteria.schedule.startTime) if criteria.schedule.startTime is not None else None
         end_time   = xmlhelper.parseXMLTimestamp(criteria.schedule.endTime)
         schedule   = nsa.Schedule(start_time, end_time)
 

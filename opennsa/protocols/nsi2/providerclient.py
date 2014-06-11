@@ -69,7 +69,10 @@ class ProviderClient:
 
         header_element = helper.createRequesterHeader(nsi_header.requester_nsa, nsi_header.provider_nsa, correlation_id=nsi_header.correlation_id)
 
-        schedule = nsiconnection.ScheduleType( xmlhelper.createXMLTime(criteria.schedule.start_time), xmlhelper.createXMLTime(criteria.schedule.end_time) )
+        schedule = nsiconnection.ScheduleType(
+            xmlhelper.createXMLTime(criteria.schedule.start_time) if criteria.schedule.start_time is not None else None,
+            xmlhelper.createXMLTime(criteria.schedule.end_time)
+        )
 
         sd = criteria.service_def
 

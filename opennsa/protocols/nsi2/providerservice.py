@@ -93,7 +93,7 @@ class ProviderService:
 
         # create DTOs (EROs not supported yet)
 
-        start_time = xmlhelper.parseXMLTimestamp(criteria.schedule.startTime)
+        start_time = xmlhelper.parseXMLTimestamp(criteria.schedule.startTime) if criteria.schedule.startTime is not None else None
         end_time = xmlhelper.parseXMLTimestamp(criteria.schedule.endTime)
         schedule = nsa.Schedule(start_time, end_time)
 

@@ -105,8 +105,14 @@ class RequesterClient:
         schedule = criteria.schedule
         sd = criteria.service_def
 
-        assert schedule.start_time.tzinfo is None, 'Start time must NOT have time zone'
-        assert schedule.end_time.tzinfo   is None, 'End time must NOT have time zone'
+        if schedule.start_time is not None:
+            assert schedule.start_time.tzinfo is None, 'Start time must NOT have time zone'
+            start_time = schedule.start_time.replace(tzinfo=tzutc()).isoformat()
+        else:
+            start_time = None
+
+        assert schedule.end_time.tzinfo is None, 'End time must NOT have time zone'
+        end_time = schedule.end_time.replace(tzinfo=tzutc()).isoformat()
 
         if not type(sd) is nsa.Point2PointService:
             raise ValueError('Cannot create request for service definition of type %s' % str(type(sd)))
@@ -117,8 +123,7 @@ class RequesterClient:
         params = [ p2pservices.TypeValueType(p[0], p[1]) for p in sd.parameters ] if sd.parameters else None
         service_def = p2pservices.P2PServiceBaseType(sd.capacity, sd.directionality, sd.symmetric, src_stp_id, dst_stp_id, sd.ero, params)
 
-        schedule_type = nsiconnection.ScheduleType(schedule.start_time.replace(tzinfo=tzutc()).isoformat(),
-                                                   schedule.end_time.replace(tzinfo=tzutc()).isoformat())
+        schedule_type = nsiconnection.ScheduleType(start_time, end_time)
 
         #service_type = str(p2pservices.p2ps)
         service_type = 'http://services.ogf.org/nsi/2013/12/descriptions/EVTS.A-GOLE'
