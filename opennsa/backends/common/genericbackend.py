@@ -172,7 +172,6 @@ class GenericBackend(service.Service):
 
         # return defer.fail( error.InternalNRMError('test reservation failure') )
 
-        schedule = criteria.schedule
         sd = criteria.service_def
 
         if type(sd) is not nsa.Point2PointService:
@@ -201,7 +200,10 @@ class GenericBackend(service.Service):
         if not dest_stp.port in self.nrm_ports:
             raise error.STPUnavailableError('No STP named %s (ports: %s)' %(dest_stp.baseURN(), str(self.nrm_ports.keys()) ))
 
-        duration = (schedule.end_time - schedule.start_time).total_seconds()
+        start_time = criteria.schedule.start_time or datetime.datetime.utcnow().replace(microsecond=0) + datetime.timedelta(seconds=1)  # no start time = now (well, in 1 second)
+        end_time   = criteria.schedule.end_time
+
+        duration = (end_time - start_time).total_seconds()
         if duration < self.minimum_duration:
             raise error.ConnectionCreateError('Duration too short, minimum duration is %i seconds (%i specified)' % (self.minimum_duration, duration), self.network)
 
@@ -243,8 +245,8 @@ class GenericBackend(service.Service):
             for lv in src_label_candidate.enumerateValues():
                 src_resource = self.connection_manager.getResource(source_stp.port, src_label_candidate.type_, lv)
                 try:
-                    self.calendar.checkReservation(src_resource, schedule.start_time, schedule.end_time)
-                    self.calendar.addReservation(  src_resource, schedule.start_time, schedule.end_time)
+                    self.calendar.checkReservation(src_resource, start_time, end_time)
+                    self.calendar.addReservation(  src_resource, start_time, end_time)
                     src_label = nsa.Label(src_label_candidate.type_, str(lv))
                     break
                 except error.STPUnavailableError:
@@ -256,8 +258,8 @@ class GenericBackend(service.Service):
             for lv in dst_label_candidate.enumerateValues():
                 dst_resource = self.connection_manager.getResource(dest_stp.port, dst_label_candidate.type_, lv)
                 try:
-                    self.calendar.checkReservation(dst_resource, schedule.start_time, schedule.end_time)
-                    self.calendar.addReservation(  dst_resource, schedule.start_time, schedule.end_time)
+                    self.calendar.checkReservation(dst_resource, start_time, end_time)
+                    self.calendar.addReservation(  dst_resource, start_time, end_time)
                     dst_label = nsa.Label(dst_label_candidate.type_, str(lv))
                     break
                 except error.STPUnavailableError:
@@ -272,10 +274,10 @@ class GenericBackend(service.Service):
                 src_resource = self.connection_manager.getResource(source_stp.port, label_candidate.type_, lv)
                 dst_resource = self.connection_manager.getResource(dest_stp.port,   label_candidate.type_, lv)
                 try:
-                    self.calendar.checkReservation(src_resource, schedule.start_time, schedule.end_time)
-                    self.calendar.checkReservation(dst_resource, schedule.start_time, schedule.end_time)
-                    self.calendar.addReservation(  src_resource, schedule.start_time, schedule.end_time)
-                    self.calendar.addReservation(  dst_resource, schedule.start_time, schedule.end_time)
+                    self.calendar.checkReservation(src_resource, start_time, end_time)
+                    self.calendar.checkReservation(dst_resource, start_time, end_time)
+                    self.calendar.addReservation(  src_resource, start_time, end_time)
+                    self.calendar.addReservation(  dst_resource, start_time, end_time)
                     src_label = nsa.Label(label_candidate.type_, str(lv))
                     dst_label = nsa.Label(label_candidate.type_, str(lv))
                     break
@@ -299,7 +301,7 @@ class GenericBackend(service.Service):
                                          reservation_state=state.RESERVE_START, provision_state=state.RELEASED, lifecycle_state=state.CREATED, data_plane_active=False,
                                          source_network=source_stp.network, source_port=source_stp.port, source_label=src_label,
                                          dest_network=dest_stp.network, dest_port=dest_stp.port, dest_label=dst_label,
-                                         start_time=schedule.start_time, end_time=schedule.end_time,
+                                         start_time=start_time, end_time=end_time,
                                          symmetrical=sd.symmetric, directionality=sd.directionality, bandwidth=sd.capacity, allocated=False)
         yield conn.save()
         reactor.callWhenRunning(self._doReserve, conn, header.correlation_id)
