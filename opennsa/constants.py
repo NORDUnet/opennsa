@@ -34,3 +34,6 @@ NRM_RESTRICTTRANSIT = 'restricttransit'
 FEATURE_AGGREGATOR  = 'vnd.ogf.nsi.cs.v2.role.aggregator'
 FEATURE_UPA         = 'vnd.ogf.nsi.cs.v2.role.uPA'
 
+REQUIRE_USER        = 'requireuser'
+REQUIRE_TRACE       = 'requiretrace'
+

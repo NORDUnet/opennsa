@@ -8,6 +8,8 @@ Copyright: NORDUnet (2011)
 import os
 import ConfigParser
 
+from opennsa import constants as cnt
+
 
 
 # defaults
@@ -40,6 +42,7 @@ PORT             = 'port'
 TLS              = 'tls'
 NRM_MAP_FILE     = 'nrmmap'
 PEERS            = 'peers'
+POLICY           = 'policy'
 
 # database
 DATABASE                = 'database'    # mandatory
@@ -183,6 +186,15 @@ def readVerifyConfig(cfg):
         vc[PORT] = cfg.getint(BLOCK_SERVICE, PORT)
     except ConfigParser.NoOptionError:
         vc[PORT] = DEFAULT_TLS_PORT if vc[TLS] else DEFAULT_TCP_PORT
+
+    try:
+        policies = cfg.get(BLOCK_SERVICE, POLICY).split(',')
+        for policy in policies:
+            if not policy in (cnt.REQUIRE_USER, cnt.REQUIRE_TRACE):
+                raise ConfigurationError('Invalid policy: %s' % policy)
+        vc[POLICY] = policies
+    except ConfigParser.NoOptionError:
+        vc[POLICY] = []
 
     # database
     try:

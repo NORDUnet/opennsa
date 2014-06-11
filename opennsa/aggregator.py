@@ -76,7 +76,7 @@ class Aggregator:
 
     implements(INSIProvider, INSIRequester)
 
-    def __init__(self, network, nsa_, network_topology, route_vectors, parent_requester, provider_registry):
+    def __init__(self, network, nsa_, network_topology, route_vectors, parent_requester, provider_registry, policies):
         self.network = network
         self.nsa_ = nsa_
         self.network_topology = network_topology
@@ -84,6 +84,7 @@ class Aggregator:
 
         self.parent_requester   = parent_requester
         self.provider_registry  = provider_registry
+        self.policies           = policies
 
         self.conn_prefix = network[:2].upper() + '-T'
 
@@ -190,14 +191,16 @@ class Aggregator:
                 raise error.ConnectionExistsError('Connection with id %s already exists' % connection_id)
             raise NotImplementedError('Cannot handly modification of existing connections yet')
 
-        if not header.connection_trace:
-            log.msg('Rejecting reserve request without connection trace')
-            raise error.ConnectionCreateError('This NSA (%s) requires a connection trace in the header to create a reservation.' % self.nsa_.urn() )
+        if cnt.REQUIRE_TRACE in self.policies:
+            if not header.connection_trace:
+                log.msg('Rejecting reserve request without connection trace')
+                raise error.ConnectionCreateError('This NSA (%s) requires a connection trace in the header to create a reservation.' % self.nsa_.urn() )
 
-        user_attrs  = [ sa for sa in header.security_attributes if sa.type_ == 'user'  ]
-        if not user_attrs:
-            log.msg('Rejecting reserve request without user security attribute')
-            raise error.ConnectionCreateError('This NSA (%s) requires a user security attribute in the header to create a reservation.' % self.nsa_.urn() )
+        if cnt.REQUIRE_USER in self.policies:
+            user_attrs  = [ sa for sa in header.security_attributes if sa.type_ == 'user'  ]
+            if not user_attrs:
+                log.msg('Rejecting reserve request without user security attribute')
+                raise error.ConnectionCreateError('This NSA (%s) requires a user security attribute in the header to create a reservation.' % self.nsa_.urn() )
 
         connection_id = self.conn_prefix + ''.join( [ random.choice(string.hexdigits[:16]) for _ in range(12) ] )
 
