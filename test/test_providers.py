@@ -73,6 +73,17 @@ class GenericProviderTest:
 
 
     @defer.inlineCallbacks
+    def testNoStartTime(self):
+
+        start_time = None
+        criteria   = nsa.Criteria(0, nsa.Schedule(start_time, self.end_time), self.sd)
+
+        self.header.newCorrelationId()
+        cid = yield self.provider.reserve(self.header, None, None, None, criteria)
+        header, cid, gid, desc, sp = yield self.requester.reserve_defer
+
+
+    @defer.inlineCallbacks
     def testConnectSTPToItself(self):
 
         stp = nsa.STP(self.network, self.source_port, nsa.Label(cnt.ETHERNET_VLAN, '1782') )
