@@ -39,7 +39,7 @@ CREATE TABLE service_connections (
     dest_network            text                        NOT NULL,
     dest_port               text                        NOT NULL,
     dest_label              label,
-    start_time              timestamp                   NOT NULL,
+    start_time              timestamp,                            -- null = now
     end_time                timestamp                   NOT NULL,
     symmetrical             boolean                     NOT NULL,
     directionality          directionality              NOT NULL,
