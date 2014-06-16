@@ -315,8 +315,10 @@ class Aggregator:
             local_demarc_port  = ldp.id_.rsplit(':', 1)[1]
             remote_demarc_port = ldp.remote_port.rsplit(':', 1)[1]
 
-            paths = [ [ nsa.Link(local_stp.network, local_stp.port, local_demarc_port, local_stp.label, ldp.label()),
-                        nsa.Link(remote_stp.network, remote_demarc_port, remote_stp.port, ldp.label(), remote_stp.label) ] ] # the ldp label here isn't quite correct
+            local_link  = nsa.Link(local_stp.network, local_stp.port, local_demarc_port, local_stp.label, ldp.label())
+            remote_link = nsa.Link(remote_stp.network, remote_demarc_port, remote_stp.port, ldp.label(), remote_stp.label) # the ldp label here isn't quite correct
+
+            paths = [ [ local_link, remote_link ] ]
 
 
         selected_path = paths[0] # shortest path
