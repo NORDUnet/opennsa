@@ -12,6 +12,8 @@ Requirements:
 
 * PostgreSQL (just needs a database)
 
+* pyOpenSSL 0.14 (when running with SSL/TLS)
+
 Python and Twisted should be included in the package system in most recent
 Linux distributions.
 
