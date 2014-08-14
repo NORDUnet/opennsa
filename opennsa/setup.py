@@ -141,12 +141,21 @@ class OpenNSAService(twistedservice.MultiService):
         else:
             ctx_factory = None
 
+        # plugin
+        if vc[config.PLUGIN]:
+            from twisted.python import reflect
+            plugin = reflect.namedAny('opennsa.plugins.%s.plugin' % vc[config.PLUGIN])
+        else:
+            from opennsa.plugin import BasePlugin
+            plugin = BasePlugin()
+        plugin.init(vc, ctx_factory)
+
         # the dance to setup dynamic providers right
         top_resource = resource.Resource()
         requester_creator = CS2RequesterCreator(top_resource, None, vc[config.HOST], vc[config.PORT], vc[config.TLS], ctx_factory) # set aggregator later
 
         provider_registry = provreg.ProviderRegistry({}, { cnt.CS2_SERVICE_TYPE : requester_creator.create } )
-        aggr = aggregator.Aggregator(network_topology.id_, ns_agent, network_topology, route_vectors, None, provider_registry, vc[config.POLICY] ) # set parent requester later
+        aggr = aggregator.Aggregator(network_topology.id_, ns_agent, network_topology, route_vectors, None, provider_registry, vc[config.POLICY], plugin ) # set parent requester later
 
         requester_creator.aggregator = aggr
 

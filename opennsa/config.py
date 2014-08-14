@@ -43,6 +43,7 @@ TLS              = 'tls'
 NRM_MAP_FILE     = 'nrmmap'
 PEERS            = 'peers'
 POLICY           = 'policy'
+PLUGIN           = 'plugin'
 
 # database
 DATABASE                = 'database'    # mandatory
@@ -195,6 +196,11 @@ def readVerifyConfig(cfg):
         vc[POLICY] = policies
     except ConfigParser.NoOptionError:
         vc[POLICY] = []
+
+    try:
+        vc[PLUGIN] = cfg.get(BLOCK_SERVICE, PLUGIN)
+    except ConfigParser.NoOptionError:
+        vc[PLUGIN] = None
 
     # database
     try:

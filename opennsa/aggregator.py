@@ -4,8 +4,6 @@ Connection abstraction.
 Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2011-2012)
 """
-import string
-import random
 import datetime
 
 from zope.interface import implements
@@ -76,7 +74,7 @@ class Aggregator:
 
     implements(INSIProvider, INSIRequester)
 
-    def __init__(self, network, nsa_, network_topology, route_vectors, parent_requester, provider_registry, policies):
+    def __init__(self, network, nsa_, network_topology, route_vectors, parent_requester, provider_registry, policies, plugin):
         self.network = network
         self.nsa_ = nsa_
         self.network_topology = network_topology
@@ -85,6 +83,7 @@ class Aggregator:
         self.parent_requester   = parent_requester
         self.provider_registry  = provider_registry
         self.policies           = policies
+        self.plugin             = plugin
 
         self.conn_prefix = network[:2].upper() + '-T'
 
@@ -191,6 +190,8 @@ class Aggregator:
                 raise error.ConnectionExistsError('Connection with id %s already exists' % connection_id)
             raise NotImplementedError('Cannot handly modification of existing connections yet')
 
+        yield self.plugin.connectionRequest(header, connection_id, global_reservation_id, description, criteria)
+
         if cnt.REQUIRE_TRACE in self.policies:
             if not header.connection_trace:
                 log.msg('Rejecting reserve request without connection trace')
@@ -202,7 +203,7 @@ class Aggregator:
                 log.msg('Rejecting reserve request without user security attribute')
                 raise error.ConnectionCreateError('This NSA (%s) requires a user security attribute in the header to create a reservation.' % self.nsa_.urn() )
 
-        connection_id = self.conn_prefix + ''.join( [ random.choice(string.hexdigits[:16]) for _ in range(12) ] )
+        connection_id = yield self.plugin.createConnectionId()
 
         sd = criteria.service_def
         source_stp = sd.source_stp
@@ -319,6 +320,7 @@ class Aggregator:
             remote_link = nsa.Link(remote_stp.network, remote_demarc_port, remote_stp.port, ldp.label(), remote_stp.label) # the ldp label here isn't quite correct
 
             paths = [ [ local_link, remote_link ] ]
+            paths = yield self.plugin.prunePaths(paths)
 
 
         selected_path = paths[0] # shortest path
@@ -904,6 +906,7 @@ class Aggregator:
             yield state.reserved(conn)
             header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn())
             self.parent_requester.reserveCommitConfirmed(header, conn.connection_id)
+            self.plugin.connectionCreated(conn)
 
 
     @defer.inlineCallbacks
@@ -975,6 +978,7 @@ class Aggregator:
             yield state.terminated(conn)
             header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn())
             self.parent_requester.terminateConfirmed(header, conn.connection_id)
+            self.plugin.connectionTerminated(conn)
 
     # --
 
