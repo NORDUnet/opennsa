@@ -50,7 +50,7 @@ class PrunerPlugin(BasePlugin):
     implements(IPlugin)
 
 
-    def prunePath(self, paths):
+    def prunePaths(self, paths):
         pruned_paths = [ pruneLabels(paths[0]) ]
         return defer.succeed(pruned_paths)
 
