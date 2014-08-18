@@ -55,7 +55,7 @@ class RequestContextFactory:
         ctx.set_verify(SSL.VERIFY_PEER, verify_callback)
 
         calist = [ ca for ca in os.listdir(self.certificate_dir) if ca.endswith('.0') ]
-        if len(calist) == 0:
+        if len(calist) == 0 and self.verify:
             log.msg('No certificiates loaded for CTX verificiation. CA verification will not work.', system=LOG_SYSTEM)
         for ca in calist:
             # openssl wants absolute paths
