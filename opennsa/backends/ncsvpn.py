@@ -59,8 +59,9 @@ ETHERNET_VPN_PAYLOAD_BASE = """
     <side-b>
         <router>%(router_b)s</router>
         <interface>%(interface_b)s</interface>
-  </side-b>
-  <vlan>%(vlan)i</vlan>
+    </side-b>
+    <vlan>%(vlan)i</vlan>
+    <service-id>%(service_id)s</service-id>
 </bod>
 """
 
@@ -75,8 +76,9 @@ ETHERNET_VLAN_VPN_PAYLOAD_BASE = """
     <side-b>
         <router>%(router_b)s</router>
         <interface>%(interface_b)s</interface>
-  </side-b>
-  <vlan>%(vlan)i</vlan>
+    </side-b>
+    <vlan>%(vlan)i</vlan>
+    <service-id>%(service_id)s</service-id>
 </bod>
 """
 
@@ -94,6 +96,7 @@ ETHERNET_VLAN_REWRITE_VPN_PAYLOAD_BASE = """
     </side-b>
     <vlan-side-a>%(vlan_a)i</vlan-side-a>
     <vlan-side-b>%(vlan_b)i</vlan-side-b>
+    <service-id>%(service_id)s</service-id>
 </bod>
 """
 
@@ -121,6 +124,7 @@ class NCSVPNTarget(object):
 def createVPNPayload(service_name, source_target, dest_target):
 
     intps = {
+        'service_id'    : service_name,
         'service_name'  : service_name,
         'router_a'      : source_target.router,
         'interface_a'   : source_target.interface,
