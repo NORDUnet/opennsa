@@ -339,8 +339,11 @@ class Aggregator:
 
         for idx, link in enumerate(selected_path):
 
+            sub_connection_id = None
+
             if link.network == self.network:
                 provider_urn = self.nsa_.urn()
+                sub_connection_id = connection_id
             else:
                 provider_urn = cnt.URN_OGF_PREFIX + self.route_vectors.getProvider( link.network )
 
@@ -364,7 +367,7 @@ class Aggregator:
             crt = nsa.Criteria(criteria.revision, criteria.schedule, sd)
 
             provider = self.getProvider(provider_urn)
-            d = provider.reserve(c_header, None, conn.global_reservation_id, conn.description, crt)
+            d = provider.reserve(c_header, sub_connection_id, conn.global_reservation_id, conn.description, crt)
             conn_info.append( (d, provider_urn) )
 
             # Don't bother trying to save connection here, wait for reserveConfirmed

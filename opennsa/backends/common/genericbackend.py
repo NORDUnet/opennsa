@@ -181,8 +181,12 @@ class GenericBackend(service.Service):
         log.msg('Reserve request. Connection ID: %s' % connection_id, system=self.log_system)
 
         if connection_id:
-            raise ValueError('Cannot handle cases with existing connection id (yet)')
-            #conns = yield GenericBackendConnections.findBy(connection_id=connection_id)
+            # if connection id is specified it is not allowed to be used a priori
+            try:
+                conn = yield self._getConnection(connection_id, header.requester_nsa)
+                raise ValueError('GenericBackend cannot handle modify (yet)')
+            except error.ConnectionNonExistentError:
+                pass # expected
 
         source_stp = sd.source_stp
         dest_stp   = sd.dest_stp
@@ -290,7 +294,8 @@ class GenericBackend(service.Service):
 
         source_target = self.connection_manager.getTarget(source_stp.port, src_label.type_, src_label.labelValue())
         dest_target   = self.connection_manager.getTarget(dest_stp.port,   dst_label.type_, dst_label.labelValue())
-        connection_id = self.connection_manager.createConnectionId(source_target, dest_target)
+        if connection_id is None:
+            connection_id = self.connection_manager.createConnectionId(source_target, dest_target)
         log.msg('Connection %s: Id assigned.' % connection_id, system=self.log_system)
 
         # we should check the schedule here
