@@ -23,7 +23,7 @@ def pruneLabels(path):
     """
     Some networks does not support underspecified STPs and VLAN rewrites so we help them out a bit.
     """
-    NETWORKS = [ 'surfnet.nl' ]
+    NETWORKS = [ 'surfnet.nl', 'netherlight.net' ]
 
     for idx, link in enumerate(path):
 
