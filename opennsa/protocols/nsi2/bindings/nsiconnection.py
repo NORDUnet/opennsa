@@ -39,7 +39,7 @@ class GenericErrorType(object):
 
     def xml(self, elementName):
         r = ET.Element(elementName)
-        r.append(self.serviceException.xml(ET.QName('http://schemas.ogf.org/nsi/2013/12/framework/types', 'serviceException')))
+        r.append(self.serviceException.xml('serviceException'))
         return r
 
 
@@ -365,7 +365,7 @@ class ErrorEventType(object):
         if self.additionalInfo is not None:
             ET.SubElement(r, 'additionalInfo').extend( [ e.xml(ET.QName('http://schemas.ogf.org/nsi/2013/12/framework/types', 'additionalInfo')) for e in self.additionalInfo ] )
         if self.serviceException is not None:
-            r.append(self.serviceException.xml(ET.QName('http://schemas.ogf.org/nsi/2013/12/framework/types', 'serviceException')))
+            r.append(self.serviceException.xml('serviceException'))
         return r
 
 
@@ -761,7 +761,7 @@ class GenericFailedType(object):
         r = ET.Element(elementName)
         ET.SubElement(r, 'connectionId').text = self.connectionId
         r.append(self.connectionStates.xml('connectionStates'))
-        r.append(self.serviceException.xml(ET.QName('http://schemas.ogf.org/nsi/2013/12/framework/types', 'serviceException')))
+        r.append(self.serviceException.xml('serviceException'))
         return r
 
 
@@ -884,7 +884,6 @@ reserveResponse = ET.QName('http://schemas.ogf.org/nsi/2013/12/connection/types'
 queryRecursiveConfirmed = ET.QName('http://schemas.ogf.org/nsi/2013/12/connection/types', 'queryRecursiveConfirmed')
 queryResultSyncConfirmed = ET.QName('http://schemas.ogf.org/nsi/2013/12/connection/types', 'queryResultSyncConfirmed')
 querySummarySync = ET.QName('http://schemas.ogf.org/nsi/2013/12/connection/types', 'querySummarySync')
-serviceException = ET.QName('http://schemas.ogf.org/nsi/2013/12/connection/types', 'serviceException')
 querySummary = ET.QName('http://schemas.ogf.org/nsi/2013/12/connection/types', 'querySummary')
 dataPlaneStateChange = ET.QName('http://schemas.ogf.org/nsi/2013/12/connection/types', 'dataPlaneStateChange')
 queryNotification = ET.QName('http://schemas.ogf.org/nsi/2013/12/connection/types', 'queryNotification')
@@ -929,7 +928,6 @@ def parseElement(element):
         '{http://schemas.ogf.org/nsi/2013/12/connection/types}reserveAbortConfirmed' : GenericConfirmedType,
         '{http://schemas.ogf.org/nsi/2013/12/connection/types}reserveResponse' : ReserveResponseType,
         '{http://schemas.ogf.org/nsi/2013/12/connection/types}querySummarySync' : QueryType,
-        '{http://schemas.ogf.org/nsi/2013/12/connection/types}serviceException' : ServiceExceptionType,
         '{http://schemas.ogf.org/nsi/2013/12/connection/types}querySummary' : QueryType,
         '{http://schemas.ogf.org/nsi/2013/12/connection/types}dataPlaneStateChange' : DataPlaneStateChangeRequestType,
         '{http://schemas.ogf.org/nsi/2013/12/connection/types}queryNotification' : QueryNotificationType,
