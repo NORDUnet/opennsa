@@ -145,6 +145,11 @@ class TopologyError(NSIError):
     errorId = '00400'
 
 
+class NoPathFoundError(NSIError):
+
+    errorId = '00403'
+
+
 class InternalServerError(NSIError):
 
     errorId = '00500'
@@ -210,6 +215,7 @@ NSI_ERROR_CODE_TABLE = {
     '00400' : TopologyError,
     '00401' : UnknownSTPError,                      # compat
     '00402' : STPResolutionError,                   # compat
+    '00403' : NoPathFoundError,
     '00404' : VLANInterchangeNotSupportedError,     # compat
     '00500' : InternalServerError,
     '00501' : InternalNRMError,
