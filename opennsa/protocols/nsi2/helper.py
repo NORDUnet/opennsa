@@ -94,17 +94,17 @@ def createServiceException(err, provider_nsa, connection_id=None, service_type=N
     variables = None
     child_exception = None
 
-    if err.check(error.NSIError):
-        error_id = err.value.errorId
+    if isinstance(err, error.NSIError):
+        error_id = err.errorId
         #se = bindings.ServiceExceptionType(provider_nsa, connection_id, err.value.errorId, err.getErrorMessage(), variables, child_exception)
     else:
-        log.msg('Got a non NSIError exception: %s : %s' % (err.value.__class__.__name__, err.getErrorMessage()), system=LOG_SYSTEM)
+        log.msg('Got a non NSIError exception: %s : %s' % (err.__class__.__name__, str(err)), system=LOG_SYSTEM)
         log.msg('Cannot create detailed service exception, defaulting to NSI InternalServerError (00500)', system=LOG_SYSTEM)
         log.err(err)
         error_id = error.InternalServerError.errorId
         #se = bindings.ServiceExceptionType(provider_nsa, connection_id, error.InternalServerError.errorId, err.getErrorMessage(), variables, child_exception)
 
-    se = nsiframework.ServiceExceptionType(provider_nsa, connection_id, service_type, error_id, err.getErrorMessage(), variables, child_exception)
+    se = nsiframework.ServiceExceptionType(provider_nsa, connection_id, service_type, error_id, str(err), variables, child_exception)
 
     return se
 

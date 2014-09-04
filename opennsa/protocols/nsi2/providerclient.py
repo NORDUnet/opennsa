@@ -98,10 +98,10 @@ class ProviderClient:
         return d
 
 
-    def reserveFailed(self, requester_url, requester_nsa, provider_nsa, correlation_id, connection_id, connection_states, err):
+    def reserveFailed(self, nsi_header, connection_id, connection_states, err):
 
-        return self._genericFailure(requester_url, actions.RESERVE_FAILED, nsiconnection.reserveFailed,
-                                    requester_nsa, provider_nsa, correlation_id,
+        return self._genericFailure(nsi_header.reply_to, actions.RESERVE_FAILED, nsiconnection.reserveFailed,
+                                    nsi_header.requester_nsa, nsi_header.provider_nsa, nsi_header.correlation_id,
                                     connection_id, connection_states, err)
 
 
@@ -113,8 +113,10 @@ class ProviderClient:
 
     def reserveCommitFailed(self, requester_url, requester_nsa, provider_nsa, correlation_id, connection_id, connection_states, err):
 
-        return self._genericFailure(requester_url, actions.RESERVE_COMMIT_FAILED, nsiconnection.reserveCommitFailed,
-                                    requester_nsa, provider_nsa, correlation_id, connection_id, connection_states, err)
+
+        return self._genericFailure(nsi_header.reply_to, actions.RESERVE_COMMIT_FAILED, nsiconnection.reserveCommitFailed,
+                                    nsi_header.requester_nsa, nsi_header.provider_nsa, nsi_header.correlation_id,
+                                    connection_id, connection_states, err)
 
 
     def reserveAbortConfirmed(self, requester_url, requester_nsa, provider_nsa, correlation_id, connection_id):
