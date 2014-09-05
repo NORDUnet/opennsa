@@ -7,7 +7,7 @@ Copyright: NORDUnet (2012)
 
 from xml.etree import ElementTree as ET
 
-from twisted.python import log
+from twisted.python import log, failure
 
 from opennsa import constants as cnt, nsa, error
 from opennsa.protocols.shared import minisoap
@@ -91,22 +91,20 @@ def _createGenericAcknowledgement(header, protocol_type=None):
 
 def createServiceException(err, provider_nsa, connection_id=None, service_type=None):
 
-    variables = None
-    child_exception = None
+    if isinstance(err, failure.Failure):
+        err = err.value # hack on :-)
 
     if isinstance(err, error.NSIError):
-        error_id = err.errorId
-        #se = bindings.ServiceExceptionType(provider_nsa, connection_id, err.value.errorId, err.getErrorMessage(), variables, child_exception)
+        # use values from error
+        return nsiframework.ServiceExceptionType(err.nsaId or provider_nsa, err.connectionId or connection_id,
+                                                 service_type, err.errorId, err.message, err.variables, None)
     else:
         log.msg('Got a non NSIError exception: %s : %s' % (err.__class__.__name__, str(err)), system=LOG_SYSTEM)
         log.msg('Cannot create detailed service exception, defaulting to NSI InternalServerError (00500)', system=LOG_SYSTEM)
         log.err(err)
         error_id = error.InternalServerError.errorId
-        #se = bindings.ServiceExceptionType(provider_nsa, connection_id, error.InternalServerError.errorId, err.getErrorMessage(), variables, child_exception)
+        return nsiframework.ServiceExceptionType(provider_nsa, connection_id, service_type, error_id, str(err), variables, None)
 
-    se = nsiframework.ServiceExceptionType(provider_nsa, connection_id, service_type, error_id, str(err), variables, child_exception)
-
-    return se
 
 
 def createException(service_exception, provider_nsa):
