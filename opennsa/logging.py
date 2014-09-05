@@ -5,23 +5,15 @@ Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2011-2012)
 """
 
-import sys
+import time
 
 from zope.interface import implements
 
 from twisted.python import log
 
 
-
-class EarlyObserver:
-
-    def emit(self, eventDict):
-        msg = ''.join(eventDict['message'])
-        sys.stdout.write(msg + "\n")
-        sys.stdout.flush()
-
-    def stop(self):
-        log.removeObserver(self.emit)
+# almost iso, we dump the T in the middle (makes it more tricky to read imho)
+TIME_FORMAT = "%Y-%m-%d %H:%M:%SZ"
 
 
 
@@ -34,6 +26,13 @@ class DebugLogObserver(log.FileLogObserver):
         self.debug = debug
         self.profile = profile
         self.payload = payload
+
+
+    def formatTime(self, when):
+        # over ride default time format so we get logs in utc time
+        # utc time is strongly preferable when debuggin systems across multiple timezones
+        iso_time_string = time.strftime(TIME_FORMAT, time.gmtime(when))
+        return iso_time_string
 
 
     def emit(self, eventDict):
