@@ -73,8 +73,8 @@ class NSIError(Exception):
     connectionId = None
     variables    = None
 
-    def __init__(self, value, nsa_id=None, connection_id=None, variables=None):
-        Exception.__init__(self, value)
+    def __init__(self, message, nsa_id=None, connection_id=None, variables=None):
+        Exception.__init__(self, message)
         self.nsaId = nsa_id
         self.connectionId = connection_id
         self.variables = variables # [ ( variable, value ) ]
