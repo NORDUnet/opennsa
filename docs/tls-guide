@@ -39,3 +39,12 @@ If OpenNSA should verify the peer. You want this to true, unless debugging..
 `allowedhosts=host1.example.org,host2.example.org`
 Comma-seperated list of hosts that are allowed to make request to OpenNSA.
 
+
+** Common Issues ** 
+
+If you get:
+AttributeError: 'OpenSSL.SSL.Context' object has no attribute 'set_session_cache_mode'
+
+Upgrade pyOpenSSL to at least version 0.14 (as listed in the INSTALL file).
+
+
