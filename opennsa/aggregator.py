@@ -34,38 +34,31 @@ def shortLabel(label):
     return name + '=' + label.labelValue()
 
 
-def _buildErrorMessage(connection_id, action, results):
 
-    # should probably seperate logging somehow
-    failures = [ fail for (success, fail) in results if success is False ]
-    failure_msgs = [ f.getErrorMessage() for f in failures ]
+def _logErrorResponse(err, connection_id, provider_nsa, action):
 
-    log.msg('Connection %s: %i failures' % (connection_id, len(failures)), system=LOG_SYSTEM)
-    for msg in failure_msgs:
-        log.msg('* Failure: ' + msg, system=LOG_SYSTEM)
+    log.msg('Connection %s: Error during %s request to %s.' % (connection_id, action, provider_nsa), system=LOG_SYSTEM)
+    log.msg('Connection %s: Error message: %s' % (connection_id, err.getErrorMessage()), system=LOG_SYSTEM)
+    log.msg('Trace:', system=LOG_SYSTEM)
+    err.printTraceback()
 
-    # build the error message to send back
-    if len(results) == 1:
-        # only one connection, we just return the plain failure
-        error_msg = failures[0][1].getErrorMessage()
-    else:
-        # multiple failures, here we build a more complicated error string
-        error_msg = '%i/%i %s failed:\n  %s' % (len(failures), len(results), action, '\n  '.join(failure_msgs))
-
-    return error_msg
+    return err
 
 
-def _createAggregateException(connection_id, action, results, default_error=error.InternalServerError):
 
-    # need to handle multi-errors better, but infrastructure isn't there yet
+def _createAggregateException(connection_id, action, results, provider_urns, default_error=error.InternalServerError):
+
     failures = [ conn for success,conn in results if not success ]
-    if len(failures) == 0:
-        # not supposed to happen
+
+    if len(failures) == 0: # not supposed to happen
         return error.InternalServerError('_createAggregateException called with no failures')
-    if len(results) == 1 and len(failures) == 1:
+
+    if len(failures) == 1:
         return failures[0]
-    else:
-        error_msg = _buildErrorMessage(connection_id, action, results)
+
+    else: # multiple errors
+        provider_failures = [ provider_urn + ': ' + f.getErrorMessage() for provider_urn, (success,f) in zip(provider_urns, results) if not success ]
+        error_msg = '%i/%i %s failed:\n  %s' % (len(failures), len(results), action, '\n  '.join(provider_failures))
         return default_error(error_msg)
 
 
@@ -200,7 +193,7 @@ class Aggregator:
         if cnt.REQUIRE_USER in self.policies:
             user_attrs  = [ sa for sa in header.security_attributes if sa.type_ == 'user'  ]
             if not user_attrs:
-                log.msg('Rejecting reserve request without user security attribute')
+                log.msg('Rejecting reserve request without user security attribute', system=LOG_SYSTEM)
                 raise error.ConnectionCreateError('This NSA (%s) requires a user security attribute in the header to create a reservation.' % self.nsa_.urn() )
 
         connection_id = yield self.plugin.createConnectionId()
@@ -368,6 +361,8 @@ class Aggregator:
 
             provider = self.getProvider(provider_urn)
             d = provider.reserve(c_header, sub_connection_id, conn.global_reservation_id, conn.description, crt)
+            d.addErrback(_logErrorResponse, connection_id, provider_urn, 'reserve')
+
             conn_info.append( (d, provider_urn) )
 
             # Don't bother trying to save connection here, wait for reserveConfirmed
@@ -381,6 +376,7 @@ class Aggregator:
             defer.returnValue(connection_id)
 
         else:
+            # I think this is out of spec, the aggregator shouldn't do anything here...
             # terminate non-failed connections
             # currently we don't try and be too clever about cleaning, just do it, and switch state
             yield state.terminating(conn)
@@ -401,7 +397,9 @@ class Aggregator:
             yield dl
             yield state.terminated(conn)
 
-            err = _createAggregateException(connection_id, 'reservations', results, error.ConnectionCreateError)
+            # construct provider nsa urns, so we can produce a good error message
+            provider_urns = [ ci[1] for ci in conn_info ]
+            err = _createAggregateException(connection_id, 'reservations', results, provider_urns, error.ConnectionCreateError)
             raise err
 
 
@@ -427,6 +425,7 @@ class Aggregator:
             req_header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa, security_attributes=header.security_attributes)
             # we should probably mark as committing before sending message...
             d = provider.reserveCommit(req_header, sc.connection_id)
+            d.addErrback(_logErrorResponse, connection_id, sc.provider_nsa, 'provision')
             defs.append(d)
 
         results = yield defer.DeferredList(defs, consumeErrors=True)
@@ -439,7 +438,8 @@ class Aggregator:
         else:
             n_success = sum( [ 1 for s in successes if s ] )
             log.msg('Connection %s. Only %i of %i commit acked successfully' % (connection_id, n_success, len(defs)), system=LOG_SYSTEM)
-            raise _createAggregateException(connection_id, 'committed', results, error.ConnectionError)
+            provider_urns = [ sc.provider_nsa for sc in sub_connections ]
+            raise _createAggregateException(connection_id, 'committed', results, provider_urns, error.ConnectionError)
 
 
     @defer.inlineCallbacks
@@ -464,6 +464,7 @@ class Aggregator:
             provider = self.getProvider(sc.provider_nsa)
             header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa, security_attributes=header.security_attributes)
             d = provider.reserveAbort(header, sc.connection_id)
+            d.addErrback(_logErrorResponse, connection_id, sc.provider_nsa, 'reserveAbort')
             defs.append(d)
 
         yield defer.DeferredList(save_defs, consumeErrors=True)
@@ -478,7 +479,8 @@ class Aggregator:
         else:
             n_success = sum( [ 1 for s in successes if s ] )
             log.msg('Connection %s. Only %i of %i connections aborted' % (self.connection_id, len(n_success), len(defs)), system=LOG_SYSTEM)
-            raise self._createAggregateException(connection_id, 'aborted', results, error.ConnectionError)
+            provider_urns = [ sc.provider_nsa for sc in sub_connections ]
+            raise self._createAggregateException(connection_id, 'aborted', results, provider_urns, error.ConnectionError)
 
 
     @defer.inlineCallbacks
@@ -507,6 +509,7 @@ class Aggregator:
             provider = self.getProvider(sc.provider_nsa)
             header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa, security_attributes=header.security_attributes)
             d = provider.provision(header, sc.connection_id)
+            d.addErrback(_logErrorResponse, connection_id, sc.provider_nsa, 'provision')
             defs.append(d)
 
         results = yield defer.DeferredList(defs, consumeErrors=True)
@@ -517,7 +520,8 @@ class Aggregator:
         else:
             n_success = sum( [ 1 for s in successes if s ] )
             log.msg('Connection %s. Provision failure. %i of %i connections successfully acked' % (connection_id, n_success, len(defs)), system=LOG_SYSTEM)
-            raise _createAggregateException(connection_id, 'provision', results, error.ConnectionError)
+            provider_urns = [ sc.provider_nsa for sc in sub_connections ]
+            raise _createAggregateException(connection_id, 'provision', results, provider_urns, error.ConnectionError)
 
 
     @defer.inlineCallbacks
@@ -546,6 +550,7 @@ class Aggregator:
             provider = self.getProvider(sc.provider_nsa)
             header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa, security_attributes=header.security_attributes)
             d = provider.release(header, sc.connection_id)
+            d.addErrback(_logErrorResponse, connection_id, sc.provider_nsa, 'release')
             defs.append(d)
 
         yield defer.DeferredList(save_defs, consumeErrors=True)
@@ -559,7 +564,8 @@ class Aggregator:
         else:
             n_success = sum( [ 1 for s in successes if s ] )
             log.msg('Connection %s. Only %i of %i connections successfully released' % (self.connection_id, n_success, len(defs)), system=LOG_SYSTEM)
-            raise self._createAggregateException(connection_id, 'release', results, error.ConnectionError)
+            provider_urns = [ sc.provider_nsa for sc in sub_connections ]
+            raise self._createAggregateException(connection_id, 'release', results, provider_urns, error.ConnectionError)
 
 
     @defer.inlineCallbacks
@@ -583,6 +589,7 @@ class Aggregator:
             provider = self.getProvider(sc.provider_nsa)
             header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa, security_attributes=header.security_attributes)
             d = provider.terminate(header, sc.connection_id)
+            d.addErrback(_logErrorResponse, connection_id, sc.provider_nsa, 'terminate')
             defs.append(d)
 
         results = yield defer.DeferredList(defs, consumeErrors=True)
@@ -595,7 +602,8 @@ class Aggregator:
             # we are now in an inconsistent state...
             n_success = sum( [ 1 for s in successes if s ] )
             log.msg('Connection %s. Only %i of %i connections successfully terminated' % (conn.connection_id, n_success, len(defs)), system=LOG_SYSTEM)
-            raise _createAggregateException(connection_id, 'terminate', results, error.ConnectionError)
+            provider_urns = [ sc.provider_nsa for sc in sub_connections ]
+            raise _createAggregateException(connection_id, 'terminate', results, provider_urns, error.ConnectionError)
 
 
 
@@ -676,6 +684,7 @@ class Aggregator:
                 provider = self.getProvider(sc.provider_nsa)
                 sch = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa, security_attributes=header.security_attributes)
                 d = provider.queryRecursive(sch, [ sc.connection_id ] , None)
+                d.addErrback(_logErrorResponse, 'queryRecursive', sc.provider_nsa, 'queryRecursive')
                 defs.append(d)
 
                 self.query_calls[sch.correlation_id] = (cb_header.correlation_id, None)
@@ -690,7 +699,8 @@ class Aggregator:
                 n_success = sum( [ 1 for s in successes if s ] )
                 log.msg('QueryRecursive failure. %i of %i connections successfully replied' % (n_success, len(defs)), system=LOG_SYSTEM)
                 # we should really clear out the temporary state here...
-                raise _createAggregateException('', 'queryRecursive', results, error.ConnectionError)
+                provider_urns = [ sc.provider_nsa for sc in sub_connections ]
+                raise _createAggregateException('', 'queryRecursive', results, provider_urns, error.ConnectionError)
 
         except ValueError as e:
             log.msg('Error during queryRecursive request: %s' % str(e), system=LOG_SYSTEM)
