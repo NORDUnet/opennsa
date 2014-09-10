@@ -17,8 +17,14 @@ SOAP_HEADER             = ET.QName("{%s}Header"     % SOAP_ENVELOPE_NS)
 SOAP_BODY               = ET.QName("{%s}Body"       % SOAP_ENVELOPE_NS)
 SOAP_FAULT              = ET.QName("{%s}Fault"      % SOAP_ENVELOPE_NS)
 
+FAULTCODE               = 'faultcode'
+FAULTSTRING             = 'faultstring'
+DETAIL                  = 'detail'
+
+FAULTCODE_SERVER        = 'SOAP-ENV:Server'
 
 ET.register_namespace('soap', SOAP_ENVELOPE_NS)
+
 
 
 def _indent(elem, level=0):
@@ -63,6 +69,35 @@ def createSoapPayload(body_element=None, header_element=None):
     _indent(envelope)
     payload = ET.tostring(envelope, 'utf-8')
 
+    return payload
+
+
+def createSoapFault(fault_msg, detail_element=None):
+
+    assert type(fault_msg) is str, 'Fault message must be a string'
+
+#       <SOAP-ENV:Fault>
+#           <faultcode>SOAP-ENV:Server</faultcode>
+#           <faultstring>%(fault_string)s</faultstring>
+#            <detail>
+#                %(detail)s
+#            </detail>
+#       </SOAP-ENV:Fault>
+
+    fault_element = ET.Element(SOAP_FAULT)
+
+    fault_code = ET.SubElement(fault_element, FAULTCODE)
+    fault_code.text = FAULTCODE_SERVER
+
+    fault_string = ET.SubElement(fault_element, FAULTSTRING)
+    fault_string.text = fault_msg
+
+    if detail_element is not None:
+        dec = ET.SubElement(fault_element, DETAIL)
+        dec.append(detail_element)
+
+
+    payload = createSoapPayload(fault_element)
     return payload
 
 

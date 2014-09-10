@@ -9,59 +9,24 @@ from twisted.python import log
 from twisted.internet import defer
 from twisted.web import resource, server
 
-from xml.sax.saxutils import escape as xml_escape
+from opennsa.protocols.shared import minisoap
 
 
 
 LOG_SYSTEM = 'protocol.SOAPResource'
 
 
-SERVICE_FAULT = """<?xml version='1.0' encoding='UTF-8'?>
-<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">
-   <SOAP-ENV:Body>
-       <SOAP-ENV:Fault>
-           <faultcode>SOAP-ENV:Server</faultcode>
-           <faultstring>%(fault_string)s</faultstring>
-       </SOAP-ENV:Fault>
-   </SOAP-ENV:Body>
-</SOAP-ENV:Envelope>
-"""
 
-SERVICE_FAULT_DETAILED = """<?xml version='1.0' encoding='UTF-8'?>
-<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">
-   <SOAP-ENV:Body>
-       <SOAP-ENV:Fault>
-           <faultcode>SOAP-ENV:Server</faultcode>
-           <faultstring>%(fault_string)s</faultstring>
-            <detail>
-%(detail)s
-            </detail>
-       </SOAP-ENV:Fault>
-   </SOAP-ENV:Body>
-</SOAP-ENV:Envelope>
-"""
-
-
-# Consider moving this to minisoap sometime
 class SOAPFault(Exception):
 
-    def __init__(self, fault_string, detail=None):
+    def __init__(self, fault_string, detail_element=None):
         self.fault_string = fault_string
-        self.detail = detail
+        self.detail_element = detail_element
 
 
     def createPayload(self):
 
-        # Need to do some escaping
-
-        fault_string = xml_escape( self.fault_string )
-
-        if self.detail is None:
-            payload = SERVICE_FAULT % {'fault_string': fault_string }
-        else:
-            payload = SERVICE_FAULT_DETAILED % {'fault_string': fault_string, 'detail': self.detail }
-
-        return payload
+        return minisoap.createSoapFault(self.fault_string, self.detail_element)
 
 
 

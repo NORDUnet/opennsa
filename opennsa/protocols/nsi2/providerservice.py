@@ -6,7 +6,6 @@ Copyright: NORDUnet (2011)
 """
 
 import time
-from xml.etree import ElementTree as ET
 
 from twisted.python import log, failure
 
@@ -48,10 +47,9 @@ class ProviderService:
         log.msg('Request error: %s. Returning error to remote client.' % err.getErrorMessage(), system=LOG_SYSTEM)
 
         se = helper.createServiceException(err, provider_nsa, connection_id)
-        element = se.xml(nsiconnection.serviceException)
-        detail = ET.tostring(element)
+        ex_element = se.xml(nsiconnection.serviceException)
 
-        soap_fault = resource.SOAPFault( err.getErrorMessage(), detail )
+        soap_fault = resource.SOAPFault( err.getErrorMessage(), ex_element )
         return soap_fault
 
 
