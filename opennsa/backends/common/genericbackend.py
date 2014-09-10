@@ -288,7 +288,7 @@ class GenericBackend(service.Service):
                 except error.STPUnavailableError:
                     continue
             else:
-                raise error.STPUnavailableError('STP combination %s and %s not available in specified time span' % (source_stp, dest_stp))
+                raise error.STPUnavailableError('Link %s and %s not available in specified time span' % (source_stp, dest_stp))
 
         now =  datetime.datetime.utcnow()
 
