@@ -113,7 +113,7 @@ def createException(service_exception, provider_nsa):
     try:
         exception_type = error.lookup(service_exception.errorId)
         variables = [ (tvp.type, tvp.value) for tvp in service_exception.variables ] if service_exception.variables else None
-        ex = exception_type(service_exception.text, provider_nsa, service_exception.connectionId, variables)
+        ex = exception_type(service_exception.text, service_exception.nsaId or provider_nsa, service_exception.connectionId, variables)
     except AssertionError as e:
         log.msg('Error looking up error id: %s. Message: %s' % (service_exception.errorId, str(e)), system=LOG_SYSTEM)
         ex = error.InternalServerError(service_exception.text)
