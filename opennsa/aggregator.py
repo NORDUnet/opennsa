@@ -1019,7 +1019,9 @@ class Aggregator:
         conn = yield self.getConnectionByKey(sub_conn.service_connection_id)
         sub_conns = yield self.getSubConnectionsByConnectionKey(conn.id)
 
-        if sum ( [ 1 if sc.reservation_state == state.RESERVE_TIMEOUT else 0 for sc in sub_conns ] ) == 1:
+        if conn.reservation_state == state.RESERVE_FAILED:
+            log.msg("Connection %s: reserveTimeout: Connection has already failed, not notifying parent" % conn.connection_id, system=LOG_SYSTEM)
+        elif sum ( [ 1 if sc.reservation_state == state.RESERVE_TIMEOUT else 0 for sc in sub_conns ] ) == 1:
             log.msg("Connection %s: reserveTimeout, first occurance, notifying parent" % conn.connection_id, system=LOG_SYSTEM)
             header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn(), reply_to=conn.requester_url)
             self.parent_requester.reserveTimeout(header, conn.connection_id, notification_id, timestamp, timeout_value, org_connection_id, org_nsa)
