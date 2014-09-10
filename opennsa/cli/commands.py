@@ -52,10 +52,14 @@ def _handleEvent(event):
 
 
 def _logError(e):
+    # emit the error to the user
 
     error_type = e.__class__.__name__
-    variables = '. Variables: ' + ' '.join ( [ ': '.join(tvp) for tvp in e.variables ] ) if e.variables else ''
-    log.msg('Error: %s: %s%s' % (error_type, str(e), variables))
+
+    log.msg('%s from %s' % (error_type, e.nsaId))
+    log.msg('  %s' % e)
+    if e.variables:
+        log.msg('Variables: %s' % ' '.join ( [ ': '.join(tvp) for tvp in e.variables ] ) )
 
 
 
