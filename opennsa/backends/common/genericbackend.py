@@ -296,7 +296,6 @@ class GenericBackend(service.Service):
         dest_target   = self.connection_manager.getTarget(dest_stp.port,   dst_label.type_, dst_label.labelValue())
         if connection_id is None:
             connection_id = self.connection_manager.createConnectionId(source_target, dest_target)
-        log.msg('Connection %s: Id assigned.' % connection_id, system=self.log_system)
 
         # we should check the schedule here
 
@@ -575,13 +574,13 @@ class GenericBackend(service.Service):
             self.calendar.removeReservation(src_resource, conn.start_time, conn.end_time)
             self.calendar.removeReservation(dst_resource, conn.start_time, conn.end_time)
 
-            yield state.reserved(conn)
-            self.logStateUpdate(conn, 'RESERVE START')
+            yield state.reserved(conn) # we only log this, when we haven't passed end time, as it looks wonky with start+end together
 
             now = datetime.datetime.utcnow()
             if now > conn.end_time:
                 yield self._doEndtime(conn)
             else:
+                self.logStateUpdate(conn, 'RESERVE START')
                 self.scheduler.scheduleCall(conn.connection_id, conn.end_time, self._doEndtime, conn)
                 td = conn.end_time - datetime.datetime.utcnow()
                 log.msg('Connection %s: terminate scheduled for %s UTC (%i seconds)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
