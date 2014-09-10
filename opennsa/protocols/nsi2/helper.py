@@ -103,7 +103,7 @@ def createServiceException(err, provider_nsa, connection_id=None, service_type=N
         log.msg('Cannot create detailed service exception, defaulting to NSI InternalServerError (00500)', system=LOG_SYSTEM)
         log.err(err)
         error_id = error.InternalServerError.errorId
-        return nsiframework.ServiceExceptionType(provider_nsa, connection_id, service_type, error_id, str(err), variables, None)
+        return nsiframework.ServiceExceptionType(provider_nsa, connection_id, service_type, error_id, str(err), None, None)
 
 
 
