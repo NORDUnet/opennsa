@@ -78,8 +78,6 @@ class Aggregator:
         self.policies           = policies
         self.plugin             = plugin
 
-        self.conn_prefix = network[:2].upper() + '-T'
-
         self.reservations       = {} # correlation_id -> info
         self.notification_id    = 0
 
