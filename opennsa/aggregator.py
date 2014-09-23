@@ -263,6 +263,10 @@ class Aggregator:
         yield state.reserveChecking(conn) # this also acts a lock
 
         if conn.source_network == self.network and conn.dest_network == self.network:
+            # no hairpin connections
+            if conn.source_port == conn.dest_port:
+                raise error.ServiceError('Hairpin connections not supported. Go away and fix your path finder')
+            # setup path
             path_info = ( conn.connection_id, self.network, conn.source_port, shortLabel(conn.source_label), conn.dest_port, shortLabel(conn.dest_label) )
             log.msg('Connection %s: Local link creation: %s %s?%s == %s?%s' % path_info, system=LOG_SYSTEM)
             paths = [ [ nsa.Link(self.network, conn.source_port, conn.dest_port, conn.source_label, conn.dest_label) ] ]
