@@ -170,7 +170,7 @@ class ResourceUnavailableError(NSIError):
     errorId = '00600'
 
 
-class ServiceError(NSIError): # please do not use this ugly mf
+class ServiceError(NSIError): # only use this if nothing else applies
 
     errorId = '00700'
 
@@ -222,6 +222,7 @@ NSI_ERROR_CODE_TABLE = {
     '00600' : ResourceUnavailableError,
     '00601' : STPUnavailableError,                  # compat
     '00602' : BandwidthUnavailableError,            # compat
+    '00700' : ServiceError,
     '00701' : UnknownSTPError,
     '00702' : STPResolutionError,
     '00703' : VLANInterchangeNotSupportedError,
