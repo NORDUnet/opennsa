@@ -21,7 +21,7 @@ FAULTCODE               = 'faultcode'
 FAULTSTRING             = 'faultstring'
 DETAIL                  = 'detail'
 
-FAULTCODE_SERVER        = 'SOAP-ENV:Server'
+FAULTCODE_SERVER        = 'soap:Server' # must match with the namespace below
 
 ET.register_namespace('soap', SOAP_ENVELOPE_NS)
 
