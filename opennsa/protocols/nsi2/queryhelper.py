@@ -45,7 +45,8 @@ def buildQuerySummaryResultType(connection_infos):
 
         criterias = []
         for crit in ci.criterias:
-            schedule = nsiconnection.ScheduleType(createXMLTime(crit.schedule.start_time), createXMLTime(crit.schedule.end_time))
+            sched_start_time = createXMLTime(crit.schedule.start_time) if crit.schedule.start_time is not None else None
+            schedule = nsiconnection.ScheduleType(sched_start_time, createXMLTime(crit.schedule.end_time))
             #service_type = cnt.EVTS_AGOLE
             service_type = str(p2pservices.p2ps) # we need this to have the bindings working properly
             service_def = buildServiceDefinitionType(crit.service_def)
@@ -107,7 +108,7 @@ def buildQueryRecursiveResultType(reservations):
 
 def buildSchedule(schedule):
 
-    start_time = parseXMLTimestamp(schedule.startTime)
+    start_time = parseXMLTimestamp(schedule.startTime) if schedule.startTime is not None else None
     end_time   = parseXMLTimestamp(schedule.endTime)
     return nsa.Schedule(start_time, end_time)
 
