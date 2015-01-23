@@ -37,8 +37,6 @@ class FetcherService(service.Service):
 
     def stopService(self):
         self.call.stop()
-        for delayed_call in self.blacklist.values():
-            delayed_call.cancel()
         service.Service.stopService(self)
 
 
