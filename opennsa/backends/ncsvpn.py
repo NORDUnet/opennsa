@@ -48,6 +48,9 @@ from opennsa.protocols.shared import httpclient
 
 NCS_TIMEOUT = 60 # ncs typically spends 25-32 seconds creating/deleting a vpn, sometimes a bit more
 
+NO_OUT_OF_SYNC_CHECK = 'no-out-of-sync-check' # put this as a query parameter to get ncs to bypass the check
+
+
 
 ETHERNET_VPN_PAYLOAD_BASE = """
 <bod xmlns="http://nordu.net/ns/ncs/vpn">
@@ -202,6 +205,7 @@ class NCSVPNConnectionManager:
         return headers
 
     def setupLink(self, connection_id, source_target, dest_target, bandwidth):
+        service_url = self.ncs_services_url + '?' + NO_OUT_OF_SYNC_CHECK
         payload = createVPNPayload(connection_id, source_target, dest_target)
         headers = self._createHeaders()
 
@@ -213,13 +217,13 @@ class NCSVPNConnectionManager:
             log.msg('Message: %s' % _extractErrorMessage(failure), system=self.log_system)
             return failure
 
-        d = httpclient.httpRequest(self.ncs_services_url, payload, headers, method='POST', timeout=NCS_TIMEOUT)
+        d = httpclient.httpRequest(service_url, payload, headers, method='POST', timeout=NCS_TIMEOUT)
         d.addCallbacks(linkUp, error)
         return d
 
 
     def teardownLink(self, connection_id, source_target, dest_target, bandwidth):
-        service_url = self.ncs_services_url + '/bod/' + connection_id
+        service_url = self.ncs_services_url + '/bod/' + connection_id + '?' + NO_OUT_OF_SYNC_CHECK
         headers = self._createHeaders()
 
         def linkDown(_):
