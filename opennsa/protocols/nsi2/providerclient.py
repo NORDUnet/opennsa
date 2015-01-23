@@ -124,12 +124,6 @@ class ProviderClient:
                                     correlation_id, requester_nsa, provider_nsa, connection_id)
 
 
-    def reserveAbortFailed(self, requester_url, requester_nsa, provider_nsa, correlation_id, connection_id, connection_states, err):
-
-        return self._genericFailure(requester_url, actions.RESERVE_ABORT_FAILED, nsiconnection.reserveAbortFailed,
-                                    requester_nsa, provider_nsa, correlation_id, connection_id, connection_states, err)
-
-
     def provisionConfirmed(self, requester_url, correlation_id, requester_nsa, provider_nsa, connection_id):
 
         return self._genericConfirm(nsiconnection.provisionConfirmed, requester_url, actions.PROVISION_CONFIRMED,
