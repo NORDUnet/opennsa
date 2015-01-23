@@ -480,9 +480,9 @@ class Aggregator:
 
         else:
             n_success = sum( [ 1 for s in successes if s ] )
-            log.msg('Connection %s. Only %i of %i connections aborted' % (self.connection_id, len(n_success), len(defs)), system=LOG_SYSTEM)
+            log.msg('Connection %s. Only %i of %i connections aborted' % (conn.connection_id, len(n_success), len(defs)), system=LOG_SYSTEM)
             provider_urns = [ sc.provider_nsa for sc in sub_connections ]
-            raise self._createAggregateException(connection_id, 'aborted', results, provider_urns, error.ConnectionError)
+            raise _createAggregateException(connection_id, 'aborted', results, provider_urns, error.ConnectionError)
 
 
     @defer.inlineCallbacks
@@ -567,7 +567,7 @@ class Aggregator:
             n_success = sum( [ 1 for s in successes if s ] )
             log.msg('Connection %s. Only %i of %i connections successfully released' % (self.connection_id, n_success, len(defs)), system=LOG_SYSTEM)
             provider_urns = [ sc.provider_nsa for sc in sub_connections ]
-            raise self._createAggregateException(connection_id, 'release', results, provider_urns, error.ConnectionError)
+            raise _createAggregateException(connection_id, 'release', results, provider_urns, error.ConnectionError)
 
 
     @defer.inlineCallbacks
