@@ -212,13 +212,18 @@ class GenericProviderTest:
     @defer.inlineCallbacks
     def testDoubleReserve(self):
 
+        source_stp  = nsa.STP(self.network, self.source_port, nsa.Label(cnt.ETHERNET_VLAN, '1781') )
+        p2p = nsa.Point2PointService(source_stp, self.dest_stp, self.bandwidth, cnt.BIDIRECTIONAL, False, None)
+        criteria = nsa.Criteria(0, self.schedule, p2p)
+
         self.header.newCorrelationId()
-        acid = yield self.provider.reserve(self.header, None, None, None, self.criteria)
+        print self.provider
+        acid = yield self.provider.reserve(self.header, None, None, None, criteria)
         header, cid, gid, desc, sp = yield self.requester.reserve_defer
 
         self.requester.reserve_defer = defer.Deferred() # new defer for new reserve request
         try:
-            acid2 = yield self.provider.reserve(self.header, None, None, None, self.criteria)
+            acid2 = yield self.provider.reserve(self.header, None, None, None, criteria)
             self.fail('Should have raised STPUnavailableError')
         except error.STPUnavailableError:
             pass # we expect this
