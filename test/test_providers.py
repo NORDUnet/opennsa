@@ -93,9 +93,11 @@ class GenericProviderTest:
         self.header.newCorrelationId()
         try:
             yield self.provider.reserve(self.header, None, None, None, criteria)
-            self.fail('Should have raised TopologyError')
+            self.fail('Should have raised ServceError / TopologyError')
+        except error.ServiceError:
+            pass # expected - hairpin
         except error.TopologyError:
-            pass # expected
+            pass # expected - double vlan assignment
 
 
     @defer.inlineCallbacks
@@ -264,12 +266,12 @@ class GenericProviderTest:
         self.failUnlessEquals(src_stp.network, self.network)
         self.failUnlessEquals(src_stp.port,    self.source_port)
         self.failUnlessEquals(src_stp.label.type_, cnt.ETHERNET_VLAN)
-        self.failUnlessEquals(src_stp.label.labelValue(), '1782')
+        self.failUnlessIn(src_stp.label.labelValue(), ('1781', '1782') )
 
         self.failUnlessEquals(dst_stp.network, self.network)
         self.failUnlessEquals(dst_stp.port,    self.dest_port)
         self.failUnlessEquals(dst_stp.label.type_, cnt.ETHERNET_VLAN)
-        self.failUnlessEquals(dst_stp.label.labelValue(), '1782')
+        self.failUnlessIn(dst_stp.label.labelValue(), ('1782', '1783') )
 
         self.failUnlessEqual(crit.service_def.capacity, self.bandwidth)
         self.failUnlessEqual(crit.revision,   0)
@@ -710,12 +712,12 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
         self.failUnlessEquals(src_stp.network, self.network)
         self.failUnlessEquals(src_stp.port,    self.source_port)
         self.failUnlessEquals(src_stp.label.type_, cnt.ETHERNET_VLAN)
-        self.failUnlessEquals(src_stp.label.labelValue(), '1782')
+        self.failUnlessIn(src_stp.label.labelValue(), ('1781', '1782') )
 
         self.failUnlessEquals(dst_stp.network, self.network)
         self.failUnlessEquals(dst_stp.port,    self.dest_port)
         self.failUnlessEquals(dst_stp.label.type_, cnt.ETHERNET_VLAN)
-        self.failUnlessEquals(dst_stp.label.labelValue(), '1782')
+        self.failUnlessIn(dst_stp.label.labelValue(), ('1782', '1783') )
 
         self.failUnlessEqual(sd.capacity, self.bandwidth)
         self.failUnlessEqual(crit.revision,   0)
@@ -760,12 +762,12 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
         self.failUnlessEquals(src_stp.network, self.network)
         self.failUnlessEquals(src_stp.port,    self.source_port)
         self.failUnlessEquals(src_stp.label.type_, cnt.ETHERNET_VLAN)
-        self.failUnlessEquals(src_stp.label.labelValue(), '1782')
+        self.failUnlessIn(src_stp.label.labelValue(), ('1781', '1782') )
 
         self.failUnlessEquals(dst_stp.network, self.network)
         self.failUnlessEquals(dst_stp.port,    self.dest_port)
         self.failUnlessEquals(dst_stp.label.type_, cnt.ETHERNET_VLAN)
-        self.failUnlessEquals(dst_stp.label.labelValue(), '1782')
+        self.failUnlessIn(dst_stp.label.labelValue(), ('1782', '1783') )
 
         self.failUnlessEqual(crit.service_def.capacity, self.bandwidth)
         self.failUnlessEqual(crit.revision,   0)
