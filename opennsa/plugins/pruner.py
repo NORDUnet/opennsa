@@ -23,11 +23,10 @@ def pruneLabels(path):
     """
     Some networks does not support underspecified STPs and VLAN rewrites so we help them out a bit.
     """
-    NETWORKS = [ 'surfnet.nl', 'netherlight.net' ]
+    NETWORKS = []
 
     for idx, link in enumerate(path):
 
-        #if 'surfnet.nl' in link.network:
         if any( [ n in link.network for n in NETWORKS ] ):
             liv = link.src_label.intersect(link.dst_label)
             lnv = nsa.Label(liv.type_, liv.labelValue())
