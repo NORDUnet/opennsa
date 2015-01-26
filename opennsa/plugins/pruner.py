@@ -18,28 +18,28 @@ from opennsa.interface import IPlugin
 from opennsa.plugin import BasePlugin
 
 
+NETWORKS = []
+
 
 def pruneLabels(path):
     """
     Some networks does not support underspecified STPs and VLAN rewrites so we help them out a bit.
     """
-    NETWORKS = []
-
     for idx, link in enumerate(path):
 
-        if any( [ n in link.network for n in NETWORKS ] ):
-            liv = link.src_label.intersect(link.dst_label)
+        if any( [ n in link.src_stp.network for n in NETWORKS ] ):
+            liv = link.src_stp.label.intersect(link.dst_stp.label)
             lnv = nsa.Label(liv.type_, liv.labelValue())
-            link.src_label = lnv
-            link.dst_label = lnv
+            link.src_stp.label = lnv
+            link.dst_stp.label = lnv
 
             if idx > 0:
                 prev_link = path[idx-1]
-                prev_link.dst_label = lnv
+                prev_link.dst_stp.label = lnv
 
             if idx < len(path) - 1:
                 next_link = path[idx+1]
-                next_link.src_label = lnv
+                next_link.src_stp.label = lnv
 
     return path
 
