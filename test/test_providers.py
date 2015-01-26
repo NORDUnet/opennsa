@@ -217,7 +217,6 @@ class GenericProviderTest:
         criteria = nsa.Criteria(0, self.schedule, p2p)
 
         self.header.newCorrelationId()
-        print self.provider
         acid = yield self.provider.reserve(self.header, None, None, None, criteria)
         header, cid, gid, desc, sp = yield self.requester.reserve_defer
 
