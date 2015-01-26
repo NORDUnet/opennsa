@@ -86,7 +86,7 @@ class AttributeStatementType(object):
     def xml(self, elementName):
         r = ET.Element(elementName)
         r.append(self.Attribute.xml(Attribute))
-        r.append(self.EncryptedAttribute.xml('EncryptedAttribute'))
+        #r.append(self.EncryptedAttribute.xml('EncryptedAttribute'))
         return r
 
 
