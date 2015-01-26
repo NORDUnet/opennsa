@@ -24,7 +24,7 @@ class DiscoveryService:
 
     def __init__(self, nsa_id, version=None, name=None, software_version=None, start_time=None,
                  network_ids=None, interfaces=None, features=None, peers_with=None,
-                 route_vectors=None):
+                 link_vector=None):
 
         self.nsa_id                 = nsa_id                # string
         self.version                = version               # datetime
@@ -35,7 +35,7 @@ class DiscoveryService:
         self.interfaces             = interfaces            # [ (type, url, described_by) ]
         self.features               = features              # [ (type, value) ]
         self.peers_with             = peers_with            # [ string ]
-        self.route_vectors          = route_vectors         # gns.RouteVectors
+        self.link_vector            = link_vector           # linkvector.LinkVector
 
 
     def xml(self):
@@ -44,7 +44,7 @@ class DiscoveryService:
         interface_types = [ discovery.InterfaceType(i[0], i[1], i[2]) for i in self.interfaces ]
         feature_types   = [ discovery.FeatureType(f[0], f[1]) for f in self.features ]
 
-        topology_vectors = [ (cnt.URN_OGF_PREFIX + tv, cost) for tv, cost in self.route_vectors.listVectors().items() ]
+        topology_vectors = [ (cnt.URN_OGF_PREFIX + tv, cost) for tv, cost in self.link_vector.listVectors().items() ]
         other = discovery.HolderType( [ discovery.Topology(t,c) for (t,c) in topology_vectors ] )
 
         nsa_element = discovery.NsaType(

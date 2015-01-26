@@ -18,11 +18,12 @@ FETCH_INTERVAL = 3600 # seconds - 3600 seconds = 1 hour
 
 class FetcherService(service.Service):
 
-    def __init__(self, route_vectors, peers, provider_registry, ctx_factory=None):
+    def __init__(self, link_vectors, nrm_ports, peers, provider_registry, ctx_factory=None):
         for peer in peers:
             assert peer.url.startswith('http'), 'Peer URL %s does not start with http' % peer.url
 
-        self.route_vectors = route_vectors
+        self.link_vectors = link_vectors
+        self.nrm_ports = nrm_ports
         self.peers = peers
         self.provider_registry = provider_registry
         self.ctx_factory = ctx_factory
@@ -72,19 +73,28 @@ class FetcherService(service.Service):
                 log.msg('NSA description does not have CS interface url, discarding description', system=LOG_SYSTEM)
                 return
 
-            nsi_agent = nsa.NetworkServiceAgent( _baseName(nsa_id), cs_service_url, cnt.CS2_SERVICE_TYPE)
-            self.provider_registry.spawnProvider(nsi_agent)
-
             network_ids = [ _baseName(nid) for nid in nsa_description.networkId if nid.startswith(cnt.URN_OGF_PREFIX) ] # silent discard weird stuff
+
+            nsi_agent = nsa.NetworkServiceAgent( _baseName(nsa_id), cs_service_url, cnt.CS2_SERVICE_TYPE)
+
+            self.provider_registry.spawnProvider(nsi_agent, network_ids)
+
+            # how to port ?
             vectors = {}
             if nsa_description.other is not None:
                 for other in nsa_description.other:
                     if other.topologyReachability:
                         for tr in other.topologyReachability:
                             if tr.uri.startswith(cnt.URN_OGF_PREFIX): # silent discard weird stuff
-                                vectors[_baseName(tr.uri)] = tr.cost
+                                vectors[_baseName(tr.uri)] = tr.cost + 1
+            for nid in network_ids:
+                vectors[nid] = 1
 
-            self.route_vectors.updateVector(_baseName(nsa_id), peer.cost, network_ids, vectors )
+            if vectors:
+                for np in self.nrm_ports:
+                    if np.remote_network in network_ids:
+                        # this may add the vectors to multiple ports (though not likely)
+                        self.link_vectors.updateVector(np.name, vectors )
 
             # there is lots of other stuff in the nsa description but we don't really use it
 

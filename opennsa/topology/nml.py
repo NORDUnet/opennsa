@@ -327,9 +327,9 @@ class Topology(object):
                         # --
                         if source_network.canSwapLabel(source_stp.label.type_):
                             source_label = source_port.label().intersect(source_stp.label)
-                            dest_label   = lp.label().intersect(sl[0].src_label)
+                            dest_label   = lp.label().intersect(sl[0].src_stp.label)
                         else:
-                            source_label = source_port.label().intersect(source_stp.label).intersect(lp.label()).intersect(sl[0].src_label)
+                            source_label = source_port.label().intersect(source_stp.label).intersect(lp.label()).intersect(sl[0].src_stp.label)
                             dest_label   = source_label
 
                         first_link = nsa.Link(source_stp.network, source_stp.port, lp.id_, source_label, dest_label)
@@ -363,7 +363,7 @@ def createNMLNetwork(nrm_ports, network_name, network_readable_name):
 
         inbound_port        = InternalPort(inbound_port_id,  inbound_port_name,  port.bandwidth, port.label, port.remote_out)
         outbound_port       = InternalPort(outbound_port_id, outbound_port_name, port.bandwidth, port.label, port.remote_in)
-        bidirectional_port  = BidirectionalPort(port_id, port.name, inbound_port, outbound_port, port.remote_name)
+        bidirectional_port  = BidirectionalPort(port_id, port.name, inbound_port, outbound_port, port.remote_port)
 
         inbound_ports.append(inbound_port)
         outbound_ports.append(outbound_port)

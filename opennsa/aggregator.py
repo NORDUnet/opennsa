@@ -269,7 +269,8 @@ class Aggregator:
             # setup path
             path_info = ( conn.connection_id, self.network, conn.source_port, shortLabel(conn.source_label), conn.dest_port, shortLabel(conn.dest_label) )
             log.msg('Connection %s: Local link creation: %s %s?%s == %s?%s' % path_info, system=LOG_SYSTEM)
-            paths = [ [ nsa.Link(self.network, conn.source_port, conn.dest_port, conn.source_label, conn.dest_label) ] ]
+            paths = [ [ nsa.Link( nsa.STP(self.network, conn.source_port, conn.source_label),
+                                  nsa.STP(self.network, conn.dest_port,   conn.dest_label))  ] ]
 
             # we should probably specify the connection id to the backend,
             # to make it seem like the aggregator isn't here
@@ -290,44 +291,38 @@ class Aggregator:
                 local_stp      = dest_stp
                 remote_stp     = source_stp
 
-            vector = self.route_vectors.vector(remote_stp.network)
-            if vector is None:
+            # we should really find multiple port/link vectors to the remote network, but right now we don't
+            vector_port = self.route_vectors.vector(remote_stp.network)
+            if vector_port is None:
                 raise error.STPResolutionError('No vector to network %s, cannot create circuit' % remote_stp.network)
 
-            log.msg('Vector to %s via %s' % (remote_stp.network, vector), system=LOG_SYSTEM)
-            ports = self.network_topology.findPorts(True)
-            demarc_ports = []
-            for p in ports:
-                if p.remote_port is None:
-                    continue # filter out local termination ports
-                if p.remote_port.startswith(remote_stp.network): # not quite correct, but should work
-                    demarc_ports.append(p)
+            log.msg('Vector to %s via port %s' % (remote_stp.network, vector_port), system=LOG_SYSTEM)
 
-            if not demarc_ports:
-                raise error.ConnectionCreateError('Could not find a demarction port to network topology %s' % remote_stp.network)
+            # this really shouldn't fail, so we don't need to check
+            demarc_ports = [ self.network_topology.getPort( self.network + ':' + vector_port ) ]
 
             ldp = demarc_ports[0] # most of the time we will only have one anyway, should iterate and build multiple paths
 
             local_demarc_port  = ldp.id_.rsplit(':', 1)[1]
-            remote_demarc_port = ldp.remote_port.rsplit(':', 1)[1]
+            remote_demarc_network, remote_demarc_port = ldp.remote_port.rsplit(':', 1) # [1] # this is wrong in the new naming scheme
 
-            local_link  = nsa.Link(local_stp.network, local_stp.port, local_demarc_port, local_stp.label, ldp.label())
-            remote_link = nsa.Link(remote_stp.network, remote_demarc_port, remote_stp.port, ldp.label(), remote_stp.label) # the ldp label here isn't quite correct
+            local_link  = nsa.Link( local_stp, nsa.STP(local_stp.network, local_demarc_port, ldp.label()) )
+            remote_link = nsa.Link( nsa.STP(remote_demarc_network, remote_demarc_port, ldp.label()), remote_stp) # # the ldp label isn't quite correct
 
             paths = [ [ local_link, remote_link ] ]
             paths = yield self.plugin.prunePaths(paths)
 
 
-        selected_path = paths[0] # shortest path
+        selected_path = paths[0] # shortest path (legacy structure)
         log_path = ' -> '.join( [ str(p) for p in selected_path ] )
         log.msg('Attempting to create path %s' % log_path, system=LOG_SYSTEM)
 
         for link in selected_path:
-            if link.network == self.network:
+            if link.src_stp.network == self.network:
                 continue # we got this..
-            p = self.route_vectors.getProvider(link.network)
+            p = self.provider_registry.getProviderByNetwork(link.src_stp.network)
             if p is None:
-                raise error.ConnectionCreateError('No provider for network %s. Cannot create link.' % link.network)
+                raise error.ConnectionCreateError('No provider for network %s. Cannot create link.' % link.src_stp.network)
 
         conn_trace = (header.connection_trace or []) + [ self.nsa_.urn() + ':' + conn.connection_id ]
         conn_info = []
@@ -336,28 +331,25 @@ class Aggregator:
 
             sub_connection_id = None
 
-            if link.network == self.network:
+            if link.src_stp.network == self.network:
                 provider_urn = self.nsa_.urn()
                 sub_connection_id = connection_id
             else:
-                provider_urn = cnt.URN_OGF_PREFIX + self.route_vectors.getProvider( link.network )
+                provider_urn = self.provider_registry.getProviderByNetwork(link.src_stp.network)
 
             c_header = nsa.NSIHeader(self.nsa_.urn(), provider_urn, security_attributes=header.security_attributes, connection_trace=conn_trace)
 
-            # this has to be done more generic sometime
-            sd = nsa.Point2PointService(nsa.STP(link.network, link.src_port, link.src_label),
-                                        nsa.STP(link.network, link.dst_port, link.dst_label),
-                                        conn.bandwidth, sd.directionality, sd.symmetric)
+            sd = nsa.Point2PointService(link.src_stp, link.dst_stp, conn.bandwidth, sd.directionality, sd.symmetric)
 
             # save info for db saving
             self.reservations[c_header.correlation_id] = {
                                                         'provider_nsa'  : provider_urn,
                                                         'service_connection_id' : conn.id,
                                                         'order_id'       : idx,
-                                                        'source_network' : link.network,
-                                                        'source_port'    : link.src_port,
-                                                        'dest_network'   : link.network,
-                                                        'dest_port'      : link.dst_port }
+                                                        'source_network' : link.src_stp.network,
+                                                        'source_port'    : link.src_stp.port,
+                                                        'dest_network'   : link.dst_stp.network,
+                                                        'dest_port'      : link.dst_stp.port }
 
             crt = nsa.Criteria(criteria.revision, criteria.schedule, sd)
 

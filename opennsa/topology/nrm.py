@@ -15,8 +15,11 @@ from opennsa import constants as cnt, nsa, error, config
 LOG_SYSTEM = 'topology.nrm'
 
 
-PORT_TYPES = [ cnt.NRM_ETHERNET ] # OpenNSA doesn't really do unidirectional at the moment
-ATTRIBUTES = [ cnt.NRM_RESTRICTTRANSIT ]
+PORT_TYPES      = [ cnt.NRM_ETHERNET ] # OpenNSA doesn't really do unidirectional at the moment
+
+AUTH_ATTRIBUTES = [ 'nsa', 'user', 'group', 'token' ]
+PATH_ATTRIBUTES = [ 'vector' ]
+ATTRIBUTES      = [ cnt.NRM_RESTRICTTRANSIT ]
 
 LABEL_TYPES = {
     'vlan'  : cnt.ETHERNET_VLAN
@@ -34,17 +37,19 @@ class NRMSpecificationError(Exception):
 
 class NRMPort(object):
 
-    def __init__(self, port_type, name, remote_name, remote_in, remote_out, label, bandwidth, interface, authz, transit_restricted=False):
-        self.port_type      = port_type     # string
-        self.name           = name          # string
-        self.remote_name    = remote_name   # topology:port
-        self.remote_in      = remote_in     # topology:port
-        self.remote_out     = remote_out    # topology:port
-        self.label          = label         # nsa.Label
-        self.bandwidth      = bandwidth     # int
-        self.interface      = interface     # string
-        self.authz          = authz         # [ nsa.SecurityAttribute ]
-        self.transit_restricted = transit_restricted
+    def __init__(self, port_type, name, remote_network, remote_port, remote_in, remote_out, label, bandwidth, interface, authz, vectors=None, transit_restricted=False):
+        self.port_type      = port_type      # string
+        self.name           = name           # string
+        self.remote_network = remote_network # string
+        self.remote_port    = remote_port    # string
+        self.remote_in      = remote_in      # string
+        self.remote_out     = remote_out     # string
+        self.label          = label          # nsa.Label
+        self.bandwidth      = bandwidth      # int (megabit)
+        self.interface      = interface      # string
+        self.authz          = authz          # [ nsa.SecurityAttribute ]
+        self.vectors        = vectors or {}  # network : weight
+        self.transit_restricted = transit_restricted # bool
 
 
     def isAuthorized(self, security_attributes):
@@ -121,30 +126,43 @@ def parsePortSpec(source):
 
         if port_type == cnt.NRM_ETHERNET:
             if remote_network is None:
-                remote_bd_port  = None
+                remote_port     = None
                 remote_in       = None
                 remote_out      = None
             else:
                 if not in_suffix or not out_suffix:
                     raise NRMSpecificationError('Suffix not defined for bidirectional port %s' % port_name)
-                remote_bd_port  = remote_network + ':' + remote_port
-                remote_in       = remote_network + ':' + remote_port + in_suffix
-                remote_out      = remote_network + ':' + remote_port + out_suffix
+                remote_port = remote_network + ':' + remote_port
+                remote_in   = remote_port + ':' + in_suffix
+                remote_out  = remote_port + ':' + out_suffix
         else:
             raise AssertionError('do not know what to with port of type %s' % port_type)
 
+        # these are more than auth attributes, but thats what they where for initially
         authz_attributes = []
+        link_vectors = {}
         transit_restricted = False
         if authz != '-':
             for aa in authz.split(','):
                 if '=' in aa:
-                    authz_attributes.append( nsa.SecurityAttribute(*aa.split('=',2)) )
+                    #authz_attributes.append( nsa.SecurityAttribute(*aa.split('=',2)) )
+                    ak, av = aa.split('=',2)
+                    if ak in AUTH_ATTRIBUTES:
+                        authz_attributes.append( nsa.SecurityAttribute(ak, av) )
+                    elif ak in PATH_ATTRIBUTES:
+                        if not '@' in av:
+                            raise config.ConfigurationError('Invalid path value: %s' % av)
+                        network, weight = av.split('@', 1)
+                        link_vectors[network] = int(weight)
+                    else:
+                        raise config.ConfigurationError('Invalid attribute: %s' % aa)
+
                 elif aa in ATTRIBUTES and aa == cnt.NRM_RESTRICTTRANSIT:
                     transit_restricted = True
                 else:
                     raise config.ConfigurationError('Invalid attribute: %s' % aa)
 
-        nrm_ports.append( NRMPort(port_type, port_name, remote_bd_port, remote_in, remote_out, label, bandwidth, interface, authz_attributes, transit_restricted) )
+        nrm_ports.append( NRMPort(port_type, port_name, remote_network, remote_port, remote_in, remote_out, label, bandwidth, interface, authz_attributes, link_vectors, transit_restricted) )
 
     return nrm_ports
 
