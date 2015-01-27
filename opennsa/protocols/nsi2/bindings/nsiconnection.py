@@ -920,7 +920,8 @@ def parseElement(element):
         '{http://schemas.ogf.org/nsi/2013/12/connection/types}terminate' : GenericRequestType,
         '{http://schemas.ogf.org/nsi/2013/12/connection/types}provisionConfirmed' : GenericConfirmedType,
         '{http://schemas.ogf.org/nsi/2013/12/connection/types}provision' : GenericRequestType,
-        '{http://schemas.ogf.org/nsi/2013/12/framework/types}serviceException' : ServiceExceptionType,
+        '{http://schemas.ogf.org/nsi/2013/12/framework/types}serviceException' : ServiceExceptionType, # does this even belong here?
+        '{http://schemas.ogf.org/nsi/2013/12/connection/types}serviceException' : ServiceExceptionType,
         '{http://schemas.ogf.org/nsi/2013/12/connection/types}release' : GenericRequestType,
         '{http://schemas.ogf.org/nsi/2013/12/connection/types}queryResult' : QueryResultType,
         '{http://schemas.ogf.org/nsi/2013/12/connection/types}reserve' : ReserveType,
