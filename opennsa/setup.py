@@ -198,8 +198,7 @@ class OpenNSAService(twistedservice.MultiService):
         networks    = [ cnt.URN_OGF_PREFIX + network_name ]
         interfaces  = [ ( cnt.CS2_PROVIDER, provider_endpoint, None), ( cnt.CS2_SERVICE_TYPE, provider_endpoint, None), (cnt.NML_SERVICE_TYPE, nml_resource_url, None) ]
         features    = [ (cnt.FEATURE_AGGREGATOR, None), (cnt.FEATURE_UPA, None) ]
-        peers_with  = [ ] # needs to be changed
-        ds = discoveryservice.DiscoveryService(ns_agent.urn(), now, name, opennsa_version, now, networks, interfaces, features, peers_with, link_vector)
+        ds = discoveryservice.DiscoveryService(ns_agent.urn(), now, name, opennsa_version, now, networks, interfaces, features, provider_registry, link_vector)
 
         discovery_resource = ds.resource()
         top_resource.children['NSI'].putChild(discovery_resource_name, discovery_resource)

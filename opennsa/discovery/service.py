@@ -23,7 +23,7 @@ ET.register_namespace('gns', discovery.GNS_NS)
 class DiscoveryService:
 
     def __init__(self, nsa_id, version=None, name=None, software_version=None, start_time=None,
-                 network_ids=None, interfaces=None, features=None, peers_with=None,
+                 network_ids=None, interfaces=None, features=None, provider_registry=None,
                  link_vector=None):
 
         self.nsa_id                 = nsa_id                # string
@@ -34,7 +34,7 @@ class DiscoveryService:
         self.network_ids            = network_ids           # [ string ]
         self.interfaces             = interfaces            # [ (type, url, described_by) ]
         self.features               = features              # [ (type, value) ]
-        self.peers_with             = peers_with            # [ string ]
+        self.provider_registry      = provider_registry     # provreg.ProviderRegistry
         self.link_vector            = link_vector           # linkvector.LinkVector
 
 
@@ -43,6 +43,9 @@ class DiscoveryService:
         # location not really supported yet
         interface_types = [ discovery.InterfaceType(i[0], i[1], i[2]) for i in self.interfaces ]
         feature_types   = [ discovery.FeatureType(f[0], f[1]) for f in self.features ]
+
+        peers_with = self.provider_registry.providers.keys()
+        peers_with.remove(self.nsa_id)
 
         topology_vectors = [ (cnt.URN_OGF_PREFIX + tv, cost) for tv, cost in self.link_vector.listVectors().items() ]
         other = discovery.HolderType( [ discovery.Topology(t,c) for (t,c) in topology_vectors ] )
@@ -57,7 +60,7 @@ class DiscoveryService:
             self.network_ids,
             interface_types,
             feature_types,
-            self.peers_with,
+            peers_with,
             other,
            )
 
