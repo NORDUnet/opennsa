@@ -60,7 +60,6 @@ class ModifiableResource(resource.Resource):
             except ValueError:
                 pass # error parsing timestamp
 
-        log.msg('Request from %s. Sending %i bytes' % (request.getClient(), len(self.representation)), system=self.log_system)
         request.setHeader(LAST_MODIFIED, self.last_modified_timestamp)
         if self.mime_type:
             request.setHeader(CONTENT_TYPE, self.mime_type)
