@@ -212,7 +212,7 @@ class STP(object): # Service Termination Point
         if self.label:
             base += '?' + self.label.type_.split('#')[-1] + '=' + self.label.labelValue()
         return base
- 
+
 
     def baseURN(self):
         return cnt.URN_OGF_PREFIX + self.network + ':' + self.port
