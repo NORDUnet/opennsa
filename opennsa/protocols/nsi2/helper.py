@@ -192,9 +192,3 @@ def createSTP(stp_id):
 
     return nsa.STP(network, port, label)
 
-
-
-def createSTPID(stp):
-
-    return stp.urn()
-

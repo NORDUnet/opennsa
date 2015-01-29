@@ -117,11 +117,8 @@ class RequesterClient:
         if not type(sd) is nsa.Point2PointService:
             raise ValueError('Cannot create request for service definition of type %s' % str(type(sd)))
 
-        src_stp_id = helper.createSTPID(sd.source_stp)
-        dst_stp_id = helper.createSTPID(sd.dest_stp)
-
         params = [ p2pservices.TypeValueType(p[0], p[1]) for p in sd.parameters ] if sd.parameters else None
-        service_def = p2pservices.P2PServiceBaseType(sd.capacity, sd.directionality, sd.symmetric, src_stp_id, dst_stp_id, sd.ero, params)
+        service_def = p2pservices.P2PServiceBaseType(sd.capacity, sd.directionality, sd.symmetric, sd.source_stp.urn(), sd.dest_stp.urn(), sd.ero, params)
 
         schedule_type = nsiconnection.ScheduleType(start_time, end_time)
 

@@ -22,9 +22,7 @@ LOG_SYSTEM = 'NSI2.queryhelper'
 def buildServiceDefinitionType(service_def):
     if type(service_def) is nsa.Point2PointService:
         sd = service_def
-        src_stp_id  = helper.createSTPID(sd.source_stp)
-        dst_stp_id  = helper.createSTPID(sd.dest_stp)
-        p2ps = p2pservices.P2PServiceBaseType(sd.capacity, sd.directionality, sd.symmetric, src_stp_id, dst_stp_id, None, [])
+        p2ps = p2pservices.P2PServiceBaseType(sd.capacity, sd.directionality, sd.symmetric, sd.source_stp.urn(), sd.dest_stp.urn(), None, [])
         return p2ps
     else:
         log.msg('Cannot build query service definition for %s (not P2PService)' % str(service_def), system=LOG_SYSTEM)
