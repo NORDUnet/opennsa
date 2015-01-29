@@ -196,10 +196,5 @@ def createSTP(stp_id):
 
 def createSTPID(stp):
 
-    label = ''
-    if stp.label:
-        label = '?' + stp.label.type_.split('#')[-1] + '=' + stp.label.labelValue() 
-
-    stp_id = URN_NETWORK + stp.network + ':' + stp.port + label
-    return stp_id
+    return stp.urn()
 
