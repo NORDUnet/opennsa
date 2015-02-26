@@ -64,7 +64,11 @@ class TypeValuePairType(object):
                )
 
     def xml(self, elementName):
-        r = ET.Element(elementName, attrib={'type' : str(self.type), 'namespace' : str(self.namespace)})
+        attrib = {'type' : str(self.type) } # , 'namespace' : str(self.namespace)})
+        if self.namespace is not None:
+            attrib['namespace'] = str(self.namespace)
+
+        r = ET.Element(elementName, attrib=attrib)
         if self.value is not None:
             for el in self.value:
                 ET.SubElement(r, 'value').text = el
