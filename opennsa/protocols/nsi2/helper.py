@@ -96,8 +96,9 @@ def createServiceException(err, provider_nsa, connection_id=None, service_type=N
 
     if isinstance(err, error.NSIError):
         # use values from error
+        variables = [ nsiframework.TypeValuePairType(variable, None, [ str(value) ]) for (variable, value) in err.variables ] if err.variables else None
         return nsiframework.ServiceExceptionType(err.nsaId or provider_nsa, err.connectionId or connection_id,
-                                                 service_type, err.errorId, err.message, err.variables, None)
+                                                 service_type, err.errorId, err.message, variables, None)
     else:
         log.msg('Got a non NSIError exception: %s : %s' % (err.__class__.__name__, str(err)), system=LOG_SYSTEM)
         log.msg('Cannot create detailed service exception, defaulting to NSI InternalServerError (00500)', system=LOG_SYSTEM)

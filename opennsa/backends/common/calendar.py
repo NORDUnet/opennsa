@@ -57,7 +57,8 @@ class ReservationCalendar:
         if start_time < now:
             delta = now - start_time
             stamp = str(start_time).rsplit('.')[0]
-            raise error.PayloadError('Invalid request: Start time in the past (Startime: %s Delta: %s)' % (stamp, str(delta)))
+            variables = [ ('startTime', start_time.isoformat() ) ]
+            raise error.PayloadError('Invalid request: Start time in the past (Startime: %s, Delta: %s)' % (stamp, str(delta)), variables=variables )
 
         if start_time > datetime.datetime(2025, 1, 1):
             raise error.PayloadError('Invalid request: Start time after year 2025')
