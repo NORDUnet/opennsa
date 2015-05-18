@@ -11,6 +11,8 @@ from opennsa import nsa
 from opennsa.cli import options, parser, commands, logobserver
 
 
+CLI_TIMEOUT             = 90
+
 CLI_DEFAULTS            = '.opennsa-cli'
 REQUESTER_URL_BASE      = '%s://%s:%i/NSI/services/ConnectionService'
 HELP_MESSAGE            = '%s: Try --help or <command> --help for usage details.'
@@ -169,7 +171,7 @@ def doMain():
             raise usage.UsageError('Connection ID is not defined')
 
         from opennsa.protocols import nsi2
-        client, factory = nsi2.createRequester(host, port, service_url, tls=tls, ctx_factory=ctx_factory, authz_header=authz_header, callback_timeout=12)
+        client, factory = nsi2.createRequester(host, port, service_url, tls=tls, ctx_factory=ctx_factory, authz_header=authz_header, callback_timeout=CLI_TIMEOUT)
 
         # setup listener port
         if tls:
