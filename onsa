@@ -11,7 +11,7 @@ from opennsa import nsa
 from opennsa.cli import options, parser, commands, logobserver
 
 
-CLI_TIMEOUT             = 90
+CLI_TIMEOUT             = 130 # The default 2-PC timeout for nsi is 120 seconds, so just add a bit to that
 
 CLI_DEFAULTS            = '.opennsa-cli'
 REQUESTER_URL_BASE      = '%s://%s:%i/NSI/services/ConnectionService'

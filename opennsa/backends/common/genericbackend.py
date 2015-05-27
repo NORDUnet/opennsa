@@ -39,7 +39,10 @@ class GenericBackend(service.Service):
 
     implements(INSIProvider)
 
-    TPC_TIMEOUT = 40 # seconds
+    # This is how long a reservation will be kept in reserved, but not committed state.
+    # Two minutes (120 seconds) is the recommended value from the NSI group
+    # Yeah, it should be much less, but some NRMs are that slow
+    TPC_TIMEOUT = 120 # seconds
 
     def __init__(self, network, nrm_ports, connection_manager, parent_requester, log_system, minimum_duration=60):
 
