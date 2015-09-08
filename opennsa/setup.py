@@ -178,6 +178,7 @@ class OpenNSAService(twistedservice.MultiService):
 
         backend_service = setupBackend(backend_cfg, network_topology.id_, nrm_ports, aggr)
         backend_service.setServiceParent(self)
+        can_swap_label = backend_service.connection_manager.canSwapLabel(cnt.ETHERNET_VLAN)
 
         provider_registry.addProvider(ns_agent.urn(), backend_service, [ network_topology.id_ ] )
 
@@ -209,7 +210,7 @@ class OpenNSAService(twistedservice.MultiService):
         top_resource.children['NSI'].putChild('connections', vr)
 
         # topology
-        nml_service = nmlservice.NMLService(network_topology)
+        nml_service = nmlservice.NMLService(network_topology, can_swap_label)
         top_resource.children['NSI'].putChild(nml_resource_name, nml_service.resource() )
 
         log.msg('Provider  URL: %s' % provider_endpoint )

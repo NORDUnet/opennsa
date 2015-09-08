@@ -20,13 +20,17 @@ LOG_SYSTEM = 'topology.nmlxml'
 
 
 NML_NS = 'http://schemas.ogf.org/nml/2013/05/base#'
+NSI_DEF_NS = "http://schemas.ogf.org/nsi/2013/12/services/definition"
 
 ET.register_namespace('nml', NML_NS)
+ET.register_namespace('nsidef', NSI_DEF_NS)
 
 ID = 'id'
 VERSION = 'version'
 TYPE = 'type'
+ENCODING = 'encoding'
 LABEL_TYPE = 'labeltype'
+LABEL_SWAPPING = 'labelSwapping'
 
 NML_TOPOLOGY            = ET.QName('{%s}Topology'   % NML_NS)
 NML_PORT                = ET.QName('{%s}Port'       % NML_NS)
@@ -36,7 +40,8 @@ NML_LABELGROUP          = ET.QName('{%s}LabelGroup' % NML_NS)
 NML_NAME                = ET.QName('{%s}name'       % NML_NS)
 NML_RELATION            = ET.QName('{%s}Relation'   % NML_NS)
 NML_NODE                = ET.QName('{%s}Node'       % NML_NS)
-NML_BIDIRECTIONALPORT   = ET.QName('{%s}BidirectionalPort'  % NML_NS)
+NML_BIDIRECTIONALPORT   = ET.QName('{%s}BidirectionalPort' % NML_NS)
+NML_SWITCHINGSERVICE    = ET.QName('{%s}SwitchingService'  % NML_NS)
 
 # this is odd xml
 NML_HASINBOUNDPORT      = NML_NS + 'hasInboundPort'
@@ -48,9 +53,11 @@ NML_LABEL_MAPPING = {
     cnt.ETHERNET_VLAN : cnt.NML_ETHERNET_VLAN
 }
 
+NSI_SERVICE_DEFINITION = ET.QName('{%s}serviceDefinition' % NSI_DEF_NS)
 
 
-def topologyXML(network):
+
+def topologyXML(network, labelSwap=False):
     # creates nml:Topology object from an nml network
 
     BASE_URN = cnt.URN_OGF_PREFIX + network.id_
@@ -87,6 +94,17 @@ def topologyXML(network):
         nml_outbound_ports = ET.SubElement(nml_topology, NML_RELATION, {TYPE: NML_HASOUTBOUNDPORT})
         for port in network.outbound_ports:
             addPort(nml_outbound_ports, port)
+
+    service_def = ET.SubElement(nml_topology, NSI_SERVICE_DEFINITION)
+    ET.SubElement(service_def, 'name').text = 'GLIF Automated GOLE Ethernet VLAN Transfer Service'
+    ET.SubElement(service_def, 'serviceType').text = cnt.EVTS_AGOLE
+
+    switch_id = topology_id + ':sd:EVTS.A-GOLE'
+    labelSwapping = 'true' if labelSwap else 'false'
+    switch_attrib = { ID: switch_id, ENCODING: cnt.ETHERNET_NS, LABEL_SWAPPING: labelSwapping, LABEL_TYPE: cnt.NML_ETHERNET_VLAN }
+    switch = ET.SubElement(nml_topology, NML_SWITCHINGSERVICE, switch_attrib)
+
+    ET.SubElement(switch, NSI_SERVICE_DEFINITION, { ID: switch_id } )
 
     return nml_topology
 

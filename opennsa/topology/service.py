@@ -15,16 +15,17 @@ from opennsa.topology import nmlxml
 
 class NMLService(object):
 
-    def __init__(self, nml_network):
+    def __init__(self, nml_network, can_swap_label):
 
         self.nml_network = nml_network
+        self.can_swap_label = can_swap_label
         self._resource = modifiableresource.ModifiableResource('NMLService', 'application/xml')
         self.update()
 
 
     def update(self):
 
-        xml_nml_topology = nmlxml.topologyXML(self.nml_network)
+        xml_nml_topology = nmlxml.topologyXML(self.nml_network, self.can_swap_label)
         representation = ET.tostring(xml_nml_topology, 'utf-8')
         self._resource.updateResource(representation)
 
