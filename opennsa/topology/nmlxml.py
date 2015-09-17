@@ -48,6 +48,8 @@ NML_HASINBOUNDPORT      = NML_NS + 'hasInboundPort'
 NML_HASOUTBOUNDPORT     = NML_NS + 'hasOutboundPort'
 NML_MANAGEDBY           = NML_NS + 'managedBy'
 NML_ISALIAS             = NML_NS + 'isAlias'
+NML_HASSERVICE          = NML_NS + 'hasService'
+
 
 NML_LABEL_MAPPING = {
     cnt.ETHERNET_VLAN : cnt.NML_ETHERNET_VLAN
@@ -103,7 +105,9 @@ def topologyXML(network, labelSwap=False):
     switch_id = topology_id + ':switch:EVTS.A-GOLE'
     labelSwapping = 'true' if labelSwap else 'false'
     switch_attrib = { ID: switch_id, ENCODING: cnt.ETHERNET_NS, LABEL_SWAPPING: labelSwapping, LABEL_TYPE: cnt.NML_ETHERNET_VLAN }
-    switch = ET.SubElement(nml_topology, NML_SWITCHINGSERVICE, switch_attrib)
+
+    service_rel = ET.SubElement(nml_topology, NML_RELATION, { 'type': NML_HASSERVICE} )
+    switch = ET.SubElement(service_rel, NML_SWITCHINGSERVICE, switch_attrib)
 
     ET.SubElement(switch, NSI_SERVICE_DEFINITION, { ID: service_def_id } )
 
