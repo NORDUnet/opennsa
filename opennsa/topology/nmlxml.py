@@ -30,6 +30,7 @@ VERSION = 'version'
 TYPE = 'type'
 ENCODING = 'encoding'
 LABEL_TYPE = 'labeltype'
+LABEL_TYPE_CAMEL = 'labelType'
 LABEL_SWAPPING = 'labelSwapping'
 
 NML_TOPOLOGY            = ET.QName('{%s}Topology'   % NML_NS)
@@ -104,7 +105,7 @@ def topologyXML(network, labelSwap=False):
 
     switch_id = topology_id + ':switch:EVTS.A-GOLE'
     labelSwapping = 'true' if labelSwap else 'false'
-    switch_attrib = { ID: switch_id, ENCODING: cnt.ETHERNET_NS, LABEL_SWAPPING: labelSwapping, LABEL_TYPE: cnt.NML_ETHERNET_VLAN }
+    switch_attrib = { ID: switch_id, LABEL_SWAPPING: labelSwapping, LABEL_TYPE_CAMEL : cnt.NML_ETHERNET_VLAN }
 
     service_rel = ET.SubElement(nml_topology, NML_RELATION, { 'type': NML_HASSERVICE} )
     switch = ET.SubElement(service_rel, NML_SWITCHINGSERVICE, switch_attrib)
