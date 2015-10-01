@@ -42,7 +42,7 @@ $ createdb opennsa
 $ createuser opennsa
 $ exit
 $ psql opennsa # as the user that runs opennsa
-$ \i datafiles/schemq.sql
+$ \i datafiles/schema.sql
 
 
 Configuration:
