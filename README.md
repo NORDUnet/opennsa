@@ -24,16 +24,15 @@ only partially implemented.
 * Includes command line tool for basic operations
 
 
-#### License 
+#### License
 
 NORDUnet License (3-clause BSD). See LICENSE for more details.
 
 #### Contact
 
-* Developer: Henrik Thostrup Jensen   htj <at> nordu.net
-* Project  : Jerry Sobiesky           jerry <at> nordu.net
+* Henrik Thostrup Jensen   htj <at> nordu.net
 
 #### Copyright
 
-[NORDUnet](http://www.nordu.net) (2011-2013)
+[NORDUnet](http://www.nordu.net) (2011-2015)
 
