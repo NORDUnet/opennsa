@@ -8,8 +8,6 @@ Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2011)
 """
 
-from dateutil.tz import tzutc
-
 from zope.interface import implements
 
 from twisted.python import log, failure
@@ -18,6 +16,7 @@ from twisted.internet.error import ConnectionRefusedError
 
 from opennsa.interface import INSIProvider
 from opennsa import nsa, error
+from opennsa.shared.xmlhelper import UTC
 from opennsa.protocols.shared import minisoap, httpclient
 from opennsa.protocols.nsi2 import helper, queryhelper
 from opennsa.protocols.nsi2.bindings import actions, nsiconnection, p2pservices
@@ -107,12 +106,12 @@ class RequesterClient:
 
         if schedule.start_time is not None:
             assert schedule.start_time.tzinfo is None, 'Start time must NOT have time zone'
-            start_time = schedule.start_time.replace(tzinfo=tzutc()).isoformat()
+            start_time = schedule.start_time.replace(tzinfo=UTC()).isoformat()
         else:
             start_time = None
 
         assert schedule.end_time.tzinfo is None, 'End time must NOT have time zone'
-        end_time = schedule.end_time.replace(tzinfo=tzutc()).isoformat()
+        end_time = schedule.end_time.replace(tzinfo=UTC()).isoformat()
 
         if not type(sd) is nsa.Point2PointService:
             raise ValueError('Cannot create request for service definition of type %s' % str(type(sd)))

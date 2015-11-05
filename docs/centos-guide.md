@@ -35,10 +35,7 @@ The Python2.7 interpreter is at /usr/local/bin/python2.7
  This generates the script /usr/local/bin/easy_install-2.7 that you use to install packages for Python 2.7.
  It puts your packages in /usr/local/lib/python2.7/site-packages/
 
-5) Install python-dateutil
-
-    wget http://labix.org/download/python-dateutil/python-dateutil-1.5.tar.gz
-    easy_install-2.7 python-dateutil-1.5.tar.gz
+5) (Removed, to lazy to do renumbering)
 
 6) Install Twisted
 

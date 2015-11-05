@@ -5,11 +5,10 @@ Various functionality for OpenNSA CLI options.
 import time
 import datetime
 
-from dateutil.tz import tzutc
-
 from twisted.python import log
 
 from opennsa import config
+from opennsa.shared.xmlhelper import UTC
 
 
 # option names, as constants so we don't use strings in other modules
@@ -55,7 +54,7 @@ def parseTimestamp(value):
 
     if value.startswith('+'):
         offset = int(value[1:])
-        ts = datetime.datetime.fromtimestamp(time.time() + offset, tzutc()).replace(tzinfo=None)
+        ts = datetime.datetime.fromtimestamp(time.time() + offset, UTC()).replace(tzinfo=None)
     else:
         ts = datetime.datetime.strptime(value, XSD_DATETIME_FORMAT).replace(tzinfo=None)
     assert ts.tzinfo is None, 'Timestamp must NOT have time zone'

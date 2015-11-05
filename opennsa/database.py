@@ -10,7 +10,6 @@ Copyright: NORDUnet (2011-2013)
 """
 
 import datetime
-from dateutil import parser
 
 from twisted.enterprise import adbapi
 
@@ -21,6 +20,7 @@ from twistar.registry import Registry
 from twistar.dbobject import DBObject
 
 from opennsa import nsa
+from opennsa.ext.iso8601 import iso8601
 
 
 
@@ -54,7 +54,7 @@ class SecuritAttributeComposite(CompositeCaster):
 
 
 def castDatetime(value, cur):
-    return parser.parse(value)
+    return iso8601.parse(value)
 
 
 # setup

@@ -2,8 +2,6 @@ Requirements:
 
 * Python 2.7 or later (Python 3 not supported yet)
 
-* Python Dateutil (http://labix.org/python-dateutil)
-
 * Twisted 12.2.0 or later, http://twistedmatrix.com/trac/
 
 * Psycopg 2.5.0 or later (http://initd.org/psycopg/, 2.4.6 _might_ work)
