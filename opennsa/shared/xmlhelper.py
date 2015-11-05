@@ -1,13 +1,27 @@
 """
-Various XML utility functions.
+Various XML utility functions (actually just ISO datetime).
 
 Author: Henrik Thostrup Jensen <htj _at_ nordu.net>
-Copyright: NORDUnet (2012-2014)
+Copyright: NORDUnet (2012-2015)
 """
 
-from dateutil import parser
-from dateutil.tz import tzutc
+import datetime
 
+from opennsa import error
+from opennsa.ext.iso8601 import iso8601
+
+
+
+class UTC(datetime.tzinfo):
+
+    def utcoffset(self, dt):
+        return datetime.timedelta(0)
+
+    def dst(self, dt):
+        return datetime.timedelta(0)
+
+    def tzname(self, dt):
+        return "UTC"
 
 
 def createXMLTime(timestamp):
@@ -18,17 +32,13 @@ def createXMLTime(timestamp):
 
 def parseXMLTimestamp(xsd_timestamp):
 
-    xtp = parser.parser()
+    dt = iso8601.parse(xsd_timestamp)
 
-    dt = xtp.parse(xsd_timestamp)
     if dt.utcoffset() is None:
         # this needs to changed to valueerror...
-        from opennsa import error
         raise error.PayloadError('Timestamp has no time zone information')
 
     # convert to utc and remove tz info (internal use)
-    utc_dt = dt.astimezone(tzutc()).replace(tzinfo=None)
+    utc_dt = dt.astimezone(UTC()).replace(tzinfo=None)
     return utc_dt
-
-
 
