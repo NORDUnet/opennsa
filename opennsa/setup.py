@@ -202,7 +202,7 @@ class OpenNSAService(twistedservice.MultiService):
         link_vector.callOnUpdate( lambda : discovery_resource.updateResource ( ds.xml() ))
 
         # view resource
-        vr = viewresource.ConnectionListResource(aggr)
+        vr = viewresource.ConnectionListResource()
         top_resource.children['NSI'].putChild('connections', vr)
 
         # topology

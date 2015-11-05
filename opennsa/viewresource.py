@@ -9,6 +9,8 @@ Copyright: NORDUnet (2012)
 
 from twisted.web import resource, server
 
+from opennsa import database
+
 
 HTML_HEADER = """<!DOCTYPE html>
 <html>
@@ -26,27 +28,32 @@ HTML_FOOTER = """   </body>
 
 class ConnectionListResource(resource.Resource):
 
-    def __init__(self, nsi_service):
-        self.nsi_service = nsi_service
-
+    def __init__(self):
+        pass
 
     def render_GET(self, request):
+
+        d = database.ServiceConnection.find()
+        d.addCallback(self.renderPage, request)
+        return server.NOT_DONE_YET
+
+
+    def renderPage(self, connections, request):
 
         ib = 4 * ' '
 
         body =''
-        body += 2*ib + '<h3>OpenNSA Connections</h3>\n'
+        body += 2*ib + '<h3>Connections</h3>\n'
         body += 2*ib + '<p>\n'
 
-        for nsa, conns in sorted(self.nsi_service.connections.items()):
+        for c in connections:
+            print c
 
-            body += 2*ib + '<div>%s</div>\n' % nsa
+            source = c.source_network + ':' + c.source_port + (':' + c.source_label.labelValue() if c.source_label else '')
+            dest   = c.dest_network   + ':' + c.dest_port   + (':' + c.dest_label.labelValue()   if c.dest_label   else '')
+
+            body += 2*ib + '<div>%s : %s | %s => %s | %s - %s</div>\n' % (c.connection_id, c.lifecycle_state, source, dest, c.start_time, c.end_time)
             body += 2*ib + '<p>\n'
-
-            for conn_id, conn in conns.items():
-                sp = conn.service_parameters
-                body += 2*ib + '<div>%s : %s | %s - %s</div>\n' % (conn_id, conn.state(), sp.start_time, sp.end_time)
-                body += 2*ib + '<p>\n'
 
             body += 2*ib + '<p> &nbsp; <p>\n'
             break # so else block don't get triggered
