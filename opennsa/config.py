@@ -29,7 +29,6 @@ BLOCK_DUD        = 'dud'
 BLOCK_JUNIPER_EX = 'juniperex'
 BLOCK_JUNOS      = 'junos'
 BLOCK_FORCE10    = 'force10'
-BLOCK_ARGIA      = 'argia'
 BLOCK_BROCADE    = 'brocade'
 BLOCK_DELL       = 'dell'
 BLOCK_NCSVPN     = 'ncsvpn'
@@ -82,10 +81,6 @@ FORCE10_PASSWORD        = _SSH_PASSWORD
 FORCE10_HOST_FINGERPRINT = _SSH_HOST_FINGERPRINT
 FORCE10_SSH_PUBLIC_KEY  = _SSH_PUBLIC_KEY
 FORCE10_SSH_PRIVATE_KEY = _SSH_PRIVATE_KEY
-
-# argia block
-ARGIA_COMMAND_DIR       = 'commanddir'
-ARGIA_COMMAND_BIN       = 'commandbin'
 
 # Brocade block
 BROCADE_HOST              = _SSH_HOST
@@ -273,7 +268,7 @@ def readVerifyConfig(cfg):
         if name in backends:
             raise ConfigurationError('Can only have one backend named "%s"' % name)
 
-        if backend_type in (BLOCK_DUD, BLOCK_JUNIPER_EX, BLOCK_JUNOS, BLOCK_FORCE10, BLOCK_BROCADE, BLOCK_DELL, BLOCK_NCSVPN):
+        if backend_type in (BLOCK_DUD, BLOCK_JUNIPER_EX, BLOCK_JUNOS, BLOCK_FORCE10, BLOCK_BROCADE, BLOCK_DELL, BLOCK_NCSVPN, 'asyncfail'):
             backend_conf = dict( cfg.items(section) )
             backend_conf['_backend_type'] = backend_type
             backends[name] = backend_conf

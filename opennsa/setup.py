@@ -37,10 +37,6 @@ def setupBackend(backend_cfg, network_name, nrm_ports, parent_requester):
         from opennsa.backends import force10
         BackendConstructer = force10.Force10Backend
 
-#    elif backend_type == config.BLOCK_ARGIA:
-#        from opennsa.backends import argia
-#        return argia.ArgiaBackend(network_name, bc.items())
-
     elif backend_type == config.BLOCK_JUNIPER_EX:
         from opennsa.backends import juniperex
         BackendConstructer = juniperex.JuniperEXBackend

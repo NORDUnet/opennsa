@@ -15,7 +15,7 @@ only partially implemented.
 
 * Open-source NSI implementation
 * Pluggable backends to support different equipment
-  * Support: Junox MX, Force10 switch (etherscale), Dell Powerconnect, Argia
+  * Support: Junox MX, Force10 switch (etherscale), Dell Powerconnect
   * DUD backend for easy testing
 * Easy development of new backends
 * Easy creation of NML topology from short-hand topology specification
