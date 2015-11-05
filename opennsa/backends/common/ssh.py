@@ -38,12 +38,18 @@ class SSHClientFactory(protocol.ClientFactory):
     def __init__(self, fingerprints):
         # ClientFactory has no __init__ method
         self.fingerprints = fingerprints # this is just a passthrough to the transport protocol
+        self.stopped = False
 
 
     def buildProtocol(self, addr):
         p = self.protocol(self.fingerprints)
         p.factory = self
         return p
+
+
+    def stopFactory(self):
+        log.msg('SSH client factory stopped (new connection must be created).', system=LOG_SYSTEM)
+        self.stopped = True
 
 
 
