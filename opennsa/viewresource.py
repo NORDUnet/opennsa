@@ -1,7 +1,7 @@
 """
 HTTP Resource for displaying connection in OpenNSA.
 
-Currently rather simple.
+Currently rather simple. No CSS, just raw html tables.
 
 Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2012)
@@ -42,25 +42,44 @@ class ConnectionListResource(resource.Resource):
 
         ib = 4 * ' '
 
-        body =''
-        body += 2*ib + '<h3>Connections</h3>\n'
-        body += 2*ib + '<p>\n'
+        body = """
+        <h3>Connections</h3>
+        <p>
+        <table style="width:95%" border=1>
+            <thead>
+                <tr>
+                    <th>Connection Id</th>
+                    <th>Lifecycle state</th>
+                    <th>Source</th>
+                    <th>Destination</th>
+                    <th>Start time</th>
+                    <th>End time</th>
+                </tr>
+            </thead>
+            <tbody>"""
 
         for c in connections:
-            print c
+            #print c
 
             source = c.source_network + ':' + c.source_port + (':' + c.source_label.labelValue() if c.source_label else '')
             dest   = c.dest_network   + ':' + c.dest_port   + (':' + c.dest_label.labelValue()   if c.dest_label   else '')
 
-            body += 2*ib + '<div>%s : %s | %s => %s | %s - %s</div>\n' % (c.connection_id, c.lifecycle_state, source, dest, c.start_time, c.end_time)
-            body += 2*ib + '<p>\n'
+            start_time = c.start_time.replace(microsecond=0) if c.start_time is not None else '-'
+            end_time = c.end_time.replace(microsecond=0)
 
-            body += 2*ib + '<p> &nbsp; <p>\n'
-            break # so else block don't get triggered
+            body += """
+                 <tr>
+                    <th><div>%s</div></th>
+                    <th>%s</th>
+                    <th>%s</th>
+                    <th>%s</th>
+                    <th>%s</th>
+                    <th>%s</th>
+                 </tr>
+            """ % (c.connection_id, c.lifecycle_state, source, dest, start_time, end_time)
 
-        else:
-
-            body += '<div>No connections defined</div>\n'
+        body += 4*ib + '</tbody>'
+        body += 3*ib + '</table>'
 
         body = str(body)
 
