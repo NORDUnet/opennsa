@@ -543,20 +543,24 @@ class QueryResultType(object):
 
 
 class ReservationConfirmCriteriaType(object):
-    def __init__(self, version, schedule, serviceType, serviceDefinition):
+    def __init__(self, version, schedule, serviceType, serviceDefinitionTag, serviceDefinition):
         self.version = version  # int
         self.schedule = schedule  # ScheduleType
         self.serviceType = serviceType  # string
+        self.serviceDefinitionTag = serviceDefinitionTag # string
         self.serviceDefinition = serviceDefinition # xs:any
 
     @classmethod
     def build(self, element):
+        # This isn't quite done right. It should look up the tag name, and find the parser from there
+        # However only a single service is currently supported, so this works
         from . import p2pservices
         service_defs = [ p2pservices.parseElement(e) for e in element if e.tag not in ('schedule', 'serviceType') ]
         return ReservationConfirmCriteriaType(
                 element.get('version'),
                 ScheduleType.build(element.find('schedule')),
                 element.findtext('serviceType'),
+                str(p2pservices.p2ps),
                 service_defs[0]
                )
 
@@ -565,7 +569,7 @@ class ReservationConfirmCriteriaType(object):
         r.append(self.schedule.xml('schedule'))
         ET.SubElement(r, 'serviceType').text = self.serviceType
         if self.serviceDefinition:
-            r.append(self.serviceDefinition.xml(self.serviceType))
+            r.append(self.serviceDefinition.xml(self.serviceDefinitionTag))
         return r
 
 

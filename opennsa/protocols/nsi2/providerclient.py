@@ -7,6 +7,7 @@ Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2011-2013)
 """
 
+from opennsa import constants as cnt
 from opennsa.shared import xmlhelper
 from opennsa.protocols.shared import minisoap, httpclient
 from opennsa.protocols.nsi2 import helper, queryhelper
@@ -79,7 +80,7 @@ class ProviderClient:
         # we only support p2p for now
         p2p = p2pservices.P2PServiceBaseType(sd.capacity, sd.directionality, sd.symmetric, sd.source_stp.urn(), sd.dest_stp.urn(), None, [])
 
-        criteria = nsiconnection.ReservationConfirmCriteriaType(criteria.revision, schedule, str(p2pservices.p2ps), p2p)
+        criteria = nsiconnection.ReservationConfirmCriteriaType(criteria.revision, schedule, cnt.EVTS_AGOLE, str(p2pservices.p2ps), p2p)
 
         reserve_conf = nsiconnection.ReserveConfirmedType(connection_id, global_reservation_id, description, criteria)
 
