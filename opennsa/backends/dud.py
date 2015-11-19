@@ -46,8 +46,8 @@ class DUDConnectionManager:
 
 
     def canSwapLabel(self, label_type):
-        #return True
-        return False
+        return True
+        #return False
 
 
     def setupLink(self, connection_id, source_target, dest_target, bandwidth):
