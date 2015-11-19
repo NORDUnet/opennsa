@@ -9,7 +9,7 @@ Copyright: NORDUnet (2011-2012)
 import re
 import StringIO
 
-from opennsa import constants as cnt, nsa, error, config
+from opennsa import constants as cnt, nsa, error, config, authz
 
 
 LOG_SYSTEM = 'topology.nrm'
@@ -17,13 +17,10 @@ LOG_SYSTEM = 'topology.nrm'
 
 PORT_TYPES      = [ cnt.NRM_ETHERNET ] # OpenNSA doesn't really do unidirectional at the moment
 
-AUTH_ATTRIBUTES = [ 'nsa', 'user', 'group', 'token' ]
 PATH_ATTRIBUTES = [ 'vector' ]
 ATTRIBUTES      = [ cnt.NRM_RESTRICTTRANSIT ]
 
-LABEL_TYPES = {
-    'vlan'  : cnt.ETHERNET_VLAN
-}
+LABEL_TYPES     = { 'vlan'  : cnt.ETHERNET_VLAN }
 
 
 # format: network#port OR network#port-(in|out)
@@ -47,16 +44,9 @@ class NRMPort(object):
         self.label          = label          # nsa.Label
         self.bandwidth      = bandwidth      # int (megabit)
         self.interface      = interface      # string
-        self.authz          = authz          # [ nsa.SecurityAttribute ]
+        self.authz          = authz          # [ authz.AuthorizationRule ]
         self.vectors        = vectors or {}  # network : weight
         self.transit_restricted = transit_restricted # bool
-
-
-    def isAuthorized(self, security_attributes):
-        for port_sa in self.authz:
-            if not any( [ port_sa.match(rsa) for rsa in security_attributes] ):
-                return False
-        return True
 
 
 
@@ -90,7 +80,7 @@ def parsePortSpec(source):
 
     # Parse the entries like the following:
 
-    ## type       name            remote                         label               bandwidth interface  authz
+    ## type       name            remote                         label               bandwidth interface  authorization
     #
     #ethernet     ps              -                              vlan:1780-1783      1000       em0        user=user@example.org
     #ethernet     netherlight     netherlight#nordunet-(in|out)  vlan:1780-1783      1000       em1        -
@@ -111,7 +101,7 @@ def parsePortSpec(source):
         if len(tokens) != 7:
             raise NRMSpecificationError('Invalid number of entries for entry: %s' % line)
 
-        port_type, port_name, remote_spec, label_spec, bandwidth, interface, authz = tokens
+        port_type, port_name, remote_spec, label_spec, bandwidth, interface, authz_spec = tokens
 
         if not port_type in PORT_TYPES:
             raise error.TopologyError('Port type %s is not a valid port type' % port_type)
@@ -142,13 +132,12 @@ def parsePortSpec(source):
         authz_attributes = []
         link_vectors = {}
         transit_restricted = False
-        if authz != '-':
-            for aa in authz.split(','):
+        if authz_spec != '-':
+            for aa in authz_spec.split(','):
                 if '=' in aa:
-                    #authz_attributes.append( nsa.SecurityAttribute(*aa.split('=',2)) )
                     ak, av = aa.split('=',2)
-                    if ak in AUTH_ATTRIBUTES:
-                        authz_attributes.append( nsa.SecurityAttribute(ak, av) )
+                    if ak in authz.AUTH_ATTRIBUTES:
+                        authz_attributes.append( authz.AuthorizationAttribute(ak, av) )
                     elif ak in PATH_ATTRIBUTES:
                         if not '@' in av:
                             raise config.ConfigurationError('Invalid path value: %s' % av)

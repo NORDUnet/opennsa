@@ -23,7 +23,7 @@ from twisted.application import service
 
 from opennsa.interface import INSIProvider
 
-from opennsa import error, state, nsa, constants as cnt
+from opennsa import constants as cnt, error, state, nsa, authz
 from opennsa.backends.common import scheduler, calendar
 
 from twistar.dbobject import DBObject
@@ -218,9 +218,11 @@ class GenericBackend(service.Service):
         nrm_dest_port   = self.nrm_ports[dest_stp.port]
 
         # authz check
-        if not nrm_source_port.isAuthorized(header.security_attributes):
+        source_authz = yield authz.isAuthorized(nrm_source_port, header.security_attributes, source_stp, start_time, end_time)
+        if not source_authz:
             raise error.UnauthorizedError('Request does not have any valid credentials for port %s' % source_stp.baseURN())
-        if not nrm_dest_port.isAuthorized(header.security_attributes):
+        dest_authz = yield authz.isAuthorized(nrm_dest_port, header.security_attributes, dest_stp, start_time, end_time)
+        if not dest_authz:
             raise error.UnauthorizedError('Request does not have any valid credentials for port %s' % dest_stp.baseURN())
 
         # transit restriction

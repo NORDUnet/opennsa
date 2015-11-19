@@ -58,11 +58,6 @@ class SecurityAttribute(object):
         self.value = value
 
 
-    def match(self, sa):
-        assert type(sa) is SecurityAttribute, 'Can only compare SecurityAttribute with another SecurityAttribute'
-        return self.type_ == sa.type_ and self.value == sa.value
-
-
     def __repr__(self):
         return '<SecurityAttribute: %s = %s>' % (self.type_, self.value)
 
