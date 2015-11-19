@@ -186,13 +186,13 @@ class Aggregator:
         if cnt.REQUIRE_TRACE in self.policies:
             if not header.connection_trace:
                 log.msg('Rejecting reserve request without connection trace')
-                raise error.ConnectionCreateError('This NSA (%s) requires a connection trace in the header to create a reservation.' % self.nsa_.urn() )
+                raise error.SecurityError('This NSA (%s) requires a connection trace in the header to create a reservation.' % self.nsa_.urn() )
 
         if cnt.REQUIRE_USER in self.policies:
             user_attrs  = [ sa for sa in header.security_attributes if sa.type_ == 'user'  ]
             if not user_attrs:
                 log.msg('Rejecting reserve request without user security attribute', system=LOG_SYSTEM)
-                raise error.ConnectionCreateError('This NSA (%s) requires a user attribute in the header to create a reservation.' % self.nsa_.urn() )
+                raise error.SecurityError('This NSA (%s) requires a user attribute in the header to create a reservation.' % self.nsa_.urn() )
 
         connection_id = yield self.plugin.createConnectionId()
 
