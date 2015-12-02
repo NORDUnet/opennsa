@@ -452,10 +452,16 @@ class GenericBackend(service.Service):
 
         self.scheduler.cancelCall(conn.connection_id) # cancel end time tear down
 
+        # if we passed end time, resources have already been freed
+        free_resources = True
+        if conn.lifecycle_state == state.PASSED_ENDTIME:
+            free_resources = False
+
         yield state.terminating(conn)
         self.logStateUpdate(conn, 'TERMINATING')
 
-        yield self._doFreeResource(conn)
+        if free_resources:
+            yield self._doFreeResource(conn)
 
         # here the reply will practially always come before the ack
         header = nsa.NSIHeader(conn.requester_nsa, conn.requester_nsa) # The NSA is both requester and provider in the backend, but this might be problematic without aggregator
