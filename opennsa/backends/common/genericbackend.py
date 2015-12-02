@@ -704,7 +704,7 @@ class GenericBackend(service.Service):
             except Exception as e:
                 log.msg('Error ending connection: %s' % e)
                 raise e
-        elif conn.allocated: # only free reservation if it was actually allocated
+        elif conn.allocated or conn.reservation_state == state.RESERVE_HELD: # free reservation if it was allocated/held
             src_resource = self.connection_manager.getResource(conn.source_port, conn.source_label.type_, conn.source_label.labelValue())
             dst_resource = self.connection_manager.getResource(conn.dest_port,   conn.dest_label.type_,   conn.dest_label.labelValue())
             self.calendar.removeReservation(src_resource, conn.start_time, conn.end_time)
