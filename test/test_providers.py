@@ -417,7 +417,7 @@ class GenericProviderTest:
             reactor.callLater(2, d.callback, None)
             return d
 
-        # make activation fail via monkey patching
+        # make activation slow via monkey patching
         self.backend.connection_manager.setupLink = setupLink
 
         self.header.newCorrelationId()
