@@ -343,6 +343,30 @@ class GenericProviderTest:
 
 
     @defer.inlineCallbacks
+    def testReserveTerminateReReserve(self):
+
+        # Tamas Varga found a bug where calendar isn't probably cleanup up on reserve+terminate
+        # This reproduces the the issue
+
+        # these need to be constructed such that there is only one label option
+        source_stp  = nsa.STP(self.network, self.source_port, nsa.Label(cnt.ETHERNET_VLAN, '1782') )
+        dest_stp    = nsa.STP(self.network, self.dest_port,   nsa.Label(cnt.ETHERNET_VLAN, '1782') )
+        criteria    = nsa.Criteria(0, self.schedule, nsa.Point2PointService(source_stp, dest_stp, 200, cnt.BIDIRECTIONAL, False, None) )
+
+        self.header.newCorrelationId()
+        acid = yield self.provider.reserve(self.header, None, None, None, criteria)
+        header, cid, gid, desc, sp = yield self.requester.reserve_defer
+
+        # terminate the connection
+        yield self.provider.terminate(self.header, cid)
+        yield self.requester.terminate_defer
+
+        # try to reserve the same resources
+        acid2 = yield self.provider.reserve(self.header, None, None, None, criteria)
+        header, cid, gid, desc, sp = yield self.requester.reserve_defer
+
+
+    @defer.inlineCallbacks
     def testReserveTimeout(self):
 
         # these need to be constructed such that there is only one label option
