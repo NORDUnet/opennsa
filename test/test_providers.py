@@ -357,13 +357,16 @@ class GenericProviderTest:
         acid = yield self.provider.reserve(self.header, None, None, None, criteria)
         header, cid, gid, desc, sp = yield self.requester.reserve_defer
 
+        # reset deferred for reservation
+        self.requester.reserve_defer = defer.Deferred()
+
         # terminate the connection
         yield self.provider.terminate(self.header, cid)
         yield self.requester.terminate_defer
 
         # try to reserve the same resources
         acid2 = yield self.provider.reserve(self.header, None, None, None, criteria)
-        header, cid, gid, desc, sp = yield self.requester.reserve_defer
+        yield self.requester.reserve_defer
 
 
     @defer.inlineCallbacks
