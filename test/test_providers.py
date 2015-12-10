@@ -368,6 +368,63 @@ class GenericProviderTest:
         acid2 = yield self.provider.reserve(self.header, None, None, None, criteria)
         yield self.requester.reserve_defer
 
+    @defer.inlineCallbacks
+    def testReserveFailAndLabelSwapEnabled(self):
+
+        # When you try to reserve a circuit using a labelSwap enabled backend and the dest_stp appers to be in use,
+        # the src stp reservation never gets removed from the calendar
+
+        self.assertTrue(self.backend.connection_manager.canSwapLabel(cnt.ETHERNET_VLAN),"DUD is not able to swapLabels")
+
+        # Construct a valid circuit
+        source_stp  = nsa.STP(self.network, self.source_port, nsa.Label(cnt.ETHERNET_VLAN, '1782') )
+        dest_stp    = nsa.STP(self.network, self.dest_port,   nsa.Label(cnt.ETHERNET_VLAN, '1782') )
+        criteria    = nsa.Criteria(0, self.schedule, nsa.Point2PointService(source_stp, dest_stp, 200, cnt.BIDIRECTIONAL, False, None) )
+
+        #We shouldn't have reservations in the calendar right now
+        self.assertEquals(len(self.backend.calendar.reservations), 0,
+                          "Reservations size is %s should be 0" % len(self.backend.calendar.reservations))
+
+        self.header.newCorrelationId()
+        acid = yield self.provider.reserve(self.header, None, None, None, criteria)
+        header, cid, gid, desc, sp = yield self.requester.reserve_defer
+
+        # reset deferred for reservation
+        self.requester.reserve_defer = defer.Deferred()
+
+        # 2 reservations, for source_stp and dest_stp
+        self.assertEquals(len(self.backend.calendar.reservations), 2,
+                          "Reservations size is %s should be 2" % len(self.backend.calendar.reservations))
+
+        #Construct a second circuit, with the same dest_stp
+        source_stp2 = nsa.STP(self.network,self.source_port, nsa.Label(cnt.ETHERNET_VLAN, '1781'))
+        criteria2    = nsa.Criteria(0, self.schedule, nsa.Point2PointService(source_stp2, dest_stp, 200, cnt.BIDIRECTIONAL, False, None) )
+
+        self.header.newCorrelationId()
+        try:
+            acid2 = yield self.provider.reserve(self.header, None, None, None, criteria2)
+            header2, cid2, gid2, desc2, sp2 = yield self.requester.reserve_defer
+        except error.STPUnavailableError as e:
+            pass
+
+        # reset deferred for reservation
+        self.requester.reserve_defer = defer.Deferred()
+
+        # The second reserve request failed, so we should have the original 2 reservations in the calendar
+        self.assertEquals(len(self.backend.calendar.reservations), 2,
+                         "Reservations size is %s should be 2" % len(self.backend.calendar.reservations))
+
+        # terminate the connection
+        yield self.provider.terminate(self.header, cid)
+        yield self.requester.terminate_defer
+
+        for stp in [source_stp2,dest_stp,source_stp]:
+            try:
+                res = self.backend.connection_manager.getResource(stp.port, stp.label.type_, stp.label.labelValue())
+                resource_is_available = self.backend.calendar.checkReservation(res, self.schedule.start_time,self.schedule.end_time)
+            except error.STPUnavailableError as e:
+                self.fail("STP %s should be available" % res)
+
 
     @defer.inlineCallbacks
     def testReserveTimeout(self):
