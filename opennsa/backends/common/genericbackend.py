@@ -255,7 +255,6 @@ class GenericBackend(service.Service):
                 src_resource = self.connection_manager.getResource(source_stp.port, src_label_candidate.type_, lv)
                 try:
                     self.calendar.checkReservation(src_resource, start_time, end_time)
-                    self.calendar.addReservation(  src_resource, start_time, end_time)
                     src_label = nsa.Label(src_label_candidate.type_, str(lv))
                     break
                 except error.STPUnavailableError:
@@ -268,13 +267,16 @@ class GenericBackend(service.Service):
                 dst_resource = self.connection_manager.getResource(dest_stp.port, dst_label_candidate.type_, lv)
                 try:
                     self.calendar.checkReservation(dst_resource, start_time, end_time)
-                    self.calendar.addReservation(  dst_resource, start_time, end_time)
                     dst_label = nsa.Label(dst_label_candidate.type_, str(lv))
                     break
                 except error.STPUnavailableError:
                     pass
             else:
                 raise error.STPUnavailableError('STP %s not available in specified time span' % dest_stp)
+
+            # Only add reservations, when src and dest stps are both available
+            self.calendar.addReservation(  src_resource, start_time, end_time)
+            self.calendar.addReservation(  dst_resource, start_time, end_time)
 
         else:
             label_candidate = src_label_candidate.intersect(dst_label_candidate)
