@@ -1,14 +1,30 @@
+
+Domain socket option in config
+ - option name: adminsocket, domainsocket,
+
+Add x509host stanza for port authZ
+ - Kill off nsa authN/Z - it is useless
+   - Same for user/group (can still use it through)
+
+
+Make a simple REST interface for clients
+ - Several users have asked for an easier interface (not a cli)
+ - Kill as much functionality as possible
+   - Have auto commit / provision
+   - No timezones
+   - Long-pull for state
+   - Time log for state transitions (unix time, state)
+ - And maybe support interface metrics (check juniper capabilities)
+
+
 NSIv2 BOD Service
  - Check nsidev logs and improve them
  - Better error messages on bindings (sigh...)
 
 
+Better debugging on SSH backends
 
-
-##
- Better debugging on SSH backends
-
-Current issues:
+Issues:
 
 - Make replyTo optional (assuming sync. query)
 
@@ -25,29 +41,17 @@ Registry, they are not necessarely events or service. Just a registry. (just som
 Log rotation
 
 Long term:
-  Documentation
-  Persistence for connections
   Mailing list
-  Easy way of seeing connections in OpenNSA (basic web interface is there)
+  Improve the web interface (it shows the connections)
   Deal with bandwidth in calendar (requires joint resource concept)
   Ability to generate topology from NRM mapping / internal topology description
 
-  Think about AAI and Ports, Probably want private ports
-   - How do we represent port access?
-
 
 General:
-  Seperate protocol stack from connection (done for provider, client still needs work)
-  Profiling of protocol stack / backends
-  Better connection names in client - use UUIDs for global ids
-  Make RPC + callback timeout configurable
-  Implementation of AutoGOLE topology distribution scheme
   Client should be able to breakout request itself
-  Security params clean up (see mail from Jeroen)
 
 
 Backends:
-  NCS backend
   Force10: Should do shutdown when interfaces are not in use
   Test on Juniper EX switch
   Test on Juniper virtual router
