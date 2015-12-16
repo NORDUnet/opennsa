@@ -488,7 +488,9 @@ class Aggregator:
         if conn.lifecycle_state == state.TERMINATED:
             raise error.ConnectionGoneError('Connection %s has been terminated' % connection_id)
 
-        yield state.provisioning(conn)
+        # Do provisioning call even if we are already in provisioning state (might be mis authZ or other error)
+        if conn.provision_state != state.PROVISIONING:
+            yield state.provisioning(conn)
 
         save_defs = []
         defs = []
@@ -496,8 +498,10 @@ class Aggregator:
         sub_connections = yield self.getSubConnectionsByConnectionKey(conn.id)
 
         for sc in sub_connections:
-            save_defs.append( state.provisioning(sc) )
-        yield defer.DeferredList(save_defs) #, consumeErrors=True)
+            if sc.provision_state != state.PROVISIONING:
+                save_defs.append( state.provisioning(sc) )
+        if save_defs:
+            yield defer.DeferredList(save_defs) #, consumeErrors=True)
 
         for sc in sub_connections:
             provider = self.getProvider(sc.provider_nsa)
