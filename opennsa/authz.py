@@ -15,13 +15,15 @@ from twisted.python import log
 from opennsa import nsa
 
 
+LOG_SYSTEM = 'AuthZ'
+
 NSA        = 'nsa'
 USER       = 'user'
 GROUP      = 'group'
 TOKEN      = 'token'    # To allow static tokens - not sure this is something we want long term
 HOST_DN    = 'hostdn'   # X509 subject host distinguised name
 
-HEADER_ATTRIBUTES  = [ NSA, USER, GROUP, TOKEN, HOST_DN ]
+HEADER_ATTRIBUTES  = [ NSA, USER, GROUP, TOKEN ]
 REQUEST_ATTRIBUTES = [ HOST_DN ]
 
 AUTH_ATTRIBUTES = HEADER_ATTRIBUTES + REQUEST_ATTRIBUTES
@@ -48,7 +50,7 @@ class AuthorizationAttribute(AuthorizationRule):
 
 
 
-def isAuthorized(port, security_attributes, stp, request_info, start_time, end_time):
+def isAuthorized(port, security_attributes, request_info, stp, start_time, end_time):
     """
     Check if a request is authorized to use a certain port within the given criteria.
     """
@@ -57,9 +59,11 @@ def isAuthorized(port, security_attributes, stp, request_info, start_time, end_t
     for rule in port.authz:
         if rule.type_ in HEADER_ATTRIBUTES:
             if any( [ rule.match(sa) for sa in security_attributes ] ):
+                log.msg('AuthZ granted for port %s: Using %s attribute' % (port.name, rule.type_), system=LOG_SYSTEM)
                 return True
         elif rule.type_ in REQUEST_ATTRIBUTES and rule.type_ == HOST_DN:
             if rule.value == request_info.cert_host_dn:
+                log.msg('AuthZ granted for port %s: Using certificate dn %s' % (port.name, request_info.cert_host_dn), system=LOG_SYSTEM)
                 return True
         else:
             log.msg("Couldn't figure out what to do with rule of type %s" % rule.type_, system='AuthZ')
