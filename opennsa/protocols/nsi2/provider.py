@@ -118,11 +118,11 @@ class Provider:
             return defer.succeed(None)
 
 
-    def provision(self, nsi_header, connection_id):
+    def provision(self, nsi_header, connection_id, request_info):
 
         if nsi_header.reply_to:
             self.notifications[(connection_id, PROVISION_RESPONSE)] = nsi_header
-        return self.service_provider.provision(nsi_header, connection_id)
+        return self.service_provider.provision(nsi_header, connection_id, request_info)
 
 
     def provisionConfirmed(self, header, connection_id):

@@ -151,7 +151,7 @@ class ProviderService:
 
     def provision(self, soap_data, request_info):
         header, request = helper.parseRequest(soap_data)
-        d = self.provider.provision(header, request.connectionId)
+        d = self.provider.provision(header, request.connectionId, request_info)
         d.addCallbacks(lambda _ : helper.createGenericProviderAcknowledgement(header), self._createSOAPFault, errbackArgs=(header.provider_nsa, request.connectionId))
         return d
 
