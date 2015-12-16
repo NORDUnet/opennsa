@@ -5,7 +5,11 @@ Domain socket option in config
 Add x509host stanza for port authZ
  - Kill off nsa authN/Z - it is useless
    - Same for user/group (can still use it through)
+ - Add authZ for all action, not just reserve
 
+Make a decent way to specify provider in onsa
+
+Make the aggregator use reserveAbort instead of terminate when aborting
 
 Make a simple REST interface for clients
  - Several users have asked for an easier interface (not a cli)
