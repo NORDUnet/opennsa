@@ -1,8 +1,10 @@
 """
 Web Service Resource for OpenNSA.
 
+This module turns soap data into usefull data structures.
+
 Author: Henrik Thostrup Jensen <htj@nordu.net>
-Copyright: NORDUnet (2011)
+Copyright: NORDUnet (2011-2015)
 """
 
 import time

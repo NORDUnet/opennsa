@@ -2,8 +2,8 @@
 Authorization functinonality.
 
 Part of this was originally in the toplogy module and some other in the NSI2
-protocol stack, but it got weird due to cross-cutting concerns, so this was
-made.
+protocol stack, but it got weird due to all the cross-cutting concerns, so this
+was made.
 
 Author: Henrik Thostrup Jensen <htj@nordu.net>
 

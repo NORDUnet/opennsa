@@ -32,7 +32,7 @@ def logError(err, message_type):
 class Provider:
     # This is part of the provider side of the protocol, and usually sits on top of the aggregator
     # As it sits on top of the aggregator - which is a provider - it implements the Requester interface
-    # So it is Provider, that implements the Requester interface. If this doesn't confuse, you may continue reading
+    # So it is Provider, that implements the Requester interface. If this doesn't confuse you, continue reading
 
     implements(INSIRequester)
 
