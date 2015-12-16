@@ -367,7 +367,7 @@ class GenericBackend(service.Service):
 
 
     @defer.inlineCallbacks
-    def provision(self, header, connection_id):
+    def provision(self, header, connection_id, request_info=None):
 
         log.msg('Provision request from %s. Connection ID: %s' % (header.requester_nsa, connection_id), system=self.log_system)
 
@@ -377,6 +377,22 @@ class GenericBackend(service.Service):
 
         if not conn.allocated:
             raise error.ConnectionError('No resource allocated to the connection, cannot provision')
+
+        # authz - abstract me
+        nrm_source_port = self.nrm_ports[conn.source_port]
+        nrm_dest_port   = self.nrm_ports[conn.dest_port]
+
+        # authz check
+        source_authz = authz.isAuthorized(nrm_source_port, header.security_attributes, request_info, nrm_source_port, None, None)
+        if not source_authz:
+            stp_name = cnt.URN_OGF_PREFIX + self.network + ':' + nrm_source_port.name
+            raise error.UnauthorizedError('Request does not have any valid credentials for port %s' % stp_name)
+        dest_authz = authz.isAuthorized(nrm_dest_port, header.security_attributes, request_info, nrm_dest_port, None, None)
+        if not dest_authz:
+            stp_name = cnt.URN_OGF_PREFIX + self.network + ':' + nrm_dest_port.name
+            raise error.UnauthorizedError('Request does not have any valid credentials for port %s' % stp_name)
+
+
 
         if conn.reservation_state != state.RESERVE_START:
             raise error.InvalidTransitionError('Cannot provision connection in a non-reserved state')

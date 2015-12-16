@@ -479,7 +479,7 @@ class Aggregator:
 
 
     @defer.inlineCallbacks
-    def provision(self, header, connection_id):
+    def provision(self, header, connection_id, request_info=None):
 
         log.msg('', system=LOG_SYSTEM)
         log.msg('Provision request. NSA: %s. Connection ID: %s' % (header.requester_nsa, connection_id), system=LOG_SYSTEM)
@@ -503,7 +503,7 @@ class Aggregator:
         for sc in sub_connections:
             provider = self.getProvider(sc.provider_nsa)
             header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa, security_attributes=header.security_attributes)
-            d = provider.provision(header, sc.connection_id)
+            d = provider.provision(header, sc.connection_id, request_info) # request_info will only be passed locally
             d.addErrback(_logErrorResponse, connection_id, sc.provider_nsa, 'provision')
             defs.append(d)
 
