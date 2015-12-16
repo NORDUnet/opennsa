@@ -92,7 +92,8 @@ class RequesterClient:
         return err
 
 
-    def reserve(self, header, connection_id, global_reservation_id, description, criteria):
+    def reserve(self, header, connection_id, global_reservation_id, description, criteria, request_info=None):
+        # request_info is local only, so it isn't used
 
         self._checkHeader(header)
 

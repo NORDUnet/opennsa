@@ -43,7 +43,7 @@ class Provider:
         self.notifications = {}
 
 
-    def reserve(self, nsi_header, connection_id, global_reservation_id, description, criteria):
+    def reserve(self, nsi_header, connection_id, global_reservation_id, description, criteria, request_info):
 
         # we cannot create notification immediately, as there might not be a connection id yet
         # the notification mechanisms relies on the received ack coming before the confirmation, which is not ideal
@@ -53,7 +53,7 @@ class Provider:
                 self.notifications[(assigned_connection_id, RESERVE_RESPONSE)] = nsi_header
             return assigned_connection_id
 
-        d = self.service_provider.reserve(nsi_header, connection_id, global_reservation_id, description, criteria)
+        d = self.service_provider.reserve(nsi_header, connection_id, global_reservation_id, description, criteria, request_info)
         d.addCallback(setNotify)
         return d
 

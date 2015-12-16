@@ -169,7 +169,7 @@ class Aggregator:
 
 
     @defer.inlineCallbacks
-    def reserve(self, header, connection_id, global_reservation_id, description, criteria):
+    def reserve(self, header, connection_id, global_reservation_id, description, criteria, request_info=None):
 
         log.msg('', system=LOG_SYSTEM)
         log.msg('Reserve request from %s. Trace: %s' % (header.requester_nsa, header.connection_trace), system=LOG_SYSTEM)
@@ -354,7 +354,8 @@ class Aggregator:
             crt = nsa.Criteria(criteria.revision, criteria.schedule, sd)
 
             provider = self.getProvider(provider_urn)
-            d = provider.reserve(c_header, sub_connection_id, conn.global_reservation_id, conn.description, crt)
+            # note: request info will only be passed to local backends, remote requester will just ignore it
+            d = provider.reserve(c_header, sub_connection_id, conn.global_reservation_id, conn.description, crt, request_info)
             d.addErrback(_logErrorResponse, connection_id, provider_urn, 'reserve')
 
             conn_info.append( (d, provider_urn) )

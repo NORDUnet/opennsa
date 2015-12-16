@@ -171,7 +171,7 @@ class GenericBackend(service.Service):
 
 
     @defer.inlineCallbacks
-    def reserve(self, header, connection_id, global_reservation_id, description, criteria):
+    def reserve(self, header, connection_id, global_reservation_id, description, criteria, request_info=None):
 
         # return defer.fail( error.InternalNRMError('test reservation failure') )
 
@@ -218,10 +218,10 @@ class GenericBackend(service.Service):
         nrm_dest_port   = self.nrm_ports[dest_stp.port]
 
         # authz check
-        source_authz = yield authz.isAuthorized(nrm_source_port, header.security_attributes, source_stp, start_time, end_time)
+        source_authz = authz.isAuthorized(nrm_source_port, header.security_attributes, request_info, source_stp, start_time, end_time)
         if not source_authz:
             raise error.UnauthorizedError('Request does not have any valid credentials for port %s' % source_stp.baseURN())
-        dest_authz = yield authz.isAuthorized(nrm_dest_port, header.security_attributes, dest_stp, start_time, end_time)
+        dest_authz = authz.isAuthorized(nrm_dest_port, header.security_attributes, request_info, dest_stp, start_time, end_time)
         if not dest_authz:
             raise error.UnauthorizedError('Request does not have any valid credentials for port %s' % dest_stp.baseURN())
 
