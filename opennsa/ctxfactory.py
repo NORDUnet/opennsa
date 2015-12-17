@@ -46,7 +46,12 @@ class RequestContextFactory:
             else:
                 return 1 # allow everything which has a cert
 
-        ctx = SSL.Context(SSL.TLSv1_METHOD) # only tls v1
+        # The way to support tls 1.0 and forward is to use the SSLv23 method
+        # (which means everything) and then disable ssl2 and ssl3
+        # Not pretty, but it works
+        ctx = SSL.Context(SSL.SSLv23_METHOD)
+        ctx.set_options(SSL.OP_NO_SSLv2)
+        ctx.set_options(SSL.OP_NO_SSLv3)
 
         # disable tls session id, as the twisted tls protocol seems to break on them
         ctx.set_session_cache_mode(SSL.SESS_CACHE_OFF)
