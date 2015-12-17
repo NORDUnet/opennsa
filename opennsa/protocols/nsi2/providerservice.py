@@ -137,14 +137,14 @@ class ProviderService:
 
     def reserveCommit(self, soap_data, request_info):
         header, confirm = helper.parseRequest(soap_data)
-        d = self.provider.reserveCommit(header, confirm.connectionId)
+        d = self.provider.reserveCommit(header, confirm.connectionId, request_info)
         d.addCallbacks(lambda _ : helper.createGenericProviderAcknowledgement(header), self._createSOAPFault, errbackArgs=(header.provider_nsa, confirm.connectionId))
         return d
 
 
     def reserveAbort(self, soap_data, request_info):
         header, request = helper.parseRequest(soap_data)
-        d = self.provider.reserveAbort(header, request.connectionId)
+        d = self.provider.reserveAbort(header, request.connectionId, request_info)
         d.addCallbacks(lambda _ : helper.createGenericProviderAcknowledgement(header), self._createSOAPFault, errbackArgs=(header.provider_nsa, request.connectionId))
         return d
 
@@ -158,7 +158,7 @@ class ProviderService:
 
     def release(self, soap_data, request_info):
         header, request = helper.parseRequest(soap_data)
-        d = self.provider.release(header, request.connectionId)
+        d = self.provider.release(header, request.connectionId, request_info)
         d.addCallbacks(lambda _ : helper.createGenericProviderAcknowledgement(header), self._createSOAPFault, errbackArgs=(header.provider_nsa, request.connectionId))
         return d
 
@@ -166,7 +166,7 @@ class ProviderService:
     def terminate(self, soap_data, request_info):
 
         header, request = helper.parseRequest(soap_data)
-        d = self.provider.terminate(header, request.connectionId)
+        d = self.provider.terminate(header, request.connectionId, request_info)
         d.addCallbacks(lambda _ : helper.createGenericProviderAcknowledgement(header), self._createSOAPFault, errbackArgs=(header.provider_nsa, request.connectionId))
         return d
 
@@ -174,7 +174,7 @@ class ProviderService:
     def querySummary(self, soap_data, request_info):
 
         header, query = helper.parseRequest(soap_data)
-        d = self.provider.querySummary(header, query.connectionId, query.globalReservationId)
+        d = self.provider.querySummary(header, query.connectionId, query.globalReservationId, request_info)
         d.addCallbacks(lambda _ : helper.createGenericProviderAcknowledgement(header), self._createSOAPFault, errbackArgs=(header.provider_nsa,))
         return d
 
@@ -193,7 +193,7 @@ class ProviderService:
             return payload
 
         header, query = helper.parseRequest(soap_data)
-        d = self.provider.querySummarySync(header, query.connectionId, query.globalReservationId)
+        d = self.provider.querySummarySync(header, query.connectionId, query.globalReservationId, request_info)
         d.addCallbacks(gotReservations, self._createSOAPFault, callbackArgs=(header,), errbackArgs=(header.provider_nsa,))
         return d
 
@@ -201,7 +201,7 @@ class ProviderService:
     def queryRecursive(self, soap_data, request_info):
 
         header, query = helper.parseRequest(soap_data)
-        d = self.provider.queryRecursive(header, query.connectionId, query.globalReservationId)
+        d = self.provider.queryRecursive(header, query.connectionId, query.globalReservationId, request_info)
         d.addCallbacks(lambda _ : helper.createGenericProviderAcknowledgement(header), self._createSOAPFault, errbackArgs=(header.provider_nsa,))
         return d
 

@@ -399,7 +399,7 @@ class Aggregator:
 
 
     @defer.inlineCallbacks
-    def reserveCommit(self, header, connection_id):
+    def reserveCommit(self, header, connection_id, request_info=None):
 
         log.msg('', system=LOG_SYSTEM)
         log.msg('ReserveCommit request. NSA: %s. Connection ID: %s' % (header.requester_nsa, connection_id), system=LOG_SYSTEM)
@@ -419,7 +419,7 @@ class Aggregator:
             provider = self.getProvider(sc.provider_nsa)
             req_header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa, security_attributes=header.security_attributes)
             # we should probably mark as committing before sending message...
-            d = provider.reserveCommit(req_header, sc.connection_id)
+            d = provider.reserveCommit(req_header, sc.connection_id, request_info)
             d.addErrback(_logErrorResponse, connection_id, sc.provider_nsa, 'provision')
             defs.append(d)
 
@@ -438,7 +438,7 @@ class Aggregator:
 
 
     @defer.inlineCallbacks
-    def reserveAbort(self, header, connection_id):
+    def reserveAbort(self, header, connection_id, request_info=None):
 
         log.msg('', system=LOG_SYSTEM)
         log.msg('ReserveAbort request. NSA: %s. Connection ID: %s' % (header.requester_nsa, connection_id), system=LOG_SYSTEM)
@@ -458,7 +458,7 @@ class Aggregator:
             save_defs.append( state.reserveAbort(sc) )
             provider = self.getProvider(sc.provider_nsa)
             header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa, security_attributes=header.security_attributes)
-            d = provider.reserveAbort(header, sc.connection_id)
+            d = provider.reserveAbort(header, sc.connection_id, request_info)
             d.addErrback(_logErrorResponse, connection_id, sc.provider_nsa, 'reserveAbort')
             defs.append(d)
 
@@ -523,7 +523,7 @@ class Aggregator:
 
 
     @defer.inlineCallbacks
-    def release(self, header, connection_id):
+    def release(self, header, connection_id, request_info=None):
 
         log.msg('', system=LOG_SYSTEM)
         log.msg('Release request. NSA: %s. Connection ID: %s' % (header.requester_nsa, connection_id), system=LOG_SYSTEM)
@@ -547,7 +547,7 @@ class Aggregator:
         for sc in sub_connections:
             provider = self.getProvider(sc.provider_nsa)
             header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa, security_attributes=header.security_attributes)
-            d = provider.release(header, sc.connection_id)
+            d = provider.release(header, sc.connection_id, request_info)
             d.addErrback(_logErrorResponse, connection_id, sc.provider_nsa, 'release')
             defs.append(d)
 
@@ -567,7 +567,7 @@ class Aggregator:
 
 
     @defer.inlineCallbacks
-    def terminate(self, header, connection_id):
+    def terminate(self, header, connection_id, request_info=None):
 
         log.msg('', system=LOG_SYSTEM)
         log.msg('Terminate request. NSA: %s. Connection ID: %s' % (header.requester_nsa, connection_id), system=LOG_SYSTEM)
@@ -586,7 +586,7 @@ class Aggregator:
             # we assume a provider is available
             provider = self.getProvider(sc.provider_nsa)
             header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa, security_attributes=header.security_attributes)
-            d = provider.terminate(header, sc.connection_id)
+            d = provider.terminate(header, sc.connection_id, request_info)
             d.addErrback(_logErrorResponse, connection_id, sc.provider_nsa, 'terminate')
             defs.append(d)
 
@@ -606,7 +606,7 @@ class Aggregator:
 
 
     @defer.inlineCallbacks
-    def querySummary(self, header, connection_ids=None, global_reservation_ids=None):
+    def querySummary(self, header, connection_ids=None, global_reservation_ids=None, request_info=None):
 
         log.msg('QuerySummary request from %s. CID: %s. GID: %s' % (header.requester_nsa, connection_ids, global_reservation_ids), system=LOG_SYSTEM)
 
@@ -653,7 +653,7 @@ class Aggregator:
 
 
     @defer.inlineCallbacks
-    def queryRecursive(self, header, connection_ids, global_reservation_ids):
+    def queryRecursive(self, header, connection_ids, global_reservation_ids, request_info=None):
 
         log.msg('QueryRecursive request from %s. CID: %s. GID: %s' % (header.requester_nsa, connection_ids, global_reservation_ids), system=LOG_SYSTEM)
 
@@ -681,7 +681,7 @@ class Aggregator:
             for sc in sub_connections:
                 provider = self.getProvider(sc.provider_nsa)
                 sch = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa, security_attributes=header.security_attributes)
-                d = provider.queryRecursive(sch, [ sc.connection_id ] , None)
+                d = provider.queryRecursive(sch, [ sc.connection_id ] , None, request_info)
                 d.addErrback(_logErrorResponse, 'queryRecursive', sc.provider_nsa, 'queryRecursive')
                 defs.append(d)
 

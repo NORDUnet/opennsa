@@ -333,11 +333,13 @@ class GenericBackend(service.Service):
 
 
     @defer.inlineCallbacks
-    def reserveCommit(self, header, connection_id):
+    def reserveCommit(self, header, connection_id, request_info=None):
 
         log.msg('ReserveCommit request from %s. Connection ID: %s' % (header.requester_nsa, connection_id), system=self.log_system)
 
         conn = yield self._getConnection(connection_id, header.requester_nsa)
+        self._authorize(conn.source_port, conn.dest_port, header, request_info)
+
         if conn.lifecycle_state in (state.TERMINATING, state.TERMINATED):
             raise error.ConnectionGoneError('Connection %s has been terminated')
 
@@ -359,11 +361,13 @@ class GenericBackend(service.Service):
 
 
     @defer.inlineCallbacks
-    def reserveAbort(self, header, connection_id):
+    def reserveAbort(self, header, connection_id, request_info=None):
 
         log.msg('ReserveAbort request from %s. Connection ID: %s' % (header.requester_nsa, connection_id), system=self.log_system)
 
         conn = yield self._getConnection(connection_id, header.requester_nsa)
+        self._authorize(conn.source_port, conn.dest_port, header, request_info)
+
         if conn.lifecycle_state in (state.TERMINATING, state.TERMINATED):
             raise error.ConnectionGoneError('Connection %s has been terminated')
 
@@ -379,13 +383,13 @@ class GenericBackend(service.Service):
         log.msg('Provision request from %s. Connection ID: %s' % (header.requester_nsa, connection_id), system=self.log_system)
 
         conn = yield self._getConnection(connection_id, header.requester_nsa)
-        if conn.lifecycle_state in (state.TERMINATING, state.TERMINATED):
-            raise error.ConnectionGoneError('Connection %s has been terminated')
+        self._authorize(conn.source_port, conn.dest_port, header, request_info)
 
         if not conn.allocated:
             raise error.ConnectionError('No resource allocated to the connection, cannot provision')
 
-        self._authorize(conn.source_port, conn.dest_port, header, request_info)
+        if conn.lifecycle_state in (state.TERMINATING, state.TERMINATED):
+            raise error.ConnectionGoneError('Connection %s has been terminated')
 
         if conn.reservation_state != state.RESERVE_START:
             raise error.InvalidTransitionError('Cannot provision connection in a non-reserved state')
@@ -416,12 +420,14 @@ class GenericBackend(service.Service):
 
 
     @defer.inlineCallbacks
-    def release(self, header, connection_id):
+    def release(self, header, connection_id, request_info=None):
 
         log.msg('Release request from %s. Connection ID: %s' % (header.requester_nsa, connection_id), system=self.log_system)
 
         try:
             conn = yield self._getConnection(connection_id, header.requester_nsa)
+            self._authorize(conn.source_port, conn.dest_port, header, request_info)
+
             if conn.lifecycle_state in (state.TERMINATING, state.TERMINATED):
                 raise error.ConnectionGoneError('Connection %s has been terminated')
 
@@ -451,12 +457,13 @@ class GenericBackend(service.Service):
 
 
     @defer.inlineCallbacks
-    def terminate(self, header, connection_id):
+    def terminate(self, header, connection_id, request_info=None):
         # return defer.fail( error.InternalNRMError('test termination failure') )
 
         log.msg('Terminate request from %s. Connection ID: %s' % (header.requester_nsa, connection_id), system=self.log_system)
 
         conn = yield self._getConnection(connection_id, header.requester_nsa)
+        self._authorize(conn.source_port, conn.dest_port, header, request_info)
 
         if conn.lifecycle_state == state.TERMINATED:
             defer.returnValue(conn.cid)
@@ -484,27 +491,28 @@ class GenericBackend(service.Service):
 
 
     @defer.inlineCallbacks
-    def querySummary(self, header, connection_ids=None, global_reservation_ids=None):
+    def querySummary(self, header, connection_ids=None, global_reservation_ids=None, request_info=None):
 
-        reservations = yield self._query(header.requester_nsa, connection_ids, global_reservation_ids)
+        reservations = yield self._query(header, connection_ids, global_reservation_ids)
         self.parent_requester.querySummaryConfirmed(header, reservations)
 
 
     @defer.inlineCallbacks
-    def queryRecursive(self, header, connection_ids, global_reservation_ids):
+    def queryRecursive(self, header, connection_ids, global_reservation_ids, request_info=None):
 
-        reservations = yield self._query(header.requester_nsa, connection_ids, global_reservation_ids)
+        reservations = yield self._query(header, connection_ids, global_reservation_ids)
         self.parent_requester.queryRecursiveConfirmed(header, reservations)
 
 
     @defer.inlineCallbacks
-    def _query(self, requester_nsa, connection_ids, global_reservation_ids):
+    def _query(self, header, connection_ids, global_reservation_ids, request_info=None):
         # generic query mechanism for summary and recursive
 
+        # TODO: Match stps/ports that can be used with credentials and return connections using these STPs
         if connection_ids:
-            conns = yield GenericBackendConnections.find(where=['requester_nsa = ? AND connection_id IN ?', requester_nsa, tuple(connection_ids) ])
+            conns = yield GenericBackendConnections.find(where=['requester_nsa = ? AND connection_id IN ?', header.requester_nsa, tuple(connection_ids) ])
         elif global_reservation_ids:
-            conns = yield GenericBackendConnections.find(where=['requester_nsa = ? AND global_reservation_ids IN ?', requester_nsa, tuple(global_reservation_ids) ])
+            conns = yield GenericBackendConnections.find(where=['requester_nsa = ? AND global_reservation_ids IN ?', header.requester_nsa, tuple(global_reservation_ids) ])
         else:
             raise error.MissingParameterError('Must specify connectionId or globalReservationId')
 
