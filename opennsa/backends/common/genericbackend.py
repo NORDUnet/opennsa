@@ -164,6 +164,25 @@ class GenericBackend(service.Service):
         defer.returnValue( conns[0] ) # we only get one, unique in db
 
 
+    def _authorize(self, source_port, destination_port, header, request_info, start_time=None, end_time=None):
+        """
+        Checks if port usage is allowed from the credentials provided in the
+        NSI header or information from the request.
+        """
+        nrm_source_port = self.nrm_ports[source_port]
+        nrm_dest_port   = self.nrm_ports[destination_port]
+
+        source_authz = authz.isAuthorized(nrm_source_port, header.security_attributes, request_info, nrm_source_port, None, None)
+        if not source_authz:
+            stp_name = cnt.URN_OGF_PREFIX + self.network + ':' + nrm_source_port.name
+            raise error.UnauthorizedError('Request does not have any valid credentials for STP %s' % stp_name)
+
+        dest_authz = authz.isAuthorized(nrm_dest_port, header.security_attributes, request_info, nrm_dest_port, None, None)
+        if not dest_authz:
+            stp_name = cnt.URN_OGF_PREFIX + self.network + ':' + nrm_dest_port.name
+            raise error.UnauthorizedError('Request does not have any valid credentials for STP %s' % stp_name)
+
+
     def logStateUpdate(self, conn, state_msg):
         src_target = self.connection_manager.getTarget(conn.source_port, conn.source_label.type_, conn.source_label.labelValue())
         dst_target = self.connection_manager.getTarget(conn.dest_port,   conn.dest_label.type_,   conn.dest_label.labelValue())
@@ -217,13 +236,7 @@ class GenericBackend(service.Service):
         nrm_source_port = self.nrm_ports[source_stp.port]
         nrm_dest_port   = self.nrm_ports[dest_stp.port]
 
-        # authz check
-        source_authz = authz.isAuthorized(nrm_source_port, header.security_attributes, request_info, source_stp, start_time, end_time)
-        if not source_authz:
-            raise error.UnauthorizedError('Request does not have any valid credentials for port %s' % source_stp.baseURN())
-        dest_authz = authz.isAuthorized(nrm_dest_port, header.security_attributes, request_info, dest_stp, start_time, end_time)
-        if not dest_authz:
-            raise error.UnauthorizedError('Request does not have any valid credentials for port %s' % dest_stp.baseURN())
+        self._authorize(source_stp.port, dest_stp.port, header, request_info, start_time, end_time)
 
         # transit restriction
         if nrm_source_port.transit_restricted and nrm_dest_port.transit_restricted:
@@ -378,21 +391,7 @@ class GenericBackend(service.Service):
         if not conn.allocated:
             raise error.ConnectionError('No resource allocated to the connection, cannot provision')
 
-        # authz - abstract me
-        nrm_source_port = self.nrm_ports[conn.source_port]
-        nrm_dest_port   = self.nrm_ports[conn.dest_port]
-
-        # authz check
-        source_authz = authz.isAuthorized(nrm_source_port, header.security_attributes, request_info, nrm_source_port, None, None)
-        if not source_authz:
-            stp_name = cnt.URN_OGF_PREFIX + self.network + ':' + nrm_source_port.name
-            raise error.UnauthorizedError('Request does not have any valid credentials for port %s' % stp_name)
-        dest_authz = authz.isAuthorized(nrm_dest_port, header.security_attributes, request_info, nrm_dest_port, None, None)
-        if not dest_authz:
-            stp_name = cnt.URN_OGF_PREFIX + self.network + ':' + nrm_dest_port.name
-            raise error.UnauthorizedError('Request does not have any valid credentials for port %s' % stp_name)
-
-
+        self._authorize(conn.source_port, conn.dest_port, header, request_info)
 
         if conn.reservation_state != state.RESERVE_START:
             raise error.InvalidTransitionError('Cannot provision connection in a non-reserved state')
