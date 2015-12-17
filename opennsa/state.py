@@ -42,9 +42,14 @@ RESERVE_TRANSITIONS = {
     RESERVE_ABORTING    : [ RESERVE_START                                          ]
 }
 
+# The PROVISIONING -> PROVISIONING transition isn't canon, but is needed in
+# case a provision request and fails due to pre-check or similar. Here the
+# provisoning can be recovered by sending down a second provision request.
+# This can happen in cases of authZ check or similar.
+
 PROVISION_TRANSITIONS = {
     RELEASED        : [ PROVISIONING  ],
-    PROVISIONING    : [ PROVISIONED   ],
+    PROVISIONING    : [ PROVISIONING,   PROVISIONED   ],
     PROVISIONED     : [ RELEASING     ],
     RELEASING       : [ RELEASED      ]
 }

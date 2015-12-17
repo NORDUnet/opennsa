@@ -488,9 +488,7 @@ class Aggregator:
         if conn.lifecycle_state == state.TERMINATED:
             raise error.ConnectionGoneError('Connection %s has been terminated' % connection_id)
 
-        # Do provisioning call even if we are already in provisioning state (might be mis authZ or other error)
-        if conn.provision_state != state.PROVISIONING:
-            yield state.provisioning(conn)
+        yield state.provisioning(conn)
 
         save_defs = []
         defs = []
@@ -498,6 +496,7 @@ class Aggregator:
         sub_connections = yield self.getSubConnectionsByConnectionKey(conn.id)
 
         for sc in sub_connections:
+            # only bother saving stuff to db if the state is actually changed
             if sc.provision_state != state.PROVISIONING:
                 save_defs.append( state.provisioning(sc) )
         if save_defs:
