@@ -15,7 +15,7 @@ CURACAO_TOPO    = 'curacao:topo'
 DOMINCA_TOPO    = 'dominica:topo'
 
 
-class GNSTest(unittest.TestCase):
+class LinkVectorTest(unittest.TestCase):
 
     def setUp(self):
 
