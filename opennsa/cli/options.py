@@ -43,8 +43,6 @@ VERIFY_CERT     = config.VERIFY_CERT
 
 NOTIFICATION_WAIT = 'notification_wait'
 
-FULL_GRAPH      = 'fullgraph'
-
 # other constants
 XSD_DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S"
 

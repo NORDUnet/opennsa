@@ -134,10 +134,6 @@ class TLSFlag(usage.Options):
 class SkipCertificateVerificationFlag(usage.Options):
     optFlags = [ [ options.VERIFY_CERT, 'z', 'Skip certificate verification' ] ]
 
-class FullGraphFlag(usage.Options):
-    optFlags = [ [ options.FULL_GRAPH, 'l', 'Render full graph with all links.' ] ]
-
-
 
 # command options
 
