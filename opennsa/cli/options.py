@@ -43,10 +43,9 @@ VERIFY_CERT     = config.VERIFY_CERT
 
 NOTIFICATION_WAIT = 'notification_wait'
 
-FULL_GRAPH      = 'fullgraph'
-
 # other constants
 XSD_DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S"
+NSA_SHORTHAND       = 'nsa'
 
 
 
@@ -76,6 +75,12 @@ def readDefaults(file_):
 
             option, value = line.split('=',2)
 
+            # nsa shorthand, this one is a bit special so we do it first, and continue on match
+            if option == NSA_SHORTHAND:
+                shorthand, nsa_id, service_url = value.split(',',3)
+                defaults.setdefault(option, {})[shorthand] = (nsa_id, service_url)
+                continue
+
             # parse datetimes
             if option in (START_TIME, END_TIME):
                 value = parseTimestamp(value)
@@ -88,8 +93,9 @@ def readDefaults(file_):
 
             defaults[option] = value
 
+
         except Exception, e:
-            log.msg('Error parsing line "%s" in defaults file. Error: %s' % (line, str(e)))
+            log.msg('Error parsing line in CLI defaults file. Line: %s. Error: %s' % (line, str(e)))
 
     return defaults
 
