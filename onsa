@@ -76,11 +76,17 @@ def doMain():
     # note: we currently only have network commands, but they may change in the future
     if config.subCommand in ['reserve', 'reserveonly', 'reservecommit', 'reserveprovision', 'rprt', 'provision', 'release', 'terminate', 'query', 'queryrec']:
 
-        service_url     = config.subOptions[options.SERVICE_URL]    or defaults.get(options.SERVICE_URL)
-        authz_header    = config.subOptions[options.AUTHZ_HEADER]   or defaults.get(options.AUTHZ_HEADER)
+        if options.NSA_SHORTHAND in defaults and config.subOptions[options.PROVIDER] in defaults[options.NSA_SHORTHAND]:
+            ns = defaults[options.NSA_SHORTHAND][config.subOptions[options.PROVIDER]]
+            provider_nsa = ns[0]
+            service_url  = ns[1]
+        else:
+            provider_nsa    = config.subOptions[options.PROVIDER]       or defaults.get(options.PROVIDER)
+            service_url     = config.subOptions[options.SERVICE_URL]    or defaults.get(options.SERVICE_URL)
 
         requester_nsa   = config.subOptions[options.REQUESTER]      or defaults.get(options.REQUESTER)      or 'OpenNSA-CLI'
-        provider_nsa    = config.subOptions[options.PROVIDER]       or defaults.get(options.PROVIDER)
+
+        authz_header    = config.subOptions[options.AUTHZ_HEADER]   or defaults.get(options.AUTHZ_HEADER)
 
         connection_id   = config.subOptions[options.CONNECTION_ID]  or defaults.get(options.CONNECTION_ID)
         global_id       = config.subOptions[options.GLOBAL_ID]      or defaults.get(options.GLOBAL_ID)
