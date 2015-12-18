@@ -48,7 +48,7 @@ and typically looks like this:
 
 ethernet    ps      -                                   vlan:1780-1799,2000 1000        em0         user=johndoe@example.org
 ethernet    bon     bonaire.net:topology#arb(-in|-out)  vlan:1780-1799      1000        em3         restricttransit
-
+ethernet    cur     curacao.net:topology#arb(-in|-out)  vlan:1780-1799      1000        em3         restricttransit,hostdn=curacao.example.net
 
 ```
 
@@ -88,6 +88,12 @@ The port on the corresponding NRM / network equipment.
 
 A list of comma seperated attributes that describes security attributes or
 policies for the port. Security attributes always have the form 'key=value',
-otherwise it is a policy. The only supported policy at the moment as
-restricttransit (ports that both have restricttransit cannot be connected).
+otherwise it is a policy. Despite the name, security attributes are not very
+secure.
+
+The hostdn will match against the hostname of a certificate. For this to work
+OpenNSA must be configured to run with TLS (see docs/tls-guide).
+
+The only supported policy at the moment as restricttransit (OpenNSA will _NOT_
+allow ports that both have restricttransit cannot be connected).
 

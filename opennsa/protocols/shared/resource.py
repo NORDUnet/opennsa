@@ -17,6 +17,17 @@ LOG_SYSTEM = 'protocol.SOAPResource'
 
 
 
+class RequestInfo:
+    """
+    Holds various data about the request.
+    Somewhat adding things as we go.
+    """
+    def __init__(self, cert_subject=None, cert_host_dn=None):
+        self.cert_subject = cert_subject
+        self.cert_host_dn = cert_host_dn
+
+
+
 class SOAPFault(Exception):
 
     def __init__(self, fault_string, detail_element=None):
@@ -59,6 +70,7 @@ class SOAPResource(resource.Resource):
                 log.msg('Rejecting request, no client certificate presented', system=LOG_SYSTEM)
                 return 'Requests without client certificate not allowed\r\n'
 
+            cert_subject = cert.get_subject()
             log.msg('Certificate subject %s' % cert.get_subject(), system=LOG_SYSTEM)
             host_dn = cert.get_subject().get_components()[-1][1]
             log.msg('Host DN: %s' % host_dn, system=LOG_SYSTEM)
@@ -68,11 +80,19 @@ class SOAPResource(resource.Resource):
                 log.msg('Rejecting request, certificate host dn does not match allowed hosts', system=LOG_SYSTEM)
                 return 'Requests without certificate not allowed\r\n'
 
+            request_info = RequestInfo(str(cert_subject), host_dn)
+
         elif request.isSecure():
             # log certificate subject
             cert = request.transport.getPeerCertificate()
             if cert:
                 log.msg('Certificate subject %s' % cert.get_subject(), system=LOG_SYSTEM)
+
+            host_dn = cert.get_subject().get_components()[-1][1]
+            request_info = RequestInfo(str(cert.get_subject()), host_dn)
+
+        else:
+            request_info = RequestInfo()
 
 
         soap_action = request.requestHeaders.getRawHeaders('soapaction',[None])[0]
@@ -117,7 +137,7 @@ class SOAPResource(resource.Resource):
             request.finish()
 
         decoder = self.soap_actions[soap_action]
-        d = defer.maybeDeferred(decoder, soap_data)
+        d = defer.maybeDeferred(decoder, soap_data, request_info)
         d.addCallbacks(reply, errorReply, errbackArgs=(soap_data,))
 
         return server.NOT_DONE_YET

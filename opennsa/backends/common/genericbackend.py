@@ -164,6 +164,25 @@ class GenericBackend(service.Service):
         defer.returnValue( conns[0] ) # we only get one, unique in db
 
 
+    def _authorize(self, source_port, destination_port, header, request_info, start_time=None, end_time=None):
+        """
+        Checks if port usage is allowed from the credentials provided in the
+        NSI header or information from the request.
+        """
+        nrm_source_port = self.nrm_ports[source_port]
+        nrm_dest_port   = self.nrm_ports[destination_port]
+
+        source_authz = authz.isAuthorized(nrm_source_port, header.security_attributes, request_info, nrm_source_port, None, None)
+        if not source_authz:
+            stp_name = cnt.URN_OGF_PREFIX + self.network + ':' + nrm_source_port.name
+            raise error.UnauthorizedError('Request does not have any valid credentials for STP %s' % stp_name)
+
+        dest_authz = authz.isAuthorized(nrm_dest_port, header.security_attributes, request_info, nrm_dest_port, None, None)
+        if not dest_authz:
+            stp_name = cnt.URN_OGF_PREFIX + self.network + ':' + nrm_dest_port.name
+            raise error.UnauthorizedError('Request does not have any valid credentials for STP %s' % stp_name)
+
+
     def logStateUpdate(self, conn, state_msg):
         src_target = self.connection_manager.getTarget(conn.source_port, conn.source_label.type_, conn.source_label.labelValue())
         dst_target = self.connection_manager.getTarget(conn.dest_port,   conn.dest_label.type_,   conn.dest_label.labelValue())
@@ -171,7 +190,7 @@ class GenericBackend(service.Service):
 
 
     @defer.inlineCallbacks
-    def reserve(self, header, connection_id, global_reservation_id, description, criteria):
+    def reserve(self, header, connection_id, global_reservation_id, description, criteria, request_info=None):
 
         # return defer.fail( error.InternalNRMError('test reservation failure') )
 
@@ -217,13 +236,7 @@ class GenericBackend(service.Service):
         nrm_source_port = self.nrm_ports[source_stp.port]
         nrm_dest_port   = self.nrm_ports[dest_stp.port]
 
-        # authz check
-        source_authz = yield authz.isAuthorized(nrm_source_port, header.security_attributes, source_stp, start_time, end_time)
-        if not source_authz:
-            raise error.UnauthorizedError('Request does not have any valid credentials for port %s' % source_stp.baseURN())
-        dest_authz = yield authz.isAuthorized(nrm_dest_port, header.security_attributes, dest_stp, start_time, end_time)
-        if not dest_authz:
-            raise error.UnauthorizedError('Request does not have any valid credentials for port %s' % dest_stp.baseURN())
+        self._authorize(source_stp.port, dest_stp.port, header, request_info, start_time, end_time)
 
         # transit restriction
         if nrm_source_port.transit_restricted and nrm_dest_port.transit_restricted:
@@ -320,11 +333,13 @@ class GenericBackend(service.Service):
 
 
     @defer.inlineCallbacks
-    def reserveCommit(self, header, connection_id):
+    def reserveCommit(self, header, connection_id, request_info=None):
 
         log.msg('ReserveCommit request from %s. Connection ID: %s' % (header.requester_nsa, connection_id), system=self.log_system)
 
         conn = yield self._getConnection(connection_id, header.requester_nsa)
+        self._authorize(conn.source_port, conn.dest_port, header, request_info)
+
         if conn.lifecycle_state in (state.TERMINATING, state.TERMINATED):
             raise error.ConnectionGoneError('Connection %s has been terminated')
 
@@ -346,11 +361,13 @@ class GenericBackend(service.Service):
 
 
     @defer.inlineCallbacks
-    def reserveAbort(self, header, connection_id):
+    def reserveAbort(self, header, connection_id, request_info=None):
 
         log.msg('ReserveAbort request from %s. Connection ID: %s' % (header.requester_nsa, connection_id), system=self.log_system)
 
         conn = yield self._getConnection(connection_id, header.requester_nsa)
+        self._authorize(conn.source_port, conn.dest_port, header, request_info)
+
         if conn.lifecycle_state in (state.TERMINATING, state.TERMINATED):
             raise error.ConnectionGoneError('Connection %s has been terminated')
 
@@ -361,16 +378,18 @@ class GenericBackend(service.Service):
 
 
     @defer.inlineCallbacks
-    def provision(self, header, connection_id):
+    def provision(self, header, connection_id, request_info=None):
 
         log.msg('Provision request from %s. Connection ID: %s' % (header.requester_nsa, connection_id), system=self.log_system)
 
         conn = yield self._getConnection(connection_id, header.requester_nsa)
-        if conn.lifecycle_state in (state.TERMINATING, state.TERMINATED):
-            raise error.ConnectionGoneError('Connection %s has been terminated')
+        self._authorize(conn.source_port, conn.dest_port, header, request_info)
 
         if not conn.allocated:
             raise error.ConnectionError('No resource allocated to the connection, cannot provision')
+
+        if conn.lifecycle_state in (state.TERMINATING, state.TERMINATED):
+            raise error.ConnectionGoneError('Connection %s has been terminated')
 
         if conn.reservation_state != state.RESERVE_START:
             raise error.InvalidTransitionError('Cannot provision connection in a non-reserved state')
@@ -401,12 +420,14 @@ class GenericBackend(service.Service):
 
 
     @defer.inlineCallbacks
-    def release(self, header, connection_id):
+    def release(self, header, connection_id, request_info=None):
 
         log.msg('Release request from %s. Connection ID: %s' % (header.requester_nsa, connection_id), system=self.log_system)
 
         try:
             conn = yield self._getConnection(connection_id, header.requester_nsa)
+            self._authorize(conn.source_port, conn.dest_port, header, request_info)
+
             if conn.lifecycle_state in (state.TERMINATING, state.TERMINATED):
                 raise error.ConnectionGoneError('Connection %s has been terminated')
 
@@ -436,12 +457,13 @@ class GenericBackend(service.Service):
 
 
     @defer.inlineCallbacks
-    def terminate(self, header, connection_id):
+    def terminate(self, header, connection_id, request_info=None):
         # return defer.fail( error.InternalNRMError('test termination failure') )
 
         log.msg('Terminate request from %s. Connection ID: %s' % (header.requester_nsa, connection_id), system=self.log_system)
 
         conn = yield self._getConnection(connection_id, header.requester_nsa)
+        self._authorize(conn.source_port, conn.dest_port, header, request_info)
 
         if conn.lifecycle_state == state.TERMINATED:
             defer.returnValue(conn.cid)
@@ -469,27 +491,28 @@ class GenericBackend(service.Service):
 
 
     @defer.inlineCallbacks
-    def querySummary(self, header, connection_ids=None, global_reservation_ids=None):
+    def querySummary(self, header, connection_ids=None, global_reservation_ids=None, request_info=None):
 
-        reservations = yield self._query(header.requester_nsa, connection_ids, global_reservation_ids)
+        reservations = yield self._query(header, connection_ids, global_reservation_ids)
         self.parent_requester.querySummaryConfirmed(header, reservations)
 
 
     @defer.inlineCallbacks
-    def queryRecursive(self, header, connection_ids, global_reservation_ids):
+    def queryRecursive(self, header, connection_ids, global_reservation_ids, request_info=None):
 
-        reservations = yield self._query(header.requester_nsa, connection_ids, global_reservation_ids)
+        reservations = yield self._query(header, connection_ids, global_reservation_ids)
         self.parent_requester.queryRecursiveConfirmed(header, reservations)
 
 
     @defer.inlineCallbacks
-    def _query(self, requester_nsa, connection_ids, global_reservation_ids):
+    def _query(self, header, connection_ids, global_reservation_ids, request_info=None):
         # generic query mechanism for summary and recursive
 
+        # TODO: Match stps/ports that can be used with credentials and return connections using these STPs
         if connection_ids:
-            conns = yield GenericBackendConnections.find(where=['requester_nsa = ? AND connection_id IN ?', requester_nsa, tuple(connection_ids) ])
+            conns = yield GenericBackendConnections.find(where=['requester_nsa = ? AND connection_id IN ?', header.requester_nsa, tuple(connection_ids) ])
         elif global_reservation_ids:
-            conns = yield GenericBackendConnections.find(where=['requester_nsa = ? AND global_reservation_ids IN ?', requester_nsa, tuple(global_reservation_ids) ])
+            conns = yield GenericBackendConnections.find(where=['requester_nsa = ? AND global_reservation_ids IN ?', header.requester_nsa, tuple(global_reservation_ids) ])
         else:
             raise error.MissingParameterError('Must specify connectionId or globalReservationId')
 

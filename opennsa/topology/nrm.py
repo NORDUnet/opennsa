@@ -9,6 +9,8 @@ Copyright: NORDUnet (2011-2012)
 import re
 import StringIO
 
+from twisted.python import log
+
 from opennsa import constants as cnt, nsa, error, config, authz
 
 
@@ -17,6 +19,7 @@ LOG_SYSTEM = 'topology.nrm'
 
 PORT_TYPES      = [ cnt.NRM_ETHERNET ] # OpenNSA doesn't really do unidirectional at the moment
 
+#AUTH_ATTRIBUTES = [ authz.NSA, authz.USER, authz.GROUP ]
 PATH_ATTRIBUTES = [ 'vector' ]
 ATTRIBUTES      = [ cnt.NRM_RESTRICTTRANSIT ]
 
@@ -137,6 +140,9 @@ def parsePortSpec(source):
                 if '=' in aa:
                     ak, av = aa.split('=',2)
                     if ak in authz.AUTH_ATTRIBUTES:
+                        # warn about bad authz
+                        if ak in authz.HEADER_ATTRIBUTES:
+                            log.msg("WARNING: Port %s: Using header attribute %s as authorization isn't really secure. Be careful." % (port_name, ak) )
                         authz_attributes.append( authz.AuthorizationAttribute(ak, av) )
                     elif ak in PATH_ATTRIBUTES:
                         if not '@' in av:

@@ -5,7 +5,18 @@ Domain socket option in config
 Add x509host stanza for port authZ
  - Kill off nsa authN/Z - it is useless
    - Same for user/group (can still use it through)
+ - Add authZ for all action, not just reserve
 
+Make a decent way to specify provider in onsa (the current sucks)
+
+It _might_ be possible to get OpenNSA to try and bring up the same
+cross-connect multiple times by issuing provision request concurrently. Look
+into this.
+
+Aggregator should perform authorization on its requester API as well. This is
+slightly tricky as NSA-hostname correlation must be known.
+
+Make the aggregator use reserveAbort instead of terminate when aborting
 
 Make a simple REST interface for clients
  - Several users have asked for an easier interface (not a cli)

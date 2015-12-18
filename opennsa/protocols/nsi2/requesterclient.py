@@ -92,7 +92,8 @@ class RequesterClient:
         return err
 
 
-    def reserve(self, header, connection_id, global_reservation_id, description, criteria):
+    def reserve(self, header, connection_id, global_reservation_id, description, criteria, request_info=None):
+        # request_info is local only, so it isn't used
 
         self._checkHeader(header)
 
@@ -139,7 +140,7 @@ class RequesterClient:
         return d
 
 
-    def reserveCommit(self, header, connection_id):
+    def reserveCommit(self, header, connection_id, request_info=None):
 
         self._checkHeader(header)
 
@@ -150,7 +151,7 @@ class RequesterClient:
         return d
 
 
-    def reserveAbort(self, header, connection_id):
+    def reserveAbort(self, header, connection_id, request_info=None):
 
         self._checkHeader(header)
 
@@ -162,7 +163,7 @@ class RequesterClient:
         return d
 
 
-    def provision(self, header, connection_id):
+    def provision(self, header, connection_id, request_info=None):
 
         self._checkHeader(header)
 
@@ -173,7 +174,7 @@ class RequesterClient:
         return d
 
 
-    def release(self, header, connection_id):
+    def release(self, header, connection_id, request_info=None):
 
         self._checkHeader(header)
 
@@ -183,7 +184,7 @@ class RequesterClient:
         return d
 
 
-    def terminate(self, header, connection_id):
+    def terminate(self, header, connection_id, request_info=None):
 
         self._checkHeader(header)
 
@@ -193,7 +194,7 @@ class RequesterClient:
         return d
 
 
-    def querySummary(self, header, connection_ids=None, global_reservation_ids=None):
+    def querySummary(self, header, connection_ids=None, global_reservation_ids=None, request_info=None):
 
         self._checkHeader(header)
 
@@ -210,7 +211,7 @@ class RequesterClient:
         return d
 
 
-    def querySummarySync(self, header, connection_ids=None, global_reservation_ids=None):
+    def querySummarySync(self, header, connection_ids=None, global_reservation_ids=None, request_info=None):
 
         def gotReply(soap_data):
             header, query_confirmed = helper.parseRequest(soap_data)
@@ -230,7 +231,7 @@ class RequesterClient:
         return d
 
 
-    def queryRecursive(self, header, connection_ids, global_reservation_ids=None):
+    def queryRecursive(self, header, connection_ids, global_reservation_ids=None, request_info=None):
 
         self._checkHeader(header)
 

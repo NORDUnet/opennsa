@@ -43,7 +43,7 @@ class Provider:
         self.notifications = {}
 
 
-    def reserve(self, nsi_header, connection_id, global_reservation_id, description, criteria):
+    def reserve(self, nsi_header, connection_id, global_reservation_id, description, criteria, request_info):
 
         # we cannot create notification immediately, as there might not be a connection id yet
         # the notification mechanisms relies on the received ack coming before the confirmation, which is not ideal
@@ -53,7 +53,7 @@ class Provider:
                 self.notifications[(assigned_connection_id, RESERVE_RESPONSE)] = nsi_header
             return assigned_connection_id
 
-        d = self.service_provider.reserve(nsi_header, connection_id, global_reservation_id, description, criteria)
+        d = self.service_provider.reserve(nsi_header, connection_id, global_reservation_id, description, criteria, request_info)
         d.addCallback(setNotify)
         return d
 
@@ -80,11 +80,11 @@ class Provider:
             return defer.succeed(None)
 
 
-    def reserveCommit(self, nsi_header, connection_id):
+    def reserveCommit(self, nsi_header, connection_id, request_info):
 
         if nsi_header.reply_to:
             self.notifications[(connection_id, RESERVE_COMMIT_RESPONSE)] = nsi_header
-        return self.service_provider.reserveCommit(nsi_header, connection_id)
+        return self.service_provider.reserveCommit(nsi_header, connection_id, request_info)
 
 
     def reserveCommitConfirmed(self, header, connection_id):
@@ -99,11 +99,11 @@ class Provider:
             return defer.succeed(None)
 
 
-    def reserveAbort(self, header, connection_id):
+    def reserveAbort(self, header, connection_id, request_info):
 
         if header.reply_to:
             self.notifications[(connection_id, RESERVE_ABORT_RESPONSE)] = header
-        return self.service_provider.reserveAbort(header, connection_id)
+        return self.service_provider.reserveAbort(header, connection_id, request_info)
 
 
     def reserveAbortConfirmed(self, header, connection_id):
@@ -118,11 +118,11 @@ class Provider:
             return defer.succeed(None)
 
 
-    def provision(self, nsi_header, connection_id):
+    def provision(self, nsi_header, connection_id, request_info):
 
         if nsi_header.reply_to:
             self.notifications[(connection_id, PROVISION_RESPONSE)] = nsi_header
-        return self.service_provider.provision(nsi_header, connection_id)
+        return self.service_provider.provision(nsi_header, connection_id, request_info)
 
 
     def provisionConfirmed(self, header, connection_id):
@@ -137,11 +137,11 @@ class Provider:
             return defer.succeed(None)
 
 
-    def release(self, nsi_header, connection_id):
+    def release(self, nsi_header, connection_id, request_info):
 
         if nsi_header.reply_to:
             self.notifications[(connection_id, RELEASE_RESPONSE)] = nsi_header
-        return self.service_provider.release(nsi_header, connection_id)
+        return self.service_provider.release(nsi_header, connection_id, request_info)
 
 
     def releaseConfirmed(self, header, connection_id):
@@ -156,11 +156,11 @@ class Provider:
             return defer.succeed(None)
 
 
-    def terminate(self, nsi_header, connection_id):
+    def terminate(self, nsi_header, connection_id, request_info):
 
         if nsi_header.reply_to:
             self.notifications[(connection_id, TERMINATE_RESPONSE)] = nsi_header
-        return self.service_provider.terminate(nsi_header, connection_id)
+        return self.service_provider.terminate(nsi_header, connection_id, request_info)
 
 
     def terminateConfirmed(self, header, connection_id):
@@ -178,7 +178,7 @@ class Provider:
 
     # Query
 
-    def querySummary(self, header, connection_ids=None, global_reservation_ids=None):
+    def querySummary(self, header, connection_ids, global_reservation_ids, request_info):
 
         if not header.reply_to:
             raise ValueError('Cannot perform querySummary request without a replyTo field in the header')
@@ -188,7 +188,7 @@ class Provider:
         return self.service_provider.querySummary(header, connection_ids, global_reservation_ids)
 
 
-    def querySummarySync(self, header, connection_ids=None, global_reservation_ids=None):
+    def querySummarySync(self, header, connection_ids, global_reservation_ids, request_info):
 
         if not header.reply_to:
             raise ValueError('Cannot perform querySummary request without a replyTo field in the header')
@@ -199,7 +199,7 @@ class Provider:
         self.notifications[(header.correlation_id, QUERY_SUMMARY_RESPONSE)] = dc
 
         # returns a deferred, but we don't use it (indicates message receival only), should it be chained?
-        self.service_provider.querySummary(header, connection_ids, global_reservation_ids)
+        self.service_provider.querySummary(header, connection_ids, global_reservation_ids, request_info)
         return dc
 
 
@@ -212,14 +212,14 @@ class Provider:
             return self.provider_client.querySummaryConfirmed(header.reply_to, header.requester_nsa, header.provider_nsa, header.correlation_id, reservations)
 
 
-    def queryRecursive(self, header, connection_ids=None, global_reservation_ids=None):
+    def queryRecursive(self, header, connection_ids, global_reservation_ids, request_info):
 
         if not header.reply_to:
             raise ValueError('Cannot perform queryRecursive request without a replyTo field in the header')
         if not header.correlation_id:
             raise ValueError('Cannot perform queryRecursive request without a correlationId field in the header')
 
-        return self.service_provider.queryRecursive(header, connection_ids, global_reservation_ids)
+        return self.service_provider.queryRecursive(header, connection_ids, global_reservation_ids, request_info)
 
 
     def queryRecursiveConfirmed(self, header, reservations):
