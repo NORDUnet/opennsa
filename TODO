@@ -4,6 +4,8 @@ Adminstrative interface
    - And it makes it hard to put things on different boxes
  - Functionality: List ports, list connections, generate tokens (in the future), etc
 
+Have a max size for xml payloads, and check for any expansion in there, and reject if found (security).
+
 Iterative tree aggregator
 
 Add x509host stanza for port authZ
@@ -28,15 +30,11 @@ Make a simple REST interface for clients
 
 Better debugging on SSH backends
 
-Registry, they are not necessarely events or service. Just a registry. (just some renaming)
-
 Log rotation
 
 Long term:
   Mailing list
   Improve the web interface (it shows the connections)
-  Deal with bandwidth in calendar (requires joint resource concept)
-  Ability to generate topology from NRM mapping / internal topology description
 
 Client:
   Should the client should be able to breakout request itself
