@@ -1,8 +1,10 @@
 
-Domain socket option in config
- - option name: adminsocket, domainsocket,
- - Actually, do not use domain sockets (they suck)
- - Make an adminstrative interface with auth (or restrict to localhost)
+Adminstrative interface
+ - First considered with domainsocket, but tests showed it to be weird
+   - And it makes it hard to put things on different boxes
+ - Functionality: List ports, list connections, generate tokens (in the future), etc
+
+Iterative tree aggregator
 
 Add x509host stanza for port authZ
  - Implemented for provider side (upa level, which is fine)
@@ -24,25 +26,7 @@ Make a simple REST interface for clients
    - Time log for state transitions (unix time, state)
  - And maybe support interface metrics (check juniper capabilities)
 
-
-NSIv2 BOD Service
- - Check nsidev logs and improve them
- - Better error messages on bindings (sigh...)
-
-
 Better debugging on SSH backends
-
-Issues:
-
-- Make replyTo optional (assuming sync. query)
-
-- Better aggregate error handling
-- Better logging in aggregation failures
-- NSI2 Detail Query
-
-- Label support in topology and backends
-- Rework all error throwing handling to new error infrastructure
-- Rename shared.resource to shared.soapresource
 
 Registry, they are not necessarely events or service. Just a registry. (just some renaming)
 
@@ -54,10 +38,8 @@ Long term:
   Deal with bandwidth in calendar (requires joint resource concept)
   Ability to generate topology from NRM mapping / internal topology description
 
-
-General:
-  Client should be able to breakout request itself
-
+Client:
+  Should the client should be able to breakout request itself
 
 Backends:
   Force10: Should do shutdown when interfaces are not in use
