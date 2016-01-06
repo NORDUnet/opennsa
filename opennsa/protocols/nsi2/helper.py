@@ -38,14 +38,6 @@ LABEL_MAP = {
 
 
 
-def createProviderHeader(requester_nsa_urn, provider_nsa_urn, reply_to=None, correlation_id=None, security_attributes=None, connection_trace=None):
-    return _createHeader(requester_nsa_urn, provider_nsa_urn, reply_to, correlation_id, security_attributes, connection_trace, protocol_type=cnt.CS2_PROVIDER)
-
-
-def createRequesterHeader(requester_nsa_urn, provider_nsa_urn, reply_to=None, correlation_id=None, security_attributes=None, connection_trace=None):
-    return _createHeader(requester_nsa_urn, provider_nsa_urn, reply_to, correlation_id, security_attributes, connection_trace, protocol_type=cnt.CS2_REQUESTER)
-
-
 def _createHeader(requester_nsa_urn, provider_nsa_urn, reply_to=None, correlation_id=None, security_attributes=None, connection_trace=None, protocol_type=None):
 
     if protocol_type is None:
@@ -67,13 +59,15 @@ def _createHeader(requester_nsa_urn, provider_nsa_urn, reply_to=None, correlatio
     return header_element
 
 
+def createProviderHeader(requester_nsa_urn, provider_nsa_urn, reply_to=None, correlation_id=None, security_attributes=None, connection_trace=None):
+    return _createHeader(requester_nsa_urn, provider_nsa_urn, reply_to, correlation_id, security_attributes, connection_trace, protocol_type=cnt.CS2_PROVIDER)
 
-def createGenericProviderAcknowledgement(header):
-    return _createGenericAcknowledgement(header, cnt.CS2_PROVIDER)
+def convertProviderHeader(header, reply_to): # header is the dto from nsa.py
+    return createProviderHeader(header.requester_nsa, header.provider_nsa, reply_to, header.correlation_id, header.security_attributes, header.connection_trace)
 
 
-def createGenericRequesterAcknowledgement(header):
-    return _createGenericAcknowledgement(header, cnt.CS2_REQUESTER)
+def createRequesterHeader(requester_nsa_urn, provider_nsa_urn, reply_to=None, correlation_id=None, security_attributes=None, connection_trace=None):
+    return _createHeader(requester_nsa_urn, provider_nsa_urn, reply_to, correlation_id, security_attributes, connection_trace, protocol_type=cnt.CS2_REQUESTER)
 
 
 def _createGenericAcknowledgement(header, protocol_type=None):
@@ -86,6 +80,14 @@ def _createGenericAcknowledgement(header, protocol_type=None):
 
     payload = minisoap.createSoapPayload(generic_confirm_element, soap_header_element)
     return payload
+
+
+def createGenericProviderAcknowledgement(header):
+    return _createGenericAcknowledgement(header, cnt.CS2_PROVIDER)
+
+def createGenericRequesterAcknowledgement(header):
+    return _createGenericAcknowledgement(header, cnt.CS2_REQUESTER)
+
 
 
 
