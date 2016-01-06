@@ -688,7 +688,7 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
         from twisted.web import resource, server
         from twisted.application import internet
         from opennsa.protocols import nsi2
-        from opennsa.protocols.shared import resource as soapresource
+        from opennsa.protocols.shared import soapresource
         from opennsa.protocols.nsi2 import requesterservice, requesterclient
 
         tcf = os.path.expanduser('~/.opennsa-test.json')

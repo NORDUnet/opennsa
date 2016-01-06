@@ -13,7 +13,7 @@ from twisted.python import log, failure
 
 from opennsa import nsa, error
 from opennsa.shared import xmlhelper
-from opennsa.protocols.shared import minisoap, resource
+from opennsa.protocols.shared import minisoap, soapresource
 from opennsa.protocols.nsi2 import helper, queryhelper
 from opennsa.protocols.nsi2.bindings import actions, nsiconnection, p2pservices
 
@@ -51,7 +51,7 @@ class ProviderService:
         se = helper.createServiceException(err, provider_nsa, connection_id)
         ex_element = se.xml(nsiconnection.serviceException)
 
-        soap_fault = resource.SOAPFault( err.getErrorMessage(), ex_element )
+        soap_fault = soapresource.SOAPFault( err.getErrorMessage(), ex_element )
         return soap_fault
 
 

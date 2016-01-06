@@ -7,7 +7,7 @@ Copyright: NORDUnet (2011-2012)
 
 from twisted.web import resource, server
 
-from opennsa.protocols.shared import resource as soapresource
+from opennsa.protocols.shared import soapresource
 
 from opennsa.protocols.nsi2 import providerservice, providerclient, provider, \
                                    requesterservice, requesterclient, requester

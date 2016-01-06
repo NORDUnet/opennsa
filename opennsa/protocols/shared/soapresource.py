@@ -1,30 +1,20 @@
 """
-Web Service Resource for OpenNSA.
+SOAP Service Resource for OpenNSA.
 
 Author: Henrik Thostrup Jensen <htj@nordu.net>
-Copyright: NORDUnet (2011-2012)
+Copyright: NORDUnet (2011-2016)
 """
 
 from twisted.python import log
 from twisted.internet import defer
 from twisted.web import resource, server
 
+from opennsa.shared.requestinfo import RequestInfo
 from opennsa.protocols.shared import minisoap
 
 
 
 LOG_SYSTEM = 'protocol.SOAPResource'
-
-
-
-class RequestInfo:
-    """
-    Holds various data about the request.
-    Somewhat adding things as we go.
-    """
-    def __init__(self, cert_subject=None, cert_host_dn=None):
-        self.cert_subject = cert_subject
-        self.cert_host_dn = cert_host_dn
 
 
 
