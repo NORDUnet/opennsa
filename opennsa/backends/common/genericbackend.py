@@ -97,6 +97,11 @@ class GenericBackend(service.Service):
             if conn.lifecycle_state in (state.PASSED_ENDTIME, state.TERMINATED):
                 continue # This connection has already lived it life to the fullest :-)
 
+            if conn.reservation_state == state.RESERVE_START and not conn.allocated:
+                # This happens when a connection was reserved, but never committed and abort/timeout happened
+                log.msg('Connection %s: Was never comitted, not putting entry into calendar' % conn.connection_id, debug=True, system=self.log_system)
+                continue
+
             # add reservation, some of the following code will remove the reservation again
             src_resource = self.connection_manager.getResource(conn.source_port, conn.source_label.type_, conn.source_label.labelValue())
             dst_resource = self.connection_manager.getResource(conn.dest_port,   conn.dest_label.type_,   conn.dest_label.labelValue())
