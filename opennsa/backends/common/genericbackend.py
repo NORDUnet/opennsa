@@ -103,18 +103,42 @@ class GenericBackend(service.Service):
             self.calendar.addReservation(  src_resource, conn.start_time, conn.end_time)
             self.calendar.addReservation(  dst_resource, conn.start_time, conn.end_time)
 
-            if conn.end_time < now and conn.lifecycle_state not in (state.PASSED_ENDTIME, state.TERMINATED):
+            if conn.end_time is not None and conn.end_time < now and conn.lifecycle_state not in (state.PASSED_ENDTIME, state.TERMINATED):
                 log.msg('Connection %s: Immediate end during buildSchedule' % conn.connection_id, system=self.log_system)
                 yield self._doEndtime(conn)
                 continue
 
             elif conn.reservation_state == state.RESERVE_HELD:
-                timeout_time = min(now + datetime.timedelta(seconds=self.TPC_TIMEOUT), conn.end_time)
+                abort_timestamp = now + datetime.timedelta(seconds=self.TPC_TIMEOUT)
+                timeout_time = min(abort_timestamp, conn.end_time or abort_timestamp) # or to handle None case
                 if timeout_time > now:
                     # we have passed the time when timeout should occur
                     yield self._doReserveRollback(conn) # will remove reservation
                 else:
                     self.scheduler.scheduleCall(conn.connection_id, timeout_time, self._doReserveTimeout, conn)
+
+            elif conn.start_time is None or conn.start_time < now:
+                # we have passed start time, we must either: activate, schedule deactive, or schedule terminate
+                if conn.provision_state == state.PROVISIONED:
+                    if conn.data_plane_active:
+                        if conn.end_time is None:
+                            log.msg('Connection %s: already active, no scheduled end time' % conn.connection_id, system=self.log_system)
+                        else:
+                            self.scheduler.scheduleCall(conn.connection_id, conn.end_time, self._doEndtime, conn)
+                            td = conn.end_time - now
+                            log.msg('Connection %s: already active, scheduling end for %s UTC (%i seconds) (buildSchedule)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
+                    else:
+                        log.msg('Connection %s: Immediate activate during buildSchedule' % conn.connection_id, system=self.log_system)
+                        yield self._doActivate(conn)
+                elif conn.provision_state == state.RELEASED:
+                    if conn.end_time is None:
+                        log.msg('Connection %s: Currently released, no end scheduled' % conn.connection_id, system=self.log_system)
+                    else:
+                        self.scheduler.scheduleCall(conn.connection_id, conn.end_time, self._doEndtime, conn)
+                        td = conn.end_time - now
+                        log.msg('Connection %s: End scheduled for %s UTC (%i seconds) (buildSchedule)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
+                else:
+                    log.msg('Unhandled provision state %s for connection %s in scheduler building' % (conn.provision_state, conn.connection_id))
 
             elif conn.start_time > now:
                 # start time has not yet passed, we must schedule activate or schedule terminate depending on state
@@ -122,23 +146,6 @@ class GenericBackend(service.Service):
                     self.scheduler.scheduleCall(conn.connection_id, conn.start_time, self._doActivate, conn)
                     td = conn.start_time - now
                     log.msg('Connection %s: activate scheduled for %s UTC (%i seconds) (buildSchedule)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
-                elif conn.provision_state == state.RELEASED:
-                    self.scheduler.scheduleCall(conn.connection_id, conn.end_time, self._doEndtime, conn)
-                    td = conn.end_time - now
-                    log.msg('Connection %s: End scheduled for %s UTC (%i seconds) (buildSchedule)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
-                else:
-                    log.msg('Unhandled provision state %s for connection %s in scheduler building' % (conn.provision_state, conn.connection_id))
-
-            elif conn.start_time < now:
-                # we have passed start time, we must either: activate, schedule deactive, or schedule terminate
-                if conn.provision_state == state.PROVISIONED:
-                    if conn.data_plane_active:
-                        self.scheduler.scheduleCall(conn.connection_id, conn.end_time, self._doEndtime, conn)
-                        td = conn.end_time - now
-                        log.msg('Connection %s: already active, scheduling end for %s UTC (%i seconds) (buildSchedule)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
-                    else:
-                        log.msg('Connection %s: Immediate activate during buildSchedule' % conn.connection_id, system=self.log_system)
-                        yield self._doActivate(conn)
                 elif conn.provision_state == state.RELEASED:
                     self.scheduler.scheduleCall(conn.connection_id, conn.end_time, self._doEndtime, conn)
                     td = conn.end_time - now
@@ -226,12 +233,13 @@ class GenericBackend(service.Service):
         if not dest_stp.port in self.nrm_ports:
             raise error.STPUnavailableError('No STP named %s (ports: %s)' %(dest_stp.baseURN(), str(self.nrm_ports.keys()) ))
 
-        start_time = criteria.schedule.start_time or datetime.datetime.utcnow().replace(microsecond=0) + datetime.timedelta(seconds=1)  # no start time = now (well, in 1 second)
+        start_time = criteria.schedule.start_time # or datetime.datetime.utcnow().replace(microsecond=0) + datetime.timedelta(seconds=1)  # no start time = now (well, in 1 second)
         end_time   = criteria.schedule.end_time
 
-        duration = (end_time - start_time).total_seconds()
-        if duration < self.minimum_duration:
-            raise error.ConnectionCreateError('Duration too short, minimum duration is %i seconds (%i specified)' % (self.minimum_duration, duration), self.network)
+        if start_time is not None and end_time is not None:
+            duration = (end_time - start_time).total_seconds()
+            if duration < self.minimum_duration:
+                raise error.ConnectionCreateError('Duration too short, minimum duration is %i seconds (%i specified)' % (self.minimum_duration, duration), self.network)
 
         nrm_source_port = self.nrm_ports[source_stp.port]
         nrm_dest_port   = self.nrm_ports[dest_stp.port]
@@ -351,9 +359,10 @@ class GenericBackend(service.Service):
 
         # cancel abort and schedule end time call
         self.scheduler.cancelCall(connection_id)
-        self.scheduler.scheduleCall(conn.connection_id, conn.end_time, self._doEndtime, conn)
-        td = conn.end_time - datetime.datetime.utcnow()
-        log.msg('Connection %s: End and teardown scheduled for %s UTC (%i seconds)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
+        if conn.end_time is not None:
+            self.scheduler.scheduleCall(conn.connection_id, conn.end_time, self._doEndtime, conn)
+            td = conn.end_time - datetime.datetime.utcnow()
+            log.msg('Connection %s: End and teardown scheduled for %s UTC (%i seconds)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
 
         yield self.parent_requester.reserveCommitConfirmed(header, connection_id)
 
@@ -395,7 +404,7 @@ class GenericBackend(service.Service):
             raise error.InvalidTransitionError('Cannot provision connection in a non-reserved state')
 
         now = datetime.datetime.utcnow()
-        if conn.end_time <= now:
+        if conn.end_time is not None and conn.end_time <= now:
             raise error.ConnectionGoneError('Cannot provision connection after end time (end time: %s, current time: %s).' % (conn.end_time, now))
 
         yield state.provisioning(conn)
@@ -403,8 +412,8 @@ class GenericBackend(service.Service):
 
         self.scheduler.cancelCall(connection_id)
 
-        if conn.start_time <= now:
-            self._doActivate(conn) # returns a deferred, but isn't used
+        if conn.start_time is None or conn.start_time <= now:
+            self._doActivate(conn) # returns a deferred, but it isn't used
         else:
             self.scheduler.scheduleCall(connection_id, conn.start_time, self._doActivate, conn)
             td = conn.start_time - now
@@ -454,6 +463,7 @@ class GenericBackend(service.Service):
             defer.returnValue(conn.connection_id)
         except Exception, e:
             log.msg('Error in release: %s: %s' % (type(e), e), system=self.log_system)
+            log.err(e)
 
 
     @defer.inlineCallbacks
@@ -553,8 +563,8 @@ class GenericBackend(service.Service):
             # this means that the build scheduler made a call while we yielded
             self.scheduler.cancelCall(conn.connection_id)
 
-        now =  datetime.datetime.utcnow()
-        timeout_time = min(now + datetime.timedelta(seconds=self.TPC_TIMEOUT), conn.end_time)
+        abort_timestamp = datetime.datetime.utcnow() + datetime.timedelta(seconds=self.TPC_TIMEOUT)
+        timeout_time = min(abort_timestamp, conn.end_time or abort_timestamp)
 
         self.scheduler.scheduleCall(conn.connection_id, timeout_time, self._doReserveTimeout, conn)
         td = timeout_time - datetime.datetime.utcnow()
@@ -586,6 +596,7 @@ class GenericBackend(service.Service):
 
         except Exception as e:
             log.msg('Error in reserveTimeout: %s: %s' % (type(e), e), system=self.log_system)
+            log.err(e)
 
 
     @defer.inlineCallbacks
@@ -607,9 +618,10 @@ class GenericBackend(service.Service):
             yield state.reserved(conn) # we only log this, when we haven't passed end time, as it looks wonky with start+end together
 
             now = datetime.datetime.utcnow()
-            if now > conn.end_time:
+            if conn.end_time is not None and now > conn.end_time:
+                print 'abort do endtime'
                 yield self._doEndtime(conn)
-            else:
+            elif conn.end_time is not None:
                 self.logStateUpdate(conn, 'RESERVE START')
                 self.scheduler.scheduleCall(conn.connection_id, conn.end_time, self._doEndtime, conn)
                 td = conn.end_time - datetime.datetime.utcnow()
@@ -617,6 +629,7 @@ class GenericBackend(service.Service):
 
         except Exception as e:
             log.msg('Error in doReserveRollback: %s: %s' % (type(e), e), system=self.log_system)
+            log.err(e)
 
 
     @defer.inlineCallbacks
@@ -649,13 +662,14 @@ class GenericBackend(service.Service):
             # we might have passed end time during activation...
             end_time = conn.end_time
             now = datetime.datetime.utcnow()
-            if end_time < now:
+            if end_time is not None and end_time < now:
                 log.msg('Connection %s: passed end time during activation, scheduling immediate teardown.' % conn.connection_id, system=self.log_system)
                 end_time = now
 
-            self.scheduler.scheduleCall(conn.connection_id, end_time, self._doEndtime, conn)
-            td = end_time - datetime.datetime.utcnow()
-            log.msg('Connection %s: End and teardown scheduled for %s UTC (%i seconds)' % (conn.connection_id, end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
+            if end_time is not None:
+                self.scheduler.scheduleCall(conn.connection_id, end_time, self._doEndtime, conn)
+                td = end_time - datetime.datetime.utcnow()
+                log.msg('Connection %s: End and teardown scheduled for %s UTC (%i seconds)' % (conn.connection_id, end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
 
             data_plane_status = (True, conn.revision, True) # active, version, consistent
             now = datetime.datetime.utcnow()
@@ -663,6 +677,7 @@ class GenericBackend(service.Service):
             self.parent_requester.dataPlaneStateChange(header, conn.connection_id, self.getNotificationId(), now, data_plane_status)
         except Exception, e:
             log.msg('Error in post-activation: %s: %s' % (type(e), e), system=self.log_system)
+            log.err(e)
 
 
     @defer.inlineCallbacks
@@ -700,6 +715,7 @@ class GenericBackend(service.Service):
 
         except Exception as e:
             log.msg('Error in post-deactivation: %s' % e)
+            log.err(e)
 
 
     @defer.inlineCallbacks

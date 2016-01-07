@@ -82,6 +82,64 @@ class GenericProviderTest:
         cid = yield self.provider.reserve(self.header, None, None, None, criteria)
         header, cid, gid, desc, sp = yield self.requester.reserve_defer
 
+        yield self.provider.reserveCommit(self.header, cid)
+        yield self.requester.reserve_commit_defer
+
+        yield self.provider.provision(self.header, cid)
+        yield self.requester.provision_defer
+
+        self.clock.advance(3)
+
+        header, cid, nid, timestamp, dps = yield self.requester.data_plane_change_defer
+        active, version, consistent = dps
+        self.failUnlessEquals(active, True)
+
+
+    @defer.inlineCallbacks
+    def testNoEndTime(self):
+
+        end_time = None
+        criteria   = nsa.Criteria(0, nsa.Schedule(self.start_time, end_time), self.sd)
+
+        self.header.newCorrelationId()
+        cid = yield self.provider.reserve(self.header, None, None, None, criteria)
+        header, cid, gid, desc, sp = yield self.requester.reserve_defer
+
+        yield self.provider.reserveCommit(self.header, cid)
+        yield self.requester.reserve_commit_defer
+
+        yield self.provider.provision(self.header, cid)
+        yield self.requester.provision_defer
+
+        self.clock.advance(3)
+
+        header, cid, nid, timestamp, dps = yield self.requester.data_plane_change_defer
+        active, version, consistent = dps
+        self.failUnlessEquals(active, True)
+
+
+    @defer.inlineCallbacks
+    def testNoStartOrEndTime(self):
+
+        criteria   = nsa.Criteria(0, nsa.Schedule(None, None), self.sd)
+
+        self.header.newCorrelationId()
+        cid = yield self.provider.reserve(self.header, None, None, None, criteria)
+        header, cid, gid, desc, sp = yield self.requester.reserve_defer
+
+        yield self.provider.reserveCommit(self.header, cid)
+        yield self.requester.reserve_commit_defer
+
+        yield self.provider.provision(self.header, cid)
+        yield self.requester.provision_defer
+
+        self.clock.advance(3)
+
+        header, cid, nid, timestamp, dps = yield self.requester.data_plane_change_defer
+        active, version, consistent = dps
+        self.failUnlessEquals(active, True)
+
+
 
     @defer.inlineCallbacks
     def testConnectSTPToItself(self):
@@ -327,6 +385,30 @@ class GenericProviderTest:
         source_stp  = nsa.STP(self.network, self.source_port, nsa.Label(cnt.ETHERNET_VLAN, '1782') )
         dest_stp    = nsa.STP(self.network, self.dest_port,   nsa.Label(cnt.ETHERNET_VLAN, '1782') )
         criteria    = nsa.Criteria(0, self.schedule, nsa.Point2PointService(source_stp, dest_stp, 200, cnt.BIDIRECTIONAL, False, None) )
+
+        self.header.newCorrelationId()
+        acid = yield self.provider.reserve(self.header, None, None, None, criteria)
+        header, cid, gid, desc, sp = yield self.requester.reserve_defer
+
+        yield self.provider.reserveAbort(self.header, acid)
+        header, cid = yield self.requester.reserve_abort_defer
+
+        self.requester.reserve_defer = defer.Deferred()
+
+        # try to reserve the same resources
+        acid2 = yield self.provider.reserve(self.header, None, None, None, criteria)
+        header, cid, gid, desc, sp = yield self.requester.reserve_defer
+
+
+    @defer.inlineCallbacks
+    def testNoEndtimeAbort(self):
+
+        # these need to be constructed such that there is only one label option
+        source_stp  = nsa.STP(self.network, self.source_port, nsa.Label(cnt.ETHERNET_VLAN, '1782') )
+        dest_stp    = nsa.STP(self.network, self.dest_port,   nsa.Label(cnt.ETHERNET_VLAN, '1782') )
+#        criteria    = nsa.Criteria(0, self.schedule, nsa.Point2PointService(source_stp, dest_stp, 200, cnt.BIDIRECTIONAL, False, None) )
+        end_time    = None
+        criteria    = nsa.Criteria(0, nsa.Schedule(self.start_time, end_time), nsa.Point2PointService(source_stp, dest_stp, 200, cnt.BIDIRECTIONAL, False, None) )
 
         self.header.newCorrelationId()
         acid = yield self.provider.reserve(self.header, None, None, None, criteria)
