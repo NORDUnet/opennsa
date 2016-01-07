@@ -363,7 +363,8 @@ class Schedule(object):
         # Must be datetime instances without tzinfo
         if start_time is not None:
             assert start_time.tzinfo is None, 'Start time must NOT have time zone'
-        assert end_time.tzinfo   is None, 'End time must NOT have time zone'
+        if end_time is not None:
+            assert end_time.tzinfo   is None, 'End time must NOT have time zone'
 
         self.start_time = start_time
         self.end_time   = end_time
