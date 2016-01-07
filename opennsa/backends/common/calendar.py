@@ -1,14 +1,21 @@
 """
 Backend reservation calendar.
 
+Keeps track of reservation timeslots for resources.
+
 Inteded usage is for NRM backend which does not have their own reservation calendar.
 
-Right now it is very minimal, but should be enough for basic service.
+The module assumes that any expired reservations are removed. Otherwise the
+overlap detection will not work properly.
+
+None is allowed for start and end time. In that case the semantics is now for
+start time and forever for end time.
 
 Author: Henrik Thostrup Jensen <htj@nordu.net>
-Copyright: NORDUnet (2011)
+Copyright: NORDUnet (2011-2016)
 """
 
+import types
 import datetime
 
 from opennsa import error
@@ -23,10 +30,14 @@ class ReservationCalendar:
 
     def _checkArgs(self, resource, start_time, end_time):
         assert type(resource)    is str, 'Resource must be a string'
-        assert type(start_time)  is datetime.datetime, 'Start time must be a datetime object, not %s' % str(type(start_time))
-        assert type(end_time)    is datetime.datetime, 'End time must be a datetime object, not %s' % str(type(end_time))
-        assert start_time.tzinfo is None, 'Start time must NOT have time zone.'
-        assert end_time.tzinfo   is None, 'End time must NOT have time zone.'
+
+        assert type(start_time)  in (types.NoneType, datetime.datetime), 'Start time must be a datetime object or None, not %s' % str(type(start_time))
+        assert type(end_time)    in (types.NoneType, datetime.datetime), 'End time must be a datetime object or None, not %s' % str(type(end_time))
+
+        if start_time is not None:
+            assert start_time.tzinfo is None, 'Start time must NOT have time zone.'
+        if end_time is not None:
+            assert end_time.tzinfo   is None, 'End time must NOT have time zone.'
 
 
     def addReservation(self, resource, start_time, end_time):
@@ -49,19 +60,22 @@ class ReservationCalendar:
     def checkReservation(self, resource, start_time, end_time):
         self._checkArgs(resource, start_time, end_time)
 
-        # sanity checks
-        if start_time > end_time:
+        # check start time is before end time
+        if start_time is not None and end_time is not None and start_time > end_time:
             raise error.PayloadError('Invalid request: Reverse duration (end time before start time)')
 
-        now = datetime.datetime.utcnow()
-        if start_time < now:
-            delta = now - start_time
-            stamp = str(start_time).rsplit('.')[0]
-            variables = [ ('startTime', start_time.isoformat() ) ]
-            raise error.PayloadError('Invalid request: Start time in the past (Startime: %s, Delta: %s)' % (stamp, str(delta)), variables=variables )
+        if start_time is not None:
+            # check that start time is not in the past
+            now = datetime.datetime.utcnow()
+            if start_time < now:
+                delta = now - start_time
+                stamp = str(start_time).rsplit('.')[0]
+                variables = [ ('startTime', start_time.isoformat() ) ]
+                raise error.PayloadError('Invalid request: Start time in the past (Startime: %s, Delta: %s)' % (stamp, str(delta)), variables=variables )
 
-        if start_time > datetime.datetime(2025, 1, 1):
-            raise error.PayloadError('Invalid request: Start time after year 2025')
+            # check the start time makes sense
+            if start_time > datetime.datetime(2025, 1, 1):
+                raise error.PayloadError('Invalid request: Start time after year 2025')
 
         for (c_resource, c_start_time, c_end_time) in self.reservations:
             if resource == c_resource:
@@ -70,15 +84,27 @@ class ReservationCalendar:
 
         # all good
 
-    # resourceort temporal availability
+
     def _resourceOverlap(self, res1_start_time, res1_end_time, res2_start_time, res2_end_time):
+        # resource temporal availability
 
-        assert res1_start_time < res1_end_time, 'Refusing to detect overlap for backwards reservation (1)'
-        assert res2_start_time < res2_end_time, 'Refusing to detect overlap for backwards reservation (2)'
+        # hack on
+        # instead of doing a lot of complicated branching for None checking, we just coalesce the values into something easier
 
-        if res2_end_time < res1_start_time:
+        now = datetime.datetime.utcnow()
+        forever = datetime.datetime(9999, 1, 1)
+
+        r1s = res1_start_time or now
+        r2s = res2_start_time or now
+        r1e = res1_end_time or forever
+        r2e = res2_end_time or forever
+
+        assert r1s < r1e, 'Cannot detect overlap for backwards reservation (1)'
+        assert r2s < r2e, 'Cannot detect overlap for backwards reservation (2)'
+
+        if r2e < r1s:
             return False # res2 ends before res1 starts so it is ok
-        if res2_start_time > res1_end_time:
+        if r2s > r1e:
             return False # res2 starts after res1 ends so it is ok
 
         # resources overlap in time
