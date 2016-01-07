@@ -406,7 +406,6 @@ class GenericProviderTest:
         # these need to be constructed such that there is only one label option
         source_stp  = nsa.STP(self.network, self.source_port, nsa.Label(cnt.ETHERNET_VLAN, '1782') )
         dest_stp    = nsa.STP(self.network, self.dest_port,   nsa.Label(cnt.ETHERNET_VLAN, '1782') )
-#        criteria    = nsa.Criteria(0, self.schedule, nsa.Point2PointService(source_stp, dest_stp, 200, cnt.BIDIRECTIONAL, False, None) )
         end_time    = None
         criteria    = nsa.Criteria(0, nsa.Schedule(self.start_time, end_time), nsa.Point2PointService(source_stp, dest_stp, 200, cnt.BIDIRECTIONAL, False, None) )
 
