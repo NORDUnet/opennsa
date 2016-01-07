@@ -39,8 +39,8 @@ CREATE TABLE service_connections (
     dest_network            text                        NOT NULL,
     dest_port               text                        NOT NULL,
     dest_label              label,
-    start_time              timestamp,                            -- null = now
-    end_time                timestamp                   NOT NULL,
+    start_time              timestamp,                            -- null = immediate start
+    end_time                timestamp,                            -- null = forever
     symmetrical             boolean                     NOT NULL,
     directionality          directionality              NOT NULL,
     bandwidth               integer                     NOT NULL, -- mbps
@@ -92,8 +92,8 @@ CREATE TABLE generic_backend_connections (
     dest_network            text                        NOT NULL,
     dest_port               text                        NOT NULL,
     dest_label              label,
-    start_time              timestamp                   NOT NULL,
-    end_time                timestamp                   NOT NULL,
+    start_time              timestamp,                            -- null = immediate start
+    end_time                timestamp,                            -- null = forever
     symmetrical             boolean                     NOT NULL,
     directionality          directionality              NOT NULL,
     bandwidth               integer                     NOT NULL, -- mbps
