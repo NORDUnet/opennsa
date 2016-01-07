@@ -828,6 +828,7 @@ class Aggregator:
         #sd.dest_stp.label.intersect(sub_connection.dest_label)
 
         db_start_time = criteria.schedule.start_time.isoformat() if criteria.schedule.start_time is not None else None
+        db_end_time = criteria.schedule.end_time.isoformat()     if criteria.schedule.end_time   is not None else None
 
         # save sub connection in database
         sc = database.SubConnection(provider_nsa=org_provider_nsa, connection_id=connection_id, local_link=False, # remove local link sometime
@@ -836,7 +837,7 @@ class Aggregator:
                                     reservation_state=state.RESERVE_HELD, provision_state=state.RELEASED, lifecycle_state=state.CREATED, data_plane_active=False,
                                     source_network=sd.source_stp.network, source_port=sd.source_stp.port, source_label=sd.source_stp.label,
                                     dest_network=sd.dest_stp.network, dest_port=sd.dest_stp.port, dest_label=sd.dest_stp.label,
-                                    start_time=db_start_time, end_time=criteria.schedule.end_time.isoformat(), bandwidth=sd.capacity)
+                                    start_time=db_start_time, end_time=db_end_time, bandwidth=sd.capacity)
 
         yield sc.save()
 
