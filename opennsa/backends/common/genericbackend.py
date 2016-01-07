@@ -114,12 +114,15 @@ class GenericBackend(service.Service):
                 continue
 
             elif conn.reservation_state == state.RESERVE_HELD:
-                abort_timestamp = now + datetime.timedelta(seconds=self.TPC_TIMEOUT)
-                timeout_time = min(abort_timestamp, conn.end_time or abort_timestamp) # or to handle None case
-                if timeout_time > now:
-                    # we have passed the time when timeout should occur
+                abort_time = conn.reserve_time + datetime.timedelta(seconds=self.TPC_TIMEOUT)
+                timeout_time = min(abort_time, conn.end_time or abort_time) # or to handle None case
+                if timeout_time < now:
+                    # have passed the time when timeout should occur
+                    log.msg('Connection %s: Reservation Held, but timeout has passed, doing rollback' % conn.connection_id, system=self.log_system)
                     yield self._doReserveRollback(conn) # will remove reservation
                 else:
+                    td = timeout_time - now
+                    log.msg('Connection %s: Reservation Held, scheduling timeout in %i seconds' % (conn.connection_id, td.total_seconds()), system=self.log_system)
                     self.scheduler.scheduleCall(conn.connection_id, timeout_time, self._doReserveTimeout, conn)
 
             elif conn.start_time is None or conn.start_time < now:
