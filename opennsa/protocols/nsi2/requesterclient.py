@@ -107,8 +107,11 @@ class RequesterClient:
         else:
             start_time = None
 
-        assert schedule.end_time.tzinfo is None, 'End time must NOT have time zone'
-        end_time = schedule.end_time.replace(tzinfo=UTC()).isoformat()
+        if schedule.end_time is not None:
+            assert schedule.end_time.tzinfo is None, 'End time must NOT have time zone'
+            end_time = schedule.end_time.replace(tzinfo=UTC()).isoformat()
+        else:
+            end_time = None
 
         if not type(sd) is nsa.Point2PointService:
             raise ValueError('Cannot create request for service definition of type %s' % str(type(sd)))

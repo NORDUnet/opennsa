@@ -72,7 +72,7 @@ class ProviderClient:
 
         schedule = nsiconnection.ScheduleType(
             xmlhelper.createXMLTime(criteria.schedule.start_time) if criteria.schedule.start_time is not None else None,
-            xmlhelper.createXMLTime(criteria.schedule.end_time)
+            xmlhelper.createXMLTime(criteria.schedule.end_time)   if criteria.schedule.end_time   is not None else None
         )
 
         sd = criteria.service_def
