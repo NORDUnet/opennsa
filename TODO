@@ -1,3 +1,4 @@
+Remove all requester nsa scoping in aggregator - it won't work
 
 Adminstrative interface
  - First considered with domainsocket, but tests showed it to be weird
