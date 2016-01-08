@@ -100,7 +100,7 @@ class Aggregator:
         return self.provider_registry.getProvider(nsi_agent_urn)
 
 
-    def getConnection(self, requester_nsa, connection_id):
+    def getConnection(self, connection_id):
 
         # need to do authz here
 
@@ -126,7 +126,7 @@ class Aggregator:
             if len(connections) == 0:
                 return defer.fail( error.ConnectionNonExistentError('No connection with key %s' % connection_key) )
             conn = connections[0]
-            return self.getConnection(conn.requester_nsa, conn.connection_id)
+            return self.getConnection(conn.connection_id)
 
         d = database.ServiceConnection.findBy(id=connection_key)
         d.addCallback(gotResult)
@@ -404,7 +404,7 @@ class Aggregator:
         log.msg('', system=LOG_SYSTEM)
         log.msg('ReserveCommit request. NSA: %s. Connection ID: %s' % (header.requester_nsa, connection_id), system=LOG_SYSTEM)
 
-        conn = yield self.getConnection(header.requester_nsa, connection_id)
+        conn = yield self.getConnection(connection_id)
 
         if conn.lifecycle_state == state.TERMINATED:
             raise error.ConnectionGoneError('Connection %s has been terminated' % connection_id)
@@ -443,7 +443,7 @@ class Aggregator:
         log.msg('', system=LOG_SYSTEM)
         log.msg('ReserveAbort request. NSA: %s. Connection ID: %s' % (header.requester_nsa, connection_id), system=LOG_SYSTEM)
 
-        conn = yield self.getConnection(header.requester_nsa, connection_id)
+        conn = yield self.getConnection(connection_id)
 
         if conn.lifecycle_state == state.TERMINATED:
             raise error.ConnectionGoneError('Connection %s has been terminated' % connection_id)
@@ -484,7 +484,7 @@ class Aggregator:
         log.msg('', system=LOG_SYSTEM)
         log.msg('Provision request. NSA: %s. Connection ID: %s' % (header.requester_nsa, connection_id), system=LOG_SYSTEM)
 
-        conn = yield self.getConnection(header.requester_nsa, connection_id)
+        conn = yield self.getConnection(connection_id)
 
         if conn.lifecycle_state == state.TERMINATED:
             raise error.ConnectionGoneError('Connection %s has been terminated' % connection_id)
@@ -528,7 +528,7 @@ class Aggregator:
         log.msg('', system=LOG_SYSTEM)
         log.msg('Release request. NSA: %s. Connection ID: %s' % (header.requester_nsa, connection_id), system=LOG_SYSTEM)
 
-        conn = yield self.getConnection(header.requester_nsa, connection_id)
+        conn = yield self.getConnection(connection_id)
 
         if conn.lifecycle_state == state.TERMINATED:
             raise error.ConnectionGoneError('Connection %s has been terminated' % connection_id)
@@ -572,7 +572,7 @@ class Aggregator:
         log.msg('', system=LOG_SYSTEM)
         log.msg('Terminate request. NSA: %s. Connection ID: %s' % (header.requester_nsa, connection_id), system=LOG_SYSTEM)
 
-        conn = yield self.getConnection(header.requester_nsa, connection_id)
+        conn = yield self.getConnection(connection_id)
 
         if conn.lifecycle_state == state.TERMINATED:
             defer.returnValue(connection_id) # all good
@@ -670,7 +670,7 @@ class Aggregator:
             raise error.UnsupportedParameter("Can only perform queryRecursive for a single connection id.")
 
         try:
-            conn = yield self.getConnection(header.requester_nsa, connection_ids[0])
+            conn = yield self.getConnection(connection_ids[0])
 
             sub_connections = yield self.getSubConnectionsByConnectionKey(conn.id)
 
