@@ -34,6 +34,6 @@ class InterfaceTest(unittest.TestCase):
         prov = provider.Provider(None, None)
         verifyObject(INSIRequester, prov)
 
-    testSoapProvider.skip = 'provider not complete yet'
+    testProvider.skip = 'provider not complete yet'
 
 
