@@ -17,6 +17,8 @@ Add x509host stanza for port authZ
 It _might_ be possible to get OpenNSA to try and bring up the same
 cross-connect multiple times by issuing provision request concurrently. Look
 into this.
+ - State machine should not allow this
+   - But the error message will probably suck
 
 Make the aggregator use reserveAbort instead of terminate when aborting
 
