@@ -1,8 +1,0 @@
-# NRM topology example for NSIv2 NML
-
-# type          name        remote                      label               bandwith    interface
-
-bi-ethernet     ps          -                           vlan:1780-1783      1000        em0
-bi-ethernet     bonaire     Bonaire#aruba-(in|out)      vlan:1780-1783      1000        em1
-bi-ethernet     dominica    Dominica#aruba-(in|out)     vlan:1780-1783      1000        em1
-
