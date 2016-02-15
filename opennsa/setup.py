@@ -164,6 +164,11 @@ class OpenNSAService(twistedservice.MultiService):
         pc = nsi2.setupProvider(aggr, top_resource, ctx_factory=ctx_factory, allowed_hosts=vc.get(config.ALLOWED_HOSTS))
         aggr.parent_requester = pc
 
+        if vc[config.REST]:
+            from opennsa.protocols import rest
+            rest_endpoint = base_url + '/connections'
+            rest.setupService(aggr, top_resource, vc.get(config.ALLOWED_HOSTS))
+
         # setup backend(s) - for now we only support one
 
         backend_configs = vc['backend']
@@ -212,6 +217,8 @@ class OpenNSAService(twistedservice.MultiService):
         log.msg('Provider  URL: %s' % provider_endpoint )
         log.msg('Discovery URL: %s/NSI/%s' % (base_url, discovery_resource_name) )
         log.msg('Topology  URL: %s' % (nml_resource_url) )
+        if vc[config.REST]:
+            log.msg('REST      URL: %s' % rest_endpoint )
 
         factory = server.Site(top_resource)
         factory.log = httplog.logRequest # default logging is weird, so we do our own
