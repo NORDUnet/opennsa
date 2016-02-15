@@ -205,6 +205,10 @@ class Provider:
 
     def querySummaryConfirmed(self, header, reservations):
 
+        if header.reply_to is None:
+            log.msg('No reply url to notify about query summary. Skipping notification.', system=LOG_SYSTEM)
+            return defer.succeed(None)
+
         if (header.correlation_id, QUERY_SUMMARY_RESPONSE) in self.notifications:
             dc = self.notifications.pop( (header.correlation_id, QUERY_SUMMARY_RESPONSE) )
             dc.callback( reservations )
@@ -242,6 +246,10 @@ class Provider:
 
 
     def dataPlaneStateChange(self, header, connection_id, notification_id, timestamp, data_plane_status):
+
+        if header.reply_to is None:
+            log.msg('No reply url to notify about data plane state change. Skipping notification.', system=LOG_SYSTEM)
+            return defer.succeed(None)
 
         active, version, consistent = data_plane_status
         d = self.provider_client.dataPlaneStateChange(header.reply_to, header.requester_nsa, header.provider_nsa, header.correlation_id,
