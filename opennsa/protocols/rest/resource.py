@@ -23,15 +23,22 @@ RN = '\r\n'
 CONTENT_LENGTH = 'content-length' # twisted.web doesn't have this as a constant
 
 
-def _finishRequest(request, code, payload, headers=None):
-    # helper to finish request
+def _requestResponse(request, code, payload, headers=None):
+    # helper
     request.setResponseCode(code)
-    request.setHeader('content-length', len(payload))
+    request.setHeader(CONTENT_LENGTH, len(payload))
     if headers is not None:
         for key, value in headers.items():
             request.setHeader(key, value)
+    return payload
+
+
+def _finishRequest(request, code, payload, headers=None):
+    # helper
+    _requestResponse(request, code, payload, headers)
     request.write(payload)
     request.finish()
+
 
 
 class P2PBaseResource(resource.Resource):
@@ -58,29 +65,26 @@ class P2PBaseResource(resource.Resource):
         allowed, msg, request_info = requestauthz.checkAuthz(request, self.allowed_hosts)
         if not allowed:
             payload = msg + RN
-            _finishRequest(request, 401, payload) # Not Authorized
-            return
+            return _requestResponse(request, 401, payload) # Not Authorized
 
         payload = request.content.read()
 
         if len(payload) == 0:
             log.msg('No data received in request', system=LOG_SYSTEM)
             payload = 'No data received in request' + RN
-            _finishRequest(request, 400, payload) # Bad Request
-            return
+            return _requestResponse(request, 400, payload) # Bad Request
 
         if len(payload) > 32*1024:
             log.msg('Rejecting request, payload too large. Length %i' % len(payload), system=LOG_SYSTEM)
             payload = 'Requests too large' + RN
-            _finishRequest(request, 413, payload) # Payload Too Large
-            return
+            return _requestResponse(request, 413, payload) # Payload Too Large
 
         try:
             data = json.loads(payload)
         except ValueError:
             log.msg('Invalid JSON data received, returning 400', system=LOG_SYSTEM)
             payload = 'Invalid JSON data' + RN
-            _finishRequest(request, 400, payload) # Bad Request
+            return _requestResponse(request, 400, payload) # Bad Request
 
         # extract stuffs
 
@@ -156,7 +160,7 @@ class P2PConnectionResource(resource.Resource):
         allowed, msg, request_info = requestauthz.checkAuthz(request, self.allowed_hosts)
         if not allowed:
             payload = msg + RN
-            _finishRequest(request, 401, payload) # Not Authorized
+            return _requestResponse(request, 401, payload) # Not Authorized
 
         d = self.provider.getConnection(self.connection_id)
 
@@ -245,15 +249,13 @@ class P2PStatusResource(resource.Resource):
         allowed, msg, request_info = requestauthz.checkAuthz(request, self.allowed_hosts)
         if not allowed:
             payload = msg + RN
-            _finishRequest(request, 401, payload) # Not Authorized
-            return
+            return _requestResponse(request, 401, payload) # Not Authorized
 
         state_command = request.content.read()
         state_command = state_command.upper()
         if state_command not in ('COMMIT', 'ABORT', 'PROVISION', 'RELEASE', 'TERMINATE'):
             payload = 'Invalid state command specified' + RN
-            _finishRequest(request, 400, payload) # Client Error
-            return
+            return _requestResponse(request, 400, payload) # Client Error
 
         header = nsa.NSIHeader('rest-dud-requester', 'rest-dud-provider') # completely bogus header
 
@@ -269,8 +271,7 @@ class P2PStatusResource(resource.Resource):
             d = self.provider.terminate(header, self.connection_id, request_info)
         else:
             payload = 'Unrecognized command (should not happend)' + RN
-            _finishRequest(request, 500, payload) # Server Error
-            return
+            return _requestResponse(request, 500, payload) # Server Error
 
         def commandDone(_):
             payload = 'ACK' + RN
