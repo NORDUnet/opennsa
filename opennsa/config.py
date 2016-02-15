@@ -39,6 +39,7 @@ LOG_FILE         = 'logfile'
 HOST             = 'host'
 PORT             = 'port'
 TLS              = 'tls'
+REST             = 'rest'
 NRM_MAP_FILE     = 'nrmmap'
 PEERS            = 'peers'
 POLICY           = 'policy'
@@ -161,6 +162,11 @@ def readVerifyConfig(cfg):
         vc[NRM_MAP_FILE] = nrm_map_file
     except ConfigParser.NoOptionError:
         vc[NRM_MAP_FILE] = None
+
+    try:
+        vc[REST] = cfg.getboolean(BLOCK_SERVICE, REST)
+    except ConfigParser.NoOptionError:
+        vc[REST] = False
 
     try:
         peers_raw = cfg.get(BLOCK_SERVICE, PEERS)
