@@ -30,7 +30,7 @@ class InterfaceTest(unittest.TestCase):
 
     testAggregator.skip = 'aggregator not complete yet'
 
-    def testSoapProvider(self):
+    def testProvider(self):
         prov = provider.Provider(None, None)
         verifyObject(INSIRequester, prov)
 
