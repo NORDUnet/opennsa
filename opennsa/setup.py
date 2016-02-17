@@ -128,7 +128,7 @@ class OpenNSAService(twistedservice.MultiService):
         network_name = base_name + ':topology' # because we say so
         nsa_name  = base_name + ':nsa'
 
-        # url stuffs
+        # base url
         base_protocol = 'https://' if vc[config.TLS] else 'http://'
         base_url = base_protocol + vc[config.HOST] + ':' + str(vc[config.PORT])
 
