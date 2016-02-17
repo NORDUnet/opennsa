@@ -61,6 +61,25 @@ def setupBackend(backend_cfg, network_name, nrm_ports, parent_requester):
 
 
 
+def setupTopology(nrm_map, network_name, base_name):
+
+    link_vector = linkvector.LinkVector( [ network_name ] )
+
+    nrm_ports = nrm.parsePortSpec( open(nrm_map) )
+    nml_network = nml.createNMLNetwork(nrm_ports, network_name, base_name)
+
+    # route vectors
+    # hack in link vectors manually, since we don't have a mechanism for updating them automatically
+    for np in nrm_ports:
+        if np.remote_network is not None:
+            link_vector.updateVector(np.name, { np.remote_network : 1 } ) # hack
+            for network, cost in np.vectors.items():
+                link_vector.updateVector(np.name, { network : cost })
+
+    return nrm_ports, nml_network, link_vector
+
+
+
 def setupTLSContext(vc):
 
     # ssl/tls contxt
@@ -137,18 +156,9 @@ class OpenNSAService(twistedservice.MultiService):
         ns_agent = nsa.NetworkServiceAgent(nsa_name, provider_endpoint, 'local')
 
         # topology
-        nrm_ports = nrm.parsePortSpec( open( vc[config.NRM_MAP_FILE] ) )
-        network_topology = nml.createNMLNetwork(nrm_ports, network_name, base_name)
+        nrm_ports, network_topology, link_vector = setupTopology(vc[config.NRM_MAP_FILE], network_name, base_name)
 
-        # route vectors
-        link_vector = linkvector.LinkVector( [ network_name ] )
-        # hack in link vectors manually, since we don't have a mechanism for updating them automatically
-        for np in nrm_ports:
-            if np.remote_network is not None:
-                link_vector.updateVector(np.name, { np.remote_network : 1 } ) # hack
-                for network, cost in np.vectors.items():
-                    link_vector.updateVector(np.name, { network : cost })
-
+        # ssl/tls context
         ctx_factory = setupTLSContext(vc) # May be None
 
         # plugin
