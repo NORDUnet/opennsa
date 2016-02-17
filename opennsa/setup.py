@@ -165,7 +165,7 @@ class OpenNSAService(twistedservice.MultiService):
         requester_creator = CS2RequesterCreator(top_resource, None, vc[config.HOST], vc[config.PORT], vc[config.TLS], ctx_factory) # set aggregator later
 
         provider_registry = provreg.ProviderRegistry({}, { cnt.CS2_SERVICE_TYPE : requester_creator.create } )
-        aggr = aggregator.Aggregator(network_topology.id_, ns_agent, network_topology, link_vector, None, provider_registry, vc[config.POLICY], plugin ) # set parent requester later
+        aggr = aggregator.Aggregator(network_name, ns_agent, network_topology, link_vector, None, provider_registry, vc[config.POLICY], plugin ) # set parent requester later
 
         requester_creator.aggregator = aggr
 
