@@ -142,6 +142,8 @@ class OpenNSAService(twistedservice.MultiService):
         # database
         database.setupDatabase(vc[config.DATABASE], vc[config.DATABASE_USER], vc[config.DATABASE_PASSWORD])
 
+        service_endpoints = []
+
         # base names
         base_name = vc[config.NETWORK_NAME]
         network_name = base_name + ':topology' # because we say so
@@ -151,8 +153,10 @@ class OpenNSAService(twistedservice.MultiService):
         base_protocol = 'https://' if vc[config.TLS] else 'http://'
         base_url = base_protocol + vc[config.HOST] + ':' + str(vc[config.PORT])
 
-        # nsi agent
+        # nsi endpoint and agent
         provider_endpoint = base_url + '/NSI/services/CS2' # hardcode for now
+        service_endpoints.append( ('Provider', provider_endpoint) )
+
         ns_agent = nsa.NetworkServiceAgent(nsa_name, provider_endpoint, 'local')
 
         # topology
@@ -209,8 +213,13 @@ class OpenNSAService(twistedservice.MultiService):
         # wire up the http stuff
 
         discovery_resource_name = 'discovery.xml'
+        discovery_url = '%s/NSI/%s' % (base_url, discovery_resource_name)
+
         nml_resource_name       = base_name + '.nml.xml'
         nml_resource_url        = '%s/NSI/%s' % (base_url, nml_resource_name)
+
+        service_endpoints.append( ('Discovery', discovery_url) )
+        service_endpoints.append( ('NML Topology', nml_resource_url) )
 
         # discovery service
         name = base_name.split(':')[0] if ':' in base_name else base_name
@@ -232,11 +241,15 @@ class OpenNSAService(twistedservice.MultiService):
         nml_service = nmlservice.NMLService(nml_network, can_swap_label)
         top_resource.children['NSI'].putChild(nml_resource_name, nml_service.resource() )
 
-        log.msg('Provider  URL: %s' % provider_endpoint )
-        log.msg('Discovery URL: %s/NSI/%s' % (base_url, discovery_resource_name) )
-        log.msg('Topology  URL: %s' % (nml_resource_url) )
         if vc[config.REST]:
-            log.msg('REST      URL: %s' % rest_endpoint )
+            from opennsa.protocols import rest
+            rest_endpoint = base_url + '/connections'
+            rest.setupService(aggr, top_resource, vc.get(config.ALLOWED_HOSTS))
+            service_endpoints.append( ('REST', rest_endpoint) )
+
+        # print service urls
+        for service_name, url in service_endpoints:
+            log.msg('{:<12} URL: {}'.format(service_name, url))
 
         factory = server.Site(top_resource)
         factory.log = httplog.logRequest # default logging is weird, so we do our own
