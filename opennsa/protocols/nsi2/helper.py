@@ -191,6 +191,7 @@ def createSTP(stp_id):
     if not ':' in loc:
         raise error.PayloadError('No : in stp urn (%s)' % loc)
 
+    # FIXME This may need to be updated for new stp structure (Uppsala)
     network, port = loc.rsplit(':', 1)
 
     return nsa.STP(network, port, label)
