@@ -79,7 +79,7 @@ class FetcherService(service.Service):
 
             self.provider_registry.spawnProvider(nsi_agent, network_ids)
 
-            # how to port ?
+            # first, build vectors
             vectors = {}
             if nsa_description.other is not None:
                 for other in nsa_description.other:
@@ -90,6 +90,7 @@ class FetcherService(service.Service):
             for nid in network_ids:
                 vectors[nid] = 1
 
+            # update per-port link vectors
             if vectors:
                 for np in self.nrm_ports:
                     if np.remote_network in network_ids:
