@@ -170,7 +170,7 @@ class JuniperEXCommandSender:
             ssh_connection.openChannel(channel)
             return channel.channel_open
 
-        if self.ssh_connection:
+        if self.ssh_connection and not self.ssh_connection.transport.factory.stopped:
             log.msg('Reusing SSH connection', debug=True, system=LOG_SYSTEM)
             return gotSSHConnection(self.ssh_connection)
         else:
