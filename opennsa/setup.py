@@ -61,6 +61,23 @@ def setupBackend(backend_cfg, network_name, nrm_ports, parent_requester):
 
 
 
+def setupTLSContext(vc):
+
+    # ssl/tls contxt
+    if vc[config.TLS]:
+        from opennsa import ctxfactory
+        ctx_factory = ctxfactory.ContextFactory(vc[config.KEY], vc[config.CERTIFICATE], vc[config.CERTIFICATE_DIR], vc[config.VERIFY_CERT])
+    elif os.path.isdir(vc[config.CERTIFICATE_DIR]):
+        # we can at least create a context
+        from opennsa import ctxfactory
+        ctx_factory = ctxfactory.RequestContextFactory(vc[config.CERTIFICATE_DIR], vc[config.VERIFY_CERT])
+    else:
+        ctx_factory = None
+
+    return ctx_factory
+
+
+
 class CS2RequesterCreator:
 
     def __init__(self, top_resource, aggregator, host, port, tls, ctx_factory):
@@ -132,16 +149,7 @@ class OpenNSAService(twistedservice.MultiService):
                 for network, cost in np.vectors.items():
                     link_vector.updateVector(np.name, { network : cost })
 
-        # ssl/tls contxt
-        if vc[config.TLS]:
-            from opennsa import ctxfactory
-            ctx_factory = ctxfactory.ContextFactory(vc[config.KEY], vc[config.CERTIFICATE], vc[config.CERTIFICATE_DIR], vc[config.VERIFY_CERT])
-        elif os.path.isdir(vc[config.CERTIFICATE_DIR]):
-            # we can at least create a context
-            from opennsa import ctxfactory
-            ctx_factory = ctxfactory.RequestContextFactory(vc[config.CERTIFICATE_DIR], vc[config.VERIFY_CERT])
-        else:
-            ctx_factory = None
+        ctx_factory = setupTLSContext(vc) # May be None
 
         # plugin
         if vc[config.PLUGIN]:
