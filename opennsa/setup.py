@@ -156,7 +156,7 @@ class OpenNSAService(twistedservice.MultiService):
         ns_agent = nsa.NetworkServiceAgent(nsa_name, provider_endpoint, 'local')
 
         # topology
-        nrm_ports, network_topology, link_vector = setupTopology(vc[config.NRM_MAP_FILE], network_name, base_name)
+        nrm_ports, nml_network, link_vector = setupTopology(vc[config.NRM_MAP_FILE], network_name, base_name)
 
         # ssl/tls context
         ctx_factory = setupTLSContext(vc) # May be None
@@ -175,7 +175,7 @@ class OpenNSAService(twistedservice.MultiService):
         requester_creator = CS2RequesterCreator(top_resource, None, vc[config.HOST], vc[config.PORT], vc[config.TLS], ctx_factory) # set aggregator later
 
         provider_registry = provreg.ProviderRegistry({}, { cnt.CS2_SERVICE_TYPE : requester_creator.create } )
-        aggr = aggregator.Aggregator(network_name, ns_agent, network_topology, link_vector, None, provider_registry, vc[config.POLICY], plugin ) # set parent requester later
+        aggr = aggregator.Aggregator(network_name, ns_agent, nml_network, link_vector, None, provider_registry, vc[config.POLICY], plugin ) # set parent requester later
 
         requester_creator.aggregator = aggr
 
@@ -229,7 +229,7 @@ class OpenNSAService(twistedservice.MultiService):
         top_resource.children['NSI'].putChild('connections', vr)
 
         # topology
-        nml_service = nmlservice.NMLService(network_topology, can_swap_label)
+        nml_service = nmlservice.NMLService(nml_network, can_swap_label)
         top_resource.children['NSI'].putChild(nml_resource_name, nml_service.resource() )
 
         log.msg('Provider  URL: %s' % provider_endpoint )
