@@ -195,11 +195,11 @@ class OpenNSAService(twistedservice.MultiService):
 
         backend_cfg = backend_configs.values()[0]
 
-        backend_service = setupBackend(backend_cfg, network_topology.id_, nrm_ports, aggr)
+        backend_service = setupBackend(backend_cfg, network_name, nrm_ports, aggr)
         backend_service.setServiceParent(self)
         can_swap_label = backend_service.connection_manager.canSwapLabel(cnt.ETHERNET_VLAN)
 
-        provider_registry.addProvider(ns_agent.urn(), backend_service, [ network_topology.id_ ] )
+        provider_registry.addProvider(ns_agent.urn(), backend_service, [ network_name ] )
 
         # fetcher
         if vc[config.PEERS]:
