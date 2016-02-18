@@ -360,9 +360,10 @@ class GenericBackend(service.Service):
             raise error.ConnectionGoneError('Connection %s has been terminated')
 
         # the switch to reserve start and allocated must be in same transaction
-        state.reserveMultiSwitch(conn, state.RESERVE_COMMITTING, state.RESERVE_START)
+        # state.reserveMultiSwitch will save the state, including the allocated flag
         conn.allocated = True
-        yield conn.save()
+        yield state.reserveMultiSwitch(conn, state.RESERVE_COMMITTING, state.RESERVE_START)
+
         self.logStateUpdate(conn, 'COMMIT/RESERVED')
 
         # cancel abort and schedule end time call
@@ -562,8 +563,7 @@ class GenericBackend(service.Service):
     def _doReserve(self, conn, correlation_id):
 
         # we have already checked resource availability, so can progress directly through checking
-        state.reserveMultiSwitch(conn, state.RESERVE_CHECKING, state.RESERVE_HELD)
-        yield conn.save()
+        yield state.reserveMultiSwitch(conn, state.RESERVE_CHECKING, state.RESERVE_HELD)
         self.logStateUpdate(conn, 'RESERVE CHECKING/HELD')
 
         # schedule 2PC timeout

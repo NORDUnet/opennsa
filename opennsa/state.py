@@ -112,6 +112,7 @@ def reserveMultiSwitch(conn, *states):
     for s in states:
         _switchState(RESERVE_TRANSITIONS, conn.reservation_state, s)
         conn.reservation_state = s
+    return conn.save()
 
 
 # Provision
