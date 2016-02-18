@@ -5,12 +5,13 @@ Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2015)
 """
 
+import time
 import json
 
 from twisted.python import log
 from twisted.web import resource, server
 
-from opennsa import nsa, error, constants as cnt
+from opennsa import nsa, error, state, constants as cnt
 from opennsa.shared import xmlhelper
 from opennsa.protocols.shared import requestauthz
 from opennsa.protocols.nsi2 import helper
@@ -165,7 +166,6 @@ class P2PConnectionResource(resource.Resource):
         d = self.provider.getConnection(self.connection_id)
 
         def gotConnection(conn):
-            #print 'connection', conn
             d = {}
             d['connection_id']     = conn.connection_id
             d['start_time']        = conn.start_time
@@ -199,49 +199,42 @@ class P2PStatusResource(resource.Resource):
         self.allowed_hosts = allowed_hosts
 
 
-#    # this is for longpull, we don't have the notification infrastructure
-#    def render_GET(self, request):
-#
-#        allowed, msg, request_info = requestauthz.checkAuthz(request, self.allowed_hosts)
-#        if not allowed:
-#            request.setResponseCode(401) # Not Authorized
-#            return msg + RN
-#
-#        # not sure this one is actually needed, does pretty much the same as conn resource get
-#        # actually we need this for long poll.. not sure how to pull that off though
-#        d = self.provider.getConnection(self.connection_id)
-#
-#        def gotConnection(conn):
-#            #print 'connection', conn
-#            request.setResponseCode(200)
-#
-#            # hackish long-poll
-#
-#            def createStatusPayload(conn):
-#                d = {}
-#                d['timestamp']         = int(time.time())
-#                d['reservation_state'] = conn.reservation_state
-#                d['provision_state']   = conn.provision_state
-#                d['lifecycle_state']   = conn.lifecycle_state
-#                return json.dumps(d) + RN
-#
-#            payload = createStatusPayload(conn)
-#            #request.write(json.dumps(d) + RN)
-#            request.write(payload)
-#            reactor.callLater(2, gotConnection, conn)
-##            request.finish()
-#            return server.NOT_DONE_YET
-#
-#        def noConnection(err):
-#            print 'could not get connection', err
-#            request.setResponseCode(404)
-#            request.write('No connection with id %s' % self.connection_id)
-#            request.finish()
-#
-#        print 'Longpull request', self.connection_id
-#        d.addCallbacks(gotConnection, noConnection)
-#        return server.NOT_DONE_YET
+    # this is for longpull
+    # there is currently NO notification infrastructure for state updates
+    def render_GET(self, request):
 
+        allowed, msg, request_info = requestauthz.checkAuthz(request, self.allowed_hosts)
+        if not allowed:
+            request.setResponseCode(401) # Not Authorized
+            return msg + RN
+
+        def gotConnection(conn):
+            request.setResponseCode(200)
+
+            def writeStatusPayload():
+                d = {}
+                d['timestamp']         = int(time.time())
+                d['reservation_state'] = conn.reservation_state
+                d['provision_state']   = conn.provision_state
+                d['lifecycle_state']   = conn.lifecycle_state
+
+                payload = json.dumps(d) + RN
+                request.write(payload)
+
+            writeStatusPayload()
+            state.subscribe(conn, lambda : writeStatusPayload() )
+            return server.NOT_DONE_YET
+
+        def noConnection(err):
+            log.msg('Connection id %s specified on longpull request does not exist' % self.connection_id)
+            request.setResponseCode(404)
+            request.write('No connection with id %s' % self.connection_id)
+            request.finish()
+
+        log.msg('Longpull state request for %s' % self.connection_id, system=LOG_SYSTEM)
+        d = self.provider.getConnection(self.connection_id)
+        d.addCallbacks(gotConnection, noConnection)
+        return server.NOT_DONE_YET
 
 
     def render_POST(self, request):

@@ -5,8 +5,12 @@ Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2011)
 """
 
+from twisted.python import log
+
 from opennsa import error
 
+
+LOG_SYSTEM = 'opennsa.state'
 
 
 # Reservation states
@@ -62,6 +66,31 @@ LIFECYCLE_TRANSITIONS = {
     TERMINATED      : []
 }
 
+SUBSCRIPTIONS = {}
+
+def subscribe(conn, f):
+    global SUBSCRIPTIONS
+    SUBSCRIPTIONS.setdefault(id(conn), []).append(f)
+
+
+def saveNotify(conn):
+
+    def notify(conn):
+        try:
+            for f in SUBSCRIPTIONS[id(conn)]:
+                try:
+                    f()
+                except Exception as e:
+                    log.msg('Error during state notificaton: %s' % str(e), system=LOG_SYSTEM)
+        except KeyError:
+            pass
+
+        return conn
+
+    d = conn.save()
+    d.addCallback(notify)
+    return d
+
 
 def _switchState(transition_schema, old_state, new_state):
     if new_state in transition_schema[old_state]:
@@ -75,44 +104,44 @@ def _switchState(transition_schema, old_state, new_state):
 def reserveChecking(conn):
     _switchState(RESERVE_TRANSITIONS, conn.reservation_state, RESERVE_CHECKING)
     conn.reservation_state = RESERVE_CHECKING
-    return conn.save()
+    return saveNotify(conn)
 
 def reserveHeld(conn):
     _switchState(RESERVE_TRANSITIONS, conn.reservation_state, RESERVE_HELD)
     conn.reservation_state = RESERVE_HELD
-    return conn.save()
+    return saveNotify(conn)
 
 def reserveFailed(conn):
     _switchState(RESERVE_TRANSITIONS, conn.reservation_state, RESERVE_FAILED)
     conn.reservation_state = RESERVE_FAILED
-    return conn.save()
+    return saveNotify(conn)
 
 def reserveCommit(conn):
     _switchState(RESERVE_TRANSITIONS, conn.reservation_state, RESERVE_COMMITTING)
     conn.reservation_state = RESERVE_COMMITTING
-    return conn.save()
+    return saveNotify(conn)
 
 def reserveAbort(conn):
     _switchState(RESERVE_TRANSITIONS, conn.reservation_state, RESERVE_ABORTING)
     conn.reservation_state = RESERVE_ABORTING
-    return conn.save()
+    return saveNotify(conn)
 
 def reserveTimeout(conn):
     _switchState(RESERVE_TRANSITIONS, conn.reservation_state, RESERVE_TIMEOUT)
     conn.reservation_state = RESERVE_TIMEOUT
-    return conn.save()
+    return saveNotify(conn)
 
 def reserved(conn):
     _switchState(RESERVE_TRANSITIONS, conn.reservation_state, RESERVE_START)
     conn.reservation_state = RESERVE_START
-    return conn.save()
+    return saveNotify(conn)
 
 def reserveMultiSwitch(conn, *states):
     # switch through multiple states in one go, note this does not save the state (because it is often needed with allocation switch)
     for s in states:
         _switchState(RESERVE_TRANSITIONS, conn.reservation_state, s)
         conn.reservation_state = s
-    return conn.save()
+    return saveNotify(conn)
 
 
 # Provision
@@ -120,42 +149,42 @@ def reserveMultiSwitch(conn, *states):
 def provisioning(conn):
     _switchState(PROVISION_TRANSITIONS, conn.provision_state, PROVISIONING)
     conn.provision_state = PROVISIONING
-    return conn.save()
+    return saveNotify(conn)
 
 def provisioned(conn):
     _switchState(PROVISION_TRANSITIONS, conn.provision_state, PROVISIONED)
     conn.provision_state = PROVISIONED
-    return conn.save()
+    return saveNotify(conn)
 
 def releasing(conn):
     _switchState(PROVISION_TRANSITIONS, conn.provision_state, RELEASING)
     conn.provision_state = RELEASING
-    return conn.save()
+    return saveNotify(conn)
 
 def released(conn):
     _switchState(PROVISION_TRANSITIONS, conn.provision_state, RELEASED)
     conn.provision_state = RELEASED
-    return conn.save()
+    return saveNotify(conn)
 
 # Lifecyle
 
 def passedEndtime(conn):
     _switchState(LIFECYCLE_TRANSITIONS, conn.lifecycle_state, PASSED_ENDTIME)
     conn.lifecycle_state = PASSED_ENDTIME
-    return conn.save()
+    return saveNotify(conn)
 
 def failed(conn):
     _switchState(LIFECYCLE_TRANSITIONS, conn.lifecycle_state, FAILED)
     conn.lifecycle_state = FAILED
-    return conn.save()
+    return saveNotify(conn)
 
 def terminating(conn):
     _switchState(LIFECYCLE_TRANSITIONS, conn.lifecycle_state, TERMINATING)
     conn.lifecycle_state = TERMINATING
-    return conn.save()
+    return saveNotify(conn)
 
 def terminated(conn):
     _switchState(LIFECYCLE_TRANSITIONS, conn.lifecycle_state, TERMINATED)
     conn.lifecycle_state = TERMINATED
-    return conn.save()
+    return saveNotify(conn)
 
