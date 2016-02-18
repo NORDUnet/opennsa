@@ -11,7 +11,7 @@ import json
 from twisted.python import log
 from twisted.web import resource, server
 
-from opennsa import nsa, error, state, constants as cnt
+from opennsa import nsa, error, state, constants as cnt, database
 from opennsa.shared import xmlhelper
 from opennsa.protocols.shared import requestauthz
 from opennsa.protocols.nsi2 import helper
@@ -57,8 +57,57 @@ class P2PBaseResource(resource.Resource):
         return P2PConnectionResource(self.provider, path, self.allowed_hosts)
 
 
-    #def render_GET(self, request)
+    def render_GET(self, request):
         # this should return a list of authZed connections with some usefull information
+        # we cannot really do any meaningfull authz at the moment though...
+
+        def gotConnections(conns):
+            res = []
+            def label(label):
+                if label is None:
+                    return ''
+                else:
+                    return '?%s=%s' % (label.type_, label.labelValue())
+
+            for conn in conns:
+                print conn
+
+                # this thing is sorta used multiple times...
+                d = {}
+                d['connection_id']     = conn.connection_id
+                d['start_time']        = conn.start_time if conn.start_time is None else conn.start_time.isoformat()
+                d['end_time']          = conn.end_time   if conn.end_time   is None else conn.end_time.isoformat()
+                d['source']            = '%s:%s%s' % (conn.source_network, conn.source_port, label(conn.source_label))
+                d['destination']       = '%s:%s%s' % (conn.dest_network, conn.dest_port, label(conn.dest_label))
+                d['bandwidth']         = conn.bandwidth
+                d['reservation_state'] = conn.reservation_state
+                d['provision_state']   = conn.provision_state
+                d['lifecycle_state']   = conn.lifecycle_state
+
+                res.append(d)
+
+            payload = json.dumps(res) + RN
+
+            request.setResponseCode(200)
+            request.write(payload)
+            request.finish()
+
+
+        # factor this one out some time
+        def createErrorResponse(err):
+            log.msg('%s while creating connection: %s' % (str(err.type), str(err.value)), system=LOG_SYSTEM)
+
+            payload = str(err.value) + RN
+
+            if isinstance(err.value, error.NSIError):
+                _finishRequest(request, 400, payload) # Bad Request
+            else:
+                _finishRequest(request, 500, payload) # Server Error
+
+
+        d = database.ServiceConnection.find()
+        d.addCallbacks(gotConnections, createErrorResponse)
+        return server.NOT_DONE_YET
 
 
     def render_POST(self, request):
@@ -168,8 +217,8 @@ class P2PConnectionResource(resource.Resource):
         def gotConnection(conn):
             d = {}
             d['connection_id']     = conn.connection_id
-            d['start_time']        = conn.start_time
-            d['end_time']          = conn.end_time
+            d['start_time']        = conn.start_time if conn.start_time is None else conn.start_time.isoformat()
+            d['end_time']          = conn.end_time   if conn.end_time   is None else conn.end_time.isoformat()
             d['source']            = '%s:%s?%s=%s' % (conn.source_network, conn.source_port, conn.source_label.type_, conn.dest_label.labelValue())
             d['destination']       = '%s:%s?%s=%s' % (conn.dest_network, conn.dest_port, conn.dest_label.type_, conn.dest_label.labelValue())
             d['bandwidth']         = conn.bandwidth
