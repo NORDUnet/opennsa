@@ -460,9 +460,10 @@ class GenericBackend(service.Service):
                 except Exception as e:
                     log.msg('Connection %s: Error tearing down link: %s' % (conn.connection_id, e))
 
-            self.scheduler.scheduleCall(connection_id, conn.end_time, self._doEndtime, conn)
-            td = conn.start_time - datetime.datetime.utcnow()
-            log.msg('Connection %s: terminating scheduled for %s UTC (%i seconds)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
+            if conn.end_time is not None:
+                self.scheduler.scheduleCall(connection_id, conn.end_time, self._doEndtime, conn)
+                td = conn.start_time - datetime.datetime.utcnow()
+                log.msg('Connection %s: terminating scheduled for %s UTC (%i seconds)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
 
             yield state.released(conn)
             self.logStateUpdate(conn, 'RELEASED')

@@ -193,6 +193,41 @@ class GenericProviderTest:
 
 
     @defer.inlineCallbacks
+    def testProvisionReleaseNoStartEndTime(self):
+
+        schedule    = nsa.Schedule(None, None)
+        criteria    = nsa.Criteria(0, schedule, nsa.Point2PointService(self.source_stp, self.dest_stp, 200, 'Bidirectional', False, None) )
+
+        self.header.newCorrelationId()
+        acid = yield self.provider.reserve(self.header, None, None, None, criteria)
+        yield self.requester.reserve_defer
+
+        yield self.provider.reserveCommit(self.header, acid)
+        yield self.requester.reserve_commit_defer
+
+        yield self.provider.provision(self.header, acid)
+        yield self.requester.provision_defer
+
+        self.clock.advance(3)
+
+        header, cid, nid, timestamp, dps = yield self.requester.data_plane_change_defer
+        active, version, consistent = dps
+        self.failUnlessEquals(active, True)
+
+        self.requester.data_plane_change_defer = defer.Deferred()
+
+        yield self.provider.release(self.header, acid)
+        yield self.requester.release_defer
+
+        header, cid, nid, timestamp, dps = yield self.requester.data_plane_change_defer
+        active, version, consistent = dps
+        self.failUnlessEquals(active, False)
+
+        yield self.provider.terminate(self.header, cid)
+        yield self.requester.terminate_defer
+
+
+    @defer.inlineCallbacks
     def testProvisionReleaseUsage(self):
 
         self.header.newCorrelationId()
