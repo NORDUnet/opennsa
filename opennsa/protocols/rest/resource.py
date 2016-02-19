@@ -102,6 +102,7 @@ class P2PBaseResource(resource.Resource):
         # factor this one out some time
         def createErrorResponse(err):
             log.msg('%s while creating connection: %s' % (str(err.type), str(err.value)), system=LOG_SYSTEM)
+            log.err(err)
 
             payload = str(err.value) + RN
 
@@ -181,6 +182,7 @@ class P2PBaseResource(resource.Resource):
 
         def createErrorResponse(err):
             log.msg('%s while creating connection: %s' % (str(err.type), str(err.value)), system=LOG_SYSTEM)
+            log.err(err)
 
             payload = str(err.value) + RN
 
@@ -245,7 +247,7 @@ class P2PStatusResource(resource.Resource):
         self.allowed_hosts = allowed_hosts
 
 
-    # this is for longpull
+    # this is for longpoll
     # there is currently NO notification infrastructure for state updates
     def render_GET(self, request):
 
@@ -272,12 +274,12 @@ class P2PStatusResource(resource.Resource):
             return server.NOT_DONE_YET
 
         def noConnection(err):
-            log.msg('Connection id %s specified on longpull request does not exist' % self.connection_id)
+            log.msg('Connection id %s specified on longpoll request does not exist' % self.connection_id)
             request.setResponseCode(404)
             request.write('No connection with id %s' % self.connection_id)
             request.finish()
 
-        log.msg('Longpull state request for %s' % self.connection_id, system=LOG_SYSTEM)
+        log.msg('Longpoll state request for %s' % self.connection_id, system=LOG_SYSTEM)
         d = self.provider.getConnection(self.connection_id)
         d.addCallbacks(gotConnection, noConnection)
         return server.NOT_DONE_YET
