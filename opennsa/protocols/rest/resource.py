@@ -42,6 +42,30 @@ def _finishRequest(request, code, payload, headers=None):
 
 
 
+def conn2dict(conn):
+
+    def label(label):
+        if label is None:
+            return ''
+        else:
+            return '?%s=%s' % (label.type_, label.labelValue())
+
+    d = {}
+
+    d['connection_id']     = conn.connection_id
+    d['start_time']        = conn.start_time if conn.start_time is None else conn.start_time.isoformat()
+    d['end_time']          = conn.end_time   if conn.end_time   is None else conn.end_time.isoformat()
+    d['source']            = '%s:%s%s' % (conn.source_network, conn.source_port, label(conn.source_label))
+    d['destination']       = '%s:%s%s' % (conn.dest_network, conn.dest_port, label(conn.dest_label))
+    d['bandwidth']         = conn.bandwidth
+    d['reservation_state'] = conn.reservation_state
+    d['provision_state']   = conn.provision_state
+    d['lifecycle_state']   = conn.lifecycle_state
+
+    return d
+
+
+
 class P2PBaseResource(resource.Resource):
     """
     Resource for creating connections. Also creates sub-resources for connections.
@@ -63,27 +87,9 @@ class P2PBaseResource(resource.Resource):
 
         def gotConnections(conns):
             res = []
-            def label(label):
-                if label is None:
-                    return ''
-                else:
-                    return '?%s=%s' % (label.type_, label.labelValue())
 
             for conn in conns:
-                print conn
-
-                # this thing is sorta used multiple times...
-                d = {}
-                d['connection_id']     = conn.connection_id
-                d['start_time']        = conn.start_time if conn.start_time is None else conn.start_time.isoformat()
-                d['end_time']          = conn.end_time   if conn.end_time   is None else conn.end_time.isoformat()
-                d['source']            = '%s:%s%s' % (conn.source_network, conn.source_port, label(conn.source_label))
-                d['destination']       = '%s:%s%s' % (conn.dest_network, conn.dest_port, label(conn.dest_label))
-                d['bandwidth']         = conn.bandwidth
-                d['reservation_state'] = conn.reservation_state
-                d['provision_state']   = conn.provision_state
-                d['lifecycle_state']   = conn.lifecycle_state
-
+                d = conn2dict(conn)
                 res.append(d)
 
             payload = json.dumps(res) + RN
@@ -215,16 +221,7 @@ class P2PConnectionResource(resource.Resource):
         d = self.provider.getConnection(self.connection_id)
 
         def gotConnection(conn):
-            d = {}
-            d['connection_id']     = conn.connection_id
-            d['start_time']        = conn.start_time if conn.start_time is None else conn.start_time.isoformat()
-            d['end_time']          = conn.end_time   if conn.end_time   is None else conn.end_time.isoformat()
-            d['source']            = '%s:%s?%s=%s' % (conn.source_network, conn.source_port, conn.source_label.type_, conn.dest_label.labelValue())
-            d['destination']       = '%s:%s?%s=%s' % (conn.dest_network, conn.dest_port, conn.dest_label.type_, conn.dest_label.labelValue())
-            d['bandwidth']         = conn.bandwidth
-            d['reservation_state'] = conn.reservation_state
-            d['provision_state']   = conn.provision_state
-            d['lifecycle_state']   = conn.lifecycle_state
+            d = conn2dict(conn)
 
             payload = json.dumps(d) + RN
             _finishRequest(request, 200, payload)
