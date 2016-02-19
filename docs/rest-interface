@@ -4,11 +4,9 @@ URL design:
 Create new connection       POST    /connections
 List connections (filter)   GET     /connections
 Get connection information  GET     /connections/{connection_id}
-Get connection state        GET     /connections/{connection_id}/state
+Get connection status       GET     /connections/{connection_id}/status
 
-List connections and longpull are not yet implemented.
-
-For state, include time stamp
+the /status is longpull (server won't close connection but will update continously)
 
 Enable:
 
@@ -17,7 +15,7 @@ In [service] section:
 rest=true
 
 
-Example minimal payload:
+Example minimal payload to create connnection:
 
 """
 {
@@ -38,6 +36,7 @@ More flags:
 
 Date format is ISO, e.g., "2015-12-13 08:08:08Z" 
 
+
 No:
     nsa identity (b0rked concept anyway)
     global reservation id
@@ -46,8 +45,4 @@ No:
 
 Maybe:
     client correlation id
-
-Features:
-    Long-pull state retrieval
-
 
