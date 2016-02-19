@@ -6,25 +6,18 @@ from opennsa.interface import INSIProvider, INSIRequester
 
 from opennsa import aggregator
 from opennsa.backends.common import genericbackend
-from opennsa.protocols.nsi2 import provider, requester
-
-
-class FakeTopology:
-    def __init__(self, name, id_):
-        self.name = name
-        self.id_ = id_
+from opennsa.protocols.nsi2 import provider
 
 
 class InterfaceTest(unittest.TestCase):
 
     def testGenericBackend(self):
-        ft = FakeTopology('network', 'network')
-        simple_backend = genericbackend.GenericBackend('network', ft, None, None, None)
+        simple_backend = genericbackend.GenericBackend('network', None, None, None, None)
         verifyObject(INSIProvider, simple_backend)
 
 
     def testAggregator(self):
-        aggr = aggregator.Aggregator('network', None, None, None, None)
+        aggr = aggregator.Aggregator('network', None, None, None, None, None, None, None)
         verifyObject(INSIProvider, aggr)
         verifyObject(INSIRequester, aggr)
 
