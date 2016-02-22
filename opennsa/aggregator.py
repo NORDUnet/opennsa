@@ -985,14 +985,14 @@ class Aggregator:
     def terminateConfirmed(self, header, connection_id):
 
         sub_connection = yield self.getSubConnection(header.provider_nsa, connection_id)
-        sub_connection.reservation_state = state.TERMINATED
+        sub_connection.lifecycle_state = state.TERMINATED
         yield sub_connection.save()
 
         conn = yield self.getConnectionByKey(sub_connection.service_connection_id)
         sub_conns = yield self.getSubConnectionsByConnectionKey(conn.id)
 
         # if we get responses very close, multiple requests can trigger this, so we check main state as well
-        if all( [ sc.reservation_state == state.TERMINATED for sc in sub_conns ] ) and conn.reservation_state != state.TERMINATED:
+        if all( [ sc.lifecycle_state == state.TERMINATED for sc in sub_conns ] ) and conn.lifecycle_state != state.TERMINATED:
             yield state.terminated(conn)
             header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn())
             self.parent_requester.terminateConfirmed(header, conn.connection_id)
