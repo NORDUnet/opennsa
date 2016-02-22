@@ -858,7 +858,8 @@ class Aggregator:
             log.msg('Connection %s: Still missing %i reserveConfirmed call(s) to aggregate' % (conn.connection_id, len(outstanding_calls)), system=LOG_SYSTEM)
             return
 
-        if all( [ sc.reservation_state == state.RESERVE_HELD for sc in sub_conns ] ):
+        # if we get responses very close, multiple requests can trigger this, so we check main state as well
+        if all( [ sc.reservation_state == state.RESERVE_HELD for sc in sub_conns ] ) and conn.reservation_state != state.RESERVE_HELD:
             log.msg('Connection %s: All sub connections reserve held, can emit reserveConfirmed' % (conn.connection_id), system=LOG_SYSTEM)
             yield state.reserveHeld(conn)
             header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn())
@@ -914,7 +915,8 @@ class Aggregator:
         conn = yield self.getConnectionByKey(sub_connection.service_connection_id)
         sub_conns = yield self.getSubConnectionsByConnectionKey(conn.id)
 
-        if all( [ sc.reservation_state == state.RESERVE_START for sc in sub_conns ] ):
+        # if we get responses very close, multiple requests can trigger this, so we check main state as well
+        if all( [ sc.reservation_state == state.RESERVE_START for sc in sub_conns ] ) and conn.reservation_state != state.RESERVE_START:
             yield state.reserved(conn)
             header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn())
             self.parent_requester.reserveCommitConfirmed(header, conn.connection_id)
@@ -934,7 +936,8 @@ class Aggregator:
         conn = yield self.getConnectionByKey(sub_connection.service_connection_id)
         sub_conns = yield self.getSubConnectionsByConnectionKey(conn.id)
 
-        if all( [ sc.reservation_state == state.RESERVE_START for sc in sub_conns ] ):
+        # if we get responses very close, multiple requests can trigger this, so we check main state as well
+        if all( [ sc.reservation_state == state.RESERVE_START for sc in sub_conns ] ) and conn.reservation_state != state.RESERVE_START:
             yield state.reserved(conn)
             header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn())
             self.parent_requester.reserveAbortConfirmed(header, conn.connection_id)
@@ -952,7 +955,8 @@ class Aggregator:
         conn = yield self.getConnectionByKey(sub_connection.service_connection_id)
         sub_conns = yield self.getSubConnectionsByConnectionKey(conn.id)
 
-        if all( [ sc.provision_state == state.PROVISIONED for sc in sub_conns ] ):
+        # if we get responses very close, multiple requests can trigger this, so we check main state as well
+        if all( [ sc.provision_state == state.PROVISIONED for sc in sub_conns ] ) and conn.provision_state != state.PROVISIONED:
             yield state.provisioned(conn)
             req_header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn())
             self.parent_requester.provisionConfirmed(req_header, conn.connection_id)
@@ -970,7 +974,8 @@ class Aggregator:
         conn = yield self.getConnectionByKey(sub_connection.service_connection_id)
         sub_conns = yield self.getSubConnectionsByConnectionKey(conn.id)
 
-        if all( [ sc.provision_state == state.RELEASED for sc in sub_conns ] ):
+        # if we get responses very close, multiple requests can trigger this, so we check main state as well
+        if all( [ sc.provision_state == state.RELEASED for sc in sub_conns ] ) and conn.provision_state != state.RELEASED:
             yield state.released(conn)
             req_header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn())
             self.parent_requester.releaseConfirmed(req_header, conn.connection_id)
@@ -986,7 +991,8 @@ class Aggregator:
         conn = yield self.getConnectionByKey(sub_connection.service_connection_id)
         sub_conns = yield self.getSubConnectionsByConnectionKey(conn.id)
 
-        if all( [ sc.reservation_state == state.TERMINATED for sc in sub_conns ] ):
+        # if we get responses very close, multiple requests can trigger this, so we check main state as well
+        if all( [ sc.reservation_state == state.TERMINATED for sc in sub_conns ] ) and conn.reservation_state != state.TERMINATED:
             yield state.terminated(conn)
             header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn())
             self.parent_requester.terminateConfirmed(header, conn.connection_id)
