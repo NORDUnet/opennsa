@@ -41,6 +41,17 @@ def _finishRequest(request, code, payload, headers=None):
     request.finish()
 
 
+def _createErrorResponse(err, request):
+    log.msg('%s while creating connection: %s' % (str(err.type), str(err.value)), system=LOG_SYSTEM)
+    log.err(err)
+
+    payload = str(err.value) + RN
+
+    if isinstance(err.value, error.NSIError):
+        _finishRequest(request, 400, payload) # Bad Request
+    else:
+        _finishRequest(request, 500, payload) # Server Error
+
 
 def conn2dict(conn):
 
@@ -98,22 +109,8 @@ class P2PBaseResource(resource.Resource):
             request.write(payload)
             request.finish()
 
-
-        # factor this one out some time
-        def createErrorResponse(err):
-            log.msg('%s while creating connection: %s' % (str(err.type), str(err.value)), system=LOG_SYSTEM)
-            log.err(err)
-
-            payload = str(err.value) + RN
-
-            if isinstance(err.value, error.NSIError):
-                _finishRequest(request, 400, payload) # Bad Request
-            else:
-                _finishRequest(request, 500, payload) # Server Error
-
-
         d = database.ServiceConnection.find()
-        d.addCallbacks(gotConnections, createErrorResponse)
+        d.addCallbacks(gotConnections, _createErrorResponse, errbackArgs=(request,))
         return server.NOT_DONE_YET
 
 
@@ -180,18 +177,7 @@ class P2PBaseResource(resource.Resource):
             header = { 'location': self.base_path + '/' + connection_id }
             _finishRequest(request, 201, payload, header) # Created
 
-        def createErrorResponse(err):
-            log.msg('%s while creating connection: %s' % (str(err.type), str(err.value)), system=LOG_SYSTEM)
-            log.err(err)
-
-            payload = str(err.value) + RN
-
-            if isinstance(err.value, error.NSIError):
-                _finishRequest(request, 400, payload) # Bad Request
-            else:
-                _finishRequest(request, 500, payload) # Server Error
-
-        d.addCallbacks(createResponse, createErrorResponse)
+        d.addCallbacks(createResponse, _createErrorResponse, errbackArgs=(request,))
 
         return server.NOT_DONE_YET
 
