@@ -194,8 +194,6 @@ class Aggregator:
                 log.msg('Rejecting reserve request without user security attribute', system=LOG_SYSTEM)
                 raise error.SecurityError('This NSA (%s) requires a user attribute in the header to create a reservation.' % self.nsa_.urn() )
 
-        connection_id = yield self.plugin.createConnectionId()
-
         sd = criteria.service_def
         source_stp = sd.source_stp
         dest_stp   = sd.dest_stp
@@ -219,6 +217,8 @@ class Aggregator:
             self.network_topology.getPort(source_stp.network + ':' + source_stp.port)
         if dest_stp.network == self.network:
             self.network_topology.getPort(dest_stp.network + ':' + dest_stp.port)
+
+        connection_id = yield self.plugin.createConnectionId()
 
         conn = database.ServiceConnection(connection_id=connection_id, revision=0, global_reservation_id=global_reservation_id, description=description,
                             requester_nsa=header.requester_nsa, requester_url=header.reply_to, reserve_time=datetime.datetime.utcnow(),
