@@ -43,7 +43,6 @@ def _finishRequest(request, code, payload, headers=None):
 
 def _createErrorResponse(err, request):
     log.msg('%s while creating connection: %s' % (str(err.type), str(err.value)), system=LOG_SYSTEM)
-    log.err(err)
 
     payload = str(err.value) + RN
 
