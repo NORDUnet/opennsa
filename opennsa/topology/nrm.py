@@ -23,7 +23,8 @@ PORT_TYPES      = [ cnt.ETHERNET ] # OpenNSA doesn't really do unidirectional at
 PATH_ATTRIBUTES = [ 'vector' ]
 ATTRIBUTES      = [ cnt.RESTRICTTRANSIT ]
 
-LABEL_TYPES     = { 'vlan'  : cnt.ETHERNET_VLAN }
+LABEL_TYPES     = { 'vlan'  : cnt.ETHERNET_VLAN,
+                    'mpls'  : cnt.MPLS }
 
 
 # format: network#port OR network#port-(in|out)
