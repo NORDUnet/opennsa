@@ -67,6 +67,9 @@ def _parseRemoteSpec(remote_spec):
 
 def _parseLabelSpec(label_spec):
 
+    if label_spec == '-':
+        return None
+
     if not ':' in label_spec:
         raise error.TopologyError('Invalid label description: %s' % label_spec)
 

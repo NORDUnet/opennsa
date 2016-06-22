@@ -9,6 +9,7 @@ NRM_ENTRY = \
 """
 # some comment
 ethernet     ps              -                              vlan:1780-1788  1000    em0     -
+ethernet     eth             -                              -               1000    em0     -
 ethernet     netherlight     netherlight#intf1(-in|-out)    vlan:1780-1783  1000    em1     -
 ethernet     somelight       somelight#intf2(-in|-out)      vlan:1780-1780  1000    em8     -
 ethernet     uvalight        uvalight#intf3(-in|-out)       vlan:1780-1783  1000    em2     -
