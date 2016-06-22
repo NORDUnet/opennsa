@@ -23,20 +23,23 @@ BIDIRECTIONAL       = 'Bidirectional'
 
 EVTS_AGOLE          = 'http://services.ogf.org/nsi/2013/07/descriptions/EVTS.A-GOLE'
 
-ETHERNET_NS         = 'http://schemas.ogf.org/nml/2012/10/ethernet'
-NML_ETHERNET_VLAN   = '%s#vlan' % ETHERNET_NS
-
-# Port types
+# port types
 ETHERNET            = 'ethernet' # bidirectional implied
 ETHERNET_VLAN       = 'vlan'
 MPLS                = 'mpls'
 
 RESTRICTTRANSIT     = 'restricttransit'
 
+# nml
+ETHERNET_NS         = 'http://schemas.ogf.org/nml/2012/10/ethernet'
+NML_ETHERNET_VLAN   = '%s#vlan' % ETHERNET_NS
+NML_MPLS            = 'http://nsi.nordu.net/nml#mpls' # pretty much just made up
+
+
 FEATURE_AGGREGATOR  = 'vnd.ogf.nsi.cs.v2.role.aggregator'
 FEATURE_UPA         = 'vnd.ogf.nsi.cs.v2.role.uPA'
 
-# Policies
+# policies
 REQUIRE_USER        = 'requireuser'
 REQUIRE_TRACE       = 'requiretrace'
 

@@ -53,7 +53,8 @@ NML_HASSERVICE          = NML_NS + 'hasService'
 
 
 NML_LABEL_MAPPING = {
-    cnt.ETHERNET_VLAN : cnt.NML_ETHERNET_VLAN
+    cnt.ETHERNET_VLAN : cnt.NML_ETHERNET_VLAN,
+    cnt.MPLS          : cnt.NML_MPLS
 }
 
 NSI_SERVICE_DEFINITION = ET.QName('{%s}serviceDefinition' % NSI_DEF_NS)

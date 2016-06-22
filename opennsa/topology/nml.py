@@ -82,7 +82,10 @@ class BidirectionalPort(object):
         assert type(name) is str, 'Port name must be a string'
         assert isinstance(inbound_port, Port), 'Inbound port must be a <Port>'
         assert isinstance(outbound_port, Port), 'Outbound port must be a <Port>'
-        assert inbound_port.label().type_ == outbound_port.label().type_, 'Port labels must match each other'
+        if inbound_port.label() is None and outbound_port.label() is None:
+            pass # ok
+        else:
+            assert inbound_port.label().type_ == outbound_port.label().type_, 'Port labels must match each other'
         assert not id_.startswith('urn:'), 'URNs are not used in core OpenNSA NML (id: %s)' % id_
 
         self.id_ = id_
