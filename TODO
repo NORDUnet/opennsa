@@ -1,4 +1,10 @@
+In reserve request log: put source and dest
+
+Schedule re-check shortly after startup if discovery files are not available
+
 Remove all requester nsa scoping in aggregator - it won't work
+
+Add cli backend (script to invoke setup and teardown)
 
 Adminstrative interface
  - First considered with domainsocket, but tests showed it to be weird
