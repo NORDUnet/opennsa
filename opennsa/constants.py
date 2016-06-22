@@ -26,14 +26,17 @@ EVTS_AGOLE          = 'http://services.ogf.org/nsi/2013/07/descriptions/EVTS.A-G
 ETHERNET_NS         = 'http://schemas.ogf.org/nml/2012/10/ethernet'
 NML_ETHERNET_VLAN   = '%s#vlan' % ETHERNET_NS
 
+# Port types
+ETHERNET            = 'ethernet' # bidirectional implied
 ETHERNET_VLAN       = 'vlan'
+MPLS                = 'mpls'
 
-NRM_ETHERNET        = 'ethernet' # bidirectional implied
-NRM_RESTRICTTRANSIT = 'restricttransit'
+RESTRICTTRANSIT     = 'restricttransit'
 
 FEATURE_AGGREGATOR  = 'vnd.ogf.nsi.cs.v2.role.aggregator'
 FEATURE_UPA         = 'vnd.ogf.nsi.cs.v2.role.uPA'
 
+# Policies
 REQUIRE_USER        = 'requireuser'
 REQUIRE_TRACE       = 'requiretrace'
 

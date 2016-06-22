@@ -17,11 +17,11 @@ from opennsa import constants as cnt, nsa, error, config, authz
 LOG_SYSTEM = 'topology.nrm'
 
 
-PORT_TYPES      = [ cnt.NRM_ETHERNET ] # OpenNSA doesn't really do unidirectional at the moment
+PORT_TYPES      = [ cnt.ETHERNET ] # OpenNSA doesn't really do unidirectional at the moment
 
 #AUTH_ATTRIBUTES = [ authz.NSA, authz.USER, authz.GROUP ]
 PATH_ATTRIBUTES = [ 'vector' ]
-ATTRIBUTES      = [ cnt.NRM_RESTRICTTRANSIT ]
+ATTRIBUTES      = [ cnt.RESTRICTTRANSIT ]
 
 LABEL_TYPES     = { 'vlan'  : cnt.ETHERNET_VLAN }
 
@@ -117,7 +117,7 @@ def parsePortSpec(source):
         except ValueError as e:
             raise NRMSpecificationError('Invalid bandwidth: %s' % str(e))
 
-        if port_type == cnt.NRM_ETHERNET:
+        if port_type == cnt.ETHERNET:
             if remote_network is None:
                 remote_port     = None
                 remote_in       = None
@@ -152,7 +152,7 @@ def parsePortSpec(source):
                     else:
                         raise config.ConfigurationError('Invalid attribute: %s' % aa)
 
-                elif aa in ATTRIBUTES and aa == cnt.NRM_RESTRICTTRANSIT:
+                elif aa in ATTRIBUTES and aa == cnt.RESTRICTTRANSIT:
                     transit_restricted = True
                 else:
                     raise config.ConfigurationError('Invalid attribute: %s' % aa)

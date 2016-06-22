@@ -352,7 +352,7 @@ def createNMLNetwork(nrm_ports, network_name, network_readable_name):
 
     for port in nrm_ports:
 
-        assert port.port_type == cnt.NRM_ETHERNET, 'Sorry can only do ethernet ports for now'
+        assert port.port_type == cnt.ETHERNET, 'Sorry can only do ethernet ports for now'
 
         inbound_port_name   = port.name + '-in'
         outbound_port_name  = port.name + '-out'
