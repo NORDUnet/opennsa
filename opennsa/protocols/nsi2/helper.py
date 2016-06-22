@@ -189,7 +189,7 @@ def createSTP(stp_id):
         label = None
 
     if not ':' in loc:
-        raise error.PayloadError('No : in stp urn (%s)' % loc)
+        raise error.PayloadError('Invalid STP: No ":" in stp urn (%s)' % loc)
 
     # FIXME This may need to be updated for new stp structure (Uppsala)
     network, port = loc.rsplit(':', 1)
