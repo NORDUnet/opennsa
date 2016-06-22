@@ -1,12 +1,9 @@
-include README
+include README.md
 include INSTALL
-include ISSUES
+include TODO
 include Makefile
 include onsa
 include client-test
 include opennsa.tac
-include opennsa-abc.tac
-include opennsa-northernlight.tac
-include opennsa-starlight.tac
 recursive-include docs *
 recursive-include patches *
