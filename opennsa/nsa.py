@@ -72,10 +72,13 @@ class Label(object):
 
     def __init__(self, type_, values=None):
 
-        assert type(values) in (None, str, list), 'Type of Label values must be a None, str, or list. Was given %s' % type(values)
+        assert type(values) in (None, str, list, int), 'Type of Label values must be a None, str, or list. Was given %s' % type(values)
 
         self.type_ = type_
-        self.values = self._parseLabelValues(values) if values is not None else None
+        if type(values) is int:
+            self.values = [ [values, values] ]
+        else:
+            self.values = self._parseLabelValues(values) if values is not None else None
 
 
     def _parseLabelValues(self, values):
