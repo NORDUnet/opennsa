@@ -103,8 +103,8 @@ class GenericBackend(service.Service):
                 continue
 
             # add reservation, some of the following code will remove the reservation again
-            src_resource = self.connection_manager.getResource(conn.source_port, conn.source_label.type_, conn.source_label.labelValue())
-            dst_resource = self.connection_manager.getResource(conn.dest_port,   conn.dest_label.type_,   conn.dest_label.labelValue())
+            src_resource = self.connection_manager.getResource(conn.source_port, conn.source_label)
+            dst_resource = self.connection_manager.getResource(conn.dest_port,   conn.dest_label)
             self.calendar.addReservation(  src_resource, conn.start_time, conn.end_time)
             self.calendar.addReservation(  dst_resource, conn.start_time, conn.end_time)
 
@@ -199,8 +199,8 @@ class GenericBackend(service.Service):
 
 
     def logStateUpdate(self, conn, state_msg):
-        src_target = self.connection_manager.getTarget(conn.source_port, conn.source_label.type_, conn.source_label.labelValue())
-        dst_target = self.connection_manager.getTarget(conn.dest_port,   conn.dest_label.type_,   conn.dest_label.labelValue())
+        src_target = self.connection_manager.getTarget(conn.source_port, conn.source_label)
+        dst_target = self.connection_manager.getTarget(conn.dest_port,   conn.dest_label)
         log.msg('Connection %s: %s -> %s %s' % (conn.connection_id, src_target, dst_target, state_msg), system=self.log_system)
 
 
@@ -258,45 +258,48 @@ class GenericBackend(service.Service):
         if nrm_source_port.transit_restricted and nrm_dest_port.transit_restricted:
             raise error.ConnectionCreateError('Cannot connect two transit restricted STPs.')
 
-        # basic label check
-        if source_stp.label is None:
-            raise error.TopologyError('Source STP must specify a label')
-        if dest_stp.label is None:
-            raise error.TopologyError('Destination STP must specify a label')
-
-        src_label_candidate = source_stp.label
-        dst_label_candidate = dest_stp.label
-        assert src_label_candidate.type_ == dst_label_candidate.type_, 'Cannot connect ports with different label types'
-
         # check that we are connecting an stp to itself
-        if source_stp == dest_stp and source_stp.label.singleValue():
-            raise error.TopologyError('Cannot connect STP %s to itself.' % source_stp)
+        if source_stp.port == dest_stp.port:
+            raise error.ServiceError('Cannot connect STP %s to itself (hairpin connections not supported). Fix your path finder.' % source_stp)
+
+        labelType = lambda stp : None if stp.label is None else stp.label.type_
+
+        # have the backend check if the ports/labels can be connected
+        # this is needed for cases of cross-label switching like ethernet-mpls encapsulation
+        if hasattr(self.connection_manager, 'canConnect'):
+            if not self.connection_manager.canConnect(source_stp.port, dest_stp.port, source_stp.label, dest_stp.label):
+                raise error.TopologyError('Cannot connect STP %s to %s.' % (source_stp, dest_stp))
+        elif labelType(source_stp) != labelType(dest_stp):
+            # if backend doesn't implement canConnect, we assume only the same label can be connected (old default)
+            raise error.TopologyError('Cannot connect ports with different label types')
+
 
         # now check that the ports have (some of) the specified label values
-        if not nsa.Label.canMatch(nrm_source_port.label, src_label_candidate):
-            raise error.TopologyError('Source port %s cannot match label set %s' % (nrm_source_port.name, src_label_candidate ) )
-        if not nsa.Label.canMatch(nrm_dest_port.label, dst_label_candidate):
-            raise error.TopologyError('Destination port %s cannot match label set %s' % (nrm_dest_port.name, dst_label_candidate ) )
+        if not nsa.Label.canMatch(nrm_source_port.label, source_stp.label):
+            raise error.TopologyError('Source port %s cannot match label set %s' % (nrm_source_port.name, source_stp.label) )
+        if not nsa.Label.canMatch(nrm_dest_port.label, dest_stp.label):
+            raise error.TopologyError('Destination port %s cannot match label set %s' % (nrm_dest_port.name, dest_stp.label) )
+
+        labelEnum = lambda label : [None] if label is None else [ nsa.Label(label.type_, lv) for lv in label.enumerateValues() ]
 
         # do the find the label value dance
-        if self.connection_manager.canSwapLabel(src_label_candidate.type_):
-            for lv in src_label_candidate.enumerateValues():
-                src_resource = self.connection_manager.getResource(source_stp.port, src_label_candidate.type_, lv)
+        if self.connection_manager.canSwapLabel(labelType(source_stp)) and self.connection_manager.canSwapLabel(labelType(dest_stp)):
+            for lv in labelEnum(source_stp.label):
+                src_resource = self.connection_manager.getResource(source_stp.port, lv)
                 try:
                     self.calendar.checkReservation(src_resource, start_time, end_time)
-                    src_label = nsa.Label(src_label_candidate.type_, str(lv))
+                    src_label = lv
                     break
                 except error.STPUnavailableError:
                     pass
             else:
                 raise error.STPUnavailableError('STP %s not available in specified time span' % source_stp)
 
-
-            for lv in dst_label_candidate.enumerateValues():
-                dst_resource = self.connection_manager.getResource(dest_stp.port, dst_label_candidate.type_, lv)
+            for lv in labelEnum(dest_stp.label):
+                dst_resource = self.connection_manager.getResource(dest_stp.port, lv)
                 try:
                     self.calendar.checkReservation(dst_resource, start_time, end_time)
-                    dst_label = nsa.Label(dst_label_candidate.type_, str(lv))
+                    dst_label = lv
                     break
                 except error.STPUnavailableError:
                     pass
@@ -308,18 +311,23 @@ class GenericBackend(service.Service):
             self.calendar.addReservation(  dst_resource, start_time, end_time)
 
         else:
-            label_candidate = src_label_candidate.intersect(dst_label_candidate)
+            if source_stp.label is None:
+                label_candidate = dest_stp.label
+            elif dest_stp.label is None:
+                label_candidate = source_stp.label
+            else:
+                label_candidate = source_stp.label.intersect(dest_stp.label)
 
-            for lv in label_candidate.enumerateValues():
-                src_resource = self.connection_manager.getResource(source_stp.port, label_candidate.type_, lv)
-                dst_resource = self.connection_manager.getResource(dest_stp.port,   label_candidate.type_, lv)
+            for lv in labelEnum(label_candidate):
+                src_resource = self.connection_manager.getResource(source_stp.port, lv)
+                dst_resource = self.connection_manager.getResource(dest_stp.port,   lv)
                 try:
                     self.calendar.checkReservation(src_resource, start_time, end_time)
                     self.calendar.checkReservation(dst_resource, start_time, end_time)
                     self.calendar.addReservation(  src_resource, start_time, end_time)
                     self.calendar.addReservation(  dst_resource, start_time, end_time)
-                    src_label = nsa.Label(label_candidate.type_, str(lv))
-                    dst_label = nsa.Label(label_candidate.type_, str(lv))
+                    src_label = lv
+                    dst_label = lv
                     break
                 except error.STPUnavailableError:
                     continue
@@ -328,8 +336,8 @@ class GenericBackend(service.Service):
 
         now =  datetime.datetime.utcnow()
 
-        source_target = self.connection_manager.getTarget(source_stp.port, src_label.type_, src_label.labelValue())
-        dest_target   = self.connection_manager.getTarget(dest_stp.port,   dst_label.type_, dst_label.labelValue())
+        source_target = self.connection_manager.getTarget(source_stp.port, src_label)
+        dest_target   = self.connection_manager.getTarget(dest_stp.port,   dst_label)
         if connection_id is None:
             connection_id = self.connection_manager.createConnectionId(source_target, dest_target)
 
@@ -618,8 +626,8 @@ class GenericBackend(service.Service):
             self.scheduler.cancelCall(conn.connection_id) # we only have this for non-timeout calls, but just cancel
 
             # release the resources
-            src_resource = self.connection_manager.getResource(conn.source_port, conn.source_label.type_, conn.source_label.labelValue())
-            dst_resource = self.connection_manager.getResource(conn.dest_port,   conn.dest_label.type_,   conn.dest_label.labelValue())
+            src_resource = self.connection_manager.getResource(conn.source_port, conn.source_label)
+            dst_resource = self.connection_manager.getResource(conn.dest_port,   conn.dest_label)
 
             self.calendar.removeReservation(src_resource, conn.start_time, conn.end_time)
             self.calendar.removeReservation(dst_resource, conn.start_time, conn.end_time)
@@ -644,8 +652,8 @@ class GenericBackend(service.Service):
     @defer.inlineCallbacks
     def _doActivate(self, conn):
 
-        src_target = self.connection_manager.getTarget(conn.source_port, conn.source_label.type_, conn.source_label.labelValue())
-        dst_target = self.connection_manager.getTarget(conn.dest_port,   conn.dest_label.type_,  conn.dest_label.labelValue())
+        src_target = self.connection_manager.getTarget(conn.source_port, conn.source_label)
+        dst_target = self.connection_manager.getTarget(conn.dest_port,   conn.dest_label)
         try:
             log.msg('Connection %s: Activating data plane...' % conn.connection_id, system=self.log_system)
             yield self.connection_manager.setupLink(conn.connection_id, src_target, dst_target, conn.bandwidth)
@@ -693,8 +701,8 @@ class GenericBackend(service.Service):
     def _doTeardown(self, conn):
         # this one is not used as a stand-alone, just a utility function
 
-        src_target = self.connection_manager.getTarget(conn.source_port, conn.source_label.type_, conn.source_label.labelValue())
-        dst_target = self.connection_manager.getTarget(conn.dest_port,   conn.dest_label.type_,   conn.dest_label.labelValue())
+        src_target = self.connection_manager.getTarget(conn.source_port, conn.source_label)
+        dst_target = self.connection_manager.getTarget(conn.dest_port,   conn.dest_label)
         try:
             log.msg('Connection %s: Deactivating data plane...' % conn.connection_id, system=self.log_system)
             yield self.connection_manager.teardownLink(conn.connection_id, src_target, dst_target, conn.bandwidth)
@@ -747,16 +755,16 @@ class GenericBackend(service.Service):
             try:
                 yield self._doTeardown(conn)
                 # we can only remove resource reservation entry if we succesfully shut down the link :-(
-                src_resource = self.connection_manager.getResource(conn.source_port, conn.source_label.type_, conn.source_label.labelValue())
-                dst_resource = self.connection_manager.getResource(conn.dest_port,   conn.dest_label.type_,   conn.dest_label.labelValue())
+                src_resource = self.connection_manager.getResource(conn.source_port, conn.source_label)
+                dst_resource = self.connection_manager.getResource(conn.dest_port,   conn.dest_label)
                 self.calendar.removeReservation(src_resource, conn.start_time, conn.end_time)
                 self.calendar.removeReservation(dst_resource, conn.start_time, conn.end_time)
             except Exception as e:
                 log.msg('Error ending connection: %s' % e)
                 raise e
         elif conn.allocated or conn.reservation_state == state.RESERVE_HELD: # free reservation if it was allocated/held
-            src_resource = self.connection_manager.getResource(conn.source_port, conn.source_label.type_, conn.source_label.labelValue())
-            dst_resource = self.connection_manager.getResource(conn.dest_port,   conn.dest_label.type_,   conn.dest_label.labelValue())
+            src_resource = self.connection_manager.getResource(conn.source_port, conn.source_label)
+            dst_resource = self.connection_manager.getResource(conn.dest_port,   conn.dest_label)
             self.calendar.removeReservation(src_resource, conn.start_time, conn.end_time)
             self.calendar.removeReservation(dst_resource, conn.start_time, conn.end_time)
 

@@ -5,6 +5,8 @@ ARUBA_TOPOLOGY = """
 ethernet     ps      -                       vlan:1780-1789  1000    em0    -
 ethernet     bon     bonaire#aru-(in|out)    vlan:1780-1789  1000    em1    -
 ethernet     dom     dominica#aru-(in|out)   vlan:1780-1789   500    em2    -
+ethernet     eth1    -                       -               1000    em7    -
+ethernet     eth2    -                       -               1000    em8    -
 """
 
 BONAIRE_TOPOLOGY = """

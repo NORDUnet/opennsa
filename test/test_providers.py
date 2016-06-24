@@ -484,6 +484,7 @@ class GenericProviderTest:
         acid2 = yield self.provider.reserve(self.header, None, None, None, criteria)
         yield self.requester.reserve_defer
 
+
     @defer.inlineCallbacks
     def testReserveFailAndLabelSwapEnabled(self):
 
@@ -536,7 +537,7 @@ class GenericProviderTest:
 
         for stp in [source_stp2,dest_stp,source_stp]:
             try:
-                res = self.backend.connection_manager.getResource(stp.port, stp.label.type_, stp.label.labelValue())
+                res = self.backend.connection_manager.getResource(stp.port, stp.label)
                 resource_is_available = self.backend.calendar.checkReservation(res, self.schedule.start_time,self.schedule.end_time)
             except error.STPUnavailableError as e:
                 self.fail("STP %s should be available" % res)
@@ -681,6 +682,76 @@ class GenericProviderTest:
         header, cid, nid, timestamp, event, info, ex = yield self.requester.error_event_defer
         self.failUnlessEquals(event, 'deactivateFailed')
         self.failUnlessEquals(cid, acid)
+
+
+    @defer.inlineCallbacks
+    def testIdenticalPortSTPs(self):
+
+        source_stp  = nsa.STP(self.network, 'eth1', None)
+        dest_stp    = nsa.STP(self.network, 'eth1', None)
+
+        criteria    = nsa.Criteria(0, self.schedule, nsa.Point2PointService(source_stp, dest_stp, 200, cnt.BIDIRECTIONAL, False, None) )
+
+        self.header.newCorrelationId()
+        try:
+            acid = yield self.provider.reserve(self.header, None, None, None, criteria)
+            self.fail("Should have gotten service error for hairpin request")
+        except error.ServiceError:
+            pass # expected
+
+
+    @defer.inlineCallbacks
+    def testInvalidRewrite(self):
+
+        source_stp  = nsa.STP(self.network, 'eth1', None)
+
+        criteria    = nsa.Criteria(0, self.schedule, nsa.Point2PointService(source_stp, self.dest_stp, 200, cnt.BIDIRECTIONAL, False, None) )
+
+        self.header.newCorrelationId()
+        try:
+            acid = yield self.provider.reserve(self.header, None, None, None, criteria)
+            self.fail("Should have gotten topology error ")
+        except error.NSIError:
+            pass # expected
+
+
+    @defer.inlineCallbacks
+    def testPortSTPs(self):
+
+        source_stp  = nsa.STP(self.network, 'eth1', None)
+        dest_stp    = nsa.STP(self.network, 'eth2', None)
+
+        criteria    = nsa.Criteria(0, self.schedule, nsa.Point2PointService(source_stp, dest_stp, 200, cnt.BIDIRECTIONAL, False, None) )
+
+        self.header.newCorrelationId()
+        acid = yield self.provider.reserve(self.header, None, None, None, criteria)
+        header, cid, gid, desc, sc = yield self.requester.reserve_defer
+        self.failUnlessEqual(cid, acid)
+
+        yield self.provider.reserveCommit(self.header, acid)
+        cid = yield self.requester.reserve_commit_defer
+
+        yield self.provider.provision(self.header, acid)
+        cid = yield self.requester.provision_defer
+
+        self.clock.advance(3)
+
+        header, cid, nid, timestamp, dps = yield self.requester.data_plane_change_defer
+        active, version, consistent = dps
+
+        self.requester.data_plane_change_defer = defer.Deferred() # need a new one for deactivate
+
+        self.failUnlessEqual(cid, acid)
+        self.failUnlessEqual(active, True)
+        self.failUnlessEqual(consistent, True)
+
+        #yield self.provider.release(self.header, cid)
+        #cid = yield self.requester.release_defer
+
+        yield self.provider.terminate(self.header, acid)
+        cid = yield self.requester.terminate_defer
+
+
 
 
 

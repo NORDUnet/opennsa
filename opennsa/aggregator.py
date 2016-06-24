@@ -818,9 +818,9 @@ class Aggregator:
             log.msg('reserveConfirmed: dest network mismatch', system=LOG_SYSTEM)
         if sd.dest_stp.port      != resv_info['dest_port']:
             log.msg('reserveConfirmed: dest port mismatch', system=LOG_SYSTEM)
-        if not sd.source_stp.label.singleValue():
+        if not (sd.source_stp.label is None or sd.source_stp.label.singleValue()):
             log.msg('reserveConfirmed: source label is no a single value', system=LOG_SYSTEM)
-        if not sd.dest_stp.label.singleValue():
+        if not (sd.dest_stp.label is None or sd.dest_stp.label.singleValue()):
             log.msg('reserveConfirmed: dest label is no a single value', system=LOG_SYSTEM)
 
         # skip label check for now

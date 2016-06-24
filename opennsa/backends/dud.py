@@ -11,6 +11,7 @@ import random
 from twisted.python import log
 from twisted.internet import defer
 
+from opennsa import constants as cnt
 from opennsa.backends.common import genericbackend
 
 
@@ -33,12 +34,21 @@ class DUDConnectionManager:
         self.port_map   = port_map
 
 
-    def getResource(self, port, label_type, label_value):
-        return self.port_map[port] + ':' + str(label_value)
+    def getResource(self, port, label):
+        return self.port_map[port] + ':' + '' if label is None else str(label.labelValue())
 
 
-    def getTarget(self, port, label_type, label_value):
-        return self.port_map[port] + '#' + str(label_value)
+    def getTarget(self, port, label):
+        return self.port_map[port] + '#' + '' if label is None else str(label.labelValue())
+
+
+    def canConnect(self, source_stp, dest_port, source_label, dest_label):
+        if source_label is None and dest_label is None:
+            return True
+        elif source_label is None or dest_label is None:
+            return False
+        else:
+            return source_label.type_ == dest_label.type_
 
 
     def createConnectionId(self, source_target, dest_target):
@@ -46,7 +56,7 @@ class DUDConnectionManager:
 
 
     def canSwapLabel(self, label_type):
-        return True
+        return label_type == cnt.ETHERNET_VLAN
         #return False
 
 
