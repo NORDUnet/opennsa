@@ -231,16 +231,16 @@ class JuniperEXConnectionManager:
         self.command_sender = JuniperEXCommandSender(host, port, host_fingerprint, user, ssh_public_key, ssh_private_key)
 
 
-    def getResource(self, port, label_type, label_value):
-        assert label_type in (None, cnt.ETHERNET_VLAN), 'Label must be None or VLAN'
-        return str(label_value) # vlan is a global resource, only one be used at a time
+    def getResource(self, port, label):
+        assert label is None or label.type_ == cnt.ETHERNET_VLAN, 'Label must be None or VLAN'
+        return str(label.value) # vlan is a global resource, only one be used at a time
 
 
-    def getTarget(self, port, label_type, label_value):
-        assert label_type in (None, cnt.ETHERNET_VLAN), 'Label must be None or VLAN'
-        if label_type == cnt.ETHERNET_VLAN:
-            vlan = int(label_value)
-            assert 1 <= vlan <= 4095, 'Invalid label value for vlan: %s' % label_value
+    def getTarget(self, port, label):
+        assert label is None or label.type_ == cnt.ETHERNET_VLAN, 'Label must be None or VLAN'
+        if label.type_ == cnt.ETHERNET_VLAN:
+            vlan = int(label.value)
+            assert 1 <= vlan <= 4095, 'Invalid label value for vlan: %s' % label.value
 
         return JunosEXTarget(self.port_map[port], vlan)
 

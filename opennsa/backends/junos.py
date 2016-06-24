@@ -1,5 +1,7 @@
 """
-OpenNSA JunOS backend.
+OpenNSA JunOS / Juniper MX backend.
+
+Note: Has NOT been ported to new backend interface.
 """
 
 # configure snippet:

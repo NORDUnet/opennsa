@@ -1,6 +1,8 @@
 """
 Backend for Dell PowerConnect 5324 Switch. May work with similar equipment.
 
+Note: Has not been updated for latest backend interface.
+
 Author: Jeroen van der Ham
 Copyright: NORDUnet (2012-2013)
 """

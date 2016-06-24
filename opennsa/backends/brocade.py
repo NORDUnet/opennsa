@@ -208,13 +208,14 @@ class BrocadeConnectionManager:
         self.command_sender = BrocadeCommandSender(host, port, host_fingerprint, user, ssh_public_key, ssh_private_key, enable_password)
 
 
-    def getResource(self, port, label_type, label_value):
-        assert label_type == cnt.ETHERNET_VLAN, 'Label type must be ethernet-vlan'
-        return str(label_value)
+    def getResource(self, port, label):
+        assert label is not None and label.type_ == cnt.ETHERNET_VLAN, 'Label type must be ethernet-vlan'
+        return str(label.value)
 
 
-    def getTarget(self, port, label_type, label_value):
-        return self.port_map[port] + '.' + label_value
+    def getTarget(self, port, label):
+        assert label is not None and label.type_ == cnt.ETHERNET_VLAN, 'Label type must be ethernet-vlan'
+        return self.port_map[port] + '.' + label.value
 
 
     def createConnectionId(self, source_target, dest_target):

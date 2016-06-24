@@ -170,16 +170,18 @@ class NCSVPNConnectionManager:
         self.log_system       = log_system
 
 
-    def getResource(self, port, label_type, label_value):
-        assert label_type in (None, cnt.ETHERNET_VLAN), 'Label must be None or VLAN'
-        return port + ':' + str(label_value) # port contains router and port
+    def getResource(self, port, label):
+        assert label is None or label.type_ == cnt.ETHERNET_VLAN, 'Label must be None or VLAN'
+        return port + ':' + str(label.value) # port contains router and port
 
 
-    def getTarget(self, port, label_type, label_value):
-        assert label_type in (None, cnt.ETHERNET_VLAN), 'Label must be None or VLAN'
-        if label_type == cnt.ETHERNET_VLAN:
-            vlan = int(label_value)
-            assert 1 <= vlan <= 4095, 'Invalid label value for vlan: %s' % label_value
+    def getTarget(self, port, label):
+        assert label is None or label.type_ == cnt.ETHERNET_VLAN, 'Label must be None or VLAN'
+        if label is not None and label.type_ == cnt.ETHERNET_VLAN:
+            vlan = int(label.value)
+            assert 1 <= vlan <= 4095, 'Invalid label value for vlan: %s' % label.value
+        else:
+            vlan = None
 
         ri = self.port_map[port]
         router, interface = ri.split(':')
