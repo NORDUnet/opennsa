@@ -194,6 +194,8 @@ class OpenNSAService(twistedservice.MultiService):
         backend_configs = vc['backend']
         if len(backend_configs) == 0:
             log.msg('No backend specified. Running in aggregator-only mode')
+            if not cnt.AGGREGATOR in vc[config.POLICY]:
+                vc[config.POLICY].append(cnt.AGGREGATOR)
         elif len(backend_configs) > 1:
             raise config.ConfigurationError('Only one backend supported for now. Multiple will probably come later.')
         else: # 1 backend
