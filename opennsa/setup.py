@@ -65,16 +65,20 @@ def setupTopology(nrm_map, network_name, base_name):
 
     link_vector = linkvector.LinkVector( [ network_name ] )
 
-    nrm_ports = nrm.parsePortSpec( open(nrm_map) )
-    nml_network = nml.createNMLNetwork(nrm_ports, network_name, base_name)
+    if nrm_map is not None:
+        nrm_ports = nrm.parsePortSpec( open(nrm_map) )
+        nml_network = nml.createNMLNetwork(nrm_ports, network_name, base_name)
 
-    # route vectors
-    # hack in link vectors manually, since we don't have a mechanism for updating them automatically
-    for np in nrm_ports:
-        if np.remote_network is not None:
-            link_vector.updateVector(np.name, { np.remote_network : 1 } ) # hack
-            for network, cost in np.vectors.items():
-                link_vector.updateVector(np.name, { network : cost })
+        # route vectors
+        # hack in link vectors manually, since we don't have a mechanism for updating them automatically
+        for np in nrm_ports:
+            if np.remote_network is not None:
+                link_vector.updateVector(np.name, { np.remote_network : 1 } ) # hack
+                for network, cost in np.vectors.items():
+                    link_vector.updateVector(np.name, { network : cost })
+    else:
+        nrm_ports = []
+        nml_network = None
 
     return nrm_ports, nml_network, link_vector
 
@@ -187,18 +191,22 @@ class OpenNSAService(twistedservice.MultiService):
         aggr.parent_requester = pc
 
         # setup backend(s) - for now we only support one
-
         backend_configs = vc['backend']
-        if len(backend_configs) > 1:
+        if len(backend_configs) == 0:
+            log.msg('No backend specified. Running in aggregator-only mode')
+        elif len(backend_configs) > 1:
             raise config.ConfigurationError('Only one backend supported for now. Multiple will probably come later.')
+        else: # 1 backend
+            if not nrm_ports:
+                raise config.ConfigurationError('No NRM Map file specified. Cannot configured a backend without port spec.')
 
-        backend_cfg = backend_configs.values()[0]
+            backend_cfg = backend_configs.values()[0]
 
-        backend_service = setupBackend(backend_cfg, network_name, nrm_ports, aggr)
-        backend_service.setServiceParent(self)
-        can_swap_label = backend_service.connection_manager.canSwapLabel(cnt.ETHERNET_VLAN)
+            backend_service = setupBackend(backend_cfg, network_name, nrm_ports, aggr)
+            backend_service.setServiceParent(self)
+            can_swap_label = backend_service.connection_manager.canSwapLabel(cnt.ETHERNET_VLAN)
+            provider_registry.addProvider(ns_agent.urn(), backend_service, [ network_name ] )
 
-        provider_registry.addProvider(ns_agent.urn(), backend_service, [ network_name ] )
 
         # fetcher
         if vc[config.PEERS]:
@@ -219,9 +227,11 @@ class OpenNSAService(twistedservice.MultiService):
         # discovery service
         name = base_name.split(':')[0] if ':' in base_name else base_name
         opennsa_version = 'OpenNSA-' + version
-        networks    = [ cnt.URN_OGF_PREFIX + network_name ]
+        networks    = [ cnt.URN_OGF_PREFIX + network_name ] if nml_network is not None else []
         interfaces  = [ ( cnt.CS2_PROVIDER, provider_endpoint, None), ( cnt.CS2_SERVICE_TYPE, provider_endpoint, None), (cnt.NML_SERVICE_TYPE, nml_resource_url, None) ]
-        features    = [ (cnt.FEATURE_AGGREGATOR, None), (cnt.FEATURE_UPA, None) ]
+        features    = [ (cnt.FEATURE_AGGREGATOR, None)  ]
+        if nrm_ports:
+            features.append( (cnt.FEATURE_UPA, None) )
         ds = discoveryservice.DiscoveryService(ns_agent.urn(), now, name, opennsa_version, now, networks, interfaces, features, provider_registry, link_vector)
 
         discovery_resource = ds.resource()
@@ -232,15 +242,16 @@ class OpenNSAService(twistedservice.MultiService):
         vr = viewresource.ConnectionListResource()
         top_resource.children['NSI'].putChild('connections', vr)
 
-        # topology
-        nml_service = nmlservice.NMLService(nml_network, can_swap_label)
-        top_resource.children['NSI'].putChild(nml_resource_name, nml_service.resource() )
-
         if vc[config.REST]:
             from opennsa.protocols import rest
             rest_endpoint = base_url + '/connections'
             rest.setupService(aggr, top_resource, vc.get(config.ALLOWED_HOSTS))
             service_endpoints.append( ('REST', rest_endpoint) )
+
+        # topology
+        if nml_network is not None:
+            nml_service = nmlservice.NMLService(nml_network, can_swap_label)
+            top_resource.children['NSI'].putChild(nml_resource_name, nml_service.resource() )
 
         # print service urls
         for service_name, url in service_endpoints:

@@ -192,7 +192,7 @@ def readVerifyConfig(cfg):
     try:
         policies = cfg.get(BLOCK_SERVICE, POLICY).split(',')
         for policy in policies:
-            if not policy in (cnt.REQUIRE_USER, cnt.REQUIRE_TRACE):
+            if not policy in (cnt.REQUIRE_USER, cnt.REQUIRE_TRACE, cnt.AGGREGATOR):
                 raise ConfigurationError('Invalid policy: %s' % policy)
         vc[POLICY] = policies
     except ConfigParser.NoOptionError:
@@ -278,9 +278,6 @@ def readVerifyConfig(cfg):
             backend_conf = dict( cfg.items(section) )
             backend_conf['_backend_type'] = backend_type
             backends[name] = backend_conf
-
-    if not backends:
-        raise ConfigurationError('No or invalid backend specified')
 
     vc['backend'] = backends
 

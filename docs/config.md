@@ -19,20 +19,20 @@ policies=requiretrace,requireuser
 * Service block
 
 
-network     : The network name managed by OpenNSA.
-              Mandatory.
+network  : The network name managed by OpenNSA. Mandatory.
 
-logfile     : File to log to.
-              Defaults to /var/log/opennsa.log
+logfile : File to log to.
+          Defaults to /var/log/opennsa.log
 
-nrmmap      : Path to port/topology NRM description file
+nrmmap  : Path to port/topology NRM description file
 
-peers       : URLs to NSAs to peer with control-plane wise.
+peers   : URLs to NSAs to peer with control-plane wise.
               Seperate multiple entries with newline.
 
-policies    : What policies are required. Currently requiretrace and
-              requireuser are the possible options. These require a connection
-              trace and user security attribute respecitively.
+policy  : What policies are required. Currently requiretrace, requireuser,
+          and aggregator are the possible options. These require a connection
+          trace, a user security attribute, and allow proxy aggregation
+          respecitively.
 ```
 
 

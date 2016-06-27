@@ -198,19 +198,21 @@ class Aggregator:
         source_stp = sd.source_stp
         dest_stp   = sd.dest_stp
 
-        # policy check: one endpoint must be in local network
-        if not (source_stp.network == self.network or dest_stp.network == self.network):
-            raise error.ConnectionCreateError('None of the endpoints terminate in the network, rejecting request (network: %s + %s, nsa network %s)' %
-                (source_stp.network, dest_stp.network, self.network))
+        if not cnt.AGGREGATOR in self.policies:
+            # policy check: one endpoint must be in local network
+            if not (source_stp.network == self.network or dest_stp.network == self.network):
+                raise error.ConnectionCreateError('None of the endpoints terminate in the network, rejecting request (network: %s + %s, nsa network %s)' %
+                    (source_stp.network, dest_stp.network, self.network))
 
         if (source_stp.label is None and dest_stp.label) or (source_stp.label and dest_stp.label is None):
             raise error.ConnectionCreateError('Cannot create connection with label only defined in one end (maybe possible in the future)')
 
-        # check that we have path vectors to topologies
-        if source_stp.network != self.network and self.route_vectors.vector(source_stp.network) is None:
-            raise error.ConnectionCreateError('No known routes to network %s' % source_stp.network)
-        if dest_stp.network != self.network and self.route_vectors.vector(dest_stp.network) is None:
-            raise error.ConnectionCreateError('No known routes to network %s' % dest_stp.network)
+        # check that we have path vectors to topologies if we start from here
+        if self.network in (source_stp.network, dest_stp.network):
+            if source_stp.network != self.network and self.route_vectors.vector(source_stp.network) is None:
+                raise error.ConnectionCreateError('No known routes to network %s' % source_stp.network)
+            if dest_stp.network != self.network and self.route_vectors.vector(dest_stp.network) is None:
+                raise error.ConnectionCreateError('No known routes to network %s' % dest_stp.network)
 
         # if the link terminates at our network, check that ports exists
         if source_stp.network == self.network:
@@ -275,7 +277,7 @@ class Aggregator:
             # we should probably specify the connection id to the backend,
             # to make it seem like the aggregator isn't here
 
-        else:
+        elif self.network in (conn.source_network, conn.dest_network):
             # log about creation and the connection type
             log.msg('Connection %s: Aggregate path creation: %s -> %s' % (conn.connection_id, str(source_stp), str(dest_stp)), system=LOG_SYSTEM)
             # making the connection is the same for all though :-)
@@ -311,6 +313,17 @@ class Aggregator:
 
             paths = [ [ local_link, remote_link ] ]
             paths = yield self.plugin.prunePaths(paths)
+
+        elif cnt.AGGREGATOR in self.policies:
+            # both endpoints outside the network, proxy aggregation allowed
+            path_info = ( conn.connection_id, self.network, conn.source_port, shortLabel(conn.source_label), conn.dest_port, shortLabel(conn.dest_label) )
+            log.msg('Connection %s: Remote proxy link creation: %s %s?%s == %s?%s' % path_info, system=LOG_SYSTEM)
+            paths = [ [ nsa.Link( nsa.STP(conn.source_network, conn.source_port, conn.source_label),
+                                  nsa.STP(conn.dest_network,   conn.dest_port,   conn.dest_label))  ] ]
+        else:
+            # both endpoints outside the network, proxy aggregation not alloweded
+            raise error.ConnectionCreateError('None of the endpoints terminate in the network, rejecting request (network: %s + %s, nsa network %s)' %
+                (source_stp.network, dest_stp.network, self.network))
 
 
         selected_path = paths[0] # shortest path (legacy structure)

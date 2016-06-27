@@ -42,4 +42,5 @@ FEATURE_UPA         = 'vnd.ogf.nsi.cs.v2.role.uPA'
 # policies
 REQUIRE_USER        = 'requireuser'
 REQUIRE_TRACE       = 'requiretrace'
+AGGREGATOR          = 'aggregator'
 

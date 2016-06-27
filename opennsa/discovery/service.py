@@ -45,7 +45,10 @@ class DiscoveryService:
         feature_types   = [ discovery.FeatureType(f[0], f[1]) for f in self.features ]
 
         peers_with = self.provider_registry.providers.keys()
-        peers_with.remove(self.nsa_id)
+        try:
+            peers_with.remove(self.nsa_id)
+        except ValueError:
+            pass # running in aggregetor-only mode
 
         topology_vectors = [ (cnt.URN_OGF_PREFIX + tv, cost) for tv, cost in self.link_vector.listVectors().items() ]
         other = discovery.HolderType( [ discovery.Topology(t,c) for (t,c) in topology_vectors ] )
