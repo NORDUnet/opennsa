@@ -238,10 +238,6 @@ class STP(object): # Service Termination Point
 class Link(object):
 
     def __init__(self, src_stp, dst_stp):
-        if src_stp.label is None:
-            assert dst_stp.label is None, 'Source and destination label must either both be None, or both specified'
-        else:
-            assert dst_stp.label is not None, 'Source and destination label must either both be None, or both specified'
         self.src_stp = src_stp
         self.dst_stp = dst_stp
 
