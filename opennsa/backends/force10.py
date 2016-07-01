@@ -274,12 +274,12 @@ class Force10ConnectionManager:
 
     def getResource(self, port, label):
         assert label is not None and label.type == cnt.ETHERNET_VLAN, 'Label type must be ethernet-vlan'
-        return str(label.value)
+        return str(label.labelValue)
 
 
     def getTarget(self, port, label):
         assert label is not None and label.type == cnt.ETHERNET_VLAN, 'Label type must be ethernet-vlan'
-        return self.port_map[port] + '.' + label.value
+        return self.port_map[port] + '.' + label.labelValue()
 
 
     def createConnectionId(self, source_target, dest_target):
