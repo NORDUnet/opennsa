@@ -39,7 +39,7 @@ TLS             = config.TLS
 KEY             = config.KEY
 CERTIFICATE     = config.CERTIFICATE
 CERTIFICATE_DIR = config.CERTIFICATE_DIR
-VERIFY_CERT     = config.VERIFY_CERT
+NO_VERIFY_CERT  = 'no-verify'
 
 NOTIFICATION_WAIT = 'notification_wait'
 
@@ -88,7 +88,7 @@ def readDefaults(file_):
             if option in (PORT, BANDWIDTH):
                 value = int(value)
 
-            if option in (TLS,VERIFY_CERT): # flags
+            if option in (TLS,NO_VERIFY_CERT): # flags
                 value = False if value.lower() in ('false', 'no', '0') else True
 
             defaults[option] = value

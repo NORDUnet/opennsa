@@ -132,7 +132,7 @@ class TLSFlag(usage.Options):
     optFlags = [ [ options.TLS, 'x', 'Use TLS for listener port' ] ]
 
 class SkipCertificateVerificationFlag(usage.Options):
-    optFlags = [ [ options.VERIFY_CERT, 'z', 'Skip certificate verification' ] ]
+    optFlags = [ [ options.NO_VERIFY_CERT, 'z', 'Skip certificate verification' ] ]
 
 
 # command options
