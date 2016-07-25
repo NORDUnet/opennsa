@@ -164,9 +164,10 @@ def buildQueryResult(query_confirmed, provider_nsa, include_children=False):
     states = buildConnectionStates(query_confirmed.connectionStates)
 
     criterias = []
-    for rc in qc.criteria:
-        crit = buildCriteria(rc, include_children)
-        criterias.append(crit)
+    if qc.criteria is not None:
+        for rc in qc.criteria:
+            crit = buildCriteria(rc, include_children)
+            criterias.append(crit)
 
     return nsa.ConnectionInfo(qc.connectionId, qc.globalReservationId, qc.description, cnt.EVTS_AGOLE, criterias, provider_nsa, qc.requesterNSA, states, qc.notificationId, qc.resultId)
 
