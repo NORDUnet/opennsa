@@ -12,7 +12,9 @@ from opennsa.topology.nmlxml import _baseName # nasty but I need it
 
 LOG_SYSTEM = 'discovery.Fetcher'
 
-FETCH_INTERVAL = 3600 # seconds - 3600 seconds = 1 hour
+# Exponenetial backoff (x2) is used, for fetch intervals
+FETCH_INTERVAL_MIN = 10 # seconds
+FETCH_INTERVAL_MAX = 3600 # seconds - 3600 seconds = 1 hour
 
 
 
@@ -32,7 +34,8 @@ class FetcherService(service.Service):
 
 
     def startService(self):
-        reactor.callWhenRunning(self.call.start, FETCH_INTERVAL)
+        # we use half, as it is doubled on first run
+        reactor.callWhenRunning(self.call.start, FETCH_INTERVAL_MIN // 2)
         service.Service.startService(self)
 
 
@@ -51,8 +54,12 @@ class FetcherService(service.Service):
             d.addCallbacks(self.gotDocument, self.retrievalFailed, callbackArgs=(peer,), errbackArgs=(peer,))
             defs.append(d)
 
+        def updateInterval(passthrough):
+            self.call.interval = min(self.call.interval * 2, FETCH_INTERVAL_MAX)
+            return passthrough
+
         if defs:
-            return defer.DeferredList(defs)
+            return defer.DeferredList(defs).addBoth(updateInterval)
 
 
     def gotDocument(self, result, peer):
