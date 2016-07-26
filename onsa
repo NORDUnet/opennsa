@@ -118,10 +118,10 @@ def doMain():
         private_key         = config.subOptions[options.KEY]                or defaults.get(options.KEY)
         certificate_dir     = config.subOptions[options.CERTIFICATE_DIR]    or defaults.get(options.CERTIFICATE_DIR)
         # verify cert is a flag, if it is set, it means it should be skipped
-        if config.subOptions[options.VERIFY_CERT]:
+        if config.subOptions[options.NO_VERIFY_CERT]:
             verify_cert = False
         else:
-            verify_cert = defaults.get(options.VERIFY_CERT)
+            verify_cert = defaults.get(options.NO_VERIFY_CERT)
             # if we don't get a value from defaults set it to true (default)
             if verify_cert is None:
                 verify_cert = True
