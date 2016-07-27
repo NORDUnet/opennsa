@@ -214,6 +214,8 @@ class OpenNSAService(twistedservice.MultiService):
         if vc[config.PEERS]:
             fetcher_service = fetcher.FetcherService(link_vector, nrm_ports, vc[config.PEERS], provider_registry, ctx_factory=ctx_factory)
             fetcher_service.setServiceParent(self)
+        else:
+            log.msg('No peers configured, will not be able to do outbound requests.')
 
         # wire up the http stuff
 
@@ -231,9 +233,12 @@ class OpenNSAService(twistedservice.MultiService):
         opennsa_version = 'OpenNSA-' + version
         networks    = [ cnt.URN_OGF_PREFIX + network_name ] if nml_network is not None else []
         interfaces  = [ ( cnt.CS2_PROVIDER, provider_endpoint, None), ( cnt.CS2_SERVICE_TYPE, provider_endpoint, None), (cnt.NML_SERVICE_TYPE, nml_resource_url, None) ]
-        features    = [ (cnt.FEATURE_AGGREGATOR, None)  ]
+        features    = []
         if nrm_ports:
             features.append( (cnt.FEATURE_UPA, None) )
+        if vc[config.PEERS]:
+            features.append( (cnt.FEATURE_AGGREGATOR, None) )
+
         ds = discoveryservice.DiscoveryService(ns_agent.urn(), now, name, opennsa_version, now, networks, interfaces, features, provider_registry, link_vector)
 
         discovery_resource = ds.resource()
