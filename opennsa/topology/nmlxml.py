@@ -205,6 +205,8 @@ def parseNMLTopology(nml_topology):
             assert len(sub_ports) == 2, 'The number of ports in a bidirectional port must be 2'
             bd_ports.append( (port_id, name, sub_ports) )
 
+        elif nte.tag in (NML_RELATION, NSI_SERVICE_DEFINITION):
+            pass # just ignore these for now
         else:
             log.msg('Unknown topology element %s, ignoring' % nte.tag, system=LOG_SYSTEM)
 
