@@ -66,7 +66,7 @@ def setupTopology(nrm_map, network_name, base_name):
     link_vector = linkvector.LinkVector( [ network_name ] )
 
     if nrm_map is not None:
-        nrm_ports = nrm.parsePortSpec( open(nrm_map) )
+        nrm_ports = nrm.parsePortSpec(nrm_map)
         nml_network = nml.createNMLNetwork(nrm_ports, network_name, base_name)
 
         # route vectors
@@ -164,7 +164,8 @@ class OpenNSAService(twistedservice.MultiService):
         ns_agent = nsa.NetworkServiceAgent(nsa_name, provider_endpoint, 'local')
 
         # topology
-        nrm_ports, nml_network, link_vector = setupTopology(vc[config.NRM_MAP_FILE], network_name, base_name)
+        nrm_map = open(vc[config.NRM_MAP_FILE]) if vc[config.NRM_MAP_FILE] is not None else None
+        nrm_ports, nml_network, link_node = setupTopology(nrm_map, network_name, base_name)
 
         # ssl/tls context
         ctx_factory = setupTLSContext(vc) # May be None

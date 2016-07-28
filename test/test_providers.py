@@ -3,7 +3,7 @@ import os, datetime, json, StringIO
 from twisted.trial import unittest
 from twisted.internet import reactor, defer, task
 
-from opennsa import nsa, provreg, database, error, aggregator, config, plugin, constants as cnt
+from opennsa import nsa, provreg, database, error, setup, aggregator, config, plugin, constants as cnt
 from opennsa.topology import nml, nrm, linkvector
 from opennsa.backends import dud
 
@@ -821,19 +821,17 @@ class AggregatorTest(GenericProviderTest, unittest.TestCase):
 
         self.clock = task.Clock()
 
-        nrm_ports = nrm.parsePortSpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY))
-        network_topology = nml.createNMLNetwork(nrm_ports, self.network, self.network)
+        nrm_map = StringIO.StringIO(topology.ARUBA_TOPOLOGY)
+        nrm_ports, nml_network, link_vector = setup.setupTopology(nrm_map, self.network, 'aruba.net')
 
         self.backend = dud.DUDNSIBackend(self.network, nrm_ports, self.requester, {})
         self.backend.scheduler.clock = self.clock
-
-        link_vector = linkvector.LinkVector( [ self.network ] )
 
         pl = plugin.BasePlugin()
         pl.init( { config.NETWORK_NAME: self.network }, None )
 
         pr = provreg.ProviderRegistry( { self.provider_agent.urn() : self.backend }, {} )
-        self.provider = aggregator.Aggregator(self.network, self.provider_agent, network_topology, link_vector, self.requester, pr, [], pl)
+        self.provider = aggregator.Aggregator(self.network, self.provider_agent, nml_network, link_vector, self.requester, pr, [], pl)
 
         # set parent for backend, we need to create the aggregator before this can be done
         self.backend.parent_requester = self.provider
@@ -886,19 +884,17 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
 
         self.clock = task.Clock()
 
-        nrm_ports = nrm.parsePortSpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY))
-        network_topology = nml.createNMLNetwork(nrm_ports, self.network, self.network)
+        nrm_map = StringIO.StringIO(topology.ARUBA_TOPOLOGY)
+        nrm_ports, nml_network, link_vector = setup.setupTopology(nrm_map, self.network, 'aruba.net')
 
         self.backend = dud.DUDNSIBackend(self.network, nrm_ports, None, {}) # we set the parent later
         self.backend.scheduler.clock = self.clock
-
-        link_vector = linkvector.LinkVector( [ self.network ] )
 
         pl = plugin.BasePlugin()
         pl.init( { config.NETWORK_NAME: self.network }, None )
 
         pr = provreg.ProviderRegistry( { self.provider_agent.urn() : self.backend }, {} )
-        self.aggregator = aggregator.Aggregator(self.network, self.provider_agent, network_topology, link_vector, None, pr, [], pl) # we set the parent later
+        self.aggregator = aggregator.Aggregator(self.network, self.provider_agent, nml_network, link_vector, None, pr, [], pl) # we set the parent later
 
         self.backend.parent_requester = self.aggregator
 
