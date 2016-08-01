@@ -209,9 +209,9 @@ class Aggregator:
 
         # check that we have path vectors to topologies if we start from here
         if self.network in (source_stp.network, dest_stp.network):
-            if source_stp.network != self.network and self.route_vectors.vector(source_stp.network) is None:
+            if source_stp.network != self.network and not self.route_vectors.dijkstra(self.network, source_stp.network):
                 raise error.ConnectionCreateError('No known routes to network %s' % source_stp.network)
-            if dest_stp.network != self.network and self.route_vectors.vector(dest_stp.network) is None:
+            if dest_stp.network != self.network and not self.route_vectors.dijkstra(self.network, dest_stp.network):
                 raise error.ConnectionCreateError('No known routes to network %s' % dest_stp.network)
 
         # if the link terminates at our network, check that ports exists
@@ -265,7 +265,7 @@ class Aggregator:
         yield state.reserveChecking(conn) # this also acts a lock
 
         if conn.source_network == self.network and conn.dest_network == self.network:
-            # no hairpin connections
+            # no hairpin connections - should probably be moved before db save
             if conn.source_port == conn.dest_port:
                 raise error.ServiceError('Hairpin connections not supported. Go away and fix your path finder')
             # setup path
@@ -294,22 +294,19 @@ class Aggregator:
                 remote_stp     = source_stp
 
             # we should really find multiple port/link vectors to the remote network, but right now we don't
-            vector_port = self.route_vectors.vector(remote_stp.network)
-            if vector_port is None:
-                raise error.STPResolutionError('No vector to network %s, cannot create circuit' % remote_stp.network)
+            node_path = self.route_vectors.dijkstra(local_stp.network, remote_stp.network)
+            if not node_path:
+                raise error.STPResolutionError('No path to network %s, cannot create circuit' % remote_stp.network)
 
-            log.msg('Vector to %s via port %s' % (remote_stp.network, vector_port), system=LOG_SYSTEM)
+            # find demarc port
+            demarc_port = self.route_vectors.findPort(node_path[0], node_path[1])
+            if demarc_port is None:
+                raise error.STPResolutionError('Failed to find demarcation port from %s to %s' % (node_path[0], node_path[1]), system=LOG_SYSTEM)
 
-            # this really shouldn't fail, so we don't need to check
-            demarc_ports = [ self.network_topology.getPort( self.network + ':' + vector_port ) ]
+            log.msg('Path to %s via port %s' % (remote_stp.network, demarc_port.name), system=LOG_SYSTEM)
 
-            ldp = demarc_ports[0] # most of the time we will only have one anyway, should iterate and build multiple paths
-
-            local_demarc_port  = ldp.id_.rsplit(':', 1)[1]
-            remote_demarc_network, remote_demarc_port = ldp.remote_port.rsplit(':', 1) # [1] # this is wrong in the new naming scheme
-
-            local_link  = nsa.Link( local_stp, nsa.STP(local_stp.network, local_demarc_port, ldp.label()) )
-            remote_link = nsa.Link( nsa.STP(remote_demarc_network, remote_demarc_port, ldp.label()), remote_stp) # # the ldp label isn't quite correct
+            local_link  = nsa.Link( local_stp, nsa.STP(local_stp.network, demarc_port.name, demarc_port.label) )
+            remote_link = nsa.Link( nsa.STP(demarc_port.remote_network, demarc_port.remote_port, demarc_port.label), remote_stp) # # the ldp label isn't quite correct
 
             paths = [ [ local_link, remote_link ] ]
             paths = yield self.plugin.prunePaths(paths)
@@ -318,8 +315,69 @@ class Aggregator:
             # both endpoints outside the network, proxy aggregation allowed
             path_info = ( conn.connection_id, self.network, conn.source_port, shortLabel(conn.source_label), conn.dest_port, shortLabel(conn.dest_label) )
             log.msg('Connection %s: Remote proxy link creation: %s %s?%s == %s?%s' % path_info, system=LOG_SYSTEM)
-            paths = [ [ nsa.Link( nsa.STP(conn.source_network, conn.source_port, conn.source_label),
-                                  nsa.STP(conn.dest_network,   conn.dest_port,   conn.dest_label))  ] ]
+
+#            for node_name, node in self.route_vectors.nodes.items():
+#                print node_name
+#                for port_name, port in node.ports.items():
+#                    print ' ', port_name, '->', port.remote_network
+
+            # The pathfinding here is a bit tricky, we find a node path first
+            # Then that is used to expand the link that are part of the domain
+            # This is done by passing over the path several times, expanding links as needed
+            # The results in a somewhat strange path finding algorithm that is not inherently tree or chain, but a weird hybrid
+
+            node_path = self.route_vectors.dijkstra(conn.source_network, conn.dest_network)
+            if not node_path:
+                raise error.STPResolutionError('Could not find path from network %s to %s, cannot create circuit' % (conn.source_network, conn.dest_network))
+
+            # create a single link, expand all local segments
+
+            base_path =  [ nsa.Link( nsa.STP(conn.source_network, conn.source_port, conn.source_label),
+                                     nsa.STP(conn.dest_network,   conn.dest_port,   conn.dest_label) )  ]
+
+            # need multiple passes to fully expand all domain segments
+            expanding = True
+            expanded_path = None
+
+            log.msg("Expanding path %s" % base_path, system=LOG_SYSTEM)
+
+            while expanding:
+                #print 'expand loop'
+                expanded_path = []
+
+                for link in base_path:
+                    if link.src_stp.network != link.dst_stp.network and cnt.DOMAIN_AGGREGATE in self.policies and \
+                      (link.src_stp.network.endswith(self.network) or link.dst_stp.network.endswith(self.network)):
+
+                            link_node_path = self.route_vectors.dijkstra(link.src_stp.network, link.dst_stp.network)
+
+                            if link.src_stp.network.endswith(self.network):
+                                src_network, dst_network = link_node_path[0], link_node_path[1]
+                            else:
+                                src_network, dst_network = link_node_path[-2], link_node_path[-1]
+
+                            demarc_port = self.route_vectors.findPort(src_network, dst_network)
+                            if demarc_port is None:
+                                raise error.STPResolutionError('Failed to find demarc port from %s to %s during expansion' % (src_network, dst_network))
+
+                            expanded_path.append( nsa.Link( nsa.STP(link.src_stp.network, link.src_stp.port, link.src_stp.label),
+                                                            nsa.STP(src_network,          demarc_port.name,  demarc_port.label) ) )
+
+                            expanded_path.append( nsa.Link( nsa.STP(dst_network,          demarc_port.remote_port, demarc_port.label), # demarc label isn't quite right
+                                                            nsa.STP(link.dst_stp.network, link.dst_stp.port,       link.dst_stp.label) ) )
+
+                    else:
+                        expanded_path.append(link)
+
+                log.msg("Expanded path %s" % expanded_path, system=LOG_SYSTEM)
+
+                if len(expanded_path) == len(base_path):
+                    expanding = False
+                else:
+                    base_path = expanded_path
+
+            paths = [ expanded_path ]
+
         else:
             # both endpoints outside the network, proxy aggregation not alloweded
             raise error.ConnectionCreateError('None of the endpoints terminate in the network, rejecting request (network: %s + %s, nsa network %s)' %

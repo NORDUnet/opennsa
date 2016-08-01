@@ -1,5 +1,7 @@
 # Fetches discovory documents from other nsas
 
+from xml.etree import cElementTree as ET
+
 from twisted.python import log
 from twisted.internet import defer, task, reactor
 from twisted.application import service
@@ -7,7 +9,9 @@ from twisted.application import service
 from opennsa import nsa, constants as cnt
 from opennsa.protocols.shared import httpclient
 from opennsa.discovery.bindings import discovery
+from opennsa.topology import nmlxml
 from opennsa.topology.nmlxml import _baseName # nasty but I need it
+from opennsa.topology import linknode
 
 
 LOG_SYSTEM = 'discovery.Fetcher'
@@ -20,11 +24,11 @@ FETCH_INTERVAL_MAX = 3600 # seconds - 3600 seconds = 1 hour
 
 class FetcherService(service.Service):
 
-    def __init__(self, link_vectors, nrm_ports, peers, provider_registry, ctx_factory=None):
+    def __init__(self, link_node, nrm_ports, peers, provider_registry, ctx_factory=None):
         for peer in peers:
             assert peer.url.startswith('http'), 'Peer URL %s does not start with http' % peer.url
 
-        self.link_vectors = link_vectors
+        self.link_node = link_node
         self.nrm_ports = nrm_ports
         self.peers = peers
         self.provider_registry = provider_registry
@@ -55,7 +59,7 @@ class FetcherService(service.Service):
             defs.append(d)
 
         def updateInterval(passthrough):
-            self.call.interval = min(self.call.interval * 2, FETCH_INTERVAL_MAX)
+            self.call.interval = min(self.call.interval ** 2, FETCH_INTERVAL_MAX)
             return passthrough
 
         if defs:
@@ -70,11 +74,16 @@ class FetcherService(service.Service):
             nsa_id = nsa_description.id_
 
             cs_service_url = None
+            nml_service_url = None
             for i in nsa_description.interface:
                 if i.type_ == cnt.CS2_PROVIDER:
                     cs_service_url = i.href
                 elif i.type_ == cnt.CS2_SERVICE_TYPE and cs_service_url is None: # compat, only overwrite if cs prov not specified
                     cs_service_url = i.href
+
+                if i.type_ == cnt.NML_SERVICE_TYPE:
+                    nml_service_url = i.href
+
 
             if cs_service_url is None:
                 log.msg('NSA description does not have CS interface url, discarding description', system=LOG_SYSTEM)
@@ -86,25 +95,17 @@ class FetcherService(service.Service):
 
             self.provider_registry.spawnProvider(nsi_agent, network_ids)
 
-            # first, build vectors
-            vectors = {}
-            if nsa_description.other is not None:
-                for other in nsa_description.other:
-                    if other.topologyReachability:
-                        for tr in other.topologyReachability:
-                            if tr.uri.startswith(cnt.URN_OGF_PREFIX): # silent discard weird stuff
-                                vectors[_baseName(tr.uri)] = tr.cost + 1
-            for nid in network_ids:
-                vectors[nid] = 1
-
-            # update per-port link vectors
-            if vectors:
-                for np in self.nrm_ports:
-                    if np.remote_network in network_ids:
-                        # this may add the vectors to multiple ports (though not likely)
-                        self.link_vectors.updateVector(np.name, vectors )
+            for network_id in network_ids:
+                if not network_id in self.link_node.nodes:
+                    log.msg("Adding empty node %s" % network_id, debug=True, system=LOG_SYSTEM)
+                    self.link_node.addNode( linknode.Node(network_id) )
 
             # there is lots of other stuff in the nsa description but we don't really use it
+
+            # should fetch the nml and parse demarcation ports
+            if nml_service_url is not None:
+                d = httpclient.httpRequest(nml_service_url, '', {}, 'GET', timeout=10, ctx_factory=self.ctx_factory)
+                d.addCallbacks(self.gotNMLDocument, self.nmlRetrievalFailed, callbackArgs=(nsa_id,), errbackArgs=(nsa_id, nml_service_url))
 
 
         except Exception as e:
@@ -116,4 +117,21 @@ class FetcherService(service.Service):
     def retrievalFailed(self, result, peer):
         log.msg('Topology retrieval failed for %s. Reason: %s.' % (peer.url, result.getErrorMessage()), system=LOG_SYSTEM)
 
+
+    def gotNMLDocument(self, result, nsa_id):
+
+        doc = ET.fromstring(result)
+        nml_network = nmlxml.parseNMLTopology(doc)
+
+        for bd in nml_network.bidirectional_ports:
+            if bd.outbound_port.remote_port is not None:
+                remote_network = bd.outbound_port.remote_port.rsplit(':',1)[0]
+                remote_port    = bd.outbound_port.remote_port.rsplit(':',1)[1].rsplit('-',1)[0] # hack on, won't work everywhere
+                label = bd.outbound_port._label
+                log.msg("Adding port %s:%s -> %s" % (nml_network.name, bd.name, remote_network), debug=True, system=LOG_SYSTEM)
+                self.link_node.nodes[nml_network.id_].addPort(bd.name, label, remote_network, remote_port)
+
+
+    def nmlRetrievalFailed(self, result, nsa_id, nml_service_url):
+        log.msg('NML service retrieval failed for %s/%s. Reason: %s.' % (nsa_id, nml_service_url, result.getErrorMessage()), system=LOG_SYSTEM)
 

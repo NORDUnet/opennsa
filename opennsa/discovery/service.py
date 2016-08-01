@@ -10,9 +10,15 @@ Copyright: NORDUnet (2014)
 
 from xml.etree import ElementTree as ET
 
+from twisted.python import log
+
 from opennsa import constants as cnt
 from opennsa.shared import xmlhelper, modifiableresource
 from opennsa.discovery.bindings import discovery
+from opennsa.topology.nmlxml import _baseName # nasty but I need it
+
+
+LOG_SYSTEM = "DiscoveryService"
 
 
 ET.register_namespace('nsi', discovery.NSI_DISCOVERY_NS)
@@ -24,7 +30,7 @@ class DiscoveryService:
 
     def __init__(self, nsa_id, version=None, name=None, software_version=None, start_time=None,
                  network_ids=None, interfaces=None, features=None, provider_registry=None,
-                 link_vector=None):
+                 link_node=None, domain_aggregate=False):
 
         self.nsa_id                 = nsa_id                # string
         self.version                = version               # datetime
@@ -35,10 +41,13 @@ class DiscoveryService:
         self.interfaces             = interfaces            # [ (type, url, described_by) ]
         self.features               = features              # [ (type, value) ]
         self.provider_registry      = provider_registry     # provreg.ProviderRegistry
-        self.link_vector            = link_vector           # linkvector.LinkVector
+        self.link_node              = link_node             # linkvector.Graph
+        self.domain_aggregate       = domain_aggregate      # boolean
 
 
     def xml(self):
+
+        log.msg("Generating new discovery xml resource", debug=True, system=LOG_SYSTEM)
 
         # location not really supported yet
         interface_types = [ discovery.InterfaceType(i[0], i[1], i[2]) for i in self.interfaces ]
@@ -48,10 +57,20 @@ class DiscoveryService:
         try:
             peers_with.remove(self.nsa_id)
         except ValueError:
-            pass # running in aggregetor-only mode
+            pass # running in aggregeter-only mode
 
-        topology_vectors = [ (cnt.URN_OGF_PREFIX + tv, cost) for tv, cost in self.link_vector.listVectors().items() ]
-        other = discovery.HolderType( [ discovery.Topology(t,c) for (t,c) in topology_vectors ] )
+        other = None
+
+        proxy_domains = []
+        if self.domain_aggregate:
+            proxy_domains = [ cnt.URN_OGF_PREFIX + node_name for node_name in self.link_node.nodes.keys() \
+                              if node_name.endswith( _baseName(self.network_ids[0]) ) ]
+
+            # remove nsa ids of proxy domains from peers_with
+            for pw in reversed(peers_with):
+                if _baseName(pw).endswith( _baseName(self.nsa_id) ):
+                    peers_with.remove(pw)
+
 
         nsa_element = discovery.NsaType(
             self.nsa_id,
@@ -60,7 +79,7 @@ class DiscoveryService:
             self.name,
             self.software_version,
             xmlhelper.createXMLTime(self.start_time),
-            self.network_ids,
+            self.network_ids + proxy_domains,
             interface_types,
             feature_types,
             peers_with,

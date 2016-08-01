@@ -42,5 +42,6 @@ FEATURE_UPA         = 'vnd.ogf.nsi.cs.v2.role.uPA'
 # policies
 REQUIRE_USER        = 'requireuser'
 REQUIRE_TRACE       = 'requiretrace'
-AGGREGATOR          = 'aggregator'
+AGGREGATOR          = 'aggregator'      # this can possibly be removed once domain aggregation is done
+DOMAIN_AGGREGATE    = 'domainaggregate'
 

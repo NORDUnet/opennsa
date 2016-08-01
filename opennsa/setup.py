@@ -12,7 +12,7 @@ from twisted.application import internet, service as twistedservice
 from opennsa import __version__ as version
 
 from opennsa import config, logging, constants as cnt, nsa, provreg, database, aggregator, viewresource
-from opennsa.topology import nrm, nml, linkvector, service as nmlservice
+from opennsa.topology import nrm, nml, linknode, service as nmlservice
 from opennsa.protocols.shared import httplog
 from opennsa.discovery import service as discoveryservice, fetcher
 from opennsa.protocols import nsi2
@@ -63,24 +63,26 @@ def setupBackend(backend_cfg, network_name, nrm_ports, parent_requester):
 
 def setupTopology(nrm_map, network_name, base_name):
 
-    link_vector = linkvector.LinkVector( [ network_name ] )
+    link_node = linknode.Graph()
 
     if nrm_map is not None:
         nrm_ports = nrm.parsePortSpec(nrm_map)
         nml_network = nml.createNMLNetwork(nrm_ports, network_name, base_name)
 
-        # route vectors
-        # hack in link vectors manually, since we don't have a mechanism for updating them automatically
+        # network node connectivity
+        node = linknode.Node(network_name)
         for np in nrm_ports:
             if np.remote_network is not None:
-                link_vector.updateVector(np.name, { np.remote_network : 1 } ) # hack
+                node.addPort(np.name, np.label, np.remote_network, np.remote_port.rsplit(':',1)[1])
                 for network, cost in np.vectors.items():
-                    link_vector.updateVector(np.name, { network : cost })
+                    #link_vector.updateVector(np.name, { network : cost })
+                    print 'Manual vectors not supported for link node yet'
+        link_node.addNode(node)
     else:
         nrm_ports = []
         nml_network = None
 
-    return nrm_ports, nml_network, link_vector
+    return nrm_ports, nml_network, link_node
 
 
 
@@ -184,7 +186,7 @@ class OpenNSAService(twistedservice.MultiService):
         requester_creator = CS2RequesterCreator(top_resource, None, vc[config.HOST], vc[config.PORT], vc[config.TLS], ctx_factory) # set aggregator later
 
         provider_registry = provreg.ProviderRegistry({}, { cnt.CS2_SERVICE_TYPE : requester_creator.create } )
-        aggr = aggregator.Aggregator(network_name, ns_agent, nml_network, link_vector, None, provider_registry, vc[config.POLICY], plugin ) # set parent requester later
+        aggr = aggregator.Aggregator(network_name, ns_agent, nml_network, link_node, None, provider_registry, vc[config.POLICY], plugin ) # set parent requester later
 
         requester_creator.aggregator = aggr
 
@@ -213,7 +215,7 @@ class OpenNSAService(twistedservice.MultiService):
 
         # fetcher
         if vc[config.PEERS]:
-            fetcher_service = fetcher.FetcherService(link_vector, nrm_ports, vc[config.PEERS], provider_registry, ctx_factory=ctx_factory)
+            fetcher_service = fetcher.FetcherService(link_node, nrm_ports, vc[config.PEERS], provider_registry, ctx_factory=ctx_factory)
             fetcher_service.setServiceParent(self)
         else:
             log.msg('No peers configured, will not be able to do outbound requests.')
@@ -232,7 +234,7 @@ class OpenNSAService(twistedservice.MultiService):
         # discovery service
         name = base_name.split(':')[0] if ':' in base_name else base_name
         opennsa_version = 'OpenNSA-' + version
-        networks    = [ cnt.URN_OGF_PREFIX + network_name ] if nml_network is not None else []
+        networks    = [ cnt.URN_OGF_PREFIX + network_name ] # why is this a list
         interfaces  = [ ( cnt.CS2_PROVIDER, provider_endpoint, None), ( cnt.CS2_SERVICE_TYPE, provider_endpoint, None), (cnt.NML_SERVICE_TYPE, nml_resource_url, None) ]
         features    = []
         if nrm_ports:
@@ -240,11 +242,12 @@ class OpenNSAService(twistedservice.MultiService):
         if vc[config.PEERS]:
             features.append( (cnt.FEATURE_AGGREGATOR, None) )
 
-        ds = discoveryservice.DiscoveryService(ns_agent.urn(), now, name, opennsa_version, now, networks, interfaces, features, provider_registry, link_vector)
+        domain_aggregate = cnt.DOMAIN_AGGREGATE in vc[config.POLICY]
+        ds = discoveryservice.DiscoveryService(ns_agent.urn(), now, name, opennsa_version, now, networks, interfaces, features, provider_registry, link_node, domain_aggregate)
 
         discovery_resource = ds.resource()
         top_resource.children['NSI'].putChild(discovery_resource_name, discovery_resource)
-        link_vector.callOnUpdate( lambda : discovery_resource.updateResource ( ds.xml() ))
+        link_node.callOnUpdate( lambda : discovery_resource.updateResource ( ds.xml() ))
 
         # view resource
         vr = viewresource.ConnectionListResource()
