@@ -251,9 +251,13 @@ class BrocadeConnectionManager:
 
 
 
-def BrocadeBackend(network_name, network_topology, parent_requester, port_map, configuration):
+def BrocadeBackend(network_name, nrm_ports, parent_requester, configuration):
 
     name = 'Brocade %s' % network_name
+
+    nrm_map  = dict( [ (p.name, p) for p in nrm_ports ] ) # for the generic backend
+    port_map = dict( [ (p.name, p.interface) for p in nrm_ports ] ) # for the nrm backend
+
     cm = BrocadeConnectionManager(name, port_map, configuration)
-    return genericbackend.GenericBackend(network_name, network_topology, cm, parent_requester, name)
+    return genericbackend.GenericBackend(network_name, nrm_map, cm, parent_requester, name)
 
