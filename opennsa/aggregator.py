@@ -21,7 +21,7 @@ LOG_SYSTEM = 'Aggregator'
 
 
 def shortLabel(label):
-    # create a log friendly string representation of a lbel
+    # create a log friendly string representation of a label
     if label is None: # it happens
         return ''
 
