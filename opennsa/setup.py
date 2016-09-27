@@ -53,6 +53,10 @@ def setupBackend(backend_cfg, network_name, nrm_ports, parent_requester):
         from opennsa.backends import ncsvpn
         BackendConstructer = ncsvpn.NCSVPNBackend
 
+    elif backend_type == config.BLOCK_PICA8OVS:
+        from opennsa.backends import pica8ovs
+        BackendConstructer = pica8ovs.Pica8OVSBackend
+
     else:
         raise config.ConfigurationError('No backend specified')
 

@@ -32,6 +32,7 @@ BLOCK_FORCE10    = 'force10'
 BLOCK_BROCADE    = 'brocade'
 BLOCK_DELL       = 'dell'
 BLOCK_NCSVPN     = 'ncsvpn'
+BLOCK_PICA8OVS   = 'pica8ovs'
 
 # service block
 NETWORK_NAME     = 'network'     # mandatory
@@ -98,6 +99,16 @@ DELL_PORT               = _SSH_PORT
 DELL_HOST_FINGERPRINT   = _SSH_HOST_FINGERPRINT
 DELL_USER               = _SSH_USER
 DELL_PASSWORD           = _SSH_PASSWORD
+
+# Pica8 OVS
+PICA8OVS_HOST                = _SSH_HOST
+PICA8OVS_PORT                = _SSH_PORT
+PICA8OVS_HOST_FINGERPRINT    = _SSH_HOST_FINGERPRINT
+PICA8OVS_USER                = _SSH_USER
+PICA8OVS_SSH_PUBLIC_KEY      = _SSH_PUBLIC_KEY
+PICA8OVS_SSH_PRIVATE_KEY     = _SSH_PRIVATE_KEY
+DB_IP                        = 'dbip'
+
 
 # NCS VPN Backend
 NCS_SERVICES_URL        = 'url'
@@ -274,7 +285,7 @@ def readVerifyConfig(cfg):
         if name in backends:
             raise ConfigurationError('Can only have one backend named "%s"' % name)
 
-        if backend_type in (BLOCK_DUD, BLOCK_JUNIPER_EX, BLOCK_JUNOS, BLOCK_FORCE10, BLOCK_BROCADE, BLOCK_DELL, BLOCK_NCSVPN, 'asyncfail'):
+        if backend_type in (BLOCK_DUD, BLOCK_JUNIPER_EX, BLOCK_JUNOS, BLOCK_FORCE10, BLOCK_BROCADE, BLOCK_DELL, BLOCK_NCSVPN, BLOCK_PICA8, 'asyncfail'):
             backend_conf = dict( cfg.items(section) )
             backend_conf['_backend_type'] = backend_type
             backends[name] = backend_conf
