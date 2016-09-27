@@ -169,7 +169,7 @@ class OpenNSAService(twistedservice.MultiService):
 
         # topology
         nrm_map = open(vc[config.NRM_MAP_FILE]) if vc[config.NRM_MAP_FILE] is not None else None
-        nrm_ports, nml_network, link_node = setupTopology(nrm_map, network_name, base_name)
+        nrm_ports, nml_network, link_vector = setupTopology(nrm_map, network_name, base_name)
 
         # ssl/tls context
         ctx_factory = setupTLSContext(vc) # May be None
