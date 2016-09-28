@@ -209,7 +209,7 @@ class Pica8OVSConnectionManager:
 
     def getTarget(self, port, label):
         assert label is not None and label.type_ == cnt.ETHERNET_VLAN, 'Label type must be VLAN'
-        vlan = int(label.value)
+        vlan = int(label.labelValue())
         assert 1 <= vlan <= 4095, 'Invalid label value for vlan: %s' % label.labelValue()
 
         return Pica8OVSTarget(self.port_map[port], vlan)
