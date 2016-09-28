@@ -203,14 +203,14 @@ class Pica8OVSConnectionManager:
     def getResource(self, port, label):
         assert label is not None or label.type_ == cnt.ETHERNET_VLAN, 'Label type must be VLAN'
         # vlan is a global resource, only one be used at a time - not sure this is true for pica8/ovs
-        label_value = '-' if label is None else label.value
+        label_value = '-' if label is None else label.labelValue()
         return label_value
 
 
     def getTarget(self, port, label):
         assert label is not None and label.type_ == cnt.ETHERNET_VLAN, 'Label type must be VLAN'
         vlan = int(label.value)
-        assert 1 <= vlan <= 4095, 'Invalid label value for vlan: %s' % label.value
+        assert 1 <= vlan <= 4095, 'Invalid label value for vlan: %s' % label.labelValue()
 
         return Pica8OVSTarget(self.port_map[port], vlan)
 
