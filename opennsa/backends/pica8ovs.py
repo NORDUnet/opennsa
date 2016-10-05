@@ -228,8 +228,6 @@ class Pica8OVSConnectionManager:
 
     def setupLink(self, connection_id, source_target, dest_target, bandwidth):
 
-        assert source_target.vlan == dest_target.vlan, 'VLANs must match'
-
         def linkUp(_):
             log.msg('Link %s -> %s up' % (source_target, dest_target), system=LOG_SYSTEM)
 
@@ -239,8 +237,6 @@ class Pica8OVSConnectionManager:
 
 
     def teardownLink(self, connection_id, source_target, dest_target, bandwidth):
-
-        assert source_target.vlan == dest_target.vlan, 'VLANs must match'
 
         def linkDown(_):
             log.msg('Link %s -> %s down' % (source_target, dest_target), system=LOG_SYSTEM)
