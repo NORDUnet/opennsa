@@ -24,31 +24,35 @@ COMMAND_SET_INTERFACE_VLAN      = '/ovs/bin/ovs-vsctl --db=tcp:%s:6640 add port 
 COMMAND_DELETE_INTERFACE_VLAN   = '/ovs/bin/ovs-vsctl --db=tcp:%s:6640 remove port %s trunk %i'
 
 COMMAND_ADD_FLOW                = '/ovs/bin/ovs-ofctl add-flow br0 in_port=%s,dl_vlan=%i,actions=output:%s'
+COMMAND_ADD_FLOW_SWAP           = '/ovs/bin/ovs-ofctl add-flow br0 in_port=%s,dl_vlan=%i,action=set_field=%i-\\>vlan_vid,output:%s'
 COMMAND_DELETE_FLOW             = '/ovs/bin/ovs-ofctl del-flows br0 in_port=%s,dl_vlan=%i'
 
 
-def createConfigureCommands(db_ip, source_nrm_port, dest_nrm_port, vlan):
+def createConfigureCommands(db_ip, source_nrm_port, dest_nrm_port, source_vlan, dest_vlan):
 
-    #vl = COMMAND_SET_VLAN % (vlan, vlan)
-    cmd_s_intf  = COMMAND_SET_INTERFACE_VLAN % (db_ip, source_nrm_port, vlan)
-    cmd_d_intf  = COMMAND_SET_INTERFACE_VLAN % (db_ip, dest_nrm_port, vlan)
+    cmd_s_intf  = COMMAND_SET_INTERFACE_VLAN % (db_ip, source_nrm_port, source_vlan)
+    cmd_d_intf  = COMMAND_SET_INTERFACE_VLAN % (db_ip, dest_nrm_port, dest_vlan)
     s_flow = str(int(source_nrm_port.split('/')[2]) + 128)
     d_flow = str(int(dest_nrm_port.split('/')[2]) + 128)
-    cmd_s_flow  = COMMAND_ADD_FLOW              % ( s_flow, vlan, d_flow )
-    cmd_d_flow  = COMMAND_ADD_FLOW              % ( d_flow, vlan, s_flow )
+    if source_vlan == dest_vlan:
+        cmd_s_flow  = COMMAND_ADD_FLOW              % ( s_flow, source_vlan, d_flow )
+        cmd_d_flow  = COMMAND_ADD_FLOW              % ( d_flow, source_vlan, s_flow )
+    else:
+        cmd_s_flow  = COMMAND_ADD_FLOW_SWAP         % ( s_flow, source_vlan, dest_vlan, d_flow )
+        cmd_d_flow  = COMMAND_ADD_FLOW_SWAP         % ( d_flow, dest_vlan, source_vlan, s_flow )
 
     commands = [ cmd_s_intf, cmd_d_intf, cmd_s_flow, cmd_d_flow ]
     return commands
 
 
-def createDeleteCommands(db_ip, source_nrm_port, dest_nrm_port, vlan):
+def createDeleteCommands(db_ip, source_nrm_port, dest_nrm_port, source_vlan, dest_vlan):
 
-    cmd_no_s_intf = COMMAND_DELETE_INTERFACE_VLAN % (db_ip, source_nrm_port, vlan )
-    cmd_no_d_intf = COMMAND_DELETE_INTERFACE_VLAN % (db_ip, dest_nrm_port, vlan )
+    cmd_no_s_intf = COMMAND_DELETE_INTERFACE_VLAN % (db_ip, source_nrm_port, source_vlan )
+    cmd_no_d_intf = COMMAND_DELETE_INTERFACE_VLAN % (db_ip, dest_nrm_port, dest_vlan )
     s_flow = str(int(source_nrm_port.split('/')[2]) + 128)
     d_flow = str(int(dest_nrm_port.split('/')[2]) + 128)
-    cmd_no_s_flow = COMMAND_DELETE_FLOW         % ( s_flow, vlan )
-    cmd_no_d_flow = COMMAND_DELETE_FLOW         % ( d_flow, vlan )
+    cmd_no_s_flow = COMMAND_DELETE_FLOW         % ( s_flow, source_vlan )
+    cmd_no_d_flow = COMMAND_DELETE_FLOW         % ( d_flow, dest_vlan )
 
     commands = [ cmd_no_s_flow, cmd_no_d_flow, cmd_no_s_intf, cmd_no_d_intf ]
     return commands
@@ -163,15 +167,15 @@ class Pica8OVSCommandSender:
             ssh_connection.transport.loseConnection()
 
 
-    def setupLink(self, source_nrm_port, dest_nrm_port, vlan):
+    def setupLink(self, source_target, dest_target):
 
-        commands = createConfigureCommands(self.db_ip, source_nrm_port, dest_nrm_port, vlan)
+        commands = createConfigureCommands(self.db_ip, source_target.port, dest_target.port, source_target.vlan, dest_target.vlan)
         return self._sendCommands(commands)
 
 
-    def teardownLink(self, source_nrm_port, dest_nrm_port, vlan):
+    def teardownLink(self, source_target, dest_target):
 
-        commands = createDeleteCommands(self.db_ip, source_nrm_port, dest_nrm_port, vlan)
+        commands = createDeleteCommands(self.db_ip, source_target.port, dest_target.port, source_target.vlan, dest_target.vlan)
         return self._sendCommands(commands)
 
 
@@ -202,9 +206,9 @@ class Pica8OVSConnectionManager:
 
     def getResource(self, port, label):
         assert label is not None or label.type_ == cnt.ETHERNET_VLAN, 'Label type must be VLAN'
-        # vlan is a global resource, only one be used at a time - not sure this is true for pica8/ovs
-        label_value = '-' if label is None else label.labelValue()
-        return label_value
+        # resource is port + vlan (router / virtual switching)
+        label_value = '' if label is None else label.labelValue()
+        return port + ':' + label_value
 
 
     def getTarget(self, port, label):
@@ -230,7 +234,7 @@ class Pica8OVSConnectionManager:
         def linkUp(_):
             log.msg('Link %s -> %s up' % (source_target, dest_target), system=LOG_SYSTEM)
 
-        d = self.command_sender.setupLink(source_target.port, dest_target.port, dest_target.vlan)
+        d = self.command_sender.setupLink(source_target, dest_target)
         d.addCallback(linkUp)
         return d
 
@@ -242,7 +246,7 @@ class Pica8OVSConnectionManager:
         def linkDown(_):
             log.msg('Link %s -> %s down' % (source_target, dest_target), system=LOG_SYSTEM)
 
-        d = self.command_sender.teardownLink(source_target.port, dest_target.port, dest_target.vlan)
+        d = self.command_sender.teardownLink(source_target, dest_target)
         d.addCallback(linkDown)
         return d
 
