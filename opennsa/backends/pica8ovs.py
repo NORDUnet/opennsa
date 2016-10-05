@@ -223,7 +223,7 @@ class Pica8OVSConnectionManager:
 
 
     def canSwapLabel(self, label_type):
-        return False # not yet anyway
+        return True
 
 
     def setupLink(self, connection_id, source_target, dest_target, bandwidth):
