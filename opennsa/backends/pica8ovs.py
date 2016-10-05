@@ -6,7 +6,6 @@ Authors:  iCAIR. Contributions by SURFnet, NORDUnet
 """
 
 import random
-import time
 
 from twisted.python import log
 from twisted.internet import defer
