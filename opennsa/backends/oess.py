@@ -11,15 +11,15 @@
 """
 
 import random
-from base64 import b64encode
 import json
-from ast import literal_eval
+from base64 import b64encode
+
 from twisted.python import log
+from twisted.internet import reactor, defer
 from twisted.internet.ssl import ClientContextFactory
 from twisted.web.client import Agent, readBody
-from twisted.internet import reactor, defer
 from twisted.web.http_headers import Headers
-from twisted.python.log import err
+
 from opennsa.backends.common import genericbackend
 from opennsa import constants as cnt, config
 
@@ -39,19 +39,11 @@ class WebClientContextFactory(ClientContextFactory):
 
 def http_query(conn, sub_path):
     """
-        Mini Twisted Web Client
+    Mini Twisted Web Client
     """
     full_url = conn.url + sub_path
     full_url = full_url.encode('latin-1')
     log.msg("http_query: %r" % full_url, debug=True, system=LOG_SYSTEM)
-
-    def cb_body(body):
-        return body
-
-    def cb_request(response):
-        d = readBody(response)
-        d.addCallback(cb_body)
-        return d
 
     context_factory = WebClientContextFactory()
     agent = Agent(reactor, context_factory)
@@ -61,7 +53,7 @@ def http_query(conn, sub_path):
                         'Authorization': ['Basic ' + conn.auth]
                         }),
                       bodyProducer=None)
-    d.addCallbacks(cb_request, err)
+    d.addCallbacks(readBody, log.err)
     return d
 
 
@@ -88,7 +80,7 @@ def oess_get_circuit_id(circuits, src_interface, dst_interface):
                         return circuit["circuit_id"]
 
     error_msg = "Circuit not found for %s - %s" % (src_interface, dst_interface)
-    log.msg(error_msg, debug=True, system=LOG_SYSTEM)
+    log.msg(error_msg, system=LOG_SYSTEM)
     return 0
 
 
@@ -236,7 +228,6 @@ class UrlConnection(object):
 class OessSetup(object):
 
     def __init__(self, url, user, password, workgroup):
-        self.log_system = LOG_SYSTEM
         self.url = url
         self.username = user
         self.password = password
@@ -251,59 +242,59 @@ class OessSetup(object):
         log.msg("Provisioning OESS circuit... ", system=LOG_SYSTEM)
         try:
             log.msg("01 - Getting All OESS Workgroup' Workgroup_IDs",
-                    debug=True, system=self.log_system)
+                    debug=True, system=LOG_SYSTEM)
             wg_ids = yield oess_get_workgroups(self.conn)
 
             log.msg("02 - Getting our Group's ID",
-                    debug = True, system=self.log_system)
+                    debug = True, system=LOG_SYSTEM)
             self.workgroup_id = oess_get_workgroup_id(wg_ids, self.workgroup)
 
             log.msg("03 - Getting source switch, interface and VLAN from src_interface",
-                    debug=True, system=self.log_system)
+                    debug=True, system=LOG_SYSTEM)
             s_sw, s_int, s_vlan = oess_get_port_vlan(src_interface)
 
             log.msg("04 - Querying for all interfaces of the source switch",
-                    debug=True, system=self.log_system)
+                    debug=True, system=LOG_SYSTEM)
             s_switch_interfaces = yield oess_get_switch_ports(self.conn, s_sw)
 
             log.msg("05 - Validating switch_interfaces with interface provided",
-                    debug=True, system=self.log_system)
+                    debug=True, system=LOG_SYSTEM)
             oess_validate_ports(s_switch_interfaces, s_int)
 
             log.msg("06 - Verifying if source VLAN is available",
-                    debug=True, system=self.log_system)
+                    debug=True, system=LOG_SYSTEM)
             is_available = yield oess_query_vlan_availability(self.conn, s_sw, s_int, s_vlan)
             oess_confirm_vlan_availability(is_available, s_vlan)
 
             log.msg("07 - Get destination switch, interface and VLAN from dst_interface",
-                    debug=True, system=self.log_system)
+                    debug=True, system=LOG_SYSTEM)
             d_sw, d_int, d_vlan = oess_get_port_vlan(dst_interface)
 
             log.msg("08 - Querying for all interfaces of the destination switch",
-                    debug=True, system=self.log_system)
+                    debug=True, system=LOG_SYSTEM)
             d_switch_interfaces = yield oess_get_switch_ports(self.conn, d_sw)
 
             log.msg("09 - Validating switch_interfaces with interface provided",
-                    debug=True, system=self.log_system)
+                    debug=True, system=LOG_SYSTEM)
             oess_validate_ports(d_switch_interfaces, d_int)
 
             log.msg("10 - Verifying if destination VLAN is available",
-                    debug=True, system=self.log_system)
+                    debug=True, system=LOG_SYSTEM)
             is_available = yield oess_query_vlan_availability(self.conn, d_sw, d_int, d_vlan)
             oess_confirm_vlan_availability(is_available, d_vlan)
 
             log.msg("11 - Querying for primary path",
-                    debug=True, system=self.log_system)
+                    debug=True, system=LOG_SYSTEM)
             p_path = yield oess_get_path(self.conn, s_sw, d_sw)
             primary = oess_process_path(p_path)
 
             log.msg("12 - Querying for backup path",
-                    debug=True, system=self.log_system)
+                    debug=True, system=LOG_SYSTEM)
             b_path = yield oess_get_path(self.conn, s_sw, d_sw, primary)
             backup = oess_process_path(b_path)
 
             log.msg("13 - Provisioning circuit...",
-                    debug=True, system=self.log_system)
+                    debug=True, system=LOG_SYSTEM)
             result = yield oess_provision_circuit(self.conn, self.workgroup_id,
                                                   s_sw, s_int, s_vlan,
                                                   d_sw, d_int, d_vlan,
@@ -311,41 +302,44 @@ class OessSetup(object):
             self.circuit_id = oess_process_result(result)
 
             log.msg("Success!! OESS circuit %s created" % self.circuit_id,
-                    system=self.log_system)
+                    system=LOG_SYSTEM)
 
         except Exception as err:
-            print("!!!!! Error: %s !!!!! - Circuit not created!" % err)
+            log.msg("Error creating circuit: %s" % err, system=LOG_SYSTEM)
+            raise err
+
 
     @defer.inlineCallbacks
     def oess_circuit_removal(self, src_interface, dst_interface):
         log.msg("Removing OESS circuit", system=LOG_SYSTEM)
         try:
-            log.msg("01 - Getting list of circuits", debug=True, system=self.log_system)
+            log.msg("01 - Getting list of circuits", debug=True, system=LOG_SYSTEM)
             circuits = yield oess_get_circuits(self.conn, self.workgroup_id)
 
-            log.msg("02 - Getting Circuit ID", debug=True, system=self.log_system)
+            log.msg("02 - Getting Circuit ID", debug=True, system=LOG_SYSTEM)
             circuit_id = oess_get_circuit_id(circuits, src_interface, dst_interface)
 
             if not circuit_id:
-                log.msg("OESS circuit not found!", debug=True, system=self.log_system)
+                log.msg("OESS circuit not found!", debug=True, system=LOG_SYSTEM)
             else:
-                log.msg("03 - Cancelling Circuit ID", debug=True, system=self.log_system)
+                log.msg("03 - Cancelling Circuit ID", debug=True, system=LOG_SYSTEM)
                 result = yield oess_cancel_circuit(self.conn, str(circuit_id),
                                                    self.workgroup_id)
                 try:
                     try:
                         result = json.loads(result)
                     except Exception as err:
-                        raise Exception(err)
+                        raise err
 
                     if result["results"][0]["success"] == 1:
-                        log.msg("OESS circuit %s removed'" % circuit_id, system=self.log_system)
+                        log.msg("OESS circuit %s removed'" % circuit_id, system=LOG_SYSTEM)
                 except:
                     raise Exception("Problem removing circuit %s. Check OESS's logs"
                                     % circuit_id)
 
         except Exception as err:
-            print("!!!!! Error: %s !!!!! - Circuit not removed!" % err)
+            log.msg("Error creating circuit: %s" % err, system=LOG_SYSTEM)
+            raise err
 
     def setupLink(self, source_target, dest_target):
         return self.oess_provisioning(source_target, dest_target)
@@ -368,10 +362,8 @@ class OESSConnectionManager:
         self.circuit_id = None
 
     def getResource(self, port, label):
-        log.msg(
-            'OESS: getResource, port = %s and label = %s and Vlan = %s' %
-            (port, label, label.labelValue()),
-            system=self.log_system)
+        log.msg('OESS: getResource, port = %s and label = %s and Vlan = %s' %
+                (port, label, label.labelValue()), system=self.log_system)
 
         assert label is not None or label.type_ == cnt.ETHERNET_VLAN, 'Label type must be VLAN'
         # resource is port + vlan (router / virtual switching)
@@ -379,9 +371,8 @@ class OESSConnectionManager:
         return port + ':' + label_value
 
     def getTarget(self, port, label):
-        log.msg(
-            'OESS: getTarget, port = %s and label = %s' % (port, label),
-            system=self.log_system)
+        log.msg('OESS: getTarget, port = %s and label = %s' % (port, label),
+                system=self.log_system)
 
         assert label is not None and label.type_ == cnt.ETHERNET_VLAN, 'Label type must be VLAN'
         vlan = int(label.labelValue())
@@ -417,7 +408,7 @@ class OESSConnectionManager:
 
 def OESSBackend(network_name, nrm_ports, parent_requester, cfg):
     """
-        OESS Backend definition
+    OESS Backend definition
     """
     log.msg('OESS: OESSBackend', debug=True, system=LOG_SYSTEM)
     name = 'OESS NRM %s' % network_name
