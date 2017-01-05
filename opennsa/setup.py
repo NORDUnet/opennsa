@@ -258,8 +258,8 @@ class OpenNSAService(twistedservice.MultiService):
             nml_service = nmlservice.NMLService(nml_network, can_swap_label)
             top_resource.children['NSI'].putChild(nml_resource_name, nml_service.resource() )
 
-            service_endpoints.append( ('NML Topology', nml_resource_url) )
-            interfaces.append( (cnt.NML_SERVICE_TYPE, nml_resource_url, None) )
+            service_endpoints.append( ('NML Topology', nml_url) )
+            interfaces.append( (cnt.NML_SERVICE_TYPE, nml_url, None) )
 
         # discovery service
         discovery_resource_name = 'discovery.xml'
