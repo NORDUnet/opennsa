@@ -13,9 +13,9 @@ from opennsa import __version__ as version
 
 from opennsa import config, logging, constants as cnt, nsa, provreg, database, aggregator, viewresource
 from opennsa.topology import nrm, nml, linkvector, service as nmlservice
+from opennsa.protocols import rest, nsi2
 from opennsa.protocols.shared import httplog
 from opennsa.discovery import service as discoveryservice, fetcher
-from opennsa.protocols import nsi2
 
 
 
@@ -226,27 +226,44 @@ class OpenNSAService(twistedservice.MultiService):
         else:
             log.msg('No peers configured, will not be able to do outbound requests.')
 
-        # wire up the http stuff
-
-        discovery_resource_name = 'discovery.xml'
-        discovery_url = '%s/NSI/%s' % (base_url, discovery_resource_name)
-
-        nml_resource_name       = base_name + '.nml.xml'
-        nml_resource_url        = '%s/NSI/%s' % (base_url, nml_resource_name)
-
-        service_endpoints.append( ('Discovery', discovery_url) )
-        service_endpoints.append( ('NML Topology', nml_resource_url) )
-
         # discovery service
         name = base_name.split(':')[0] if ':' in base_name else base_name
         opennsa_version = 'OpenNSA-' + version
         networks    = [ cnt.URN_OGF_PREFIX + network_name ] if nml_network is not None else []
-        interfaces  = [ ( cnt.CS2_PROVIDER, provider_endpoint, None), ( cnt.CS2_SERVICE_TYPE, provider_endpoint, None), (cnt.NML_SERVICE_TYPE, nml_resource_url, None) ]
+        interfaces  = [ ( cnt.CS2_PROVIDER, provider_endpoint, None), ( cnt.CS2_SERVICE_TYPE, provider_endpoint, None) ]
         features    = []
         if nrm_ports:
             features.append( (cnt.FEATURE_UPA, None) )
         if vc[config.PEERS]:
             features.append( (cnt.FEATURE_AGGREGATOR, None) )
+
+        # view resource
+        vr = viewresource.ConnectionListResource()
+        top_resource.children['NSI'].putChild('connections', vr)
+
+        # rest service
+        if vc[config.REST]:
+            rest_url = base_url + '/connections'
+
+            rest.setupService(aggr, top_resource, vc.get(config.ALLOWED_HOSTS))
+
+            service_endpoints.append( ('REST', rest_url) )
+            interfaces.append( (cnt.OPENNSA_REST, rest_url, None) )
+
+        # nml topology
+        if nml_network is not None:
+            nml_resource_name = base_name + '.nml.xml'
+            nml_url  = '%s/NSI/%s' % (base_url, nml_resource_name)
+
+            nml_service = nmlservice.NMLService(nml_network, can_swap_label)
+            top_resource.children['NSI'].putChild(nml_resource_name, nml_service.resource() )
+
+            service_endpoints.append( ('NML Topology', nml_resource_url) )
+            interfaces.append( (cnt.NML_SERVICE_TYPE, nml_resource_url, None) )
+
+        # discovery service
+        discovery_resource_name = 'discovery.xml'
+        discovery_url = '%s/NSI/%s' % (base_url, discovery_resource_name)
 
         ds = discoveryservice.DiscoveryService(ns_agent.urn(), now, name, opennsa_version, now, networks, interfaces, features, provider_registry, link_vector)
 
@@ -254,20 +271,7 @@ class OpenNSAService(twistedservice.MultiService):
         top_resource.children['NSI'].putChild(discovery_resource_name, discovery_resource)
         link_vector.callOnUpdate( lambda : discovery_resource.updateResource ( ds.xml() ))
 
-        # view resource
-        vr = viewresource.ConnectionListResource()
-        top_resource.children['NSI'].putChild('connections', vr)
-
-        if vc[config.REST]:
-            from opennsa.protocols import rest
-            rest_endpoint = base_url + '/connections'
-            rest.setupService(aggr, top_resource, vc.get(config.ALLOWED_HOSTS))
-            service_endpoints.append( ('REST', rest_endpoint) )
-
-        # topology
-        if nml_network is not None:
-            nml_service = nmlservice.NMLService(nml_network, can_swap_label)
-            top_resource.children['NSI'].putChild(nml_resource_name, nml_service.resource() )
+        service_endpoints.append( ('Discovery', discovery_url) )
 
         # print service urls
         for service_name, url in service_endpoints:

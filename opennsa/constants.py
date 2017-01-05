@@ -19,6 +19,8 @@ NML_SERVICE_TYPE    = 'application/vnd.ogf.nsi.topology.v2+xml'
 CS2_REQUESTER       = 'application/vnd.ogf.nsi.cs.v2.requester+soap'
 CS2_PROVIDER        = 'application/vnd.ogf.nsi.cs.v2.provider+soap'
 
+OPENNSA_REST        = 'application/vnd.net.nordu.opennsa+rest'
+
 BIDIRECTIONAL       = 'Bidirectional'
 
 EVTS_AGOLE          = 'http://services.ogf.org/nsi/2013/07/descriptions/EVTS.A-GOLE'
