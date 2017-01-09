@@ -63,11 +63,12 @@ def conn2dict(conn):
     d = {}
 
     d['connection_id']     = conn.connection_id
-    d['start_time']        = conn.start_time if conn.start_time is None else conn.start_time.isoformat()
-    d['end_time']          = conn.end_time   if conn.end_time   is None else conn.end_time.isoformat()
+    d['start_time']        = xmlhelper.createXMLTime(conn.start_time) if conn.start_time is not None else None
+    d['end_time']          = xmlhelper.createXMLTime(conn.end_time)   if conn.end_time   is not None else None
     d['source']            = '%s:%s%s' % (conn.source_network, conn.source_port, label(conn.source_label))
     d['destination']       = '%s:%s%s' % (conn.dest_network, conn.dest_port, label(conn.dest_label))
     d['bandwidth']         = conn.bandwidth
+    d['created']           = xmlhelper.createXMLTime(conn.reserve_time)
     d['reservation_state'] = conn.reservation_state
     d['provision_state']   = conn.provision_state
     d['lifecycle_state']   = conn.lifecycle_state
