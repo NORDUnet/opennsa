@@ -172,7 +172,9 @@ class Aggregator:
     def reserve(self, header, connection_id, global_reservation_id, description, criteria, request_info=None):
 
         log.msg('', system=LOG_SYSTEM)
-        log.msg('Reserve request from %s. Trace: %s' % (header.requester_nsa, header.connection_trace), system=LOG_SYSTEM)
+        log.msg('Reserve request from %s' % header.requester_nsa, system=LOG_SYSTEM)
+        log.msg('- Path %s -- %s ' % (criteria.service_def.source_stp, criteria.service_def.dest_stp), system=LOG_SYSTEM)
+        log.msg('- Trace: %s' % (header.connection_trace), system=LOG_SYSTEM)
 
         # rethink with modify
         if connection_id != None:
@@ -316,8 +318,7 @@ class Aggregator:
 
         elif cnt.AGGREGATOR in self.policies:
             # both endpoints outside the network, proxy aggregation allowed
-            path_info = ( conn.connection_id, self.network, conn.source_port, shortLabel(conn.source_label), conn.dest_port, shortLabel(conn.dest_label) )
-            log.msg('Connection %s: Remote proxy link creation: %s %s?%s == %s?%s' % path_info, system=LOG_SYSTEM)
+            log.msg('Connection %s: Remote proxy link creation' % connection_id, system=LOG_SYSTEM)
             paths = [ [ nsa.Link( nsa.STP(conn.source_network, conn.source_port, conn.source_label),
                                   nsa.STP(conn.dest_network,   conn.dest_port,   conn.dest_label))  ] ]
         else:
