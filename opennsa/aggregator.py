@@ -219,20 +219,24 @@ class Aggregator:
         # if the link terminates at our network, check that ports exists and that labels match
         if source_stp.network == self.network:
             port = self.network_topology.getPort(source_stp.network + ':' + source_stp.port)
-            if port.label() is None and source_stp.label is not None:
-                raise error.ConnectionCreateError('Source STP %s has label specified on port %s without label' % (source_stp, port.name))
-            elif port.label().type_ is not None and source_stp.label is None:
-                raise error.ConnectionCreateError('Source STP %s has no label for port %s with label %s' % (source_stp, port.name, port.label().type_))
-            elif port.label().type_ != source_stp.label.type_:
-                raise error.ConnectionCreateError('Source STP %s label does not match label specified on port %s (%s)' % (source_stp, port.name, port.label().type_))
+            if port.label() is None:
+                if source_stp.label is not None:
+                    raise error.ConnectionCreateError('Source STP %s has label specified on port %s without label' % (source_stp, port.name))
+            else: # there is a label
+                if source_stp.label is None:
+                    raise error.ConnectionCreateError('Source STP %s has no label for port %s with label %s' % (source_stp, port.name, port.label().type_))
+                if port.label().type_ != source_stp.label.type_:
+                    raise error.ConnectionCreateError('Source STP %s label does not match label specified on port %s (%s)' % (source_stp, port.name, port.label().type_))
         if dest_stp.network == self.network:
             port = self.network_topology.getPort(dest_stp.network + ':' + dest_stp.port)
-            if port.label() is None and dest_stp.label is not None:
-                raise error.ConnectionCreateError('Destination STP %s has label specified on port %s without label' % (dest_stp, port.name))
-            elif port.label().type_ is not None and dest_stp.label is None:
-                raise error.ConnectionCreateError('Destination STP %s has no label for port %s with label %s' % (dest_stp, port.name, port.label().type_))
-            elif port.label().type_ != dest_stp.label.type_:
-                raise error.ConnectionCreateError('Source STP %s label does not match label specified on port %s (%s)' % (dest_stp, port.name, port.label().type_))
+            if port.label() is None:
+                if dest_stp.label is not None:
+                    raise error.ConnectionCreateError('Destination STP %s has label specified on port %s without label' % (dest_stp, port.name))
+            else:
+                if port.label().type_ is not None and dest_stp.label is None:
+                    raise error.ConnectionCreateError('Destination STP %s has no label for port %s with label %s' % (dest_stp, port.name, port.label().type_))
+                if port.label().type_ != dest_stp.label.type_:
+                    raise error.ConnectionCreateError('Source STP %s label does not match label specified on port %s (%s)' % (dest_stp, port.name, port.label().type_))
 
 
         connection_id = yield self.plugin.createConnectionId()
