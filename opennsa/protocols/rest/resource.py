@@ -8,7 +8,8 @@ Copyright: NORDUnet (2015)
 import time
 import json
 
-from twisted.python import log
+from twisted.python import log, failure
+from twisted.internet import defer
 from twisted.web import resource, server
 
 from opennsa import nsa, error, state, constants as cnt, database
@@ -41,17 +42,24 @@ def _finishRequest(request, code, payload, headers=None):
     request.finish()
 
 
+def _errorCode(ex):
+    if isinstance(ex, error.NSIError):
+        return 400 # Client Error
+    else:
+        return 500 # Server Error
+
+
 def _createErrorResponse(err, request):
     log.msg('%s while creating connection: %s' % (str(err.type), str(err.value)), system=LOG_SYSTEM)
 
     payload = str(err.value) + RN
+    error_code = _errorCode(err.value)
 
-    if isinstance(err.value, error.NSIError):
-        _finishRequest(request, 400, payload) # Bad Request
-    else:
-        _finishRequest(request, 500, payload) # Server Error
+    _finishRequest(request, error_code, payload)
 
 
+
+@defer.inlineCallbacks
 def conn2dict(conn):
 
     def label(label):
@@ -73,7 +81,23 @@ def conn2dict(conn):
     d['provision_state']   = conn.provision_state
     d['lifecycle_state']   = conn.lifecycle_state
 
-    return d
+    # this really needs to be in the database module (aggregator uses this too)
+    df = database.SubConnection.findBy(service_connection_id=conn.id)
+    sub_conns = yield df
+
+    # copied from aggregator, refactor sometime
+    if len(sub_conns) == 0: # apparently this can happen
+        data_plane_status = (False, 0, False)
+    else:
+        aggr_active     = all( [ sc.data_plane_active     for sc in sub_conns ] )
+        aggr_version    = max( [ sc.data_plane_version    for sc in sub_conns ] ) or 0 # can be None otherwise
+        aggr_consistent = all( [ sc.data_plane_consistent for sc in sub_conns ] )
+        data_plane_status = (aggr_active, aggr_version, aggr_consistent)
+
+    d['data_plane_active'] = conn.data_plane = data_plane_status[0]
+
+    #return d
+    defer.returnValue(d)
 
 
 
@@ -96,11 +120,12 @@ class P2PBaseResource(resource.Resource):
         # this should return a list of authZed connections with some usefull information
         # we cannot really do any meaningfull authz at the moment though...
 
+        @defer.inlineCallbacks
         def gotConnections(conns):
             res = []
 
             for conn in conns:
-                d = conn2dict(conn)
+                d = yield conn2dict(conn)
                 res.append(d)
 
             payload = json.dumps(res) + RN
@@ -140,36 +165,6 @@ class P2PBaseResource(resource.Resource):
             payload = 'Invalid JSON data' + RN
             return _requestResponse(request, 400, payload) # Bad Request
 
-        # extract stuffs
-
-        source = data['source']
-        if not source.startswith(cnt.URN_OGF_PREFIX):
-            source = cnt.URN_OGF_PREFIX + source
-
-        destination = data['destination']
-        if not destination.startswith(cnt.URN_OGF_PREFIX):
-            destination = cnt.URN_OGF_PREFIX + destination
-
-        source_stp = helper.createSTP(str(source))
-        destination_stp = helper.createSTP(str(destination))
-
-        start_time = xmlhelper.parseXMLTimestamp(data['start']) if 'start' in data else None
-        end_time   = xmlhelper.parseXMLTimestamp(data['end'])   if 'end'   in data else None
-        capacity   = data['capacity'] if 'capacity' in data else 0 # Maybe None should just be best effort
-
-        # fillers, we don't really do this in this api
-        symmetric = False
-        ero       = None
-        params    = None
-        version   = 0
-
-        service_def = nsa.Point2PointService(source_stp, destination_stp, capacity, cnt.BIDIRECTIONAL, symmetric, ero, params)
-        schedule = nsa.Schedule(start_time, end_time)
-        criteria = nsa.Criteria(version, schedule, service_def)
-
-        header = nsa.NSIHeader('rest-dud-requester', 'rest-dud-provider') # completely bogus header
-        d = self.provider.reserve(header, None, None, None, criteria, request_info) # nones are connectoin id, global resv id, description
-
 
         def createResponse(connection_id):
 
@@ -177,9 +172,42 @@ class P2PBaseResource(resource.Resource):
             header = { 'location': self.base_path + '/' + connection_id }
             _finishRequest(request, 201, payload, header) # Created
 
-        d.addCallbacks(createResponse, _createErrorResponse, errbackArgs=(request,))
+        # extract stuffs
+        try:
+            source = data['source']
+            if not source.startswith(cnt.URN_OGF_PREFIX):
+                source = cnt.URN_OGF_PREFIX + source
 
-        return server.NOT_DONE_YET
+            destination = data['destination']
+            if not destination.startswith(cnt.URN_OGF_PREFIX):
+                destination = cnt.URN_OGF_PREFIX + destination
+
+            source_stp = helper.createSTP(str(source))
+            destination_stp = helper.createSTP(str(destination))
+
+            start_time = xmlhelper.parseXMLTimestamp(data['start']) if 'start' in data else None
+            end_time   = xmlhelper.parseXMLTimestamp(data['end'])   if 'end'   in data else None
+            capacity   = data['capacity'] if 'capacity' in data else 0 # Maybe None should just be best effort
+
+            # fillers, we don't really do this in this api
+            symmetric = False
+            ero       = None
+            params    = None
+            version   = 0
+
+            service_def = nsa.Point2PointService(source_stp, destination_stp, capacity, cnt.BIDIRECTIONAL, symmetric, ero, params)
+            schedule = nsa.Schedule(start_time, end_time)
+            criteria = nsa.Criteria(version, schedule, service_def)
+
+            header = nsa.NSIHeader('rest-dud-requester', 'rest-dud-provider') # completely bogus header
+
+            d = self.provider.reserve(header, None, None, None, criteria, request_info) # nones are connectoin id, global resv id, description
+            d.addCallbacks(createResponse, _createErrorResponse, errbackArgs=(request,))
+            return server.NOT_DONE_YET
+
+        except Exception as e:
+            error_code = _errorCode(e)
+            return _requestResponse(request, error_code, str(e))
 
 
 
@@ -208,8 +236,9 @@ class P2PConnectionResource(resource.Resource):
 
         d = self.provider.getConnection(self.connection_id)
 
+        @defer.inlineCallbacks
         def gotConnection(conn):
-            d = conn2dict(conn)
+            d = yield conn2dict(conn)
 
             payload = json.dumps(d) + RN
             _finishRequest(request, 200, payload)
@@ -234,7 +263,6 @@ class P2PStatusResource(resource.Resource):
 
 
     # this is for longpoll
-    # there is currently NO notification infrastructure for state updates
     def render_GET(self, request):
 
         allowed, msg, request_info = requestauthz.checkAuthz(request, self.allowed_hosts)
