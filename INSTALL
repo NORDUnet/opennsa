@@ -1,4 +1,35 @@
-Requirements:
+# OpenNSA Installation Notes
+
+This document covers the requirements, dependencies, installation and
+configuration of OpenNSA.
+
+## Overview
+
+OpenNSA is a single Python process that listens on one port.
+It uses PostgreSQL for storage.
+Requires outbound connectivity to talk to other NSI agents.
+Requires access to connect to the devices to setup cross-connects.
+Doesn't need to run as root.
+
+## Requirements:
+
+Host OS:
+
+Ubuntu/Debian is the easiest. RedHat/Fedora will work too. I suspect you can
+make it work on any Linux that can run Python 2.7 and PostgreSQL. Several
+people have had it running on OS X.
+
+It runs fine in a virtual machine. Real iron be fine as well (but a bit wasteful).
+
+Server location:
+
+As close to the router/device for obvious reasons, but it is not latencey
+sensitive or anything. Next city should also work.
+
+Dmz vs. behind the firewall: Should work with both, not required.
+
+
+## Dependencies:
 
 * Python 2.7 or later (Python 3 not supported yet)
 
@@ -23,13 +54,13 @@ remove some of the log statements in the Twisted SSH module, which is rather
 noisy. This makes the log a lot easier to read.
 
 
-Installation:
+## Installation:
 
 python setup.py build
 sudo python setup.py install
 
 
-Database setup:
+## Database setup:
 
 You need to have a postgresql database setup and the user should have access to
 it (if you use OS access - which is the easiest - you can put whatever in the
@@ -43,14 +74,14 @@ $ psql opennsa # as the user that runs opennsa
 $ \i datafiles/schema.sql
 
 
-Configuration:
+## Configuration:
 
 Edit /etc/opennsa.conf. Configuring the service is relatively straightforward,
 but creating the topology specification is still somewhat tricky. Look at the
 .nrm file in opennsa distribution for an example.
 
 
-Command line tool:
+## Command line tool:
 
 Make a reservation:
 onsa reserve -u http://localhost:9080/NSI/services/ConnectionService -p OpenNSA-TestClient -r Aruba -s Aruba:A1 -d Aruba:A4
@@ -58,7 +89,7 @@ onsa reserve -u http://localhost:9080/NSI/services/ConnectionService -p OpenNSA-
 Do a ./onsa --help for more information.
 
 
-Development
+## Development
 
 To start a test service:
 
