@@ -41,6 +41,10 @@ def setupBackend(backend_cfg, network_name, nrm_ports, parent_requester):
         from opennsa.backends import juniperex
         BackendConstructer = juniperex.JuniperEXBackend
 
+    elif backend_type == config.BLOCK_JUNIPER_VPLS:
+        from opennsa.backends import junipervpls
+        BackendConstructer = junipervpls.JuniperVPLSBackend
+
     elif backend_type == config.BLOCK_BROCADE:
         from opennsa.backends import brocade
         BackendConstructer = brocade.BrocadeBackend
@@ -152,7 +156,7 @@ class OpenNSAService(twistedservice.MultiService):
             vc[config.HOST] = socket.getfqdn()
 
         # database
-        database.setupDatabase(vc[config.DATABASE], vc[config.DATABASE_USER], vc[config.DATABASE_PASSWORD])
+        database.setupDatabase(vc[config.DATABASE], vc[config.DATABASE_USER], vc[config.DATABASE_PASSWORD], vc[config.SERVICE_ID_START])
 
         service_endpoints = []
 

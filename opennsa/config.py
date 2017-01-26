@@ -27,6 +27,7 @@ DEFAULT_CERTIFICATE_DIR = '/etc/ssl/certs' # This will work on most mordern linu
 BLOCK_SERVICE    = 'service'
 BLOCK_DUD        = 'dud'
 BLOCK_JUNIPER_EX = 'juniperex'
+BLOCK_JUNIPER_VPLS = 'junipervpls'
 BLOCK_JUNOS      = 'junos'
 BLOCK_FORCE10    = 'force10'
 BLOCK_BROCADE    = 'brocade'
@@ -46,6 +47,7 @@ NRM_MAP_FILE     = 'nrmmap'
 PEERS            = 'peers'
 POLICY           = 'policy'
 PLUGIN           = 'plugin'
+SERVICE_ID_START = 'serviceid_start'
 
 # database
 DATABASE                = 'database'    # mandatory
@@ -59,7 +61,7 @@ CERTIFICATE_DIR         = 'certdir'     # mandatory (but dir can be empty)
 VERIFY_CERT             = 'verify'
 ALLOWED_HOSTS           = 'allowedhosts' # comma seperated list
 
-# generic ssh stuff, don't use directly
+# generic stuff
 _SSH_HOST               = 'host'
 _SSH_PORT               = 'port'
 _SSH_HOST_FINGERPRINT   = 'fingerprint'
@@ -67,6 +69,8 @@ _SSH_USER               = 'user'
 _SSH_PASSWORD           = 'password'
 _SSH_PUBLIC_KEY         = 'publickey'
 _SSH_PRIVATE_KEY        = 'privatekey'
+
+AS_NUMBER              = 'asnumber'
 
 # juniper block - same for ex/qxf backend and mx backend
 JUNIPER_HOST                = _SSH_HOST
@@ -236,6 +240,11 @@ def readVerifyConfig(cfg):
     except ConfigParser.NoOptionError:
         vc[DATABASE_PASSWORD] = None
 
+    try:
+        vc[SERVICE_ID_START] = cfg.get(BLOCK_SERVICE, SERVICE_ID_START)
+    except ConfigParser.NoOptionError:
+        vc[SERVICE_ID_START] = None
+
     # we always extract certdir and verify as we need that for performing https requests
     try:
         certdir = cfg.get(BLOCK_SERVICE, CERTIFICATE_DIR)
@@ -291,7 +300,7 @@ def readVerifyConfig(cfg):
         if name in backends:
             raise ConfigurationError('Can only have one backend named "%s"' % name)
 
-        if backend_type in (BLOCK_DUD, BLOCK_JUNIPER_EX, BLOCK_JUNOS, BLOCK_FORCE10, BLOCK_BROCADE,
+        if backend_type in (BLOCK_DUD, BLOCK_JUNIPER_EX, BLOCK_JUNIPER_VPLS, BLOCK_JUNOS, BLOCK_FORCE10, BLOCK_BROCADE,
                             BLOCK_DELL, BLOCK_NCSVPN, BLOCK_PICA8OVS, BLOCK_OESS, 'asyncfail'):
             backend_conf = dict( cfg.items(section) )
             backend_conf['_backend_type'] = backend_type

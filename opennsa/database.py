@@ -59,7 +59,7 @@ def castDatetime(value, cur):
 
 # setup
 
-def setupDatabase(database, user, password=None):
+def setupDatabase(database, user, password=None, connection_id_start=None):
 
     # hack on, use psycopg2 connection to register postgres label -> nsa label adaptation
     import psycopg2
@@ -74,9 +74,14 @@ def setupDatabase(database, user, password=None):
     DT = psycopg2.extensions.new_type((timestamptz_oid,), "timestamptz", castDatetime)
     psycopg2.extensions.register_type(DT)
 
+    if connection_id_start:
+        cur.execute("INSERT INTO backend_connection_id (connection_id) VALUES (%s) ON CONFLICT DO NOTHING;", connection_id_start)
+
     conn.close()
 
     Registry.DBPOOL = adbapi.ConnectionPool('psycopg2', user=user, password=password, database=database)
+
+
 
 
 
@@ -89,6 +94,37 @@ class ServiceConnection(DBObject):
 
 class SubConnection(DBObject):
     BELONGSTO = ['ServiceConnection']
+
+
+class STPAuthz(DBObject):
+    TABLENAME = 'stp_authz'
+
+
+# Not really needed
+class BackendConnectionID(DBObject):
+    TABLENAME = 'backend_connection_id'
+
+#@defer.inlineCallbacks
+def getBackendConnectionId():
+
+#    rows = yield BackendConnectionID.find()
+#    if len(rows) == 0:
+#        defer.returnValue(0)
+#    else:
+#        connection_id = rows[0].connection_id
+#        rows[0].connection_id += 1
+#        rows[0].save()
+#        defer.returnValue(connection_id)
+
+    def gotResult(rows):
+        print 'rows', rows
+        if len(rows) == 0:
+            return None
+        else:
+            return rows[0][0]
+
+    return Registry.DBPOOL.runQuery('UPDATE backend_connection_id SET connection_id = connection_id + 1 RETURNING connection_id;').addCallback(gotResult)
+
 
 
 Registry.register(ServiceConnection, SubConnection)
