@@ -12,41 +12,6 @@ Copyright: NORDUnet (2017)
 
 # Configuration conventions / environment, and snippets
 
-# We assign each service a unique Circuit-ID and this CID, or parts of it,
-# are used for provisioning
-#
-# Circuit-ID follows this naming/syntax <Unique_ID> - <Organizational_ID>
-# - CANARIE_site_short<1..9> - CANARIE_site_short<1..9> - Service_Name
-# for example, 13903CS01-NORDUNet-AMST1-NYCN1
-#
-# This circuit ID is used in "description" of sub-interface/logical unit
-# number for example, description "13903CS01-NORDUNet-AMST1-NYCN1
-# [with some extra information in square brackets .... L2VPN circuit
-# Amsterdam to New York for XYZ]";
-
-# This circuit ID is also used as the name for the routing instance
-# for example,
-# routing-instances {
-#   13903CS01-NORDUNet-AMST1-NYCN1 {
-# .....
-#
-# route-distinguisher and vrf-target for the routing instance are also
-# composed using the information that derives from <Unique_ID>
-# The two characters (in this example CS) are removed and seven digest
-# used for the second, after ":" part. The first part is our AS number.
-#
-# for unique_id "13903CS01", for example
-#   route-distinguisher 6509:1390301;
-#   vrf-target target:6509:1390301;
-#
-# the sites for the routing instance are directly derived from Circuit-ID,
-#   site AMST1 {
-#                    site-identifier 1;
-# .....
-#                site NYCN1 {
-#                    site-identifier 2;
-# ....
-#
 # logical unit number normally matches a vlan ID (or a first VLAN number in a list)
 #
 # interfaces {
@@ -104,9 +69,9 @@ Copyright: NORDUnet (2017)
 #import random
 
 from twisted.python import log
-from twisted.internet import defer
+from twisted.internet import defer, reactor
 
-from opennsa import constants as cnt, config, database
+from opennsa import constants as cnt, config
 from opennsa.backends.common import genericbackend, ssh
 
 
@@ -114,7 +79,7 @@ LOG_SYSTEM = 'JuniperVPLS'
 
 
 # JunOS commands, static
-CONFIGURE   = 'configure'
+CONFIGURE   = 'configure private'
 COMMIT      = 'commit'
 
 # JunOS commands, parameterized
@@ -126,50 +91,55 @@ COMMIT      = 'commit'
 #SET_UNIT_VLAN           = 'set interfaces %(interface) unit %(unit) vlan-id-list %(vlan)'
 #SET_UNIT_FAMILY         = 'set interfaces %(interface) unit %(unit) family vpls'
 
-SET_UNIT = 'set interfaces %(interface) unit %(unit) description %(description) encapsulation vlan-vpls vlan-id %(vlan) family vpls'
+SET_UNIT = 'set interfaces {interface} unit {unit} description "{description}" encapsulation vlan-vpls vlan-id {vlan} family vpls'
 
 # Routing instance configuration
 #SET_RI                      = 'set routing-instance %(instance)'
-SET_RI_INSTANCE_TYPE        = 'set routing-instances %(instance) instance-type vpls'
-SET_RI_INTERFACE            = 'set routing-instances %(instance) interface %(interface)'
-SET_RI_ROUTE_DISTINGUISHER  = 'set routing-instances %(instance) route-distinguisher %(route-distinguisher)'
-SET_RI_VRF_TARGET           = 'set routing-instances %(instance) vrf-target %(vrf-target)'
-SET_RI_PROTOCOLS            = 'set routing-instances %(instance) protocols vpls site-range 2 no-tunnel-services'
-SET_RI_VPLS_SITE            = 'set routing-instances %(instance) protocols vpls site %(site) site-identifier %(site-id) interface %(interface)'
+SET_RI_INSTANCE_TYPE        = 'set routing-instances {instance} instance-type vpls'
+SET_RI_INTERFACE            = 'set routing-instances {instance} interface {interface}'
+SET_RI_ROUTE_DISTINGUISHER  = 'set routing-instances {instance} route-distinguisher {route_distinguisher}'
+SET_RI_VRF_TARGET           = 'set routing-instances {instance} vrf-target {vrf_target}'
+SET_RI_PROTOCOLS            = 'set routing-instances {instance} protocols vpls site-range 2 no-tunnel-services'
+SET_RI_VPLS_SITE            = 'set routing-instances {instance} protocols vpls site {site} site-identifier {site_id} interface {interface}'
 #SET_RI_VPLS_SITE2           = 'set routing-instances %(instance) protocols vpls site %(site) site-identifier 2 interface %(interface)'
 
 # Delete statements
-DELETE_UNIT             = 'delete interfaces %(interface) unit $(unit)'
-DELETE_ROUTING_INSTANCE = 'delete routing-instance %(instance)'
+DELETE_UNIT             = 'delete interfaces {interface} unit {unit}'
+DELETE_ROUTING_INSTANCE = 'delete routing-instance {instance}'
 
 
 
 def createSetupCommands(source_port, dest_port, vlan, instance_id, description, route_distinguiser, vrf_target):
 
-    commands = [
-        SET_UNIT % {'interface': source_port, 'unit': vlan, 'description': description, 'vlan': vlan},
-        SET_UNIT % {'interface': dest_port,   'unit': vlan, 'description': description, 'vlan': vlan},
+    source_interface = source_port + '.' + str(vlan)
+    dest_interface   = dest_port   + '.' + str(vlan)
 
-        SET_RI_INSTANCE_TYPE        % {'instance': instance_id },
-        SET_RI_INTERFACE            % {'instance': instance_id, 'interface': source_port + '.' + vlan },
-        SET_RI_INTERFACE            % {'instance': instance_id, 'interface': dest_port   + '.' + vlan },
-        SET_RI_ROUTE_DISTINGUISHER  % {'instance': instance_id, 'route-distinguisher': route_distinguiser },
-        SET_RI_VRF_TARGET           % {'instance': instance_id, 'vrf-target': vrf_target },
-        SET_RI_PROTOCOLS            % {'instance': instance_id },
-        SET_RI_VPLS_SITE            % {'instance': instance_id, 'site': 'SITE1', 'site-id': 1 },
-        SET_RI_VPLS_SITE            % {'instance': instance_id, 'site': 'SITE2', 'site-id': 2 }
-    ]
+    source_unit = SET_UNIT.format(interface=source_port, unit=vlan, description=description, vlan=vlan)
+    dest_unit   = SET_UNIT.format(interface=dest_port,   unit=vlan, description=description, vlan=vlan)
+
+    ri_instance   = SET_RI_INSTANCE_TYPE.format(instance=instance_id)
+    ri_interface1 = SET_RI_INTERFACE.format(instance=instance_id, interface=source_interface)
+    ri_interface2 = SET_RI_INTERFACE.format(instance=instance_id, interface=dest_interface)
+
+    ri_route_dist = SET_RI_ROUTE_DISTINGUISHER.format(instance=instance_id, route_distinguisher=route_distinguiser)
+    ri_vrf_target = SET_RI_VRF_TARGET.format(instance=instance_id, vrf_target=vrf_target)
+
+    ri_protocols  = SET_RI_PROTOCOLS.format(instance=instance_id)
+    ri_vpls_site1 = SET_RI_VPLS_SITE.format(instance=instance_id, site='MTRL1', site_id='1', interface=source_interface)
+    ri_vpls_site2 = SET_RI_VPLS_SITE.format(instance=instance_id, site='MTRL2', site_id='2', interface=dest_interface)
+
+    commands = [ source_unit, dest_unit, ri_instance, ri_interface1, ri_interface2, ri_route_dist, ri_vrf_target, ri_protocols, ri_vpls_site1, ri_vpls_site2 ]
 
     return commands
 
 
 def createDeleteCommands(source_port, dest_port, vlan, instance_id):
 
-    commands = [
-        DELETE_UNIT                 % {'interface': source_port, 'unit': vlan },
-        DELETE_UNIT                 % {'interface': dest_port,   'unit': vlan },
-        DELETE_ROUTING_INSTANCE     % {'instance' : instance_id }
-    ]
+    delete_source_unit = DELETE_UNIT.format(interface=source_port, unit=vlan)
+    delete_dest_unit   = DELETE_UNIT.format(interface=dest_port,   unit=vlan)
+    delete_ri          = DELETE_ROUTING_INSTANCE.format(instance=instance_id)
+
+    commands = [ delete_source_unit, delete_dest_unit, delete_ri ]
 
     return commands
 
@@ -196,7 +166,8 @@ class SSHChannel(ssh.SSHChannel):
 
         try:
             yield self.conn.sendRequest(self, 'shell', '', wantReply=1)
-            d = self.waitForLine('>')
+
+            d = self.waitForLine('[edit]', 3)
             self.write(CONFIGURE + LT)
             yield d
 
@@ -204,14 +175,11 @@ class SSHChannel(ssh.SSHChannel):
 
             for cmd in commands:
                 log.msg('CMD> %s' % cmd, system=LOG_SYSTEM)
-                d = self.waitForLine('[edit]')
+                d = self.waitForLine('[edit]', 3)
                 self.write(cmd + LT)
                 yield d
 
-            # commit commands, check for 'commit complete' as success
-            # not quite sure how to handle failure here
-
-            d = self.waitForLine('commit complete')
+            d = self.waitForLine('commit complete', 20)
             self.write(COMMIT + LT)
             yield d
 
@@ -224,21 +192,48 @@ class SSHChannel(ssh.SSHChannel):
         self.closeIt()
 
 
-    def waitForLine(self, line):
+    def waitForLine(self, line, timeout=None):
+
         self.wait_line = line
         self.wait_defer = defer.Deferred()
+        self.delayed_call = None
+
+        if timeout is not None:
+            assert type(timeout) in (int, float), 'Timeout must be a number (int or float)'
+            self.delayed_call = reactor.callLater(timeout, self.waitTimeout)
         return self.wait_defer
 
 
+    def waitTimeout(self):
+        log.msg('Timeout while waiting for line: ' + self.wait_line, system=LOG_SYSTEM)
+        self.wait_line  = None
+        wd = self.wait_defer = None
+        self.delayed_call = None
+        defer.timeout(wd)
+
+
     def matchLine(self, line):
+
+        if self.wait_line is None and self.wait_defer is None:
+            log.msg('Nothing to wait for line:: ' + line, debug=True, system=LOG_SYSTEM)
+            return
+
         if self.wait_line and self.wait_defer:
             if self.wait_line in line.strip():
                 d = self.wait_defer
                 self.wait_line  = None
                 self.wait_defer = None
+                if self.delayed_call is not None:
+                    self.delayed_call.cancel()
+                    self.delayed_call = None
                 d.callback(self)
+
             else:
-                pass
+                log.msg('Discarding wait line: ' + line, debug=True, system=LOG_SYSTEM)
+
+        else:
+            log.msg('Weird wait configuration: ' + str(self.wait_line) + ' / ' + str(self.wait_defer), system=LOG_SYSTEM)
+            pass
 
 
     def dataReceived(self, data):
@@ -301,12 +296,11 @@ class JuniperVPLSCommandSender:
         return d
 
 
-    #def setupLink(self, source_port, source_vlan, dest_port, dest_vlan):
     def setupLink(self, source_port, dest_port, vlan, instance_id, as_number):
 
         # createSetupCommands(source_port, dest_port, vlan, instance_id, description, route_distinguiser, vrf_target)
 
-        description = instance_id + '[ X-connect created by OpenNSA ]'
+        description = instance_id + ' [ X-connect created by OpenNSA ]'
         unique_id = instance_id[:5] + instance_id[7:9]
         route_distinguisher = as_number + ':' + unique_id
         vrf_target = 'target:' + as_number + ':' + unique_id
@@ -370,19 +364,11 @@ class JuniperVPLSConnectionManager:
 
 
     def createConnectionId(self, source_target, dest_target):
-        # This needs to be fixed!
-        unique_id = database.getBackendConnectionId()
-        if unique_id is None:
-            raise ValueError("Could not generate an connection id from the database, most likely serviceid_start isn't set")
-
-        # not quite done here...
-        connection_id = unique_id[:5] + 'CS' + unique_id[5:] + '-ANA'
-        print 'generated id', connection_id
-        return connection_id
+        raise NotImplementedError('Connection id should be assigned in plugin')
 
 
     def canSwapLabel(self, label_type):
-        # Not right now at least, maybe in the future
+        # Not right now, maybe in the future
         return False
 
 
@@ -405,7 +391,7 @@ class JuniperVPLSConnectionManager:
 
         assert source_target.vlan == dest_target.vlan, 'Source and destination vlan must match'
 
-        d = self.command_sender.teardownLink(source_target.port, source_target.vlan, dest_target.port, dest_target.vlan)
+        d = self.command_sender.teardownLink(source_target.port, dest_target.port, dest_target.vlan, connection_id)
         d.addCallback(linkDown)
         return d
 
