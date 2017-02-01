@@ -14,6 +14,8 @@ peers=http://host.example.org:9080/NSI/discovery.xml
 
 policies=requiretrace,requireuser
 
+serviceid_start=1900000
+
 # Database
 database=opennsa
 dbuser=dbuser
@@ -34,11 +36,15 @@ nrmmap   : Path to port/topology NRM description file
 
 peers    : URLs to NSAs to peer with control-plane wise.
            Seperate multiple entries with newline.
+           Optional. No peers will put OpenNSA into UPA mode.
 
 policies : What policies are required. Currently requiretrace, requireuser,
            and aggregator are the possible options. These require a connection
            trace, a user security attribute, and allow proxy aggregation
-           respecitively.
+           respecitively. Optional.
+
+serviceid_start : Initial service id to set in the database. Requires a plugin
+                  to use. Optional.
 
 database : Name of the PostgreSQL databse to connect to. Mandatory.
 
