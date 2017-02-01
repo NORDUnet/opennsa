@@ -156,7 +156,7 @@ class OpenNSAService(twistedservice.MultiService):
             vc[config.HOST] = socket.getfqdn()
 
         # database
-        database.setupDatabase(vc[config.DATABASE], vc[config.DATABASE_USER], vc[config.DATABASE_PASSWORD], vc[config.SERVICE_ID_START])
+        database.setupDatabase(vc[config.DATABASE], vc[config.DATABASE_USER], vc[config.DATABASE_PASSWORD], vc[config.DATABASE_HOST], vc[config.SERVICE_ID_START])
 
         service_endpoints = []
 
