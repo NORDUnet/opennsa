@@ -46,16 +46,17 @@ RESERVE_TRANSITIONS = {
     RESERVE_ABORTING    : [ RESERVE_START                                          ]
 }
 
-# The PROVISIONING -> PROVISIONING transition isn't canon, but is needed in
-# case a provision request and fails due to pre-check or similar. Here the
-# provisoning can be recovered by sending down a second provision request.
-# This can happen in cases of authZ check or similar.
+# The PROVISIONING -> PROVISIONING  and RELEASING -> RELEASING transitions
+# isn't canon, but is needed in case a provision/release request and fails due
+# to pre-check or similar. The provisoning/release request can be recovered by
+# sending down a second provision request. This can happen in cases of authZ
+# check, error to activate/deactive data plane or similar.
 
 PROVISION_TRANSITIONS = {
     RELEASED        : [ PROVISIONING  ],
     PROVISIONING    : [ PROVISIONING,   PROVISIONED   ],
     PROVISIONED     : [ RELEASING     ],
-    RELEASING       : [ RELEASED      ]
+    RELEASING       : [ RELEASING,      RELEASED      ]
 }
 
 LIFECYCLE_TRANSITIONS = {
