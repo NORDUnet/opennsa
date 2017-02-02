@@ -69,21 +69,25 @@ LIFECYCLE_TRANSITIONS = {
 
 SUBSCRIPTIONS = {}
 
-def subscribe(conn, f):
+def subscribe(connection_id, f):
     global SUBSCRIPTIONS
-    SUBSCRIPTIONS.setdefault(id(conn), []).append(f)
+    SUBSCRIPTIONS.setdefault(connection_id, []).append(f)
+
+def desubscribe(connection_id, f):
+    SUBSCRIPTIONS[connection_id].remove(f)
 
 
 def saveNotify(conn):
 
     def notify(conn):
         try:
-            for f in SUBSCRIPTIONS[id(conn)]:
+            for f in SUBSCRIPTIONS[conn.connection_id]:
                 try:
                     f()
                 except Exception as e:
                     log.msg('Error during state notificaton: %s' % str(e), system=LOG_SYSTEM)
-        except KeyError:
+        except KeyError as e:
+            #print 'Nothing to notify about %s (%s)' % (conn.connection_id, str(e))
             pass
 
         return conn

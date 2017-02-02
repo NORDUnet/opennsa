@@ -171,6 +171,8 @@ class P2PBaseResource(resource.Resource):
             payload = 'Connection created' + RN
             header = { 'location': self.base_path + '/' + connection_id }
             _finishRequest(request, 201, payload, header) # Created
+            return connection_id
+
 
         # extract stuffs
         try:
@@ -189,6 +191,15 @@ class P2PBaseResource(resource.Resource):
             end_time   = xmlhelper.parseXMLTimestamp(data['end'])   if 'end'   in data else None
             capacity   = data['capacity'] if 'capacity' in data else 0 # Maybe None should just be best effort
 
+            # auto commit (default true) and auto provision (defult false)
+            auto_commit     = False if 'auto_commit'    in data and not data['auto_commit'] else True
+            auto_provision  = True  if 'auto_provision' in data and data['auto_provision']  else False
+
+            if auto_provision and not auto_commit:
+                msg = 'Cannot have auto-provision without auto-commit'
+                log.msg('Rejecting request: ' + msg, system=LOG_SYSTEM)
+                return _requestResponse(request, 400, msg + RN) # Bad Request
+
             # fillers, we don't really do this in this api
             symmetric = False
             ero       = None
@@ -201,11 +212,33 @@ class P2PBaseResource(resource.Resource):
 
             header = nsa.NSIHeader('rest-dud-requester', 'rest-dud-provider') # completely bogus header
 
-            d = self.provider.reserve(header, None, None, None, criteria, request_info) # nones are connectoin id, global resv id, description
+            d = self.provider.reserve(header, None, None, None, criteria, request_info) # nones are connection_id, global resv id, description
             d.addCallbacks(createResponse, _createErrorResponse, errbackArgs=(request,))
+
+            if auto_commit:
+
+                @defer.inlineCallbacks
+                def connectionCreated(conn_id):
+
+                    conn = yield self.provider.getConnection(conn_id)
+
+                    def stateUpdate():
+                        print 'stateUpdate', conn.reservation_state, conn.provision_state
+                        if conn.reservation_state == state.RESERVE_HELD:
+                            self.provider.reserveCommit(header, conn_id, request_info)
+                        if conn.reservation_state == state.RESERVE_START and conn.provision_state == state.RELEASED and auto_provision:
+                            self.provider.provision(header, conn_id, request_info)
+                        if conn.provision_state == state.PROVISIONED:
+                            state.desubscribe(conn_id, stateUpdate)
+
+                    state.subscribe(conn_id, stateUpdate)
+
+                d.addCallback(connectionCreated)
+
             return server.NOT_DONE_YET
 
         except Exception as e:
+            log.err(e, system=LOG_SYSTEM)
             error_code = _errorCode(e)
             return _requestResponse(request, error_code, str(e))
 
@@ -284,7 +317,7 @@ class P2PStatusResource(resource.Resource):
                 request.write(payload)
 
             writeStatusPayload()
-            state.subscribe(conn, lambda : writeStatusPayload() )
+            state.subscribe(conn.connection_id, lambda : writeStatusPayload() )
             return server.NOT_DONE_YET
 
         def noConnection(err):
