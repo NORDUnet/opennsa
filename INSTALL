@@ -39,7 +39,7 @@ Dmz vs. behind the firewall: Should work with both, not required.
 
 * Twistar 1.1 or later (https://pypi.python.org/pypi/twistar/ & http://findingscience.com/twistar/ )
 
-* PostgreSQL (just needs a database)
+* PostgreSQL (need 9.5 or later if using connection id assignment)
 
 * pyOpenSSL 0.14 (when running with SSL/TLS)
 
