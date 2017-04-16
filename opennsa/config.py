@@ -34,6 +34,8 @@ BLOCK_BROCADE    = 'brocade'
 BLOCK_DELL       = 'dell'
 BLOCK_NCSVPN     = 'ncsvpn'
 BLOCK_PICA8OVS   = 'pica8ovs'
+BLOCK_JUNOSSPACE = 'junosspace'
+BLOCK_JUNOSEX4550  = 'junosex4550'
 BLOCK_OESS       = 'oess'
 
 # service block
@@ -120,6 +122,33 @@ PICA8OVS_DB_IP               = 'dbip'
 NCS_SERVICES_URL        = 'url'
 NCS_USER                = 'user'
 NCS_PASSWORD            = 'password'
+
+# JUNOS block
+JUNOS_HOST                = _SSH_HOST
+JUNOS_PORT                = _SSH_PORT
+JUNOS_HOST_FINGERPRINT    = _SSH_HOST_FINGERPRINT
+JUNOS_USER                = _SSH_USER
+JUNOS_SSH_PUBLIC_KEY      = _SSH_PUBLIC_KEY
+JUNOS_SSH_PRIVATE_KEY     = _SSH_PRIVATE_KEY
+JUNOS_ROUTERS             = 'routers'
+
+#Junosspace backend
+SPACE_USER              = 'space_user'
+SPACE_PASSWORD          = 'space_password'
+SPACE_API_URL           = 'space_api_url'
+SPACE_ROUTERS           = 'routers'
+SPACE_CONFIGLET_ACTIVATE_LOCAL = 'configlet_activate_local'  
+SPACE_CONFIGLET_ACTIVATE_REMOTE = 'configlet_activate_remote'
+SPACE_CONFIGLET_DEACTIVATE_LOCAL = 'configlet_deactivate_local'
+SPACE_CONFIGLET_DEACTIVATE_REMOTE = 'configlet_deactivate_remote'
+
+# JunosEx4550 block
+JunosEx4550_HOST                = _SSH_HOST
+JunosEx4550_PORT                = _SSH_PORT
+JunosEx4550_HOST_FINGERPRINT    = _SSH_HOST_FINGERPRINT
+JunosEx4550_USER                = _SSH_USER
+JunosEx4550_SSH_PUBLIC_KEY      = _SSH_PUBLIC_KEY
+JunosEx4550_SSH_PRIVATE_KEY     = _SSH_PRIVATE_KEY
 
 # OESS
 OESS_URL                = 'url'
@@ -307,7 +336,7 @@ def readVerifyConfig(cfg):
             raise ConfigurationError('Can only have one backend named "%s"' % name)
 
         if backend_type in (BLOCK_DUD, BLOCK_JUNIPER_EX, BLOCK_JUNIPER_VPLS, BLOCK_JUNOS, BLOCK_FORCE10, BLOCK_BROCADE,
-                            BLOCK_DELL, BLOCK_NCSVPN, BLOCK_PICA8OVS, BLOCK_OESS, 'asyncfail'):
+                            BLOCK_DELL, BLOCK_NCSVPN, BLOCK_PICA8OVS, BLOCK_OESS, BLOCK_JUNOSSPACE, BLOCK_JUNOSEX4550,  'asyncfail'):
             backend_conf = dict( cfg.items(section) )
             backend_conf['_backend_type'] = backend_type
             backends[name] = backend_conf
