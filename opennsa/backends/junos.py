@@ -1,115 +1,48 @@
 """
-OpenNSA JunOS / Juniper MX backend.
-
-Note: Has NOT been ported to new backend interface.
+OpenNSA JUNOS backend, using Junos MX80
+Currently only mpls, vlan and full port connections are supported
+Author: Tamas Varga <vargat(at)niif(dot)hu>
 """
-
-# configure snippet:
-
-# opennsa@cph> configure <return>
-# Entering configuration mode
-#
-#[edit]
-#
-#opennsa@cph# set protocols connections interface-switch ps-to-netherlight-1780 interface ge-1/0/5.1780
-#
-#[edit]
-#
-#opennsa@cph# set interfaces ge-1/0/5 unit 1780 vlan-id 1780 encapsulation vlan-ccc
-#
-#[edit]
-#opennsa@cph# delete interfaces ge-1/0/5 unit 1780
-#
-#[edit]
-#opennsa@cph# delete protocols connections interface-switch ps-to-netherlight-1780
-#
-#[edit]
-#
-# Basically stuff should end with [edit] :-)
-#
+import random
 
 from twisted.python import log
 from twisted.internet import defer
 
-from opennsa import config
-from opennsa.backends.common import calendar as reservationcalendar, simplebackend, ssh
-
-
-# Example commands used:
-#> set protocols connections interface-switch ps-to-netherlight-1780 interface ge-1/0/5.1780
-#> set protocols connections interface-switch ps-to-netherlight-1780 interface ge-1/1/9.1780
-#> set interfaces ge-1/0/5 unit 1780 vlan-id 1780 encapsulation vlan-ccc
-#> set interfaces ge-1/1/9 unit 1780 vlan-id 1780 encapsulation vlan-ccc
-
-# VLAN swapping
-#> set interfaces ge-1/1/9 unit 1780 vlan-id 1780 encapsulation vlan-ccc input-vlan-map swap vlan-id 1781
-#> set interfaces ge-1/1/9 unit 1781 vlan-id 1781 encapsulation vlan-ccc input-vlan-map swap vlan-id 1780
+from opennsa import constants as cnt, config
+from opennsa.backends.common import genericbackend, ssh
 
 # parameterized commands
 COMMAND_CONFIGURE           = 'configure'
 COMMAND_COMMIT              = 'commit'
 
-COMMAND_SET_CONNECTIONS     = 'set protocols connections interface-switch %(switch)s interface %(interface)s' # switch name, interface
-COMMAND_SET_INTERFACES      = 'set interfaces %(port)s unit %(source_vlan)s vlan-id %(source_vlan)s encapsulation vlan-ccc' # port, source vlan, source vlan
-COMMAND_SET_INTERFACES_SWAP = 'set interfaces %(port)s unit %(source_vlan)s vlan-id %(source_vlan)s encapsulation vlan-ccc input-vlan-map swap vlan-id %(dest_vlan)s' # port, source vlan, source vlan, dest vlan
+COMMAND_SET_INTERFACES      = 'set interfaces %(port)s encapsulation ethernet-ccc' # port, source vlan, source vlan
+COMMAND_SET_INTERFACES_CCC  = 'set interfaces %(port)s unit 0 family ccc'
+COMMAND_SET_INTERFACES_MTU  = 'set interfaces %(port)s mtu 9000'
 
-COMMAND_DELETE_INTERFACES   = 'delete interfaces %(port)s unit %(vlan)s' # port / vlan
+COMMAND_SET_FLEXIBLE_VLAN_T = 'set interfaces %(port)s flexible-vlan-tagging'
+COMMAND_SET_INTERFACES_VLAN = 'set interfaces %(port)s encapsulation flexible-ethernet-services'
+COMMAND_SET_VLAN_ENCAP      = 'set interfaces %(port)s unit %(vlan)s encapsulation vlan-ccc'
+COMMAND_SET_VLAN_ID         = 'set interfaces %(port)s unit %(vlan)s vlan-id %(vlan)s'
+COMMAND_SET_INPUT_VLAN_MAP  = 'set interfaces %(port)s unit %(vlan)s input-vlan-map pop'
+COMMAND_SET_OUTPUT_VLAN_MAP = 'set interfaces %(port)s unit %(vlan)s output-vlan-map push'
+
+COMMAND_DELETE_INTERFACES   = 'delete interfaces %(port)s' # port / vlan
+COMMAND_DELETE_INTERFACES_VL= 'delete interfaces %(port)s.%(vlan)s'
 COMMAND_DELETE_CONNECTIONS  = 'delete protocols connections interface-switch %(switch)s' # switch
 
-LOG_SYSTEM = 'opennsa.JunOS'
+COMMAND_DELETE_MPLS_LSP     = 'delete protocols mpls label-switched-path %(unique-id)s'
+COMMAND_DELETE_REMOTE_INT_SW= 'delete protocols connections remote-interface-switch %(connectionid)s'
 
+COMMAND_LOCAL_CONNECTIONS   = 'set protocols connections interface-switch %(switch)s interface %(interface)s.%(subinterface)s'
 
-def portToInterfaceVLAN(nrm_port):
+COMMAND_REMOTE_LSP_OUT_TO   = 'set protocols mpls label-switched-path %(unique-id)s to %(remote_ip)s'
+COMMAND_REMOTE_LSP_OUT_NOCSPF = 'set protocols mpls label-switched-path %(unique-id)s no-cspf'
 
-    port, vlan = nrm_port.split('.')
-    return port, vlan
+COMMAND_REMOTE_CONNECTIONS_INT = 'set protocols connections remote-interface-switch %(connectionid)s interface %(port)s'
+COMMAND_REMOTE_CONNECTIONS_TRANSMIT_LSP = 'set protocols connections remote-interface-switch %(connectionid)s transmit-lsp %(unique-id)s'
+COMMAND_REMOTE_CONNECTIONS_RECEIVE_LSP  = 'set protocols connections remote-interface-switch %(connectionid)s receive-lsp %(unique-id)s'
 
-
-def createSwitchName(source_port, dest_port, source_vlan, dest_vlan):
-
-    sp = source_port.replace('/','').replace('-','')
-    dp = dest_port.replace('/','').replace('-','')
-
-    switch_name = 'nsi-%s-%s-%s-%s' % (sp, source_vlan, dp, dest_vlan)
-    return switch_name
-
-
-def createConfigureCommands(source_nrm_port, dest_nrm_port):
-
-    source_port, source_vlan = portToInterfaceVLAN(source_nrm_port)
-    dest_port,   dest_vlan   = portToInterfaceVLAN(dest_nrm_port)
-
-    switch_name = createSwitchName(source_port, dest_port, source_vlan, dest_vlan)
-
-    cfg_conn_source = COMMAND_SET_CONNECTIONS % { 'switch':switch_name, 'interface':source_nrm_port }
-    cfg_conn_dest   = COMMAND_SET_CONNECTIONS % { 'switch':switch_name, 'interface':dest_nrm_port   }
-
-    if source_vlan == dest_vlan:
-        cfg_intf_source = COMMAND_SET_INTERFACES % { 'port':source_port, 'source_vlan': source_vlan }
-        cfg_intf_dest   = COMMAND_SET_INTERFACES % { 'port':dest_port,   'source_vlan': dest_vlan   }
-    else:
-        cfg_intf_source = COMMAND_SET_INTERFACES_SWAP % { 'port':source_port, 'source_vlan':source_vlan, 'dest_vlan':dest_vlan }
-        cfg_intf_dest   = COMMAND_SET_INTERFACES_SWAP % { 'port':dest_port,   'source_vlan':dest_vlan,   'dest_vlan':source_vlan }
-
-    commands = [ cfg_conn_source, cfg_conn_dest, cfg_intf_source, cfg_intf_dest ]
-    return commands
-
-
-def createDeleteCommands(source_nrm_port, dest_nrm_port):
-
-    source_port, source_vlan = portToInterfaceVLAN(source_nrm_port)
-    dest_port,   dest_vlan   = portToInterfaceVLAN(dest_nrm_port)
-
-    switch_name = createSwitchName(source_port, dest_port, source_vlan, dest_vlan)
-
-    del_intf_source = COMMAND_DELETE_INTERFACES  % {'port':source_port, 'vlan': source_vlan }
-    del_intf_dest   = COMMAND_DELETE_INTERFACES  % {'port':dest_port,   'vlan': dest_vlan   }
-    del_conn        = COMMAND_DELETE_CONNECTIONS % {'switch':switch_name }
-
-    commands = [ del_intf_source, del_intf_dest, del_conn ]
-    return commands
-
-
+LOG_SYSTEM = 'JUNOS'
 
 class SSHChannel(ssh.SSHChannel):
 
@@ -194,16 +127,17 @@ class SSHChannel(ssh.SSHChannel):
 
 
 
-class JunOSCommandSender:
+class JUNOSCommandSender:
 
-
-    def __init__(self, host, port, ssh_host_fingerprint, user, ssh_public_key_path, ssh_private_key_path):
-
+    def __init__(self, host, port, ssh_host_fingerprint, user, ssh_public_key_path, ssh_private_key_path,
+            junos_routers,network_name):
         self.ssh_connection_creator = \
              ssh.SSHConnectionCreator(host, port, [ ssh_host_fingerprint ], user, ssh_public_key_path, ssh_private_key_path)
 
         self.ssh_connection = None # cached connection
-
+        self.connection_lock = defer.DeferredLock()
+        self.junos_routers = junos_routers
+        self.network_name = network_name
 
     def _getSSHChannel(self):
 
@@ -230,61 +164,473 @@ class JunOSCommandSender:
             return d
 
 
+    @defer.inlineCallbacks
     def _sendCommands(self, commands):
 
-        def gotChannel(channel):
-            d = channel.sendCommands(commands)
-            return d
+        channel = yield self._getSSHChannel()
+        log.msg('Acquiring ssh session lock', debug=True, system=LOG_SYSTEM)
+        yield self.connection_lock.acquire()
+        log.msg('Got ssh session lock', debug=True, system=LOG_SYSTEM)
 
-        d = self._getSSHChannel()
-        d.addCallback(gotChannel)
+        try:
+            yield channel.sendCommands(commands)
+        finally:
+            log.msg('Releasing ssh session lock', debug=True, system=LOG_SYSTEM)
+            self.connection_lock.release()
+            log.msg('Released ssh session lock', debug=True, system=LOG_SYSTEM)
+
+
+    def setupLink(self, connection_id, source_port, dest_port, bandwidth):
+
+        cg = JUNOSCommandGenerator(connection_id,source_port,dest_port,self.junos_routers,self.network_name,bandwidth)
+        commands = cg.generateActivateCommand() 
+        return self._sendCommands(commands)
+
+
+    def teardownLink(self, connection_id, source_port, dest_port, bandwidth):
+
+        cg = JUNOSCommandGenerator(connection_id,source_port,dest_port,self.junos_routers,self.network_name,bandwidth)
+        commands = cg.generateDeactivateCommand() 
+        return self._sendCommands(commands)
+
+
+class JUNOSTarget(object):
+
+    def __init__(self, port, original_port,value=None):
+        self.port = port
+        self.value = value
+        self.original_port = original_port
+        # NEVER USE : in port name! 
+    def __str__(self):
+        if self.port.remote_network is None:
+            if self.port.label is not None:
+                return '<JUNOSTarget %s#%s=%s>' % (self.original_port,self.port.label.type_,self.value)
+            else:
+                return '<JUNOSTarget %s#>' % (self.original_port)
+        else:
+            if self.port.label is not None:
+                return '<JUNOSTarget %s#%s=%s -> %s>' % (self.original_port,self.port.label.type_,self.value,self.port.remote_port)
+            else:
+                return '<JUNOSTarget %s# -> %s>' % (self.original_port,self.port.remote_port)
+
+
+
+class JUNOSConnectionManager:
+
+    def __init__(self, port_map, host, port, host_fingerprint, user, ssh_public_key, ssh_private_key,
+            junos_routers,network_name):
+        self.network_name = network_name
+        self.port_map = port_map
+        self.command_sender = JUNOSCommandSender(host, port, host_fingerprint, user, ssh_public_key, ssh_private_key,
+                junos_routers,network_name)
+        self.junos_routers = junos_routers
+        self.supportedLabelPairs = {
+                "mpls" : ['vlan','port'],
+                "vlan" : ['port','mpls'],
+                "port" : ['vlan','mpls']
+                
+                }
+
+
+    def getResource(self, port, label_type, label_value):
+        assert label_type in (None, cnt.ETHERNET_VLAN,cnt.ETHERNET_MPLS), 'Label must be None,VLAN,MPLS or PORT'
+        return port + "-" + str(label_type) + "=" + str(label_value)
+
+    def getTarget(self, port, label_type, label_value):
+        return JUNOSTarget(self.port_map[port], port,label_value)
+
+    def createConnectionId(self, source_target, dest_target):
+        return 'JUNOS-' + str(random.randint(100000,999999))
+
+
+    def canSwapLabel(self, label_type):
+        return True
+
+
+    def setupLink(self, connection_id, source_target, dest_target, bandwidth):
+        def linkUp(_):
+            log.msg('Link %s -> %s up' % (source_target, dest_target), system=LOG_SYSTEM)
+        d = self.command_sender.setupLink(connection_id,source_target, dest_target,bandwidth)
+        d.addCallback(linkUp)
         return d
 
 
-    def setupLink(self, source_nrm_port, dest_nrm_port):
+    def teardownLink(self, connection_id, source_target, dest_target, bandwidth):
+        def linkDown(_):
+            log.msg('Link %s -> %s down' % (source_target, dest_target), system=LOG_SYSTEM)
+        d = self.command_sender.teardownLink(connection_id,source_target, dest_target, bandwidth)
+        d.addCallback(linkDown)
+        return d
 
-        commands = createConfigureCommands(source_nrm_port, dest_nrm_port)
-        return self._sendCommands(commands)
+    
+    def canConnect(self,src_label_type,dst_label_type):
+        log.msg("Checking, if label pair %s %s connection is supported" % (src_label_type,dst_label_type),system=LOG_SYSTEM)
+        #by default, acccept same types
+        if src_label_type == dst_label_type:
+            return True
+        if src_label_type in self.supportedLabelPairs and dst_label_type in self.supportedLabelPairs[src_label_type]:
+            return True
 
 
-    def teardownLink(self, source_nrm_port, dest_nrm_port):
+def JUNOSBackend(network_name, nrm_ports , parent_requester, cfg):
 
-        commands = createDeleteCommands(source_nrm_port, dest_nrm_port)
-        return self._sendCommands(commands)
+    name = 'JUNOS %s' % network_name
+    nrm_map  = dict( [ (p.name, p) for p in nrm_ports ] ) # for the generic backend
+    port_map = dict( [ (p.name, p) for p in nrm_ports ] ) # for the nrm backend
+
+    host             = cfg[config.JUNOS_HOST]
+    port             = cfg.get(config.JUNOS_PORT, 22)
+    host_fingerprint = cfg[config.JUNOS_HOST_FINGERPRINT]
+    user             = cfg[config.JUNOS_USER]
+    ssh_public_key   = cfg[config.JUNOS_SSH_PUBLIC_KEY]
+    ssh_private_key  = cfg[config.JUNOS_SSH_PRIVATE_KEY]
+    junos_routers_c    =  cfg[config.JUNOS_ROUTERS].split()
+    junos_routers = dict()
+    log.msg("Loaded JUNOS backend with routers:")
+    for g in junos_routers_c:
+        r,l = g.split(':',1)
+        log.msg("Network: %s loopback: %s" % (r,l))
+        junos_routers[r] = l
+    cm = JUNOSConnectionManager(port_map, host, port, host_fingerprint, user, ssh_public_key, ssh_private_key,
+            junos_routers,network_name)
+    return genericbackend.GenericBackend(network_name, nrm_map, cm, parent_requester, name)
 
 
-# --------
-
-
-class JunOSBackend:
-
-    def __init__(self, network_name, configuration):
+class JUNOSCommandGenerator(object):
+     
+    def __init__(self,connection_id,src_port,dest_port,junos_routers,network_name,bandwidth=None):
+        self.connection_id = connection_id
+        self.src_port = src_port
+        self.dest_port = dest_port
+        self.bandwidth = bandwidth
+        self.junos_routers = junos_routers
         self.network_name = network_name
-        self.calendar = reservationcalendar.ReservationCalendar()
-
-        # extract config items
-        cfg_dict = dict(configuration)
-
-        host             = cfg_dict[config.JUNOS_HOST]
-        port             = cfg_dict.get(config.JUNOS_PORT, 22)
-        host_fingerprint = cfg_dict[config.JUNOS_HOST_FINGERPRINT]
-        user             = cfg_dict[config.JUNOS_USER]
-        ssh_public_key   = cfg_dict[config.JUNOS_SSH_PUBLIC_KEY]
-        ssh_private_key  = cfg_dict[config.JUNOS_SSH_PRIVATE_KEY]
-
-        self.command_sender = JunOSCommandSender(host, port, host_fingerprint, user, ssh_public_key, ssh_private_key)
+        log.msg('Initialised with params src %s dst %s bandwidth %s connectionid %s' %
+                (src_port,dest_port,bandwidth,connection_id), debug=True, system=LOG_SYSTEM)
 
 
-    def createConnection(self, source_nrm_port, dest_nrm_port, service_parameters):
+    def generateActivateCommand(self):
+        commands = []
 
-        # probably need a short hand for this
-        self.calendar.checkReservation(source_nrm_port, service_parameters.start_time, service_parameters.end_time)
-        self.calendar.checkReservation(dest_nrm_port  , service_parameters.start_time, service_parameters.end_time)
+        source_port = self.src_port.port
+        dest_port   = self.dest_port.port
+        log.msg("Activate commands between %s and %s " %  (source_port,dest_port), debug=True, system=LOG_SYSTEM)
 
-        self.calendar.addConnection(source_nrm_port, service_parameters.start_time, service_parameters.end_time)
-        self.calendar.addConnection(dest_nrm_port  , service_parameters.start_time, service_parameters.end_time)
+        # Local connection 
+        if source_port.remote_network is None and dest_port.remote_network is None:
+            commands = self._generateLocalConnectionActivate()
+        elif source_port.remote_network is not None and dest_port.remote_network is not None:
+            commands = self._generateTransitConnectionActivate()
+        else: 
+            commands = self._generateRemoteConnectionActivate()
 
-        c = simplebackend.GenericConnection(source_nrm_port, dest_nrm_port, service_parameters, self.network_name, self.calendar,
-                                            'JunOS NRM', LOG_SYSTEM, self.command_sender)
-        return c
+        return commands
 
+
+    def generateDeactivateCommand(self):
+        commands = {}
+
+        source_port = self.src_port.port
+        dest_port   = self.dest_port.port
+        log.msg("Deactivate commands between %s and %s " %  (source_port,dest_port), debug=True, system=LOG_SYSTEM)
+
+        # Local connection 
+        if source_port.remote_network is None and dest_port.remote_network is None:
+            commands = self._generateLocalConnectionDeActivate()
+        elif source_port.remote_network is not None and dest_port.remote_network is not None:
+            commands = self._generateTransitConnectionDeactivate()
+        else: 
+            commands = self._generateRemoteConnectionDeactivate()
+
+ 
+
+
+        return commands
+
+    def _createSwitchName(self,connection_id):
+
+        switch_name = 'JUNOS-local-%s' % (connection_id)
+        
+        return switch_name
+
+    def _generateLocalConnectionActivate(self):
+        commands = []
+        switch_name = self._createSwitchName( self.connection_id )
+
+        """ For configuration reason, we're going to generate port things first, then the interface-switch commands"""
+        for junos_port in self.src_port,self.dest_port:
+            if junos_port.port.label is None:
+                commands.append( COMMAND_SET_INTERFACES % { 'port':junos_port.port.interface} )
+                commands.append( COMMAND_SET_INTERFACES_MTU % { 'port':junos_port.port.interface} )
+                commands.append( COMMAND_SET_INTERFACES_CCC % { 'port':junos_port.port.interface} ) 
+            elif junos_port.port.label.type_ == "vlan":
+                commands.append( COMMAND_SET_FLEXIBLE_VLAN_T % {'port':junos_port.port.interface, 'vlan':junos_port.value} )
+                commands.append( COMMAND_SET_INTERFACES_VLAN % {'port':junos_port.port.interface, 'vlan':junos_port.value} )
+                commands.append( COMMAND_SET_VLAN_ENCAP % {'port':junos_port.port.interface, 'vlan':junos_port.value} )
+                commands.append( COMMAND_SET_VLAN_ID % {'port':junos_port.port.interface, 'vlan':junos_port.value} )
+                commands.append( COMMAND_SET_INPUT_VLAN_MAP % {'port':junos_port.port.interface, 'vlan':junos_port.value} )
+                commands.append( COMMAND_SET_OUTPUT_VLAN_MAP % {'port':junos_port.port.interface, 'vlan':junos_port.value} )
+
+        
+        for junos_port in self.src_port,self.dest_port:
+            commands.append( COMMAND_LOCAL_CONNECTIONS % { 'switch':switch_name, 
+                                                       'interface':"%s" % junos_port.port.interface,
+                                                       'subinterface': "%s" % junos_port.value if
+                                                       junos_port.port.label is not None else '0' } )
+        
+        return commands
+
+    def _generateLocalConnectionDeActivate(self):
+        commands = []
+        switch_name = self._createSwitchName( self.connection_id )
+
+        for junos_port in self.src_port,self.dest_port:
+            if junos_port.port.label is None:
+                commands.append( COMMAND_DELETE_INTERFACES % { 'port':junos_port.port.interface } )
+            elif junos_port.port.label.type_ == "vlan":
+                commands.append( COMMAND_DELETE_INTERFACES_VL % { 'port':junos_port.port.interface, 'vlan' : "%s"
+                    % junos_port.value})
+        commands.append( COMMAND_DELETE_CONNECTIONS % { 'switch':switch_name } )
+
+        return commands
+
+    def _generateRemoteConnectionActivate(self):
+        commands = []
+        
+        local_port = self.src_port if self.src_port.port.remote_network is None else self.dest_port
+        remote_port = self.src_port if self.src_port.port.remote_network is not None else self.dest_port
+        log.msg("%s" % local_port.original_port)
+        log.msg("%s" % remote_port.original_port)
+        
+        if local_port.port.label is None:
+            commands.append( COMMAND_SET_INTERFACES % { 'port':local_port.port.interface} )
+            commands.append( COMMAND_SET_INTERFACES_MTU % { 'port':local_port.port.interface} )
+            commands.append( COMMAND_SET_INTERFACES_CCC % { 'port':local_port.port.interface} ) 
+        elif local_port.port.label.type_ == "vlan":
+            commands.append( COMMAND_SET_FLEXIBLE_VLAN_T % {'port':local_port.port.interface, 'vlan':local_port.value} )
+            commands.append( COMMAND_SET_INTERFACES_VLAN % {'port':local_port.port.interface, 'vlan':local_port.value} )
+            commands.append( COMMAND_SET_VLAN_ENCAP % {'port':local_port.port.interface, 'vlan':local_port.value} )
+            commands.append( COMMAND_SET_VLAN_ID % {'port':local_port.port.interface, 'vlan':local_port.value} )
+            commands.append( COMMAND_SET_INPUT_VLAN_MAP % {'port':local_port.port.interface, 'vlan':local_port.value} )
+            commands.append( COMMAND_SET_OUTPUT_VLAN_MAP % {'port':local_port.port.interface, 'vlan':local_port.value} )
+
+
+        if remote_port.port.label is not None and remote_port.port.label.type_ == "mpls":
+            remote_sw_ip = self._getRouterLoopback(remote_port.port.remote_network) 
+            
+            commands.append(COMMAND_REMOTE_LSP_OUT_TO % {
+                'unique-id':"T-"+remote_port.port.remote_network+"-F-"+self.network_name+"-mpls"+str(remote_port.value),
+                                                    'remote_ip':remote_sw_ip } )
+            commands.append(COMMAND_REMOTE_LSP_OUT_NOCSPF % {
+                'unique-id':"T-"+remote_port.port.remote_network+"-F-"+self.network_name+"-mpls"+str(remote_port.value),
+                                                    'remote_ip':remote_sw_ip } )
+
+
+            if local_port.port.label is None:
+                commands.append(COMMAND_REMOTE_CONNECTIONS_INT % { 'connectionid' : self.connection_id,
+                                                        'port' : local_port.port.interface
+                                                        } )
+            elif local_port.port.label.type_ == "vlan":
+                 commands.append(COMMAND_REMOTE_CONNECTIONS_INT % { 'connectionid' : self.connection_id,
+                                                        'port' : local_port.port.interface + "." + str(local_port.value)
+                                                        } )
+                   
+            commands.append(COMMAND_REMOTE_CONNECTIONS_TRANSMIT_LSP % { 'connectionid' : self.connection_id,
+                                                        'unique-id':"T-"+remote_port.port.remote_network+"-F-"+self.network_name+"-mpls"+str(remote_port.value)
+                                                        } )
+            commands.append(COMMAND_REMOTE_CONNECTIONS_RECEIVE_LSP % { 'connectionid' : self.connection_id,
+                                                        'unique-id':"T-"+self.network_name+"-F-"+remote_port.port.remote_network+"-mpls"+str(remote_port.value)
+                                                        } )
+        if remote_port.port.label is not None and remote_port.port.label.type_ == "vlan":
+            switch_name = self._createSwitchName( self.connection_id )
+            
+            commands.append( COMMAND_SET_FLEXIBLE_VLAN_T % {'port':remote_port.port.interface, 'vlan':remote_port.value} )
+            commands.append( COMMAND_SET_INTERFACES_VLAN % {'port':remote_port.port.interface, 'vlan':remote_port.value} )
+            commands.append( COMMAND_SET_VLAN_ENCAP % {'port':remote_port.port.interface, 'vlan':remote_port.value} )
+            commands.append( COMMAND_SET_VLAN_ID % {'port':remote_port.port.interface, 'vlan':remote_port.value} )
+            commands.append( COMMAND_SET_INPUT_VLAN_MAP % {'port':remote_port.port.interface, 'vlan':remote_port.value} )
+            commands.append( COMMAND_SET_OUTPUT_VLAN_MAP % {'port':remote_port.port.interface, 'vlan':remote_port.value} )
+
+            for junos_port in local_port,remote_port:
+                commands.append( COMMAND_LOCAL_CONNECTIONS % { 'switch':switch_name, 
+                                                       'interface':"%s" % junos_port.port.interface,
+                                                       'subinterface': "%s" % junos_port.value if
+                                                       junos_port.port.label.type_ == "vlan" else '0' } )
+
+
+        return commands
+
+
+    def _generateRemoteConnectionDeactivate(self):
+        commands = []
+
+        local_port = self.src_port if self.src_port.port.remote_network is None else self.dest_port
+        remote_port = self.src_port if self.src_port.port.remote_network is not None else self.dest_port
+        
+        if local_port.port.label is None:
+            commands.append( COMMAND_DELETE_INTERFACES % { 'port':local_port.port.interface } )
+        elif local_port.port.label.type_ == "vlan":
+            commands.append( COMMAND_DELETE_INTERFACES_VL % { 'port':local_port.port.interface, 'vlan' : "%s"
+                % local_port.value})
+
+        if remote_port.port.label is not None and remote_port.port.label.type_ == "mpls":
+            #remote_sw_ip = self._getRouterLoopback(remote_port.port.remote_network) 
+            commands.append( COMMAND_DELETE_MPLS_LSP % {
+                'unique-id' : "T-"+remote_port.port.remote_network+"-F-"+self.network_name+"-mpls"+str(remote_port.value)
+                } )
+            commands.append( COMMAND_DELETE_REMOTE_INT_SW % { 'connectionid' :
+                    self.connection_id } )
+        elif remote_port.port.label.type_ == "vlan":
+            switch_name = self._createSwitchName( self.connection_id )
+            commands.append( COMMAND_DELETE_INTERFACES_VL % { 'port':remote_port.port.interface, 'vlan' : "%s"
+                % remote_port.value})
+            commands.append( COMMAND_DELETE_CONNECTIONS % { 'switch':switch_name } )
+
+        return commands
+
+    def _generateTransitConnectionActivate(self):
+        commands = []
+        
+        local_port = self.src_port
+        remote_port = self.dest_port
+        log.msg("%s" % local_port.original_port)
+        log.msg("%s" % remote_port.original_port)
+        
+        if local_port.port.label is not None and local_port.port.label.type_ == "vlan":
+            commands.append( COMMAND_SET_FLEXIBLE_VLAN_T % {'port':local_port.port.interface, 'vlan':local_port.value} )
+            commands.append( COMMAND_SET_INTERFACES_VLAN % {'port':local_port.port.interface, 'vlan':local_port.value} )
+            commands.append( COMMAND_SET_VLAN_ENCAP % {'port':local_port.port.interface, 'vlan':local_port.value} )
+            commands.append( COMMAND_SET_VLAN_ID % {'port':local_port.port.interface, 'vlan':local_port.value} )
+            commands.append( COMMAND_SET_INPUT_VLAN_MAP % {'port':local_port.port.interface, 'vlan':local_port.value} )
+            commands.append( COMMAND_SET_OUTPUT_VLAN_MAP % {'port':local_port.port.interface, 'vlan':local_port.value} )
+            
+        if remote_port.port.label is not None and remote_port.port.label.type_ == "vlan":
+            commands.append( COMMAND_SET_FLEXIBLE_VLAN_T % {'port':remote_port.port.interface, 'vlan':remote_port.value} )
+            commands.append( COMMAND_SET_INTERFACES_VLAN % {'port':remote_port.port.interface, 'vlan':remote_port.value} )
+            commands.append( COMMAND_SET_VLAN_ENCAP % {'port':remote_port.port.interface, 'vlan':remote_port.value} )
+            commands.append( COMMAND_SET_VLAN_ID % {'port':remote_port.port.interface, 'vlan':remote_port.value} )
+            commands.append( COMMAND_SET_INPUT_VLAN_MAP % {'port':remote_port.port.interface, 'vlan':remote_port.value} )
+            commands.append( COMMAND_SET_OUTPUT_VLAN_MAP % {'port':remote_port.port.interface, 'vlan':remote_port.value} )
+            
+        if local_port.port.label is not None and local_port.port.label.type_ == "mpls":
+            remote_sw_ip = self._getRouterLoopback(local_port.port.remote_network) 
+            
+            commands.append(COMMAND_REMOTE_LSP_OUT_TO % {
+                'unique-id':"T-"+local_port.port.remote_network+"-F-"+self.network_name+"-mpls"+str(local_port.value),
+                                                    'remote_ip':remote_sw_ip } )
+            commands.append(COMMAND_REMOTE_LSP_OUT_NOCSPF % {
+                'unique-id':"T-"+local_port.port.remote_network+"-F-"+self.network_name+"-mpls"+str(local_port.value),
+                                                    'remote_ip':remote_sw_ip } )
+
+            #Should not happen
+            #if remote_port.port.label.type_ == "port":
+            #    commands.append(COMMAND_REMOTE_CONNECTIONS_INT % { 'connectionid' : self.connection_id,
+            #                                            'port' : remote_port.port.interface
+            #                                            } )
+            if remote_port.port.label is not None and remote_port.port.label.type_ == "vlan":
+                 commands.append(COMMAND_REMOTE_CONNECTIONS_INT % { 'connectionid' : self.connection_id,
+                                                        'port' : remote_port.port.interface + "." + str(remote_port.value)
+                                                        } )
+                   
+            commands.append(COMMAND_REMOTE_CONNECTIONS_TRANSMIT_LSP % { 'connectionid' : self.connection_id,
+                                                        'unique-id':"T-"+local_port.port.remote_network+"-F-"+self.network_name+"-mpls"+str(local_port.value)
+                                                        } )
+            commands.append(COMMAND_REMOTE_CONNECTIONS_RECEIVE_LSP % { 'connectionid' : self.connection_id,
+                                                        'unique-id':"T-"+self.network_name+"-F-"+local_port.port.remote_network+"-mpls"+str(local_port.value)
+                                                        } )
+
+
+        if remote_port.port.label is not None and remote_port.port.label.type_ == "mpls":
+            remote_sw_ip = self._getRouterLoopback(remote_port.port.remote_network) 
+            
+            commands.append(COMMAND_REMOTE_LSP_OUT_TO % {
+                'unique-id':"T-"+remote_port.port.remote_network+"-F-"+self.network_name+"-mpls"+str(remote_port.value),
+                                                    'remote_ip':remote_sw_ip } )
+            commands.append(COMMAND_REMOTE_LSP_OUT_NOCSPF % {
+                'unique-id':"T-"+remote_port.port.remote_network+"-F-"+self.network_name+"-mpls"+str(remote_port.value),
+                                                    'remote_ip':remote_sw_ip } )
+
+            #Should not happen
+            #if local_port.port.label.type_ == "port":
+            #    commands.append(COMMAND_REMOTE_CONNECTIONS_INT % { 'connectionid' : self.connection_id,
+            #                                            'port' : local_port.port.interface
+            #                                            } )
+            if local_port.port.label is not None and local_port.port.label.type_ == "vlan":
+                 commands.append(COMMAND_REMOTE_CONNECTIONS_INT % { 'connectionid' : self.connection_id,
+                                                        'port' : local_port.port.interface + "." + str(local_port.value)
+                                                        } )
+                   
+            commands.append(COMMAND_REMOTE_CONNECTIONS_TRANSMIT_LSP % { 'connectionid' : self.connection_id,
+                                                        'unique-id':"T-"+remote_port.port.remote_network+"-F-"+self.network_name+"-mpls"+str(remote_port.value)
+                                                        } )
+            commands.append(COMMAND_REMOTE_CONNECTIONS_RECEIVE_LSP % { 'connectionid' : self.connection_id,
+                                                        'unique-id':"T-"+self.network_name+"-F-"+remote_port.port.remote_network+"-mpls"+str(remote_port.value)
+                                                        } )
+
+        if remote_port.port.label is not None and remote_port.port.label.type_ == "vlan" and local_port.port.label is not None and local_port.port.label.type_ == "vlan":
+            switch_name = self._createSwitchName( self.connection_id )
+
+            for junos_port in local_port,remote_port:
+                commands.append( COMMAND_LOCAL_CONNECTIONS % { 'switch':switch_name, 
+                                                       'interface':"%s" % junos_port.port.interface,
+                                                       'subinterface': "%s" % junos_port.value if
+                                                       junos_port.port.label.type_ == "vlan" else '0' } )
+        #TODO
+        # we're missing 2 things here
+        # mpls->mpls lsp stiching
+        # port->something else crossconnect
+
+        return commands
+
+
+    def _generateTransitConnectionDeactivate(self):
+        commands = []
+        
+        local_port = self.src_port 
+        remote_port = self.dest_port
+
+        if local_port.port.label is not None and local_port.port.label.type_ == "mpls":
+            #remote_sw_ip = self._getRouterLoopback(local_port.port.remote_network) 
+            commands.append( COMMAND_DELETE_MPLS_LSP % {
+                'unique-id' : "T-"+local_port.port.remote_network+"-F-"+self.network_name+"-mpls"+str(local_port.value)
+                } )
+            #commands.append( COMMAND_DELETE_REMOTE_INT_SW % { 'connectionid' :
+                    #self.connection_id } )
+        if local_port.port.label is not None and local_port.port.label.type_ == "vlan":
+            switch_name = self._createSwitchName( self.connection_id )
+            commands.append( COMMAND_DELETE_INTERFACES_VL % { 'port':local_port.port.interface, 'vlan' : "%s"
+                % local_port.value})
+            #commands.append( COMMAND_DELETE_CONNECTIONS % { 'switch':switch_name } )
+
+        if remote_port.port.label is not None and remote_port.port.label.type_ == "mpls":
+            #remote_sw_ip = self._getRouterLoopback(remote_port.port.remote_network) 
+            commands.append( COMMAND_DELETE_MPLS_LSP % {
+                'unique-id' : "T-"+remote_port.port.remote_network+"-F-"+self.network_name+"-mpls"+str(remote_port.value)
+                } )
+            #commands.append( COMMAND_DELETE_REMOTE_INT_SW % { 'connectionid' :
+                    #self.connection_id } )
+        if remote_port.port.label is not None and remote_port.port.label.type_ == "vlan":
+            switch_name = self._createSwitchName( self.connection_id )
+            commands.append( COMMAND_DELETE_INTERFACES_VL % { 'port':remote_port.port.interface, 'vlan' : "%s"
+                % remote_port.value})
+            #commands.append( COMMAND_DELETE_CONNECTIONS % { 'switch':switch_name } )
+            
+        if local_port.port.label is not None and remote_port.port.label is not None:
+            if remote_port.port.label.type_ == "mpls" or local_port.port.label.type_ == "mpls":
+                            commands.append( COMMAND_DELETE_REMOTE_INT_SW % { 'connectionid' :
+                        self.connection_id } )
+            else:
+                commands.append( COMMAND_DELETE_CONNECTIONS % { 'switch':switch_name } )
+        
+
+        return commands
+        
+   
+    def _getRouterLoopback(self,network_name):
+
+        if ":topology" in network_name:
+            network_name = network_name.replace(":topology","")
+        if network_name in self.junos_routers:
+            return self.junos_routers[network_name]
+        else:
+           raise Exception("Can't find loopback IP address for network %s " % network_name)
