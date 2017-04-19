@@ -1,21 +1,21 @@
 """
-Opennsa junosspace backend
+OpenNSA JunosSpace backend
 Currently only mpls, vlan and full port connections are supported
 Author: Tamas Varga <vargat@niif.hu>
-"""
-"""
-Description:
-    Basic Junosspace backend, which uses api calls based on the documentation.
-    In order to need to use this backend, configlets need to be added to the JunosSpace, and their respective number
-    needs to be configured in the config file.
 
-    The backend will shoot API calls over http to junosspace, using the predefined configlets, populating the variables
-    with the given data. The calls are carrying JSON as a payload. The format of the payload and available variables are
-    described in a different documentation alongside with the configlets.
-    
-    The backend will not validate if the commands/request was successfully carried out by Junosspace. It'll post the the
-    given data, and if Junosspace returns with a success, it assumes, that junosspace will handle the rest, and the
-    command(s) is successfully delivered to the router.
+Description:
+
+Basic Junosspace backend, which uses api calls based on the documentation.
+In order to need to use this backend, configlets need to be added to the JunosSpace, and their respective number
+needs to be configured in the config file.
+
+The backend will shoot API calls over http to junosspace, using the predefined configlets, populating the variables
+with the given data. The calls are carrying JSON as a payload. The format of the payload and available variables are
+described in a different documentation alongside with the configlets.
+
+The backend will not validate if the commands/request was successfully carried out by Junosspace. It'll post the the
+given data, and if Junosspace returns with a success, it assumes, that junosspace will handle the rest, and the
+command(s) is successfully delivered to the router.
 
 Configuration:
 [junosspace]
@@ -32,16 +32,19 @@ TODO
 
 """
 
+import json
 import random
-from twisted.python import log
-from twisted.internet import defer
-
-from twisted.internet import reactor
-from twisted.web.client import Agent,readBody
-from twisted.web.http_headers import Headers
+from base64 import b64encode
+from pprint import pprint, pformat
 
 from zope.interface import implements
 
+from twisted.python import log
+from twisted.internet import defer
+from twisted.internet import reactor
+from twisted.internet.defer import setDebugging
+from twisted.web.client import Agent,readBody
+from twisted.web.http_headers import Headers
 from twisted.internet.defer import succeed
 from twisted.web.iweb import IBodyProducer
 from twisted.internet.ssl import ClientContextFactory
@@ -49,13 +52,7 @@ from twisted.internet.ssl import ClientContextFactory
 from opennsa import constants as cnt, config
 from opennsa.backends.common import genericbackend
 
-from base64 import b64encode
-import json
 
-from twisted.internet.defer import setDebugging
-
-from pprint import pprint
-from pprint import pformat
 
 setDebugging(True)
 
@@ -68,6 +65,7 @@ REMOTE_ACTIVATE_CONFIGLET_ID    = "1578271"
 LOCAL_DEACTIVATE_CONFIGLET_ID   = "1578251"
 REMOTE_DEACTIVATE_CONFIGLET_ID  = "1578262"
 
+
 class JUNOSSPACERouter(object):
     def __init__(self,router_name,router_id,router_ip):
         self.router_name = router_name
@@ -79,6 +77,7 @@ class JUNOSSPACERouter(object):
 
     def __str__(self):
         return "Router name {} deviceId {} loopback ip {}".format(self.router_name,self.router_id,self.router_ip)
+
 
 class JUNOSSPACEPayloadProducer(object):
     implements(IBodyProducer)
@@ -95,7 +94,8 @@ class JUNOSSPACEPayloadProducer(object):
         pass
 
     def stopProducing(self):
-        pass        
+        pass
+
 
 class WebClientContextFactory(ClientContextFactory):
     def getContext(self, hostname, port):
@@ -106,13 +106,14 @@ class WebClientContextFactory(ClientContextFactory):
 class JUNOSSPACECommandSender:
 
     def __init__(self, space_user, space_password, space_api_url,  gts_routers,network_name):
-        
+
         self.gts_routers = gts_routers
         self.network_name = network_name
         self.space_user = space_user
         self.space_password = space_password
         self.space_api_url = space_api_url
         log.msg("Space api url {} {}:{}".format(self.space_api_url,self.space_user,self.space_password))
+
 
     @defer.inlineCallbacks
     def _sendCommands(self, configlet_payload):
@@ -123,15 +124,16 @@ class JUNOSSPACECommandSender:
         api_configlet_url = "{}/configuration-management/cli-configlets/{}/apply-configlet".format(self.space_api_url,configlet_payload['configlet_id'])
         contextFactory = WebClientContextFactory()
         agent = Agent(reactor,contextFactory)
-	req = agent.request(
-		'POST',
-		api_configlet_url,
-                Headers({b"authorization": [b"Basic " + authorization_string],
-                    b"Content-Type": [API_CALL_CONTENT_TYPE],
-                    b"Accept": [API_CALL_ACCEPT]}),
-                payload)
+        req = agent.request(
+            'POST',
+            api_configlet_url,
+            Headers({b"authorization": [b"Basic " + authorization_string],
+                     b"Content-Type": [API_CALL_CONTENT_TYPE],
+                     b"Accept": [API_CALL_ACCEPT]}),
+                    payload)
         req.addCallbacks(self._cbRequest,self._cbError) 
         yield req
+
 
     def _cbRequest(self,response):
         print 'Response version:', response.version
@@ -149,7 +151,6 @@ class JUNOSSPACECommandSender:
 
     def printBody(self,body):
         log.msg('Received body from junosspace {}'.format(body), debug=True, system=LOG_SYSTEM)
-        
 
 
     def setupLink(self, connection_id, source_port, dest_port, bandwidth):
@@ -192,8 +193,7 @@ class JUNOSSPACEConnectionManager:
                 "mpls" : ['vlan','port'],
                 "vlan" : ['port','mpls'],
                 "port" : ['vlan','mpls']
-                
-                }
+        }
 
 
     def getResource(self, port, label_type, label_value):
@@ -226,7 +226,7 @@ class JUNOSSPACEConnectionManager:
         d.addCallback(linkDown)
         return d
 
-    
+
     def canConnectLabels(self,src_label_type,dst_label_type):
         log.msg("Check label pair %s %s" % (src_label_type,dst_label_type),system=LOG_SYSTEM)
         #by default, acccept same types
@@ -247,15 +247,14 @@ def JUNOSSPACEBackend(network_name, nrm_ports , parent_requester, cfg):
     space_api_url   = cfg[config.SPACE_API_URL]
     space_routers_config   = cfg[config.SPACE_ROUTERS].split()
 
-    global LOCAL_ACTIVATE_CONFIGLET_ID     
-    global REMOTE_ACTIVATE_CONFIGLET_ID    
-    global LOCAL_DEACTIVATE_CONFIGLET_ID   
-    global REMOTE_DEACTIVATE_CONFIGLET_ID  
-    LOCAL_ACTIVATE_CONFIGLET_ID     = cfg[config.SPACE_CONFIGLET_ACTIVATE_LOCAL]  
-    REMOTE_ACTIVATE_CONFIGLET_ID    = cfg[config.SPACE_CONFIGLET_ACTIVATE_REMOTE] 
-    LOCAL_DEACTIVATE_CONFIGLET_ID   = cfg[config.SPACE_CONFIGLET_DEACTIVATE_LOCAL] 
-    REMOTE_DEACTIVATE_CONFIGLET_ID  = cfg[config.SPACE_CONFIGLET_DEACTIVATE_REMOTE] 
-
+    global LOCAL_ACTIVATE_CONFIGLET_ID
+    global REMOTE_ACTIVATE_CONFIGLET_ID
+    global LOCAL_DEACTIVATE_CONFIGLET_ID
+    global REMOTE_DEACTIVATE_CONFIGLET_ID
+    LOCAL_ACTIVATE_CONFIGLET_ID     = cfg[config.SPACE_CONFIGLET_ACTIVATE_LOCAL]
+    REMOTE_ACTIVATE_CONFIGLET_ID    = cfg[config.SPACE_CONFIGLET_ACTIVATE_REMOTE]
+    LOCAL_DEACTIVATE_CONFIGLET_ID   = cfg[config.SPACE_CONFIGLET_DEACTIVATE_LOCAL]
+    REMOTE_DEACTIVATE_CONFIGLET_ID  = cfg[config.SPACE_CONFIGLET_DEACTIVATE_REMOTE]
 
     space_routers = dict()
     log.msg("Loaded JunosSpace backend with routers:")
@@ -274,7 +273,7 @@ def JUNOSSPACEBackend(network_name, nrm_ports , parent_requester, cfg):
 
 
 class JUNOSSPACECommandGenerator(object):
-     
+
     def __init__(self,connection_id,src_port,dest_port,space_routers,network_name,bandwidth=None):
         self.connection_id = connection_id
         self.src_port = src_port
@@ -325,16 +324,13 @@ class JUNOSSPACECommandGenerator(object):
         else: 
             commands = self._generateRemoteConnectionDeactivate()
 
- 
-
-
         return commands
 
     def _createSwitchName(self,connection_id):
 
         switch_name = 'GTS-local-%s' % (connection_id)
-        
         return switch_name
+
 
     def _getDeviceId(self,network_name):
         if ":topology" in network_name:
@@ -343,7 +339,8 @@ class JUNOSSPACECommandGenerator(object):
             return self.space_routers[network_name].router_id
         else:
            raise Exception("Can't find deviceId for network %s " % network_name)
-    
+
+
     def _getDeviceLoopbackIp(self,network_name):
         if ":topology" in network_name:
             network_name = network_name.replace(":topology","")
@@ -367,9 +364,8 @@ class JUNOSSPACECommandGenerator(object):
         payload['deviceId'] = self._getDeviceId(self.network_name)
         payload['cli-configlet-param'] = []
         switch_name = self._createSwitchName( self.connection_id )
-        
-        
-        """ For configuration reason, we're going to generate port things first, then the interface-switch commands"""
+
+        # For configuration reason, we're going to generate port things first, then the interface-switch commands
         payload['cli-configlet-param'].append(self._createParamDict("LabelType1",self.src_port.port.label.type_))
         payload['cli-configlet-param'].append(self._createParamDict("InterfaceName1",self.src_port.port.interface))
         payload['cli-configlet-param'].append(self._createParamDict("LabelValue1",self.src_port.value))
@@ -388,19 +384,18 @@ class JUNOSSPACECommandGenerator(object):
         commands['payload'] = {}
         commands['payload']['cli-configlet-mgmt'] = {}
         payload['deviceId'] = self._getDeviceId(self.network_name) 
-        """ should not pass param """
+        # should not pass param
         payload['cli-configlet-param'] = []
         switch_name = self._createSwitchName( self.connection_id )
-        
-        
-        """ For configuration reason, we're going to generate port things first, then the interface-switch commands"""
+
+        # For configuration reason, we're going to generate port things first, then the interface-switch commands
         payload['cli-configlet-param'].append(self._createParamDict("LabelType1",self.src_port.port.label.type_))
         payload['cli-configlet-param'].append(self._createParamDict("InterfaceName1",self.src_port.port.interface))
         payload['cli-configlet-param'].append(self._createParamDict("LabelValue1",self.src_port.value))
         payload['cli-configlet-param'].append(self._createParamDict("LabelType2",self.dest_port.port.label.type_))
         payload['cli-configlet-param'].append(self._createParamDict("InterfaceName2",self.dest_port.port.interface))
         payload['cli-configlet-param'].append(self._createParamDict("LabelValue2",self.dest_port.value))
-        payload['cli-configlet-param'].append(self._createParamDict("CircuitName",switch_name))       
+        payload['cli-configlet-param'].append(self._createParamDict("CircuitName",switch_name))
 
         commands['payload']['cli-configlet-mgmt'] = payload 
         return commands
@@ -410,21 +405,21 @@ class JUNOSSPACECommandGenerator(object):
         remote_port = self.src_port if self.src_port.port.remote_network is not None else self.dest_port
         log.msg("%s" % local_port.original_port)
         log.msg("%s" % remote_port.original_port)
-        
+
         payload = {}
         commands = {}
         commands['configlet_id'] = REMOTE_ACTIVATE_CONFIGLET_ID
         commands['payload'] = {}
         commands['payload']['cli-configlet-mgmt'] = {}
         payload['deviceId'] = self._getDeviceId(self.network_name) 
-        """ should not pass param """
+        # should not pass param
         payload['cli-configlet-param'] = []
         switch_name = self._createSwitchName( self.connection_id )
-       
+
         payload['cli-configlet-param'].append(self._createParamDict("LabelType",local_port.port.label.type_))
         payload['cli-configlet-param'].append(self._createParamDict("InterfaceName",local_port.port.interface))
         payload['cli-configlet-param'].append(self._createParamDict("LabelValue",local_port.value))
-        
+
         remote_sw_ip = self._getDeviceLoopbackIp(remote_port.port.remote_network)
         payload['cli-configlet-param'].append(self._createParamDict("TargetIP",remote_sw_ip))
         lsp_out_name = "T-{}-F-{}-mpls{}".format(remote_port.port.remote_network,self.network_name,str(remote_port.value))
@@ -442,7 +437,7 @@ class JUNOSSPACECommandGenerator(object):
         remote_port = self.src_port if self.src_port.port.remote_network is not None else self.dest_port
         log.msg("%s" % local_port.original_port)
         log.msg("%s" % remote_port.original_port)
-        
+
         payload = {}
         commands = {}
         commands['configlet_id'] = REMOTE_DEACTIVATE_CONFIGLET_ID
@@ -452,11 +447,11 @@ class JUNOSSPACECommandGenerator(object):
         """ should not pass param """
         payload['cli-configlet-param'] = []
         switch_name = self._createSwitchName( self.connection_id )
-       
+
         payload['cli-configlet-param'].append(self._createParamDict("LabelType",local_port.port.label.type_))
         payload['cli-configlet-param'].append(self._createParamDict("InterfaceName",local_port.port.interface))
         payload['cli-configlet-param'].append(self._createParamDict("LabelValue",local_port.value))
-        
+
         remote_sw_ip = self._getDeviceLoopbackIp(remote_port.port.remote_network)
         payload['cli-configlet-param'].append(self._createParamDict("TargetIP",remote_sw_ip))
         lsp_out_name = "T-{}-F-{}-mpls{}".format(remote_port.port.remote_network,self.network_name,str(remote_port.value))

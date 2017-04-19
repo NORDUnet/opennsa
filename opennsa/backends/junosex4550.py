@@ -1,10 +1,15 @@
 """
-OpenNSA GTS backend, using Junos on EX4550 switches
-Currently only vlan connections are supported
-Authors: 
+OpenNSA backend for Juniper EX switches supporting ccc encapsulation.
+
+Even though mpls is used here, mpls to other devices is not supported. MPLS is
+merely to facilitate private switching between two units. So only vlan-vlan
+connections are supported.
+
+Authors:
 Original GTS backend: Tamas Varga <vargat@niif.hu>
 Modified for EX4550 Michal Hazlinksy <hazlinsky@cesnet.cz>
 """
+
 import random
 
 from twisted.python import log
@@ -12,6 +17,8 @@ from twisted.internet import defer
 
 from opennsa import constants as cnt, config
 from opennsa.backends.common import genericbackend, ssh
+
+
 
 # parameterized commands
 COMMAND_CONFIGURE           = 'configure'
@@ -44,6 +51,8 @@ COMMAND_REMOTE_CONNECTIONS_TRANSMIT_LSP = 'set protocols connections remote-inte
 COMMAND_REMOTE_CONNECTIONS_RECEIVE_LSP  = 'set protocols connections remote-interface-switch %(connectionid)s receive-lsp %(unique-id)s'
 
 LOG_SYSTEM = 'EX4550'
+
+
 
 class SSHChannel(ssh.SSHChannel):
 
@@ -217,14 +226,6 @@ class JunosEx4550ConnectionManager:
         self.port_map = port_map
         self.command_sender = JunosEx4550CommandSender(host, port, host_fingerprint, user, ssh_public_key, ssh_private_key,
                 network_name)
-        
-        #IMHO - Can be removed since EX4550 supports vlan to vlan connections only
-        #self.supportedLabelPairs = {
-        #        "mpls" : ['vlan','port'],
-        #        "vlan" : ['port','mpls'],
-        #        "port" : ['vlan','mpls']
-        #        
-        #        }
 
 
     def getResource(self, port, label_type, label_value):
@@ -257,15 +258,14 @@ class JunosEx4550ConnectionManager:
         d.addCallback(linkDown)
         return d
 
-    
+
     def canConnectLabels(self,src_label_type,dst_label_type):
         log.msg("Check label pair %s %s" % (src_label_type,dst_label_type),system=LOG_SYSTEM)
         #by default, acccept same types
         if src_label_type == dst_label_type:
             return True
-        #if src_label_type in self.supportedLabelPairs and dst_label_type in self.supportedLabelPairs[src_label_type]:
-        #    return True
-        # commented out because of removal the pairs definition above
+
+
 
 def JunosEx4550Backend(network_name, nrm_ports , parent_requester, cfg):
 
@@ -279,14 +279,14 @@ def JunosEx4550Backend(network_name, nrm_ports , parent_requester, cfg):
     user             = cfg[config.JunosEx4550_USER]
     ssh_public_key   = cfg[config.JunosEx4550_SSH_PUBLIC_KEY]
     ssh_private_key  = cfg[config.JunosEx4550_SSH_PRIVATE_KEY]
-    
+
     cm = JunosEx4550ConnectionManager(port_map, host, port, host_fingerprint, user, ssh_public_key, ssh_private_key,
             network_name)
     return genericbackend.GenericBackend(network_name, nrm_map, cm, parent_requester, name)
 
 
 class JunosEx4550CommandGenerator(object):
-     
+
     def __init__(self,connection_id,src_port,dest_port,network_name,bandwidth=None):
         self.connection_id = connection_id
         self.src_port = src_port
@@ -308,13 +308,13 @@ class JunosEx4550CommandGenerator(object):
                     dest_port.remote_network, dest_port.interface, dest_port.label.type_), debug=True,
                 system=LOG_SYSTEM)
 
-        # Local connection 
+        # Local connection
         if source_port.remote_network is None and dest_port.remote_network is None:
             commands = self._generateLocalConnectionActivate()
         elif source_port.remote_network is not None and dest_port.remote_network is not None:
             commands = self._generateLocalConnectionActivate()
             log.msg('Transit connection-HERE SHOULD BE COMMANDS FOR TRANSIT', system=LOG_SYSTEM)
-        else: 
+        else:
             #commands = self._generateRemoteConnectionActivate()  All cases are the same tODO: remove IFs competely here 
             commands = self._generateLocalConnectionActivate()
         return commands
@@ -340,16 +340,15 @@ class JunosEx4550CommandGenerator(object):
             #commands = self._generateRemoteConnectionDeactivate()   DTTO as activate
             commands = self._generateLocalConnectionDeActivate()
 
- 
-
-
         return commands
+
 
     def _createSwitchName(self,connection_id):
 
         switch_name = 'OpenNSA-local-%s' % (connection_id)
-        
+
         return switch_name
+
 
     def _generateLocalConnectionActivate(self):
         commands = []
@@ -370,14 +369,13 @@ class JunosEx4550CommandGenerator(object):
                 commands.append( COMMAND_SET_VLAN_ID % {'port':gts_port.port.interface, 'vlan':gts_port.value} )
                 commands.append( COMMAND_SET_SWAP_PUSH_POP % {'port':gts_port.port.interface, 'vlan':gts_port.value} )
 
-        
         for gts_port in self.src_port,self.dest_port:
             commands.append( COMMAND_LOCAL_CONNECTIONS % { 'switch':switch_name, 
                                                        'interface':"%s" % gts_port.port.interface,
                                                        'subinterface': "%s" % gts_port.value if
                                                        gts_port.port.label.type_ == "vlan" else '0' } )
-        
         return commands
+
 
     def _generateLocalConnectionDeActivate(self):
         commands = []
@@ -395,12 +393,12 @@ class JunosEx4550CommandGenerator(object):
 
 #    def _generateRemoteConnectionActivate(self):
 #        commands = []
-#        
+#
 #        local_port = self.src_port if self.src_port.port.remote_network is None else self.dest_port
 #        remote_port = self.src_port if self.src_port.port.remote_network is not None else self.dest_port
 #        log.msg("%s" % local_port.original_port)
 #        log.msg("%s" % remote_port.original_port)
-#        
+#
 #        if local_port.port.label.type_ == "port":
 #            commands.append( COMMAND_SET_INTERFACES % { 'port':local_port.port.interface} )
 #            commands.append( COMMAND_SET_INTERFACES_MTU % { 'port':local_port.port.interface} )
@@ -411,10 +409,10 @@ class JunosEx4550CommandGenerator(object):
 #            commands.append( COMMAND_SET_VLAN_ENCAP % {'port':local_port.port.interface, 'vlan':local_port.value} )
 #            commands.append( COMMAND_SET_VLAN_ID % {'port':local_port.port.interface, 'vlan':local_port.value} )
 #            commands.append( COMMAND_SET_SWAP_PUSH_POP % {'port':local_port.port.interface, 'vlan':local_port.value} )
-#       
+#
 #        if remote_port.port.label.type_ == "mpls":
 #            remote_sw_ip = self._getRouterLoopback(remote_port.port.remote_network) 
-#            
+#
 #            commands.append(COMMAND_REMOTE_LSP_OUT_TO % {
 #                'unique-id':"T-"+remote_port.port.remote_network+"-F-"+self.network_name+"-mpls"+str(remote_port.value),
 #                                                    'remote_ip':remote_sw_ip } )
@@ -431,7 +429,7 @@ class JunosEx4550CommandGenerator(object):
 #                 commands.append(COMMAND_REMOTE_CONNECTIONS_INT % { 'connectionid' : self.connection_id,
 #                                                        'port' : local_port.port.interface + "." + str(local_port.value)
 #                                                        } )
-#                   
+#
 #            commands.append(COMMAND_REMOTE_CONNECTIONS_TRANSMIT_LSP % { 'connectionid' : self.connection_id,
 #                                                        'unique-id':"T-"+remote_port.port.remote_network+"-F-"+self.network_name+"-mpls"+str(remote_port.value)
 #                                                        } )
@@ -440,13 +438,13 @@ class JunosEx4550CommandGenerator(object):
 #                                                        } )
 #        if remote_port.port.label.type_ == "vlan":
 #            switch_name = self._createSwitchName( self.connection_id )
-#            
+#
 #            commands.append( COMMAND_SET_INTERFACE_VLN_T % {'port':remote_port.port.interface, 'vlan':remote_port.value} )
 #            commands.append( COMMAND_SET_INTERFACE_ENC_V % {'port':remote_port.port.interface, 'vlan':remote_port.value} )
 #            commands.append( COMMAND_SET_VLAN_ENCAP % {'port':remote_port.port.interface, 'vlan':remote_port.value} )
 #            commands.append( COMMAND_SET_VLAN_ID % {'port':remote_port.port.interface, 'vlan':remote_port.value} )
 #            commands.append( COMMAND_SET_SWAP_PUSH_POP % {'port':remote_port.port.interface, 'vlan':remote_port.value} )
-#            
+#
 #            for gts_port in local_port,remote_port:
 #                commands.append( COMMAND_LOCAL_CONNECTIONS % { 'switch':switch_name, 
 #                                                       'interface':"%s" % gts_port.port.interface,
@@ -462,7 +460,7 @@ class JunosEx4550CommandGenerator(object):
 #
 #        local_port = self.src_port if self.src_port.port.remote_network is None else self.dest_port
 #        remote_port = self.src_port if self.src_port.port.remote_network is not None else self.dest_port
-#        
+#
 #        if local_port.port.label.type_ == "port":
 #            commands.append( COMMAND_DELETE_INTERFACES % { 'port':local_port.port.interface } )
 #        if local_port.port.label.type_ == "vlan":
