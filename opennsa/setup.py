@@ -281,7 +281,7 @@ class OpenNSAService(twistedservice.MultiService):
         discovery_resource_name = 'discovery.xml'
         discovery_url = '%s/NSI/%s' % (base_url, discovery_resource_name)
 
-        ds = discoveryservice.DiscoveryService(ns_agent.urn(), now, name, opennsa_version, now, networks, interfaces, features, provider_registry, link_node)
+        ds = discoveryservice.DiscoveryService(ns_agent.urn(), now, name, opennsa_version, now, networks, interfaces, features, provider_registry, link_node, domain_aggregate)
 
         discovery_resource = ds.resource()
         top_resource.children['NSI'].putChild(discovery_resource_name, discovery_resource)
