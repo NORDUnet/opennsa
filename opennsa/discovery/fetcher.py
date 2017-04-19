@@ -97,7 +97,7 @@ class FetcherService(service.Service):
 
             for network_id in network_ids:
                 if not network_id in self.link_node.nodes:
-                    log.msg("Adding empty node %s" % network_id, debug=True, system=LOG_SYSTEM)
+                    log.msg("Adding node %s" % network_id, debug=True, system=LOG_SYSTEM)
                     self.link_node.addNode( linknode.Node(network_id) )
 
             # there is lots of other stuff in the nsa description but we don't really use it
