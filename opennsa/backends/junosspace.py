@@ -47,7 +47,7 @@ from twisted.web.iweb import IBodyProducer
 from twisted.internet.ssl import ClientContextFactory
 
 from opennsa import constants as cnt, config
-from opennsa.backends.common import genericbackend, ssh
+from opennsa.backends.common import genericbackend
 
 from base64 import b64encode
 import json
@@ -287,7 +287,6 @@ class JUNOSSPACECommandGenerator(object):
 
 
     def generateActivateCommand(self):
-        command_set = []
 
         source_port = self.src_port.port
         dest_port   = self.dest_port.port
