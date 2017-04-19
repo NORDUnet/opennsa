@@ -335,6 +335,12 @@ class Aggregator:
             path_info = ( conn.connection_id, self.network, conn.source_port, shortLabel(conn.source_label), conn.dest_port, shortLabel(conn.dest_label) )
             log.msg('Connection %s: Remote proxy link creation: %s %s?%s == %s?%s' % path_info, system=LOG_SYSTEM)
 
+            # first some sanity checking, not sure why the checks at the top doesn't catch these
+            if not conn.source_network in self.route_vectors.nodes.keys():
+                raise error.STPResolutionError('Source network %s not known, cannot create circuit' % conn.source_network)
+            if not conn.dest_network in self.route_vectors.nodes.keys():
+                raise error.STPResolutionError('Destination network %s not known, cannot create circuit' % conn.dest_network)
+
 #            for node_name, node in self.route_vectors.nodes.items():
 #                print node_name
 #                for port_name, port in node.ports.items():
