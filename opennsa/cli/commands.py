@@ -6,19 +6,18 @@ from twisted.internet import defer
 from opennsa import constants as cnt, nsa, error
 
 LABEL_MAP = {
-        'vlan' : cnt.ETHERNET_VLAN,
-        'mpls' : cnt.MPLS
-        }
+    'vlan' : cnt.ETHERNET_VLAN,
+    'mpls' : cnt.MPLS
+}
 
 
 def _createSTP(stp_arg):
 
-    # no generic label stuff for now
     if '#' in stp_arg:
-        stp_desc, label_str = stp_arg.split('#')
+        stp_desc, label_desc = stp_arg.split('#')
         network, port = stp_desc.rsplit(':',1)
-        label_type,label_value = label_str.split("=")
-        label = nsa.Label(LABEL_MAP[label_type],label_value)
+        label_type,label_value = label_desc.split("=")
+        label = nsa.Label(LABEL_MAP[label_type],label_value) # FIXME need good error message if label type doesn't exist
     else:
         network, port = stp_arg.rsplit(':',1)
         label = None

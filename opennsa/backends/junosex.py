@@ -273,12 +273,12 @@ def JunosEx4550Backend(network_name, nrm_ports , parent_requester, cfg):
     nrm_map  = dict( [ (p.name, p) for p in nrm_ports ] ) # for the generic backend
     port_map = dict( [ (p.name, p) for p in nrm_ports ] ) # for the nrm backend
 
-    host             = cfg[config.JunosEx4550_HOST]
-    port             = cfg.get(config.JunosEx4550_PORT, 22)
-    host_fingerprint = cfg[config.JunosEx4550_HOST_FINGERPRINT]
-    user             = cfg[config.JunosEx4550_USER]
-    ssh_public_key   = cfg[config.JunosEx4550_SSH_PUBLIC_KEY]
-    ssh_private_key  = cfg[config.JunosEx4550_SSH_PRIVATE_KEY]
+    host             = cfg[config.JUNIPER_HOST]
+    port             = cfg.get(config.JUNIPER_PORT, 22)
+    host_fingerprint = cfg[config.JUNIPER_HOST_FINGERPRINT]
+    user             = cfg[config.JUNIPER_USER]
+    ssh_public_key   = cfg[config.JUNIPER_SSH_PUBLIC_KEY]
+    ssh_private_key  = cfg[config.JUNIPER_SSH_PRIVATE_KEY]
 
     cm = JunosEx4550ConnectionManager(port_map, host, port, host_fingerprint, user, ssh_public_key, ssh_private_key,
             network_name)

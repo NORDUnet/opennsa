@@ -28,14 +28,14 @@ BLOCK_SERVICE    = 'service'
 BLOCK_DUD        = 'dud'
 BLOCK_JUNIPER_EX = 'juniperex'
 BLOCK_JUNIPER_VPLS = 'junipervpls'
-BLOCK_JUNOS      = 'junos'
 BLOCK_FORCE10    = 'force10'
 BLOCK_BROCADE    = 'brocade'
 BLOCK_DELL       = 'dell'
 BLOCK_NCSVPN     = 'ncsvpn'
 BLOCK_PICA8OVS   = 'pica8ovs'
+BLOCK_JUNOSMX    = 'junosmx'
+BLOCK_JUNOSEX    = 'junosex'
 BLOCK_JUNOSSPACE = 'junosspace'
-BLOCK_JUNOSEX4550  = 'junosex4550'
 BLOCK_OESS       = 'oess'
 
 # service block
@@ -75,7 +75,7 @@ _SSH_PRIVATE_KEY        = 'privatekey'
 
 AS_NUMBER              = 'asnumber'
 
-# juniper block - same for ex/qxf backend and mx backend
+# juniper block - same for mx / ex backends
 JUNIPER_HOST                = _SSH_HOST
 JUNIPER_PORT                = _SSH_PORT
 JUNIPER_HOST_FINGERPRINT    = _SSH_HOST_FINGERPRINT
@@ -141,14 +141,6 @@ SPACE_CONFIGLET_ACTIVATE_LOCAL = 'configlet_activate_local'
 SPACE_CONFIGLET_ACTIVATE_REMOTE = 'configlet_activate_remote'
 SPACE_CONFIGLET_DEACTIVATE_LOCAL = 'configlet_deactivate_local'
 SPACE_CONFIGLET_DEACTIVATE_REMOTE = 'configlet_deactivate_remote'
-
-# JunosEx4550 block
-JunosEx4550_HOST                = _SSH_HOST
-JunosEx4550_PORT                = _SSH_PORT
-JunosEx4550_HOST_FINGERPRINT    = _SSH_HOST_FINGERPRINT
-JunosEx4550_USER                = _SSH_USER
-JunosEx4550_SSH_PUBLIC_KEY      = _SSH_PUBLIC_KEY
-JunosEx4550_SSH_PRIVATE_KEY     = _SSH_PRIVATE_KEY
 
 # OESS
 OESS_URL                = 'url'
@@ -335,8 +327,8 @@ def readVerifyConfig(cfg):
         if name in backends:
             raise ConfigurationError('Can only have one backend named "%s"' % name)
 
-        if backend_type in (BLOCK_DUD, BLOCK_JUNIPER_EX, BLOCK_JUNIPER_VPLS, BLOCK_JUNOS, BLOCK_FORCE10, BLOCK_BROCADE,
-                            BLOCK_DELL, BLOCK_NCSVPN, BLOCK_PICA8OVS, BLOCK_OESS, BLOCK_JUNOSSPACE, BLOCK_JUNOSEX4550,  'asyncfail'):
+        if backend_type in (BLOCK_DUD, BLOCK_JUNIPER_EX, BLOCK_JUNIPER_VPLS, BLOCK_JUNOSMX, BLOCK_FORCE10, BLOCK_BROCADE,
+                            BLOCK_DELL, BLOCK_NCSVPN, BLOCK_PICA8OVS, BLOCK_OESS, BLOCK_JUNOSSPACE, BLOCK_JUNOSEX,  'asyncfail'):
             backend_conf = dict( cfg.items(section) )
             backend_conf['_backend_type'] = backend_type
             backends[name] = backend_conf
