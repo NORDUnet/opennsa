@@ -13,9 +13,9 @@ from opennsa import __version__ as version
 
 from opennsa import config, logging, constants as cnt, nsa, provreg, database, aggregator, viewresource
 from opennsa.topology import nrm, nml, linknode, service as nmlservice
+from opennsa.protocols import rest, nsi2
 from opennsa.protocols.shared import httplog
 from opennsa.discovery import service as discoveryservice, fetcher
-from opennsa.protocols import nsi2
 
 
 
@@ -28,10 +28,9 @@ def setupBackend(backend_cfg, network_name, nrm_ports, parent_requester):
         from opennsa.backends import dud
         BackendConstructer = dud.DUDNSIBackend
 
-# These are not yet ported for the new backend
-#    elif backend_type == config.BLOCK_JUNOS:
-#        from opennsa.backends import junos
-#        return junos.JunOSBackend(network_name, parent_requester, port_map, bc.items())
+    elif backend_type == config.BLOCK_JUNOS:
+        from opennsa.backends import junos
+        BackendConstructer = junos.JUNOSBackend
 
     elif backend_type == config.BLOCK_FORCE10:
         from opennsa.backends import force10
@@ -40,6 +39,10 @@ def setupBackend(backend_cfg, network_name, nrm_ports, parent_requester):
     elif backend_type == config.BLOCK_JUNIPER_EX:
         from opennsa.backends import juniperex
         BackendConstructer = juniperex.JuniperEXBackend
+
+    elif backend_type == config.BLOCK_JUNIPER_VPLS:
+        from opennsa.backends import junipervpls
+        BackendConstructer = junipervpls.JuniperVPLSBackend
 
     elif backend_type == config.BLOCK_BROCADE:
         from opennsa.backends import brocade
@@ -52,6 +55,22 @@ def setupBackend(backend_cfg, network_name, nrm_ports, parent_requester):
     elif backend_type == config.BLOCK_NCSVPN:
         from opennsa.backends import ncsvpn
         BackendConstructer = ncsvpn.NCSVPNBackend
+
+    elif backend_type == config.BLOCK_PICA8OVS:
+        from opennsa.backends import pica8ovs
+        BackendConstructer = pica8ovs.Pica8OVSBackend
+
+    elif backend_type == config.BLOCK_JUNOSSPACE:
+        from opennsa.backends import junosspace
+        BackendConstructer = junosspace.JUNOSSPACEBackend
+
+    elif backend_type == config.BLOCK_JUNOSEX4550:
+        from opennsa.backends import junosex4550
+        BackendConstructer = junosex4550.JunosEx4550Backend
+
+    elif backend_type == config.BLOCK_OESS:
+        from opennsa.backends import oess
+        BackendConstructer = oess.OESSBackend
 
     else:
         raise config.ConfigurationError('No backend specified')
@@ -146,7 +165,7 @@ class OpenNSAService(twistedservice.MultiService):
             vc[config.HOST] = socket.getfqdn()
 
         # database
-        database.setupDatabase(vc[config.DATABASE], vc[config.DATABASE_USER], vc[config.DATABASE_PASSWORD])
+        database.setupDatabase(vc[config.DATABASE], vc[config.DATABASE_USER], vc[config.DATABASE_PASSWORD], vc[config.DATABASE_HOST], vc[config.SERVICE_ID_START])
 
         service_endpoints = []
 
@@ -220,22 +239,12 @@ class OpenNSAService(twistedservice.MultiService):
         else:
             log.msg('No peers configured, will not be able to do outbound requests.')
 
-        # wire up the http stuff
-
-        discovery_resource_name = 'discovery.xml'
-        discovery_url = '%s/NSI/%s' % (base_url, discovery_resource_name)
-
-        nml_resource_name       = base_name + '.nml.xml'
-        nml_resource_url        = '%s/NSI/%s' % (base_url, nml_resource_name)
-
-        service_endpoints.append( ('Discovery', discovery_url) )
-        service_endpoints.append( ('NML Topology', nml_resource_url) )
-
         # discovery service
         name = base_name.split(':')[0] if ':' in base_name else base_name
         opennsa_version = 'OpenNSA-' + version
-        networks    = [ cnt.URN_OGF_PREFIX + network_name ] # why is this a list
-        interfaces  = [ ( cnt.CS2_PROVIDER, provider_endpoint, None), ( cnt.CS2_SERVICE_TYPE, provider_endpoint, None), (cnt.NML_SERVICE_TYPE, nml_resource_url, None) ]
+        networks    = [ cnt.URN_OGF_PREFIX + network_name ] # list because most things support listing multiple networks
+        interfaces  = [ ( cnt.CS2_PROVIDER, provider_endpoint, None), ( cnt.CS2_SERVICE_TYPE, provider_endpoint, None) ]
+
         features    = []
         if nrm_ports:
             features.append( (cnt.FEATURE_UPA, None) )
@@ -243,26 +252,42 @@ class OpenNSAService(twistedservice.MultiService):
             features.append( (cnt.FEATURE_AGGREGATOR, None) )
 
         domain_aggregate = cnt.DOMAIN_AGGREGATE in vc[config.POLICY]
-        ds = discoveryservice.DiscoveryService(ns_agent.urn(), now, name, opennsa_version, now, networks, interfaces, features, provider_registry, link_node, domain_aggregate)
-
-        discovery_resource = ds.resource()
-        top_resource.children['NSI'].putChild(discovery_resource_name, discovery_resource)
-        link_node.callOnUpdate( lambda : discovery_resource.updateResource ( ds.xml() ))
 
         # view resource
         vr = viewresource.ConnectionListResource()
         top_resource.children['NSI'].putChild('connections', vr)
 
+        # rest service
         if vc[config.REST]:
-            from opennsa.protocols import rest
-            rest_endpoint = base_url + '/connections'
-            rest.setupService(aggr, top_resource, vc.get(config.ALLOWED_HOSTS))
-            service_endpoints.append( ('REST', rest_endpoint) )
+            rest_url = base_url + '/connections'
 
-        # topology
+            rest.setupService(aggr, top_resource, vc.get(config.ALLOWED_HOSTS))
+
+            service_endpoints.append( ('REST', rest_url) )
+            interfaces.append( (cnt.OPENNSA_REST, rest_url, None) )
+
+        # nml topology
         if nml_network is not None:
+            nml_resource_name = base_name + '.nml.xml'
+            nml_url  = '%s/NSI/%s' % (base_url, nml_resource_name)
+
             nml_service = nmlservice.NMLService(nml_network, can_swap_label)
             top_resource.children['NSI'].putChild(nml_resource_name, nml_service.resource() )
+
+            service_endpoints.append( ('NML Topology', nml_url) )
+            interfaces.append( (cnt.NML_SERVICE_TYPE, nml_url, None) )
+
+        # discovery service
+        discovery_resource_name = 'discovery.xml'
+        discovery_url = '%s/NSI/%s' % (base_url, discovery_resource_name)
+
+        ds = discoveryservice.DiscoveryService(ns_agent.urn(), now, name, opennsa_version, now, networks, interfaces, features, provider_registry, link_node)
+
+        discovery_resource = ds.resource()
+        top_resource.children['NSI'].putChild(discovery_resource_name, discovery_resource)
+        link_node.callOnUpdate( lambda : discovery_resource.updateResource ( ds.xml() ))
+
+        service_endpoints.append( ('Discovery', discovery_url) )
 
         # print service urls
         for service_name, url in service_endpoints:

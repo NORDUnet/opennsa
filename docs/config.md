@@ -14,6 +14,14 @@ peers=http://host.example.org:9080/NSI/discovery.xml
 
 policies=requiretrace,requireuser
 
+serviceid_start=1900000
+
+# Database
+database=opennsa
+dbuser=dbuser
+dbpassword=dbpassword
+dbhost=127.0.0.1
+
 [dud]
 
 * Service block
@@ -21,18 +29,34 @@ policies=requiretrace,requireuser
 
 network  : The network name managed by OpenNSA. Mandatory.
 
-logfile : File to log to.
-          Defaults to /var/log/opennsa.log
+logfile  : File to log to.
+           Defaults to /var/log/opennsa.log
 
-nrmmap  : Path to port/topology NRM description file
+nrmmap   : Path to port/topology NRM description file
 
-peers   : URLs to NSAs to peer with control-plane wise.
-              Seperate multiple entries with newline.
+peers    : URLs to NSAs to peer with control-plane wise.
+           Seperate multiple entries with newline.
+           Optional. No peers will put OpenNSA into UPA mode.
 
-policy  : What policies are required. Currently requiretrace, requireuser,
-          and aggregator are the possible options. These require a connection
-          trace, a user security attribute, and allow proxy aggregation
-          respecitively.
+policies : What policies are required. Currently requiretrace, requireuser,
+           and aggregator are the possible options. These require a connection
+           trace, a user security attribute, and allow proxy aggregation
+           respecitively. Optional.
+
+serviceid_start : Initial service id to set in the database. Requires a plugin
+                  to use. Optional.
+
+database : Name of the PostgreSQL databse to connect to. Mandatory.
+
+dbuser   : Username to use when connecting to database. Mandatory.
+
+dbpassword : Password to use when connecting to database. Mandatory.
+
+dbhost   : Host to connect to for database. Optional.
+           OpenNSA does not require anything big from the datebase, so using a
+           different host/vm is almost surely a waste of resources. It is
+           however useful when running a PostgreSQL in docker.
+
 ```
 
 

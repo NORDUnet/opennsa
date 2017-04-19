@@ -101,3 +101,15 @@ CREATE TABLE generic_backend_connections (
     allocated               boolean                     NOT NULL  -- indicated if the resources are actually allocated
 );
 
+
+-- Force this to only have a single row
+-- generate new id with:
+-- there needs to be a conflict check to see if the backend has a row (and insert corrosonding start value)
+-- INSERT INTO backend_connection_id (connection_id) VALUES (190000)  ON CONFLICT DO NOTHING;
+-- Generate new id with:
+-- UPDATE backend_connection_id SET connection_id = connection_id + 1 RETURNING connection_id;
+CREATE TABLE backend_connection_id (
+    id                      integer                     PRIMARY KEY NOT NULL DEFAULT(1) CHECK (id = 1),
+    connection_id           serial                      NOT NULL
+);
+

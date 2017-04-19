@@ -316,7 +316,10 @@ class GenericBackend(service.Service):
             elif dest_stp.label is None:
                 label_candidate = source_stp.label
             else:
-                label_candidate = source_stp.label.intersect(dest_stp.label)
+                try:
+                    label_candidate = source_stp.label.intersect(dest_stp.label)
+                except nsa.EmptyLabelSet:
+                    raise error.VLANInterchangeNotSupportedError('VLAN re-write not supported and no possible label intersection')
 
             for lv in labelEnum(label_candidate):
                 src_resource = self.connection_manager.getResource(source_stp.port, lv)
@@ -659,6 +662,7 @@ class GenericBackend(service.Service):
             yield self.connection_manager.setupLink(conn.connection_id, src_target, dst_target, conn.bandwidth)
         except Exception, e:
             # We need to mark failure in state machine here somehow....
+            log.err(e)
             log.msg('Connection %s: Error activating data plane: %s' % (conn.connection_id, str(e)), system=self.log_system)
             # should include stack trace
             conn.data_plane_active = False

@@ -158,6 +158,8 @@ class SSHConnectionCreator:
 
 
     def getSSHConnection(self):
+        # this should really be called createSSHConnection, but previously connecting caching was done here
+        # however that is not put in the backend itself, where it fits much better
 
         def gotTCPConnection(proto):
             ssh_connection = SSHConnection()
@@ -168,15 +170,8 @@ class SSHConnectionCreator:
             else:
                 raise AssertionError('No ssh keys or password supplied')
 
-#            ssh_connection.ssh_connection_established_d.addCallback(gotSSHConnection)
             return ssh_connection.ssh_connection_established_d
 
-#        # should check if there is an existing protocol in place
-#        if self.ssh_connection:
-#            log.msg('Reusing SSH connection', debug=True, system=LOG_SYSTEM)
-#            return defer.succeed(self.ssh_connection)
-#
-#        log.msg('Creating new SSH connection', system=LOG_SYSTEM)
         d = self.createTCPConnection()
         d.addCallback(gotTCPConnection)
         return d

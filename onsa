@@ -164,8 +164,6 @@ def doMain():
 
             start_time  = config.subOptions[options.START_TIME] or defaults.get(options.START_TIME)
             end_time    = config.subOptions[options.END_TIME]   or defaults.get(options.END_TIME)
-            if end_time is None:
-                raise usage.UsageError('End time is not defined')
 
             bandwidth = config.subOptions[options.BANDWIDTH] or defaults.get(options.BANDWIDTH)
             if bandwidth is None:

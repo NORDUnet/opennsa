@@ -175,7 +175,7 @@ class ServiceExceptionType(object):
         ET.SubElement(r, 'errorId').text = self.errorId
         ET.SubElement(r, 'text').text = self.text
         if self.variables is not None:
-            ET.SubElement(r, 'variables').extend( [ e.xml('variables') for e in self.variables ] )
+            ET.SubElement(r, 'variables').extend( [ e.xml('variable') for e in self.variables ] )
         if self.childException is not None:
             for el in self.childException:
                 ET.SubElement(r, 'childException').extend( el.xml('childException') )

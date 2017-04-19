@@ -217,8 +217,10 @@ class RequesterService:
     def reserveTimeout(self, soap_data, request_info):
 
         header, reserve_timeout = helper.parseRequest(soap_data)
+
         rt = reserve_timeout
-        self.requester.reserveTimeout(header, rt.connectionId, rt.notificationId, rt.timeStamp, rt.timeoutValue, rt.originatingConnectionId, rt.originatingNSA)
+        timestamp = xmlhelper.parseXMLTimestamp(rt.timeStamp)
+        self.requester.reserveTimeout(header, rt.connectionId, rt.notificationId, timestamp, rt.timeoutValue, rt.originatingConnectionId, rt.originatingNSA)
 
         return helper.createGenericRequesterAcknowledgement(header)
 

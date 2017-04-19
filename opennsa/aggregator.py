@@ -21,7 +21,7 @@ LOG_SYSTEM = 'Aggregator'
 
 
 def shortLabel(label):
-    # create a log friendly string representation of a lbel
+    # create a log friendly string representation of a label
     if label is None: # it happens
         return ''
 
@@ -172,7 +172,9 @@ class Aggregator:
     def reserve(self, header, connection_id, global_reservation_id, description, criteria, request_info=None):
 
         log.msg('', system=LOG_SYSTEM)
-        log.msg('Reserve request from %s. Trace: %s' % (header.requester_nsa, header.connection_trace), system=LOG_SYSTEM)
+        log.msg('Reserve request from %s' % header.requester_nsa, system=LOG_SYSTEM)
+        log.msg('- Path %s -- %s ' % (criteria.service_def.source_stp, criteria.service_def.dest_stp), system=LOG_SYSTEM)
+        log.msg('- Trace: %s' % (header.connection_trace), system=LOG_SYSTEM)
 
         # rethink with modify
         if connection_id != None:
@@ -214,11 +216,28 @@ class Aggregator:
             if dest_stp.network != self.network and not self.route_vectors.dijkstra(self.network, dest_stp.network):
                 raise error.ConnectionCreateError('No known routes to network %s' % dest_stp.network)
 
-        # if the link terminates at our network, check that ports exists
+        # if the link terminates at our network, check that ports exists and that labels match
         if source_stp.network == self.network:
-            self.network_topology.getPort(source_stp.network + ':' + source_stp.port)
+            port = self.network_topology.getPort(source_stp.network + ':' + source_stp.port)
+            if port.label() is None:
+                if source_stp.label is not None:
+                    raise error.ConnectionCreateError('Source STP %s has label specified on port %s without label' % (source_stp, port.name))
+            else: # there is a label
+                if source_stp.label is None:
+                    raise error.ConnectionCreateError('Source STP %s has no label for port %s with label %s' % (source_stp, port.name, port.label().type_))
+                if port.label().type_ != source_stp.label.type_:
+                    raise error.ConnectionCreateError('Source STP %s label does not match label specified on port %s (%s)' % (source_stp, port.name, port.label().type_))
         if dest_stp.network == self.network:
-            self.network_topology.getPort(dest_stp.network + ':' + dest_stp.port)
+            port = self.network_topology.getPort(dest_stp.network + ':' + dest_stp.port)
+            if port.label() is None:
+                if dest_stp.label is not None:
+                    raise error.ConnectionCreateError('Destination STP %s has label specified on port %s without label' % (dest_stp, port.name))
+            else:
+                if port.label().type_ is not None and dest_stp.label is None:
+                    raise error.ConnectionCreateError('Destination STP %s has no label for port %s with label %s' % (dest_stp, port.name, port.label().type_))
+                if port.label().type_ != dest_stp.label.type_:
+                    raise error.ConnectionCreateError('Source STP %s label does not match label specified on port %s (%s)' % (dest_stp, port.name, port.label().type_))
+
 
         connection_id = yield self.plugin.createConnectionId()
 
@@ -1100,9 +1119,12 @@ class Aggregator:
         if conn.reservation_state == state.RESERVE_FAILED:
             log.msg("Connection %s: reserveTimeout: Connection has already failed, not notifying parent" % conn.connection_id, system=LOG_SYSTEM)
         elif sum ( [ 1 if sc.reservation_state == state.RESERVE_TIMEOUT else 0 for sc in sub_conns ] ) == 1:
-            log.msg("Connection %s: reserveTimeout, first occurance, notifying parent" % conn.connection_id, system=LOG_SYSTEM)
-            header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn(), reply_to=conn.requester_url)
-            self.parent_requester.reserveTimeout(header, conn.connection_id, notification_id, timestamp, timeout_value, org_connection_id, org_nsa)
+            if conn.requester_url is None:
+                log.msg("Connection %s: reserveTimeout, no requester_url. Cannot notify parent" % conn.connection_id, system=LOG_SYSTEM)
+            else:
+                log.msg("Connection %s: reserveTimeout, first occurance, notifying parent" % conn.connection_id, system=LOG_SYSTEM)
+                header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn(), reply_to=conn.requester_url)
+                self.parent_requester.reserveTimeout(header, conn.connection_id, notification_id, timestamp, timeout_value, org_connection_id, org_nsa)
         else:
             log.msg("Connection %s: reserveTimeout: Second or later reserveTimeout, not notifying parent" % conn.connection_id, system=LOG_SYSTEM)
 

@@ -27,11 +27,16 @@ DEFAULT_CERTIFICATE_DIR = '/etc/ssl/certs' # This will work on most mordern linu
 BLOCK_SERVICE    = 'service'
 BLOCK_DUD        = 'dud'
 BLOCK_JUNIPER_EX = 'juniperex'
-BLOCK_JUNOS      = 'junos'
+BLOCK_JUNIPER_VPLS = 'junipervpls'
 BLOCK_FORCE10    = 'force10'
 BLOCK_BROCADE    = 'brocade'
 BLOCK_DELL       = 'dell'
 BLOCK_NCSVPN     = 'ncsvpn'
+BLOCK_PICA8OVS   = 'pica8ovs'
+BLOCK_JUNOSMX    = 'junosmx'
+BLOCK_JUNOSEX    = 'junosex'
+BLOCK_JUNOSSPACE = 'junosspace'
+BLOCK_OESS       = 'oess'
 
 # service block
 NETWORK_NAME     = 'network'     # mandatory
@@ -44,11 +49,13 @@ NRM_MAP_FILE     = 'nrmmap'
 PEERS            = 'peers'
 POLICY           = 'policy'
 PLUGIN           = 'plugin'
+SERVICE_ID_START = 'serviceid_start'
 
 # database
 DATABASE                = 'database'    # mandatory
 DATABASE_USER           = 'dbuser'      # mandatory
 DATABASE_PASSWORD       = 'dbpassword'  # can be none (os auth)
+DATABASE_HOST           = 'dbhost'      # can be none (local db)
 
 # tls
 KEY                     = 'key'         # mandatory, if tls is set
@@ -57,7 +64,7 @@ CERTIFICATE_DIR         = 'certdir'     # mandatory (but dir can be empty)
 VERIFY_CERT             = 'verify'
 ALLOWED_HOSTS           = 'allowedhosts' # comma seperated list
 
-# generic ssh stuff, don't use directly
+# generic stuff
 _SSH_HOST               = 'host'
 _SSH_PORT               = 'port'
 _SSH_HOST_FINGERPRINT   = 'fingerprint'
@@ -66,7 +73,9 @@ _SSH_PASSWORD           = 'password'
 _SSH_PUBLIC_KEY         = 'publickey'
 _SSH_PRIVATE_KEY        = 'privatekey'
 
-# juniper block - same for ex/qxf backend and mx backend
+AS_NUMBER              = 'asnumber'
+
+# juniper block - same for mx / ex backends
 JUNIPER_HOST                = _SSH_HOST
 JUNIPER_PORT                = _SSH_PORT
 JUNIPER_HOST_FINGERPRINT    = _SSH_HOST_FINGERPRINT
@@ -99,11 +108,45 @@ DELL_HOST_FINGERPRINT   = _SSH_HOST_FINGERPRINT
 DELL_USER               = _SSH_USER
 DELL_PASSWORD           = _SSH_PASSWORD
 
+# Pica8 OVS
+PICA8OVS_HOST                = _SSH_HOST
+PICA8OVS_PORT                = _SSH_PORT
+PICA8OVS_HOST_FINGERPRINT    = _SSH_HOST_FINGERPRINT
+PICA8OVS_USER                = _SSH_USER
+PICA8OVS_SSH_PUBLIC_KEY      = _SSH_PUBLIC_KEY
+PICA8OVS_SSH_PRIVATE_KEY     = _SSH_PRIVATE_KEY
+PICA8OVS_DB_IP               = 'dbip'
+
+
 # NCS VPN Backend
 NCS_SERVICES_URL        = 'url'
 NCS_USER                = 'user'
 NCS_PASSWORD            = 'password'
 
+# JUNOS block
+JUNOS_HOST                = _SSH_HOST
+JUNOS_PORT                = _SSH_PORT
+JUNOS_HOST_FINGERPRINT    = _SSH_HOST_FINGERPRINT
+JUNOS_USER                = _SSH_USER
+JUNOS_SSH_PUBLIC_KEY      = _SSH_PUBLIC_KEY
+JUNOS_SSH_PRIVATE_KEY     = _SSH_PRIVATE_KEY
+JUNOS_ROUTERS             = 'routers'
+
+#Junosspace backend
+SPACE_USER              = 'space_user'
+SPACE_PASSWORD          = 'space_password'
+SPACE_API_URL           = 'space_api_url'
+SPACE_ROUTERS           = 'routers'
+SPACE_CONFIGLET_ACTIVATE_LOCAL = 'configlet_activate_local'  
+SPACE_CONFIGLET_ACTIVATE_REMOTE = 'configlet_activate_remote'
+SPACE_CONFIGLET_DEACTIVATE_LOCAL = 'configlet_deactivate_local'
+SPACE_CONFIGLET_DEACTIVATE_REMOTE = 'configlet_deactivate_remote'
+
+# OESS
+OESS_URL                = 'url'
+OESS_USER               = 'username'
+OESS_PASSWORD           = 'password'
+OESS_WORKGROUP          = 'workgroup'
 
 
 class ConfigurationError(Exception):
@@ -219,6 +262,16 @@ def readVerifyConfig(cfg):
     except ConfigParser.NoOptionError:
         vc[DATABASE_PASSWORD] = None
 
+    try:
+        vc[DATABASE_HOST] = cfg.get(BLOCK_SERVICE, DATABASE_HOST)
+    except ConfigParser.NoOptionError:
+        vc[DATABASE_HOST] = None
+
+    try:
+        vc[SERVICE_ID_START] = cfg.get(BLOCK_SERVICE, SERVICE_ID_START)
+    except ConfigParser.NoOptionError:
+        vc[SERVICE_ID_START] = None
+
     # we always extract certdir and verify as we need that for performing https requests
     try:
         certdir = cfg.get(BLOCK_SERVICE, CERTIFICATE_DIR)
@@ -274,7 +327,8 @@ def readVerifyConfig(cfg):
         if name in backends:
             raise ConfigurationError('Can only have one backend named "%s"' % name)
 
-        if backend_type in (BLOCK_DUD, BLOCK_JUNIPER_EX, BLOCK_JUNOS, BLOCK_FORCE10, BLOCK_BROCADE, BLOCK_DELL, BLOCK_NCSVPN, 'asyncfail'):
+        if backend_type in (BLOCK_DUD, BLOCK_JUNIPER_EX, BLOCK_JUNIPER_VPLS, BLOCK_JUNOSMX, BLOCK_FORCE10, BLOCK_BROCADE,
+                            BLOCK_DELL, BLOCK_NCSVPN, BLOCK_PICA8OVS, BLOCK_OESS, BLOCK_JUNOSSPACE, BLOCK_JUNOSEX,  'asyncfail'):
             backend_conf = dict( cfg.items(section) )
             backend_conf['_backend_type'] = backend_type
             backends[name] = backend_conf
