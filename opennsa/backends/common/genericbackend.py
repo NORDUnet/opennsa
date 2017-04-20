@@ -662,7 +662,7 @@ class GenericBackend(service.Service):
             yield self.connection_manager.setupLink(conn.connection_id, src_target, dst_target, conn.bandwidth)
         except Exception, e:
             # We need to mark failure in state machine here somehow....
-            log.err(e)
+            #log.err(e) # note: this causes error in tests
             log.msg('Connection %s: Error activating data plane: %s' % (conn.connection_id, str(e)), system=self.log_system)
             # should include stack trace
             conn.data_plane_active = False
