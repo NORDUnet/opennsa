@@ -28,9 +28,9 @@ def setupBackend(backend_cfg, network_name, nrm_ports, parent_requester):
         from opennsa.backends import dud
         BackendConstructer = dud.DUDNSIBackend
 
-    elif backend_type == config.BLOCK_JUNOS:
+    elif backend_type == config.BLOCK_JUNOSMX:
         from opennsa.backends import junos
-        BackendConstructer = junos.JUNOSBackend
+        BackendConstructer = junos.JUNOSMXBackend
 
     elif backend_type == config.BLOCK_FORCE10:
         from opennsa.backends import force10
@@ -64,9 +64,9 @@ def setupBackend(backend_cfg, network_name, nrm_ports, parent_requester):
         from opennsa.backends import junosspace
         BackendConstructer = junosspace.JUNOSSPACEBackend
 
-    elif backend_type == config.BLOCK_JUNOSEX4550:
-        from opennsa.backends import junosex4550
-        BackendConstructer = junosex4550.JunosEx4550Backend
+    elif backend_type == config.BLOCK_JUNOSEX:
+        from opennsa.backends import junosex
+        BackendConstructer = junosex.JunosEXBackend
 
     elif backend_type == config.BLOCK_OESS:
         from opennsa.backends import oess
