@@ -219,6 +219,10 @@ class P2PBaseResource(resource.Resource):
 
                 @defer.inlineCallbacks
                 def connectionCreated(conn_id):
+                    if conn_id is None:
+                        # error creating connection
+                        # not exactly optimal code flow here, but chainining the callback correctly for this is tricky
+                        return
 
                     conn = yield self.provider.getConnection(conn_id)
 
@@ -238,7 +242,9 @@ class P2PBaseResource(resource.Resource):
             return server.NOT_DONE_YET
 
         except Exception as e:
-            log.err(e, system=LOG_SYSTEM)
+            #log.err(e, system=LOG_SYSTEM)
+            log.msg('Error creating connection: %s' % str(e), system=LOG_SYSTEM)
+
             error_code = _errorCode(e)
             return _requestResponse(request, error_code, str(e))
 

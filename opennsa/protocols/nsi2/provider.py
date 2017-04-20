@@ -239,6 +239,10 @@ class Provider:
 
     def reserveTimeout(self, header, connection_id, notification_id, timestamp, timeout_value, originating_connection_id, originating_nsa):
 
+        if header.reply_to is None:
+            log.msg('No reply url to notify about reserve timeout. Skipping notification.', system=LOG_SYSTEM)
+            return defer.succeed(None)
+
         d = self.provider_client.reserveTimeout(header.reply_to, header.requester_nsa, header.provider_nsa, header.correlation_id,
                                                 connection_id, notification_id, timestamp, timeout_value, originating_connection_id, originating_nsa)
         d.addErrback(logError, 'reserveTimeout')

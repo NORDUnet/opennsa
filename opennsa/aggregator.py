@@ -1125,12 +1125,9 @@ class Aggregator:
         if conn.reservation_state == state.RESERVE_FAILED:
             log.msg("Connection %s: reserveTimeout: Connection has already failed, not notifying parent" % conn.connection_id, system=LOG_SYSTEM)
         elif sum ( [ 1 if sc.reservation_state == state.RESERVE_TIMEOUT else 0 for sc in sub_conns ] ) == 1:
-            if conn.requester_url is None:
-                log.msg("Connection %s: reserveTimeout, no requester_url. Cannot notify parent" % conn.connection_id, system=LOG_SYSTEM)
-            else:
-                log.msg("Connection %s: reserveTimeout, first occurance, notifying parent" % conn.connection_id, system=LOG_SYSTEM)
-                header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn(), reply_to=conn.requester_url)
-                self.parent_requester.reserveTimeout(header, conn.connection_id, notification_id, timestamp, timeout_value, org_connection_id, org_nsa)
+            log.msg("Connection %s: reserveTimeout, first occurance, notifying parent" % conn.connection_id, system=LOG_SYSTEM)
+            header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn(), reply_to=conn.requester_url)
+            self.parent_requester.reserveTimeout(header, conn.connection_id, notification_id, timestamp, timeout_value, org_connection_id, org_nsa)
         else:
             log.msg("Connection %s: reserveTimeout: Second or later reserveTimeout, not notifying parent" % conn.connection_id, system=LOG_SYSTEM)
 

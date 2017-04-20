@@ -96,10 +96,15 @@ class RestInterfaceTest(unittest.TestCase):
 
         header = Headers({'User-Agent': ['OpenNSA Test Client'], 'Host': ['localhost'] } )
 
-        payload = '''{ "source" : "nordu.net:s1", "destination" : "surfnet.nl:ps", "end" : "2016-01-13T08:08:08Z" }'''
+        #payload = '''{ "source" : "nordu.net:s1", "destination" : "surfnet.nl:ps", "end" : "2016-01-13T08:08:08Z" }'''
+        payload = { "source" : "nordu.net:s1",
+                    "destination" : "surfnet.nl:ps",
+                    "end" : "2016-01-13T08:08:08Z"
+        }
+        payload_data = json.dumps(payload)
 
         create_url = 'http://localhost:%i%s' % (self.PORT, rest.PATH)
-        producer = FileBodyProducer(StringIO(payload))
+        producer = FileBodyProducer(StringIO(payload_data))
 
         d = agent.request('POST', create_url, header, producer)
 
@@ -115,10 +120,14 @@ class RestInterfaceTest(unittest.TestCase):
 
         header = Headers({'User-Agent': ['OpenNSA Test Client'], 'Host': ['localhost'] } )
 
-        payload = '''{ "source" : "aruba:topology:ps?vlan=1783", "destination" : "aruba:topology:bon?vlan=1783" }'''
+        payload = { "source" : "aruba:topology:ps?vlan=1783",
+                    "destination" : "aruba:topology:bon?vlan=1783",
+                    "auto_commit" : False
+                }
+        payload_data = json.dumps(payload)
 
         create_url = 'http://localhost:%i%s' % (self.PORT, rest.PATH)
-        producer = FileBodyProducer(StringIO(payload))
+        producer = FileBodyProducer(StringIO(payload_data))
 
         resp = yield agent.request('POST', create_url, header, producer)
 
