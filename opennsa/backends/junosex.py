@@ -267,9 +267,9 @@ class JunosEx4550ConnectionManager:
 
 
 
-def JunosEx4550Backend(network_name, nrm_ports , parent_requester, cfg):
+def JunosEXBackend(network_name, nrm_ports , parent_requester, cfg):
 
-    name = 'JunosEx4550 %s' % network_name
+    name = 'JunosEX %s' % network_name
     nrm_map  = dict( [ (p.name, p) for p in nrm_ports ] ) # for the generic backend
     port_map = dict( [ (p.name, p) for p in nrm_ports ] ) # for the nrm backend
 

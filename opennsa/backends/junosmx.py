@@ -279,7 +279,7 @@ class JUNOSConnectionManager:
             return True
 
 
-def JUNOSBackend(network_name, nrm_ports , parent_requester, cfg):
+def JUNOSMXBackend(network_name, nrm_ports , parent_requester, cfg):
 
     name = 'JUNOS %s' % network_name
     nrm_map  = dict( [ (p.name, p) for p in nrm_ports ] ) # for the generic backend

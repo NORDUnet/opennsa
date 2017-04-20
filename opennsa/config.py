@@ -75,6 +75,8 @@ _SSH_PRIVATE_KEY        = 'privatekey'
 
 AS_NUMBER              = 'asnumber'
 
+# TODO: Don't do backend specifics for everything, it causes confusion, and doesn't really solve anything
+
 # juniper block - same for mx / ex backends
 JUNIPER_HOST                = _SSH_HOST
 JUNIPER_PORT                = _SSH_PORT
