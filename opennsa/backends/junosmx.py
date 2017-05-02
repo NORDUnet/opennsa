@@ -239,9 +239,8 @@ class JUNOSConnectionManager:
         }
 
 
-    def getResource(self, port, label_type, label_value):
-        assert label_type in (None, cnt.ETHERNET_VLAN,cnt.ETHERNET_MPLS), 'Label must be None,VLAN,MPLS or PORT'
-        return port + "-" + str(label_type) + "=" + str(label_value)
+    def getResource(self, port, label):
+        return self.port_map[port] + ':' + '' if label is None else str(label.labelValue())
 
     def getTarget(self, port, label_type, label_value):
         return JUNOSTarget(self.port_map[port], port,label_value)
@@ -270,13 +269,17 @@ class JUNOSConnectionManager:
         return d
 
 
-    def canConnect(self,src_label_type,dst_label_type):
-        log.msg("Checking, if label pair %s %s connection is supported" % (src_label_type,dst_label_type),system=LOG_SYSTEM)
+    def canConnect(self, source_stp, dest_port, source_label, dest_label):
+        log.msg("Checking, if connection of given labels is supported",system=LOG_SYSTEM)
+        src_label_type = 'port' if source_label is None else source_label.type_
+        dst_label_type = 'port' if dest_label is None else dest_label.type_
         #by default, acccept same types
         if src_label_type == dst_label_type:
             return True
-        if src_label_type in self.supportedLabelPairs and dst_label_type in self.supportedLabelPairs[src_label_type]:
+        elif src_label_type in self.supportedLabelPairs and dst_label_type in self.supportedLabelPairs[src_label_type]:
             return True
+        else: 
+            return False
 
 
 def JUNOSMXBackend(network_name, nrm_ports , parent_requester, cfg):
