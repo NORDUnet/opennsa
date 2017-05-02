@@ -167,7 +167,7 @@ class JUNOSSPACECommandSender:
         return self._sendCommands(commands)
 
 
-class GTSTarget(object):
+class JUNOSSPACETarget(object):
 
     def __init__(self, port, original_port,value=None):
         self.port = port
@@ -176,10 +176,15 @@ class GTSTarget(object):
         # NEVER USE : in port name! 
     def __str__(self):
         if self.port.remote_network is None:
-            return '<GTSTarget %s#%s=%s>' % (self.original_port,self.port.label.type_,self.value)
+            if self.port.label is not None:
+                return '<JUNOSTarget %s#%s=%s>' % (self.original_port,self.port.label.type_,self.value)
+            else:
+                return '<JUNOSTarget %s#>' % (self.original_port)
         else:
-            return '<GTSTarget %s#%s=%s -> %s>' % (self.original_port,self.port.label.type_,self.value,self.port.remote_port,)
-
+            if self.port.label is not None:
+                return '<JUNOSTarget %s#%s=%s -> %s>' % (self.original_port,self.port.label.type_,self.value,self.port.remote_port)
+            else:
+                return '<JUNOSTarget %s# -> %s>' % (self.original_port,self.port.remote_port)
 
 
 class JUNOSSPACEConnectionManager:
@@ -201,7 +206,7 @@ class JUNOSSPACEConnectionManager:
 
 #    def getTarget(self, port, label_type, label_value):
     def getTarget(self, port, label):
-        return JunosEx4550Target(self.port_map[port], port,label.labelValue())
+        return JUNOSSPACETarget(self.port_map[port], port,label.labelValue())
 
     def createConnectionId(self, source_target, dest_target):
         return 'JUNOSSPACE-' + str(random.randint(100000,999999))

@@ -244,7 +244,7 @@ class JUNOSConnectionManager:
 
 #    def getTarget(self, port, label_type, label_value):
     def getTarget(self, port, label):
-        return JunosEx4550Target(self.port_map[port], port,label.labelValue())
+        return JUNOSTarget(self.port_map[port], port,label.labelValue())
 
     def createConnectionId(self, source_target, dest_target):
         return 'JUNOS-' + str(random.randint(100000,999999))
