@@ -44,6 +44,7 @@
 
 # Not all commands will accept all flags and some flags are mutally exclusive
 
+import datetime
 
 from twisted.python import usage
 
@@ -89,9 +90,15 @@ class GlobalIDOption(usage.Options):
 
 class StartTimeOption(usage.Options):
     optParameters = [ [ options.START_TIME, 'a', None, 'Start time (UTC time)'] ]
+    def postOptions(self):
+        if self[options.START_TIME] is not None:
+            self[options.START_TIME] = datetime.datetime.strptime(self[options.START_TIME], options.XSD_DATETIME_FORMAT) #.replace(tzinfo=None)
 
 class EndTimeOption(usage.Options):
     optParameters = [ [ options.END_TIME, 'e', None, 'End time (UTC time)'] ]
+    def postOptions(self):
+        if self[options.END_TIME] is not None:
+            self[options.END_TIME] = datetime.datetime.strptime(self[options.END_TIME], options.XSD_DATETIME_FORMAT) # .replace(tzinfo=None)
 
 class SecurityAttributeOptions(usage.Options):
     optParameters = [ [ options.SECURITY_ATTRIBUTES, 'j', None, 'Security attributes (format attr1=value1,attr2=value2)'] ]
