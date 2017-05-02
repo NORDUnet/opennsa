@@ -108,7 +108,7 @@ def buildQueryRecursiveResultType(reservations):
 def buildSchedule(schedule):
 
     start_time = parseXMLTimestamp(schedule.startTime) if schedule.startTime is not None else None
-    end_time   = parseXMLTimestamp(schedule.endTime)
+    end_time   = parseXMLTimestamp(schedule.endTime) if schedule.endTime is not None else None
     return nsa.Schedule(start_time, end_time)
 
 
