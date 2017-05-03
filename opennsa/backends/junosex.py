@@ -228,12 +228,13 @@ class JunosEx4550ConnectionManager:
                 network_name)
 
 
-    def getResource(self, port, label_type, label_value):
-        assert label_type in (None, cnt.ETHERNET_VLAN), 'Label must be None,or VLAN'
-        return port + "-" + str(label_type) + "=" + str(label_value)
+    def getResource(self, port, label):
+        return self.port_map[port] + ':' + '' if label is None else str(label.labelValue())
 
-    def getTarget(self, port, label_type, label_value):
-        return JunosEx4550Target(self.port_map[port], port,label_value)
+
+    def getTarget(self, port, label):
+        return JunosEx4550Target(self.port_map[port], port,label.labelValue())
+
 
     def createConnectionId(self, source_target, dest_target):
         return 'JuniperEx4550-' + str(random.randint(100000,999999))
@@ -257,13 +258,6 @@ class JunosEx4550ConnectionManager:
         d = self.command_sender.teardownLink(connection_id,source_target, dest_target, bandwidth)
         d.addCallback(linkDown)
         return d
-
-
-    def canConnectLabels(self,src_label_type,dst_label_type):
-        log.msg("Check label pair %s %s" % (src_label_type,dst_label_type),system=LOG_SYSTEM)
-        #by default, acccept same types
-        if src_label_type == dst_label_type:
-            return True
 
 
 

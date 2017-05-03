@@ -167,7 +167,7 @@ class JUNOSSPACECommandSender:
         return self._sendCommands(commands)
 
 
-class GTSTarget(object):
+class JUNOSSPACETarget(object):
 
     def __init__(self, port, original_port,value=None):
         self.port = port
@@ -176,10 +176,15 @@ class GTSTarget(object):
         # NEVER USE : in port name! 
     def __str__(self):
         if self.port.remote_network is None:
-            return '<GTSTarget %s#%s=%s>' % (self.original_port,self.port.label.type_,self.value)
+            if self.port.label is not None:
+                return '<JUNOSTarget %s#%s=%s>' % (self.original_port,self.port.label.type_,self.value)
+            else:
+                return '<JUNOSTarget %s#>' % (self.original_port)
         else:
-            return '<GTSTarget %s#%s=%s -> %s>' % (self.original_port,self.port.label.type_,self.value,self.port.remote_port,)
-
+            if self.port.label is not None:
+                return '<JUNOSTarget %s#%s=%s -> %s>' % (self.original_port,self.port.label.type_,self.value,self.port.remote_port)
+            else:
+                return '<JUNOSTarget %s# -> %s>' % (self.original_port,self.port.remote_port)
 
 
 class JUNOSSPACEConnectionManager:
@@ -196,12 +201,13 @@ class JUNOSSPACEConnectionManager:
         }
 
 
-    def getResource(self, port, label_type, label_value):
-        assert label_type in (None, cnt.ETHERNET_VLAN,cnt.ETHERNET_MPLS,cnt.ETHERNET_PORT), 'Label must be None,VLAN,MPLS or PORT'
-        return port + "-" + str(label_type) + "=" + str(label_value)
+    def getResource(self, port, label):
+        return self.port_map[port] + ':' + '' if label is None else str(label.labelValue())
 
-    def getTarget(self, port, label_type, label_value):
-        return GTSTarget(self.port_map[port], port,label_value)
+
+    def getTarget(self, port, label):
+        return JUNOSSPACETarget(self.port_map[port], port,label.labelValue())
+
 
     def createConnectionId(self, source_target, dest_target):
         return 'JUNOSSPACE-' + str(random.randint(100000,999999))
@@ -227,13 +233,16 @@ class JUNOSSPACEConnectionManager:
         return d
 
 
-    def canConnectLabels(self,src_label_type,dst_label_type):
-        log.msg("Check label pair %s %s" % (src_label_type,dst_label_type),system=LOG_SYSTEM)
+    def canConnect(self, source_stp, dest_port, source_label, dest_label):
+        src_label_type = 'port' if source_label is None else source_label.type_
+        dst_label_type = 'port' if dest_label is None else dest_label.type_
         #by default, acccept same types
         if src_label_type == dst_label_type:
             return True
-        if src_label_type in self.supportedLabelPairs and dst_label_type in self.supportedLabelPairs[src_label_type]:
+        elif src_label_type in self.supportedLabelPairs and dst_label_type in self.supportedLabelPairs[src_label_type]:
             return True
+        else: 
+            return False
 
 
 def JUNOSSPACEBackend(network_name, nrm_ports , parent_requester, cfg):
