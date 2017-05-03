@@ -242,9 +242,10 @@ class JUNOSConnectionManager:
     def getResource(self, port, label):
         return self.port_map[port] + ':' + '' if label is None else str(label.labelValue())
 
-#    def getTarget(self, port, label_type, label_value):
+
     def getTarget(self, port, label):
         return JUNOSTarget(self.port_map[port], port,label.labelValue())
+
 
     def createConnectionId(self, source_target, dest_target):
         return 'JUNOS-' + str(random.randint(100000,999999))
@@ -271,7 +272,6 @@ class JUNOSConnectionManager:
 
 
     def canConnect(self, source_stp, dest_port, source_label, dest_label):
-        log.msg("Checking, if connection of given labels is supported",system=LOG_SYSTEM)
         src_label_type = 'port' if source_label is None else source_label.type_
         dst_label_type = 'port' if dest_label is None else dest_label.type_
         #by default, acccept same types
