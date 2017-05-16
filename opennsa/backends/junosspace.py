@@ -449,8 +449,8 @@ class JUNOSSPACECommandGenerator(object):
 
             remote_sw_ip = self._getDeviceLoopbackIp(remote_port.port.remote_network)
             payload['cli-configlet-param'].append(self._createParamDict("TargetIP",remote_sw_ip))
-            lsp_out_name = "{}-T-{}-F-{}-mpls{}".format(self.connection_id,remote_port.port.remote_network[0:6],self.network_name[0:6],str(remote_port.value))
-            lsp_in_name = "{}-T-{}-F-{}-mpls{}".format(self.connection_id,self.network_name[0:6],remote_port.port.remote_network[0:6],str(remote_port.value))
+            lsp_out_name = "T-{}-F-{}-mpls{}".format(remote_port.port.remote_network[0:6],self.network_name[0:6],str(remote_port.value))
+            lsp_in_name = "T-{}-F-{}-mpls{}".format(self.network_name[0:6],remote_port.port.remote_network[0:6],str(remote_port.value))
             payload['cli-configlet-param'].append(self._createParamDict("LspNameOut",lsp_out_name))
             payload['cli-configlet-param'].append(self._createParamDict("LspNameIn",lsp_in_name))
             payload['cli-configlet-param'].append(self._createParamDict("CircuitName",switch_name))       
@@ -488,8 +488,8 @@ class JUNOSSPACECommandGenerator(object):
 
             remote_sw_ip = self._getDeviceLoopbackIp(remote_port.port.remote_network)
             payload['cli-configlet-param'].append(self._createParamDict("TargetIP",remote_sw_ip))
-            lsp_out_name = "{}-T-{}-F-{}-mpls{}".format(self.connection_id,remote_port.port.remote_network[0:6],self.network_name[0:6],str(remote_port.value))
-            lsp_in_name = "{}-T-{}-F-{}-mpls{}".format(self.connection_id,self.network_name[0:6],remote_port.port.remote_network[0:6],str(remote_port.value))
+            lsp_out_name = "T-{}-F-{}-mpls{}".format(remote_port.port.remote_network[0:6],self.network_name[0:6],str(remote_port.value))
+            lsp_in_name = "T-{}-F-{}-mpls{}".format(self.network_name[0:6],remote_port.port.remote_network[0:6],str(remote_port.value))
             payload['cli-configlet-param'].append(self._createParamDict("LspNameOut",lsp_out_name))
             payload['cli-configlet-param'].append(self._createParamDict("LspNameIn",lsp_in_name))
             payload['cli-configlet-param'].append(self._createParamDict("CircuitName",switch_name))       
@@ -547,8 +547,8 @@ class JUNOSSPACECommandGenerator(object):
 
                     remote_sw_ip = self._getDeviceLoopbackIp(remote_port.port.remote_network)
                     payload['cli-configlet-param'].append(self._createParamDict("TargetIP",remote_sw_ip))
-                    lsp_out_name = "{}-T-{}-F-{}-mpls{}".format(self.connection_id,remote_port.port.remote_network[0:6],self.network_name[0:6],str(remote_port.value))
-                    lsp_in_name = "{}-T-{}-F-{}-mpls{}".format(self.connection_id,self.network_name[0:6],remote_port.port.remote_network[0:6],str(remote_port.value))
+                    lsp_out_name = "T-{}-F-{}-mpls{}".format(remote_port.port.remote_network[0:6],self.network_name[0:6],str(remote_port.value))
+                    lsp_in_name = "T-{}-F-{}-mpls{}".format(self.network_name[0:6],remote_port.port.remote_network[0:6],str(remote_port.value))
                     payload['cli-configlet-param'].append(self._createParamDict("LspNameOut",lsp_out_name))
                     payload['cli-configlet-param'].append(self._createParamDict("LspNameIn",lsp_in_name))
                     payload['cli-configlet-param'].append(self._createParamDict("CircuitName",switch_name))
@@ -611,8 +611,8 @@ class JUNOSSPACECommandGenerator(object):
 
                     remote_sw_ip = self._getDeviceLoopbackIp(remote_port.port.remote_network)
                     payload['cli-configlet-param'].append(self._createParamDict("TargetIP",remote_sw_ip))
-                    lsp_out_name = "{}-T-{}-F-{}-mpls{}".format(self.connection_id,remote_port.port.remote_network[0:6],self.network_name[0:6],str(remote_port.value))
-                    lsp_in_name = "{}-T-{}-F-{}-mpls{}".format(self.connection_id,self.network_name[0:6],remote_port.port.remote_network[0:6],str(remote_port.value))
+                    lsp_out_name = "T-{}-F-{}-mpls{}".format(remote_port.port.remote_network[0:6],self.network_name[0:6],str(remote_port.value))
+                    lsp_in_name = "T-{}-F-{}-mpls{}".format(self.network_name[0:6],remote_port.port.remote_network[0:6],str(remote_port.value))
                     payload['cli-configlet-param'].append(self._createParamDict("LspNameOut",lsp_out_name))
                     payload['cli-configlet-param'].append(self._createParamDict("LspNameIn",lsp_in_name))
                     payload['cli-configlet-param'].append(self._createParamDict("CircuitName",switch_name))       

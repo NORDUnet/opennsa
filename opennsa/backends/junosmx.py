@@ -430,10 +430,10 @@ class JUNOSCommandGenerator(object):
             remote_sw_ip = self._getRouterLoopback(remote_port.port.remote_network) 
 
             commands.append(COMMAND_REMOTE_LSP_OUT_TO % {
-                'unique-id':self.connection_id+"-T-"+remote_port.port.remote_network[0:6]+"-F-"+self.network_name[0:6]+"-mpls"+str(remote_port.value),
+                'unique-id':"T-"+remote_port.port.remote_network[0:6]+"-F-"+self.network_name[0:6]+"-mpls"+str(remote_port.value),
                                                     'remote_ip':remote_sw_ip } )
             commands.append(COMMAND_REMOTE_LSP_OUT_NOCSPF % {
-                'unique-id':self.connection_id+"-T-"+remote_port.port.remote_network[0:6]+"-F-"+self.network_name[0:6]+"-mpls"+str(remote_port.value),
+                'unique-id':"T-"+remote_port.port.remote_network[0:6]+"-F-"+self.network_name[0:6]+"-mpls"+str(remote_port.value),
                                                     'remote_ip':remote_sw_ip } )
 
 
@@ -447,10 +447,10 @@ class JUNOSCommandGenerator(object):
                                                         } )
 
             commands.append(COMMAND_REMOTE_CONNECTIONS_TRANSMIT_LSP % { 'connectionid' : self.connection_id,
-                                                        'unique-id':self.connection_id+"-T-"+remote_port.port.remote_network[0:6]+"-F-"+self.network_name[0:6]+"-mpls"+str(remote_port.value)
+                                                        'unique-id':"T-"+remote_port.port.remote_network[0:6]+"-F-"+self.network_name[0:6]+"-mpls"+str(remote_port.value)
                                                         } )
             commands.append(COMMAND_REMOTE_CONNECTIONS_RECEIVE_LSP % { 'connectionid' : self.connection_id,
-                                                        'unique-id':self.connection_id+"-T-"+self.network_name[0:6]+"-F-"+remote_port.port.remote_network[0:6]+"-mpls"+str(remote_port.value)
+                                                        'unique-id':"T-"+self.network_name[0:6]+"-F-"+remote_port.port.remote_network[0:6]+"-mpls"+str(remote_port.value)
                                                         } )
         if remote_port.port.label is not None and remote_port.port.label.type_ == "vlan":
             switch_name = self._createSwitchName( self.connection_id )
@@ -487,7 +487,7 @@ class JUNOSCommandGenerator(object):
         if remote_port.port.label is not None and remote_port.port.label.type_ == "mpls":
             #remote_sw_ip = self._getRouterLoopback(remote_port.port.remote_network) 
             commands.append( COMMAND_DELETE_MPLS_LSP % {
-                'unique-id' : self.connection_id+"-T-"+remote_port.port.remote_network[0:6]+"-F-"+self.network_name[0:6]+"-mpls"+str(remote_port.value)
+                'unique-id' : "T-"+remote_port.port.remote_network[0:6]+"-F-"+self.network_name[0:6]+"-mpls"+str(remote_port.value)
                 } )
             commands.append( COMMAND_DELETE_REMOTE_INT_SW % { 'connectionid' :
                     self.connection_id } )
@@ -527,10 +527,10 @@ class JUNOSCommandGenerator(object):
             remote_sw_ip = self._getRouterLoopback(local_port.port.remote_network) 
 
             commands.append(COMMAND_REMOTE_LSP_OUT_TO % {
-                'unique-id':self.connection_id+"-T-"+local_port.port.remote_network[0:6]+"-F-"+self.network_name[0:6]+"-mpls"+str(local_port.value),
+                'unique-id':"T-"+local_port.port.remote_network[0:6]+"-F-"+self.network_name[0:6]+"-mpls"+str(local_port.value),
                                                     'remote_ip':remote_sw_ip } )
             commands.append(COMMAND_REMOTE_LSP_OUT_NOCSPF % {
-                'unique-id':self.connection_id+"-T-"+local_port.port.remote_network[0:6]+"-F-"+self.network_name[0:6]+"-mpls"+str(local_port.value),
+                'unique-id':"T-"+local_port.port.remote_network[0:6]+"-F-"+self.network_name[0:6]+"-mpls"+str(local_port.value),
                                                     'remote_ip':remote_sw_ip } )
 
             #Should not happen
@@ -544,10 +544,10 @@ class JUNOSCommandGenerator(object):
                                                         } )
 
             commands.append(COMMAND_REMOTE_CONNECTIONS_TRANSMIT_LSP % { 'connectionid' : self.connection_id,
-                                                        'unique-id':self.connection_id+"-T-"+local_port.port.remote_network[0:6]+"-F-"+self.network_name[0:6]+"-mpls"+str(local_port.value)
+                                                        'unique-id':"T-"+local_port.port.remote_network[0:6]+"-F-"+self.network_name[0:6]+"-mpls"+str(local_port.value)
                                                         } )
             commands.append(COMMAND_REMOTE_CONNECTIONS_RECEIVE_LSP % { 'connectionid' : self.connection_id,
-                                                        'unique-id':self.connection_id+"-T-"+self.network_name[0:6]+"-F-"+local_port.port.remote_network[0:6]+"-mpls"+str(local_port.value)
+                                                        'unique-id':"T-"+self.network_name[0:6]+"-F-"+local_port.port.remote_network[0:6]+"-mpls"+str(local_port.value)
                                                         } )
 
 
@@ -555,10 +555,10 @@ class JUNOSCommandGenerator(object):
             remote_sw_ip = self._getRouterLoopback(remote_port.port.remote_network) 
 
             commands.append(COMMAND_REMOTE_LSP_OUT_TO % {
-                'unique-id':self.connection_id+"-T-"+remote_port.port.remote_network[0:6]+"-F-"+self.network_name[0:6]+"-mpls"+str(remote_port.value),
+                'unique-id':"T-"+remote_port.port.remote_network[0:6]+"-F-"+self.network_name[0:6]+"-mpls"+str(remote_port.value),
                                                     'remote_ip':remote_sw_ip } )
             commands.append(COMMAND_REMOTE_LSP_OUT_NOCSPF % {
-                'unique-id':self.connection_id+"-T-"+remote_port.port.remote_network[0:6]+"-F-"+self.network_name[0:6]+"-mpls"+str(remote_port.value),
+                'unique-id':"T-"+remote_port.port.remote_network[0:6]+"-F-"+self.network_name[0:6]+"-mpls"+str(remote_port.value),
                                                     'remote_ip':remote_sw_ip } )
 
             #Should not happen
@@ -572,10 +572,10 @@ class JUNOSCommandGenerator(object):
                                                         } )
 
             commands.append(COMMAND_REMOTE_CONNECTIONS_TRANSMIT_LSP % { 'connectionid' : self.connection_id,
-                                                        'unique-id':self.connection_id+"-T-"+remote_port.port.remote_network[0:6]+"-F-"+self.network_name[0:6]+"-mpls"+str(remote_port.value)
+                                                        'unique-id':"T-"+remote_port.port.remote_network[0:6]+"-F-"+self.network_name[0:6]+"-mpls"+str(remote_port.value)
                                                         } )
             commands.append(COMMAND_REMOTE_CONNECTIONS_RECEIVE_LSP % { 'connectionid' : self.connection_id,
-                                                        'unique-id':self.connection_id+"-T-"+self.network_name[0:6]+"-F-"+remote_port.port.remote_network[0:6]+"-mpls"+str(remote_port.value)
+                                                        'unique-id':"T-"+self.network_name[0:6]+"-F-"+remote_port.port.remote_network[0:6]+"-mpls"+str(remote_port.value)
                                                         } )
 
         if remote_port.port.label is not None and remote_port.port.label.type_ == "vlan" and local_port.port.label is not None and local_port.port.label.type_ == "vlan":
@@ -603,7 +603,7 @@ class JUNOSCommandGenerator(object):
         if local_port.port.label is not None and local_port.port.label.type_ == "mpls":
             #remote_sw_ip = self._getRouterLoopback(local_port.port.remote_network) 
             commands.append( COMMAND_DELETE_MPLS_LSP % {
-                'unique-id' : self.connection_id+"-T-"+local_port.port.remote_network[0:6]+"-F-"+self.network_name[0:6]+"-mpls"+str(local_port.value)
+                'unique-id' : "T-"+local_port.port.remote_network[0:6]+"-F-"+self.network_name[0:6]+"-mpls"+str(local_port.value)
                 } )
             #commands.append( COMMAND_DELETE_REMOTE_INT_SW % { 'connectionid' :
                     #self.connection_id } )
@@ -616,7 +616,7 @@ class JUNOSCommandGenerator(object):
         if remote_port.port.label is not None and remote_port.port.label.type_ == "mpls":
             #remote_sw_ip = self._getRouterLoopback(remote_port.port.remote_network) 
             commands.append( COMMAND_DELETE_MPLS_LSP % {
-                'unique-id' : self.connection_id+"-T-"+remote_port.port.remote_network[0:6]+"-F-"+self.network_name[0:6]+"-mpls"+str(remote_port.value)
+                'unique-id' : "T-"+remote_port.port.remote_network[0:6]+"-F-"+self.network_name[0:6]+"-mpls"+str(remote_port.value)
                 } )
             #commands.append( COMMAND_DELETE_REMOTE_INT_SW % { 'connectionid' :
                     #self.connection_id } )
