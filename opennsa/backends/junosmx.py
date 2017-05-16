@@ -240,7 +240,9 @@ class JUNOSConnectionManager:
 
 
     def getResource(self, port, label):
-        return self.port_map[port] + ':' + '' if label is None else str(label.labelValue())
+        assert label is None or ( label.type_ in (cnt.MPLS, cnt.ETHERNET_VLAN) ), 'Label must be None or VLAN or MPLS'
+        val = "" if label is None else str(label.labelValue())
+        return port + ':' + val
 
 
     def getTarget(self, port, label):
