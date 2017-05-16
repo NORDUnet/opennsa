@@ -208,9 +208,9 @@ class JUNOSSPACEConnectionManager:
 
     def getTarget(self, port, label):
         if label is None:
-            return JUNOSTarget(self.port_map[port], port)
+            return JUNOSSPACETarget(self.port_map[port], port)
         else:
-            return JUNOSTarget(self.port_map[port], port, label.labelValue())
+            return JUNOSSPACETarget(self.port_map[port], port, label.labelValue())
 
     def createConnectionId(self, source_target, dest_target):
         return 'JUNOSSPACE-' + str(random.randint(100000,999999))
