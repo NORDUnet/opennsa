@@ -301,12 +301,9 @@ class JUNOSSPACECommandGenerator(object):
 
         source_port = self.src_port.port
         dest_port   = self.dest_port.port
-        log.msg("%s %s " % (source_port,dest_port))
-        log.msg("Activate commands between %s:%s:%s and %s:%s:%s " % 
-                (source_port.remote_network, source_port.interface, source_port.label.type_,
-                    dest_port.remote_network, dest_port.interface, dest_port.label.type_), debug=True,
-                system=LOG_SYSTEM)
-
+        log.msg("%s %s " % (self.src_port,self.dest_port))
+        log.msg("Activate commands between %s and %s " %  (source_port,dest_port), debug=True, system=LOG_SYSTEM)
+        
         # Local connection 
         if source_port.remote_network is None and dest_port.remote_network is None:
             commands = self._generateLocalConnectionActivate()
@@ -323,11 +320,8 @@ class JUNOSSPACECommandGenerator(object):
 
         source_port = self.src_port.port
         dest_port   = self.dest_port.port
-        log.msg("Deactivate commands between %s:%s#%s=%s and %s:%s#%s=%s " % 
-                (source_port.remote_network, source_port.interface, source_port.label.type_,self.src_port.value,
-                    dest_port.remote_network, dest_port.interface, dest_port.label.type_,self.dest_port.value), debug=True,
-                system=LOG_SYSTEM)
-
+        log.msg("Deactivate commands between %s and %s " %  (source_port,dest_port), debug=True, system=LOG_SYSTEM)
+        
         # Local connection 
         if source_port.remote_network is None and dest_port.remote_network is None:
             commands = self._generateLocalConnectionDeActivate()
