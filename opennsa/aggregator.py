@@ -206,8 +206,9 @@ class Aggregator:
                 raise error.ConnectionCreateError('None of the endpoints terminate in the network, rejecting request (network: %s + %s, nsa network %s)' %
                     (source_stp.network, dest_stp.network, self.network))
 
-        if (source_stp.label is None and dest_stp.label) or (source_stp.label and dest_stp.label is None):
-            raise error.ConnectionCreateError('Cannot create connection with label only defined in one end (maybe possible in the future)')
+        # This condition has been removed since there could be the use case where this is OK when domain supports EoMPLS with lable swapping.  
+        #if (source_stp.label is None and dest_stp.label) or (source_stp.label and dest_stp.label is None):
+        #    raise error.ConnectionCreateError('Cannot create connection with label only defined in one end (maybe possible in the future)')
 
         # check that we have path vectors to topologies if we start from here
         if self.network in (source_stp.network, dest_stp.network):
