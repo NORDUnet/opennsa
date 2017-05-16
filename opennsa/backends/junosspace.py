@@ -376,8 +376,8 @@ class JUNOSSPACECommandGenerator(object):
         src_label_type = 'port' if self.src_port.port.label is None else self.src_port.port.label.type_
         dst_label_type = 'port' if self.dest_port.port.label is None else self.dest_port.port.label.type_
         
-        src_label_value = 0 if self.src_port.port.label is None else self.src_port.port.value
-        dst_label_value = 0 if self.dest_port.port.label is None else self.dest_port.port.value
+        src_label_value = 0 if self.src_port.port.label is None else self.src_port.value
+        dst_label_value = 0 if self.dest_port.port.label is None else self.dest_port.value
 
         # For configuration reason, we're going to generate port things first, then the interface-switch commands
         payload['cli-configlet-param'].append(self._createParamDict("LabelType1",src_label_type))
@@ -405,8 +405,8 @@ class JUNOSSPACECommandGenerator(object):
         src_label_type = 'port' if self.src_port.port.label is None else self.src_port.port.label.type_
         dst_label_type = 'port' if self.dest_port.port.label is None else self.dest_port.port.label.type_
         
-        src_label_value = 0 if self.src_port.port.label is None else self.src_port.port.value
-        dst_label_value = 0 if self.dest_port.port.label is None else self.dest_port.port.value
+        src_label_value = 0 if self.src_port.port.label is None else self.src_port.value
+        dst_label_value = 0 if self.dest_port.port.label is None else self.dest_port.value
 
         # For configuration reason, we're going to generate port things first, then the interface-switch commands
         payload['cli-configlet-param'].append(self._createParamDict("LabelType1",src_label_type))
@@ -441,7 +441,7 @@ class JUNOSSPACECommandGenerator(object):
             switch_name = self._createSwitchName( self.connection_id )
             
             local_label_type = 'port' if local_port.port.label is None else local_port.port.label.type_        
-            local_label_value = 0 if local_port.port.label is None else local_port.port.value
+            local_label_value = 0 if local_port.port.label is None else local_port.value
         
             payload['cli-configlet-param'].append(self._createParamDict("LabelType",local_label_type))
             payload['cli-configlet-param'].append(self._createParamDict("InterfaceName",local_port.port.interface))
@@ -480,7 +480,7 @@ class JUNOSSPACECommandGenerator(object):
             switch_name = self._createSwitchName( self.connection_id )
             
             local_label_type = 'port' if local_port.port.label is None else local_port.port.label.type_        
-            local_label_value = 0 if local_port.port.label is None else local_port.port.value
+            local_label_value = 0 if local_port.port.label is None else local_port.value
 
             payload['cli-configlet-param'].append(self._createParamDict("LabelType",local_label_type))
             payload['cli-configlet-param'].append(self._createParamDict("InterfaceName",local_port.port.interface))
