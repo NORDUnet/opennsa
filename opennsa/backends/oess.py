@@ -423,8 +423,6 @@ def OESSBackend(network_name, nrm_ports, parent_requester, cfg):
     oess_pass = cfg[config.OESS_PASSWORD]
     oess_workgroup = cfg[config.OESS_WORKGROUP]
 
-    cm = OESSConnectionManager(name, port_map, oess_url, oess_user,
-                               oess_pass, oess_workgroup)
-    return genericbackend.GenericBackend(network_name, nrm_map, cm,
-                                         parent_requester, name,
-                                         minimum_duration=1)
+    cm = OESSConnectionManager(name, port_map, oess_url, oess_user, oess_pass, oess_workgroup)
+    return genericbackend.GenericBackend(network_name, nrm_map, cm, parent_requester, name, minimum_duration=1)
+
