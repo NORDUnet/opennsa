@@ -142,10 +142,11 @@ class GenericProviderTest:
 
 
     @defer.inlineCallbacks
-    def testConnectSTPToItself(self):
+    def testHairpinConnection(self):
 
-        stp = nsa.STP(self.network, self.source_port, nsa.Label(cnt.ETHERNET_VLAN, '1782') )
-        sd = nsa.Point2PointService(stp, stp, self.bandwidth, cnt.BIDIRECTIONAL, False, None)
+        source_stp = nsa.STP(self.network, self.source_port, nsa.Label(cnt.ETHERNET_VLAN, '1782') )
+        dest_stp = nsa.STP(self.network, self.source_port, nsa.Label(cnt.ETHERNET_VLAN, '1783') )
+        sd = nsa.Point2PointService(source_stp, dest_stp, self.bandwidth, cnt.BIDIRECTIONAL, False, None)
         criteria = nsa.Criteria(0, self.schedule, sd)
 
         self.header.newCorrelationId()
@@ -695,7 +696,7 @@ class GenericProviderTest:
         self.header.newCorrelationId()
         try:
             acid = yield self.provider.reserve(self.header, None, None, None, criteria)
-            self.fail("Should have gotten service error for hairpin request")
+            self.fail("Should have gotten service error for identical ports")
         except error.ServiceError:
             pass # expected
 
@@ -801,6 +802,10 @@ class DUDBackendTest(GenericProviderTest, unittest.TestCase):
         # close database connections, so we don't run out
         from twistar.registry import Registry
         Registry.DBPOOL.close()
+
+    def testHairpinConnection(self):
+        pass
+    testHairpinConnection.skip = 'Tested in aggregator'
 
 
 
