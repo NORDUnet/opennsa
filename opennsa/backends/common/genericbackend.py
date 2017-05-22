@@ -258,9 +258,9 @@ class GenericBackend(service.Service):
         if nrm_source_port.transit_restricted and nrm_dest_port.transit_restricted:
             raise error.ConnectionCreateError('Cannot connect two transit restricted STPs.')
 
-        # check that we are connecting an stp to itself
-        if source_stp.port == dest_stp.port:
-            raise error.ServiceError('Cannot connect STP %s to itself (hairpin connections not supported). Fix your path finder.' % source_stp)
+        # check that we are not connecting two identical stp (hairpin)
+        if source_stp.port == dest_stp.port and source_stp.label == dest_stp.label:
+            raise error.ServiceError('Cannot connect STP %s to itself.' % source_stp)
 
         labelType = lambda stp : None if stp.label is None else stp.label.type_
 
