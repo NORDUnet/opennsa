@@ -157,7 +157,7 @@ class Aggregator:
                 if all( [ r[0] for r in results ] ):
                     return [ r[1] for r in results ]
                 else:
-                    return defer.fail('Error retrieving one or more subconnections: %s' % str(results))
+                    return defer.fail( ValueError('Error retrieving one or more subconnections: %s' % str(results)) )
 
             defs = [ self.getSubConnection(r['provider_nsa'], r['connection_id']) for r in rows ]
             return defer.DeferredList(defs).addCallback(gotSubConns)
