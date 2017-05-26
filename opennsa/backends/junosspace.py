@@ -236,7 +236,7 @@ class JUNOSSPACEConnectionManager:
         return d
 
 
-    def canConnect(self, source_stp, dest_port, source_label, dest_label):
+    def canConnect(self, source_port, dest_port, source_label, dest_label):
         src_label_type = 'port' if source_label is None else source_label.type_
         dst_label_type = 'port' if dest_label is None else dest_label.type_
         #by default, acccept same types
