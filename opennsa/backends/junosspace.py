@@ -202,7 +202,7 @@ class JUNOSSPACEConnectionManager:
 
 
     def getResource(self, port, label):
-        assert label is None or ( label.type_ in (cnt.MPLS, cnt.ETHERNET_VLAN) ), 'Label must be None or VLAN or MPLS'
+        assert label is None or label.type_ in (cnt.MPLS, cnt.ETHERNET_VLAN), 'Label must be None or VLAN or MPLS'
         val = "" if label is None else str(label.labelValue())
         return port + ':' + val
 
@@ -303,7 +303,7 @@ class JUNOSSPACECommandGenerator(object):
         dest_port   = self.dest_port.port
         log.msg("%s %s " % (self.src_port,self.dest_port))
         log.msg("Activate commands between %s and %s " %  (source_port,dest_port), debug=True, system=LOG_SYSTEM)
-        
+
         # Local connection 
         if source_port.remote_network is None and dest_port.remote_network is None:
             commands = self._generateLocalConnectionActivate()
@@ -321,13 +321,13 @@ class JUNOSSPACECommandGenerator(object):
         source_port = self.src_port.port
         dest_port   = self.dest_port.port
         log.msg("Deactivate commands between %s and %s " %  (source_port,dest_port), debug=True, system=LOG_SYSTEM)
-        
+
         # Local connection 
         if source_port.remote_network is None and dest_port.remote_network is None:
             commands = self._generateLocalConnectionDeActivate()
         elif source_port.remote_network is not None and dest_port.remote_network is not None:
             commands = self._generateTransitConnectionDeactivate()
-        else: 
+        else:
             commands = self._generateRemoteConnectionDeactivate()
 
         return commands
@@ -372,7 +372,7 @@ class JUNOSSPACECommandGenerator(object):
         switch_name = self._createSwitchName( self.connection_id )
         src_label_type = 'port' if self.src_port.port.label is None else self.src_port.port.label.type_
         dst_label_type = 'port' if self.dest_port.port.label is None else self.dest_port.port.label.type_
-        
+
         src_label_value = 0 if self.src_port.port.label is None else self.src_port.value
         dst_label_value = 0 if self.dest_port.port.label is None else self.dest_port.value
 
@@ -398,10 +398,10 @@ class JUNOSSPACECommandGenerator(object):
         # should not pass param
         payload['cli-configlet-param'] = []
         switch_name = self._createSwitchName( self.connection_id )
-        
+
         src_label_type = 'port' if self.src_port.port.label is None else self.src_port.port.label.type_
         dst_label_type = 'port' if self.dest_port.port.label is None else self.dest_port.port.label.type_
-        
+
         src_label_value = 0 if self.src_port.port.label is None else self.src_port.value
         dst_label_value = 0 if self.dest_port.port.label is None else self.dest_port.value
 
@@ -418,7 +418,7 @@ class JUNOSSPACECommandGenerator(object):
         return commands
 
     def _generateRemoteConnectionActivate(self):
-                
+
         local_port = self.src_port if self.src_port.port.remote_network is None else self.dest_port
         remote_port = self.src_port if self.src_port.port.remote_network is not None else self.dest_port
         if remote_port.port.label.type_ == "vlan":
@@ -436,10 +436,10 @@ class JUNOSSPACECommandGenerator(object):
             # should not pass param
             payload['cli-configlet-param'] = []
             switch_name = self._createSwitchName( self.connection_id )
-            
+
             local_label_type = 'port' if local_port.port.label is None else local_port.port.label.type_        
             local_label_value = 0 if local_port.port.label is None else local_port.value
-        
+
             payload['cli-configlet-param'].append(self._createParamDict("LabelType",local_label_type))
             payload['cli-configlet-param'].append(self._createParamDict("InterfaceName",local_port.port.interface))
             payload['cli-configlet-param'].append(self._createParamDict("LabelValue",local_label_value))
@@ -453,7 +453,7 @@ class JUNOSSPACECommandGenerator(object):
             payload['cli-configlet-param'].append(self._createParamDict("CircuitName",switch_name))       
 
             commands['payload']['cli-configlet-mgmt'] = payload
-            
+
         return commands
 
 
@@ -475,7 +475,7 @@ class JUNOSSPACECommandGenerator(object):
             """ should not pass param """
             payload['cli-configlet-param'] = []
             switch_name = self._createSwitchName( self.connection_id )
-            
+
             local_label_type = 'port' if local_port.port.label is None else local_port.port.label.type_        
             local_label_value = 0 if local_port.port.label is None else local_port.value
 
@@ -495,9 +495,9 @@ class JUNOSSPACECommandGenerator(object):
         return commands
 
     def _generateTransitConnectionActivate(self):
-        
+
         if self.src_port.port.label is not None and self.dest_port.port.label is not None:
-            
+
             if self.src_port.port.label.type_ == "vlan" and self.dest_port.port.label.type_ == "vlan":
                 payload = {}
                 commands = {}
@@ -519,11 +519,11 @@ class JUNOSSPACECommandGenerator(object):
 
             elif self.src_port.port.label.type_ == "mpls" and self.dest_port.port.label.type_ == "mpls":
                 raise Exception("MPLS lsp stitching not supported in this version")
-            
+
             else:
                 local_port = self.src_port if self.src_port.port.label.type_ == "vlan" else self.dest_port
                 remote_port = self.src_port if self.src_port.port.label.type_ == "mpls" else self.dest_port
-                
+
                 if local_port.port.label.type_ == "vlan" and remote_port.port.label.type_ == "mpls":
                     log.msg("Transit vlan port %s" % local_port.original_port)
                     log.msg("Transit mpls port %s" % remote_port.original_port)
@@ -556,11 +556,11 @@ class JUNOSSPACECommandGenerator(object):
 
         commands['payload']['cli-configlet-mgmt'] = payload
         return commands
-    
+
     def _generateTransitConnectionDeactivate(self):
-        
+
         if self.src_port.port.label is not None and self.dest_port.port.label is not None:
-            
+
             if self.src_port.port.label.type_ == "vlan" and self.dest_port.port.label.type_ == "vlan":
                 payload = {}
                 commands = {}
@@ -583,11 +583,11 @@ class JUNOSSPACECommandGenerator(object):
 
             elif self.src_port.port.label.type_ == "mpls" and self.dest_port.port.label.type_ == "mpls":
                 raise Exception("MPLS lsp stitching not supported in this version")
-            
+
             else:
                 local_port = self.src_port if self.src_port.port.label.type_ == "vlan" else self.dest_port
                 remote_port = self.src_port if self.src_port.port.label.type_ == "mpls" else self.dest_port
-                
+
                 if local_port.port.label.type_ == "vlan" and remote_port.port.label.type_ == "mpls":
                     log.msg("Transit vlan port %s" % local_port.original_port)
                     log.msg("Transit mpls port %s" % remote_port.original_port)
@@ -612,7 +612,7 @@ class JUNOSSPACECommandGenerator(object):
                     lsp_in_name = "T-{}-F-{}-mpls{}".format(self.network_name[0:6],remote_port.port.remote_network[0:6],str(remote_port.value))
                     payload['cli-configlet-param'].append(self._createParamDict("LspNameOut",lsp_out_name))
                     payload['cli-configlet-param'].append(self._createParamDict("LspNameIn",lsp_in_name))
-                    payload['cli-configlet-param'].append(self._createParamDict("CircuitName",switch_name))       
+                    payload['cli-configlet-param'].append(self._createParamDict("CircuitName",switch_name))
 
                 else:
                     raise Exception("Bad combination of label types")

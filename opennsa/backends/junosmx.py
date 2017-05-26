@@ -240,7 +240,7 @@ class JUNOSConnectionManager:
 
 
     def getResource(self, port, label):
-        assert label is None or ( label.type_ in (cnt.MPLS, cnt.ETHERNET_VLAN) ), 'Label must be None or VLAN or MPLS'
+        assert label is None or label.type_ in (cnt.MPLS, cnt.ETHERNET_VLAN), 'Label must be None or VLAN or MPLS'
         val = "" if label is None else str(label.labelValue())
         return port + ':' + val
 
@@ -356,9 +356,6 @@ class JUNOSCommandGenerator(object):
             commands = self._generateTransitConnectionDeactivate()
         else: 
             commands = self._generateRemoteConnectionDeactivate()
-
- 
-
 
         return commands
 
