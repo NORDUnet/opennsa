@@ -1,0 +1,39 @@
+#!/bin/sh
+
+set -e
+
+# Run a PostgreSQL database for testing
+
+database=opennsatest
+user=opennsa
+password=$(openssl rand -base64 18)
+
+configfile=".opennsa-test.json"
+
+# Start PostgreSQL
+
+docker run --rm --name opennsa-test -e POSTGRES_DB=$database -e POSTGRES_USER=$user -e POSTGRES_PASSWORD=$password postgres:9.6.5 &
+
+# Nasty stuff
+sleep 5
+
+hostip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' opennsa-test)
+
+echo "{
+    \"host\"     : \"$hostip\",
+    \"database\" : \"$database\",
+    \"user\"     : \"$user\",
+    \"password\" : \"$password\"
+}" > "$configfile"
+
+
+
+echo
+echo "Loading schema"
+
+schema=$(cat datafiles/schema.sql)
+docker run --rm --name opennsa-test-psql --link=opennsa-test -it -e PGPASSWORD=$password postgres:9.6.5 psql -h opennsa-test -U $user $database -c "$schema"
+
+echo
+echo "Database config file: $configfile"
+

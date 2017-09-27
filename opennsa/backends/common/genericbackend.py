@@ -258,9 +258,9 @@ class GenericBackend(service.Service):
         if nrm_source_port.transit_restricted and nrm_dest_port.transit_restricted:
             raise error.ConnectionCreateError('Cannot connect two transit restricted STPs.')
 
-        # check that we are connecting an stp to itself
-        if source_stp.port == dest_stp.port:
-            raise error.ServiceError('Cannot connect STP %s to itself (hairpin connections not supported). Fix your path finder.' % source_stp)
+        # check that we are not connecting two identical stp (hairpin)
+        if source_stp.port == dest_stp.port and source_stp.label == dest_stp.label:
+            raise error.ServiceError('Cannot connect STP %s to itself.' % source_stp)
 
         labelType = lambda stp : None if stp.label is None else stp.label.type_
 
@@ -453,38 +453,34 @@ class GenericBackend(service.Service):
 
         log.msg('Release request from %s. Connection ID: %s' % (header.requester_nsa, connection_id), system=self.log_system)
 
-        try:
-            conn = yield self._getConnection(connection_id, header.requester_nsa)
-            self._authorize(conn.source_port, conn.dest_port, header, request_info)
+        conn = yield self._getConnection(connection_id, header.requester_nsa)
+        self._authorize(conn.source_port, conn.dest_port, header, request_info)
 
-            if conn.lifecycle_state in (state.TERMINATING, state.TERMINATED):
-                raise error.ConnectionGoneError('Connection %s has been terminated')
+        if conn.lifecycle_state in (state.TERMINATING, state.TERMINATED):
+            raise error.ConnectionGoneError('Connection %s has been terminated')
 
-            yield state.releasing(conn)
-            self.logStateUpdate(conn, 'RELEASING')
+        yield state.releasing(conn)
+        self.logStateUpdate(conn, 'RELEASING')
 
-            self.scheduler.cancelCall(connection_id)
+        self.scheduler.cancelCall(connection_id)
 
-            if conn.data_plane_active:
-                try:
-                    yield self._doTeardown(conn) # we don't have to block here
-                except Exception as e:
-                    log.msg('Connection %s: Error tearing down link: %s' % (conn.connection_id, e))
+        if conn.data_plane_active:
+            try:
+                yield self._doTeardown(conn) # we don't have to block here
+            except Exception as e:
+                log.msg('Connection %s: Error tearing down link: %s' % (conn.connection_id, e))
 
-            if conn.end_time is not None:
-                self.scheduler.scheduleCall(connection_id, conn.end_time, self._doEndtime, conn)
-                td = conn.start_time - datetime.datetime.utcnow()
-                log.msg('Connection %s: terminating scheduled for %s UTC (%i seconds)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
+        if conn.end_time is not None:
+            self.scheduler.scheduleCall(connection_id, conn.end_time, self._doEndtime, conn)
+            td = conn.end_time - datetime.datetime.utcnow()
+            log.msg('Connection %s: terminate scheduled for %s UTC (%i seconds)' % (conn.connection_id, conn.end_time.replace(microsecond=0), td.total_seconds()), system=self.log_system)
 
-            yield state.released(conn)
-            self.logStateUpdate(conn, 'RELEASED')
+        yield state.released(conn)
+        self.logStateUpdate(conn, 'RELEASED')
 
-            self.parent_requester.releaseConfirmed(header, connection_id)
+        self.parent_requester.releaseConfirmed(header, connection_id)
 
-            defer.returnValue(conn.connection_id)
-        except Exception, e:
-            log.msg('Error in release: %s: %s' % (type(e), e), system=self.log_system)
-            log.err(e)
+        defer.returnValue(conn.connection_id)
 
 
     @defer.inlineCallbacks

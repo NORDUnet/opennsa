@@ -1,6 +1,6 @@
 # cli commands
 
-from twisted.python import log
+from twisted.python import log, usage
 from twisted.internet import defer
 
 from opennsa import constants as cnt, nsa, error
@@ -13,9 +13,14 @@ LABEL_MAP = {
 
 def _createSTP(stp_arg):
 
+    if not ':' in stp_arg:
+        raise usage.UsageError('No ":" in stp, invalid format (see docs/cli.md)')
+
     if '#' in stp_arg:
         stp_desc, label_desc = stp_arg.split('#')
         network, port = stp_desc.rsplit(':',1)
+        if not '=' in label_desc:
+            raise usage.UsageError('No "=" in stp label, invalid format (see docs/cli.md)')
         label_type,label_value = label_desc.split("=")
         label = nsa.Label(LABEL_MAP[label_type],label_value) # FIXME need good error message if label type doesn't exist
     else:

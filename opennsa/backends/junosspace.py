@@ -202,12 +202,15 @@ class JUNOSSPACEConnectionManager:
 
 
     def getResource(self, port, label):
-        return self.port_map[port] + ':' + '' if label is None else str(label.labelValue())
-
+        assert label is None or label.type_ in (cnt.MPLS, cnt.ETHERNET_VLAN), 'Label must be None or VLAN or MPLS'
+        val = "" if label is None else str(label.labelValue())
+        return port + ':' + val
 
     def getTarget(self, port, label):
-        return JUNOSSPACETarget(self.port_map[port], port,label.labelValue())
-
+        if label is None:
+            return JUNOSSPACETarget(self.port_map[port], port)
+        else:
+            return JUNOSSPACETarget(self.port_map[port], port, label.labelValue())
 
     def createConnectionId(self, source_target, dest_target):
         return 'JUNOSSPACE-' + str(random.randint(100000,999999))
@@ -233,7 +236,7 @@ class JUNOSSPACEConnectionManager:
         return d
 
 
-    def canConnect(self, source_stp, dest_port, source_label, dest_label):
+    def canConnect(self, source_port, dest_port, source_label, dest_label):
         src_label_type = 'port' if source_label is None else source_label.type_
         dst_label_type = 'port' if dest_label is None else dest_label.type_
         #by default, acccept same types
@@ -298,17 +301,14 @@ class JUNOSSPACECommandGenerator(object):
 
         source_port = self.src_port.port
         dest_port   = self.dest_port.port
-        log.msg("%s %s " % (source_port,dest_port))
-        log.msg("Activate commands between %s:%s:%s and %s:%s:%s " % 
-                (source_port.remote_network, source_port.interface, source_port.label.type_,
-                    dest_port.remote_network, dest_port.interface, dest_port.label.type_), debug=True,
-                system=LOG_SYSTEM)
+        log.msg("%s %s " % (self.src_port,self.dest_port))
+        log.msg("Activate commands between %s and %s " %  (source_port,dest_port), debug=True, system=LOG_SYSTEM)
 
         # Local connection 
         if source_port.remote_network is None and dest_port.remote_network is None:
             commands = self._generateLocalConnectionActivate()
         elif source_port.remote_network is not None and dest_port.remote_network is not None:
-            commands = ["Transit connection"]
+            commands = self._generateTransitConnectionActivate()
         else: 
             commands = self._generateRemoteConnectionActivate()
         pprint(commands,indent=2) 
@@ -320,17 +320,14 @@ class JUNOSSPACECommandGenerator(object):
 
         source_port = self.src_port.port
         dest_port   = self.dest_port.port
-        log.msg("Deactivate commands between %s:%s#%s=%s and %s:%s#%s=%s " % 
-                (source_port.remote_network, source_port.interface, source_port.label.type_,self.src_port.value,
-                    dest_port.remote_network, dest_port.interface, dest_port.label.type_,self.dest_port.value), debug=True,
-                system=LOG_SYSTEM)
+        log.msg("Deactivate commands between %s and %s " %  (source_port,dest_port), debug=True, system=LOG_SYSTEM)
 
         # Local connection 
         if source_port.remote_network is None and dest_port.remote_network is None:
             commands = self._generateLocalConnectionDeActivate()
         elif source_port.remote_network is not None and dest_port.remote_network is not None:
-            commands = ["Transit connection"]
-        else: 
+            commands = self._generateTransitConnectionDeactivate()
+        else:
             commands = self._generateRemoteConnectionDeactivate()
 
         return commands
@@ -373,14 +370,19 @@ class JUNOSSPACECommandGenerator(object):
         payload['deviceId'] = self._getDeviceId(self.network_name)
         payload['cli-configlet-param'] = []
         switch_name = self._createSwitchName( self.connection_id )
+        src_label_type = 'port' if self.src_port.port.label is None else self.src_port.port.label.type_
+        dst_label_type = 'port' if self.dest_port.port.label is None else self.dest_port.port.label.type_
+
+        src_label_value = 0 if self.src_port.port.label is None else self.src_port.value
+        dst_label_value = 0 if self.dest_port.port.label is None else self.dest_port.value
 
         # For configuration reason, we're going to generate port things first, then the interface-switch commands
-        payload['cli-configlet-param'].append(self._createParamDict("LabelType1",self.src_port.port.label.type_))
+        payload['cli-configlet-param'].append(self._createParamDict("LabelType1",src_label_type))
         payload['cli-configlet-param'].append(self._createParamDict("InterfaceName1",self.src_port.port.interface))
-        payload['cli-configlet-param'].append(self._createParamDict("LabelValue1",self.src_port.value))
-        payload['cli-configlet-param'].append(self._createParamDict("LabelType2",self.dest_port.port.label.type_))
+        payload['cli-configlet-param'].append(self._createParamDict("LabelValue1",src_label_value))
+        payload['cli-configlet-param'].append(self._createParamDict("LabelType2",dst_label_type))
         payload['cli-configlet-param'].append(self._createParamDict("InterfaceName2",self.dest_port.port.interface))
-        payload['cli-configlet-param'].append(self._createParamDict("LabelValue2",self.dest_port.value))
+        payload['cli-configlet-param'].append(self._createParamDict("LabelValue2",dst_label_value))
         payload['cli-configlet-param'].append(self._createParamDict("CircuitName",switch_name)) 
 
         commands['payload']['cli-configlet-mgmt'] = payload 
@@ -397,79 +399,228 @@ class JUNOSSPACECommandGenerator(object):
         payload['cli-configlet-param'] = []
         switch_name = self._createSwitchName( self.connection_id )
 
+        src_label_type = 'port' if self.src_port.port.label is None else self.src_port.port.label.type_
+        dst_label_type = 'port' if self.dest_port.port.label is None else self.dest_port.port.label.type_
+
+        src_label_value = 0 if self.src_port.port.label is None else self.src_port.value
+        dst_label_value = 0 if self.dest_port.port.label is None else self.dest_port.value
+
         # For configuration reason, we're going to generate port things first, then the interface-switch commands
-        payload['cli-configlet-param'].append(self._createParamDict("LabelType1",self.src_port.port.label.type_))
+        payload['cli-configlet-param'].append(self._createParamDict("LabelType1",src_label_type))
         payload['cli-configlet-param'].append(self._createParamDict("InterfaceName1",self.src_port.port.interface))
-        payload['cli-configlet-param'].append(self._createParamDict("LabelValue1",self.src_port.value))
-        payload['cli-configlet-param'].append(self._createParamDict("LabelType2",self.dest_port.port.label.type_))
+        payload['cli-configlet-param'].append(self._createParamDict("LabelValue1",src_label_value))
+        payload['cli-configlet-param'].append(self._createParamDict("LabelType2",dst_label_type))
         payload['cli-configlet-param'].append(self._createParamDict("InterfaceName2",self.dest_port.port.interface))
-        payload['cli-configlet-param'].append(self._createParamDict("LabelValue2",self.dest_port.value))
+        payload['cli-configlet-param'].append(self._createParamDict("LabelValue2",dst_label_value))
         payload['cli-configlet-param'].append(self._createParamDict("CircuitName",switch_name))
 
         commands['payload']['cli-configlet-mgmt'] = payload 
         return commands
 
     def _generateRemoteConnectionActivate(self):
+
         local_port = self.src_port if self.src_port.port.remote_network is None else self.dest_port
         remote_port = self.src_port if self.src_port.port.remote_network is not None else self.dest_port
-        log.msg("%s" % local_port.original_port)
-        log.msg("%s" % remote_port.original_port)
+        if remote_port.port.label.type_ == "vlan":
+            commands = self._generateLocalConnectionActivate()
+        else:
+            log.msg("%s" % local_port.original_port)
+            log.msg("%s" % remote_port.original_port)
 
-        payload = {}
-        commands = {}
-        commands['configlet_id'] = REMOTE_ACTIVATE_CONFIGLET_ID
-        commands['payload'] = {}
-        commands['payload']['cli-configlet-mgmt'] = {}
-        payload['deviceId'] = self._getDeviceId(self.network_name) 
-        # should not pass param
-        payload['cli-configlet-param'] = []
-        switch_name = self._createSwitchName( self.connection_id )
+            payload = {}
+            commands = {}
+            commands['configlet_id'] = REMOTE_ACTIVATE_CONFIGLET_ID
+            commands['payload'] = {}
+            commands['payload']['cli-configlet-mgmt'] = {}
+            payload['deviceId'] = self._getDeviceId(self.network_name) 
+            # should not pass param
+            payload['cli-configlet-param'] = []
+            switch_name = self._createSwitchName( self.connection_id )
 
-        payload['cli-configlet-param'].append(self._createParamDict("LabelType",local_port.port.label.type_))
-        payload['cli-configlet-param'].append(self._createParamDict("InterfaceName",local_port.port.interface))
-        payload['cli-configlet-param'].append(self._createParamDict("LabelValue",local_port.value))
+            local_label_type = 'port' if local_port.port.label is None else local_port.port.label.type_        
+            local_label_value = 0 if local_port.port.label is None else local_port.value
 
-        remote_sw_ip = self._getDeviceLoopbackIp(remote_port.port.remote_network)
-        payload['cli-configlet-param'].append(self._createParamDict("TargetIP",remote_sw_ip))
-        lsp_out_name = "T-{}-F-{}-mpls{}".format(remote_port.port.remote_network,self.network_name,str(remote_port.value))
-        lsp_in_name = "T-{}-F-{}-mpls{}".format(self.network_name,remote_port.port.remote_network,str(remote_port.value))
-        payload['cli-configlet-param'].append(self._createParamDict("LspNameOut",lsp_out_name))
-        payload['cli-configlet-param'].append(self._createParamDict("LspNameIn",lsp_in_name))
-        payload['cli-configlet-param'].append(self._createParamDict("CircuitName",switch_name))       
+            payload['cli-configlet-param'].append(self._createParamDict("LabelType",local_label_type))
+            payload['cli-configlet-param'].append(self._createParamDict("InterfaceName",local_port.port.interface))
+            payload['cli-configlet-param'].append(self._createParamDict("LabelValue",local_label_value))
 
-        commands['payload']['cli-configlet-mgmt'] = payload
+            remote_sw_ip = self._getDeviceLoopbackIp(remote_port.port.remote_network)
+            payload['cli-configlet-param'].append(self._createParamDict("TargetIP",remote_sw_ip))
+            lsp_out_name = "T-{}-F-{}-mpls{}".format(remote_port.port.remote_network[0:6],self.network_name[0:6],str(remote_port.value))
+            lsp_in_name = "T-{}-F-{}-mpls{}".format(self.network_name[0:6],remote_port.port.remote_network[0:6],str(remote_port.value))
+            payload['cli-configlet-param'].append(self._createParamDict("LspNameOut",lsp_out_name))
+            payload['cli-configlet-param'].append(self._createParamDict("LspNameIn",lsp_in_name))
+            payload['cli-configlet-param'].append(self._createParamDict("CircuitName",switch_name))       
+
+            commands['payload']['cli-configlet-mgmt'] = payload
+
         return commands
 
 
     def _generateRemoteConnectionDeactivate(self):
         local_port = self.src_port if self.src_port.port.remote_network is None else self.dest_port
         remote_port = self.src_port if self.src_port.port.remote_network is not None else self.dest_port
-        log.msg("%s" % local_port.original_port)
-        log.msg("%s" % remote_port.original_port)
+        if remote_port.port.label.type_ == "vlan":
+            commands = self._generateLocalConnectionDeActivate()
+        else:
+            log.msg("%s" % local_port.original_port)
+            log.msg("%s" % remote_port.original_port)
 
-        payload = {}
-        commands = {}
-        commands['configlet_id'] = REMOTE_DEACTIVATE_CONFIGLET_ID
-        commands['payload'] = {}
-        commands['payload']['cli-configlet-mgmt'] = {}
-        payload['deviceId'] = self._getDeviceId(self.network_name) 
-        """ should not pass param """
-        payload['cli-configlet-param'] = []
-        switch_name = self._createSwitchName( self.connection_id )
+            payload = {}
+            commands = {}
+            commands['configlet_id'] = REMOTE_DEACTIVATE_CONFIGLET_ID
+            commands['payload'] = {}
+            commands['payload']['cli-configlet-mgmt'] = {}
+            payload['deviceId'] = self._getDeviceId(self.network_name) 
+            """ should not pass param """
+            payload['cli-configlet-param'] = []
+            switch_name = self._createSwitchName( self.connection_id )
 
-        payload['cli-configlet-param'].append(self._createParamDict("LabelType",local_port.port.label.type_))
-        payload['cli-configlet-param'].append(self._createParamDict("InterfaceName",local_port.port.interface))
-        payload['cli-configlet-param'].append(self._createParamDict("LabelValue",local_port.value))
+            local_label_type = 'port' if local_port.port.label is None else local_port.port.label.type_        
+            local_label_value = 0 if local_port.port.label is None else local_port.value
 
-        remote_sw_ip = self._getDeviceLoopbackIp(remote_port.port.remote_network)
-        payload['cli-configlet-param'].append(self._createParamDict("TargetIP",remote_sw_ip))
-        lsp_out_name = "T-{}-F-{}-mpls{}".format(remote_port.port.remote_network,self.network_name,str(remote_port.value))
-        lsp_in_name = "T-{}-F-{}-mpls{}".format(self.network_name,remote_port.port.remote_network,str(remote_port.value))
-        payload['cli-configlet-param'].append(self._createParamDict("LspNameOut",lsp_out_name))
-        payload['cli-configlet-param'].append(self._createParamDict("LspNameIn",lsp_in_name))
-        payload['cli-configlet-param'].append(self._createParamDict("CircuitName",switch_name))       
+            payload['cli-configlet-param'].append(self._createParamDict("LabelType",local_label_type))
+            payload['cli-configlet-param'].append(self._createParamDict("InterfaceName",local_port.port.interface))
+            payload['cli-configlet-param'].append(self._createParamDict("LabelValue",local_label_value))
+
+            remote_sw_ip = self._getDeviceLoopbackIp(remote_port.port.remote_network)
+            payload['cli-configlet-param'].append(self._createParamDict("TargetIP",remote_sw_ip))
+            lsp_out_name = "T-{}-F-{}-mpls{}".format(remote_port.port.remote_network[0:6],self.network_name[0:6],str(remote_port.value))
+            lsp_in_name = "T-{}-F-{}-mpls{}".format(self.network_name[0:6],remote_port.port.remote_network[0:6],str(remote_port.value))
+            payload['cli-configlet-param'].append(self._createParamDict("LspNameOut",lsp_out_name))
+            payload['cli-configlet-param'].append(self._createParamDict("LspNameIn",lsp_in_name))
+            payload['cli-configlet-param'].append(self._createParamDict("CircuitName",switch_name))       
+
+            commands['payload']['cli-configlet-mgmt'] = payload
+        return commands
+
+    def _generateTransitConnectionActivate(self):
+
+        if self.src_port.port.label is not None and self.dest_port.port.label is not None:
+
+            if self.src_port.port.label.type_ == "vlan" and self.dest_port.port.label.type_ == "vlan":
+                payload = {}
+                commands = {}
+                commands['configlet_id'] = LOCAL_ACTIVATE_CONFIGLET_ID
+                commands['payload'] = {}
+                commands['payload']['cli-configlet-mgmt'] = {}
+                payload['deviceId'] = self._getDeviceId(self.network_name)
+                payload['cli-configlet-param'] = []
+                switch_name = self._createSwitchName( self.connection_id )
+
+                # For configuration reason, we're going to generate port things first, then the interface-switch commands
+                payload['cli-configlet-param'].append(self._createParamDict("LabelType1",self.src_port.port.label.type_))
+                payload['cli-configlet-param'].append(self._createParamDict("InterfaceName1",self.src_port.port.interface))
+                payload['cli-configlet-param'].append(self._createParamDict("LabelValue1",self.src_port.value))
+                payload['cli-configlet-param'].append(self._createParamDict("LabelType2",self.dest_port.port.label.type_))
+                payload['cli-configlet-param'].append(self._createParamDict("InterfaceName2",self.dest_port.port.interface))
+                payload['cli-configlet-param'].append(self._createParamDict("LabelValue2",self.dest_port.value))
+                payload['cli-configlet-param'].append(self._createParamDict("CircuitName",switch_name)) 
+
+            elif self.src_port.port.label.type_ == "mpls" and self.dest_port.port.label.type_ == "mpls":
+                raise Exception("MPLS lsp stitching not supported in this version")
+
+            else:
+                local_port = self.src_port if self.src_port.port.label.type_ == "vlan" else self.dest_port
+                remote_port = self.src_port if self.src_port.port.label.type_ == "mpls" else self.dest_port
+
+                if local_port.port.label.type_ == "vlan" and remote_port.port.label.type_ == "mpls":
+                    log.msg("Transit vlan port %s" % local_port.original_port)
+                    log.msg("Transit mpls port %s" % remote_port.original_port)
+
+                    payload = {}
+                    commands = {}
+                    commands['configlet_id'] = REMOTE_ACTIVATE_CONFIGLET_ID
+                    commands['payload'] = {}
+                    commands['payload']['cli-configlet-mgmt'] = {}
+                    payload['deviceId'] = self._getDeviceId(self.network_name) 
+                    # should not pass param
+                    payload['cli-configlet-param'] = []
+                    switch_name = self._createSwitchName( self.connection_id )
+
+                    payload['cli-configlet-param'].append(self._createParamDict("LabelType",local_port.port.label.type_))
+                    payload['cli-configlet-param'].append(self._createParamDict("InterfaceName",local_port.port.interface))
+                    payload['cli-configlet-param'].append(self._createParamDict("LabelValue",local_port.value))
+
+                    remote_sw_ip = self._getDeviceLoopbackIp(remote_port.port.remote_network)
+                    payload['cli-configlet-param'].append(self._createParamDict("TargetIP",remote_sw_ip))
+                    lsp_out_name = "T-{}-F-{}-mpls{}".format(remote_port.port.remote_network[0:6],self.network_name[0:6],str(remote_port.value))
+                    lsp_in_name = "T-{}-F-{}-mpls{}".format(self.network_name[0:6],remote_port.port.remote_network[0:6],str(remote_port.value))
+                    payload['cli-configlet-param'].append(self._createParamDict("LspNameOut",lsp_out_name))
+                    payload['cli-configlet-param'].append(self._createParamDict("LspNameIn",lsp_in_name))
+                    payload['cli-configlet-param'].append(self._createParamDict("CircuitName",switch_name))
+                else:
+                    raise Exception("Bad combination of label types")
+        else:
+            raise Exception("Port based STPs not supported in transit nodes.")
 
         commands['payload']['cli-configlet-mgmt'] = payload
         return commands
+
+    def _generateTransitConnectionDeactivate(self):
+
+        if self.src_port.port.label is not None and self.dest_port.port.label is not None:
+
+            if self.src_port.port.label.type_ == "vlan" and self.dest_port.port.label.type_ == "vlan":
+                payload = {}
+                commands = {}
+                commands['configlet_id'] = LOCAL_DEACTIVATE_CONFIGLET_ID
+                commands['payload'] = {}
+                commands['payload']['cli-configlet-mgmt'] = {}
+                payload['deviceId'] = self._getDeviceId(self.network_name) 
+                # should not pass param
+                payload['cli-configlet-param'] = []
+                switch_name = self._createSwitchName( self.connection_id )
+
+                # For configuration reason, we're going to generate port things first, then the interface-switch commands
+                payload['cli-configlet-param'].append(self._createParamDict("LabelType1",self.src_port.port.label.type_))
+                payload['cli-configlet-param'].append(self._createParamDict("InterfaceName1",self.src_port.port.interface))
+                payload['cli-configlet-param'].append(self._createParamDict("LabelValue1",self.src_port.value))
+                payload['cli-configlet-param'].append(self._createParamDict("LabelType2",self.dest_port.port.label.type_))
+                payload['cli-configlet-param'].append(self._createParamDict("InterfaceName2",self.dest_port.port.interface))
+                payload['cli-configlet-param'].append(self._createParamDict("LabelValue2",self.dest_port.value))
+                payload['cli-configlet-param'].append(self._createParamDict("CircuitName",switch_name))
+
+            elif self.src_port.port.label.type_ == "mpls" and self.dest_port.port.label.type_ == "mpls":
+                raise Exception("MPLS lsp stitching not supported in this version")
+
+            else:
+                local_port = self.src_port if self.src_port.port.label.type_ == "vlan" else self.dest_port
+                remote_port = self.src_port if self.src_port.port.label.type_ == "mpls" else self.dest_port
+
+                if local_port.port.label.type_ == "vlan" and remote_port.port.label.type_ == "mpls":
+                    log.msg("Transit vlan port %s" % local_port.original_port)
+                    log.msg("Transit mpls port %s" % remote_port.original_port)
+
+                    payload = {}
+                    commands = {}
+                    commands['configlet_id'] = REMOTE_DEACTIVATE_CONFIGLET_ID
+                    commands['payload'] = {}
+                    commands['payload']['cli-configlet-mgmt'] = {}
+                    payload['deviceId'] = self._getDeviceId(self.network_name) 
+                    """ should not pass param """
+                    payload['cli-configlet-param'] = []
+                    switch_name = self._createSwitchName( self.connection_id )
+
+                    payload['cli-configlet-param'].append(self._createParamDict("LabelType",local_port.port.label.type_))
+                    payload['cli-configlet-param'].append(self._createParamDict("InterfaceName",local_port.port.interface))
+                    payload['cli-configlet-param'].append(self._createParamDict("LabelValue",local_port.value))
+
+                    remote_sw_ip = self._getDeviceLoopbackIp(remote_port.port.remote_network)
+                    payload['cli-configlet-param'].append(self._createParamDict("TargetIP",remote_sw_ip))
+                    lsp_out_name = "T-{}-F-{}-mpls{}".format(remote_port.port.remote_network[0:6],self.network_name[0:6],str(remote_port.value))
+                    lsp_in_name = "T-{}-F-{}-mpls{}".format(self.network_name[0:6],remote_port.port.remote_network[0:6],str(remote_port.value))
+                    payload['cli-configlet-param'].append(self._createParamDict("LspNameOut",lsp_out_name))
+                    payload['cli-configlet-param'].append(self._createParamDict("LspNameIn",lsp_in_name))
+                    payload['cli-configlet-param'].append(self._createParamDict("CircuitName",switch_name))
+
+                else:
+                    raise Exception("Bad combination of label types")
+        else:
+            raise Exception("Port based STPs not supported in transit nodes.")
+
+        commands['payload']['cli-configlet-mgmt'] = payload
+        return commands
+
 
 

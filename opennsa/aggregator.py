@@ -157,7 +157,7 @@ class Aggregator:
                 if all( [ r[0] for r in results ] ):
                     return [ r[1] for r in results ]
                 else:
-                    return defer.fail('Error retrieving one or more subconnections: %s' % str(results))
+                    return defer.fail( ValueError('Error retrieving one or more subconnections: %s' % str(results)) )
 
             defs = [ self.getSubConnection(r['provider_nsa'], r['connection_id']) for r in rows ]
             return defer.DeferredList(defs).addCallback(gotSubConns)
@@ -205,9 +205,6 @@ class Aggregator:
             if not (source_stp.network == self.network or dest_stp.network == self.network):
                 raise error.ConnectionCreateError('None of the endpoints terminate in the network, rejecting request (network: %s + %s, nsa network %s)' %
                     (source_stp.network, dest_stp.network, self.network))
-
-        if (source_stp.label is None and dest_stp.label) or (source_stp.label and dest_stp.label is None):
-            raise error.ConnectionCreateError('Cannot create connection with label only defined in one end (maybe possible in the future)')
 
         # check that we have path vectors to topologies if we start from here
         if self.network in (source_stp.network, dest_stp.network):
@@ -284,9 +281,11 @@ class Aggregator:
         yield state.reserveChecking(conn) # this also acts a lock
 
         if conn.source_network == self.network and conn.dest_network == self.network:
-            # no hairpin connections - should probably be moved before db save
-            if conn.source_port == conn.dest_port:
-                raise error.ServiceError('Hairpin connections not supported. Go away and fix your path finder')
+            # check for hairpins (unless allowed in policies)
+            if not cnt.ALLOW_HAIRPIN in self.policies:
+                if conn.source_port == conn.dest_port:
+                    raise error.ServiceError('Hairpin connections not allowed.')
+
             # setup path
             path_info = ( conn.connection_id, self.network, conn.source_port, shortLabel(conn.source_label), conn.dest_port, shortLabel(conn.dest_label) )
             log.msg('Connection %s: Local link creation: %s %s?%s == %s?%s' % path_info, system=LOG_SYSTEM)

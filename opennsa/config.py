@@ -237,7 +237,7 @@ def readVerifyConfig(cfg):
     try:
         policies = cfg.get(BLOCK_SERVICE, POLICY).split(',')
         for policy in policies:
-            if not policy in (cnt.REQUIRE_USER, cnt.REQUIRE_TRACE, cnt.AGGREGATOR, cnt.DOMAIN_AGGREGATE):
+            if not policy in (cnt.REQUIRE_USER, cnt.REQUIRE_TRACE, cnt.AGGREGATOR, cnt.ALLOW_HAIRPIN, cnt.DOMAIN_AGGREGATE):
                 raise ConfigurationError('Invalid policy: %s' % policy)
         vc[POLICY] = policies
     except ConfigParser.NoOptionError:

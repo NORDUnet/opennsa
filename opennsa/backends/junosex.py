@@ -21,7 +21,7 @@ from opennsa.backends.common import genericbackend, ssh
 
 
 # parameterized commands
-COMMAND_CONFIGURE           = 'configure'
+COMMAND_CONFIGURE           = 'edit private'
 COMMAND_COMMIT              = 'commit'
 
 COMMAND_SET_INTERFACES      = 'set interfaces %(port)s encapsulation ethernet-ccc' # port, source vlan, source vlan

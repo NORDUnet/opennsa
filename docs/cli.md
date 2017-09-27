@@ -64,14 +64,29 @@ defaults file, with the exception of the command to perform.
 
 With a default options file created, a connection can be created like this:
 
-    $ ./onsa reserve --source northernlight.ets:ps-80 --dest northernlight.ets:ams-80 -n northernlight.ets
+    $ ./onsa reserve --source northernlight.ets:ps --dest northernlight.ets:ams -p northernlight.ets
 
 A connection id and global id is assigned automatically but can also be
 assigned using the -c and -g options.
 
 To provision the connection:
 
-    ./onsa provision -n northernlight.ets -c <connection-id>
+    ./onsa provision -p northernlight.ets -c <connection-id>
 
 Similarly with release and terminate, querysummary, and querydetails.
+
+
+**STP Syntax**
+
+STP without VLAN (full port - rarely used)
+
+northernlight.ets:ps
+
+STP with VLAN 23, this is the typical one to use.
+
+northernlight.ets:ps?vlan=23
+
+There is also MPLS (you should know what you are doing wrt. labels)
+
+northernlight.ets:ps?mpls=123:456
 

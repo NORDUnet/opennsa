@@ -42,7 +42,7 @@ class DUDConnectionManager:
         return self.port_map[port] + '#' + '' if label is None else str(label.labelValue())
 
 
-    def canConnect(self, source_stp, dest_port, source_label, dest_label):
+    def canConnect(self, source_port, dest_port, source_label, dest_label):
         if source_label is None and dest_label is None:
             return True
         elif source_label is None or dest_label is None:

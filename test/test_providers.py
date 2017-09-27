@@ -7,7 +7,7 @@ from opennsa import nsa, provreg, database, error, setup, aggregator, config, pl
 from opennsa.topology import nml, nrm, linkvector
 from opennsa.backends import dud
 
-from . import topology, common
+from . import topology, common, db
 
 
 
@@ -142,10 +142,11 @@ class GenericProviderTest:
 
 
     @defer.inlineCallbacks
-    def testConnectSTPToItself(self):
+    def testHairpinConnection(self):
 
-        stp = nsa.STP(self.network, self.source_port, nsa.Label(cnt.ETHERNET_VLAN, '1782') )
-        sd = nsa.Point2PointService(stp, stp, self.bandwidth, cnt.BIDIRECTIONAL, False, None)
+        source_stp = nsa.STP(self.network, self.source_port, nsa.Label(cnt.ETHERNET_VLAN, '1782') )
+        dest_stp = nsa.STP(self.network, self.source_port, nsa.Label(cnt.ETHERNET_VLAN, '1783') )
+        sd = nsa.Point2PointService(source_stp, dest_stp, self.bandwidth, cnt.BIDIRECTIONAL, False, None)
         criteria = nsa.Criteria(0, self.schedule, sd)
 
         self.header.newCorrelationId()
@@ -695,7 +696,7 @@ class GenericProviderTest:
         self.header.newCorrelationId()
         try:
             acid = yield self.provider.reserve(self.header, None, None, None, criteria)
-            self.fail("Should have gotten service error for hairpin request")
+            self.fail("Should have gotten service error for identical ports")
         except error.ServiceError:
             pass # expected
 
@@ -776,9 +777,7 @@ class DUDBackendTest(GenericProviderTest, unittest.TestCase):
         self.provider.scheduler.clock = self.clock
         self.provider.startService()
 
-        tcf = os.path.expanduser('~/.opennsa-test.json')
-        tc = json.load( open(tcf) )
-        database.setupDatabase( tc['database'], tc['database-user'], tc['database-password'])
+        db.setupDatabase()
 
         # request stuff
         self.start_time  = datetime.datetime.utcnow() + datetime.timedelta(seconds=2)
@@ -802,6 +801,10 @@ class DUDBackendTest(GenericProviderTest, unittest.TestCase):
         from twistar.registry import Registry
         Registry.DBPOOL.close()
 
+    def testHairpinConnection(self):
+        pass
+    testHairpinConnection.skip = 'Tested in aggregator'
+
 
 
 class AggregatorTest(GenericProviderTest, unittest.TestCase):
@@ -813,9 +816,7 @@ class AggregatorTest(GenericProviderTest, unittest.TestCase):
 
     def setUp(self):
 
-        tcf = os.path.expanduser('~/.opennsa-test.json')
-        tc = json.load( open(tcf) )
-        database.setupDatabase( tc['database'], tc['database-user'], tc['database-password'])
+        db.setupDatabase()
 
         self.requester = common.DUDRequester()
 
@@ -858,6 +859,24 @@ class AggregatorTest(GenericProviderTest, unittest.TestCase):
         Registry.DBPOOL.close()
 
 
+    @defer.inlineCallbacks
+    def testHairpinConnectionAllowed(self):
+
+        self.provider.policies.append(cnt.ALLOW_HAIRPIN)
+
+        source_stp = nsa.STP(self.network, self.source_port, nsa.Label(cnt.ETHERNET_VLAN, '1782') )
+        dest_stp   = nsa.STP(self.network, self.source_port, nsa.Label(cnt.ETHERNET_VLAN, '1783') )
+        sd = nsa.Point2PointService(source_stp, dest_stp, self.bandwidth, cnt.BIDIRECTIONAL, False, None)
+        criteria = nsa.Criteria(0, self.schedule, sd)
+
+        self.header.newCorrelationId()
+        try:
+            acid = yield self.provider.reserve(self.header, None, None, None, criteria)
+            yield self.requester.reserve_defer
+        except Exception as e:
+            self.fail('Should not have raised exception: %s' % str(e))
+
+
 
 class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
 
@@ -876,9 +895,7 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
         from opennsa.protocols.shared import soapresource
         from opennsa.protocols.nsi2 import requesterservice, requesterclient
 
-        tcf = os.path.expanduser('~/.opennsa-test.json')
-        tc = json.load( open(tcf) )
-        database.setupDatabase( tc['database'], tc['database-user'], tc['database-password'])
+        db.setupDatabase()
 
         self.requester = common.DUDRequester()
 
@@ -1005,6 +1022,68 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
 
         self.header.newCorrelationId()
         acid = yield self.provider.reserve(self.header, None, 'gid-123', 'desc2', self.criteria)
+        yield self.requester.reserve_defer
+
+        yield self.provider.reserveCommit(self.header, acid)
+        yield self.requester.reserve_commit_defer
+
+        self.header.newCorrelationId()
+        yield self.provider.queryRecursive(self.header, connection_ids = [ acid ] )
+        header, reservations = yield self.requester.query_recursive_defer
+
+        self.failUnlessEquals(len(reservations), 1)
+        ci = reservations[0]
+
+        self.failUnlessEquals(ci.connection_id, acid)
+        self.failUnlessEquals(ci.global_reservation_id, 'gid-123')
+        self.failUnlessEquals(ci.description, 'desc2')
+
+        self.failUnlessEquals(ci.requester_nsa, self.requester_agent.urn())
+        self.failUnlessEquals(len(ci.criterias), 1)
+        crit = ci.criterias[0]
+
+        src_stp = crit.service_def.source_stp
+        dst_stp = crit.service_def.dest_stp
+
+        self.failUnlessEquals(src_stp.network, self.network)
+        self.failUnlessEquals(src_stp.port,    self.source_port)
+        self.failUnlessEquals(src_stp.label.type_, cnt.ETHERNET_VLAN)
+        self.failUnlessIn(src_stp.label.labelValue(), ('1781', '1782') )
+
+        self.failUnlessEquals(dst_stp.network, self.network)
+        self.failUnlessEquals(dst_stp.port,    self.dest_port)
+        self.failUnlessEquals(dst_stp.label.type_, cnt.ETHERNET_VLAN)
+        self.failUnlessIn(dst_stp.label.labelValue(), ('1782', '1783') )
+
+        self.failUnlessEqual(crit.service_def.capacity, self.bandwidth)
+        self.failUnlessEqual(crit.revision,   0)
+
+        from opennsa import state
+        rsm, psm, lsm, dps = ci.states
+        self.failUnlessEquals(rsm, state.RESERVE_START)
+        self.failUnlessEquals(psm, state.RELEASED)
+        self.failUnlessEquals(lsm, state.CREATED)
+        self.failUnlessEquals(dps[:2], (False, 0) )  # we cannot really expect a consistent result for consistent here
+
+        self.failUnlessEqual(len(crit.children), 1)
+        child = crit.children[0]
+
+        rsm, psm, lsm, dps = ci.states # overwrite
+        self.failUnlessEquals(rsm, state.RESERVE_START)
+        self.failUnlessEquals(psm, state.RELEASED)
+        self.failUnlessEquals(lsm, state.CREATED)
+        self.failUnlessEquals(dps[:2], (False, 0) )  # we cannot really expect a consistent result for consistent here
+
+
+    @defer.inlineCallbacks
+    def testQueryRecursiveNoStartTime(self):
+        # only available on aggregator and remote, we just do remote for now
+
+        start_time = None
+        criteria   = nsa.Criteria(0, nsa.Schedule(start_time, self.end_time), self.sd)
+
+        self.header.newCorrelationId()
+        acid = yield self.provider.reserve(self.header, None, 'gid-123', 'desc2', criteria)
         yield self.requester.reserve_defer
 
         yield self.provider.reserveCommit(self.header, acid)

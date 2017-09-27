@@ -45,5 +45,6 @@ FEATURE_UPA         = 'vnd.ogf.nsi.cs.v2.role.uPA'
 REQUIRE_USER        = 'requireuser'
 REQUIRE_TRACE       = 'requiretrace'
 AGGREGATOR          = 'aggregator'      # this can possibly be removed once domain aggregation is done
+ALLOW_HAIRPIN       = 'allowhairpin'
 DOMAIN_AGGREGATE    = 'domainaggregate'
 

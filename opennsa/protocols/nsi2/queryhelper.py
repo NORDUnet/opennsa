@@ -69,8 +69,11 @@ def buildQueryRecursiveResultType(reservations):
     def buildQueryRecursiveResultCriteriaType(criteria):
         assert type(criteria) is nsa.QueryCriteria, 'Wrong criteria type for buildQueryRecursiveResultCriteriaType: %s' % (str(criteria))
 
-        schedule = nsiconnection.ScheduleType(createXMLTime(criteria.schedule.start_time), createXMLTime(criteria.schedule.end_time))
-        #service_type, service_def = buildServiceDefinition(criteria.service_def)
+        # handle optional start / end time
+        start_time = createXMLTime(criteria.schedule.start_time) if criteria.schedule.start_time is not None else None 
+        end_time   = createXMLTime(criteria.schedule.end_time)   if criteria.schedule.end_time is not None else None 
+        schedule = nsiconnection.ScheduleType(start_time, end_time)
+
         service_type = str(p2pservices.p2ps) # we need this to have the bindings working properly
         service_def = buildServiceDefinitionType(criteria.service_def)
 
