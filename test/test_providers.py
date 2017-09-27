@@ -7,7 +7,7 @@ from opennsa import nsa, provreg, database, error, setup, aggregator, config, pl
 from opennsa.topology import nml, nrm, linkvector
 from opennsa.backends import dud
 
-from . import topology, common
+from . import topology, common, db
 
 
 
@@ -777,9 +777,7 @@ class DUDBackendTest(GenericProviderTest, unittest.TestCase):
         self.provider.scheduler.clock = self.clock
         self.provider.startService()
 
-        tcf = os.path.expanduser('~/.opennsa-test.json')
-        tc = json.load( open(tcf) )
-        database.setupDatabase( tc['database'], tc['database-user'], tc['database-password'])
+        db.setupDatabase()
 
         # request stuff
         self.start_time  = datetime.datetime.utcnow() + datetime.timedelta(seconds=2)
@@ -818,9 +816,7 @@ class AggregatorTest(GenericProviderTest, unittest.TestCase):
 
     def setUp(self):
 
-        tcf = os.path.expanduser('~/.opennsa-test.json')
-        tc = json.load( open(tcf) )
-        database.setupDatabase( tc['database'], tc['database-user'], tc['database-password'])
+        db.setupDatabase()
 
         self.requester = common.DUDRequester()
 
@@ -881,9 +877,7 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
         from opennsa.protocols.shared import soapresource
         from opennsa.protocols.nsi2 import requesterservice, requesterclient
 
-        tcf = os.path.expanduser('~/.opennsa-test.json')
-        tc = json.load( open(tcf) )
-        database.setupDatabase( tc['database'], tc['database-user'], tc['database-password'])
+        db.setupDatabase()
 
         self.requester = common.DUDRequester()
 

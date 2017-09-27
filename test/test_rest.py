@@ -11,7 +11,7 @@ from opennsa.topology import nml, nrm, linkvector
 from opennsa.backends import dud
 from opennsa.protocols import rest, nsi2
 
-from . import topology, common
+from . import topology, common, db
 
 # http client
 from twisted.web.client import Agent, FileBodyProducer, readBody
@@ -30,9 +30,8 @@ class RestInterfaceTest(unittest.TestCase):
 
 
     def setUp(self):
-        tcf = os.path.expanduser('~/.opennsa-test.json')
-        tc = json.load( open(tcf) )
-        database.setupDatabase( tc['database'], tc['database-user'], tc['database-password'])
+
+        db.setupDatabase()
 
         self.requester = common.DUDRequester()
 
