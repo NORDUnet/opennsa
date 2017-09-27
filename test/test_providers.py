@@ -859,6 +859,24 @@ class AggregatorTest(GenericProviderTest, unittest.TestCase):
         Registry.DBPOOL.close()
 
 
+    @defer.inlineCallbacks
+    def testHairpinConnectionAllowed(self):
+
+        self.provider.policies.append(cnt.ALLOW_HAIRPIN)
+
+        source_stp = nsa.STP(self.network, self.source_port, nsa.Label(cnt.ETHERNET_VLAN, '1782') )
+        dest_stp   = nsa.STP(self.network, self.source_port, nsa.Label(cnt.ETHERNET_VLAN, '1783') )
+        sd = nsa.Point2PointService(source_stp, dest_stp, self.bandwidth, cnt.BIDIRECTIONAL, False, None)
+        criteria = nsa.Criteria(0, self.schedule, sd)
+
+        self.header.newCorrelationId()
+        try:
+            acid = yield self.provider.reserve(self.header, None, None, None, criteria)
+            yield self.requester.reserve_defer
+        except Exception as e:
+            self.fail('Should not have raised exception: %s' % str(e))
+
+
 
 class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
 
