@@ -231,13 +231,22 @@ class OpenNSAService(twistedservice.MultiService):
             can_swap_label = backend_service.connection_manager.canSwapLabel(cnt.ETHERNET_VLAN)
             provider_registry.addProvider(ns_agent.urn(), backend_service, [ network_name ] )
 
-
         # fetcher
         if vc[config.PEERS]:
             fetcher_service = fetcher.FetcherService(link_node, nrm_ports, vc[config.PEERS], provider_registry, ctx_factory=ctx_factory)
             fetcher_service.setServiceParent(self)
         else:
             log.msg('No peers configured, will not be able to do outbound requests.')
+
+        # domain aggregate
+        domain_aggregate = cnt.DOMAIN_AGGREGATE in vc[config.POLICY]
+        if domain_aggregate:
+            if not len(backend_configs) == 0:
+                raise config.ConfigurationError('Cannot run domain aggregate mode with a backend configured.')
+            if not vc[config.PEERS]:
+                raise config.ConfigurationError('Domain aggregate mode specified with no peers. Cannot provide a useful service without peers.')
+
+            log.msg('Domain aggregate mode enabled')
 
         # discovery service
         name = base_name.split(':')[0] if ':' in base_name else base_name
@@ -250,8 +259,6 @@ class OpenNSAService(twistedservice.MultiService):
             features.append( (cnt.FEATURE_UPA, None) )
         if vc[config.PEERS]:
             features.append( (cnt.FEATURE_AGGREGATOR, None) )
-
-        domain_aggregate = cnt.DOMAIN_AGGREGATE in vc[config.POLICY]
 
         # view resource
         vr = viewresource.ConnectionListResource()
