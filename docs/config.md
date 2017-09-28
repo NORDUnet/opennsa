@@ -35,7 +35,7 @@ logfile  : File to log to.
 nrmmap   : Path to port/topology NRM description file
 
 peers    : URLs to NSAs to peer with control-plane wise.
-           Seperate multiple entries with newline.
+           Seperate multiple entries with newline (only peers= on the first line).
            Optional. No peers will put OpenNSA into UPA mode.
 
 policies : What policies are required. Currently requiretrace, requireuser,
