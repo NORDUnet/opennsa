@@ -340,11 +340,6 @@ class Aggregator:
             if not conn.dest_network in self.route_vectors.nodes.keys():
                 raise error.STPResolutionError('Destination network %s not known, cannot create circuit' % conn.dest_network)
 
-#            for node_name, node in self.route_vectors.nodes.items():
-#                print node_name
-#                for port_name, port in node.ports.items():
-#                    print ' ', port_name, '->', port.remote_network
-
             # The pathfinding here is a bit tricky, we find a node path first
             # Then that is used to expand the link that are part of the domain
             # This is done by passing over the path several times, expanding links as needed
@@ -352,6 +347,13 @@ class Aggregator:
 
             node_path = self.route_vectors.dijkstra(conn.source_network, conn.dest_network)
             if not node_path:
+                msg = 'Failed to find a path from {} to {}. Dumping topology for trouble shooting purposes.'.format(conn.source_network, conn.dest_network)
+                log.msg(msg, system=LOG_SYSTEM)
+
+                for key,node in sorted(self.route_vectors.nodes.items()):
+                    ports = ', '.join( [ '{} -> {}:{}'.format(p.name, p.remote_network, p.remote_port) for p in node.ports.values() ] )
+                    log.msg('{} : {}'.format(key, ports), system=LOG_SYSTEM)
+
                 raise error.STPResolutionError('Could not find path from network %s to %s, cannot create circuit' % (conn.source_network, conn.dest_network))
 
             # create a single link, expand all local segments
