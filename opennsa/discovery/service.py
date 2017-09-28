@@ -61,9 +61,8 @@ class DiscoveryService:
 
         other = None
 
-        proxy_domains = []
         if self.domain_aggregate:
-            proxy_domains = [ cnt.URN_OGF_PREFIX + node_name for node_name in self.link_node.nodes.keys() \
+            network_ids = [ cnt.URN_OGF_PREFIX + node_name for node_name in self.link_node.nodes.keys() \
                               if node_name.endswith( _baseName(self.network_ids[0]) ) ]
 
             # remove nsa ids of proxy domains from peers_with
@@ -71,6 +70,8 @@ class DiscoveryService:
                 if _baseName(pw).endswith( _baseName(self.nsa_id) ):
                     peers_with.remove(pw)
 
+        else:
+            network_ids = self.network_ids
 
         nsa_element = discovery.NsaType(
             self.nsa_id,
@@ -79,7 +80,7 @@ class DiscoveryService:
             self.name,
             self.software_version,
             xmlhelper.createXMLTime(self.start_time),
-            self.network_ids + proxy_domains,
+            network_ids,
             interface_types,
             feature_types,
             peers_with,
