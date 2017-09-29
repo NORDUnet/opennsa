@@ -13,6 +13,7 @@ from twisted.internet import defer
 
 from opennsa.interface import INSIProvider, INSIRequester
 from opennsa import error, nsa, state, database, constants as cnt
+from opennsa.topology import linknode
 
 
 
@@ -383,28 +384,7 @@ class Aggregator:
                     raise error.STPResolutionError('Could not find path from network %s to %s, cannot create circuit' % (conn.source_network, conn.dest_network))
 
             # Build path from list of networks
-
-            # Put the build stuff into link node, and make some unit tests for it
-
-            build_path = []
-
-            current_stp = nsa.STP(conn.source_network, conn.source_port, conn.source_label)
-
-            for next_hop in node_path[1:]:
-                #print 'hop', current_stp.network, next_hop
-                demarc_port = self.route_vectors.findPort(current_stp.network, next_hop)
-                dest_stp = nsa.STP(current_stp.network, demarc_port.name,  demarc_port.label)
-                build_path.append(nsa.Link( current_stp, dest_stp))
-                #print 'bp', build_path
-
-                current_stp = nsa.STP(next_hop, demarc_port.remote_port, demarc_port.label)
-
-            # add last link
-            dest_stp = nsa.STP(conn.dest_network,   conn.dest_port,   conn.dest_label)
-            build_path.append(nsa.Link( current_stp, dest_stp))
-            #print 'bp', build_path
-            #raise error.STPResolutionError('STAHP')
-
+            build_path = linknode.buildPath(source_stp, dest_stp, node_path, self.route_vectors)
             paths = [ build_path ]
 
             ## do we need any checking for domain aggregation policies

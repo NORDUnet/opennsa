@@ -14,7 +14,7 @@ Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2016)
 """
 
-from twisted.python import log
+from opennsa import nsa
 
 
 LOG_SYSTEM = 'topology.linknode'
@@ -64,8 +64,6 @@ class Graph:
 
     def addNode(self, node):
         # print 'addNode', node.name, node.ports
-        for port_name, port in node.ports.items():
-            print port_name, '->', port.remote_network, port.remote_port
         if not node.name in self.nodes:
             self.nodes[node.name] = node
             self.updated()
@@ -117,36 +115,33 @@ class Graph:
 
 
 
-def test():
+def buildPath(start_stp, end_stp, network_path, graph):
+    """
+    Bulid a path from source to destination through a series of specified networks
+    Typically the list of specified network will be the result of a graph.dijkstra
 
-    na = Node('aruba')
-    na.addPort('bon', None, 'bonaire', 'aru')
+    Note that is perfectly possible to have holes in the networks, that will
+    just be a multi-hop link.
+    """
 
-    nb = Node('bonaire')
-    nb.addPort('aru', None, 'aruba', 'bon')
-    nb.addPort('cur', None, 'curacao', 'bon')
+    assert start_stp.network == network_path[0], 'Source network and first hop in network does not match'
 
-    nc = Node('curacao')
-    nc.addPort('bon', None, 'bonaire', 'cur')
+    current_stp = start_stp
 
-    nd = Node('dominica')
+    path = []
 
-    g = Graph()
-    g.addNode(na)
-    g.addNode(nb)
-    g.addNode(nc)
-    g.addNode(nd)
+    for next_hop in network_path[1:]:
 
-    print g.dijkstra('aruba', 'aruba')
-    print g.dijkstra('aruba', 'bonaire')
-    print g.dijkstra('aruba', 'curacao')
-    print g.dijkstra('bonaire', 'curacao')
-    print g.dijkstra('curacao', 'aruba')
+        demarc_port = graph.findPort(current_stp.network, next_hop)
 
-    print g.dijkstra('aruba', 'dominica')
-    print g.dijkstra('dominica', 'bonaire')
+        dest_stp = nsa.STP(current_stp.network, demarc_port.name,  demarc_port.label)
+        path.append(nsa.Link( current_stp, dest_stp))
 
+        # the demarc port label is not really right here, but it works
+        current_stp = nsa.STP(next_hop, demarc_port.remote_port, demarc_port.label)
 
-if __name__ == '__main__':
-    test()
+    # add last link
+    path.append(nsa.Link( current_stp, end_stp))
+
+    return path
 
