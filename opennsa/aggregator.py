@@ -348,9 +348,9 @@ class Aggregator:
             node_path = self.route_vectors.dijkstra(conn.source_network, conn.dest_network)
 
             # If we don't find a path with dijkstra we try to find an alternative path
-            # This is done by trying to find path to another network managed by the same nsa
-            # and do pathfindind to each of those network. If the two networks can be connected,
-            # the NSA should know about it and be able to set it up
+            # This is done by trying to find a path to another network managed by the same nsa
+            # and do pathfinding to each of those networks. If a path can be found to one of the
+            # networks, we assume the NSA for the network is able set it up (otherwise no one probably can)
             # This should make domain aggregate work when dest is in domain but without a clear path
             if not node_path:
                 msg = 'Failed to find a dijkstra path from {} to {}. Attempting provider heuristic.'.format(conn.source_network, conn.dest_network)
