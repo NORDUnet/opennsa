@@ -4,6 +4,7 @@ set -e
 
 # Run a PostgreSQL database for testing
 
+container=opennsa-test-database
 database=opennsatest
 user=opennsa
 password=$(openssl rand -base64 18)
@@ -12,27 +13,18 @@ configfile=".opennsa-test.json"
 
 # Start PostgreSQL
 
-docker run --rm --name opennsa-test -e POSTGRES_DB=$database -e POSTGRES_USER=$user -e POSTGRES_PASSWORD=$password postgres:9.6.5 &
+# Note: We bind the port, so it listens on 127.0.0.1 only, so no host info needed
 
-# Nasty stuff
-sleep 5
-
-hostip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' opennsa-test)
+docker run --rm --name $container -p 127.0.0.1:5432:5432 -v $PWD/datafiles/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro \
+    -e POSTGRES_DB=$database -e POSTGRES_USER=$user -e POSTGRES_PASSWORD=$password postgres:9.6.5 &
 
 echo "{
-    \"host\"     : \"$hostip\",
-    \"database\" : \"$database\",
-    \"user\"     : \"$user\",
-    \"password\" : \"$password\"
+    \"container\" : \"$container\",
+    \"database\"  : \"$database\",
+    \"user\"      : \"$user\",
+    \"password\"  : \"$password\"
 }" > "$configfile"
 
-
-
-echo
-echo "Loading schema"
-
-schema=$(cat datafiles/schema.sql)
-docker run --rm --name opennsa-test-psql --link=opennsa-test -it -e PGPASSWORD=$password postgres:9.6.5 psql -h opennsa-test -U $user $database -c "$schema"
 
 echo
 echo "Database config file: $configfile"
