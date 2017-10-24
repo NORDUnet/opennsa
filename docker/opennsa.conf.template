@@ -1,0 +1,19 @@
+# Sample docker configuration file
+
+[service]
+network=dockertest.net
+# log to stdout
+logfile=
+nrmmap=opennsa.nrm
+#peers=example.org@http://example.org:9080/NSI/topology/example.org.xml
+
+# These are set by the create-compose script
+dbhost=opennsa-db
+database=${POSTGRES_DB}
+dbuser=${POSTGRES_USER}
+dbpassword=${POSTGRES_PASSWORD}
+
+tls=false
+
+[dud]
+

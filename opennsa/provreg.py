@@ -20,8 +20,8 @@ class ProviderRegistry(object):
     def __init__(self, providers, provider_factories):
         # usually initialized with local providers
         self.providers = providers.copy()
-        self.provider_factories = provider_factories
-        self.networks  = {} # network -> nsi agent urn
+        self.provider_factories = provider_factories # { provider_type : provider_spawn_func }
+        self.provider_networks = {} # { provider_urn : [ network ] }
 
 
     def getProvider(self, nsi_agent_urn):
@@ -38,9 +38,10 @@ class ProviderRegistry(object):
         """
         Get the provider urn by specifying network.
         """
-        try:
-            return self.networks[network_id]
-        except KeyError:
+        for provider, networks in self.provider_networks.items():
+            if network_id in networks:
+                return provider
+        else:
             raise error.STPResolutionError('Could not resolve a provider for %s' % network_id)
 
 
@@ -48,12 +49,11 @@ class ProviderRegistry(object):
         """
         Directly add a provider. Probably only needed by setup.py
         """
-        if nsi_agent_urn in self.providers:
+        if not nsi_agent_urn in self.providers:
             log.msg('Creating new provider for %s' % nsi_agent_urn, system=LOG_SYSTEM)
 
         self.providers[ nsi_agent_urn ] = provider
-        for nid in network_ids:
-            self.networks[nid] = nsi_agent_urn
+        self.provider_networks[ nsi_agent_urn ] = network_ids
 
 
     def spawnProvider(self, nsi_agent, network_ids):
@@ -61,12 +61,13 @@ class ProviderRegistry(object):
         Create a new provider, from an NSI agent.
         ServiceType must exist on the NSI agent, and a factory for the type available.
         """
-        if nsi_agent.urn() in self.providers:
-            log.msg('Skipping provider spawn for %s' % nsi_agent, debug=True, system=LOG_SYSTEM)
+        if nsi_agent.urn() in self.providers and self.provider_networks[nsi_agent.urn()] == network_ids:
+            log.msg('Skipping provider spawn for %s (no change)' % nsi_agent, debug=True, system=LOG_SYSTEM)
             return self.providers[nsi_agent.urn()]
 
-        fac = self.provider_factories[ nsi_agent.getServiceType() ]
-        prov = fac(nsi_agent)
+        factory = self.provider_factories[ nsi_agent.getServiceType() ]
+        prov = factory(nsi_agent)
+
         self.addProvider(nsi_agent.urn(), prov, network_ids)
 
         log.msg('Spawned new provider for %s' % nsi_agent, system=LOG_SYSTEM)

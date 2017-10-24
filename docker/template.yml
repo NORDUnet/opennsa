@@ -1,0 +1,32 @@
+version: '3'
+
+services:
+  opennsa-db:
+    image: postgres:9.6.5
+    volumes:
+      - ${SCHEMA_FILE}:/docker-entrypoint-initdb.d/schema.sql:ro
+      - opennsa-pgdata:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+
+
+  opennsa:
+    image: opennsa:latest
+    depends_on:
+      - opennsa-db
+    ports:
+      - 127.0.0.1:9080:9080
+      - 127.0.0.1:9443:9443
+    links:
+      - opennsa-db
+    volumes:
+      - ${OPENNSA_CONF_FILE}:/home/opennsa/opennsa/opennsa.conf:ro
+      - ${OPENNSA_NRM_FILE}:/home/opennsa/opennsa/opennsa.nrm:ro
+
+
+volumes:
+  opennsa-pgdata:
+
+

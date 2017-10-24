@@ -2,10 +2,12 @@
 
 # Run psql on the PostgreSQL test database
 
+container=$(cat .opennsa-test.json | jq  -r '.container')
+database=$(cat .opennsa-test.json | jq  -r '.database')
 user=$(cat .opennsa-test.json | jq  -r '.user')
 password=$(cat .opennsa-test.json | jq  -r '.password')
-database=$(cat .opennsa-test.json | jq  -r '.database')
 
 
-docker run --rm --name opennsa-test-psql --link=opennsa-test -it -e PGPASSWORD=$password postgres:9.6.5 psql -h opennsa-test -U $user $database
+docker run --rm --name opennsa-test-psql --link=$container -it -e PGPASSWORD=$password postgres:9.6.5 \
+    psql -h $container -U $user $database
 
