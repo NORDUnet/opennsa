@@ -2,3 +2,4 @@
 _trial_temp
 build
 dist
+.opennsa-test.json
