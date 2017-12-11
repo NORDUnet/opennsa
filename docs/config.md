@@ -30,35 +30,36 @@ option2=abc
 
 These are the options for the service block:
 
-network  : The network name managed by OpenNSA. Mandatory.
+`network`  : The network name managed by OpenNSA. Mandatory.
 
-logfile  : File to log to.
-           Defaults to /var/log/opennsa.log
+`logfile`  : File to log to.
+             Defaults to /var/log/opennsa.log
 
-nrmmap   : Path to port/topology NRM description file
+`nrmmap`   : Path to port/topology NRM description file
 
-peers    : URLs to NSAs to peer with control-plane wise.
-           Seperate multiple entries with newline (only peers= on the first line).
-           Optional. No peers will put OpenNSA into UPA mode.
+`peers`    : URLs to NSAs to peer with control-plane wise.
+             Seperate multiple entries with newline (only peers= on the first line).
+             Optional. No peers will put OpenNSA into UPA mode.
 
-policies : What policies are required. Currently requiretrace, requireuser,
-           and aggregator are the possible options. These require a connection
-           trace, a user security attribute, and allow proxy aggregation
-           respecitively. Optional.
+`policies` : What policies are required. Currently requiretrace, requireuser,
+             and aggregator are the possible options. These require a connection
+             trace, a user security attribute, and allow proxy aggregation
+             respecitively. Optional.
 
-serviceid_start : Initial service id to set in the database. Requires a plugin
-                  to use. Optional.
+`serviceid_start` : Initial service id to set in the database. Requires a plugin
+                    to use. Optional.
 
-database : Name of the PostgreSQL databse to connect to. Mandatory.
+`database` : Name of the PostgreSQL databse to connect to. Mandatory.
 
-dbuser   : Username to use when connecting to database. Mandatory.
+`dbuser`   : Username to use when connecting to database. Mandatory.
 
-dbpassword : Password to use when connecting to database. Mandatory.
+`dbpassword` : Password to use when connecting to database. Mandatory.
 
-dbhost   : Host to connect to for database. Optional.
-           OpenNSA does not require anything big from the datebase, so using a
-           different host/vm is almost surely a waste of resources. It is
-           however useful when running a PostgreSQL in docker.
+`dbhost`   : Host to connect to for database. Optional. If not specificed,
+             OpenNSA will connect to PostgreSQL over the unix domain socket
+             OpenNSA does not require anything big from the datebase, so using a
+             different host/vm is almost surely a waste of resources. It is
+             however useful when running a PostgreSQL in docker.
 
 
 # Backend
