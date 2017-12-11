@@ -105,48 +105,41 @@ ethernet    cur     curacao.net:topology#arb(-in|-out)  vlan:1780-1799      1000
 
 ```
 
-Each line describes a port.
+Each line describes an STP (NSI term). An STP is more or less the same as a
+port. Note that two STPs can point to the same underlying interface / port,
+which can occasionally be useful (you will probably know if this happens).
+OpenNSA does reservations on the interface resources internally, to ensure that
+resource do not get double booked.
 
-* Type
+## NRM Configuration options
 
-The port type. Only ethernet is recognized at the moment. Bidirectional is implied here.
+`type`  : The port type. Only ethernet is recognized at the moment.
+          Bidirectional is implied.
 
-* Name
+`name`  : The name of the STP. The STP address will be a URN with the network and name in it.
 
-The name of the port. The port address will be a URN with the network and port name in it.
+` Remote`   : The network and port the port is connected to. Format:
+              `network#port(-inprefix|-outprefix)`
+              Use '-' if not connected to any network (termination inside the network).
 
-* Remote
+`label` : STP configuration options. Currently `vlan` and `mpls` are supported.
+          Note that not all backend support those. Can specify single values and ranges. Comma seperated.
+          Use '-' if no labels are to be used (i.e., ethernet trunk).
 
-The network and port the port is connected to. Format:
+`bandwidth` : The available bandwidth on the port (or the bandwidth that is
+              available to OpenNSA on the port).
 
-network#port(-inprefix|-outprefix)
+`interface` : The interface / port on the network device.
 
-Use '-' if not connected to any network (local termination port).
+`attributes` : A list of comma seperated attributes that describes security
+               attributes or policies for the port. Security attributes always have the form
+              `key=value`, otherwise it is a policy. Despite the name, security attributes
+               are not very secure.
 
-* Label
+               The hostdn will match against the hostname of a certificate. For this to work
+               OpenNSA must be configured to run with TLS (see docs/tls-guide).
 
-Port configuration options. Only VLANs supported for now. Can specify single values and ranges. Comma seperated.
-
-Use '-' if no labels are to be used (i.e., trunk for vlan).
-
-* Bandwidth
-
-The available bandwidth on the port (or the bandwidth that is available to OpenNSA).
-
-* Interface
-
-The port on the corresponding NRM / network equipment. 
-
-* Attributes
-
-A list of comma seperated attributes that describes security attributes or
-policies for the port. Security attributes always have the form 'key=value',
-otherwise it is a policy. Despite the name, security attributes are not very
-secure.
-
-The hostdn will match against the hostname of a certificate. For this to work
-OpenNSA must be configured to run with TLS (see docs/tls-guide).
-
-The only supported policy at the moment as restricttransit (OpenNSA will _NOT_
-allow ports that both have restricttransit cannot be connected).
+               The only supported policy at the moment is `restricttransit`. If
+               two ports both have the `restricttransit` attribute, connecions
+               between the two will not be allowed.
 
