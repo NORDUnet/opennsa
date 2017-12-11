@@ -32,8 +32,7 @@ These are the options for the service block:
 
 `network`  : The network name managed by OpenNSA. Mandatory.
 
-`logfile`  : File to log to.
-             Defaults to /var/log/opennsa.log
+`logfile`  : File to log to. Default: /var/log/opennsa.log
 
 `nrmmap`   : Path to port/topology NRM description file
 
@@ -41,8 +40,8 @@ These are the options for the service block:
              Seperate multiple entries with newline (only peers= on the first line).
              Optional. No peers will put OpenNSA into UPA mode.
 
-`policies` : What policies are required. Currently requiretrace, requireuser,
-             and aggregator are the possible options. These require a connection
+`policies` : What policies are required. Currently `requiretrace`, `requireuser`,
+             and `aggregator` are the possible options. These require a connection
              trace, a user security attribute, and allow proxy aggregation
              respecitively. Optional.
 
