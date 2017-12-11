@@ -23,6 +23,10 @@ dbpassword=dbpassword
 dbhost=127.0.0.1
 
 [dud]
+option1=123
+option2=abc
+```
+
 
 * Service block
 
@@ -57,7 +61,33 @@ dbhost   : Host to connect to for database. Optional.
            different host/vm is almost surely a waste of resources. It is
            however useful when running a PostgreSQL in docker.
 
+
+## Backend
+
+A backend is configured by a section describing the type of backend, e.g. `dud`
+(for testing) or `junosmx`. The configuration options in the section are
+specific to the backend. Reading the setup code in backend, is the easiest way
+to see the options.
+
+
+### Custom Backend
+
+If you have written your own backend that is specific to an organization or
+project, you can use the custombackend option:
+
 ```
+[custombackend]
+module=mycustombackend
+op1=123
+op2=abc
+```
+
+This will import the Python module named `mycustombackend` and pass along the
+configuration options. You will probably need to specify PYTHONPATH to include
+the path of the module.
+
+It is strongly recommended that you keep the module out of the OpenNSA module
+such that you can upgrade OpenNSA without having to re-deploy your backend.
 
 
 ** NRM Configuration **
