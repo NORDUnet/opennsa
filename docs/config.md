@@ -1,8 +1,7 @@
 OpenNSA configuration
 ---------------------
 
-
-**Example configuration:**
+# Example Configuration
 
 ```
 [service]
@@ -27,9 +26,9 @@ option1=123
 option2=abc
 ```
 
+# Service block
 
-* Service block
-
+These are the options for the service block:
 
 network  : The network name managed by OpenNSA. Mandatory.
 
@@ -62,7 +61,7 @@ dbhost   : Host to connect to for database. Optional.
            however useful when running a PostgreSQL in docker.
 
 
-## Backend
+# Backend
 
 A backend is configured by a section describing the type of backend, e.g. `dud`
 (for testing) or `junosmx`. The configuration options in the section are
@@ -70,7 +69,7 @@ specific to the backend. Reading the setup code in backend, is the easiest way
 to see the options.
 
 
-### Custom Backend
+## Custom Backend
 
 If you have written your own backend that is specific to an organization or
 project, you can use the custombackend option:
@@ -90,7 +89,7 @@ It is strongly recommended that you keep the module out of the OpenNSA module
 such that you can upgrade OpenNSA without having to re-deploy your backend.
 
 
-** NRM Configuration **
+# NRM Configuration
 
 Configuration the nrm file is typically the most confusing parts of setting up
 OpenNSA. In short the NRM file defines the ports available through the NSI
