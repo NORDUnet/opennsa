@@ -225,7 +225,7 @@ class OpenNSAService(twistedservice.MultiService):
             raise config.ConfigurationError('Only one backend supported for now. Multiple will probably come later.')
         else: # 1 backend
             if not nrm_ports:
-                raise config.ConfigurationError('No NRM Map file specified. Cannot configured a backend without port spec.')
+                raise config.ConfigurationError('No NRM Map file specified. Cannot configure a backend without port spec.')
 
             backend_cfg = backend_configs.values()[0]
 
