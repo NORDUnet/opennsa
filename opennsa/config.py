@@ -37,6 +37,7 @@ BLOCK_JUNOSMX    = 'junosmx'
 BLOCK_JUNOSEX    = 'junosex'
 BLOCK_JUNOSSPACE = 'junosspace'
 BLOCK_OESS       = 'oess'
+BLOCK_CUSTOM_BACKEND = 'backend'
 
 # service block
 NETWORK_NAME     = 'network'     # mandatory
@@ -330,7 +331,8 @@ def readVerifyConfig(cfg):
             raise ConfigurationError('Can only have one backend named "%s"' % name)
 
         if backend_type in (BLOCK_DUD, BLOCK_JUNIPER_EX, BLOCK_JUNIPER_VPLS, BLOCK_JUNOSMX, BLOCK_FORCE10, BLOCK_BROCADE,
-                            BLOCK_DELL, BLOCK_NCSVPN, BLOCK_PICA8OVS, BLOCK_OESS, BLOCK_JUNOSSPACE, BLOCK_JUNOSEX,  'asyncfail'):
+                            BLOCK_DELL, BLOCK_NCSVPN, BLOCK_PICA8OVS, BLOCK_OESS, BLOCK_JUNOSSPACE, BLOCK_JUNOSEX,
+                            BLOCK_CUSTOM_BACKEND, 'asyncfail'):
             backend_conf = dict( cfg.items(section) )
             backend_conf['_backend_type'] = backend_type
             backends[name] = backend_conf
@@ -338,4 +340,3 @@ def readVerifyConfig(cfg):
     vc['backend'] = backends
 
     return vc
-

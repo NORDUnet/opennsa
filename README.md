@@ -17,6 +17,7 @@ only partially implemented.
 * Pluggable backends to support different equipment
   * Support: Junox MX, Force10 switch (etherscale), Dell Powerconnect
   * DUD backend for easy testing
+  * Any custom Python backend
 * Easy development of new backends
 * Easy creation of NML topology from short-hand topology specification
 * Topology aggregation and path finding to do multi-domain circuit creation
