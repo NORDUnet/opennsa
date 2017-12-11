@@ -49,10 +49,6 @@ def setupBackend(backend_cfg, network_name, nrm_ports, parent_requester):
         from opennsa.backends import brocade
         BackendConstructer = brocade.BrocadeBackend
 
-#    elif backend_type == config.BLOCK_DELL:
-#        from opennsa.backends import dell
-#        return dell.DellBackend(network_name, bc.items())
-
     elif backend_type == config.BLOCK_NCSVPN:
         from opennsa.backends import ncsvpn
         BackendConstructer = ncsvpn.NCSVPNBackend
