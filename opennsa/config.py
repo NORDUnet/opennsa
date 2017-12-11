@@ -37,7 +37,7 @@ BLOCK_JUNOSMX    = 'junosmx'
 BLOCK_JUNOSEX    = 'junosex'
 BLOCK_JUNOSSPACE = 'junosspace'
 BLOCK_OESS       = 'oess'
-BLOCK_CUSTOM_BACKEND = 'backend'
+BLOCK_CUSTOM_BACKEND = 'custombackend'
 
 # service block
 NETWORK_NAME     = 'network'     # mandatory
