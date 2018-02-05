@@ -228,7 +228,7 @@ class P2PBaseResource(resource.Resource):
                     conn = yield self.provider.getConnection(conn_id)
 
                     def stateUpdate():
-                        print 'stateUpdate', conn.reservation_state, conn.provision_state
+                        log.msg('stateUpdate reservation_state: %s, provision_state: %s' % (str(conn.reservation_state), str(conn.provision_state)), debug=True, system=LOG_SYSTEM)
                         if conn.reservation_state == state.RESERVE_HELD:
                             self.provider.reserveCommit(header, conn_id, request_info)
                         if conn.reservation_state == state.RESERVE_START and conn.provision_state == state.RELEASED and auto_provision:
