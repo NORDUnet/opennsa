@@ -4,6 +4,7 @@ High-level functionality for creating clients and services in OpenNSA.
 import os
 import hashlib
 import datetime
+import importlib
 
 from twisted.python import log
 from twisted.web import resource, server
@@ -48,10 +49,6 @@ def setupBackend(backend_cfg, network_name, nrm_ports, parent_requester):
         from opennsa.backends import brocade
         BackendConstructer = brocade.BrocadeBackend
 
-#    elif backend_type == config.BLOCK_DELL:
-#        from opennsa.backends import dell
-#        return dell.DellBackend(network_name, bc.items())
-
     elif backend_type == config.BLOCK_NCSVPN:
         from opennsa.backends import ncsvpn
         BackendConstructer = ncsvpn.NCSVPNBackend
@@ -72,6 +69,14 @@ def setupBackend(backend_cfg, network_name, nrm_ports, parent_requester):
         from opennsa.backends import oess
         BackendConstructer = oess.OESSBackend
 
+    elif backend_type == config.BLOCK_CUSTOM_BACKEND:
+        module_name = backend_cfg.pop('module')
+        try:
+            module = importlib.import_module(module_name)
+            BackendConstructer = module.Backend
+        except Exception as e:
+            log.msg('Failed to load backend {}:\n{}'.format(module_name, e))
+            raise config.ConfigurationError('Failed to load backend')
     else:
         raise config.ConfigurationError('No backend specified')
 

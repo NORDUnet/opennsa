@@ -131,6 +131,7 @@ class P2PBaseResource(resource.Resource):
             payload = json.dumps(res) + RN
 
             request.setResponseCode(200)
+            request.setHeader("Content-Type", 'application/json')
             request.write(payload)
             request.finish()
 
@@ -280,7 +281,7 @@ class P2PConnectionResource(resource.Resource):
             d = yield conn2dict(conn)
 
             payload = json.dumps(d) + RN
-            _finishRequest(request, 200, payload)
+            _finishRequest(request, 200, payload, {'Content-Type': 'application/json'})
 
         def noConnection(err):
             payload = 'No connection with id %s' % self.connection_id
