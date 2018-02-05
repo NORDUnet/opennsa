@@ -75,7 +75,7 @@ def conn2dict(conn):
     d['end_time']          = xmlhelper.createXMLTime(conn.end_time)   if conn.end_time   is not None else None
     d['source']            = '%s:%s%s' % (conn.source_network, conn.source_port, label(conn.source_label))
     d['destination']       = '%s:%s%s' % (conn.dest_network, conn.dest_port, label(conn.dest_label))
-    d['bandwidth']         = conn.bandwidth
+    d['capacity']         = conn.bandwidth
     d['created']           = xmlhelper.createXMLTime(conn.reserve_time)
     d['reservation_state'] = conn.reservation_state
     d['provision_state']   = conn.provision_state
