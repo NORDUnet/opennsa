@@ -142,6 +142,68 @@ class RestInterfaceTest(unittest.TestCase):
 
         yield task.deferLater(reactor, 0.1, self._createCommitProvisionCB, agent, conn_url, header)
 
+    @defer.inlineCallbacks
+    def testGetResources(self):
+        agent = Agent(reactor)
+
+        payload = {"source": "aruba:topology:ps?vlan=1783",
+                   "destination": "aruba:topology:bon?vlan=1783",
+                   "capacity": 1000,
+                   "auto_commit": True
+                   }
+        payload_data = json.dumps(payload)
+
+        create_url = 'http://localhost:%i%s' % (self.PORT, rest.PATH)
+        producer = FileBodyProducer(StringIO(payload_data))
+        resp = yield agent.request('POST', create_url, None, producer)
+
+        self.failUnlessEqual(resp.code, 201, 'Service did not return created')
+
+        resp = yield task.deferLater(reactor, 0.1, agent.request, 'GET', create_url)
+        self.failUnlessEquals(resp.headers.getRawHeaders('Content-Type'), ['application/json'])
+        data = yield readBody(resp)
+        connections = json.loads(data)
+        conn_info = connections[0]
+
+        self._checkResource(conn_info)
+
+    @defer.inlineCallbacks
+    def testGetResource(self):
+        agent = Agent(reactor)
+
+        payload = {"source": "aruba:topology:ps?vlan=1783",
+                   "destination": "aruba:topology:bon?vlan=1783",
+                   "capacity": 1000,
+                   "auto_commit": True
+                   }
+        payload_data = json.dumps(payload)
+
+        create_url = 'http://localhost:%i%s' % (self.PORT, rest.PATH)
+        producer = FileBodyProducer(StringIO(payload_data))
+        resp = yield agent.request('POST', create_url, None, producer)
+
+        self.failUnlessEqual(resp.code, 201, 'Service did not return created')
+
+        conn_url = 'http://localhost:%i%s' % (self.PORT, resp.headers.getRawHeaders('location')[0])
+        resp = yield task.deferLater(reactor, 0.1, agent.request, 'GET', conn_url)
+        self.failUnlessEquals(resp.headers.getRawHeaders('Content-Type'), ['application/json'])
+        data = yield readBody(resp)
+        conn_info = json.loads(data)
+
+        self._checkResource(conn_info)
+
+    def _checkResource(self, conn_info):
+        self.failUnlessEquals(conn_info['source'], 'aruba:topology:ps?vlan=1783')
+        self.failUnlessEquals(conn_info['destination'], 'aruba:topology:bon?vlan=1783')
+        self.failUnlessEquals(conn_info['lifecycle_state'], 'Created')
+        self.failUnlessEquals(conn_info['reservation_state'], 'ReserveStart')
+        self.failUnlessEquals(conn_info['provision_state'], 'Released')
+        self.failUnlessEquals(conn_info['capacity'], 1000)
+        self.failUnlessEquals(conn_info['data_plane_active'], False)
+        self.assertNotIn(conn_info['connection_id'], ['', None])
+        self.assertIsNone(conn_info['start_time'])
+        self.assertIsNone(conn_info['end_time'])
+
 
     @defer.inlineCallbacks
     def _createCommitProvisionCB(self, agent, conn_url, header):
