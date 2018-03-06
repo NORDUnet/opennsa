@@ -66,7 +66,12 @@ def conn2dict(conn):
         if label is None:
             return ''
         else:
-            return '?%s=%s' % (label.type_, label.labelValue())
+            try:
+                return '?%s=%s' % (label.type_, label.labelValue())
+            except Exception as err:
+                log.msg('Error while converting label "%s" for connection: %s. %s: %s' % (label, conn.connection_id, str(err.type), str(err.value)), system=LOG_SYSTEM)
+                return ''
+
 
     d = {}
 
