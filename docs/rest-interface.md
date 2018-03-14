@@ -50,7 +50,7 @@ curl -i -X POST -d '{"source": "TestNetwork:topology:port1?vlan=1781", "destinat
 
 You will get a location header back that contains the connection id.
 
-## Provision a reserved connection
+### Provision a reserved connection
 
 ```
 curl -X POST -d "PROVISION" http://localhost:9080/connections/TE-03b16eea46/status
@@ -59,13 +59,21 @@ curl -X POST -d "PROVISION" http://localhost:9080/connections/TE-03b16eea46/stat
 It will return an ACK, and start working on provisioning the link.
 The link will be up and ready to use when the `provision_state` is `Provisioned` and `data_plane_active` is `true`.
 
-## Terminatning a connectiond
+### Terminatning a connectiond
 
 ```
-curl -X POST -d "PROVISION" http://localhost:9080/connections/TE-03b16eea46/status
+curl -X POST -d "TERMINATE" http://localhost:9080/connections/TE-03b16eea46/status
 ```
 
 The conneciton will then go into `lifecycle_state` `Terminating`, and when everything is released it will end up in `lifecycle_state` `Terminated`.
+
+### Other supported status operations
+
+- `COMMIT` confirms the reserve commit (used if you set `auto_commit` to `false`).
+- `ABORT` aborts the reservation.
+- `RELEASE` used to release a provisioned connection, and return to it just being reserved.
+- `PROVISION` described above
+- `TERMINATE` described above
 
 ## Other features
 
