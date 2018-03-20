@@ -24,6 +24,10 @@ RN = '\r\n'
 
 CONTENT_LENGTH = 'content-length' # twisted.web doesn't have this as a constant
 
+# Connection Fields
+START_TIME = 'start_time'
+END_TIME = 'end_time'
+
 
 def _requestResponse(request, code, payload, headers=None):
     # helper
@@ -71,8 +75,8 @@ def conn2dict(conn):
     d = {}
 
     d['connection_id']     = conn.connection_id
-    d['start_time']        = xmlhelper.createXMLTime(conn.start_time) if conn.start_time is not None else None
-    d['end_time']          = xmlhelper.createXMLTime(conn.end_time)   if conn.end_time   is not None else None
+    d[START_TIME]        = xmlhelper.createXMLTime(conn.start_time) if conn.start_time is not None else None
+    d[END_TIME]          = xmlhelper.createXMLTime(conn.end_time)   if conn.end_time   is not None else None
     d['source']            = '%s:%s%s' % (conn.source_network, conn.source_port, label(conn.source_label))
     d['destination']       = '%s:%s%s' % (conn.dest_network, conn.dest_port, label(conn.dest_label))
     d['capacity']         = conn.bandwidth
@@ -188,8 +192,8 @@ class P2PBaseResource(resource.Resource):
             source_stp = helper.createSTP(str(source))
             destination_stp = helper.createSTP(str(destination))
 
-            start_time = xmlhelper.parseXMLTimestamp(data['start']) if 'start' in data else None
-            end_time   = xmlhelper.parseXMLTimestamp(data['end'])   if 'end'   in data else None
+            start_time = xmlhelper.parseXMLTimestamp(data[START_TIME]) if START_TIME in data else None
+            end_time   = xmlhelper.parseXMLTimestamp(data[END_TIME])   if END_TIME   in data else None
             capacity   = data['capacity'] if 'capacity' in data else 0 # Maybe None should just be best effort
 
             # auto commit (default true) and auto provision (defult false)

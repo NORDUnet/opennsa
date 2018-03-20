@@ -40,7 +40,7 @@ Additional fields:
 - `auto_commit` - Used to enable auto commit of reservation request. Defaults `true`.
 - `auto_provision` - Used to auto provision the link after the reservation is done. Default `false`.
 
-Date format is ISO8601, e.g., "2015-12-13 08:08:08Z"
+Date format is ISO8601, e.g., "2015-12-13T08:08:08Z"
 
 Create a connection using curl:
 
