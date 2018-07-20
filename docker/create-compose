@@ -2,7 +2,7 @@
 
 set -a # load source environment variables into scope
 
-source env.sh
+. env.sh
 
 cat template.yml | envsubst > docker-compose.yml
 
