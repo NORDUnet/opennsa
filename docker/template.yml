@@ -16,6 +16,7 @@ services:
     image: opennsa:latest
     depends_on:
       - opennsa-db
+      - waitforpg
     ports:
       - 127.0.0.1:9080:9080
       - 127.0.0.1:9443:9443
@@ -25,6 +26,12 @@ services:
       - ${OPENNSA_CONF_FILE}:/home/opennsa/opennsa/opennsa.conf:ro
       - ${OPENNSA_NRM_FILE}:/home/opennsa/opennsa/opennsa.nrm:ro
 
+
+  waitforpg:
+    image: dadarek/wait-for-dependencies
+    depends_on:
+      - opennsa-db
+    command: opennsa-db:5432
 
 volumes:
   opennsa-pgdata:
