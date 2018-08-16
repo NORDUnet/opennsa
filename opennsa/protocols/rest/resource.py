@@ -24,6 +24,10 @@ RN = '\r\n'
 
 CONTENT_LENGTH = 'content-length' # twisted.web doesn't have this as a constant
 
+# Connection Fields
+START_TIME = 'start_time'
+END_TIME = 'end_time'
+
 
 def _requestResponse(request, code, payload, headers=None):
     # helper
@@ -71,11 +75,11 @@ def conn2dict(conn):
     d = {}
 
     d['connection_id']     = conn.connection_id
-    d['start_time']        = xmlhelper.createXMLTime(conn.start_time) if conn.start_time is not None else None
-    d['end_time']          = xmlhelper.createXMLTime(conn.end_time)   if conn.end_time   is not None else None
+    d[START_TIME]        = xmlhelper.createXMLTime(conn.start_time) if conn.start_time is not None else None
+    d[END_TIME]          = xmlhelper.createXMLTime(conn.end_time)   if conn.end_time   is not None else None
     d['source']            = '%s:%s%s' % (conn.source_network, conn.source_port, label(conn.source_label))
     d['destination']       = '%s:%s%s' % (conn.dest_network, conn.dest_port, label(conn.dest_label))
-    d['bandwidth']         = conn.bandwidth
+    d['capacity']         = conn.bandwidth
     d['created']           = xmlhelper.createXMLTime(conn.reserve_time)
     d['reservation_state'] = conn.reservation_state
     d['provision_state']   = conn.provision_state
@@ -131,6 +135,7 @@ class P2PBaseResource(resource.Resource):
             payload = json.dumps(res) + RN
 
             request.setResponseCode(200)
+            request.setHeader("Content-Type", 'application/json')
             request.write(payload)
             request.finish()
 
@@ -187,8 +192,8 @@ class P2PBaseResource(resource.Resource):
             source_stp = helper.createSTP(str(source))
             destination_stp = helper.createSTP(str(destination))
 
-            start_time = xmlhelper.parseXMLTimestamp(data['start']) if 'start' in data else None
-            end_time   = xmlhelper.parseXMLTimestamp(data['end'])   if 'end'   in data else None
+            start_time = xmlhelper.parseXMLTimestamp(data[START_TIME]) if START_TIME in data else None
+            end_time   = xmlhelper.parseXMLTimestamp(data[END_TIME])   if END_TIME   in data else None
             capacity   = data['capacity'] if 'capacity' in data else 0 # Maybe None should just be best effort
 
             # auto commit (default true) and auto provision (defult false)
@@ -227,7 +232,7 @@ class P2PBaseResource(resource.Resource):
                     conn = yield self.provider.getConnection(conn_id)
 
                     def stateUpdate():
-                        print 'stateUpdate', conn.reservation_state, conn.provision_state
+                        log.msg('stateUpdate reservation_state: %s, provision_state: %s' % (str(conn.reservation_state), str(conn.provision_state)), debug=True, system=LOG_SYSTEM)
                         if conn.reservation_state == state.RESERVE_HELD:
                             self.provider.reserveCommit(header, conn_id, request_info)
                         if conn.reservation_state == state.RESERVE_START and conn.provision_state == state.RELEASED and auto_provision:
@@ -280,7 +285,7 @@ class P2PConnectionResource(resource.Resource):
             d = yield conn2dict(conn)
 
             payload = json.dumps(d) + RN
-            _finishRequest(request, 200, payload)
+            _finishRequest(request, 200, payload, {'Content-Type': 'application/json'})
 
         def noConnection(err):
             payload = 'No connection with id %s' % self.connection_id

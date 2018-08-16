@@ -63,6 +63,11 @@ class FetcherService(service.Service):
 
 
     def gotDocument(self, result, peer):
+
+        if result is None:
+            log.msg('Got empty NSA discovery document (URL: %s)' % peer.url, system=LOG_SYSTEM)
+            return
+
         log.msg('Got NSA description from %s (%i bytes)' % (peer.url, len(result)), debug=True, system=LOG_SYSTEM)
         try:
             nsa_description = discovery.parse(result)
