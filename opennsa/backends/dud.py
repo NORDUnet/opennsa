@@ -35,11 +35,11 @@ class DUDConnectionManager:
 
 
     def getResource(self, port, label):
-        return self.port_map[port] + ':' + '' if label is None else str(label.labelValue())
+        return self.port_map[port] + ':' + ('' if label is None else str(label.labelValue()))
 
 
     def getTarget(self, port, label):
-        return self.port_map[port] + '#' + '' if label is None else str(label.labelValue())
+        return self.port_map[port] + '#' + ('' if label is None else str(label.labelValue()))
 
 
     def canConnect(self, source_port, dest_port, source_label, dest_label):
