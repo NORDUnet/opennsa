@@ -52,6 +52,5 @@ ENV PYTHONPATH .
 EXPOSE 9080
 EXPOSE 9443
 
-# Sleep as postgres take a bit of time to start. HACK ON.
-ENTRYPOINT sleep 3 ; twistd -ny opennsa.tac
+ENTRYPOINT rm -f twistd.pid; twistd -ny opennsa.tac
 
