@@ -1,10 +1,11 @@
-import os, datetime, json, StringIO
+import datetime
+import StringIO
 
 from twisted.trial import unittest
 from twisted.internet import reactor, defer, task
 
 from opennsa import nsa, provreg, database, error, setup, aggregator, config, plugin, constants as cnt
-from opennsa.topology import nml, nrm, linkvector
+from opennsa.topology import nrm
 from opennsa.backends import dud
 
 from . import topology, common, db
