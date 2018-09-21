@@ -753,6 +753,33 @@ class GenericProviderTest:
         cid = yield self.requester.terminate_defer
 
 
+    @defer.inlineCallbacks
+    def testNoStartEndTimeAndAdditionalReservation(self):
+
+        schedule    = nsa.Schedule(None, None)
+        criteria    = nsa.Criteria(0, schedule, nsa.Point2PointService(self.source_stp, self.dest_stp, 200, cnt.BIDIRECTIONAL, False, None) )
+
+        self.header.newCorrelationId()
+        acid = yield self.provider.reserve(self.header, None, None, None, criteria)
+        header, cid, gid, desc, sc = yield self.requester.reserve_defer
+        self.failUnlessEqual(cid, acid)
+
+        yield self.provider.reserveCommit(self.header, acid)
+        cid = yield self.requester.reserve_commit_defer
+
+        # second reservation
+        self.header.newCorrelationId()
+        self.requester.reserve_defer = defer.Deferred()
+        self.requester.reserve_commit_defer = defer.Deferred()
+
+        schedule    = nsa.Schedule(None, None)
+        criteria    = nsa.Criteria(0, schedule, nsa.Point2PointService(self.source_stp, self.dest_stp, 200, cnt.BIDIRECTIONAL, False, None) )
+
+        acid2 = yield self.provider.reserve(header, None, None, None, criteria)
+        _ = yield self.requester.reserve_defer
+
+        yield self.provider.reserveCommit(self.header, acid2)
+        cid = yield self.requester.reserve_commit_defer
 
 
 
