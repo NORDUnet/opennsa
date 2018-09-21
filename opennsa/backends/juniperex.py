@@ -108,7 +108,7 @@ class SSHChannel(ssh.SSHChannel):
             self.write(COMMAND_COMMIT + LT)
             yield d
 
-        except Exception, e:
+        except Exception as e:
             log.msg('Error sending commands: %s' % str(e))
             raise e
 
@@ -233,14 +233,14 @@ class JuniperEXConnectionManager:
 
     def getResource(self, port, label):
         assert label is None or label.type_ == cnt.ETHERNET_VLAN, 'Label must be None or VLAN'
-        return str(label.value) # vlan is a global resource, only one be used at a time
+        return label.labelValue() # vlan is a global resource, only one be used at a time
 
 
     def getTarget(self, port, label):
         assert label is None or label.type_ == cnt.ETHERNET_VLAN, 'Label must be None or VLAN'
         if label.type_ == cnt.ETHERNET_VLAN:
-            vlan = int(label.value)
-            assert 1 <= vlan <= 4095, 'Invalid label value for vlan: %s' % label.value
+            vlan = int(label.labelValue())
+            assert 1 <= vlan <= 4095, 'Invalid label value for vlan: %s' % label.labelValue()
 
         return JunosEXTarget(self.port_map[port], vlan)
 
