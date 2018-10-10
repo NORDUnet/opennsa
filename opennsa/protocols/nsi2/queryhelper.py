@@ -46,8 +46,7 @@ def buildQuerySummaryResultType(connection_infos):
             sched_start_time = createXMLTime(crit.schedule.start_time) if crit.schedule.start_time is not None else None
             sched_end_time   = createXMLTime(crit.schedule.end_time)   if crit.schedule.end_time   is not None else None
             schedule = nsiconnection.ScheduleType(sched_start_time, sched_end_time)
-            #service_type = cnt.EVTS_AGOLE
-            service_type = str(p2pservices.p2ps) # we need this to have the bindings working properly
+            service_type = cnt.EVTS_AGOLE
             service_def = buildServiceDefinitionType(crit.service_def)
             children = []
             criteria = nsiconnection.QuerySummaryResultCriteriaType(crit.revision, schedule, service_type, children, service_def)
