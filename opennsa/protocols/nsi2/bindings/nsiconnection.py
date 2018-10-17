@@ -841,12 +841,13 @@ class QuerySummaryResultCriteriaType(object):
                )
 
     def xml(self, elementName):
+        from . import p2pservices
         r = ET.Element(elementName, attrib={'version' : str(self.version)})
         r.append(self.schedule.xml('schedule'))
         ET.SubElement(r, 'serviceType').text = self.serviceType
         if self.children is not None:
             ET.SubElement(r, 'children').extend( [ e.xml('children') for e in self.children ] )
-        r.append(self.serviceDefinition.xml(self.serviceType))
+        r.append(self.serviceDefinition.xml(p2pservices.p2ps))
         return r
 
 

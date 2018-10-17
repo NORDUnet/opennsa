@@ -46,7 +46,8 @@ CREATE TABLE service_connections (
     bandwidth               integer                     NOT NULL, -- mbps
     parameter               parameter[],
     security_attributes     security_attribute[],
-    connection_trace        text[]
+    connection_trace        text[],
+    CHECK ( start_time < end_time)
 );
 
 -- internal references to connections that are part of a service connection
@@ -98,7 +99,8 @@ CREATE TABLE generic_backend_connections (
     directionality          directionality              NOT NULL,
     bandwidth               integer                     NOT NULL, -- mbps
     parameter               parameter[],
-    allocated               boolean                     NOT NULL  -- indicated if the resources are actually allocated
+    allocated               boolean                     NOT NULL, -- indicated if the resources are actually allocated
+    CHECK ( start_time < end_time)
 );
 
 
