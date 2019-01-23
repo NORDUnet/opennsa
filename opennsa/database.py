@@ -119,7 +119,7 @@ def getBackendConnectionId():
 #        defer.returnValue(connection_id)
 
     def gotResult(rows):
-        print 'rows', rows
+        print('rows: {}'.format(rows))
         if len(rows) == 0:
             return None
         else:

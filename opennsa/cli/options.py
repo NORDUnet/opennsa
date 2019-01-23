@@ -94,7 +94,7 @@ def readDefaults(file_):
             defaults[option] = value
 
 
-        except Exception, e:
+        except Exception as e:
             log.msg('Error parsing line in CLI defaults file. Line: %s. Error: %s' % (line, str(e)))
 
     return defaults
