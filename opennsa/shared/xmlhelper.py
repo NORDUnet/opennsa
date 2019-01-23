@@ -8,8 +8,8 @@ Copyright: NORDUnet (2012-2015)
 import datetime
 
 from opennsa import error
-from opennsa.ext.iso8601 import iso8601
 
+from dateutil import parser
 
 
 class UTC(datetime.tzinfo):
@@ -32,7 +32,7 @@ def createXMLTime(timestamp):
 
 def parseXMLTimestamp(xsd_timestamp):
 
-    dt = iso8601.parse(xsd_timestamp)
+    dt = parser.isoparse(xsd_timestamp)
 
     if dt.utcoffset() is None:
         # this needs to changed to valueerror...

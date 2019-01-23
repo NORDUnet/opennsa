@@ -19,8 +19,9 @@ from psycopg2.extras import CompositeCaster, register_composite
 from twistar.registry import Registry
 from twistar.dbobject import DBObject
 
+from dateutil import parser
+
 from opennsa import nsa
-from opennsa.ext.iso8601 import iso8601
 
 
 
@@ -54,7 +55,7 @@ class SecuritAttributeComposite(CompositeCaster):
 
 
 def castDatetime(value, cur):
-    return iso8601.parse(value)
+    return parser.isoparse(value)
 
 
 # setup
