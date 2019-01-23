@@ -69,6 +69,7 @@ class CallScheduler:
 
 
     def cancelAllCalls(self):
-        for k in self.scheduled_calls.keys():
-            self.scheduled_calls.pop(k).cancel()
+        for d in self.scheduled_calls.values():
+            d.cancel()
+        self.scheduled_calls = {}
 
