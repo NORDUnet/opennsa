@@ -1,5 +1,5 @@
 import os, json
-from StringIO import StringIO
+from io import StringIO
 
 from twisted.trial import unittest
 from twisted.internet import reactor, defer, task

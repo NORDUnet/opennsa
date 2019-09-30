@@ -8,7 +8,7 @@ Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2011)
 """
 
-from zope.interface import implements
+from zope.interface import implementer
 
 from twisted.python import log, failure
 from twisted.web.error import Error as WebError
@@ -26,13 +26,12 @@ LOG_SYSTEM  = 'nsi2.RequesterClient'
 
 
 
+@implementer(INSIProvider)
 class RequesterClient:
-
-    implements(INSIProvider)
 
     def __init__(self, service_url, reply_to, ctx_factory=None, authz_header=None):
 
-        assert type(service_url) in (str,bytes), 'Service URL must be of type string or bytes'
+        assert type(service_url) is bytes, 'Service URL must be of type string or bytes'
         self.service_url = service_url
         self.reply_to    = reply_to
         self.ctx_factory = ctx_factory

@@ -8,7 +8,7 @@ Copyright: NORDUnet (2015)
 import time
 import json
 
-from twisted.python import log, failure
+from twisted.python import log
 from twisted.internet import defer
 from twisted.web import resource, server
 

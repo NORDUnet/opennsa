@@ -1,4 +1,4 @@
-from zope.interface import implements
+from zope.interface import implementer
 
 from twisted.python import log
 from twisted.internet import defer, error
@@ -29,12 +29,11 @@ def logError(err, message_type):
 
 
 
+@implementer(INSIRequester)
 class Provider:
     # This is part of the provider side of the protocol, and usually sits on top of the aggregator
     # As it sits on top of the aggregator - which is a provider - it implements the Requester interface
     # So it is Provider, that implements the Requester interface. If this doesn't confuse you, continue reading
-
-    implements(INSIRequester)
 
     def __init__(self, service_provider, provider_client):
 

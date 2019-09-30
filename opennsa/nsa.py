@@ -11,7 +11,7 @@ Copyright: NORDUnet (2011-2013)
 
 import uuid
 import random
-import urlparse
+from urllib.parse import urlparse
 import itertools
 
 from opennsa import error, constants as cnt
@@ -126,7 +126,7 @@ class Label(object):
 
         label_values = []
         i = iter(other.values)
-        o1, o2 = i.next()
+        o1, o2 = next(i)
 
         for v1, v2 in self.values:
             while True:
@@ -134,7 +134,7 @@ class Label(object):
                     break
                 elif o2 < v1:
                     try:
-                        o1, o2 = i.next()
+                        o1, o2 = next(i)
                     except StopIteration:
                         break
                     continue
@@ -143,7 +143,7 @@ class Label(object):
                     break
                 elif o2 <= v2:
                     try:
-                        o1, o2 = i.next()
+                        o1, o2 = next(i)
                     except StopIteration:
                         break
 
@@ -290,9 +290,9 @@ class NetworkServiceAgent(object):
 
     def __init__(self, identity, endpoint, service_type=None):
         assert type(identity) is str, 'NSA identity type must be string (type: %s, value %s)' % (type(identity), identity)
-        assert type(endpoint) is str, 'NSA endpoint type must be string (type: %s, value %s)' % (type(endpoint), endpoint)
+        assert type(endpoint) is bytes, 'NSA endpoint type must be bytes (type: %s, value %s)' % (type(endpoint), endpoint)
         self.identity = identity
-        self.endpoint = endpoint.strip()
+        self.endpoint = endpoint.strip() #.encode('utf-8')
         self.service_type = service_type
 
 

@@ -15,7 +15,7 @@ Copyright: NORDUnet (2011-2012)
 
 import datetime
 
-from zope.interface import implements
+from zope.interface import implementer
 
 from twisted.python import log
 from twisted.internet import reactor, defer
@@ -35,9 +35,8 @@ class GenericBackendConnections(DBObject):
 
 
 
+@implementer(INSIProvider)
 class GenericBackend(service.Service):
-
-    implements(INSIProvider)
 
     # This is how long a reservation will be kept in reserved, but not committed state.
     # Two minutes (120 seconds) is the recommended value from the NSI group
@@ -635,7 +634,7 @@ class GenericBackend(service.Service):
 
             now = datetime.datetime.utcnow()
             if conn.end_time is not None and now > conn.end_time:
-                print 'abort do endtime'
+                print('abort do endtime')
                 yield self._doEndtime(conn)
             elif conn.end_time is not None:
                 self.logStateUpdate(conn, 'RESERVE START')
@@ -656,7 +655,7 @@ class GenericBackend(service.Service):
         try:
             log.msg('Connection %s: Activating data plane...' % conn.connection_id, system=self.log_system)
             yield self.connection_manager.setupLink(conn.connection_id, src_target, dst_target, conn.bandwidth)
-        except Exception, e:
+        except Exception as e:
             # We need to mark failure in state machine here somehow....
             #log.err(e) # note: this causes error in tests
             log.msg('Connection %s: Error activating data plane: %s' % (conn.connection_id, str(e)), system=self.log_system)
@@ -692,7 +691,7 @@ class GenericBackend(service.Service):
             now = datetime.datetime.utcnow()
             header = nsa.NSIHeader(conn.requester_nsa, conn.requester_nsa) # The NSA is both requester and provider in the backend, but this might be problematic without aggregator
             self.parent_requester.dataPlaneStateChange(header, conn.connection_id, self.getNotificationId(), now, data_plane_status)
-        except Exception, e:
+        except Exception as e:
             log.msg('Error in post-activation: %s: %s' % (type(e), e), system=self.log_system)
             log.err(e)
 
@@ -706,7 +705,7 @@ class GenericBackend(service.Service):
         try:
             log.msg('Connection %s: Deactivating data plane...' % conn.connection_id, system=self.log_system)
             yield self.connection_manager.teardownLink(conn.connection_id, src_target, dst_target, conn.bandwidth)
-        except Exception, e:
+        except Exception as e:
             # We need to mark failure in state machine here somehow....
             log.msg('Connection %s: Error deactivating data plane: %s' % (conn.connection_id, str(e)), system=self.log_system)
             # should include stack trace

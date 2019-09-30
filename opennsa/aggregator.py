@@ -6,7 +6,7 @@ Copyright: NORDUnet (2011-2012)
 """
 import datetime
 
-from zope.interface import implements
+from zope.interface import implementer
 
 from twisted.python import log
 from twisted.internet import defer
@@ -63,9 +63,9 @@ def _createAggregateException(connection_id, action, results, provider_urns, def
 
 
 
+@implementer(INSIProvider)
+@implementer(INSIRequester)
 class Aggregator:
-
-    implements(INSIProvider, INSIRequester)
 
     def __init__(self, network, nsa_, network_topology, route_vectors, parent_requester, provider_registry, policies, plugin):
         self.network = network

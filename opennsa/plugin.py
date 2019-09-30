@@ -1,7 +1,7 @@
 import string
 import random
 
-from zope.interface import implements
+from zope.interface import implementer
 
 from twisted.internet import defer
 
@@ -10,8 +10,8 @@ from opennsa import config
 
 
 
+@implementer(IPlugin)
 class BasePlugin:
-    implements(IPlugin)
 
     """
     Default plugin.

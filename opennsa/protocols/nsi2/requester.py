@@ -1,4 +1,4 @@
-from zope.interface import implements
+from zope.interface import implementer
 
 from twisted.python import log, failure
 from twisted.internet import reactor, defer
@@ -20,10 +20,9 @@ QUERY_RECURSIVE = 'query_recursive'
 
 
 
+# In OpenNSA the requester is something that acts as a provider :-)
+@implementer(INSIProvider)
 class Requester:
-
-    # In OpenNSA the requester is something that acts as a provider :-)
-    implements(INSIProvider)
 
     def __init__(self, requester_client, callback_timeout=None):
 

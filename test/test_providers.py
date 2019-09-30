@@ -1,5 +1,5 @@
 import datetime
-import StringIO
+from io import StringIO
 
 from twisted.trial import unittest
 from twisted.internet import reactor, defer, task
@@ -786,8 +786,8 @@ class GenericProviderTest:
 
 class DUDBackendTest(GenericProviderTest, unittest.TestCase):
 
-    requester_agent = nsa.NetworkServiceAgent('test-requester:nsa', 'dud_endpoint1')
-    provider_agent  = nsa.NetworkServiceAgent(GenericProviderTest.base + ':nsa', 'dud_endpoint2')
+    requester_agent = nsa.NetworkServiceAgent('test-requester:nsa', b'dud_endpoint1')
+    provider_agent  = nsa.NetworkServiceAgent(GenericProviderTest.base + ':nsa', b'dud_endpoint2')
 
     header      = nsa.NSIHeader(requester_agent.urn(), provider_agent.urn())
 
@@ -797,7 +797,7 @@ class DUDBackendTest(GenericProviderTest, unittest.TestCase):
 
         self.requester = common.DUDRequester()
 
-        nrm_ports = nrm.parsePortSpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY))
+        nrm_ports = nrm.parsePortSpec(StringIO(topology.ARUBA_TOPOLOGY))
 
         self.backend = dud.DUDNSIBackend(self.network, nrm_ports, self.requester, {})
 
@@ -837,8 +837,8 @@ class DUDBackendTest(GenericProviderTest, unittest.TestCase):
 
 class AggregatorTest(GenericProviderTest, unittest.TestCase):
 
-    requester_agent = nsa.NetworkServiceAgent('test-requester:nsa', 'dud_endpoint1')
-    provider_agent  = nsa.NetworkServiceAgent(GenericProviderTest.base + ':nsa', 'dud_endpoint2')
+    requester_agent = nsa.NetworkServiceAgent('test-requester:nsa', b'dud_endpoint1')
+    provider_agent  = nsa.NetworkServiceAgent(GenericProviderTest.base + ':nsa', b'dud_endpoint2')
     header          = nsa.NSIHeader(requester_agent.urn(), provider_agent.urn(), connection_trace= [ requester_agent.urn() + ':1' ],
                                     security_attributes = [ nsa.SecurityAttribute('user', 'testuser') ] )
 
@@ -850,7 +850,7 @@ class AggregatorTest(GenericProviderTest, unittest.TestCase):
 
         self.clock = task.Clock()
 
-        nrm_map = StringIO.StringIO(topology.ARUBA_TOPOLOGY)
+        nrm_map = StringIO(topology.ARUBA_TOPOLOGY)
         nrm_ports, nml_network, link_vector = setup.setupTopology(nrm_map, self.network, 'aruba.net')
 
         self.backend = dud.DUDNSIBackend(self.network, nrm_ports, self.requester, {})
@@ -911,8 +911,8 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
     PROVIDER_PORT = 8180
     REQUESTER_PORT = 8280
 
-    requester_agent = nsa.NetworkServiceAgent('test-requester:nsa', 'http://localhost:%i/NSI/services/RequesterService2' % REQUESTER_PORT)
-    provider_agent  = nsa.NetworkServiceAgent(GenericProviderTest.base + ':nsa', 'http://localhost:%i/NSI/services/CS2' % PROVIDER_PORT)
+    requester_agent = nsa.NetworkServiceAgent('test-requester:nsa', b'http://localhost:%i/NSI/services/RequesterService2' % REQUESTER_PORT)
+    provider_agent  = nsa.NetworkServiceAgent(GenericProviderTest.base + ':nsa', b'http://localhost:%i/NSI/services/CS2' % PROVIDER_PORT)
     header   = nsa.NSIHeader(requester_agent.urn(), provider_agent.urn(), reply_to=requester_agent.endpoint, connection_trace=[ requester_agent.urn() + ':1' ],
                              security_attributes = [ nsa.SecurityAttribute('user', 'testuser') ] )
 
@@ -929,7 +929,7 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
 
         self.clock = task.Clock()
 
-        nrm_map = StringIO.StringIO(topology.ARUBA_TOPOLOGY)
+        nrm_map = StringIO(topology.ARUBA_TOPOLOGY)
         nrm_ports, nml_network, link_vector = setup.setupTopology(nrm_map, self.network, 'aruba.net')
 
         self.backend = dud.DUDNSIBackend(self.network, nrm_ports, None, {}) # we set the parent later

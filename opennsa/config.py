@@ -6,7 +6,7 @@ Copyright: NORDUnet (2011)
 """
 
 import os
-import ConfigParser
+import configparser
 
 from opennsa import constants as cnt
 
@@ -160,7 +160,7 @@ class Peer(object):
 
 def readConfig(filename):
 
-    cfg = ConfigParser.SafeConfigParser()
+    cfg = configparser.SafeConfigParser()
 
     cfg.add_section(BLOCK_SERVICE)
     cfg.read( [ filename ] )
@@ -185,12 +185,12 @@ def readVerifyConfig(cfg):
 
     try:
         vc[NETWORK_NAME] = cfg.get(BLOCK_SERVICE, NETWORK_NAME)
-    except ConfigParser.NoOptionError:
+    except configparser.NoOptionError:
         raise ConfigurationError('No network name specified in configuration file (mandatory)')
 
     try:
         vc[LOG_FILE] = cfg.get(BLOCK_SERVICE, LOG_FILE)
-    except ConfigParser.NoOptionError:
+    except configparser.NoOptionError:
         vc[LOG_FILE] = DEFAULT_LOG_FILE
 
     try:
@@ -198,33 +198,33 @@ def readVerifyConfig(cfg):
         if not os.path.exists(nrm_map_file):
             raise ConfigurationError('Specified NRM mapping file does not exist (%s)' % nrm_map_file)
         vc[NRM_MAP_FILE] = nrm_map_file
-    except ConfigParser.NoOptionError:
+    except configparser.NoOptionError:
         vc[NRM_MAP_FILE] = None
 
     try:
         vc[REST] = cfg.getboolean(BLOCK_SERVICE, REST)
-    except ConfigParser.NoOptionError:
+    except configparser.NoOptionError:
         vc[REST] = False
 
     try:
         peers_raw = cfg.get(BLOCK_SERVICE, PEERS)
         vc[PEERS] = [ Peer(purl, 1) for purl in  peers_raw.split('\n') ]
-    except ConfigParser.NoOptionError:
+    except configparser.NoOptionError:
         vc[PEERS] = None
 
     try:
         vc[HOST] = cfg.get(BLOCK_SERVICE, HOST)
-    except ConfigParser.NoOptionError:
+    except configparser.NoOptionError:
         vc[HOST] = None
 
     try:
         vc[TLS] = cfg.getboolean(BLOCK_SERVICE, TLS)
-    except ConfigParser.NoOptionError:
+    except configparser.NoOptionError:
         vc[TLS] = DEFAULT_TLS
 
     try:
         vc[PORT] = cfg.getint(BLOCK_SERVICE, PORT)
-    except ConfigParser.NoOptionError:
+    except configparser.NoOptionError:
         vc[PORT] = DEFAULT_TLS_PORT if vc[TLS] else DEFAULT_TCP_PORT
 
     try:
@@ -233,38 +233,38 @@ def readVerifyConfig(cfg):
             if not policy in (cnt.REQUIRE_USER, cnt.REQUIRE_TRACE, cnt.AGGREGATOR, cnt.ALLOW_HAIRPIN):
                 raise ConfigurationError('Invalid policy: %s' % policy)
         vc[POLICY] = policies
-    except ConfigParser.NoOptionError:
+    except configparser.NoOptionError:
         vc[POLICY] = []
 
     try:
         vc[PLUGIN] = cfg.get(BLOCK_SERVICE, PLUGIN)
-    except ConfigParser.NoOptionError:
+    except configparser.NoOptionError:
         vc[PLUGIN] = None
 
     # database
     try:
         vc[DATABASE] = cfg.get(BLOCK_SERVICE, DATABASE)
-    except ConfigParser.NoOptionError:
+    except configparser.NoOptionError:
         raise ConfigurationError('No database specified in configuration file (mandatory)')
 
     try:
         vc[DATABASE_USER] = cfg.get(BLOCK_SERVICE, DATABASE_USER)
-    except ConfigParser.NoOptionError:
+    except configparser.NoOptionError:
         raise ConfigurationError('No database user specified in configuration file (mandatory)')
 
     try:
         vc[DATABASE_PASSWORD] = cfg.get(BLOCK_SERVICE, DATABASE_PASSWORD)
-    except ConfigParser.NoOptionError:
+    except configparser.NoOptionError:
         vc[DATABASE_PASSWORD] = None
 
     try:
         vc[DATABASE_HOST] = cfg.get(BLOCK_SERVICE, DATABASE_HOST)
-    except ConfigParser.NoOptionError:
+    except configparser.NoOptionError:
         vc[DATABASE_HOST] = None
 
     try:
         vc[SERVICE_ID_START] = cfg.get(BLOCK_SERVICE, SERVICE_ID_START)
-    except ConfigParser.NoOptionError:
+    except configparser.NoOptionError:
         vc[SERVICE_ID_START] = None
 
     # we always extract certdir and verify as we need that for performing https requests
@@ -273,11 +273,11 @@ def readVerifyConfig(cfg):
         if not os.path.exists(certdir):
             raise ConfigurationError('Specified certdir does not exist (%s)' % certdir)
         vc[CERTIFICATE_DIR] = certdir
-    except ConfigParser.NoOptionError, e:
+    except configparser.NoOptionError:
         vc[CERTIFICATE_DIR] = DEFAULT_CERTIFICATE_DIR
     try:
         vc[VERIFY_CERT] = cfg.getboolean(BLOCK_SERVICE, VERIFY_CERT)
-    except ConfigParser.NoOptionError:
+    except configparser.NoOptionError:
         vc[VERIFY_CERT] = DEFAULT_VERIFY
 
     # tls
@@ -300,7 +300,7 @@ def readVerifyConfig(cfg):
             except:
                 pass
 
-        except ConfigParser.NoOptionError, e:
+        except configparser.NoOptionError as e:
             # Not enough options for configuring tls context
             raise ConfigurationError('Missing TLS option: %s' % str(e))
 

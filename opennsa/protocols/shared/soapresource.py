@@ -151,7 +151,7 @@ def setupSOAPResource(top_resource, resource_name, subpath=None, allowed_hosts=N
             ir = nr
 
     if resource_name in ir.children:
-        raise AssertionError, 'Trying to insert several SOAP resource in same leaf. Go away.'
+        raise AssertionError('Trying to insert several SOAP resource in same leaf. Go away.')
 
     soap_resource = SOAPResource(allowed_hosts=allowed_hosts)
     ir.putChild(resource_name, soap_resource)

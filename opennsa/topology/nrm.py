@@ -7,7 +7,7 @@ Copyright: NORDUnet (2011-2012)
 """
 
 import re
-import StringIO
+import io
 
 from twisted.python import log
 
@@ -95,7 +95,7 @@ def parsePortSpec(source):
 
     # Line starting with # and blank lines should be ignored
 
-    assert isinstance(source, file) or isinstance(source, StringIO.StringIO), 'Topology source must be file or StringIO instance'
+    assert isinstance(source, io.IOBase),  'Topology source must be file, StringIO or other IOBase instance'
 
     nrm_ports = []
 

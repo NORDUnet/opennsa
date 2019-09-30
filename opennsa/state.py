@@ -86,8 +86,8 @@ def saveNotify(conn):
                     f()
                 except Exception as e:
                     log.msg('Error during state notificaton: %s' % str(e), system=LOG_SYSTEM)
-        except KeyError as e:
-            #print 'Nothing to notify about %s (%s)' % (conn.connection_id, str(e))
+        except KeyError:
+            #print('Nothing to notify about {}'.format(conn.connection_id))
             pass
 
         return conn

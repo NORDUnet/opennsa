@@ -1,4 +1,4 @@
-import StringIO
+from io import StringIO
 
 from twisted.trial import unittest
 
@@ -21,7 +21,7 @@ class NRMParserTest(unittest.TestCase):
 
     def testPortMapping(self):
 
-        nrm_ports = nrm.parsePortSpec( StringIO.StringIO(NRM_ENTRY) )
+        nrm_ports = nrm.parsePortSpec( StringIO(NRM_ENTRY) )
 
         port_map = dict( [ (p.name, p.interface) for p in nrm_ports ] )
 
@@ -34,7 +34,7 @@ class NRMParserTest(unittest.TestCase):
 
     def testRemotePort(self):
 
-        nrm_ports = nrm.parsePortSpec( StringIO.StringIO(NRM_ENTRY) )
+        nrm_ports = nrm.parsePortSpec( StringIO(NRM_ENTRY) )
 
         port_map = dict( [ (p.name, p.remote_port) for p in nrm_ports ] )
 
