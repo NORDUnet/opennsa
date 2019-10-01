@@ -796,7 +796,7 @@ class Aggregator:
 
             # clear temporary structure
             self.query_requests.pop(cbh_correlation_id)
-            for k,v in self.query_calls.items():
+            for k,v in list(self.query_calls.items()): # make a copy to avoid changing the dict while iterating
                 cbhci, res = v
                 if cbhci == cbh_correlation_id:
                     self.query_calls.pop(k)
