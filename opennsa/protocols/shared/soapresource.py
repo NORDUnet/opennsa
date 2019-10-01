@@ -88,7 +88,9 @@ class SOAPResource(resource.Resource):
         soap_action = request.requestHeaders.getRawHeaders('soapaction',[None])[0]
 
         soap_data = request.content.read()
-        log.msg(" -- Received payload --\n%s\n -- END. Received payload --" % soap_data, system=LOG_SYSTEM, payload=True)
+        log.msg(' -- Received payload --', system=LOG_SYSTEM, payload=True)
+        log.msg(soap_data, system=LOG_SYSTEM, payload=True)
+        log.msg(' -- END --', system=LOG_SYSTEM, payload=True)
 
         if not soap_action in self.soap_actions:
             log.msg('Got request with unknown SOAP action: %s' % soap_action, system=LOG_SYSTEM)
@@ -106,7 +108,9 @@ class SOAPResource(resource.Resource):
             if reply_data is None or len(reply_data) == 0:
                 log.msg('None/empty reply data supplied for SOAPResource. This is probably wrong', system=LOG_SYSTEM)
             else:
-                log.msg(" -- Sending response --\n%s\n -- END: Sending response --" % reply_data, system=LOG_SYSTEM, payload=True)
+                log.msg(' -- Sending response --', system=LOG_SYSTEM, payload=True)
+                log.msg(reply_data, system=LOG_SYSTEM, payload=True)
+                log.msg('-- END --', system=LOG_SYSTEM, payload=True)
 
             request.setHeader('Content-Type', 'text/xml') # Keeps some SOAP implementations happy
             request.write(reply_data)
@@ -116,7 +120,8 @@ class SOAPResource(resource.Resource):
 
             log.msg('Failure during SOAP decoding/dispatch: %s' % err.getErrorMessage(), system=LOG_SYSTEM)
             log.err(err)
-            log.msg('SOAP Payload that caused error:\n%s\n' % soap_data)
+            log.msg('SOAP Payload that caused error:')
+            log.msg(soap_data)
             error_payload = SOAPFault(err.getErrorMessage()).createPayload()
 
             log.msg(" -- Sending response (fault) --\n%s\n -- END: Sending response (fault) --" % error_payload, system=LOG_SYSTEM, payload=True)

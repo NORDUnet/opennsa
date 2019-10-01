@@ -50,7 +50,9 @@ def httpRequest(url, payload, headers, method=b'POST', timeout=DEFAULT_TIMEOUT, 
         e = HTTPRequestError('URL does not start with http (URL %s)' % (url))
         return defer.fail(e)
 
-    log.msg(" -- Sending Payload to %s --\n%s\n -- END. Sending Payload --" % (url, payload), system=LOG_SYSTEM, payload=True)
+    log.msg(" -- Sending Payload to {} --".format(url), system=LOG_SYSTEM, payload=True)
+    log.msg(payload, system=LOG_SYSTEM, payload=True)
+    log.msg(' -- END --', system=LOG_SYSTEM, payload=True)
 
     scheme, netloc, _ , _, _, _ = twhttp.urlparse(url)
     if not b':' in netloc:
@@ -92,7 +94,9 @@ def httpRequest(url, payload, headers, method=b'POST', timeout=DEFAULT_TIMEOUT, 
             return err
 
     def logReply(data):
-        log.msg(" -- Received Reply --\n%s\n -- END. Received Reply --" % data, system=LOG_SYSTEM, payload=True)
+        log.msg(' -- Received Reply --', system=LOG_SYSTEM, payload=True)
+        log.msg(data, system=LOG_SYSTEM, payload=True)
+        log.msg('-- END --', system=LOG_SYSTEM, payload=True)
         return data
 
     factory.deferred.addCallbacks(logReply, invocationError)
