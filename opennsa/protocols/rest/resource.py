@@ -40,7 +40,7 @@ ACTIONS = [ COMMIT, ABORT, PROVISION, RELEASE, TERMINATE ]
 def _requestResponse(request, code, payload, headers=None):
     # helper
     request.setResponseCode(code)
-    request.setHeader(CONTENT_LENGTH, len(payload))
+    request.setHeader(CONTENT_LENGTH, str(len(payload)))
     if headers is not None:
         for key, value in headers.items():
             request.setHeader(key, value)
