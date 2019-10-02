@@ -87,7 +87,9 @@ def httpRequest(url, payload, headers, method=b'POST', timeout=DEFAULT_TIMEOUT, 
             pass # these are pretty common when the remote shuts down
         elif isinstance(err.value, WebError):
             data = err.value.response
-            log.msg(' -- Received Reply (fault) --\n%s\n -- END. Received Reply (fault) --' % data, system=LOG_SYSTEM, payload=True)
+            log.msg(' -- Received Reply (fault) --', system=LOG_SYSTEM, payload=True)
+            log.msg(data, system=LOG_SYSTEM, payload=True)
+            log.msg(' -- END --', system=LOG_SYSTEM, payload=True)
             return err
         elif isinstance(err.value, ConnectionRefusedError):
             log.msg('Connection refused for %s:%i. Request URL: %s' % (host, port, url), system=LOG_SYSTEM)
