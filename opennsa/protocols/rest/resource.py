@@ -28,6 +28,14 @@ CONTENT_LENGTH = 'content-length' # twisted.web doesn't have this as a constant
 START_TIME = 'start_time'
 END_TIME = 'end_time'
 
+COMMIT    = b'COMMIT'
+ABORT     = b'ABORT'
+PROVISION = b'PROVISION'
+RELEASE   = b'RELEASE'
+TERMINATE = b'TERMINATE'
+
+ACTIONS = [ COMMIT, ABORT, PROVISION, RELEASE, TERMINATE ]
+
 
 def _requestResponse(request, code, payload, headers=None):
     # helper
@@ -41,6 +49,11 @@ def _requestResponse(request, code, payload, headers=None):
 
 def _finishRequest(request, code, payload, headers=None):
     # helper
+
+    # make it work with string and bytes (we do expect string here, but it is not enforced)
+    if type(payload) is str:
+        payload = payload.encode()
+
     _requestResponse(request, code, payload, headers)
     request.write(payload)
     request.finish()
@@ -136,7 +149,7 @@ class P2PBaseResource(resource.Resource):
 
             request.setResponseCode(200)
             request.setHeader("Content-Type", 'application/json')
-            request.write(payload)
+            request.write(payload.encode())
             request.finish()
 
         d = database.ServiceConnection.find()
@@ -221,7 +234,6 @@ class P2PBaseResource(resource.Resource):
             d.addCallbacks(createResponse, _createErrorResponse, errbackArgs=(request,))
 
             if auto_commit:
-
                 @defer.inlineCallbacks
                 def connectionCreated(conn_id):
                     if conn_id is None:
@@ -260,12 +272,15 @@ class P2PConnectionResource(resource.Resource):
     def __init__(self, provider, connection_id, allowed_hosts=None):
         resource.Resource.__init__(self)
         self.provider = provider
-        self.connection_id = connection_id
+        if type(connection_id) is bytes:
+            self.connection_id = connection_id.decode('utf-8')
+        else:
+            self.connection_id = connection_id
         self.allowed_hosts = allowed_hosts
 
 
     def getChild(self, path, request):
-        if path == 'status':
+        if path == b'status':
             return P2PStatusResource(self.provider, self.connection_id, self.allowed_hosts)
         else:
             return resource.NoResource('Resourse does not exist')
@@ -289,6 +304,7 @@ class P2PConnectionResource(resource.Resource):
 
         def noConnection(err):
             payload = 'No connection with id %s' % self.connection_id
+            log.msg(payload, system=LOG_SYSTEM)
             _finishRequest(request, 404, payload)
 
         d.addCallbacks(gotConnection, noConnection)
@@ -352,24 +368,26 @@ class P2PStatusResource(resource.Resource):
 
         state_command = request.content.read()
         state_command = state_command.upper()
-        if state_command not in ('COMMIT', 'ABORT', 'PROVISION', 'RELEASE', 'TERMINATE'):
-            payload = 'Invalid state command specified' + RN
+        if state_command not in ACTIONS:
+            payload = 'Invalid state command specified {}'.format(state_command) + RN
+            log.msg(payload, system=LOG_SYSTEM)
             return _requestResponse(request, 400, payload) # Client Error
 
         header = nsa.NSIHeader('rest-dud-requester', 'rest-dud-provider') # completely bogus header
 
-        if state_command == 'COMMIT':
+        if state_command == COMMIT:
             d = self.provider.reserveCommit(header, self.connection_id, request_info)
-        elif state_command == 'ABORT':
+        elif state_command == ABORT:
             d = self.provider.reserveAbort(header, self.connection_id, request_info)
-        elif state_command == 'PROVISION':
+        elif state_command == PROVISION:
             d = self.provider.provision(header, self.connection_id, request_info)
-        elif state_command == 'RELEASE':
+        elif state_command == RELEASE:
             d = self.provider.release(header, self.connection_id, request_info)
-        elif state_command == 'TERMINATE':
+        elif state_command == TERMINATE:
             d = self.provider.terminate(header, self.connection_id, request_info)
         else:
             payload = 'Unrecognized command (should not happend)' + RN
+            log.msg(payload, system=LOG_SYSTEM)
             return _requestResponse(request, 500, payload) # Server Error
 
         def commandDone(_):
@@ -380,10 +398,10 @@ class P2PStatusResource(resource.Resource):
             log.msg('Error during state switch: %s' % str(err), system=LOG_SYSTEM)
             payload = str(err.getErrorMessage()) + RN
             if isinstance(err.value, error.NSIError):
-                _finishRequest(request, 400, payload) # Client Error
+                _finishRequest(request, 400, payload.encode()) # Client Error
             else:
                 log.err(err)
-                _finishRequest(request, 500, payload) # Server Error
+                _finishRequest(request, 500, payload.encode()) # Server Error
 
         d.addCallbacks(commandDone, commandError)
         return server.NOT_DONE_YET

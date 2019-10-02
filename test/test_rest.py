@@ -1,5 +1,5 @@
 import os, json
-from io import StringIO
+from io import StringIO, BytesIO
 
 from twisted.trial import unittest
 from twisted.internet import reactor, defer, task
@@ -96,16 +96,17 @@ class RestInterfaceTest(unittest.TestCase):
         header = Headers({'User-Agent': ['OpenNSA Test Client'], 'Host': ['localhost'] } )
 
         #payload = '''{ "source" : "nordu.net:s1", "destination" : "surfnet.nl:ps", "end" : "2016-01-13T08:08:08Z" }'''
-        payload = { "source" : "nordu.net:s1",
-                    "destination" : "surfnet.nl:ps",
-                    "end" : "2016-01-13T08:08:08Z"
+        payload = {
+            "source" : "nordu.net:s1",
+            "destination" : "surfnet.nl:ps",
+            "end" : "2016-01-13T08:08:08Z"
         }
+
+        create_url = 'http://localhost:{}{}'.format(self.PORT, rest.PATH).encode()
         payload_data = json.dumps(payload)
+        producer = FileBodyProducer(BytesIO(payload_data.encode()))
 
-        create_url = 'http://localhost:%i%s' % (self.PORT, rest.PATH)
-        producer = FileBodyProducer(StringIO(payload_data))
-
-        d = agent.request('POST', create_url, header, producer)
+        d = agent.request(b'POST', create_url, header, producer)
 
         resp = yield d
 
@@ -126,15 +127,15 @@ class RestInterfaceTest(unittest.TestCase):
         payload_data = json.dumps(payload)
 
         create_url = 'http://localhost:%i%s' % (self.PORT, rest.PATH)
-        producer = FileBodyProducer(StringIO(payload_data))
+        producer = FileBodyProducer(BytesIO(payload_data.encode()))
 
-        resp = yield agent.request('POST', create_url, header, producer)
+        resp = yield agent.request(b'POST', create_url.encode(), header, producer)
 
         self.failUnlessEqual(resp.code, 201, 'Service did not return created')
         if not resp.headers.hasHeader('location'):
             self.fail('No location header in create response')
 
-        conn_url = 'http://localhost:%i%s' % (self.PORT, resp.headers.getRawHeaders('location')[0])
+        conn_url = 'http://localhost:{}{}'.format(self.PORT, resp.headers.getRawHeaders('location')[0])
 
         # so... the connection will not necesarely have moved into reserveheld or all sub-connections might not even be in place yet
         # we cannot really commit until we are in created and ReserveHeld
@@ -142,30 +143,33 @@ class RestInterfaceTest(unittest.TestCase):
 
         yield task.deferLater(reactor, 0.1, self._createCommitProvisionCB, agent, conn_url, header)
 
+
     @defer.inlineCallbacks
     def testGetResources(self):
         agent = Agent(reactor)
 
-        payload = {"source": "aruba:topology:ps?vlan=1783",
-                   "destination": "aruba:topology:bon?vlan=1783",
-                   "capacity": 1000,
-                   "auto_commit": True
-                   }
+        payload = {
+            "source": "aruba:topology:ps?vlan=1783",
+            "destination": "aruba:topology:bon?vlan=1783",
+            "capacity": 1000,
+            "auto_commit": True
+        }
         payload_data = json.dumps(payload)
 
-        create_url = 'http://localhost:%i%s' % (self.PORT, rest.PATH)
-        producer = FileBodyProducer(StringIO(payload_data))
-        resp = yield agent.request('POST', create_url, None, producer)
+        create_url = 'http://localhost:{}{}'.format(self.PORT, rest.PATH).encode()
+        producer = FileBodyProducer(BytesIO(payload_data.encode()))
+        resp = yield agent.request(b'POST', create_url, None, producer)
 
         self.failUnlessEqual(resp.code, 201, 'Service did not return created')
 
-        resp = yield task.deferLater(reactor, 0.1, agent.request, 'GET', create_url)
+        resp = yield task.deferLater(reactor, 0.1, agent.request, b'GET', create_url)
         self.failUnlessEquals(resp.headers.getRawHeaders('Content-Type'), ['application/json'])
         data = yield readBody(resp)
         connections = json.loads(data)
         conn_info = connections[0]
 
         self._checkResource(conn_info)
+
 
     @defer.inlineCallbacks
     def testGetResource(self):
@@ -178,14 +182,14 @@ class RestInterfaceTest(unittest.TestCase):
                    }
         payload_data = json.dumps(payload)
 
-        create_url = 'http://localhost:%i%s' % (self.PORT, rest.PATH)
-        producer = FileBodyProducer(StringIO(payload_data))
-        resp = yield agent.request('POST', create_url, None, producer)
+        create_url = 'http://localhost:{}{}'.format(self.PORT, rest.PATH)
+        producer = FileBodyProducer(BytesIO(payload_data.encode()))
+        resp = yield agent.request(b'POST', create_url.encode(), None, producer)
 
         self.failUnlessEqual(resp.code, 201, 'Service did not return created')
 
-        conn_url = 'http://localhost:%i%s' % (self.PORT, resp.headers.getRawHeaders('location')[0])
-        resp = yield task.deferLater(reactor, 0.1, agent.request, 'GET', conn_url)
+        conn_url = 'http://localhost:{}{}'.format(self.PORT, resp.headers.getRawHeaders('location')[0])
+        resp = yield task.deferLater(reactor, 0.1, agent.request, b'GET', conn_url.encode())
         self.failUnlessEquals(resp.headers.getRawHeaders('Content-Type'), ['application/json'])
         data = yield readBody(resp)
         conn_info = json.loads(data)
@@ -208,7 +212,7 @@ class RestInterfaceTest(unittest.TestCase):
     @defer.inlineCallbacks
     def _createCommitProvisionCB(self, agent, conn_url, header):
 
-        c_resp = yield agent.request('GET', conn_url, header)
+        c_resp = yield agent.request(b'GET', conn_url.encode(), header)
         body = yield readBody(c_resp)
         c_info = json.loads(body)
         self.failUnlessEquals(c_info['reservation_state'], 'ReserveHeld', 'State did not transit to held after creation')
@@ -216,22 +220,22 @@ class RestInterfaceTest(unittest.TestCase):
         status_url = conn_url + '/status'
 
         # commit
-        producer2 = FileBodyProducer(StringIO('commit'))
-        resp2 = yield agent.request('POST', status_url, header, producer2)
+        producer2 = FileBodyProducer(BytesIO(b'commit'))
+        resp2 = yield agent.request(b'POST', status_url.encode(), header, producer2)
 
         self.failUnlessEqual(resp2.code, 200, 'Service did not return OK after commit')
 
         # should do new call here..
 
-        c_resp = yield agent.request('GET', conn_url, header)
+        c_resp = yield agent.request(b'GET', conn_url.encode(), header)
         body = yield readBody(c_resp)
         c_info2 = json.loads(body)
 
         self.failUnlessEquals(c_info2['reservation_state'], 'ReserveStart', 'State did not transit after commit')
 
         # provision
-        producer3 = FileBodyProducer(StringIO('provision'))
-        resp3 = yield agent.request('POST', status_url, header, producer3)
+        producer3 = FileBodyProducer(BytesIO(b'provision'))
+        resp3 = yield agent.request(b'POST', status_url.encode(), header, producer3)
         self.failUnlessEqual(resp3.code, 200, 'Service did not return OK after provision')
 
         # give the provider a bit of time to switch
@@ -241,7 +245,7 @@ class RestInterfaceTest(unittest.TestCase):
     @defer.inlineCallbacks
     def _createCommitProvisionCB2(self, agent, conn_url, header):
 
-        resp = yield agent.request('GET', conn_url, header)
+        resp = yield agent.request(b'GET', conn_url.encode(), header)
         data = yield readBody(resp)
         conn_info = json.loads(data)
         self.failUnlessEquals(conn_info['provision_state'], 'Provisioned', 'State did not transit to provisioned after provision')
