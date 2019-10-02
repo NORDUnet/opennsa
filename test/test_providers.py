@@ -786,8 +786,8 @@ class GenericProviderTest:
 
 class DUDBackendTest(GenericProviderTest, unittest.TestCase):
 
-    requester_agent = nsa.NetworkServiceAgent('test-requester:nsa', b'dud_endpoint1')
-    provider_agent  = nsa.NetworkServiceAgent(GenericProviderTest.base + ':nsa', b'dud_endpoint2')
+    requester_agent = nsa.NetworkServiceAgent('test-requester:nsa', 'dud_endpoint1')
+    provider_agent  = nsa.NetworkServiceAgent(GenericProviderTest.base + ':nsa', 'dud_endpoint2')
 
     header      = nsa.NSIHeader(requester_agent.urn(), provider_agent.urn())
 
@@ -837,8 +837,8 @@ class DUDBackendTest(GenericProviderTest, unittest.TestCase):
 
 class AggregatorTest(GenericProviderTest, unittest.TestCase):
 
-    requester_agent = nsa.NetworkServiceAgent('test-requester:nsa', b'dud_endpoint1')
-    provider_agent  = nsa.NetworkServiceAgent(GenericProviderTest.base + ':nsa', b'dud_endpoint2')
+    requester_agent = nsa.NetworkServiceAgent('test-requester:nsa', 'dud_endpoint1')
+    provider_agent  = nsa.NetworkServiceAgent(GenericProviderTest.base + ':nsa', 'dud_endpoint2')
     header          = nsa.NSIHeader(requester_agent.urn(), provider_agent.urn(), connection_trace= [ requester_agent.urn() + ':1' ],
                                     security_attributes = [ nsa.SecurityAttribute('user', 'testuser') ] )
 
@@ -911,8 +911,8 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
     PROVIDER_PORT = 8180
     REQUESTER_PORT = 8280
 
-    requester_agent = nsa.NetworkServiceAgent('test-requester:nsa', b'http://localhost:%i/NSI/services/RequesterService2' % REQUESTER_PORT)
-    provider_agent  = nsa.NetworkServiceAgent(GenericProviderTest.base + ':nsa', b'http://localhost:%i/NSI/services/CS2' % PROVIDER_PORT)
+    requester_agent = nsa.NetworkServiceAgent('test-requester:nsa', 'http://localhost:%i/NSI/services/RequesterService2' % REQUESTER_PORT)
+    provider_agent  = nsa.NetworkServiceAgent(GenericProviderTest.base + ':nsa', 'http://localhost:%i/NSI/services/CS2' % PROVIDER_PORT)
     header   = nsa.NSIHeader(requester_agent.urn(), provider_agent.urn(), reply_to=requester_agent.endpoint, connection_trace=[ requester_agent.urn() + ':1' ],
                              security_attributes = [ nsa.SecurityAttribute('user', 'testuser') ] )
 
@@ -955,7 +955,7 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
         # requester protocol
 
         requester_top_resource = resource.Resource()
-        soap_resource = soapresource.setupSOAPResource(requester_top_resource, 'RequesterService2')
+        soap_resource = soapresource.setupSOAPResource(requester_top_resource, b'RequesterService2')
 
         self.provider = requesterclient.RequesterClient(self.provider_agent.endpoint, self.requester_agent.endpoint)
 
