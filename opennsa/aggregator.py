@@ -898,6 +898,7 @@ class Aggregator:
             schedule = nsa.Schedule(conn.start_time, conn.end_time)
             sd = nsa.Point2PointService(source_stp, dest_stp, conn.bandwidth, cnt.BIDIRECTIONAL, False, None) # we fake some thing that is not yet in the db
             conn_criteria = nsa.Criteria(conn.revision, schedule, sd)
+            # This is just oneshot, we don't really care if it fails, as we cannot do anything about it
             self.parent_requester.reserveConfirmed(header, conn.connection_id, conn.global_reservation_id, conn.description, conn_criteria)
 
         else:
