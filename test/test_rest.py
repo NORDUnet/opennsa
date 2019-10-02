@@ -141,7 +141,7 @@ class RestInterfaceTest(unittest.TestCase):
         # we cannot really commit until we are in created and ReserveHeld
         # the clock doesn't really do anything here (not scheduling related)
 
-        yield task.deferLater(reactor, 0.1, self._createCommitProvisionCB, agent, conn_url, header)
+        yield task.deferLater(reactor, 0.15, self._createCommitProvisionCB, agent, conn_url, header)
 
 
     @defer.inlineCallbacks
@@ -162,7 +162,7 @@ class RestInterfaceTest(unittest.TestCase):
 
         self.failUnlessEqual(resp.code, 201, 'Service did not return created')
 
-        resp = yield task.deferLater(reactor, 0.1, agent.request, b'GET', create_url)
+        resp = yield task.deferLater(reactor, 0.15, agent.request, b'GET', create_url)
         self.failUnlessEquals(resp.headers.getRawHeaders('Content-Type'), ['application/json'])
         data = yield readBody(resp)
         connections = json.loads(data)
@@ -189,7 +189,7 @@ class RestInterfaceTest(unittest.TestCase):
         self.failUnlessEqual(resp.code, 201, 'Service did not return created')
 
         conn_url = 'http://localhost:{}{}'.format(self.PORT, resp.headers.getRawHeaders('location')[0])
-        resp = yield task.deferLater(reactor, 0.1, agent.request, b'GET', conn_url.encode())
+        resp = yield task.deferLater(reactor, 0.15, agent.request, b'GET', conn_url.encode())
         self.failUnlessEquals(resp.headers.getRawHeaders('Content-Type'), ['application/json'])
         data = yield readBody(resp)
         conn_info = json.loads(data)
@@ -239,7 +239,7 @@ class RestInterfaceTest(unittest.TestCase):
         self.failUnlessEqual(resp3.code, 200, 'Service did not return OK after provision')
 
         # give the provider a bit of time to switch
-        yield task.deferLater(reactor, 0.1, self._createCommitProvisionCB2, agent, conn_url, header)
+        yield task.deferLater(reactor, 0.15, self._createCommitProvisionCB2, agent, conn_url, header)
 
 
     @defer.inlineCallbacks
