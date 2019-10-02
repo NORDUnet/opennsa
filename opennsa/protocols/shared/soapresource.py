@@ -141,6 +141,11 @@ class SOAPResource(resource.Resource):
 
 def setupSOAPResource(top_resource, resource_name, subpath=None, allowed_hosts=None):
 
+    assert type(resource_name) is bytes, 'Resource name must be bytes'
+    if subpath is not None:
+        for sp in subpath:
+            assert type(sb) is bytes, 'Subpath must by of type bytes'
+
     # Default path: NSI/services/{resource_name}
     if subpath is None:
         subpath = [b'NSI', b'services' ]
