@@ -29,6 +29,7 @@ BIDIRECTIONAL   = 'Bidirectional'
 class NSIHeader(object):
 
     def __init__(self, requester_nsa, provider_nsa, correlation_id=None, reply_to=None, security_attributes=None, connection_trace=None):
+        assert reply_to is None or type(reply_to) is str, 'NSIHeader replpy_to must be None or type str (type: %s, value %s)' % (type(reply_to), reply_to)
         self.requester_nsa          = requester_nsa
         self.provider_nsa           = provider_nsa
         self.correlation_id         = correlation_id or self._createCorrelationId()
@@ -289,8 +290,8 @@ class Path(object):
 class NetworkServiceAgent(object):
 
     def __init__(self, identity, endpoint, service_type=None):
-        assert type(identity) is str, 'NSA identity type must be string (type: %s, value %s)' % (type(identity), identity)
-        assert type(endpoint) is bytes, 'NSA endpoint type must be bytes (type: %s, value %s)' % (type(endpoint), endpoint)
+        assert type(identity) is str, 'NSA identity type must be str (type: %s, value %s)' % (type(identity), identity)
+        assert type(endpoint) is str, 'NSA endpoint type must be str (type: %s, value %s)' % (type(endpoint), endpoint)
         self.identity = identity
         self.endpoint = endpoint.strip() #.encode('utf-8')
         self.service_type = service_type
@@ -304,7 +305,8 @@ class NetworkServiceAgent(object):
 
 
     def urn(self):
-        return cnt.URN_OGF_PREFIX + self.identity
+        urn = cnt.URN_OGF_PREFIX + self.identity
+        return urn
 
 
     def getServiceType(self):
