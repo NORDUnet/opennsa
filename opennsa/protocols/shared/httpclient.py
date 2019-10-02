@@ -40,7 +40,9 @@ def httpRequest(url, payload, headers, method=b'POST', timeout=DEFAULT_TIMEOUT, 
     # copied from twisted.web.client in order to get access to the
     # factory (which contains response codes, headers, etc)
 
-    print(url)
+    # Make request work with both str and bytes url
+    if type(url) is str:
+        url = url.encode()
 
     if type(url) is not bytes:
         e = HTTPRequestError('URL must be bytes, not %s' % type(url))
