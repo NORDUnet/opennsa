@@ -34,6 +34,7 @@ DEST_STP        = 'dest'
 BANDWIDTH       = 'bandwidth'
 START_TIME      = 'starttime'
 END_TIME        = 'endtime'
+ERO             = 'ero'
 
 TLS             = config.TLS
 KEY             = config.KEY

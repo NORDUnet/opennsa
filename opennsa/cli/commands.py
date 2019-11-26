@@ -4,6 +4,7 @@ from twisted.python import log, usage
 from twisted.internet import defer
 
 from opennsa import constants as cnt, nsa, error
+from opennsa.protocols.nsi2.bindings import p2pservices
 
 LABEL_MAP = {
     'vlan' : cnt.ETHERNET_VLAN,
@@ -29,13 +30,28 @@ def _createSTP(stp_arg):
 
     return nsa.STP(network, port, label)
 
+# Take a string of ERO STP and convert to a list of OrderedStpType.
+def _createOrderedStpType(ero):
+    if ero is None:
+        return None
 
-def _createP2PS(src, dst, capacity):
+    ero_list = [x.strip() for x in ero.split(',')]
+    order = 0
+    ordered_stp = []
+    for item in ero_list:
+        ordered_stp.append(p2pservices.OrderedStpType(order, _createSTP(item).urn()))
+        order += 1
+
+    return ordered_stp
+
+
+def _createP2PS(src, dst, capacity, ero):
 
     src_stp = _createSTP(src)
     dst_stp = _createSTP(dst)
+    ordered_stp = _createOrderedStpType(ero)
 
-    return nsa.Point2PointService(src_stp, dst_stp, capacity)
+    return nsa.Point2PointService(src_stp, dst_stp, capacity, cnt.BIDIRECTIONAL, False, ordered_stp, None)
 
 
 def _handleEvent(event):
@@ -82,10 +98,10 @@ def discover(client, service_url):
 
 
 @defer.inlineCallbacks
-def reserveonly(client, nsi_header, src, dst, start_time, end_time, capacity, connection_id, global_id):
+def reserveonly(client, nsi_header, src, dst, start_time, end_time, capacity, ero, connection_id, global_id):
 
     schedule = nsa.Schedule(start_time, end_time)
-    service_def = _createP2PS(src, dst, capacity)
+    service_def = _createP2PS(src, dst, capacity, ero)
     crt = nsa.Criteria(0, schedule, service_def)
 
     try:
@@ -101,10 +117,10 @@ def reserveonly(client, nsi_header, src, dst, start_time, end_time, capacity, co
 
 
 @defer.inlineCallbacks
-def reserve(client, nsi_header, src, dst, start_time, end_time, capacity, connection_id, global_id):
+def reserve(client, nsi_header, src, dst, start_time, end_time, capacity, ero, connection_id, global_id):
 
     schedule = nsa.Schedule(start_time, end_time)
-    service_def = _createP2PS(src, dst, capacity)
+    service_def = _createP2PS(src, dst, capacity, ero)
     crt = nsa.Criteria(0, schedule, service_def)
 
     try:
@@ -124,10 +140,10 @@ def reserve(client, nsi_header, src, dst, start_time, end_time, capacity, connec
 
 
 @defer.inlineCallbacks
-def reserveprovision(client, nsi_header, src, dst, start_time, end_time, capacity, connection_id, global_id, notification_wait):
+def reserveprovision(client, nsi_header, src, dst, start_time, end_time, capacity, ero, connection_id, global_id, notification_wait):
 
     schedule = nsa.Schedule(start_time, end_time)
-    service_def = _createP2PS(src, dst, capacity)
+    service_def = _createP2PS(src, dst, capacity, ero)
     crt = nsa.Criteria(0, schedule, service_def)
 
     try:
@@ -164,10 +180,10 @@ def reserveprovision(client, nsi_header, src, dst, start_time, end_time, capacit
 
 
 @defer.inlineCallbacks
-def rprt(client, nsi_header, src, dst, start_time, end_time, capacity, connection_id, global_id):
+def rprt(client, nsi_header, src, dst, start_time, end_time, capacity, ero, connection_id, global_id):
     # reserve, provision, release,  terminate
     schedule = nsa.Schedule(start_time, end_time)
-    service_def = _createP2PS(src, dst, capacity)
+    service_def = _createP2PS(src, dst, capacity, ero)
     crt = nsa.Criteria(0, schedule, service_def)
 
     try:
