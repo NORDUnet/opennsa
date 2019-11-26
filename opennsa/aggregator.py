@@ -747,7 +747,7 @@ class Aggregator:
             dest_stp = nsa.STP(c.dest_network, c.dest_port, c.dest_label)
 
             schedule = nsa.Schedule(c.start_time, c.end_time)
-            sd = nsa.Point2PointService(source_stp, dest_stp, c.bandwidth, cnt.BIDIRECTIONAL, False, None)
+            sd = nsa.Point2PointService(source_stp, dest_stp, c.bandwidth, cnt.BIDIRECTIONAL, False, None, None)
 
             criteria = nsa.QueryCriteria(c.revision, schedule, sd, children)
 

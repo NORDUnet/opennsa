@@ -378,7 +378,7 @@ class Schedule(object):
 
 class Point2PointService(object):
 
-    def __init__(self, source_stp, dest_stp, capacity, directionality=BIDIRECTIONAL, symmetric=None, ero=None, parameters=None):
+    def __init__(self, source_stp, dest_stp, capacity, directionality=BIDIRECTIONAL, symmetric=False, ero=None, parameters=None):
 
         if directionality is None:
             raise error.MissingParameterError('directionality must be defined, must not be None')

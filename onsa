@@ -169,7 +169,7 @@ def doMain():
             if bandwidth is None:
                 raise usage.UsageError('Bandwidth is not defined')
 
-            bandwidth = config.subOptions[options.BANDWIDTH] or defaults.get(options.BANDWIDTH)
+            ero = config.subOptions[options.ERO] or defaults.get(options.BANDWIDTH)
 
         if config.subCommand in ('provision', 'release', 'terminate') and connection_id is None:
             raise usage.UsageError('Connection ID is not defined')
@@ -187,16 +187,16 @@ def doMain():
     # start over on commands, now we do the actual dispatch
 
     if config.subCommand == 'reserve':
-        yield commands.reserve(client, nsi_header, source_stp, dest_stp, start_time, end_time, bandwidth, connection_id, global_id)
+        yield commands.reserve(client, nsi_header, source_stp, dest_stp, start_time, end_time, bandwidth, ero, connection_id, global_id)
 
     elif config.subCommand == 'reserveonly':
-        yield commands.reserveonly(client, nsi_header, source_stp, dest_stp, start_time, end_time, bandwidth, connection_id, global_id)
+        yield commands.reserveonly(client, nsi_header, source_stp, dest_stp, start_time, end_time, bandwidth, ero, connection_id, global_id)
 
     elif config.subCommand == 'reserveprovision':
-        yield commands.reserveprovision(client, nsi_header, source_stp, dest_stp, start_time, end_time, bandwidth, connection_id, global_id, notification_wait)
+        yield commands.reserveprovision(client, nsi_header, source_stp, dest_stp, start_time, end_time, bandwidth, ero, connection_id, global_id, notification_wait)
 
     elif config.subCommand == 'rprt':
-        yield commands.rprt(client, nsi_header, source_stp, dest_stp, start_time, end_time, bandwidth, connection_id, global_id)
+        yield commands.rprt(client, nsi_header, source_stp, dest_stp, start_time, end_time, bandwidth, ero, connection_id, global_id)
 
     elif config.subCommand == 'reservecommit':
         yield commands.reservecommit(client, nsi_header, connection_id)
