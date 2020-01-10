@@ -783,6 +783,34 @@ class GenericProviderTest:
         cid = yield self.requester.reserve_commit_defer
 
 
+    def testReserveERO(self):
+
+        # We really need multi-agent setup for this
+
+        source_stp  = nsa.STP(self.network, self.source_port, nsa.Label(cnt.ETHERNET_VLAN, '1782-1783') )
+        dest_stp    = nsa.STP(self.network, self.dest_port,   nsa.Label(cnt.ETHERNET_VLAN, '1782-1784') )
+        criteria    = nsa.Criteria(0, self.schedule, nsa.Point2PointService(source_stp, dest_stp, 200, cnt.BIDIRECTIONAL, False, None) )
+
+        ero         = [ nsa.STP(self.network, self.source_port, nsa.Label(cnt.ETHERNET_VLAN, '1782')),
+                        nsa.STP(self.network, self.source_port, nsa.Label(cnt.ETHERNET_VLAN, '1783')) ]
+
+        self.header.newCorrelationId()
+        acid = yield self.provider.reserve(self.header, None, None, None, criteria, ero=ero)
+        header, cid, gid, desc, sp = yield self.requester.reserve_defer
+
+        yield self.provider.reserveAbort(self.header, acid)
+        header, cid = yield self.requester.reserve_abort_defer
+
+        self.requester.reserve_defer = defer.Deferred()
+
+        # try to reserve the same resources
+        acid2 = yield self.provider.reserve(self.header, None, None, None, criteria)
+        header, cid, gid, desc, sp = yield self.requester.reserve_defer
+
+
+    testReserveERO.skip = 'ERO is not implemented on server-side yet'
+
+
 
 class DUDBackendTest(GenericProviderTest, unittest.TestCase):
 
