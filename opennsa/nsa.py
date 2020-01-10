@@ -298,7 +298,7 @@ class NetworkServiceAgent(object):
 
 
     def getHostPort(self):
-        url = urlparse.urlparse(self.endpoint)
+        url = urlparse(self.endpoint)
         host, port = url.netloc.split(':',2)
         port = int(port)
         return host, port

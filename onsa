@@ -106,7 +106,7 @@ def doMain():
         host            = config.subOptions[options.HOST]           or defaults.get(options.HOST)   or getHostname(provider_nsa)
         port            = config.subOptions[options.PORT]           or defaults.get(options.PORT)   or (7443 if tls else 7080)
 
-        requester_url   = REQUESTER_URL_BASE % (scheme, host, port)
+        requester_url   = REQUESTER_URL_BASE.format(scheme, host, port)
         client_nsa      = nsa.NetworkServiceAgent(requester_nsa, requester_url)
 
         log.msg("Requester URL: %s" % requester_url, debug=True)

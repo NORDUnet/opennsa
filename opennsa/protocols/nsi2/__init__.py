@@ -50,7 +50,7 @@ def setupRequesterPair(top_resource, host, port, service_endpoint, nsi_requester
 
 def createRequester(host, port, service_endpoint, resource_name=None, tls=False, ctx_factory=None, authz_header=None, callback_timeout=None):
 
-    resource_name = resource_name or 'RequesterService2'
+    resource_name = resource_name or b'RequesterService2'
 
     top_resource = resource.Resource()
 
