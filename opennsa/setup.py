@@ -222,11 +222,41 @@ class OpenNSAService(twistedservice.MultiService):
             if not cnt.AGGREGATOR in vc[config.POLICY]:
                 vc[config.POLICY].append(cnt.AGGREGATOR)
         elif len(backend_configs) > 1:
+            # This is all temporary right now... clean up later
+            print('')
+            print(backend_configs)
+
+            for backend_name, b_cfg in backend_configs.items():
+                print('backend name: {}'.format(backend_name))
+
+                if backend_name is None or backend_name == '':
+                    raise config.Configuration('You need to specify backend name when doing multiple backends, use [backend:name]')
+
+                b_network_name = '{}:{}'.format(base_name, backend_name)
+                print(' - network name: {}'.format(b_network_name))
+
+                if not config.NRM_MAP_FILE in b_cfg: # move to verify config
+                    raise config.ConfigError('No nrm map specified for backend')
+
+                b_nrm_map_file = b_cfg[config.NRM_MAP_FILE]
+                if not os.path.exists(b_nrm_map_file): # move to verify config
+                    raise config.ConfigError('nrm map file {} for backend {} does not exists'.format(b_nrm_map_file, backend_name))
+
+                nrm_map = open(b_nrm_map_file)
+
+                b_nrm_ports = nrm.parsePortSpec(nrm_map)
+                print(' - n ports: {}'.format(len(b_nrm_ports)))
+
+                backend_service = setupBackend(b_cfg, b_network_name, nrm_ports, aggr)
+                print(backend_service)
+
             raise config.ConfigurationError('Only one backend supported for now. Multiple will probably come later.')
+
         else: # 1 backend
             if not nrm_ports:
                 raise config.ConfigurationError('No NRM Map file specified. Cannot configure a backend without port spec.')
 
+            print('single backend config: {}'.format(backend_configs))
             backend_cfg = backend_configs.values()[0]
 
             backend_service = setupBackend(backend_cfg, network_name, nrm_ports, aggr)
