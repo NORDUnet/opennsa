@@ -169,7 +169,7 @@ def doMain():
             if bandwidth is None:
                 raise usage.UsageError('Bandwidth is not defined')
 
-            ero = config.subOptions[options.ERO] or defaults.get(options.BANDWIDTH)
+            ero = config.subOptions[options.ERO] or None
 
         if config.subCommand in ('provision', 'release', 'terminate') and connection_id is None:
             raise usage.UsageError('Connection ID is not defined')
