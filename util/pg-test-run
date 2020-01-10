@@ -16,7 +16,7 @@ configfile=".opennsa-test.json"
 # Note: We bind the port, so it listens on 127.0.0.1 only, so no host info needed
 
 docker run --rm --name $container -p 127.0.0.1:5432:5432 -v $PWD/datafiles/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro \
-    -e POSTGRES_DB=$database -e POSTGRES_USER=$user -e POSTGRES_PASSWORD=$password postgres:9.6.5 &
+    -e POSTGRES_DB=$database -e POSTGRES_USER=$user -e POSTGRES_PASSWORD=$password postgres:12 &
 
 echo "{
     \"container\" : \"$container\",
