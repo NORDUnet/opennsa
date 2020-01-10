@@ -4,7 +4,6 @@ from twisted.python import log, usage
 from twisted.internet import defer
 
 from opennsa import constants as cnt, nsa, error
-from opennsa.protocols.nsi2.bindings import p2pservices
 
 LABEL_MAP = {
     'vlan' : cnt.ETHERNET_VLAN,
@@ -30,26 +29,23 @@ def _createSTP(stp_arg):
 
     return nsa.STP(network, port, label)
 
-# Take a string of ERO STP and convert to a list of OrderedStpType.
-def _createOrderedStpType(ero):
+
+def _createSTPList(ero):
+    """
+    Take a string of ERO STP and convert to a list of OrderedStpType.
+    """
     if ero is None:
         return None
 
-    ero_list = [x.strip() for x in ero.split(',')]
-    order = 0
-    ordered_stp = []
-    for item in ero_list:
-        ordered_stp.append(p2pservices.OrderedStpType(order, _createSTP(item).urn()))
-        order += 1
-
-    return ordered_stp
+    ero_stps = [ _createSTP(stp_spec.strip()) for stp_spec in ero.split(',') ]
+    return ero_stps
 
 
 def _createP2PS(src, dst, capacity, ero):
 
     src_stp = _createSTP(src)
     dst_stp = _createSTP(dst)
-    ordered_stp = _createOrderedStpType(ero)
+    ordered_stp = _createSTPList(ero)
 
     return nsa.Point2PointService(src_stp, dst_stp, capacity, cnt.BIDIRECTIONAL, False, ordered_stp, None)
 
