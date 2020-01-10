@@ -49,3 +49,11 @@ class LabelTest(unittest.TestCase):
 
         self.failUnlessRaises(nsa.EmptyLabelSet, nsa.Label('', '1781-1784').intersect, nsa.Label('', '1780-1780') )
 
+
+    def testNetworkServiceAgent(self):
+
+        agent = nsa.NetworkServiceAgent('id', 'http://localhost:8888')
+        host, port = agent.getHostPort()
+        self.failUnlessEqual(host, 'localhost')
+        self.failUnlessEqual(port, 8888)
+
