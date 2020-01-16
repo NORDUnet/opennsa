@@ -4,17 +4,17 @@ import json
 import tempfile
 import configparser
 
-from opennsa import config
+from opennsa import config, setup
 from . import db
+
 
 
 ARUBA_DUD_CONFIG = """
 [service]
-network=aruba.net
+domain=aruba.net
 logfile=
 rest=true
 port=4080
-nrmmap=/dev/null
 peers=http://localhost:4081/NSI/discovery.xml
 
 database=opennsa-aruba
@@ -26,13 +26,19 @@ tls=false
 [dud]
 """
 
-ARUBA_MULTI_DUD_CONFIG = """
+INVALID_LEGACY_CONFIG = """
 [service]
 network=aruba.net
+
+[dud]
+"""
+
+ARUBA_MULTI_DUD_CONFIG = """
+[service]
+domain=aruba.net
 logfile=
 rest=true
 port=4080
-nrmmap=/dev/null
 peers=http://localhost:4081/NSI/discovery.xml
 
 database={database}
@@ -83,6 +89,17 @@ class ConfigTest(unittest.TestCase):
         raw_cfg.read_string(ARUBA_DUD_CONFIG)
 
         cfg = config.readVerifyConfig(raw_cfg)
+        nsa_service = setup.OpenNSAService(cfg)
+
+    def testInvalidLegacyConfig(self):
+
+        raw_cfg = configparser.SafeConfigParser()
+        raw_cfg.read_string(INVALID_LEGACY_CONFIG)
+        try:
+            cfg = config.readVerifyConfig(raw_cfg)
+            self.fail('Should have raised ConfigurationError')
+        except config.ConfigurationError:
+            pass
 
 
     def testConfigParsingMultiBackend(self):
@@ -105,8 +122,6 @@ class ConfigTest(unittest.TestCase):
                                                             db_password=self.db_password,
                                                             nrm_ojs=aruba_ojs.name,
                                                             nrm_san=aruba_san.name)
-        #print(config_file_content)
-
         # parse and verify config
 
         cfg = configparser.SafeConfigParser()
@@ -114,14 +129,6 @@ class ConfigTest(unittest.TestCase):
 
         verified_config = config.readVerifyConfig(cfg)
 
-        print('')
-        print('')
-
-        #import pprint
-        #pprint.pprint(verified_config)
-
-        # This is not well suited for testing currently.. working on it
-        from opennsa import setup
+        # do the setup dance to see if all the wiring is working, but don't start anything
         nsa_service = setup.OpenNSAService(verified_config)
-        nsa_service.startService()
 

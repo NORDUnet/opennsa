@@ -39,7 +39,8 @@ BLOCK_OESS       = 'oess'
 BLOCK_CUSTOM_BACKEND = 'custombackend'
 
 # service block
-NETWORK_NAME     = 'network'     # mandatory
+DOMAIN           = 'domain'      # mandatory
+NETWORK_NAME     = 'network'     # legacy, used to be mandatory
 LOG_FILE         = 'logfile'
 HOST             = 'host'
 PORT             = 'port'
@@ -183,10 +184,26 @@ def readVerifyConfig(cfg):
 
     vc = {}
 
+    # Check for deprecated / old invalid stuff
+
     try:
-        vc[NETWORK_NAME] = cfg.get(BLOCK_SERVICE, NETWORK_NAME)
+        cfg.get(BLOCK_SERVICE, NRM_MAP_FILE)
+        raise ConfigurationError('NRM Map file should be specified under backend')
     except configparser.NoOptionError:
-        raise ConfigurationError('No network name specified in configuration file (mandatory)')
+        pass
+
+    # check / extract
+
+    try:
+        vc[DOMAIN] = cfg.get(BLOCK_SERVICE, DOMAIN)
+    except configparser.NoOptionError:
+        raise ConfigurationError('No domain name specified in configuration file (mandatory, see docs/migration)')
+
+    try:
+        cfg.get(BLOCK_SERVICE, NETWORK_NAME)
+        raise ConfigurationError('Network name no longer used, use domain (see docs/migration)')
+    except configparser.NoOptionError:
+        pass
 
     try:
         vc[LOG_FILE] = cfg.get(BLOCK_SERVICE, LOG_FILE)
