@@ -487,7 +487,7 @@ class Aggregator:
 
         for sc in sub_connections:
             save_defs.append( state.reserveAbort(sc) )
-            provider = self.getProvider(sc.provider_nsa)
+            provider = self.getProvider(sc.source_network)
             header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa, security_attributes=header.security_attributes)
             d = provider.reserveAbort(header, sc.connection_id, request_info)
             d.addErrback(_logErrorResponse, connection_id, sc.provider_nsa, 'reserveAbort')
