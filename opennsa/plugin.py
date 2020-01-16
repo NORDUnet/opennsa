@@ -25,7 +25,7 @@ class BasePlugin:
         self.cfg         = cfg
         self.ctx_factory = ctx_factory
 
-        self.conn_prefix = cfg[config.NETWORK_NAME][:2].upper() + '-'
+        self.conn_prefix = cfg[config.DOMAIN][:2].upper() + '-'
 
 
     def connectionRequest(self, header, connection_id, global_reservation_id, description, criteria):
