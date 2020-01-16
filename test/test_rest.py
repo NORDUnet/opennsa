@@ -46,10 +46,11 @@ class RestInterfaceTest(unittest.TestCase):
         link_vector = linkvector.LinkVector( [ self.network ] )
 
         pl = plugin.BasePlugin()
-        pl.init( { config.NETWORK_NAME: self.network }, None )
+        pl.init( { config.DOMAIN: self.network }, None )
 
-        pr = provreg.ProviderRegistry( { self.provider_agent.urn() : self.backend }, {} )
-        self.aggregator = aggregator.Aggregator(self.network, self.provider_agent, network_topology, link_vector, None, pr, [], pl) # we set the parent later
+        pr = provreg.ProviderRegistry({})
+        pr.addProvider(self.provider_agent.urn(), self.network, self.backend)
+        self.aggregator = aggregator.Aggregator(self.provider_agent, network_topology, link_vector, None, pr, [], pl) # we set the parent later
 
         self.backend.parent_requester = self.aggregator
 
