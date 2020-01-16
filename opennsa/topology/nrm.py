@@ -126,10 +126,11 @@ def parsePortSpec(source):
                 remote_port     = None
                 remote_in       = None
                 remote_out      = None
+            elif not in_suffix or not out_suffix:
+                raise NRMSpecificationError('Suffix not defined for bidirectional port %s' % port_name)
             else:
-                if not in_suffix or not out_suffix:
-                    raise NRMSpecificationError('Suffix not defined for bidirectional port %s' % port_name)
-                remote_port = remote_network + ':' + remote_port
+                remote_network = remote_network
+                remote_port = remote_port
                 remote_in   = remote_port + in_suffix
                 remote_out  = remote_port + out_suffix
         else:
