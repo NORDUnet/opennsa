@@ -5,7 +5,7 @@ from twisted.trial import unittest
 from twisted.internet import reactor, defer, task
 
 from opennsa import nsa, provreg, database, error, setup, aggregator, config, plugin, constants as cnt
-from opennsa.topology import nrm
+from opennsa.topology import nrm, linkvector, nml
 from opennsa.backends import dud
 
 from . import topology, common, db
@@ -879,16 +879,28 @@ class AggregatorTest(GenericProviderTest, unittest.TestCase):
         self.clock = task.Clock()
 
         nrm_map = StringIO(topology.ARUBA_TOPOLOGY)
-        nrm_ports, nml_network, link_vector = setup.setupTopology(nrm_map, self.network, 'aruba.net')
+        nrm_ports = nrm.parsePortSpec(nrm_map)
+
+        link_vector = linkvector.LinkVector()
+        link_vector.addLocalNetwork(self.network)
+        for np in nrm_ports:
+            if np.remote_network is not None:
+                link_vector.updateVector(self.network, np.name, { np.remote_network : 1 } ) # hack
+                # don't think this is needed
+                #for network, cost in np.vectors.items():
+                #    link_vector.updateVector(np.name, { network : cost })
+
+        nml_network = nml.createNMLNetwork(nrm_ports, self.network, self.base)
 
         self.backend = dud.DUDNSIBackend(self.network, nrm_ports, self.requester, {})
         self.backend.scheduler.clock = self.clock
 
         pl = plugin.BasePlugin()
-        pl.init( { config.NETWORK_NAME: self.network }, None )
+        pl.init( { config.DOMAIN: self.network }, None )
 
-        pr = provreg.ProviderRegistry( { self.provider_agent.urn() : self.backend }, {} )
-        self.provider = aggregator.Aggregator(self.network, self.provider_agent, nml_network, link_vector, self.requester, pr, [], pl)
+        pr = provreg.ProviderRegistry({})
+        pr.addProvider(self.provider_agent.urn(), self.network, self.backend)
+        self.provider = aggregator.Aggregator(self.provider_agent, nml_network, link_vector, self.requester, pr, [], pl)
 
         # set parent for backend, we need to create the aggregator before this can be done
         self.backend.parent_requester = self.provider
