@@ -970,16 +970,28 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
         self.clock = task.Clock()
 
         nrm_map = StringIO(topology.ARUBA_TOPOLOGY)
-        nrm_ports, nml_network, link_vector = setup.setupTopology(nrm_map, self.network, 'aruba.net')
+        nrm_ports = nrm.parsePortSpec(nrm_map)
+
+        link_vector = linkvector.LinkVector()
+        link_vector.addLocalNetwork(self.network)
+        for np in nrm_ports:
+            if np.remote_network is not None:
+                link_vector.updateVector(self.network, np.name, { np.remote_network : 1 } ) # hack
+                # don't think this is needed
+                #for network, cost in np.vectors.items():
+                #    link_vector.updateVector(np.name, { network : cost })
+
+        nml_network = nml.createNMLNetwork(nrm_ports, self.network, self.base)
 
         self.backend = dud.DUDNSIBackend(self.network, nrm_ports, None, {}) # we set the parent later
         self.backend.scheduler.clock = self.clock
 
         pl = plugin.BasePlugin()
-        pl.init( { config.NETWORK_NAME: self.network }, None )
+        pl.init( { config.DOMAIN: self.network }, None )
 
-        pr = provreg.ProviderRegistry( { self.provider_agent.urn() : self.backend }, {} )
-        self.aggregator = aggregator.Aggregator(self.network, self.provider_agent, nml_network, link_vector, None, pr, [], pl) # we set the parent later
+        pr = provreg.ProviderRegistry({})
+        pr.addProvider(self.provider_agent.urn(), self.network, self.backend)
+        self.aggregator = aggregator.Aggregator(self.provider_agent, nml_network, link_vector, self.requester, pr, [], pl)
 
         self.backend.parent_requester = self.aggregator
 
