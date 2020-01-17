@@ -257,7 +257,7 @@ class OpenNSAService(twistedservice.MultiService):
 
         # fetcher
         if vc[config.PEERS]:
-            fetcher_service = fetcher.FetcherService(link_vector, nrm_ports, vc[config.PEERS], provider_registry, ctx_factory=ctx_factory)
+            fetcher_service = fetcher.FetcherService(link_vector, networks, vc[config.PEERS], provider_registry, ctx_factory=ctx_factory)
             fetcher_service.setServiceParent(self)
         else:
             log.msg('No peers configured, will not be able to do outbound requests (UPA mode)')

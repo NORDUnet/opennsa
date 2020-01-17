@@ -89,7 +89,8 @@ class FetcherService(service.Service):
 
             nsi_agent = nsa.NetworkServiceAgent( _baseName(nsa_id), cs_service_url, cnt.CS2_SERVICE_TYPE)
 
-            self.provider_registry.spawnProvider(nsi_agent, network_ids)
+            for network_id in network_ids:
+                self.provider_registry.spawnProvider(nsi_agent, network_ids)
 
             # first, build vectors
             vectors = {}
@@ -104,10 +105,11 @@ class FetcherService(service.Service):
 
             # update per-port link vectors
             if vectors:
-                for np in self.nrm_ports:
-                    if np.remote_network in network_ids:
-                        # this may add the vectors to multiple ports (though not likely)
-                        self.link_vectors.updateVector(np.name, vectors )
+                for network, no in self.nrm_ports.items():
+                    for np in no['nrm_ports']:
+                        if np.remote_network in network_ids:
+                            # this may add the vectors to multiple ports (though not likely)
+                            self.link_vectors.updateVector(np.name, vectors )
 
             # there is lots of other stuff in the nsa description but we don't really use it
 
