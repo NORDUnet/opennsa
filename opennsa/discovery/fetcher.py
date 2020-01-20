@@ -50,7 +50,7 @@ class FetcherService(service.Service):
         defs = []
         for peer in self.peers:
             log.msg('Fetching %s' % peer.url, debug=True, system=LOG_SYSTEM)
-            d = httpclient.httpRequest(peer.url, '', {}, 'GET', timeout=10, ctx_factory=self.ctx_factory)
+            d = httpclient.httpRequest(peer.url.encode('utf-8'), b'', {}, b'GET', timeout=10, ctx_factory=self.ctx_factory)
             d.addCallbacks(self.gotDocument, self.retrievalFailed, callbackArgs=(peer,), errbackArgs=(peer,))
             defs.append(d)
 
