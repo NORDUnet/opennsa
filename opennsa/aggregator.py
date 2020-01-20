@@ -95,11 +95,6 @@ class Aggregator:
         return nid
 
 
-    def getProvider(self, nsi_agent_urn):
-        # This function should be killed off
-        return self.provider_registry.getProvider(nsi_agent_urn)
-
-
     def getConnection(self, connection_id):
 
         # need to do authz here
@@ -447,7 +442,7 @@ class Aggregator:
 
         for sc in sub_connections:
             # we assume a provider is available
-            provider = self.getProvider(sc.source_network) # source and dest network should be the same
+            provider = self.provider_registry.getProvider(sc.source_network) # source and dest network should be the same
             req_header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa, security_attributes=header.security_attributes)
             # we should probably mark as committing before sending message...
             d = provider.reserveCommit(req_header, sc.connection_id, request_info)
@@ -487,7 +482,7 @@ class Aggregator:
 
         for sc in sub_connections:
             save_defs.append( state.reserveAbort(sc) )
-            provider = self.getProvider(sc.source_network)
+            provider = self.provider_registry.getProvider(sc.source_network)
             header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa, security_attributes=header.security_attributes)
             d = provider.reserveAbort(header, sc.connection_id, request_info)
             d.addErrback(_logErrorResponse, connection_id, sc.provider_nsa, 'reserveAbort')
@@ -535,7 +530,7 @@ class Aggregator:
             yield defer.DeferredList(save_defs) #, consumeErrors=True)
 
         for sc in sub_connections:
-            provider = self.getProvider(sc.source_network)
+            provider = self.provider_registry.getProvider(sc.source_network)
             header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa, security_attributes=header.security_attributes)
             d = provider.provision(header, sc.connection_id, request_info) # request_info will only be passed locally
             d.addErrback(_logErrorResponse, connection_id, sc.provider_nsa, 'provision')
