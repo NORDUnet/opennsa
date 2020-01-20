@@ -206,9 +206,9 @@ class Aggregator:
 
         # check that we have path vectors to topologies if we start from here
         if any( [ source_stp.network in local_networks, dest_stp.network in local_networks ] ):
-            if source_stp.network not in local_networks and self.route_vectors.vector(source_stp.network) is None:
+            if source_stp.network not in local_networks and self.route_vectors.vector(source_stp.network, source=source_stp.network) is None:
                 raise error.ConnectionCreateError('No known routes to network %s' % source_stp.network)
-            if dest_stp.network not in local_networks and self.route_vectors.vector(dest_stp.network) is None:
+            if dest_stp.network not in local_networks and self.route_vectors.vector(dest_stp.network, source=source_stp.network) is None:
                 raise error.ConnectionCreateError('No known routes to network %s' % dest_stp.network)
 
         # if the link terminates at our network, check that ports exists and that labels match
@@ -316,7 +316,7 @@ class Aggregator:
                 remote_stp     = source_stp
 
             # we should really find multiple port/link vectors to the remote network, but right now we don't
-            vector_network, vector_port = self.route_vectors.vector(remote_stp.network)
+            vector_network, vector_port = self.route_vectors.vector(remote_stp.network, source=local_stp.network)
             # FIXME this check should probably be done before we write anything to the database, no need for that
             if vector_port is None:
                 raise error.STPResolutionError('No vector to network %s, cannot create circuit' % remote_stp.network)
