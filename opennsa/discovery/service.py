@@ -50,9 +50,6 @@ class DiscoveryService:
         except ValueError:
             pass # running in aggregetor-only mode
 
-        topology_vectors = [ (cnt.URN_OGF_PREFIX + tv, cost) for tv, cost in self.link_vector.listVectors().items() ]
-        other = discovery.HolderType( [ discovery.Topology(t,c) for (t,c) in topology_vectors ] )
-
         nsa_element = discovery.NsaType(
             self.nsa_id,
             xmlhelper.createXMLTime(self.version),
@@ -64,7 +61,7 @@ class DiscoveryService:
             interface_types,
             feature_types,
             peers_with,
-            other,
+            None,
            )
 
         e = nsa_element.xml(discovery.nsa)
