@@ -85,7 +85,8 @@ class GenericBackend(service.Service):
     @defer.inlineCallbacks
     def buildSchedule(self):
 
-        conns = yield GenericBackendConnections.find(where=['lifecycle_state <> ?', state.TERMINATED])
+        # make sure we only get connections belonging to this backend, as the table is shared between backends
+        conns = yield GenericBackendConnections.find(where=['source_network = ? AND dest_network = ? AND lifecycle_state <> ?', self.network, self.network, state.TERMINATED])
         for conn in conns:
             # avoid race with newly created connections
             if self.scheduler.hasScheduledCall(conn.connection_id):
@@ -172,7 +173,7 @@ class GenericBackend(service.Service):
     def _getConnection(self, connection_id, requester_nsa):
         # add security check sometime
 
-        conns = yield GenericBackendConnections.findBy(connection_id=connection_id)
+        conns = yield GenericBackendConnections.findBy(source_network=self.network, dest_network=self.network, connection_id=connection_id)
         if len(conns) == 0:
             raise error.ConnectionNonExistentError('No connection with id %s' % connection_id)
         defer.returnValue( conns[0] ) # we only get one, unique in db
@@ -536,9 +537,9 @@ class GenericBackend(service.Service):
 
         # TODO: Match stps/ports that can be used with credentials and return connections using these STPs
         if connection_ids:
-            conns = yield GenericBackendConnections.find(where=['requester_nsa = ? AND connection_id IN ?', header.requester_nsa, tuple(connection_ids) ])
+            conns = yield GenericBackendConnections.find(where=['source_network = ? AND dest_network = ? AND requester_nsa = ? AND connection_id IN ?', self.network, self.network, header.requester_nsa, tuple(connection_ids) ])
         elif global_reservation_ids:
-            conns = yield GenericBackendConnections.find(where=['requester_nsa = ? AND global_reservation_ids IN ?', header.requester_nsa, tuple(global_reservation_ids) ])
+            conns = yield GenericBackendConnections.find(where=['source_network = ? AND dest_network = ? AND requester_nsa = ? AND global_reservation_ids IN ?', self.network, self.network, header.requester_nsa, tuple(global_reservation_ids) ])
         else:
             raise error.MissingParameterError('Must specify connectionId or globalReservationId')
 
