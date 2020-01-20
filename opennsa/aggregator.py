@@ -389,7 +389,7 @@ class Aggregator:
             d = provider.reserve(c_header, sub_connection_id, conn.global_reservation_id, conn.description, crt, request_info)
             d.addErrback(_logErrorResponse, connection_id, provider_urn, 'reserve')
 
-            conn_info.append( (d, provider_urn) )
+            conn_info.append( (d, link.src_stp.network) )
 
             # Don't bother trying to save connection here, wait for reserveConfirmed
 
@@ -407,10 +407,10 @@ class Aggregator:
             # currently we don't try and be too clever about cleaning, just do it, and switch state
             yield state.terminating(conn)
             defs = []
-            reserved_connections = [ (sc_id, provider_urn) for (success,sc_id),(_,provider_urn) in zip(results, conn_info) if success ]
-            for (sc_id, provider_urn) in reserved_connections:
+            reserved_connections = [ (sc_id, network_urn) for (success,sc_id),(_,network_urn) in zip(results, conn_info) if success ]
+            for (sc_id, network_urn) in reserved_connections:
 
-                provider = self.getProvider(provider_urn)
+                provider = self.provider_registry.getProvider(network_urn)
                 t_header = nsa.NSIHeader(self.nsa_.urn(), provider_urn, security_attributes=header.security_attributes)
 
                 d = provider.terminate(t_header, sc_id)
