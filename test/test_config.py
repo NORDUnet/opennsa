@@ -9,6 +9,36 @@ from . import db
 
 
 
+ARUBA_DUD_CONFIG_NO_DATABASE = """
+[service]
+domain=aruba.net
+logfile=
+rest=true
+port=4080
+
+tls=false
+
+[dud]
+"""
+
+ARUBA_DUD_CONFIG_NO_NETWORK_NAME = """
+[service]
+domain=aruba.net
+logfile=
+rest=true
+port=4080
+peers=http://localhost:4081/NSI/discovery.xml
+
+database={database}
+dbhost={db_host}
+dbuser={db_user}
+dbpassword={db_password}
+
+tls=false
+
+[dud]
+"""
+
 ARUBA_DUD_CONFIG = """
 [service]
 domain=aruba.net
@@ -17,13 +47,15 @@ rest=true
 port=4080
 peers=http://localhost:4081/NSI/discovery.xml
 
-database=opennsa-aruba
-dbuser=htj
-dbpassword=htj
+database={database}
+dbhost={db_host}
+dbuser={db_user}
+dbpassword={db_password}
 
 tls=false
 
-[dud]
+[dud:topology]
+nrmmap={nrm_map}
 """
 
 INVALID_LEGACY_CONFIG = """
@@ -83,13 +115,59 @@ class ConfigTest(unittest.TestCase):
         self.db_host     = '127.0.0.1'
 
 
-    def testConfigParsing(self):
+    def testConfigParsingNoDatabase(self):
+
+        config_file_content = ARUBA_DUD_CONFIG_NO_DATABASE
 
         raw_cfg = configparser.SafeConfigParser()
-        raw_cfg.read_string(ARUBA_DUD_CONFIG)
+        raw_cfg.read_string(config_file_content)
+
+        try:
+            cfg = config.readVerifyConfig(raw_cfg)
+            nsa_service = setup.OpenNSAService(cfg)
+            factory = nsa_service.setupServiceFactory()
+            self.fail('Should have raised config.ConfigurationError')
+        except config.ConfigurationError as e:
+            pass
+
+
+    def testConfigParsingNoNetworkName(self):
+
+        config_file_content = ARUBA_DUD_CONFIG_NO_NETWORK_NAME.format(database=self.database,
+                                                                      db_host=self.db_host,
+                                                                      db_user=self.db_user,
+                                                                      db_password=self.db_password)
+        raw_cfg = configparser.SafeConfigParser()
+        raw_cfg.read_string(config_file_content)
+
+        try:
+            cfg = config.readVerifyConfig(raw_cfg)
+            nsa_service = setup.OpenNSAService(cfg)
+            factory = nsa_service.setupServiceFactory()
+            self.fail('Should have raised config.ConfigurationError')
+        except config.ConfigurationError as e:
+            pass
+
+
+    def testConfigParsing(self):
+
+        aruba_ojs = tempfile.NamedTemporaryFile()
+        aruba_ojs.write(ARUBA_OJS_NRM_MAP)
+        aruba_ojs.flush()
+
+        config_file_content = ARUBA_DUD_CONFIG.format(database=self.database,
+                                                      db_host=self.db_host,
+                                                      db_user=self.db_user,
+                                                      db_password=self.db_password,
+                                                      nrm_map=aruba_ojs.name)
+
+        raw_cfg = configparser.SafeConfigParser()
+        raw_cfg.read_string(config_file_content)
 
         cfg = config.readVerifyConfig(raw_cfg)
         nsa_service = setup.OpenNSAService(cfg)
+        factory = nsa_service.setupServiceFactory()
+
 
     def testInvalidLegacyConfig(self):
 
@@ -131,4 +209,5 @@ class ConfigTest(unittest.TestCase):
 
         # do the setup dance to see if all the wiring is working, but don't start anything
         nsa_service = setup.OpenNSAService(verified_config)
+        factory = nsa_service.setupServiceFactory()
 

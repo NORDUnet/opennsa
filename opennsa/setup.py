@@ -223,12 +223,12 @@ class OpenNSAService(twistedservice.MultiService):
             for backend_name, b_cfg in backend_configs.items():
 
                 if backend_name is None or backend_name == '':
-                    raise config.Configuration('You need to specify backend name, use [backend:name]')
+                    raise config.ConfigurationError('You need to specify backend name, use [backend:name]')
 
                 backend_network_name = '{}:{}'.format(domain_name, backend_name)
 
                 if not config.NRM_MAP_FILE in b_cfg: # move to verify config
-                    raise config.ConfigError('No nrm map specified for backend')
+                    raise config.ConfigurationError('No nrm map specified for backend')
 
                 backend_nrm_map_file = b_cfg[config.NRM_MAP_FILE]
                 if not os.path.exists(backend_nrm_map_file): # move to verify config
