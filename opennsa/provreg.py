@@ -33,11 +33,11 @@ class ProviderRegistry(object):
         if network_id in self.providers:
             raise ValueError('Provider for network {} already registered')
 
+        log.msg('Adding new provider for network {}, nsa urn {}'.format(network_id, nsi_agent_urn))
         self.providers[network_id] = provider
         self.provider_urns[network_id] = nsi_agent_urn
 
 
-    #def getProvider(self, nsi_agent_urn):
     def getProvider(self, network_id):
         """
         Get a provider from a network id
@@ -48,6 +48,7 @@ class ProviderRegistry(object):
         try:
             return self.providers[network_id]
         except KeyError:
+            log.msg('Cannot provider for network {}, have providers for {}'.format(network_id, ','.join(self.providers.keys())), debug=True, system=LOG_SYSTEM)
             raise error.STPResolutionError('Could not resolve a provider for network %s' % network_id)
 
 
@@ -60,7 +61,7 @@ class ProviderRegistry(object):
         Create a new provider, from an NSI agent.
         ServiceType must exist on the NSI agent, and a factory for the type available.
         """
-        assert type(network_id) is str, 'network_id must be a string'
+        assert type(network_id) is str, 'network_id must be a string, got {}'.format(type(network_id))
         if network_id in self.providers:
             log.msg('Skipping provider spawn for %s (already exists)' % nsi_agent, debug=True, system=LOG_SYSTEM)
             return self.providers[network_id]
