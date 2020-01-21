@@ -142,7 +142,7 @@ class OpenNSAService(twistedservice.MultiService):
         self.vc = vc
 
 
-    def startService(self):
+    def setupServiceFactory(self):
         """
         This sets up the OpenNSA service and ties together everything in the initialization.
         There are a lot of things going on, but none of it it particular deep.
@@ -321,10 +321,17 @@ class OpenNSAService(twistedservice.MultiService):
         factory = server.Site(top_resource)
         factory.log = httplog.logRequest # default logging is weird, so we do our own
 
-        if vc[config.TLS]:
-            internet.SSLServer(vc[config.PORT], factory, ctx_factory).setServiceParent(self)
+        return factory
+
+
+    def startService(self):
+
+        factory = self.setupServiceFactory()
+
+        if self.vc[config.TLS]:
+            internet.SSLServer(self.vc[config.PORT], factory, ctx_factory).setServiceParent(self)
         else:
-            internet.TCPServer(vc[config.PORT], factory).setServiceParent(self)
+            internet.TCPServer(self.vc[config.PORT], factory).setServiceParent(self)
 
         # do not start sub-services until we have started this one
         twistedservice.MultiService.startService(self)
