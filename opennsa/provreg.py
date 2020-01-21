@@ -66,6 +66,17 @@ class ProviderRegistry(object):
             log.msg('Skipping provider spawn for %s (already exists)' % nsi_agent, debug=True, system=LOG_SYSTEM)
             return self.providers[network_id]
 
+        if nsi_agent.urn() in self.provider_urns.values():
+            log.msg('Provider for {} already exists, re-using'.format(nsi_agent.urn()))
+            for other_network_id, provider_urn in self.provider_urns.items():
+                if provider_urn == nsi_agent.urn():
+                    existing_provider = self.providers[other_network_id]
+                    self.addProvider(nsi_agent.urn(), network_id, existing_provider)
+                    return
+            else:
+                log.msg('Did not find an existing provider for {}, should not happen'.format(nsi_agent.urn()))
+                return
+
         factory = self.provider_factories[ nsi_agent.getServiceType() ]
         provisioner = factory(nsi_agent)
 
