@@ -30,7 +30,7 @@ def setupProvider(child_provider, top_resource, tls=False, ctx_factory=None, all
 def setupRequesterClient(top_resource, host, port, service_endpoint, resource_name, tls=False, ctx_factory=None, authz_header=None):
 
     proto_scheme = 'https://' if tls else 'http://'
-    service_url = proto_scheme + '%s:%i/NSI/services/%s' % (host,port, resource_name.decode())
+    service_url = proto_scheme + '%s:%i/NSI/services/%s' % (host,port, resource_name.decode('utf-8'))
 
     requester_client = requesterclient.RequesterClient(service_endpoint, service_url, ctx_factory=ctx_factory, authz_header=authz_header)
     return requester_client
