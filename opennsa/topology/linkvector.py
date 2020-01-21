@@ -80,6 +80,7 @@ class LinkVector:
 
     def updateVector(self, network, port, vectors):
 
+        log.msg('Updating vector {}:{} -> {}'.format(network, port, vectors))
         if (network, port) in self.vectors:
             self.vectors[(network,port)].update(vectors)
         else:
