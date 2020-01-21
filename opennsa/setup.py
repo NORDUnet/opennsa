@@ -129,7 +129,8 @@ class CS2RequesterCreator:
 
     def create(self, nsi_agent):
 
-        resource_name = 'RequesterService2-' + hashlib.sha1(nsi_agent.urn() + nsi_agent.endpoint).hexdigest()
+        hash_input = nsi_agent.urn() + nsi_agent.endpoint
+        resource_name = b'RequesterService2-' + hashlib.sha1(hash_input.encode()).hexdigest().encode()
         return nsi2.setupRequesterPair(self.top_resource, self.host, self.port, nsi_agent.endpoint, self.aggregator,
                                        resource_name, tls=self.tls, ctx_factory=self.ctx_factory)
 
