@@ -231,9 +231,9 @@ class GenericBackend(service.Service):
         # check network and ports exist
 
         if source_stp.network != self.network:
-            raise error.ConnectionCreateError('Source network does not match network this NSA is managing (%s != %s)' % (source_stp.network, self.network) )
+            raise error.ConnectionCreateError('Source network {} does not match the network this NSA is managing ({})'.format(source_stp.network, self.network))
         if dest_stp.network != self.network:
-            raise error.ConnectionCreateError('Destination network does not match network this NSA is managing (%s != %s)' % (dest_stp.network, self.network) )
+            raise error.ConnectionCreateError('Destination network {} does not match network this NSA is managing ({})'.format(dest_stp.network, self.network))
 
         # ensure that ports actually exists
         if not source_stp.port in self.nrm_ports:
