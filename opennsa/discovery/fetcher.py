@@ -86,11 +86,13 @@ class FetcherService(service.Service):
                 return
 
             network_ids = [ _baseName(nid) for nid in nsa_description.networkId if nid.startswith(cnt.URN_OGF_PREFIX) ] # silent discard weird stuff
+            if not network_ids:
+                log.msg('NSA discovery service for {}, did not list any valid network ids.'.format(nsa_id), debug=True)
 
             nsi_agent = nsa.NetworkServiceAgent( _baseName(nsa_id), cs_service_url, cnt.CS2_SERVICE_TYPE)
 
             for network_id in network_ids:
-                self.provider_registry.spawnProvider(nsi_agent, network_ids)
+                self.provider_registry.spawnProvider(nsi_agent, network_id)
 
             # first, build vectors
             vectors = {}
