@@ -111,7 +111,7 @@ class FetcherService(service.Service):
                     for np in no['nrm_ports']:
                         if np.remote_network in network_ids:
                             # this may add the vectors to multiple ports (though not likely)
-                            self.link_vectors.updateVector(np.name, vectors )
+                            self.link_vectors.updateVector(network, np.name, vectors)
 
             # there is lots of other stuff in the nsa description but we don't really use it
 
