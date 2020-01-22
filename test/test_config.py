@@ -125,7 +125,7 @@ class ConfigTest(unittest.TestCase):
         try:
             cfg = config.readVerifyConfig(raw_cfg)
             nsa_service = setup.OpenNSAService(cfg)
-            factory = nsa_service.setupServiceFactory()
+            factory, _ = nsa_service.setupServiceFactory()
             self.fail('Should have raised config.ConfigurationError')
         except config.ConfigurationError as e:
             pass
@@ -143,7 +143,7 @@ class ConfigTest(unittest.TestCase):
         try:
             cfg = config.readVerifyConfig(raw_cfg)
             nsa_service = setup.OpenNSAService(cfg)
-            factory = nsa_service.setupServiceFactory()
+            factory, _ = nsa_service.setupServiceFactory()
             self.fail('Should have raised config.ConfigurationError')
         except config.ConfigurationError as e:
             pass
@@ -166,7 +166,7 @@ class ConfigTest(unittest.TestCase):
 
         cfg = config.readVerifyConfig(raw_cfg)
         nsa_service = setup.OpenNSAService(cfg)
-        factory = nsa_service.setupServiceFactory()
+        factory, _ = nsa_service.setupServiceFactory()
 
 
     def testInvalidLegacyConfig(self):
@@ -209,5 +209,5 @@ class ConfigTest(unittest.TestCase):
 
         # do the setup dance to see if all the wiring is working, but don't start anything
         nsa_service = setup.OpenNSAService(verified_config)
-        factory = nsa_service.setupServiceFactory()
+        factory, _ = nsa_service.setupServiceFactory()
 

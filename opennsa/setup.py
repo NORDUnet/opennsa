@@ -321,12 +321,12 @@ class OpenNSAService(twistedservice.MultiService):
         factory = server.Site(top_resource)
         factory.log = httplog.logRequest # default logging is weird, so we do our own
 
-        return factory
+        return factory, ctx_factory
 
 
     def startService(self):
 
-        factory = self.setupServiceFactory()
+        factory, ctx_factory = self.setupServiceFactory()
 
         if self.vc[config.TLS]:
             internet.SSLServer(self.vc[config.PORT], factory, ctx_factory).setServiceParent(self)
