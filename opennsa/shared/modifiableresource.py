@@ -7,7 +7,6 @@ Copyright: NORDUnet (2013-2014)
 """
 import datetime
 
-from twisted.python import log
 from twisted.web import resource
 
 

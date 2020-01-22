@@ -26,6 +26,7 @@
 # -a start time
 # -e end time
 # -b bandwidth (megabits)
+# -0 ero
 
 # -j security attributes
 # -l certificate (signed public key)
@@ -40,7 +41,7 @@
 # -z (skip) verify certificate (default is to verify)
 
 # free switches
-# 0-9
+# 1-9
 
 # Not all commands will accept all flags and some flags are mutally exclusive
 
@@ -115,6 +116,9 @@ class SecurityAttributeOptions(usage.Options):
 class BandwidthOption(usage.Options):
     optParameters = [ [ options.BANDWIDTH, 'b', None, 'Bandwidth (Megabits)'] ]
 
+class EroOption(usage.Options):
+    optParameters = [ [ options.ERO, '0', None, 'ERO list'] ]
+
 class PublicKeyOption(usage.Options):
     optParameters = [ [ options.CERTIFICATE, 'l', None, 'Certificate path' ] ]
 
@@ -163,7 +167,7 @@ class ProvisionOptions(NetworkCommandOptions, NotificationWaitFlag):
     pass
 
 
-class ReserveOptions(NetworkCommandOptions, SourceSTPOption, DestSTPOption, StartTimeOption, EndTimeOption, BandwidthOption):
+class ReserveOptions(NetworkCommandOptions, SourceSTPOption, DestSTPOption, StartTimeOption, EndTimeOption, BandwidthOption, EroOption):
 
     def postOptions(self):
         NetworkCommandOptions.postOptions(self)
@@ -201,7 +205,7 @@ class Options(usage.Options):
     def opt_version(self):
         from opennsa import __version__
         from twisted import copyright
-        print "OpenNSA version %s. Running on Twisted version %s." % (__version__, copyright.version)
+        print("OpenNSA version %s. Running on Twisted version %s." % (__version__, copyright.version))
         raise SystemExit
 
 

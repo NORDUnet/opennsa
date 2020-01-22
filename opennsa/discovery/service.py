@@ -10,7 +10,6 @@ Copyright: NORDUnet (2014)
 
 from xml.etree import ElementTree as ET
 
-from opennsa import constants as cnt
 from opennsa.shared import xmlhelper, modifiableresource
 from opennsa.discovery.bindings import discovery
 
@@ -44,14 +43,11 @@ class DiscoveryService:
         interface_types = [ discovery.InterfaceType(i[0], i[1], i[2]) for i in self.interfaces ]
         feature_types   = [ discovery.FeatureType(f[0], f[1]) for f in self.features ]
 
-        peers_with = self.provider_registry.providers.keys()
+        peers_with = list(self.provider_registry.providers.keys())
         try:
             peers_with.remove(self.nsa_id)
         except ValueError:
             pass # running in aggregetor-only mode
-
-        topology_vectors = [ (cnt.URN_OGF_PREFIX + tv, cost) for tv, cost in self.link_vector.listVectors().items() ]
-        other = discovery.HolderType( [ discovery.Topology(t,c) for (t,c) in topology_vectors ] )
 
         nsa_element = discovery.NsaType(
             self.nsa_id,
@@ -64,7 +60,7 @@ class DiscoveryService:
             interface_types,
             feature_types,
             peers_with,
-            other,
+            None,
            )
 
         e = nsa_element.xml(discovery.nsa)

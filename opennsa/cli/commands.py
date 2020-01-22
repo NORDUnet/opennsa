@@ -30,12 +30,24 @@ def _createSTP(stp_arg):
     return nsa.STP(network, port, label)
 
 
-def _createP2PS(src, dst, capacity):
+def _createSTPList(ero):
+    """
+    Take a string of ERO STP and convert to a list of OrderedStpType.
+    """
+    if ero is None:
+        return None
+
+    ero_stps = [ _createSTP(stp_spec.strip()) for stp_spec in ero.split(',') ]
+    return ero_stps
+
+
+def _createP2PS(src, dst, capacity, ero):
 
     src_stp = _createSTP(src)
     dst_stp = _createSTP(dst)
+    ordered_stp = _createSTPList(ero)
 
-    return nsa.Point2PointService(src_stp, dst_stp, capacity)
+    return nsa.Point2PointService(src_stp, dst_stp, capacity, cnt.BIDIRECTIONAL, False, ordered_stp, None)
 
 
 def _handleEvent(event):
@@ -76,16 +88,16 @@ def _logError(e):
 def discover(client, service_url):
 
     res = yield client.queryNSA(service_url)
-    print "-- COMMAND RESULT --"
-    print res
-    print "--"
+    print("-- COMMAND RESULT --")
+    print(res)
+    print("--")
 
 
 @defer.inlineCallbacks
-def reserveonly(client, nsi_header, src, dst, start_time, end_time, capacity, connection_id, global_id):
+def reserveonly(client, nsi_header, src, dst, start_time, end_time, capacity, ero, connection_id, global_id):
 
     schedule = nsa.Schedule(start_time, end_time)
-    service_def = _createP2PS(src, dst, capacity)
+    service_def = _createP2PS(src, dst, capacity, ero)
     crt = nsa.Criteria(0, schedule, service_def)
 
     try:
@@ -96,15 +108,15 @@ def reserveonly(client, nsi_header, src, dst, start_time, end_time, capacity, co
         log.msg("Connection created and held. Id %s at %s" % (connection_id, nsi_header.provider_nsa))
         log.msg("Source - Destination: %s - %s" % (sd.source_stp, sd.dest_stp))
 
-    except error.NSIError, e:
+    except error.NSIError as e:
         _logError(e)
 
 
 @defer.inlineCallbacks
-def reserve(client, nsi_header, src, dst, start_time, end_time, capacity, connection_id, global_id):
+def reserve(client, nsi_header, src, dst, start_time, end_time, capacity, ero, connection_id, global_id):
 
     schedule = nsa.Schedule(start_time, end_time)
-    service_def = _createP2PS(src, dst, capacity)
+    service_def = _createP2PS(src, dst, capacity, ero)
     crt = nsa.Criteria(0, schedule, service_def)
 
     try:
@@ -119,15 +131,15 @@ def reserve(client, nsi_header, src, dst, start_time, end_time, capacity, connec
         yield client.reserveCommit(nsi_header, connection_id)
         log.msg("Reservation committed at %s" % nsi_header.provider_nsa)
 
-    except error.NSIError, e:
+    except error.NSIError as e:
         _logError(e)
 
 
 @defer.inlineCallbacks
-def reserveprovision(client, nsi_header, src, dst, start_time, end_time, capacity, connection_id, global_id, notification_wait):
+def reserveprovision(client, nsi_header, src, dst, start_time, end_time, capacity, ero, connection_id, global_id, notification_wait):
 
     schedule = nsa.Schedule(start_time, end_time)
-    service_def = _createP2PS(src, dst, capacity)
+    service_def = _createP2PS(src, dst, capacity, ero)
     crt = nsa.Criteria(0, schedule, service_def)
 
     try:
@@ -145,7 +157,7 @@ def reserveprovision(client, nsi_header, src, dst, start_time, end_time, capacit
         # query
         nsi_header.newCorrelationId()
         qr = yield client.querySummary(nsi_header, connection_ids=[connection_id] )
-        print "Query result:", qr
+        print('Query result: {}'.format(qr))
 
         # provision
         nsi_header.newCorrelationId()
@@ -158,16 +170,16 @@ def reserveprovision(client, nsi_header, src, dst, start_time, end_time, capacit
             if exit:
                 break
 
-    except error.NSIError, e:
+    except error.NSIError as e:
         _logError(e)
 
 
 
 @defer.inlineCallbacks
-def rprt(client, nsi_header, src, dst, start_time, end_time, capacity, connection_id, global_id):
+def rprt(client, nsi_header, src, dst, start_time, end_time, capacity, ero, connection_id, global_id):
     # reserve, provision, release,  terminate
     schedule = nsa.Schedule(start_time, end_time)
-    service_def = _createP2PS(src, dst, capacity)
+    service_def = _createP2PS(src, dst, capacity, ero)
     crt = nsa.Criteria(0, schedule, service_def)
 
     try:
@@ -198,7 +210,7 @@ def rprt(client, nsi_header, src, dst, start_time, end_time, capacity, connectio
         yield client.terminate(nsi_header, connection_id)
         log.msg('Connection %s terminated' % connection_id)
 
-    except error.NSIError, e:
+    except error.NSIError as e:
         _logError(e)
 
 
@@ -209,7 +221,7 @@ def reservecommit(client, nsi_header, connection_id):
         yield client.reserveCommit(nsi_header, connection_id)
         log.msg("Reservation committed at %s" % nsi_header.provider_nsa)
 
-    except error.NSIError, e:
+    except error.NSIError as e:
         _logError(e)
 
 
@@ -219,7 +231,7 @@ def provision(client, nsi_header, connection_id, notification_wait):
     try:
         yield client.provision(nsi_header, connection_id)
         log.msg('Connection %s provisioned' % connection_id)
-    except error.NSIError, e:
+    except error.NSIError as e:
         _logError(e)
 
     if notification_wait:
@@ -232,7 +244,7 @@ def release(client, nsi_header, connection_id, notification_wait):
     try:
         yield client.release(nsi_header, connection_id)
         log.msg('Connection %s released' % connection_id)
-    except error.NSIError, e:
+    except error.NSIError as e:
         _logError(e)
 
     if notification_wait:
@@ -245,7 +257,7 @@ def terminate(client, nsi_header, connection_id):
     try:
         yield client.terminate(nsi_header, connection_id)
         log.msg('Connection %s terminated' % connection_id)
-    except error.NSIError, e:
+    except error.NSIError as e:
         _logError(e)
 
 
@@ -306,7 +318,7 @@ def querySummary(client, nsi_header, connection_ids, global_reservation_ids):
             _emitQueryResult(qr)
         log.msg('')
 
-    except error.NSIError, e:
+    except error.NSIError as e:
         _logError(e)
 
 
@@ -324,6 +336,6 @@ def queryRecursive(client, nsi_header, connection_ids, global_reservation_ids):
             _emitQueryResult(qr)
         log.msg('')
 
-    except error.NSIError, e:
+    except error.NSIError as e:
         _logError(e)
 

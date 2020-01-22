@@ -7,7 +7,7 @@ Copyright: NORDUnet (2011-2012)
 
 import time
 
-from zope.interface import implements
+from zope.interface import implementer
 
 from twisted.python import log
 
@@ -17,9 +17,8 @@ TIME_FORMAT = "%Y-%m-%d %H:%M:%SZ"
 
 
 
+@implementer(log.ILogObserver)
 class DebugLogObserver(log.FileLogObserver):
-
-    implements(log.ILogObserver)
 
     def __init__(self, file_, debug=False, profile=False, payload=False):
         log.FileLogObserver.__init__(self, file_)

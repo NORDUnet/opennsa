@@ -15,7 +15,7 @@ Copyright: NORDUnet (2011-2012)
 
 import datetime
 
-from zope.interface import implements
+from zope.interface import implementer
 
 from twisted.python import log
 from twisted.internet import reactor, defer
@@ -35,9 +35,8 @@ class GenericBackendConnections(DBObject):
 
 
 
+@implementer(INSIProvider)
 class GenericBackend(service.Service):
-
-    implements(INSIProvider)
 
     # This is how long a reservation will be kept in reserved, but not committed state.
     # Two minutes (120 seconds) is the recommended value from the NSI group
@@ -86,7 +85,8 @@ class GenericBackend(service.Service):
     @defer.inlineCallbacks
     def buildSchedule(self):
 
-        conns = yield GenericBackendConnections.find(where=['lifecycle_state <> ?', state.TERMINATED])
+        # make sure we only get connections belonging to this backend, as the table is shared between backends
+        conns = yield GenericBackendConnections.find(where=['source_network = ? AND dest_network = ? AND lifecycle_state <> ?', self.network, self.network, state.TERMINATED])
         for conn in conns:
             # avoid race with newly created connections
             if self.scheduler.hasScheduledCall(conn.connection_id):
@@ -173,7 +173,7 @@ class GenericBackend(service.Service):
     def _getConnection(self, connection_id, requester_nsa):
         # add security check sometime
 
-        conns = yield GenericBackendConnections.findBy(connection_id=connection_id)
+        conns = yield GenericBackendConnections.findBy(source_network=self.network, dest_network=self.network, connection_id=connection_id)
         if len(conns) == 0:
             raise error.ConnectionNonExistentError('No connection with id %s' % connection_id)
         defer.returnValue( conns[0] ) # we only get one, unique in db
@@ -231,9 +231,9 @@ class GenericBackend(service.Service):
         # check network and ports exist
 
         if source_stp.network != self.network:
-            raise error.ConnectionCreateError('Source network does not match network this NSA is managing (%s != %s)' % (source_stp.network, self.network) )
+            raise error.ConnectionCreateError('Source network {} does not match the network this NSA is managing ({})'.format(source_stp.network, self.network))
         if dest_stp.network != self.network:
-            raise error.ConnectionCreateError('Destination network does not match network this NSA is managing (%s != %s)' % (dest_stp.network, self.network) )
+            raise error.ConnectionCreateError('Destination network {} does not match network this NSA is managing ({})'.format(dest_stp.network, self.network))
 
         # ensure that ports actually exists
         if not source_stp.port in self.nrm_ports:
@@ -537,9 +537,9 @@ class GenericBackend(service.Service):
 
         # TODO: Match stps/ports that can be used with credentials and return connections using these STPs
         if connection_ids:
-            conns = yield GenericBackendConnections.find(where=['requester_nsa = ? AND connection_id IN ?', header.requester_nsa, tuple(connection_ids) ])
+            conns = yield GenericBackendConnections.find(where=['source_network = ? AND dest_network = ? AND requester_nsa = ? AND connection_id IN ?', self.network, self.network, header.requester_nsa, tuple(connection_ids) ])
         elif global_reservation_ids:
-            conns = yield GenericBackendConnections.find(where=['requester_nsa = ? AND global_reservation_ids IN ?', header.requester_nsa, tuple(global_reservation_ids) ])
+            conns = yield GenericBackendConnections.find(where=['source_network = ? AND dest_network = ? AND requester_nsa = ? AND global_reservation_ids IN ?', self.network, self.network, header.requester_nsa, tuple(global_reservation_ids) ])
         else:
             raise error.MissingParameterError('Must specify connectionId or globalReservationId')
 
@@ -635,7 +635,7 @@ class GenericBackend(service.Service):
 
             now = datetime.datetime.utcnow()
             if conn.end_time is not None and now > conn.end_time:
-                print 'abort do endtime'
+                print('abort do endtime')
                 yield self._doEndtime(conn)
             elif conn.end_time is not None:
                 self.logStateUpdate(conn, 'RESERVE START')
@@ -656,7 +656,7 @@ class GenericBackend(service.Service):
         try:
             log.msg('Connection %s: Activating data plane...' % conn.connection_id, system=self.log_system)
             yield self.connection_manager.setupLink(conn.connection_id, src_target, dst_target, conn.bandwidth)
-        except Exception, e:
+        except Exception as e:
             # We need to mark failure in state machine here somehow....
             #log.err(e) # note: this causes error in tests
             log.msg('Connection %s: Error activating data plane: %s' % (conn.connection_id, str(e)), system=self.log_system)
@@ -692,7 +692,7 @@ class GenericBackend(service.Service):
             now = datetime.datetime.utcnow()
             header = nsa.NSIHeader(conn.requester_nsa, conn.requester_nsa) # The NSA is both requester and provider in the backend, but this might be problematic without aggregator
             self.parent_requester.dataPlaneStateChange(header, conn.connection_id, self.getNotificationId(), now, data_plane_status)
-        except Exception, e:
+        except Exception as e:
             log.msg('Error in post-activation: %s: %s' % (type(e), e), system=self.log_system)
             log.err(e)
 
@@ -706,7 +706,7 @@ class GenericBackend(service.Service):
         try:
             log.msg('Connection %s: Deactivating data plane...' % conn.connection_id, system=self.log_system)
             yield self.connection_manager.teardownLink(conn.connection_id, src_target, dst_target, conn.bandwidth)
-        except Exception, e:
+        except Exception as e:
             # We need to mark failure in state machine here somehow....
             log.msg('Connection %s: Error deactivating data plane: %s' % (conn.connection_id, str(e)), system=self.log_system)
             # should include stack trace
