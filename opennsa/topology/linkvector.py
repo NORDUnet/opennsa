@@ -159,17 +159,34 @@ class LinkVector:
         return dist, prev
 
 
-    def vector(self, network, source):
-        # typical usage for path finding
+    def path(self, network, source):
+
+        # find path from source to network
+
         if not source in self.local_networks:
             raise ValueError('source {} is not a local network, cannot find path'.format(source))
 
         if not network in self.network_prev[source]:
-            return None, None # no path
+            return None
+
+        path = []
 
         prev = self.network_prev[source]
         prev_network, prev_port = prev[network]
+        path.append( (prev_network, prev_port) )
         while prev_network != source:
             prev_network, prev_port = prev[prev_network]
-        return prev_network, prev_port
+            path.append( (prev_network, prev_port) )
+
+        return list(reversed(path))
+
+
+    def vector(self, network, source):
+        # typical usage for path finding, find the 'vector' (first jump) to the network
+
+        path = self.path(network, source)
+        if path is None:
+            return None, None
+        else:
+            return path[0]
 
