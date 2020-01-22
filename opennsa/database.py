@@ -76,7 +76,7 @@ def setupDatabase(database, user, password=None, host=None, connection_id_start=
     psycopg2.extensions.register_type(DT)
 
     if connection_id_start:
-        r = cur.execute("INSERT INTO backend_connection_id (connection_id) VALUES (%s) ON CONFLICT DO NOTHING;", (connection_id_start,) )
+        cur.execute("INSERT INTO backend_connection_id (connection_id) VALUES (%s) ON CONFLICT DO NOTHING;", (connection_id_start,) )
         conn.commit()
 
     conn.close()
