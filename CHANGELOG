@@ -1,6 +1,13 @@
 OpenNSA Change Log
 ==================
 
+Future release
+--------------
+
+* Support for ERO on the client (no server side yet)
+
+ERO was included in 3.0.0 as well, but didn't make the release notes.
+
 
 OpenNSA 3.0.0
 -------------
