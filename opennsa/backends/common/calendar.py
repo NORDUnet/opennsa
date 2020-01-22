@@ -15,7 +15,6 @@ Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2011-2016)
 """
 
-import types
 import datetime
 
 from opennsa import error
