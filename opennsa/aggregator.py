@@ -316,21 +316,36 @@ class Aggregator:
                 remote_stp     = source_stp
 
             # we should really find multiple port/link vectors to the remote network, but right now we don't
-            vector_network, vector_port = self.route_vectors.vector(remote_stp.network, source=local_stp.network)
-            # FIXME this check should probably be done before we write anything to the database, no need for that
-            if vector_port is None:
-                raise error.STPResolutionError('No vector to network %s, cannot create circuit' % remote_stp.network)
+            # this approach is tree for local domains and then chains of the reminder of the request
+            path_vector = self.route_vectors.path(remote_stp.network, source=local_stp.network)
+            if path_vector is None:
+                raise error.STPResolutionError('No path to network %s, cannot create circuit' % remote_stp.network)
 
-            log.msg('Vector to {} via {}:{}'.format(remote_stp.network, vector_network, vector_port), system=LOG_SYSTEM)
+            # this is where the path breakup magic happens
+            log.msg('Using path: {}'.format(','.join( [ pvn for pvn, pvp in path_vector ] )))
+            setup_vector = [ (p_network, p_port) for p_network, p_port in path_vector if p_network in local_networks ]
 
-            # this really shouldn't fail, so we don't need to check
-            vector_nrm_port = self.network_ports[vector_network][vector_port]
+            prev_stp = local_stp
+            cross_connects = []
 
-            local_link  = nsa.Link( local_stp, nsa.STP(local_stp.network, vector_port, vector_nrm_port.label) ) #ldp.label()) )
-            remote_link = nsa.Link( nsa.STP(vector_nrm_port.remote_network, vector_nrm_port.remote_port, vector_nrm_port.label), remote_stp) # # the ldp label isn't quite correct
+            for v_network, v_port in setup_vector:
+                assert prev_stp.network == v_network, 'network mismatch during cross connect building {} != {}'.format(prev_stp.network, v_network)
 
-            paths = [ [ local_link, remote_link ] ]
-            paths = yield self.plugin.prunePaths(paths)
+                vector_nrm_port = self.network_ports[v_network][v_port]
+                x_connect  = nsa.Link(prev_stp, nsa.STP(v_network, v_port, vector_nrm_port.label))
+                cross_connects.append(x_connect)
+
+                prev_stp = nsa.STP(vector_nrm_port.remote_network, vector_nrm_port.remote_port, vector_nrm_port.label) # the is sorta from the wrong side, but they should be identical
+
+            # last cross connect
+            x_connect = nsa.Link(prev_stp, remote_stp)
+            cross_connects.append(x_connect)
+
+            log.msg('Will setup the following cross connects:', system=LOG_SYSTEM)
+            for xc in cross_connects:
+                log.msg('- X-connect: {}'.format(xc), system=LOG_SYSTEM)
+
+            paths = [ cross_connects ]
 
         elif cnt.AGGREGATOR in self.policies:
             # both endpoints outside the network, proxy aggregation allowed
