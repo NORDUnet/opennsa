@@ -1087,7 +1087,7 @@ class Aggregator:
         # do notification
         actives  = [ sc.data_plane_active     for sc in sub_conns ]
         aggr_active     = all( actives )
-        aggr_version    = max( [ sc.data_plane_version    for sc in sub_conns ] )
+        aggr_version    = max( [ sc.data_plane_version or 0 for sc in sub_conns ] )
         aggr_consistent = all( [ sc.data_plane_consistent for sc in sub_conns ] ) and all( [ a == actives[0] for a in actives ] ) # we need version here
 
         header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn(), reply_to=conn.requester_url)
