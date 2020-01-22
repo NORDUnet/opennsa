@@ -10,7 +10,6 @@ Copyright: NORDUnet (2014)
 
 from xml.etree import ElementTree as ET
 
-from opennsa import constants as cnt
 from opennsa.shared import xmlhelper, modifiableresource
 from opennsa.discovery.bindings import discovery
 
