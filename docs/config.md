@@ -10,6 +10,7 @@ logfile=nsalog.log
 nrmfile=ports.nrm
 
 peers=http://host.example.org:9080/NSI/discovery.xml
+      https://nsi.example.com/NSI/discovery.xml
 
 policies=requiretrace,requireuser
 
