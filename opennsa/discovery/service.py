@@ -47,7 +47,7 @@ class DiscoveryService:
         try:
             peers_with.remove(self.nsa_id)
         except ValueError:
-            pass # running in aggregetor-only mode
+            pass # running in aggregator-only mode
 
         nsa_element = discovery.NsaType(
             self.nsa_id,
