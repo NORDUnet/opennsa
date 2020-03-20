@@ -225,7 +225,7 @@ def readVerifyConfig(cfg):
 
     try:
         peers_raw = cfg.get(BLOCK_SERVICE, PEERS)
-        vc[PEERS] = [ Peer(purl, 1) for purl in  peers_raw.split('\n') ]
+        vc[PEERS] = [ Peer(purl.strip(), 1) for purl in  peers_raw.split('\n') ]
     except configparser.NoOptionError:
         vc[PEERS] = None
 
