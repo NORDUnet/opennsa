@@ -68,8 +68,8 @@ def httpRequest(url, payload, headers, method=b'POST', timeout=DEFAULT_TIMEOUT, 
     factory.noisy = False # stop spewing about factory start/stop
     factory.protocol.handleStatus_204 = lambda _ : None # 204 is an ok reply, needed by NCS VPN backend
 
-    # fix missing port in header (bug in twisted.web.client)
-    factory.headers[b'host'] = host + b':' + s_port
+    # fix missing port in header (possible bug in twisted.web.client, or just low-level library)
+    factory.headers[b'host'] = netloc
     factory.headers[b'User-Agent'] = b'OpenNSA/Twisted'
 
     for header, value in headers.items():
