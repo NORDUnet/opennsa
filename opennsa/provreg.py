@@ -18,8 +18,8 @@ LOG_SYSTEM = 'providerregistry'
 class ProviderRegistry(object):
 
     def __init__(self, provider_factories):
-        # this design might have a small problem removing old entries
-        # but i thing the old had the same issue, and it is not done currently
+        # This design might have a small problem removing old entries
+        # But I think the old had the same issue, and it is not done currently
         self.providers = {} # network_id -> provider
         self.provider_urns = {} # network_id -> provider_urn
         # in theory the latter mapping might not be needed, but it is hard to do without
