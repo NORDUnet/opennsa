@@ -7,7 +7,7 @@ Copyright: NORDUnet (2011-2012)
 """
 
 import re
-import StringIO
+import io
 
 from twisted.python import log
 
@@ -95,7 +95,7 @@ def parsePortSpec(source):
 
     # Line starting with # and blank lines should be ignored
 
-    assert isinstance(source, file) or isinstance(source, StringIO.StringIO), 'Topology source must be file or StringIO instance'
+    assert isinstance(source, io.IOBase),  'Topology source must be file, StringIO or other IOBase instance'
 
     nrm_ports = []
 
@@ -126,10 +126,11 @@ def parsePortSpec(source):
                 remote_port     = None
                 remote_in       = None
                 remote_out      = None
+            elif not in_suffix or not out_suffix:
+                raise NRMSpecificationError('Suffix not defined for bidirectional port %s' % port_name)
             else:
-                if not in_suffix or not out_suffix:
-                    raise NRMSpecificationError('Suffix not defined for bidirectional port %s' % port_name)
-                remote_port = remote_network + ':' + remote_port
+                remote_network = remote_network
+                remote_port = remote_port
                 remote_in   = remote_port + in_suffix
                 remote_out  = remote_port + out_suffix
         else:

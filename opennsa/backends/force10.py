@@ -136,8 +136,8 @@ class SSHChannel(ssh.SSHChannel):
         try:
             log.msg('Requesting shell for sending commands', debug=True, system=LOG_SYSTEM)
             term = os.environ.get('TERM', 'xterm')
-	    winSize = (25,80,0,0)
-	    ptyReqData = session.packRequest_pty_req(term, winSize, '')
+            winSize = (25,80,0,0)
+            ptyReqData = session.packRequest_pty_req(term, winSize, '')
             yield self.conn.sendRequest(self, 'pty-req', ptyReqData, wantReply=1)
             yield self.conn.sendRequest(self, 'shell', '', wantReply=1)
             log.msg('Got shell', system=LOG_SYSTEM, debug=True)
@@ -182,7 +182,7 @@ class SSHChannel(ssh.SSHChannel):
             self.write(COMMAND_EXIT + LT)
             # Waiting for the prompt removed by hopet - we could wait forever here! :(
 
-        except Exception, e:
+        except Exception as e:
             log.msg('Error sending commands: %s' % str(e))
             raise e
 

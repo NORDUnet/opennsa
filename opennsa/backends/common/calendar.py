@@ -15,7 +15,6 @@ Author: Henrik Thostrup Jensen <htj@nordu.net>
 Copyright: NORDUnet (2011-2016)
 """
 
-import types
 import datetime
 
 from opennsa import error
@@ -31,8 +30,8 @@ class ReservationCalendar:
     def _checkArgs(self, resource, start_time, end_time):
         assert type(resource)    is str, 'Resource must be a string'
 
-        assert type(start_time)  in (types.NoneType, datetime.datetime), 'Start time must be a datetime object or None, not %s' % str(type(start_time))
-        assert type(end_time)    in (types.NoneType, datetime.datetime), 'End time must be a datetime object or None, not %s' % str(type(end_time))
+        assert start_time is None or type(start_time) is datetime.datetime, 'Start time must be a datetime object or None, not %s' % str(type(start_time))
+        assert end_time   is None or type(end_time)   is datetime.datetime, 'End time must be a datetime object or None, not %s' % str(type(end_time))
 
         if start_time is not None:
             assert start_time.tzinfo is None, 'Start time must NOT have time zone.'

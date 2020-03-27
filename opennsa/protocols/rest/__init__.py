@@ -1,8 +1,8 @@
 
 from . import resource
 
-CONNECTIONS = 'connections'
-PATH = '/' + CONNECTIONS
+CONNECTIONS = b'connections'
+PATH = '/' + CONNECTIONS.decode('utf-8')
 
 def setupService(provider, top_resource, allowed_hosts=None):
 

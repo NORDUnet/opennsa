@@ -136,18 +136,18 @@ class JUNOSSPACECommandSender:
 
 
     def _cbRequest(self,response):
-        print 'Response version:', response.version
-        print 'Response code:', response.code
-        print 'Response phrase:', response.phrase
-        print 'Response headers:'
-        print pformat(list(response.headers.getAllRawHeaders()))
+        print('Response version:', response.version)
+        print('Response code:', response.code)
+        print('Response phrase:', response.phrase)
+        print('Response headers:')
+        print(pformat(list(response.headers.getAllRawHeaders())))
         d = readBody(response)
         d.addCallback(self.printBody)
         return d
 
     def _cbError(self,failure):
         log.msg("{}".format(failure.value.reasons[0].printTraceback()),debug=True, system=LOG_SYSTEM)
-        print type(failure.value), failure # catch error here
+        print(type(failure.value), failure) # catch error here
 
     def printBody(self,body):
         log.msg('Received body from junosspace {}'.format(body), debug=True, system=LOG_SYSTEM)

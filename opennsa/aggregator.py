@@ -6,7 +6,7 @@ Copyright: NORDUnet (2011-2012)
 """
 import datetime
 
-from zope.interface import implements
+from zope.interface import implementer
 
 from twisted.python import log
 from twisted.internet import defer
@@ -63,14 +63,13 @@ def _createAggregateException(connection_id, action, results, provider_urns, def
 
 
 
+@implementer(INSIProvider)
+@implementer(INSIRequester)
 class Aggregator:
 
-    implements(INSIProvider, INSIRequester)
-
-    def __init__(self, network, nsa_, network_topology, route_vectors, parent_requester, provider_registry, policies, plugin):
-        self.network = network
+    def __init__(self, nsa_, network_ports, route_vectors, parent_requester, provider_registry, policies, plugin):
         self.nsa_ = nsa_
-        self.network_topology = network_topology
+        self.network_ports = network_ports
         self.route_vectors = route_vectors
 
         self.parent_requester   = parent_requester
@@ -94,10 +93,6 @@ class Aggregator:
         nid = self.notification_id
         self.notification_id += 1
         return nid
-
-
-    def getProvider(self, nsi_agent_urn):
-        return self.provider_registry.getProvider(nsi_agent_urn)
 
 
     def getConnection(self, connection_id):
@@ -200,40 +195,48 @@ class Aggregator:
         source_stp = sd.source_stp
         dest_stp   = sd.dest_stp
 
+        local_networks = self.route_vectors.localNetworks()
+
         if not cnt.AGGREGATOR in self.policies:
             # policy check: one endpoint must be in local network
-            if not (source_stp.network == self.network or dest_stp.network == self.network):
-                raise error.ConnectionCreateError('None of the endpoints terminate in the network, rejecting request (network: %s + %s, nsa network %s)' %
-                    (source_stp.network, dest_stp.network, self.network))
+            #if not (source_stp.network == self.network or dest_stp.network == self.network):
+            if not (source_stp.network in local_networks or dest_stp.network in local_networks):
+                raise error.ConnectionCreateError('None of the endpoints terminate in the network, rejecting request (network: %s + %s, local networks %s)' %
+                    (source_stp.network, dest_stp.network, ','.join(self.route_vectors.localNetworks())))
 
         # check that we have path vectors to topologies if we start from here
-        if self.network in (source_stp.network, dest_stp.network):
-            if source_stp.network != self.network and self.route_vectors.vector(source_stp.network) is None:
+        if any( [ source_stp.network in local_networks, dest_stp.network in local_networks ] ):
+            if source_stp.network not in local_networks and self.route_vectors.vector(source_stp.network, source=source_stp.network) is None:
                 raise error.ConnectionCreateError('No known routes to network %s' % source_stp.network)
-            if dest_stp.network != self.network and self.route_vectors.vector(dest_stp.network) is None:
+            if dest_stp.network not in local_networks and self.route_vectors.vector(dest_stp.network, source=source_stp.network) is None:
                 raise error.ConnectionCreateError('No known routes to network %s' % dest_stp.network)
 
         # if the link terminates at our network, check that ports exists and that labels match
-        if source_stp.network == self.network:
-            port = self.network_topology.getPort(source_stp.network + ':' + source_stp.port)
-            if port.label() is None:
-                if source_stp.label is not None:
-                    raise error.ConnectionCreateError('Source STP %s has label specified on port %s without label' % (source_stp, port.name))
-            else: # there is a label
-                if source_stp.label is None:
-                    raise error.ConnectionCreateError('Source STP %s has no label for port %s with label %s' % (source_stp, port.name, port.label().type_))
-                if port.label().type_ != source_stp.label.type_:
-                    raise error.ConnectionCreateError('Source STP %s label does not match label specified on port %s (%s)' % (source_stp, port.name, port.label().type_))
-        if dest_stp.network == self.network:
-            port = self.network_topology.getPort(dest_stp.network + ':' + dest_stp.port)
-            if port.label() is None:
-                if dest_stp.label is not None:
-                    raise error.ConnectionCreateError('Destination STP %s has label specified on port %s without label' % (dest_stp, port.name))
-            else:
-                if port.label().type_ is not None and dest_stp.label is None:
-                    raise error.ConnectionCreateError('Destination STP %s has no label for port %s with label %s' % (dest_stp, port.name, port.label().type_))
-                if port.label().type_ != dest_stp.label.type_:
-                    raise error.ConnectionCreateError('Source STP %s label does not match label specified on port %s (%s)' % (dest_stp, port.name, port.label().type_))
+        # technically, these are not needed (i think), but they add value
+
+#        if source_stp.network in local_networks:
+#            print('source')
+#            port = self.network_topology.getPort(source_stp.network + ':' + source_stp.port)
+#            print('hmm')
+#            if port.label() is None:
+#                if source_stp.label is not None:
+#                    raise error.ConnectionCreateError('Source STP %s has label specified on port %s without label' % (source_stp, port.name))
+#            else: # there is a label
+#                if source_stp.label is None:
+#                    raise error.ConnectionCreateError('Source STP %s has no label for port %s with label %s' % (source_stp, port.name, port.label().type_))
+#                if port.label().type_ != source_stp.label.type_:
+#                    raise error.ConnectionCreateError('Source STP %s label does not match label specified on port %s (%s)' % (source_stp, port.name, port.label().type_))
+#        if dest_stp.network in local_networks:
+#            print('dest')
+#            port = self.network_topology.getPort(dest_stp.network + ':' + dest_stp.port)
+#            if port.label() is None:
+#                if dest_stp.label is not None:
+#                    raise error.ConnectionCreateError('Destination STP %s has label specified on port %s without label' % (dest_stp, port.name))
+#            else:
+#                if port.label().type_ is not None and dest_stp.label is None:
+#                    raise error.ConnectionCreateError('Destination STP %s has no label for port %s with label %s' % (dest_stp, port.name, port.label().type_))
+#                if port.label().type_ != dest_stp.label.type_:
+#                    raise error.ConnectionCreateError('Source STP %s label does not match label specified on port %s (%s)' % (dest_stp, port.name, port.label().type_))
 
 
         connection_id = yield self.plugin.createConnectionId()
@@ -280,22 +283,23 @@ class Aggregator:
 
         yield state.reserveChecking(conn) # this also acts a lock
 
-        if conn.source_network == self.network and conn.dest_network == self.network:
+        # single connection within local network
+        if conn.source_network == conn.dest_network and conn.source_network in local_networks: # and conn.dest_network in self.network:
             # check for hairpins (unless allowed in policies)
             if not cnt.ALLOW_HAIRPIN in self.policies:
                 if conn.source_port == conn.dest_port:
                     raise error.ServiceError('Hairpin connections not allowed.')
 
             # setup path
-            path_info = ( conn.connection_id, self.network, conn.source_port, shortLabel(conn.source_label), conn.dest_port, shortLabel(conn.dest_label) )
+            path_info = ( conn.connection_id, conn.source_network, conn.source_port, shortLabel(conn.source_label), conn.dest_port, shortLabel(conn.dest_label) )
             log.msg('Connection %s: Local link creation: %s %s?%s == %s?%s' % path_info, system=LOG_SYSTEM)
-            paths = [ [ nsa.Link( nsa.STP(self.network, conn.source_port, conn.source_label),
-                                  nsa.STP(self.network, conn.dest_port,   conn.dest_label))  ] ]
+            paths = [ [ nsa.Link( nsa.STP(conn.source_network, conn.source_port, conn.source_label),
+                                  nsa.STP(conn.dest_network,   conn.dest_port,   conn.dest_label))  ] ]
 
             # we should probably specify the connection id to the backend,
             # to make it seem like the aggregator isn't here
 
-        elif self.network in (conn.source_network, conn.dest_network):
+        elif conn.source_network in local_networks or conn.dest_network in local_networks:
             # log about creation and the connection type
             log.msg('Connection %s: Aggregate path creation: %s -> %s' % (conn.connection_id, str(source_stp), str(dest_stp)), system=LOG_SYSTEM)
             # making the connection is the same for all though :-)
@@ -304,7 +308,7 @@ class Aggregator:
             # 1. find topology to use from vector
             # 2. create abstracted path: local link + rest
 
-            if source_stp.network == self.network:
+            if source_stp.network in local_networks:
                 local_stp      = source_stp
                 remote_stp     = dest_stp
             else:
@@ -312,25 +316,36 @@ class Aggregator:
                 remote_stp     = source_stp
 
             # we should really find multiple port/link vectors to the remote network, but right now we don't
-            vector_port = self.route_vectors.vector(remote_stp.network)
-            if vector_port is None:
-                raise error.STPResolutionError('No vector to network %s, cannot create circuit' % remote_stp.network)
+            # this approach is tree for local domains and then chains of the reminder of the request
+            path_vector = self.route_vectors.path(remote_stp.network, source=local_stp.network)
+            if path_vector is None:
+                raise error.STPResolutionError('No path to network %s, cannot create circuit' % remote_stp.network)
 
-            log.msg('Vector to %s via port %s' % (remote_stp.network, vector_port), system=LOG_SYSTEM)
+            # this is where the path breakup magic happens
+            log.msg('Using path: {}'.format(','.join( [ pvn for pvn, pvp in path_vector ] )))
+            setup_vector = [ (p_network, p_port) for p_network, p_port in path_vector if p_network in local_networks ]
 
-            # this really shouldn't fail, so we don't need to check
-            demarc_ports = [ self.network_topology.getPort( self.network + ':' + vector_port ) ]
+            prev_stp = local_stp
+            cross_connects = []
 
-            ldp = demarc_ports[0] # most of the time we will only have one anyway, should iterate and build multiple paths
+            for v_network, v_port in setup_vector:
+                assert prev_stp.network == v_network, 'network mismatch during cross connect building {} != {}'.format(prev_stp.network, v_network)
 
-            local_demarc_port  = ldp.id_.rsplit(':', 1)[1]
-            remote_demarc_network, remote_demarc_port = ldp.remote_port.rsplit(':', 1) # [1] # this is wrong in the new naming scheme
+                vector_nrm_port = self.network_ports[v_network][v_port]
+                x_connect  = nsa.Link(prev_stp, nsa.STP(v_network, v_port, vector_nrm_port.label))
+                cross_connects.append(x_connect)
 
-            local_link  = nsa.Link( local_stp, nsa.STP(local_stp.network, local_demarc_port, ldp.label()) )
-            remote_link = nsa.Link( nsa.STP(remote_demarc_network, remote_demarc_port, ldp.label()), remote_stp) # # the ldp label isn't quite correct
+                prev_stp = nsa.STP(vector_nrm_port.remote_network, vector_nrm_port.remote_port, vector_nrm_port.label) # the is sorta from the wrong side, but they should be identical
 
-            paths = [ [ local_link, remote_link ] ]
-            paths = yield self.plugin.prunePaths(paths)
+            # last cross connect
+            x_connect = nsa.Link(prev_stp, remote_stp)
+            cross_connects.append(x_connect)
+
+            log.msg('Will setup the following cross connects:', system=LOG_SYSTEM)
+            for xc in cross_connects:
+                log.msg('- X-connect: {}'.format(xc), system=LOG_SYSTEM)
+
+            paths = [ cross_connects ]
 
         elif cnt.AGGREGATOR in self.policies:
             # both endpoints outside the network, proxy aggregation allowed
@@ -348,9 +363,9 @@ class Aggregator:
         log.msg('Attempting to create path %s' % log_path, system=LOG_SYSTEM)
 
         for link in selected_path:
-            if link.src_stp.network == self.network:
-                continue # we got this..
-            p = self.provider_registry.getProviderByNetwork(link.src_stp.network)
+            if link.src_stp.network in local_networks:
+                continue # local network
+            p = self.provider_registry.getProvider(link.src_stp.network)
             if p is None:
                 raise error.ConnectionCreateError('No provider for network %s. Cannot create link.' % link.src_stp.network)
 
@@ -361,11 +376,8 @@ class Aggregator:
 
             sub_connection_id = None
 
-            if link.src_stp.network == self.network:
-                provider_urn = self.nsa_.urn()
-                sub_connection_id = connection_id
-            else:
-                provider_urn = self.provider_registry.getProviderByNetwork(link.src_stp.network)
+            provider = self.provider_registry.getProvider(link.src_stp.network)
+            provider_urn = self.provider_registry.getProviderURN(link.src_stp.network)
 
             c_header = nsa.NSIHeader(self.nsa_.urn(), provider_urn, security_attributes=header.security_attributes, connection_trace=conn_trace)
 
@@ -383,12 +395,11 @@ class Aggregator:
 
             crt = nsa.Criteria(criteria.revision, criteria.schedule, sd)
 
-            provider = self.getProvider(provider_urn)
             # note: request info will only be passed to local backends, remote requester will just ignore it
             d = provider.reserve(c_header, sub_connection_id, conn.global_reservation_id, conn.description, crt, request_info)
             d.addErrback(_logErrorResponse, connection_id, provider_urn, 'reserve')
 
-            conn_info.append( (d, provider_urn) )
+            conn_info.append( (d, link.src_stp.network) )
 
             # Don't bother trying to save connection here, wait for reserveConfirmed
 
@@ -406,10 +417,10 @@ class Aggregator:
             # currently we don't try and be too clever about cleaning, just do it, and switch state
             yield state.terminating(conn)
             defs = []
-            reserved_connections = [ (sc_id, provider_urn) for (success,sc_id),(_,provider_urn) in zip(results, conn_info) if success ]
-            for (sc_id, provider_urn) in reserved_connections:
+            reserved_connections = [ (sc_id, network_urn) for (success,sc_id),(_,network_urn) in zip(results, conn_info) if success ]
+            for (sc_id, network_urn) in reserved_connections:
 
-                provider = self.getProvider(provider_urn)
+                provider = self.provider_registry.getProvider(network_urn)
                 t_header = nsa.NSIHeader(self.nsa_.urn(), provider_urn, security_attributes=header.security_attributes)
 
                 d = provider.terminate(t_header, sc_id)
@@ -446,7 +457,7 @@ class Aggregator:
 
         for sc in sub_connections:
             # we assume a provider is available
-            provider = self.getProvider(sc.provider_nsa)
+            provider = self.provider_registry.getProvider(sc.source_network) # source and dest network should be the same
             req_header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa, security_attributes=header.security_attributes)
             # we should probably mark as committing before sending message...
             d = provider.reserveCommit(req_header, sc.connection_id, request_info)
@@ -486,7 +497,7 @@ class Aggregator:
 
         for sc in sub_connections:
             save_defs.append( state.reserveAbort(sc) )
-            provider = self.getProvider(sc.provider_nsa)
+            provider = self.provider_registry.getProvider(sc.source_network)
             header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa, security_attributes=header.security_attributes)
             d = provider.reserveAbort(header, sc.connection_id, request_info)
             d.addErrback(_logErrorResponse, connection_id, sc.provider_nsa, 'reserveAbort')
@@ -534,7 +545,7 @@ class Aggregator:
             yield defer.DeferredList(save_defs) #, consumeErrors=True)
 
         for sc in sub_connections:
-            provider = self.getProvider(sc.provider_nsa)
+            provider = self.provider_registry.getProvider(sc.source_network)
             header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa, security_attributes=header.security_attributes)
             d = provider.provision(header, sc.connection_id, request_info) # request_info will only be passed locally
             d.addErrback(_logErrorResponse, connection_id, sc.provider_nsa, 'provision')
@@ -575,7 +586,7 @@ class Aggregator:
         yield defer.DeferredList(save_defs) #, consumeErrors=True)
 
         for sc in sub_connections:
-            provider = self.getProvider(sc.provider_nsa)
+            provider = self.provider_registry.getProvider(sc.source_network)
             header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa, security_attributes=header.security_attributes)
             d = provider.release(header, sc.connection_id, request_info)
             d.addErrback(_logErrorResponse, connection_id, sc.provider_nsa, 'release')
@@ -614,7 +625,7 @@ class Aggregator:
 
         for sc in sub_connections:
             # we assume a provider is available
-            provider = self.getProvider(sc.provider_nsa)
+            provider = self.provider_registry.getProvider(sc.source_network)
             header = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa, security_attributes=header.security_attributes)
             d = provider.terminate(header, sc.connection_id, request_info)
             d.addErrback(_logErrorResponse, connection_id, sc.provider_nsa, 'terminate')
@@ -663,7 +674,7 @@ class Aggregator:
                     data_plane_status = (False, 0, False)
                 else:
                     aggr_active     = all( [ sc.data_plane_active     for sc in sub_conns ] )
-                    aggr_version    = max( [ sc.data_plane_version    for sc in sub_conns ] ) or 0 # can be None otherwise
+                    aggr_version    = max( [ sc.data_plane_version or 0 for sc in sub_conns ] ) # py3 - max fails on None
                     aggr_consistent = all( [ sc.data_plane_consistent for sc in sub_conns ] )
                     data_plane_status = (aggr_active, aggr_version, aggr_consistent)
 
@@ -679,6 +690,7 @@ class Aggregator:
 
         except Exception as e:
             log.msg('Error during querySummary request: %s' % str(e), system=LOG_SYSTEM)
+            log.err(e)
             raise e
 
 
@@ -709,7 +721,7 @@ class Aggregator:
 
             defs = []
             for sc in sub_connections:
-                provider = self.getProvider(sc.provider_nsa)
+                provider = self.provider_registry.getProvider(sc.source_network)
                 sch = nsa.NSIHeader(self.nsa_.urn(), sc.provider_nsa, security_attributes=header.security_attributes)
                 d = provider.queryRecursive(sch, [ sc.connection_id ] , None, request_info)
                 d.addErrback(_logErrorResponse, 'queryRecursive', sc.provider_nsa, 'queryRecursive')
@@ -747,7 +759,7 @@ class Aggregator:
             dest_stp = nsa.STP(c.dest_network, c.dest_port, c.dest_label)
 
             schedule = nsa.Schedule(c.start_time, c.end_time)
-            sd = nsa.Point2PointService(source_stp, dest_stp, c.bandwidth, cnt.BIDIRECTIONAL, False, None)
+            sd = nsa.Point2PointService(source_stp, dest_stp, c.bandwidth, cnt.BIDIRECTIONAL, False, None, None)
 
             criteria = nsa.QueryCriteria(c.revision, schedule, sd, children)
 
@@ -796,7 +808,7 @@ class Aggregator:
 
             # clear temporary structure
             self.query_requests.pop(cbh_correlation_id)
-            for k,v in self.query_calls.items():
+            for k,v in list(self.query_calls.items()): # make a copy to avoid changing the dict while iterating
                 cbhci, res = v
                 if cbhci == cbh_correlation_id:
                     self.query_calls.pop(k)
@@ -898,6 +910,7 @@ class Aggregator:
             schedule = nsa.Schedule(conn.start_time, conn.end_time)
             sd = nsa.Point2PointService(source_stp, dest_stp, conn.bandwidth, cnt.BIDIRECTIONAL, False, None) # we fake some thing that is not yet in the db
             conn_criteria = nsa.Criteria(conn.revision, schedule, sd)
+            # This is just oneshot, we don't really care if it fails, as we cannot do anything about it
             self.parent_requester.reserveConfirmed(header, conn.connection_id, conn.global_reservation_id, conn.description, conn_criteria)
 
         else:
@@ -1089,7 +1102,7 @@ class Aggregator:
         # do notification
         actives  = [ sc.data_plane_active     for sc in sub_conns ]
         aggr_active     = all( actives )
-        aggr_version    = max( [ sc.data_plane_version    for sc in sub_conns ] )
+        aggr_version    = max( [ sc.data_plane_version or 0 for sc in sub_conns ] )
         aggr_consistent = all( [ sc.data_plane_consistent for sc in sub_conns ] ) and all( [ a == actives[0] for a in actives ] ) # we need version here
 
         header = nsa.NSIHeader(conn.requester_nsa, self.nsa_.urn(), reply_to=conn.requester_url)

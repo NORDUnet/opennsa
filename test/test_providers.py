@@ -1,11 +1,11 @@
 import datetime
-import StringIO
+from io import StringIO
 
 from twisted.trial import unittest
 from twisted.internet import reactor, defer, task
 
 from opennsa import nsa, provreg, database, error, setup, aggregator, config, plugin, constants as cnt
-from opennsa.topology import nrm
+from opennsa.topology import nrm, linkvector, nml
 from opennsa.backends import dud
 
 from . import topology, common, db
@@ -783,6 +783,34 @@ class GenericProviderTest:
         cid = yield self.requester.reserve_commit_defer
 
 
+    def testReserveERO(self):
+
+        # We really need multi-agent setup for this
+
+        source_stp  = nsa.STP(self.network, self.source_port, nsa.Label(cnt.ETHERNET_VLAN, '1782-1783') )
+        dest_stp    = nsa.STP(self.network, self.dest_port,   nsa.Label(cnt.ETHERNET_VLAN, '1782-1784') )
+        criteria    = nsa.Criteria(0, self.schedule, nsa.Point2PointService(source_stp, dest_stp, 200, cnt.BIDIRECTIONAL, False, None) )
+
+        ero         = [ nsa.STP(self.network, self.source_port, nsa.Label(cnt.ETHERNET_VLAN, '1782')),
+                        nsa.STP(self.network, self.source_port, nsa.Label(cnt.ETHERNET_VLAN, '1783')) ]
+
+        self.header.newCorrelationId()
+        acid = yield self.provider.reserve(self.header, None, None, None, criteria, ero=ero)
+        header, cid, gid, desc, sp = yield self.requester.reserve_defer
+
+        yield self.provider.reserveAbort(self.header, acid)
+        header, cid = yield self.requester.reserve_abort_defer
+
+        self.requester.reserve_defer = defer.Deferred()
+
+        # try to reserve the same resources
+        acid2 = yield self.provider.reserve(self.header, None, None, None, criteria)
+        header, cid, gid, desc, sp = yield self.requester.reserve_defer
+
+
+    testReserveERO.skip = 'ERO is not implemented on server-side yet'
+
+
 
 class DUDBackendTest(GenericProviderTest, unittest.TestCase):
 
@@ -797,7 +825,7 @@ class DUDBackendTest(GenericProviderTest, unittest.TestCase):
 
         self.requester = common.DUDRequester()
 
-        nrm_ports = nrm.parsePortSpec(StringIO.StringIO(topology.ARUBA_TOPOLOGY))
+        nrm_ports = nrm.parsePortSpec(StringIO(topology.ARUBA_TOPOLOGY))
 
         self.backend = dud.DUDNSIBackend(self.network, nrm_ports, self.requester, {})
 
@@ -850,17 +878,29 @@ class AggregatorTest(GenericProviderTest, unittest.TestCase):
 
         self.clock = task.Clock()
 
-        nrm_map = StringIO.StringIO(topology.ARUBA_TOPOLOGY)
-        nrm_ports, nml_network, link_vector = setup.setupTopology(nrm_map, self.network, 'aruba.net')
+        nrm_map = StringIO(topology.ARUBA_TOPOLOGY)
+        nrm_ports = nrm.parsePortSpec(nrm_map)
+
+        link_vector = linkvector.LinkVector()
+        link_vector.addLocalNetwork(self.network)
+        for np in nrm_ports:
+            if np.remote_network is not None:
+                link_vector.updateVector(self.network, np.name, { np.remote_network : 1 } ) # hack
+                # don't think this is needed
+                #for network, cost in np.vectors.items():
+                #    link_vector.updateVector(np.name, { network : cost })
+
+        nml_network = nml.createNMLNetwork(nrm_ports, self.network, self.base)
 
         self.backend = dud.DUDNSIBackend(self.network, nrm_ports, self.requester, {})
         self.backend.scheduler.clock = self.clock
 
         pl = plugin.BasePlugin()
-        pl.init( { config.NETWORK_NAME: self.network }, None )
+        pl.init( { config.DOMAIN: self.network }, None )
 
-        pr = provreg.ProviderRegistry( { self.provider_agent.urn() : self.backend }, {} )
-        self.provider = aggregator.Aggregator(self.network, self.provider_agent, nml_network, link_vector, self.requester, pr, [], pl)
+        pr = provreg.ProviderRegistry({})
+        pr.addProvider(self.provider_agent.urn(), self.network, self.backend)
+        self.provider = aggregator.Aggregator(self.provider_agent, nml_network, link_vector, self.requester, pr, [], pl)
 
         # set parent for backend, we need to create the aggregator before this can be done
         self.backend.parent_requester = self.provider
@@ -929,17 +969,29 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
 
         self.clock = task.Clock()
 
-        nrm_map = StringIO.StringIO(topology.ARUBA_TOPOLOGY)
-        nrm_ports, nml_network, link_vector = setup.setupTopology(nrm_map, self.network, 'aruba.net')
+        nrm_map = StringIO(topology.ARUBA_TOPOLOGY)
+        nrm_ports = nrm.parsePortSpec(nrm_map)
+
+        link_vector = linkvector.LinkVector()
+        link_vector.addLocalNetwork(self.network)
+        for np in nrm_ports:
+            if np.remote_network is not None:
+                link_vector.updateVector(self.network, np.name, { np.remote_network : 1 } ) # hack
+                # don't think this is needed
+                #for network, cost in np.vectors.items():
+                #    link_vector.updateVector(np.name, { network : cost })
+
+        nml_network = nml.createNMLNetwork(nrm_ports, self.network, self.base)
 
         self.backend = dud.DUDNSIBackend(self.network, nrm_ports, None, {}) # we set the parent later
         self.backend.scheduler.clock = self.clock
 
         pl = plugin.BasePlugin()
-        pl.init( { config.NETWORK_NAME: self.network }, None )
+        pl.init( { config.DOMAIN: self.network }, None )
 
-        pr = provreg.ProviderRegistry( { self.provider_agent.urn() : self.backend }, {} )
-        self.aggregator = aggregator.Aggregator(self.network, self.provider_agent, nml_network, link_vector, None, pr, [], pl) # we set the parent later
+        pr = provreg.ProviderRegistry({})
+        pr.addProvider(self.provider_agent.urn(), self.network, self.backend)
+        self.aggregator = aggregator.Aggregator(self.provider_agent, nml_network, link_vector, self.requester, pr, [], pl)
 
         self.backend.parent_requester = self.aggregator
 
@@ -955,7 +1007,7 @@ class RemoteProviderTest(GenericProviderTest, unittest.TestCase):
         # requester protocol
 
         requester_top_resource = resource.Resource()
-        soap_resource = soapresource.setupSOAPResource(requester_top_resource, 'RequesterService2')
+        soap_resource = soapresource.setupSOAPResource(requester_top_resource, b'RequesterService2')
 
         self.provider = requesterclient.RequesterClient(self.provider_agent.endpoint, self.requester_agent.endpoint)
 

@@ -88,7 +88,9 @@ class SOAPResource(resource.Resource):
         soap_action = request.requestHeaders.getRawHeaders('soapaction',[None])[0]
 
         soap_data = request.content.read()
-        log.msg(" -- Received payload --\n%s\n -- END. Received payload --" % soap_data, system=LOG_SYSTEM, payload=True)
+        log.msg(' -- Received payload --', system=LOG_SYSTEM, payload=True)
+        log.msg(soap_data, system=LOG_SYSTEM, payload=True)
+        log.msg(' -- END --', system=LOG_SYSTEM, payload=True)
 
         if not soap_action in self.soap_actions:
             log.msg('Got request with unknown SOAP action: %s' % soap_action, system=LOG_SYSTEM)
@@ -106,7 +108,9 @@ class SOAPResource(resource.Resource):
             if reply_data is None or len(reply_data) == 0:
                 log.msg('None/empty reply data supplied for SOAPResource. This is probably wrong', system=LOG_SYSTEM)
             else:
-                log.msg(" -- Sending response --\n%s\n -- END: Sending response --" % reply_data, system=LOG_SYSTEM, payload=True)
+                log.msg(' -- Sending response --', system=LOG_SYSTEM, payload=True)
+                log.msg(reply_data, system=LOG_SYSTEM, payload=True)
+                log.msg('-- END --', system=LOG_SYSTEM, payload=True)
 
             request.setHeader('Content-Type', 'text/xml') # Keeps some SOAP implementations happy
             request.write(reply_data)
@@ -116,7 +120,8 @@ class SOAPResource(resource.Resource):
 
             log.msg('Failure during SOAP decoding/dispatch: %s' % err.getErrorMessage(), system=LOG_SYSTEM)
             log.err(err)
-            log.msg('SOAP Payload that caused error:\n%s\n' % soap_data)
+            log.msg('SOAP Payload that caused error:')
+            log.msg(soap_data)
             error_payload = SOAPFault(err.getErrorMessage()).createPayload()
 
             log.msg(" -- Sending response (fault) --\n%s\n -- END: Sending response (fault) --" % error_payload, system=LOG_SYSTEM, payload=True)
@@ -136,9 +141,14 @@ class SOAPResource(resource.Resource):
 
 def setupSOAPResource(top_resource, resource_name, subpath=None, allowed_hosts=None):
 
+    assert type(resource_name) is bytes, 'Resource name must be bytes'
+    if subpath is not None:
+        for sp in subpath:
+            assert type(sp) is bytes, 'Subpath must by of type bytes'
+
     # Default path: NSI/services/{resource_name}
     if subpath is None:
-        subpath = ['NSI', 'services' ]
+        subpath = [b'NSI', b'services' ]
 
     ir = top_resource
 
@@ -151,7 +161,7 @@ def setupSOAPResource(top_resource, resource_name, subpath=None, allowed_hosts=N
             ir = nr
 
     if resource_name in ir.children:
-        raise AssertionError, 'Trying to insert several SOAP resource in same leaf. Go away.'
+        raise AssertionError('Cannot insert several SOAP resources in same leaf.')
 
     soap_resource = SOAPResource(allowed_hosts=allowed_hosts)
     ir.putChild(resource_name, soap_resource)

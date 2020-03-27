@@ -27,7 +27,7 @@ class InstallOpenNSAData(install_data):
 
         # relocation
         if RELOCATE:
-            print 'relocating to %s' % RELOCATE
+            print('relocating to {}'.format(RELOCATE))
             for (prefix, files) in reversed(self.data_files):
                 if prefix.startswith('/'):
                     new_prefix = os.path.join(RELOCATE, prefix[1:])
@@ -40,7 +40,7 @@ class InstallOpenNSAData(install_data):
                 for basefile in files:
                     fn = os.path.join(prefix, os.path.basename(basefile))
                     if os.path.exists(fn):
-                        print 'Skipping installation of %s (already exists)' % fn
+                        print('Skipping installation of {} (already exists)'.format(fn))
                         files.remove(basefile)
             if not files:
                 self.data_files.remove((prefix, []))
@@ -67,8 +67,6 @@ setup(name='opennsa',
                 'opennsa/protocols/nsi2/bindings',
                 'opennsa/protocols/rest',
                 'opennsa/protocols/shared',
-                'opennsa/ext',
-                'opennsa/ext/iso8601',
                 'opennsa/shared',
                 'opennsa/topology',
                ],

@@ -1,0 +1,24 @@
+OpenNSA Change Log
+==================
+
+Future release
+--------------
+
+* Support for ERO on the client (no server side yet)
+
+ERO was included in 3.0.0 as well, but didn't make the release notes.
+
+
+OpenNSA 3.0.0
+-------------
+
+* Port to Python 3
+* Support for multiple backends
+* More tests added
+* Better pathfinder and pathfinding in general
+* Better logging in several odd error cases
+* Lots of small fixes
+
+This release requires some small changes to configuration file.
+See docs/migration for details.
+

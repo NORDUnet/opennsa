@@ -19,9 +19,14 @@ def logRequest(request):
     length      = request.sentLength or '-'
     user_agent  = request.getHeader('user-agent') or '-'
 
-    log.msg('%s - %s %s %s %s %s %s' %  \
-        (request.getClientIP(), request.method, request.uri, request.clientproto, request.code, length, user_agent),
+    log.msg('{} - {} {} {} {} {} {}'.format(
+        request.getClientIP(),
+        request.method.decode(),
+        request.uri.decode(),
+        request.clientproto.decode(),
+        request.code,
+        length,
+        user_agent),
         system=LOG_SYSTEM
     )
-
 

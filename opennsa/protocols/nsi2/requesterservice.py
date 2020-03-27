@@ -84,7 +84,7 @@ class RequesterService:
         dst_stp = helper.createSTP(p2ps.destSTP)
 
         if p2ps.ero:
-            print "ERO parsing in reserveConfirmed not implemented yet, full path will not be available"
+            print('ERO parsing in reserveConfirmed not implemented yet, full path will not be available')
 
         sd = nsa.Point2PointService(src_stp, dst_stp, p2ps.capacity, p2ps.directionality, p2ps.symmetricPath, None)
         crt = nsa.Criteria(criteria.version, schedule, sd)

@@ -19,8 +19,9 @@ from psycopg2.extras import CompositeCaster, register_composite
 from twistar.registry import Registry
 from twistar.dbobject import DBObject
 
+from dateutil import parser
+
 from opennsa import nsa
-from opennsa.ext.iso8601 import iso8601
 
 
 
@@ -54,7 +55,7 @@ class SecuritAttributeComposite(CompositeCaster):
 
 
 def castDatetime(value, cur):
-    return iso8601.parse(value)
+    return parser.isoparse(value)
 
 
 # setup
@@ -75,7 +76,7 @@ def setupDatabase(database, user, password=None, host=None, connection_id_start=
     psycopg2.extensions.register_type(DT)
 
     if connection_id_start:
-        r = cur.execute("INSERT INTO backend_connection_id (connection_id) VALUES (%s) ON CONFLICT DO NOTHING;", (connection_id_start,) )
+        cur.execute("INSERT INTO backend_connection_id (connection_id) VALUES (%s) ON CONFLICT DO NOTHING;", (connection_id_start,) )
         conn.commit()
 
     conn.close()
@@ -118,7 +119,7 @@ def getBackendConnectionId():
 #        defer.returnValue(connection_id)
 
     def gotResult(rows):
-        print 'rows', rows
+        print('rows: {}'.format(rows))
         if len(rows) == 0:
             return None
         else:

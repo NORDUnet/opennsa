@@ -9,7 +9,7 @@ Author: Henrik Thostrup Jensen < htj at nordu dot net >
 Copyright: NORDUnet A/S (2014)
 """
 
-from zope.interface import implements
+from zope.interface import implementer
 
 from twisted.internet import defer
 
@@ -45,8 +45,9 @@ def pruneLabels(path):
 
 
 
+@implementer(IPlugin)
 class PrunerPlugin(BasePlugin):
-    implements(IPlugin)
+#    implements(IPlugin)
 
 
     def prunePaths(self, paths):

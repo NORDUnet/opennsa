@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 
 import os
 import sys
@@ -14,8 +14,8 @@ from opennsa.cli import options, parser, commands, logobserver
 CLI_TIMEOUT             = 130 # The default 2-PC timeout for nsi is 120 seconds, so just add a bit to that
 
 CLI_DEFAULTS            = '.opennsa-cli'
-REQUESTER_URL_BASE      = '%s://%s:%i/NSI/services/ConnectionService'
-HELP_MESSAGE            = '%s: Try --help or <command> --help for usage details.'
+REQUESTER_URL_BASE      = '{}://{}:{}/NSI/services/ConnectionService'
+HELP_MESSAGE            = '{}: Try --help or <command> --help for usage details.'
 
 
 def getHostname(dst_nsa):
@@ -39,14 +39,14 @@ def doMain():
     config = parser.Options()
     try:
         config.parseOptions()
-    except usage.UsageError, errortext:
-        print '%s: %s' % (sys.argv[0], errortext)
-        print HELP_MESSAGE % (sys.argv[0])
+    except usage.UsageError as errortext:
+        print('{}: {}'.format(sys.argv[0], errortext))
+        print(HELP_MESSAGE.format(sys.argv[0]))
         return
 
     # User did not enter a command.
     if not hasattr(config, "subOptions"):
-        print HELP_MESSAGE % (sys.argv[0])
+        print(HELP_MESSAGE.format(sys.argv[0]))
         return
 
     observer = logobserver.SimpleObserver(sys.stdout)
@@ -106,7 +106,7 @@ def doMain():
         host            = config.subOptions[options.HOST]           or defaults.get(options.HOST)   or getHostname(provider_nsa)
         port            = config.subOptions[options.PORT]           or defaults.get(options.PORT)   or (7443 if tls else 7080)
 
-        requester_url   = REQUESTER_URL_BASE % (scheme, host, port)
+        requester_url   = REQUESTER_URL_BASE.format(scheme, host, port)
         client_nsa      = nsa.NetworkServiceAgent(requester_nsa, requester_url)
 
         log.msg("Requester URL: %s" % requester_url, debug=True)
@@ -169,7 +169,7 @@ def doMain():
             if bandwidth is None:
                 raise usage.UsageError('Bandwidth is not defined')
 
-            bandwidth = config.subOptions[options.BANDWIDTH] or defaults.get(options.BANDWIDTH)
+            ero = config.subOptions[options.ERO] or None
 
         if config.subCommand in ('provision', 'release', 'terminate') and connection_id is None:
             raise usage.UsageError('Connection ID is not defined')
@@ -187,16 +187,16 @@ def doMain():
     # start over on commands, now we do the actual dispatch
 
     if config.subCommand == 'reserve':
-        yield commands.reserve(client, nsi_header, source_stp, dest_stp, start_time, end_time, bandwidth, connection_id, global_id)
+        yield commands.reserve(client, nsi_header, source_stp, dest_stp, start_time, end_time, bandwidth, ero, connection_id, global_id)
 
     elif config.subCommand == 'reserveonly':
-        yield commands.reserveonly(client, nsi_header, source_stp, dest_stp, start_time, end_time, bandwidth, connection_id, global_id)
+        yield commands.reserveonly(client, nsi_header, source_stp, dest_stp, start_time, end_time, bandwidth, ero, connection_id, global_id)
 
     elif config.subCommand == 'reserveprovision':
-        yield commands.reserveprovision(client, nsi_header, source_stp, dest_stp, start_time, end_time, bandwidth, connection_id, global_id, notification_wait)
+        yield commands.reserveprovision(client, nsi_header, source_stp, dest_stp, start_time, end_time, bandwidth, ero, connection_id, global_id, notification_wait)
 
     elif config.subCommand == 'rprt':
-        yield commands.rprt(client, nsi_header, source_stp, dest_stp, start_time, end_time, bandwidth, connection_id, global_id)
+        yield commands.rprt(client, nsi_header, source_stp, dest_stp, start_time, end_time, bandwidth, ero, connection_id, global_id)
 
     elif config.subCommand == 'reservecommit':
         yield commands.reservecommit(client, nsi_header, connection_id)
@@ -221,8 +221,8 @@ def doMain():
         yield commands.queryRecursive(client, nsi_header, connection_ids, global_ids)
 
     else:
-        print "Invalid subcommand specified"
-        print '%s: Try --help for usage details.' % (sys.argv[0])
+        print('Invalid subcommand specified')
+        print('{}: Try --help for usage details.'.format(sys.argv[0]))
 
 
     if iport:

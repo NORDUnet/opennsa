@@ -11,7 +11,7 @@ Copyright: NORDUnet (2011-2013)
 
 import uuid
 import random
-import urlparse
+from urllib.parse import urlparse
 import itertools
 
 from opennsa import error, constants as cnt
@@ -29,6 +29,7 @@ BIDIRECTIONAL   = 'Bidirectional'
 class NSIHeader(object):
 
     def __init__(self, requester_nsa, provider_nsa, correlation_id=None, reply_to=None, security_attributes=None, connection_trace=None):
+        assert reply_to is None or type(reply_to) is str, 'NSIHeader replpy_to must be None or type str (type: %s, value %s)' % (type(reply_to), reply_to)
         self.requester_nsa          = requester_nsa
         self.provider_nsa           = provider_nsa
         self.correlation_id         = correlation_id or self._createCorrelationId()
@@ -126,7 +127,7 @@ class Label(object):
 
         label_values = []
         i = iter(other.values)
-        o1, o2 = i.next()
+        o1, o2 = next(i)
 
         for v1, v2 in self.values:
             while True:
@@ -134,7 +135,7 @@ class Label(object):
                     break
                 elif o2 < v1:
                     try:
-                        o1, o2 = i.next()
+                        o1, o2 = next(i)
                     except StopIteration:
                         break
                     continue
@@ -143,7 +144,7 @@ class Label(object):
                     break
                 elif o2 <= v2:
                     try:
-                        o1, o2 = i.next()
+                        o1, o2 = next(i)
                     except StopIteration:
                         break
 
@@ -289,22 +290,23 @@ class Path(object):
 class NetworkServiceAgent(object):
 
     def __init__(self, identity, endpoint, service_type=None):
-        assert type(identity) is str, 'NSA identity type must be string (type: %s, value %s)' % (type(identity), identity)
-        assert type(endpoint) is str, 'NSA endpoint type must be string (type: %s, value %s)' % (type(endpoint), endpoint)
+        assert type(identity) is str, 'NSA identity type must be str (type: %s, value %s)' % (type(identity), identity)
+        assert type(endpoint) is str, 'NSA endpoint type must be str (type: %s, value %s)' % (type(endpoint), endpoint)
         self.identity = identity
-        self.endpoint = endpoint.strip()
+        self.endpoint = endpoint.strip() #.encode('utf-8')
         self.service_type = service_type
 
 
     def getHostPort(self):
-        url = urlparse.urlparse(self.endpoint)
+        url = urlparse(self.endpoint)
         host, port = url.netloc.split(':',2)
         port = int(port)
         return host, port
 
 
     def urn(self):
-        return cnt.URN_OGF_PREFIX + self.identity
+        urn = cnt.URN_OGF_PREFIX + self.identity
+        return urn
 
 
     def getServiceType(self):
@@ -376,7 +378,7 @@ class Schedule(object):
 
 class Point2PointService(object):
 
-    def __init__(self, source_stp, dest_stp, capacity, directionality=BIDIRECTIONAL, symmetric=None, ero=None, parameters=None):
+    def __init__(self, source_stp, dest_stp, capacity, directionality=BIDIRECTIONAL, symmetric=False, ero=None, parameters=None):
 
         if directionality is None:
             raise error.MissingParameterError('directionality must be defined, must not be None')

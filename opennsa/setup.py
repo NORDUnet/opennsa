@@ -1,6 +1,18 @@
 """
 High-level functionality for creating clients and services in OpenNSA.
+
+Binds all the OpenNSA modules together into a useful service.
+This is a tad complex.
+
+Beware that the Twisted HTTP module should be fed paths in bytes, not string,
+or nothing will work.
+
+TODO:
+Split out the main setup into some more comprehensible parts.
+Split out the main setup so the site can be retrieved without the service (so the whole thing can be tested).
+
 """
+
 import os
 import hashlib
 import datetime
@@ -18,6 +30,8 @@ from opennsa.protocols import rest, nsi2
 from opennsa.protocols.shared import httplog
 from opennsa.discovery import service as discoveryservice, fetcher
 
+
+NSI_RESOURCE = b'NSI'
 
 
 def setupBackend(backend_cfg, network_name, nrm_ports, parent_requester):
@@ -85,29 +99,6 @@ def setupBackend(backend_cfg, network_name, nrm_ports, parent_requester):
 
 
 
-def setupTopology(nrm_map, network_name, base_name):
-
-    link_vector = linkvector.LinkVector( [ network_name ] )
-
-    if nrm_map is not None:
-        nrm_ports = nrm.parsePortSpec(nrm_map)
-        nml_network = nml.createNMLNetwork(nrm_ports, network_name, base_name)
-
-        # route vectors
-        # hack in link vectors manually, since we don't have a mechanism for updating them automatically
-        for np in nrm_ports:
-            if np.remote_network is not None:
-                link_vector.updateVector(np.name, { np.remote_network : 1 } ) # hack
-                for network, cost in np.vectors.items():
-                    link_vector.updateVector(np.name, { network : cost })
-    else:
-        nrm_ports = []
-        nml_network = None
-
-    return nrm_ports, nml_network, link_vector
-
-
-
 def setupTLSContext(vc):
 
     # ssl/tls contxt
@@ -138,7 +129,8 @@ class CS2RequesterCreator:
 
     def create(self, nsi_agent):
 
-        resource_name = 'RequesterService2-' + hashlib.sha1(nsi_agent.urn() + nsi_agent.endpoint).hexdigest()
+        hash_input = nsi_agent.urn() + nsi_agent.endpoint
+        resource_name = b'RequesterService2-' + hashlib.sha1(hash_input.encode()).hexdigest().encode()
         return nsi2.setupRequesterPair(self.top_resource, self.host, self.port, nsi_agent.endpoint, self.aggregator,
                                        resource_name, tls=self.tls, ctx_factory=self.ctx_factory)
 
@@ -151,7 +143,7 @@ class OpenNSAService(twistedservice.MultiService):
         self.vc = vc
 
 
-    def startService(self):
+    def setupServiceFactory(self):
         """
         This sets up the OpenNSA service and ties together everything in the initialization.
         There are a lot of things going on, but none of it it particular deep.
@@ -173,9 +165,8 @@ class OpenNSAService(twistedservice.MultiService):
         service_endpoints = []
 
         # base names
-        base_name = vc[config.NETWORK_NAME]
-        network_name = base_name + ':topology' # because we say so
-        nsa_name  = base_name + ':nsa'
+        domain_name = vc[config.DOMAIN] # FIXME rename variable to domain
+        nsa_name  = domain_name + ':nsa'
 
         # base url
         base_protocol = 'https://' if vc[config.TLS] else 'http://'
@@ -187,10 +178,6 @@ class OpenNSAService(twistedservice.MultiService):
 
         ns_agent = nsa.NetworkServiceAgent(nsa_name, provider_endpoint, 'local')
 
-        # topology
-        nrm_map = open(vc[config.NRM_MAP_FILE]) if vc[config.NRM_MAP_FILE] is not None else None
-        nrm_ports, nml_network, link_vector = setupTopology(nrm_map, network_name, base_name)
-
         # ssl/tls context
         ctx_factory = setupTLSContext(vc) # May be None
 
@@ -201,14 +188,22 @@ class OpenNSAService(twistedservice.MultiService):
         else:
             from opennsa.plugin import BasePlugin
             plugin = BasePlugin()
+
         plugin.init(vc, ctx_factory)
 
         # the dance to setup dynamic providers right
         top_resource = resource.Resource()
         requester_creator = CS2RequesterCreator(top_resource, None, vc[config.HOST], vc[config.PORT], vc[config.TLS], ctx_factory) # set aggregator later
 
-        provider_registry = provreg.ProviderRegistry({}, { cnt.CS2_SERVICE_TYPE : requester_creator.create } )
-        aggr = aggregator.Aggregator(network_name, ns_agent, nml_network, link_vector, None, provider_registry, vc[config.POLICY], plugin ) # set parent requester later
+        provider_registry = provreg.ProviderRegistry( { cnt.CS2_SERVICE_TYPE : requester_creator.create } )
+
+        link_vector = linkvector.LinkVector()
+
+        networks = {}
+        ports = {} # { network : { port : nrmport } }
+
+        parent_requester = None # parent requester is set later
+        aggr = aggregator.Aggregator(ns_agent, ports, link_vector, parent_requester, provider_registry, vc[config.POLICY], plugin )
 
         requester_creator.aggregator = aggr
 
@@ -221,41 +216,66 @@ class OpenNSAService(twistedservice.MultiService):
             log.msg('No backend specified. Running in aggregator-only mode')
             if not cnt.AGGREGATOR in vc[config.POLICY]:
                 vc[config.POLICY].append(cnt.AGGREGATOR)
-        elif len(backend_configs) > 1:
-            raise config.ConfigurationError('Only one backend supported for now. Multiple will probably come later.')
-        else: # 1 backend
-            if not nrm_ports:
-                raise config.ConfigurationError('No NRM Map file specified. Cannot configure a backend without port spec.')
 
-            backend_cfg = backend_configs.values()[0]
+        else: # at least one backend
 
-            backend_service = setupBackend(backend_cfg, network_name, nrm_ports, aggr)
-            backend_service.setServiceParent(self)
-            can_swap_label = backend_service.connection_manager.canSwapLabel(cnt.ETHERNET_VLAN)
-            provider_registry.addProvider(ns_agent.urn(), backend_service, [ network_name ] )
+            # This is all temporary right now... clean up later
 
+            for backend_name, b_cfg in backend_configs.items():
+
+                if backend_name is None or backend_name == '':
+                    raise config.ConfigurationError('You need to specify backend name, use [backend:name]')
+
+                backend_network_name = '{}:{}'.format(domain_name, backend_name)
+
+                if not config.NRM_MAP_FILE in b_cfg: # move to verify config
+                    raise config.ConfigurationError('No nrm map specified for backend')
+
+                backend_nrm_map_file = b_cfg[config.NRM_MAP_FILE]
+                if not os.path.exists(backend_nrm_map_file): # move to verify config
+                    raise config.ConfigError('nrm map file {} for backend {} does not exists'.format(backend_nrm_map_file, backend_name))
+
+                nrm_map = open(backend_nrm_map_file)
+                backend_nrm_ports = nrm.parsePortSpec(nrm_map)
+
+                link_vector.addLocalNetwork(backend_network_name)
+                for np in backend_nrm_ports:
+                    if np.remote_network is not None:
+                        link_vector.updateVector(backend_network_name, np.name, { np.remote_network : 1 } ) # hack
+                        for network, cost in np.vectors.items():
+                            link_vector.updateVector(np.name, { network : cost })
+                    # build port map for aggreator to lookup
+                    ports.setdefault(backend_network_name, {})[np.name] = np
+
+                backend_service = setupBackend(b_cfg, backend_network_name, backend_nrm_ports, aggr)
+
+                networks[backend_name] = {
+                    'backend'   : backend_service,
+                    'nrm_ports' : backend_nrm_ports
+                }
+
+                provider_registry.addProvider(ns_agent.urn(), backend_network_name, backend_service)
 
         # fetcher
         if vc[config.PEERS]:
-            fetcher_service = fetcher.FetcherService(link_vector, nrm_ports, vc[config.PEERS], provider_registry, ctx_factory=ctx_factory)
+            fetcher_service = fetcher.FetcherService(link_vector, networks, vc[config.PEERS], provider_registry, ctx_factory=ctx_factory)
             fetcher_service.setServiceParent(self)
         else:
-            log.msg('No peers configured, will not be able to do outbound requests.')
+            log.msg('No peers configured, will not be able to do outbound requests (UPA mode)')
 
         # discovery service
-        name = base_name.split(':')[0] if ':' in base_name else base_name
         opennsa_version = 'OpenNSA-' + version
-        networks    = [ cnt.URN_OGF_PREFIX + network_name ] if nml_network is not None else []
+        network_urns = [ '{}{}:{}'.format(cnt.URN_OGF_PREFIX, domain_name, network_name) for network_name in networks ]
         interfaces  = [ ( cnt.CS2_PROVIDER, provider_endpoint, None), ( cnt.CS2_SERVICE_TYPE, provider_endpoint, None) ]
         features    = []
-        if nrm_ports:
+        if networks:
             features.append( (cnt.FEATURE_UPA, None) )
         if vc[config.PEERS]:
             features.append( (cnt.FEATURE_AGGREGATOR, None) )
 
         # view resource
         vr = viewresource.ConnectionListResource()
-        top_resource.children['NSI'].putChild('connections', vr)
+        top_resource.children[NSI_RESOURCE].putChild('connections', vr)
 
         # rest service
         if vc[config.REST]:
@@ -266,40 +286,52 @@ class OpenNSAService(twistedservice.MultiService):
             service_endpoints.append( ('REST', rest_url) )
             interfaces.append( (cnt.OPENNSA_REST, rest_url, None) )
 
-        # nml topology
-        if nml_network is not None:
-            nml_resource_name = base_name + '.nml.xml'
+        for network_name, no in networks.items():
+
+            nml_resource_name = '{}:{}.nml.xml'.format(domain_name, network_name, '.nml.xml')
             nml_url  = '%s/NSI/%s' % (base_url, nml_resource_name)
 
+            nml_network = nml.createNMLNetwork(no['nrm_ports'], network_name, domain_name)
+            can_swap_label = no['backend'].connection_manager.canSwapLabel(cnt.ETHERNET_VLAN)
+
             nml_service = nmlservice.NMLService(nml_network, can_swap_label)
-            top_resource.children['NSI'].putChild(nml_resource_name, nml_service.resource() )
+
+            top_resource.children[NSI_RESOURCE].putChild(nml_resource_name.encode(), nml_service.resource() )
 
             service_endpoints.append( ('NML Topology', nml_url) )
             interfaces.append( (cnt.NML_SERVICE_TYPE, nml_url, None) )
 
-        # discovery service
-        discovery_resource_name = 'discovery.xml'
-        discovery_url = '%s/NSI/%s' % (base_url, discovery_resource_name)
 
-        ds = discoveryservice.DiscoveryService(ns_agent.urn(), now, name, opennsa_version, now, networks, interfaces, features, provider_registry, link_vector)
+        # discovery service
+        discovery_resource_name = b'discovery.xml'
+        discovery_url = '%s/NSI/%s' % (base_url, discovery_resource_name.decode())
+
+        ds = discoveryservice.DiscoveryService(ns_agent.urn(), now, domain_name, opennsa_version, now, network_urns, interfaces, features, provider_registry, link_vector)
 
         discovery_resource = ds.resource()
-        top_resource.children['NSI'].putChild(discovery_resource_name, discovery_resource)
+        top_resource.children[NSI_RESOURCE].putChild(discovery_resource_name, discovery_resource)
         link_vector.callOnUpdate( lambda : discovery_resource.updateResource ( ds.xml() ))
 
         service_endpoints.append( ('Discovery', discovery_url) )
 
-        # print service urls
+        # log service urls
         for service_name, url in service_endpoints:
             log.msg('{:<12} URL: {}'.format(service_name, url))
 
         factory = server.Site(top_resource)
         factory.log = httplog.logRequest # default logging is weird, so we do our own
 
-        if vc[config.TLS]:
-            internet.SSLServer(vc[config.PORT], factory, ctx_factory).setServiceParent(self)
+        return factory, ctx_factory
+
+
+    def startService(self):
+
+        factory, ctx_factory = self.setupServiceFactory()
+
+        if self.vc[config.TLS]:
+            internet.SSLServer(self.vc[config.PORT], factory, ctx_factory).setServiceParent(self)
         else:
-            internet.TCPServer(vc[config.PORT], factory).setServiceParent(self)
+            internet.TCPServer(self.vc[config.PORT], factory).setServiceParent(self)
 
         # do not start sub-services until we have started this one
         twistedservice.MultiService.startService(self)

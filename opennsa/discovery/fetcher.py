@@ -50,7 +50,7 @@ class FetcherService(service.Service):
         defs = []
         for peer in self.peers:
             log.msg('Fetching %s' % peer.url, debug=True, system=LOG_SYSTEM)
-            d = httpclient.httpRequest(peer.url, '', {}, 'GET', timeout=10, ctx_factory=self.ctx_factory)
+            d = httpclient.httpRequest(peer.url.encode('utf-8'), b'', {}, b'GET', timeout=10, ctx_factory=self.ctx_factory)
             d.addCallbacks(self.gotDocument, self.retrievalFailed, callbackArgs=(peer,), errbackArgs=(peer,))
             defs.append(d)
 
@@ -86,10 +86,13 @@ class FetcherService(service.Service):
                 return
 
             network_ids = [ _baseName(nid) for nid in nsa_description.networkId if nid.startswith(cnt.URN_OGF_PREFIX) ] # silent discard weird stuff
+            if not network_ids:
+                log.msg('NSA discovery service for {}, did not list any valid network ids.'.format(nsa_id), debug=True)
 
             nsi_agent = nsa.NetworkServiceAgent( _baseName(nsa_id), cs_service_url, cnt.CS2_SERVICE_TYPE)
 
-            self.provider_registry.spawnProvider(nsi_agent, network_ids)
+            for network_id in network_ids:
+                self.provider_registry.spawnProvider(nsi_agent, network_id)
 
             # first, build vectors
             vectors = {}
@@ -104,10 +107,11 @@ class FetcherService(service.Service):
 
             # update per-port link vectors
             if vectors:
-                for np in self.nrm_ports:
-                    if np.remote_network in network_ids:
-                        # this may add the vectors to multiple ports (though not likely)
-                        self.link_vectors.updateVector(np.name, vectors )
+                for network, no in self.nrm_ports.items():
+                    for np in no['nrm_ports']:
+                        if np.remote_network in network_ids:
+                            # this may add the vectors to multiple ports (though not likely)
+                            self.link_vectors.updateVector(network, np.name, vectors)
 
             # there is lots of other stuff in the nsa description but we don't really use it
 

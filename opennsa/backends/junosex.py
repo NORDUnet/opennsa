@@ -15,7 +15,7 @@ import random
 from twisted.python import log
 from twisted.internet import defer
 
-from opennsa import constants as cnt, config
+from opennsa import config
 from opennsa.backends.common import genericbackend, ssh
 
 
@@ -97,7 +97,7 @@ class SSHChannel(ssh.SSHChannel):
             self.write(COMMAND_COMMIT + LT)
             yield d
 
-        except Exception, e:
+        except Exception as e:
             log.msg('Error sending commands: %s' % str(e))
             raise e
 

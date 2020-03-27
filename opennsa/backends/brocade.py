@@ -129,7 +129,7 @@ class SSHChannel(ssh.SSHChannel):
             self.write(COMMAND_END + LT)
             yield d
 
-        except Exception, e:
+        except Exception as e:
             log.msg('Error sending commands: %s' % str(e))
             raise e
 

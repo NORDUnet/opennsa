@@ -1,4 +1,4 @@
-import StringIO
+from io import StringIO
 
 from twisted.trial import unittest
 
@@ -14,6 +14,8 @@ ethernet     netherlight     netherlight#intf1(-in|-out)    vlan:1780-1783  1000
 ethernet     somelight       somelight#intf2(-in|-out)      vlan:1780-1780  1000    em8     -
 ethernet     uvalight        uvalight#intf3(-in|-out)       vlan:1780-1783  1000    em2     -
 ethernet     splight         splight#intf4(-in|-out)        mpls:1780-1783  1000    em7     -
+ethernet     aruba           aruba.net#intf5(-in|-out)      mpls:1780-1783  1000    em8     -
+ethernet     san             aruba.net:san#arb(-in|-out)    vlan:1780-1799  1000    em9     -
 """
 
 
@@ -21,7 +23,7 @@ class NRMParserTest(unittest.TestCase):
 
     def testPortMapping(self):
 
-        nrm_ports = nrm.parsePortSpec( StringIO.StringIO(NRM_ENTRY) )
+        nrm_ports = nrm.parsePortSpec( StringIO(NRM_ENTRY) )
 
         port_map = dict( [ (p.name, p.interface) for p in nrm_ports ] )
 
@@ -34,13 +36,14 @@ class NRMParserTest(unittest.TestCase):
 
     def testRemotePort(self):
 
-        nrm_ports = nrm.parsePortSpec( StringIO.StringIO(NRM_ENTRY) )
+        nrm_ports = nrm.parsePortSpec( StringIO(NRM_ENTRY) )
 
-        port_map = dict( [ (p.name, p.remote_port) for p in nrm_ports ] )
+        port_map = dict( [ (p.name, (p.remote_network, p.remote_port)) for p in nrm_ports ] )
 
-        self.assertEquals( port_map.get('ps'),          None)
-        self.assertEquals( port_map.get('netherlight'), 'netherlight:intf1')
-        self.assertEquals( port_map.get('somelight'),   'somelight:intf2')
-        self.assertEquals( port_map.get('uvalight'),    'uvalight:intf3')
-        self.assertEquals( port_map.get('splight'),     'splight:intf4')
+        self.assertEquals( port_map.get('ps'),          (None, None) )
+        self.assertEquals( port_map.get('netherlight'), ('netherlight', 'intf1'))
+        self.assertEquals( port_map.get('somelight'),   ('somelight', 'intf2'))
+        self.assertEquals( port_map.get('uvalight'),    ('uvalight', 'intf3'))
+        self.assertEquals( port_map.get('aruba'),       ('aruba.net', 'intf5'))
+        self.assertEquals( port_map.get('san'),         ('aruba.net:san', 'arb'))
 

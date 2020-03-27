@@ -71,7 +71,8 @@ class P2PServiceBaseType(object):
         ET.SubElement(r, 'sourceSTP').text = self.sourceSTP
         ET.SubElement(r, 'destSTP').text = self.destSTP
         if self.ero is not None:
-            ET.SubElement(r, 'ero').extend( [ e.xml('ero') for e in self.ero ] )
+            ordered_stps = [ OrderedStpType(idx, stp.urn()) for idx, stp in enumerate(self.ero) ]
+            ET.SubElement(r, 'ero').extend( [ e.xml('orderedSTP') for e in ordered_stps ] )
         if self.parameter is not None:
             for p in self.parameter:
                 ET.SubElement(r, 'parameter',  attrib={'type': p.type_}).text = p.value

@@ -10,6 +10,7 @@ logfile=nsalog.log
 nrmfile=ports.nrm
 
 peers=http://host.example.org:9080/NSI/discovery.xml
+      https://nsi.example.com/NSI/discovery.xml
 
 policies=requiretrace,requireuser
 
@@ -37,7 +38,9 @@ These are the options for the service block:
 `nrmmap`   : Path to port/topology NRM description file
 
 `peers`    : URLs to NSAs to peer with control-plane wise.
-             Seperate multiple entries with newline (only peers= on the first line).
+             Seperate multiple entries with newline (only peers= on the first
+             line). If using multiple lines, the following peer urls must be in
+             indented at least pass the `=` on the first line (parser limitation).
              Optional. No peers will put OpenNSA into UPA mode.
 
 `policies` : What policies are required. Currently `requiretrace`, `requireuser`,
