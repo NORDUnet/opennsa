@@ -85,7 +85,7 @@ def httpRequest(url, payload, headers, method=b'POST', timeout=DEFAULT_TIMEOUT, 
     def invocationError(err):
         if isinstance(err.value, ConnectionClosed): # note: this also includes ConnectionDone and ConnectionLost
             # It might be better to just raise an error here, but at least we log it
-            log.msg('Connection lost or closed during invocation, this might cause en error', system=LOG_SYSTEM)
+            log.msg('ConnectionClosed failure: {} (this is usually okay during shutdown)'.format(err.value), system=LOG_SYSTEM)
             pass # these are pretty common when the remote shuts down
         elif isinstance(err.value, WebError):
             data = err.value.response
