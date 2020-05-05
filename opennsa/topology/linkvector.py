@@ -80,7 +80,7 @@ class LinkVector:
 
     def updateVector(self, network, port, vectors):
 
-        log.msg('Updating vector {}:{} -> {}'.format(network, port, vectors))
+        log.msg('Updating vector {}:{} -> {}'.format(network, port, vectors), system=LOG_SYSTEM)
         if (network, port) in self.vectors:
             self.vectors[(network,port)].update(vectors)
         else:
@@ -95,7 +95,7 @@ class LinkVector:
             self.vectors.pop((network, port))
             self._calculateVectors()
         except KeyError:
-            log.msg('Tried to delete non-existing vector for %s' % port)
+            log.msg('Tried to delete non-existing vector for %s' % port, system=LOG_SYSTEM)
 
 
     def _calculateVectors(self):
