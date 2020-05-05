@@ -80,7 +80,9 @@ class LinkVector:
 
     def updateVector(self, network, port, vectors):
 
-        log.msg('Updating vector {}:{} -> {}'.format(network, port, vectors), system=LOG_SYSTEM)
+        log.msg('Updating vector {}:{} ->'.format(network, port), system=LOG_SYSTEM)
+        for dest_network, cost in vectors.items():
+            log.msg('  {} {}'.format(cost, dest_network), system=LOG_SYSTEM)
         if (network, port) in self.vectors:
             self.vectors[(network,port)].update(vectors)
         else:
