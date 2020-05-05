@@ -105,8 +105,10 @@ def setupTLSContext(vc):
     if vc[config.TLS]:
         from opennsa import ctxfactory
         ctx_factory = ctxfactory.ContextFactory(vc[config.KEY], vc[config.CERTIFICATE], vc[config.CERTIFICATE_DIR], vc[config.VERIFY_CERT])
-    elif os.path.isdir(vc[config.CERTIFICATE_DIR]):
-        # we can at least create a context
+    elif vc[config.CERTIFICATE_DIR]:
+        # create a context so we can verify https urls
+        if not os.path.isdir(vc[config.CERTIFICATE_DIR]):
+            raise config.ConfigurationError('certdir value {} is not a directory'.format(vc[config.CERTIFICATE_DIR]))
         from opennsa import ctxfactory
         ctx_factory = ctxfactory.RequestContextFactory(vc[config.CERTIFICATE_DIR], vc[config.VERIFY_CERT])
     else:
