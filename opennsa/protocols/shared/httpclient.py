@@ -75,7 +75,7 @@ def httpRequest(url, payload, headers, method=b'POST', timeout=DEFAULT_TIMEOUT, 
     for header, value in headers.items():
         factory.headers[header.encode('utf-8')] = value.encode('utf-8')
 
-    if scheme == 'https':
+    if scheme == b'https':
         if ctx_factory is None:
             return defer.fail(HTTPRequestError('Cannot perform https request without context factory'))
         reactor.connectSSL(host, port, factory, ctx_factory)
