@@ -33,7 +33,7 @@ class ProviderRegistry(object):
         if network_id in self.providers:
             raise ValueError('Provider for network {} already registered')
 
-        log.msg('Adding new provider for network {}, nsa urn {}'.format(network_id, nsi_agent_urn))
+        log.msg('Adding new provider for network {}, nsa urn {}'.format(network_id, nsi_agent_urn), system=LOG_SYSTEM)
         self.providers[network_id] = provider
         self.provider_urns[network_id] = nsi_agent_urn
 
