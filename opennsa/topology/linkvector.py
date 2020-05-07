@@ -113,7 +113,7 @@ class LinkVector:
 
     def _calculateVectors(self):
 
-        # Do dijstra for each local network
+        # Do dijkstra for each local network
 
         for local_network in self.local_networks:
             dist, prev = self._dijkstra(local_network)
