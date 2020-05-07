@@ -251,7 +251,7 @@ class OpenNSAService(twistedservice.MultiService):
 
                 backend_service = setupBackend(b_cfg, backend_network_name, backend_nrm_ports, aggr)
 
-                networks[backend_name] = {
+                networks[backend_network_name] = {
                     'backend'   : backend_service,
                     'nrm_ports' : backend_nrm_ports
                 }
@@ -288,12 +288,12 @@ class OpenNSAService(twistedservice.MultiService):
             service_endpoints.append( ('REST', rest_url) )
             interfaces.append( (cnt.OPENNSA_REST, rest_url, None) )
 
-        for network_name, no in networks.items():
+        for backend_network_name, no in networks.items():
 
-            nml_resource_name = '{}:{}.nml.xml'.format(domain_name, network_name, '.nml.xml')
+            nml_resource_name = '{}.nml.xml'.format(backend_network_name)
             nml_url  = '%s/NSI/%s' % (base_url, nml_resource_name)
 
-            nml_network = nml.createNMLNetwork(no['nrm_ports'], network_name, domain_name)
+            nml_network = nml.createNMLNetwork(no['nrm_ports'], backend_network_name, backend_network_name)
             can_swap_label = no['backend'].connection_manager.canSwapLabel(cnt.ETHERNET_VLAN)
 
             nml_service = nmlservice.NMLService(nml_network, can_swap_label)
