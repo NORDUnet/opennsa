@@ -267,7 +267,7 @@ class OpenNSAService(twistedservice.MultiService):
 
         # discovery service
         opennsa_version = 'OpenNSA-' + version
-        network_urns = [ '{}{}:{}'.format(cnt.URN_OGF_PREFIX, domain_name, network_name) for network_name in networks ]
+        network_urns = [ '{}{}'.format(cnt.URN_OGF_PREFIX, network_name) for network_name in networks ]
         interfaces  = [ ( cnt.CS2_PROVIDER, provider_endpoint, None), ( cnt.CS2_SERVICE_TYPE, provider_endpoint, None) ]
         features    = []
         if networks:
