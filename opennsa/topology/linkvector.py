@@ -13,7 +13,7 @@ from twisted.python import log
 
 
 
-LOG_SYSTEM = 'topology.linkvector'
+LOG_SYSTEM = 'topology'
 
 DEFAULT_MAX_COST = 5
 
