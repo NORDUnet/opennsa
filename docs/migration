@@ -1,9 +1,9 @@
-Python 2 -> Configuration Migration
-===================================
+OpenNSA 3 Configuration Migration
+=================================
 
-With the port of OpenNSA from Python 2 to Python 3, support for multiple
-backends was added. For this, some changes in the configuration format was
-needed.
+With the port of OpenNSA from Python 2 to Python 3, and the subsequent release
+of OpenNSA 3, support for multiple backends was added. For this, some changes
+in the configuration format was needed.
 
 The changes are:
 * Use domain instead of network in ```[service]``` block

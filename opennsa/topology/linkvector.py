@@ -13,7 +13,7 @@ from twisted.python import log
 
 
 
-LOG_SYSTEM = 'topology.linkvector'
+LOG_SYSTEM = 'topology'
 
 DEFAULT_MAX_COST = 5
 
@@ -80,11 +80,24 @@ class LinkVector:
 
     def updateVector(self, network, port, vectors):
 
-        log.msg('Updating vector {}:{} -> {}'.format(network, port, vectors))
         if (network, port) in self.vectors:
-            self.vectors[(network,port)].update(vectors)
+            np_vectors = self.vectors[network, port]
+            for dest_network, cost in vectors.items():
+                if dest_network not in np_vectors:
+                    log.msg('Add vector {}:{} -> {} {}'.format(network, port, dest_network, cost), system=LOG_SYSTEM)
+                    np_vectors[dest_network] = cost
+                else:
+                    existing_cost = np_vectors[dest_network]
+                    if cost != existing_cost:
+                        log.msg('Updating vector {}:{} -> {} {} ({})'.format(network, port, dest_network, cost, existing_cost), system=LOG_SYSTEM)
+                    else:
+                        # skip update as entry is identical, only debug here
+                        log.msg('Skiping vector update {}:{} -> {} {} ({})'.format(network, port, dest_network, cost, existing_cost),
+                                debug=True, system=LOG_SYSTEM)
         else:
             self.vectors[(network,port)] = vectors
+            for dest_network, cost in vectors.items():
+                log.msg('Add vector {}:{} -> {} {}'.format(network, port, dest_network, cost), system=LOG_SYSTEM)
 
         self._calculateVectors()
         self.updated()
@@ -95,12 +108,12 @@ class LinkVector:
             self.vectors.pop((network, port))
             self._calculateVectors()
         except KeyError:
-            log.msg('Tried to delete non-existing vector for %s' % port)
+            log.msg('Tried to delete non-existing vector for %s' % port, system=LOG_SYSTEM)
 
 
     def _calculateVectors(self):
 
-        # Do dijstra for each local network
+        # Do dijkstra for each local network
 
         for local_network in self.local_networks:
             dist, prev = self._dijkstra(local_network)

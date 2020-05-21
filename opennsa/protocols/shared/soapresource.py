@@ -161,7 +161,7 @@ def setupSOAPResource(top_resource, resource_name, subpath=None, allowed_hosts=N
             ir = nr
 
     if resource_name in ir.children:
-        raise AssertionError('Cannot insert several SOAP resources in same leaf.')
+        raise AssertionError('Duplicate SOAP resources detected, cannot insert resource (name {}).'.format(resource_name))
 
     soap_resource = SOAPResource(allowed_hosts=allowed_hosts)
     ir.putChild(resource_name, soap_resource)

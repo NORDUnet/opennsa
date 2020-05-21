@@ -18,8 +18,8 @@ LOG_SYSTEM = 'providerregistry'
 class ProviderRegistry(object):
 
     def __init__(self, provider_factories):
-        # this design might have a small problem removing old entries
-        # but i thing the old had the same issue, and it is not done currently
+        # This design might have a small problem removing old entries
+        # But I think the old had the same issue, and it is not done currently
         self.providers = {} # network_id -> provider
         self.provider_urns = {} # network_id -> provider_urn
         # in theory the latter mapping might not be needed, but it is hard to do without
@@ -33,7 +33,7 @@ class ProviderRegistry(object):
         if network_id in self.providers:
             raise ValueError('Provider for network {} already registered')
 
-        log.msg('Adding new provider for network {}, nsa urn {}'.format(network_id, nsi_agent_urn))
+        log.msg('Adding new provider for network {}, nsa urn {}'.format(network_id, nsi_agent_urn), system=LOG_SYSTEM)
         self.providers[network_id] = provider
         self.provider_urns[network_id] = nsi_agent_urn
 

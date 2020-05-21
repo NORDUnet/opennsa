@@ -105,8 +105,10 @@ def setupTLSContext(vc):
     if vc[config.TLS]:
         from opennsa import ctxfactory
         ctx_factory = ctxfactory.ContextFactory(vc[config.KEY], vc[config.CERTIFICATE], vc[config.CERTIFICATE_DIR], vc[config.VERIFY_CERT])
-    elif os.path.isdir(vc[config.CERTIFICATE_DIR]):
-        # we can at least create a context
+    elif vc[config.CERTIFICATE_DIR]:
+        # create a context so we can verify https urls
+        if not os.path.isdir(vc[config.CERTIFICATE_DIR]):
+            raise config.ConfigurationError('certdir value {} is not a directory'.format(vc[config.CERTIFICATE_DIR]))
         from opennsa import ctxfactory
         ctx_factory = ctxfactory.RequestContextFactory(vc[config.CERTIFICATE_DIR], vc[config.VERIFY_CERT])
     else:
@@ -249,7 +251,7 @@ class OpenNSAService(twistedservice.MultiService):
 
                 backend_service = setupBackend(b_cfg, backend_network_name, backend_nrm_ports, aggr)
 
-                networks[backend_name] = {
+                networks[backend_network_name] = {
                     'backend'   : backend_service,
                     'nrm_ports' : backend_nrm_ports
                 }
@@ -265,7 +267,7 @@ class OpenNSAService(twistedservice.MultiService):
 
         # discovery service
         opennsa_version = 'OpenNSA-' + version
-        network_urns = [ '{}{}:{}'.format(cnt.URN_OGF_PREFIX, domain_name, network_name) for network_name in networks ]
+        network_urns = [ '{}{}'.format(cnt.URN_OGF_PREFIX, network_name) for network_name in networks ]
         interfaces  = [ ( cnt.CS2_PROVIDER, provider_endpoint, None), ( cnt.CS2_SERVICE_TYPE, provider_endpoint, None) ]
         features    = []
         if networks:
@@ -286,12 +288,12 @@ class OpenNSAService(twistedservice.MultiService):
             service_endpoints.append( ('REST', rest_url) )
             interfaces.append( (cnt.OPENNSA_REST, rest_url, None) )
 
-        for network_name, no in networks.items():
+        for backend_network_name, no in networks.items():
 
-            nml_resource_name = '{}:{}.nml.xml'.format(domain_name, network_name, '.nml.xml')
+            nml_resource_name = '{}.nml.xml'.format(backend_network_name)
             nml_url  = '%s/NSI/%s' % (base_url, nml_resource_name)
 
-            nml_network = nml.createNMLNetwork(no['nrm_ports'], network_name, domain_name)
+            nml_network = nml.createNMLNetwork(no['nrm_ports'], backend_network_name, backend_network_name)
             can_swap_label = no['backend'].connection_manager.canSwapLabel(cnt.ETHERNET_VLAN)
 
             nml_service = nmlservice.NMLService(nml_network, can_swap_label)
