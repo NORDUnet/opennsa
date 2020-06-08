@@ -6,17 +6,17 @@ MAINTAINER Henrik Thostrup Jensen <htj@nordu.net>
 
 
 # -- Environment --
-ENV GIT_REPO git://git.nordu.net/opennsa.git
+ENV GIT_REPO https://github.com/NORDUnet/opennsa
 ENV USER opennsa
 
 
 # --- Base image ---
 # Update and install dependencies
-# pip to install twistar
+# pip to install twistar service-identity pyasn1
 # pyasn1 and crypto is needed for ssh backends
-RUN apt-get update && apt-get install -y git-core python python-twisted python-openssl python-psycopg2 python-pip python-pyasn1 python-crypto
+RUN apt-get update && apt-get install -y git-core python3 python3-twisted-bin python3-openssl python3-psycopg2 python3-pip python3-crypto python3-dateutil
 
-RUN pip install twistar
+RUN pip3 install twistar service-identity pyasn1
 
 
 # -- User setup --
@@ -33,7 +33,7 @@ RUN git clone $GIT_REPO
 # -- Cleanup --
 # With --squash this makes the image go from 476 to 164 mb
 USER root
-RUN apt-get remove -y python-pip git
+RUN apt-get remove -y python3-pip git
 RUN apt-get -y clean
 RUN apt-get -y autoclean
 RUN apt-get -y autoremove
