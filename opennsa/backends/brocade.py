@@ -3,6 +3,7 @@ Brocade backend.
 Contributed by Balasubramania Pillai from MAX Gigapop.
 Ported to OpenNSA NSIv2 by Henrik Thostrup Jensen (summer 2013)
 Further contributions/fixes from Jeronimo Aguiar from AMPATH.
+Further contributions by John Hess from CENIC.
 
 Notes:
 
@@ -88,7 +89,7 @@ def _createTeardownCommands(source_nrm_port, dest_nrm_port):
 
 class SSHChannel(ssh.SSHChannel):
 
-    name = 'session'
+    name = b'session'
 
     def __init__(self, conn):
         ssh.SSHChannel.__init__(self, conn=conn)
@@ -105,7 +106,7 @@ class SSHChannel(ssh.SSHChannel):
 
         try:
             log.msg('Requesting shell for sending commands', debug=True, system=LOG_SYSTEM)
-            yield self.conn.sendRequest(self, 'shell', '', wantReply=1)
+            yield self.conn.sendRequest(self, 'shell', b'', wantReply=1)
 
             d = self.waitForData('>')
             self.write(COMMAND_PRIVILEGE % enable_password + LT)
@@ -148,10 +149,10 @@ class SSHChannel(ssh.SSHChannel):
         if len(data) == 0:
             pass
         else:
-            self.data += data
+            self.data += data.decode('utf-8')
             if self.wait_data and self.wait_data in self.data:
                 d = self.wait_defer
-                self.data       = ''
+                self.data       = b''
                 self.wait_data  = None
                 self.wait_defer = None
                 d.callback(self)
