@@ -62,7 +62,7 @@ class SOAPResource(resource.Resource):
 
             cert_subject = cert.get_subject()
             log.msg('Certificate subject %s' % cert.get_subject(), system=LOG_SYSTEM)
-            host_dn = cert.get_subject().get_components()[-1][1]
+            host_dn = (dict(cert.get_subject().get_components()).get(b'CN')).decode('utf-8')
             log.msg('Host DN: %s' % host_dn, system=LOG_SYSTEM)
 
             if not host_dn in self.allowed_hosts:
@@ -78,7 +78,7 @@ class SOAPResource(resource.Resource):
             if cert:
                 log.msg('Certificate subject %s' % cert.get_subject(), system=LOG_SYSTEM)
 
-            host_dn = cert.get_subject().get_components()[-1][1]
+            host_dn = (dict(cert.get_subject().get_components()).get(b'CN')).decode('utf-8')
             request_info = RequestInfo(str(cert.get_subject()), host_dn)
 
         else:

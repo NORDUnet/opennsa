@@ -20,9 +20,12 @@ class SSHClientTransport(transport.SSHClientTransport):
 
 
     def verifyHostKey(self, public_key, fingerprint):
-        if fingerprint in self.fingerprints:
+        unicode_fingerprint = fingerprint.decode('utf-8')
+        if unicode_fingerprint in self.fingerprints:
+            log.msg('verifyHostKey: fingerprint {} accepted'.format(unicode_fingerprint), system=LOG_SYSTEM)
             return defer.succeed(1)
         else:
+            log.msg('verifyHostKey: fingerprint {} NOT accepted'.format(unicode_fingerprint), system=LOG_SYSTEM)
             return defer.fail(concherror.ConchError('Fingerprint not accepted'))
 
 
