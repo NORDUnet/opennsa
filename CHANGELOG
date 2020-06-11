@@ -6,7 +6,27 @@ Future release
 
 * Support for ERO on the client (no server side yet)
 
-ERO was included in 3.0.0 as well, but didn't make the release notes.
+
+OpenNSA 3.0.1
+-------------
+
+* Partial port of the the brocade backend to Python 3
+* Updated docker buildfile for Python 3 (kindly provided by Hans Trompert, SURFnet)
+* Some initial tests with multi-NSA setups
+* Fix issue with nml network displaying the wrong network names
+* Some slight clarification around OpenNSA 3 migration.
+* Fix issue with remote network being omitted in nml topology
+* Better error message if the cerficate directory is not a directory
+* Fix issue with the object id being listed in the discovery.xml (and not nsa id)
+* Improved logging (missing system variables / better explanations, linkvector)
+* Some spelling/grammar fixes on the documentation
+* Fix issue with undefined variable being used in httpclient
+* Improve parsing of peers url list
+* Better documentation around having multiple peers
+* Several fixes regarding byte/string in all of the code base
+* Updated requirements to specify twistar 2.0
+
+Special thanks to John Hess for a lot of feedback and patches for this release.
 
 
 OpenNSA 3.0.0
@@ -18,6 +38,9 @@ OpenNSA 3.0.0
 * Better pathfinder and pathfinding in general
 * Better logging in several odd error cases
 * Lots of small fixes
+
+Note: ERO client support was included in 3.0.0 as well, but didn't make the
+release notes.
 
 This release requires some small changes to configuration file.
 See docs/migration for details.
