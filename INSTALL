@@ -57,6 +57,10 @@ If you use a backend which uses SSH (JunOS, Force10), there is a patch to
 remove some of the log statements in the Twisted SSH module, which is rather
 noisy. This makes the log a lot easier to read.
 
+For users of equipment with old SSH services that does not support using SHA-2
+hashing (and this require SHA-1 hashing), there is patch in the patches
+directory for adding that support to Twisted.
+
 
 ## Installation:
 
