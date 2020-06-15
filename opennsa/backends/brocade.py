@@ -94,7 +94,7 @@ class SSHChannel(ssh.SSHChannel):
     def __init__(self, conn):
         ssh.SSHChannel.__init__(self, conn=conn)
 
-        self.data = ''
+        self.data = b''
 
         self.wait_defer = None
         self.wait_data  = None
@@ -108,25 +108,25 @@ class SSHChannel(ssh.SSHChannel):
             log.msg('Requesting shell for sending commands', debug=True, system=LOG_SYSTEM)
             yield self.conn.sendRequest(self, 'shell', b'', wantReply=1)
 
-            d = self.waitForData('>')
+            d = self.waitForData(b'>')
             self.write(COMMAND_PRIVILEGE % enable_password + LT)
             yield d
             log.msg('Entered privileged mode', debug=True, system=LOG_SYSTEM)
 
-            d = self.waitForData('#')
+            d = self.waitForData(b'#')
             self.write(COMMAND_CONFIGURE + LT)
             yield d
             log.msg('Entered configure mode', debug=True, system=LOG_SYSTEM)
 
             for cmd in commands:
                 log.msg('CMD> %s' % cmd, debug=True, system=LOG_SYSTEM)
-                d = self.waitForData('#')
+                d = self.waitForData(b'#')
                 self.write(cmd + LT)
                 yield d
 
             # not quite sure how to handle failure here
             log.msg('Commands send, sending end command.', debug=True, system=LOG_SYSTEM)
-            d = self.waitForData('#')
+            d = self.waitForData(b'#')
             self.write(COMMAND_END + LT)
             yield d
 
@@ -149,7 +149,7 @@ class SSHChannel(ssh.SSHChannel):
         if len(data) == 0:
             pass
         else:
-            self.data += data.decode('utf-8')
+            self.data += data
             if self.wait_data and self.wait_data in self.data:
                 d = self.wait_defer
                 self.data       = b''
