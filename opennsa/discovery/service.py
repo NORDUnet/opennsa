@@ -43,7 +43,8 @@ class DiscoveryService:
         interface_types = [ discovery.InterfaceType(i[0], i[1], i[2]) for i in self.interfaces ]
         feature_types   = [ discovery.FeatureType(f[0], f[1]) for f in self.features ]
 
-        peers_with = list(self.provider_registry.provider_urns.values())
+        # if we have multiple networks, we get the provider urn multiple times
+        peers_with = set(self.provider_registry.provider_urns.values())
 
         try:
             peers_with.remove(self.nsa_id)
