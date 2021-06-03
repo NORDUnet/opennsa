@@ -103,14 +103,14 @@ def setupTLSContext(vc):
 
     # ssl/tls contxt
     if vc[config.TLS]:
-        from opennsa import ctxfactory
-        ctx_factory = ctxfactory.ContextFactory(vc[config.KEY], vc[config.CERTIFICATE], vc[config.CERTIFICATE_DIR], vc[config.VERIFY_CERT])
+        from opennsa.opennsaTlsContext import opennsa2WayTlsContext
+        ctx_factory = opennsa2WayTlsContext(vc[config.KEY], vc[config.CERTIFICATE], vc[config.CERTIFICATE_DIR], vc[config.VERIFY_CERT])
     elif vc[config.CERTIFICATE_DIR]:
         # create a context so we can verify https urls
         if not os.path.isdir(vc[config.CERTIFICATE_DIR]):
             raise config.ConfigurationError('certdir value {} is not a directory'.format(vc[config.CERTIFICATE_DIR]))
-        from opennsa import ctxfactory
-        ctx_factory = ctxfactory.RequestContextFactory(vc[config.CERTIFICATE_DIR], vc[config.VERIFY_CERT])
+        from opennsa.opennsaTlsContext import opennsaTlsContext
+        ctx_factory = opennsaTlsContext(vc[config.CERTIFICATE_DIR], vc[config.VERIFY_CERT])
     else:
         ctx_factory = None
 
@@ -331,7 +331,7 @@ class OpenNSAService(twistedservice.MultiService):
         factory, ctx_factory = self.setupServiceFactory()
 
         if self.vc[config.TLS]:
-            internet.SSLServer(self.vc[config.PORT], factory, ctx_factory).setServiceParent(self)
+            internet.SSLServer(self.vc[config.PORT], factory, ctx_factory.getOpenSSLCertificateOptions()).setServiceParent(self)
         else:
             internet.TCPServer(self.vc[config.PORT], factory).setServiceParent(self)
 

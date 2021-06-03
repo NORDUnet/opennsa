@@ -130,11 +130,11 @@ def doMain():
         if public_key or private_key or certificate_dir:
 
             if public_key == '.' and private_key == '.':
-                from opennsa import ctxfactory
-                ctx_factory = ctxfactory.RequestContextFactory(certificate_dir, verify_cert)
+                from opennsa.opennsaTlsContext import opennsaTlsContext
+                ctx_factory = opennsaTlsContext(certificate_dir, verify_cert)
             elif public_key and private_key and certificate_dir:
-                from opennsa import ctxfactory
-                ctx_factory = ctxfactory.ContextFactory(private_key, public_key, certificate_dir, verify_cert)
+                from opennsa.opennsaTlsContext import opennsa2WayTlsContext
+                ctx_factory = opennsa2WayTlsContext(private_key, public_key, certificate_dir, verify_cert)
             elif tls:
                 if not public_key:
                     raise usage.UsageError('Cannot setup TLS. No public key defined')
@@ -179,7 +179,7 @@ def doMain():
 
         # setup listener port
         if tls:
-            iport = reactor.listenSSL(port, factory, ctx_factory)
+            iport = reactor.listenSSL(port, factory, ctx_factory.getOpenSSLCertificateOptions())
         else:
             iport = reactor.listenTCP(port, factory)
 
