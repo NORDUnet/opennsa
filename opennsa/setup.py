@@ -331,7 +331,7 @@ class OpenNSAService(twistedservice.MultiService):
         factory, ctx_factory = self.setupServiceFactory()
 
         if self.vc[config.TLS]:
-            internet.SSLServer(self.vc[config.PORT], factory, ctx_factory.getOpenSSLCertificateOptions()).setServiceParent(self)
+            internet.SSLServer(self.vc[config.PORT], factory, ctx_factory).setServiceParent(self)
         else:
             internet.TCPServer(self.vc[config.PORT], factory).setServiceParent(self)
 

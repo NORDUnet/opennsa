@@ -179,7 +179,7 @@ def doMain():
 
         # setup listener port
         if tls:
-            iport = reactor.listenSSL(port, factory, ctx_factory.getOpenSSLCertificateOptions())
+            iport = reactor.listenSSL(port, factory, ctx_factory)
         else:
             iport = reactor.listenTCP(port, factory)
 
