@@ -3,3 +3,5 @@ twistar>=2.0
 psycopg2>=2.7,<2.8 --no-binary psycopg2
 pyOpenSSL>=17.5.0
 python-dateutil
+service_identity
+idna
