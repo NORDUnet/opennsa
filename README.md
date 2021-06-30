@@ -31,7 +31,7 @@ NORDUnet License (3-clause BSD). See LICENSE for more details.
 
 #### Contact
 
-* Henrik Thostrup Jensen   htj <at> nordu.net
+* Johannes Garm Houen - jgh @ nordu.net
 
 #### Copyright
 

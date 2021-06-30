@@ -78,7 +78,7 @@ def httpRequest(url, payload, headers, method=b'POST', timeout=DEFAULT_TIMEOUT, 
     if scheme == b'https':
         if ctx_factory is None:
             return defer.fail(HTTPRequestError('Cannot perform https request without context factory'))
-        reactor.connectSSL(host, port, factory, ctx_factory)
+        reactor.connectSSL(host, port, factory, ctx_factory.getClientTLSOptions(host.decode()))
     else:
         reactor.connectTCP(host, port, factory)
 
