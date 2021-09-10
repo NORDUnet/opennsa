@@ -7,5 +7,5 @@ clean:
 	find . -name "*.pyc"|xargs rm
 
 docker-build:
-	docker build -t opennsa --squash docker
+	docker build -t opennsa docker
 
