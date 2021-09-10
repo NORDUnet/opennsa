@@ -46,7 +46,7 @@ class opennsaTlsContext:
             except crypto.Error as error:
                 log.msg('Cannot load CA certificate from %s: %s' % (CAFilename, error), system = LOG_SYSTEM)
             else:
-                log.msg('Loaded CA certificate commonName %s' % (str(CACertificates[-1].getSubject().commonName)), system = LOG_SYSTEM)
+                log.msg('Loaded CA certificate %s' % (str(CACertificates[-1].getSubject())), system = LOG_SYSTEM)
         if len(CACertificates) == 0:
             print('No certificiates loaded for CTX verificiation. CA verification will not work.')
         return ssl.trustRootFromCertificates(CACertificates)
