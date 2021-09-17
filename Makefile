@@ -4,8 +4,11 @@
 
 clean:
 	rm -fr _trial_temp
-	find . -name "*.pyc"|xargs rm
+	find . -name "*.pyc" -exec rm -v {} \; 
 
-docker-build:
-	docker build -t opennsa docker
+down:
+	docker-compose down
+
+docker-build: clean down
+	docker-compose build  --no-cache
 

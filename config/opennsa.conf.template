@@ -7,13 +7,13 @@ logfile=
 #peers=example.org@http://example.org:9080/NSI/topology/example.org.xml
 
 # These are set by the create-compose script
-dbhost=opennsa-db
+dbhost=${POSTGRES_HOST}
 database=${POSTGRES_DB}
 dbuser=${POSTGRES_USER}
 dbpassword=${POSTGRES_PASSWORD}
 
-tls=false
+tls=${TLS_ENABLED}
 
 [dud:topology]
-nrmmap=opennsa.nrm
+nrmmap=${NRM_FILE}
 
