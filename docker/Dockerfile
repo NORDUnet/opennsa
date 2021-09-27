@@ -5,7 +5,6 @@ FROM debian:stable-slim
 LABEL maintainer="Henrik Thostrup Jensen <htj@nordu.net>"
 
 # -- Environment --
-ENV GIT_REPO https://github.com/NORDUnet/opennsa
 ENV USER opennsa
 
 
@@ -19,26 +18,15 @@ ADD . /home/$USER/opennsa/
 # pyasn1 and crypto is needed for ssh backends
 RUN apt update \
    && apt install -y \
-   git-core \
+   libpq-dev \
    python3 \
-   python3-twisted-bin \
-   python3-openssl \
-   python3-psycopg2 \
    python3-pip \
-   python3-cryptography \
-   python3-dateutil \
-   && pip3 install \
-   twistar \
-   service-identity \
-   pyasn1 \
-   # -- Instal OpenNSA --
-   # && echo git clone $GIT_REPO \
-   # && su - $USER -c "git clone $GIT_REPO" \
-   ## Unsure why but this needs to be pulled away from the main apt install
+   netcat \
+   iputils-ping \
+   && pip3 install -r /home/$USER/opennsa/requirements.txt \
    && chown $USER:$USER -R /home/opennsa/opennsa \
-   && apt install -y netcat iputils-ping \
    # -- Cleanup --
-   && apt remove -y git-core python3-pip  \
+   && apt remove -y python3-pip  \
    && apt autoremove -y \
    && rm -rf /var/lib/apt/lists/* \
    && cp /home/$USER/opennsa/docker/run_opennsa.sh /home/$USER/opennsa \

@@ -16,4 +16,3 @@ tls=${TLS_ENABLED}
 
 [dud:topology]
 nrmmap=${NRM_FILE}
-
