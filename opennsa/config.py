@@ -10,7 +10,6 @@ import configparser
 
 from opennsa import constants as cnt
 
-
 # defaults
 DEFAULT_CONFIG_FILE = '/etc/opennsa.conf'
 DEFAULT_LOG_FILE = '/var/log/opennsa.log'
@@ -21,7 +20,6 @@ DEFAULT_TLS_PORT = 9443
 DEFAULT_VERIFY = True
 # This will work on most mordern linux distros
 DEFAULT_CERTIFICATE_DIR = '/etc/ssl/certs'
-
 
 # config blocks and options
 BLOCK_SERVICE = 'service'
@@ -38,9 +36,10 @@ BLOCK_JUNOSSPACE = 'junosspace'
 BLOCK_OESS = 'oess'
 BLOCK_CUSTOM_BACKEND = 'custombackend'
 
+
 # service block
-DOMAIN = 'domain'      # mandatory
-NETWORK_NAME = 'network'     # legacy, used to be mandatory
+DOMAIN = 'domain'  # mandatory
+NETWORK_NAME = 'network'  # legacy, used to be mandatory
 LOG_FILE = 'logfile'
 HOST = 'host'
 PORT = 'port'
@@ -53,17 +52,18 @@ PLUGIN = 'plugin'
 SERVICE_ID_START = 'serviceid_start'
 
 # database
-DATABASE = 'database'    # mandatory
-DATABASE_USER = 'dbuser'      # mandatory
+DATABASE = 'database'  # mandatory
+DATABASE_USER = 'dbuser'  # mandatory
 DATABASE_PASSWORD = 'dbpassword'  # can be none (os auth)
-DATABASE_HOST = 'dbhost'      # can be none (local db)
+DATABASE_HOST = 'dbhost'  # can be none (local db)
 
 # tls
-KEY = 'key'         # mandatory, if tls is set
+KEY = 'key'  # mandatory, if tls is set
 CERTIFICATE = 'certificate'  # mandatory, if tls is set
-CERTIFICATE_DIR = 'certdir'     # mandatory (but dir can be empty)
+CERTIFICATE_DIR = 'certdir'  # mandatory (but dir can be empty)
 VERIFY_CERT = 'verify'
 ALLOWED_HOSTS = 'allowedhosts'  # comma seperated list
+ALLOWED_ADMINS = 'allowed_admins'  # list of requester nsaId with administration level access
 
 # generic stuff
 _SSH_HOST = 'host'
@@ -112,7 +112,6 @@ PICA8OVS_USER = _SSH_USER
 PICA8OVS_SSH_PUBLIC_KEY = _SSH_PUBLIC_KEY
 PICA8OVS_SSH_PRIVATE_KEY = _SSH_PRIVATE_KEY
 PICA8OVS_DB_IP = 'dbip'
-
 
 # NCS VPN Backend
 NCS_SERVICES_URL = 'url'
@@ -166,199 +165,243 @@ class EnvInterpolation(configparser.BasicInterpolation):
         return os.path.expandvars(value)
 
 
-def readConfig(filename):
-    cfg = configparser.ConfigParser(interpolation=EnvInterpolation())
-    cfg.add_section(BLOCK_SERVICE)
-    cfg.read([filename])
-
-    return cfg
-
-
-def readVerifyConfig(cfg):
+class Config(object):
     """
-    Read a config and verify that things are correct. Will also fill in
-    default values where applicable.
+    Singleton instance of configuration class.  Loads the config and persists it to class object.
 
-    This is supposed to be used during application creation (before service
-    start) to ensure that simple configuration errors do not pop up efter
-    daemonization.
-
-    Returns a "verified" config, which is a dictionary.
+    Also, provides utility function around the loaded configuration
     """
+    _instance = None
 
-    vc = {}
+    def __init__(self):
+        raise RuntimeError("Call instance() instead, singleton class")
 
-    # Check for deprecated / old invalid stuff
+    @classmethod
+    def instance(cls):
+        if cls._instance is None:
+            print('Creating new instance')
+            cls._instance = cls.__new__(cls)
+            cls._instance.cfg = None
+            cls._instance.vc = None
+            # Put any initialization here.
+        return cls._instance
 
-    try:
-        cfg.get(BLOCK_SERVICE, NRM_MAP_FILE)
-        raise ConfigurationError(
-            'NRM Map file should be specified under backend')
-    except configparser.NoOptionError:
-        pass
+    def read_config(self, filename):
+        """
+        Load the configuration from a given file
+        """
+        if self._instance.cfg is None:
+            cfg = configparser.ConfigParser(interpolation=EnvInterpolation())
+            cfg.add_section(BLOCK_SERVICE)
+            cfg.read([filename])
+            self._instance.cfg = cfg
+        return self._instance.cfg, self._read_verify_config()
 
-    # check / extract
+    def _read_verify_config(self):
+        """
+        Returns a dictionary of the loaded config once verified
+        """
+        if self._instance.vc is None:
+            self._instance.vc = self._load_config_dict()
+        return self._instance.vc
 
-    try:
-        vc[DOMAIN] = cfg.get(BLOCK_SERVICE, DOMAIN)
-    except configparser.NoOptionError:
-        raise ConfigurationError(
-            'No domain name specified in configuration file (mandatory, see docs/migration)')
+    def config_dict(self):
+        """
+        Returns the loaded dict if one exists, or an empty one otherwise.
+        """
+        return self._instance.vc if self._instance.vc is not None else {}
 
-    try:
-        cfg.get(BLOCK_SERVICE, NETWORK_NAME)
-        raise ConfigurationError(
-            'Network name no longer used, use domain (see docs/migration)')
-    except configparser.NoOptionError:
-        pass
+    @property
+    def allowed_admins(self):
+        """
+        Property returns array of allowed admins
+        """
+        return self.config_dict().get(ALLOWED_ADMINS, '')
 
-    try:
-        vc[LOG_FILE] = cfg.get(BLOCK_SERVICE, LOG_FILE)
-    except configparser.NoOptionError:
-        vc[LOG_FILE] = DEFAULT_LOG_FILE
+    def is_admin_override(self, urn):
+        """
+        Check if the URN matches a valid admin.  Allowing all queries to execute
+        """
+        admins = self.allowed_admins
+        for entry in self.allowed_admins:
+            if entry == urn:
+                return True
+        return False
 
-    try:
-        nrm_map_file = cfg.get(BLOCK_SERVICE, NRM_MAP_FILE)
-        if not os.path.exists(nrm_map_file):
-            raise ConfigurationError(
-                'Specified NRM mapping file does not exist (%s)' % nrm_map_file)
-        vc[NRM_MAP_FILE] = nrm_map_file
-    except configparser.NoOptionError:
-        vc[NRM_MAP_FILE] = None
-
-    try:
-        vc[REST] = cfg.getboolean(BLOCK_SERVICE, REST)
-    except configparser.NoOptionError:
-        vc[REST] = False
-
-    try:
-        peers_raw = cfg.get(BLOCK_SERVICE, PEERS)
-        vc[PEERS] = [Peer(purl.strip(), 1) for purl in peers_raw.split('\n')]
-    except configparser.NoOptionError:
-        vc[PEERS] = None
-
-    try:
-        vc[HOST] = cfg.get(BLOCK_SERVICE, HOST)
-    except configparser.NoOptionError:
-        vc[HOST] = None
-
-    try:
-        vc[TLS] = cfg.getboolean(BLOCK_SERVICE, TLS)
-    except configparser.NoOptionError:
-        vc[TLS] = DEFAULT_TLS
-
-    try:
-        vc[PORT] = cfg.getint(BLOCK_SERVICE, PORT)
-    except configparser.NoOptionError:
-        vc[PORT] = DEFAULT_TLS_PORT if vc[TLS] else DEFAULT_TCP_PORT
-
-    try:
-        policies = cfg.get(BLOCK_SERVICE, POLICY).split(',')
-        for policy in policies:
-            if not policy in (cnt.REQUIRE_USER, cnt.REQUIRE_TRACE, cnt.AGGREGATOR, cnt.ALLOW_HAIRPIN):
-                raise ConfigurationError('Invalid policy: %s' % policy)
-        vc[POLICY] = policies
-    except configparser.NoOptionError:
-        vc[POLICY] = []
-
-    try:
-        vc[PLUGIN] = cfg.get(BLOCK_SERVICE, PLUGIN)
-    except configparser.NoOptionError:
-        vc[PLUGIN] = None
-
-    # database
-    try:
-        vc[DATABASE] = cfg.get(BLOCK_SERVICE, DATABASE)
-    except configparser.NoOptionError:
-        raise ConfigurationError(
-            'No database specified in configuration file (mandatory)')
-
-    try:
-        vc[DATABASE_USER] = cfg.get(BLOCK_SERVICE, DATABASE_USER)
-    except configparser.NoOptionError:
-        raise ConfigurationError(
-            'No database user specified in configuration file (mandatory)')
-
-    try:
-        vc[DATABASE_PASSWORD] = cfg.get(BLOCK_SERVICE, DATABASE_PASSWORD)
-    except configparser.NoOptionError:
-        vc[DATABASE_PASSWORD] = None
-
-    try:
-        vc[DATABASE_HOST] = cfg.get(BLOCK_SERVICE, DATABASE_HOST)
-    except configparser.NoOptionError:
-        vc[DATABASE_HOST] = None
-
-    try:
-        vc[SERVICE_ID_START] = cfg.get(BLOCK_SERVICE, SERVICE_ID_START)
-    except configparser.NoOptionError:
-        vc[SERVICE_ID_START] = None
-
-    # we always extract certdir and verify as we need that for performing https requests
-    try:
-        certdir = cfg.get(BLOCK_SERVICE, CERTIFICATE_DIR)
-        if not os.path.exists(certdir):
-            raise ConfigurationError(
-                'Specified certdir does not exist (%s)' % certdir)
-        vc[CERTIFICATE_DIR] = certdir
-    except configparser.NoOptionError:
-        vc[CERTIFICATE_DIR] = DEFAULT_CERTIFICATE_DIR
-    try:
-        vc[VERIFY_CERT] = cfg.getboolean(BLOCK_SERVICE, VERIFY_CERT)
-    except configparser.NoOptionError:
-        vc[VERIFY_CERT] = DEFAULT_VERIFY
-
-    # tls
-    if vc[TLS]:
+    def _load_database_config(self, vc):
+        # vc = self._instance.vc
+        cfg = self._instance.cfg
+        # database
         try:
-            hostkey = cfg.get(BLOCK_SERVICE, KEY)
-            hostcert = cfg.get(BLOCK_SERVICE, CERTIFICATE)
-
-            if not os.path.exists(hostkey):
-                raise ConfigurationError(
-                    'Specified hostkey does not exist (%s)' % hostkey)
-            if not os.path.exists(hostcert):
-                raise ConfigurationError(
-                    'Specified hostcert does not exist (%s)' % hostcert)
-
-            vc[KEY] = hostkey
-            vc[CERTIFICATE] = hostcert
-
-            try:
-                allowed_hosts_cfg = cfg.get(BLOCK_SERVICE, ALLOWED_HOSTS)
-                vc[ALLOWED_HOSTS] = allowed_hosts_cfg.split(',')
-            except:
-                pass
-
-        except configparser.NoOptionError as e:
-            # Not enough options for configuring tls context
-            raise ConfigurationError('Missing TLS option: %s' % str(e))
-
-    # backends
-    backends = {}
-
-    for section in cfg.sections():
-
-        if section == 'service':
-            continue
-
-        if ':' in section:
-            backend_type, name = section.split(':', 2)
-        else:
-            backend_type = section
-            name = ''
-
-        if name in backends:
+            vc[DATABASE] = cfg.get(BLOCK_SERVICE, DATABASE)
+        except configparser.NoOptionError:
             raise ConfigurationError(
-                'Can only have one backend named "%s"' % name)
+                'No database specified in configuration file (mandatory)')
 
-        if backend_type in (BLOCK_DUD, BLOCK_JUNIPER_EX, BLOCK_JUNIPER_VPLS, BLOCK_JUNOSMX, BLOCK_FORCE10, BLOCK_BROCADE,
-                            BLOCK_NCSVPN, BLOCK_PICA8OVS, BLOCK_OESS, BLOCK_JUNOSSPACE, BLOCK_JUNOSEX,
-                            BLOCK_CUSTOM_BACKEND, 'asyncfail'):
-            backend_conf = dict(cfg.items(section))
-            backend_conf['_backend_type'] = backend_type
-            backends[name] = backend_conf
+        try:
+            vc[DATABASE_USER] = cfg.get(BLOCK_SERVICE, DATABASE_USER)
+        except configparser.NoOptionError:
+            raise ConfigurationError(
+                'No database user specified in configuration file (mandatory)')
 
-    vc['backend'] = backends
+        vc[DATABASE_PASSWORD] = cfg.get(BLOCK_SERVICE, DATABASE_PASSWORD, fallback=None)
+        vc[DATABASE_HOST] = cfg.get(BLOCK_SERVICE, DATABASE_HOST, fallback='localhost')
+        vc[SERVICE_ID_START] = cfg.get(BLOCK_SERVICE, SERVICE_ID_START, fallback=None)
 
-    return vc
+    def _load_config_dict(self) -> dict:
+        """
+        Read a config and verify that things are correct. Will also fill in
+        default values where applicable.
+
+        This is supposed to be used during application creation (before service
+        start) to ensure that simple configuration errors do not pop up efter
+        daemonization.
+
+        Returns a "verified" config, which is a dictionary.
+        """
+        cfg = self._instance.cfg
+        vc = {}
+
+        # Check for deprecated / old invalid stuff
+
+        try:
+            cfg.get(BLOCK_SERVICE, NRM_MAP_FILE)
+            raise ConfigurationError(
+                'NRM Map file should be specified under backend')
+        except configparser.NoOptionError:
+            pass
+
+        # check / extract
+
+        try:
+            vc[DOMAIN] = cfg.get(BLOCK_SERVICE, DOMAIN)
+        except configparser.NoOptionError:
+            raise ConfigurationError(
+                'No domain name specified in configuration file (mandatory, see docs/migration)')
+
+        try:
+            cfg.get(BLOCK_SERVICE, NETWORK_NAME)
+            raise ConfigurationError(
+                'Network name no longer used, use domain (see docs/migration)')
+        except configparser.NoOptionError:
+            pass
+
+        vc[LOG_FILE] = cfg.get(BLOCK_SERVICE, LOG_FILE, fallback=DEFAULT_LOG_FILE)
+
+        try:
+            nrm_map_file = cfg.get(BLOCK_SERVICE, NRM_MAP_FILE)
+            if not os.path.exists(nrm_map_file):
+                raise ConfigurationError(
+                    'Specified NRM mapping file does not exist (%s)' % nrm_map_file)
+            vc[NRM_MAP_FILE] = nrm_map_file
+        except configparser.NoOptionError:
+            vc[NRM_MAP_FILE] = None
+
+        vc[REST] = cfg.getboolean(BLOCK_SERVICE, REST, fallback=False)
+
+        try:
+            peers_raw = cfg.get(BLOCK_SERVICE, PEERS)
+            vc[PEERS] = [Peer(purl.strip(), 1) for purl in peers_raw.split('\n')]
+        except configparser.NoOptionError:
+            vc[PEERS] = None
+
+        vc[HOST] = cfg.get(BLOCK_SERVICE, HOST, fallback=None)
+        vc[TLS] = cfg.getboolean(BLOCK_SERVICE, TLS, fallback=DEFAULT_TLS)
+        vc[PORT] = cfg.getint(BLOCK_SERVICE, PORT, fallback=DEFAULT_TLS_PORT if vc[TLS] else DEFAULT_TCP_PORT)
+
+        try:
+            policies = cfg.get(BLOCK_SERVICE, POLICY).split(',')
+            for policy in policies:
+                if not policy in (cnt.REQUIRE_USER, cnt.REQUIRE_TRACE, cnt.AGGREGATOR, cnt.ALLOW_HAIRPIN):
+                    raise ConfigurationError('Invalid policy: %s' % policy)
+            vc[POLICY] = policies
+        except configparser.NoOptionError:
+            vc[POLICY] = []
+
+        vc[PLUGIN] = cfg.get(BLOCK_SERVICE, PLUGIN, fallback=None)
+
+        self._load_database_config(vc)
+        self._load_certificates(vc)
+
+        ## Set override of allowed Admins
+        allowed_hosts_admins = cfg.get(BLOCK_SERVICE, ALLOWED_ADMINS, fallback='')
+        vc[ALLOWED_ADMINS] = [i.strip() for i in allowed_hosts_admins.split(',') if len(i) > 0]
+
+        # backends
+        self._load_backends(vc)
+        return vc
+
+    def _load_certificates(self, vc):
+        cfg = self._instance.cfg
+        # we always extract certdir and verify as we need that for performing https requests
+        try:
+            certdir = cfg.get(BLOCK_SERVICE, CERTIFICATE_DIR)
+            if not os.path.exists(certdir):
+                raise ConfigurationError(
+                    'Specified certdir does not exist (%s)' % certdir)
+            vc[CERTIFICATE_DIR] = certdir
+        except configparser.NoOptionError:
+            vc[CERTIFICATE_DIR] = DEFAULT_CERTIFICATE_DIR
+        try:
+            vc[VERIFY_CERT] = cfg.getboolean(BLOCK_SERVICE, VERIFY_CERT)
+        except configparser.NoOptionError:
+            vc[VERIFY_CERT] = DEFAULT_VERIFY
+
+        # tls
+        if vc[TLS]:
+            try:
+                hostkey = cfg.get(BLOCK_SERVICE, KEY)
+                hostcert = cfg.get(BLOCK_SERVICE, CERTIFICATE)
+
+                if not os.path.exists(hostkey):
+                    raise ConfigurationError(
+                        'Specified hostkey does not exist (%s)' % hostkey)
+                if not os.path.exists(hostcert):
+                    raise ConfigurationError(
+                        'Specified hostcert does not exist (%s)' % hostcert)
+
+                vc[KEY] = hostkey
+                vc[CERTIFICATE] = hostcert
+
+                try:
+                    allowed_hosts_cfg = cfg.get(BLOCK_SERVICE, ALLOWED_HOSTS)
+                    vc[ALLOWED_HOSTS] = [i.strip() for i in allowed_hosts_cfg.split(',') if len(i) > 0]
+
+                except:
+                    pass
+
+            except configparser.NoOptionError as e:
+                # Not enough options for configuring tls context
+                raise ConfigurationError('Missing TLS option: %s' % str(e))
+
+    def _load_backends(self, vc):
+        """
+        Verify and load backends into configuration class
+        """
+        cfg = self._instance.cfg
+        backends = {}
+
+        for section in cfg.sections():
+
+            if section == 'service':
+                continue
+
+            if ':' in section:
+                backend_type, name = section.split(':', 2)
+            else:
+                backend_type = section
+                name = ''
+
+            if name in backends:
+                raise ConfigurationError(
+                    'Can only have one backend named "%s"' % name)
+
+            if backend_type in (
+                    BLOCK_DUD, BLOCK_JUNIPER_EX, BLOCK_JUNIPER_VPLS, BLOCK_JUNOSMX, BLOCK_FORCE10, BLOCK_BROCADE,
+                    BLOCK_NCSVPN, BLOCK_PICA8OVS, BLOCK_OESS, BLOCK_JUNOSSPACE, BLOCK_JUNOSEX,
+                    BLOCK_CUSTOM_BACKEND, 'asyncfail'):
+                backend_conf = dict(cfg.items(section))
+                backend_conf['_backend_type'] = backend_type
+                backends[name] = backend_conf
+
+        vc['backend'] = backends

@@ -3,11 +3,11 @@ from twisted.trial import unittest
 import json
 import tempfile
 import configparser
+from io import StringIO
 
 from opennsa import config, setup
+from opennsa.config import Config
 from . import db
-
-
 
 ARUBA_DUD_CONFIG_NO_DATABASE = """
 [service]
@@ -37,11 +37,15 @@ dbpassword={db_password}
 tls=false
 
 [dud]
+
+[backends:dummy]
+name=foobar
 """
 
 ARUBA_DUD_CONFIG = """
 [service]
 domain=aruba.net
+host=dummy
 logfile=
 rest=true
 port=4080
@@ -105,31 +109,49 @@ ethernet    bon     bonaire.net:topology#arb(-in|-out)  vlan:1780-1799          
 
 class ConfigTest(unittest.TestCase):
 
+    def _reset_instance(self):
+        try:
+            self.configIns._instance.cfg = None
+            self.configIns._instance.vc = None
+        except:
+            pass
 
     def setUp(self):
-
-        tc = json.load( open(db.CONFIG_FILE) )
-        self.database    = tc['database']
-        self.db_user     = tc['user']
+        self.configIns = Config.instance()
+        self._reset_instance()
+        tc = json.load(open(db.CONFIG_FILE))
+        self.database = tc['database']
+        self.db_user = tc['user']
         self.db_password = tc['password']
-        self.db_host     = '127.0.0.1'
+        self.db_host = '127.0.0.1'
 
+    def _generate_temp_file(self, buffer):
+        """
+        Helper utility to generate a temp file and write buffer to it.
+        """
+        tmp = tempfile.NamedTemporaryFile('w+t')
+        tmp.write(buffer)
+        tmp.flush()
+        return tmp
 
     def testConfigParsingNoDatabase(self):
 
         config_file_content = ARUBA_DUD_CONFIG_NO_DATABASE
 
-        raw_cfg = configparser.SafeConfigParser()
-        raw_cfg.read_string(config_file_content)
+        expectedError = "No database specified in configuration file (mandatory)"
+        tmp = None
 
         try:
-            cfg = config.readVerifyConfig(raw_cfg)
+            tmp = self._generate_temp_file(config_file_content)
+            cfg, vc = self.configIns.read_config(tmp.name)
             nsa_service = setup.OpenNSAService(cfg)
             factory, _ = nsa_service.setupServiceFactory()
             self.fail('Should have raised config.ConfigurationError')
         except config.ConfigurationError as e:
-            pass
-
+            self.assertEquals(expectedError, e.args[0])
+        finally:
+            if tmp is not None:
+                tmp.close()
 
     def testConfigParsingNoNetworkName(self):
 
@@ -137,17 +159,18 @@ class ConfigTest(unittest.TestCase):
                                                                       db_host=self.db_host,
                                                                       db_user=self.db_user,
                                                                       db_password=self.db_password)
-        raw_cfg = configparser.SafeConfigParser()
-        raw_cfg.read_string(config_file_content)
-
+        tmp = None
         try:
-            cfg = config.readVerifyConfig(raw_cfg)
-            nsa_service = setup.OpenNSAService(cfg)
+            tmp = self._generate_temp_file(config_file_content)
+            cfg, vc = self.configIns.read_config(tmp.name)
+            nsa_service = setup.OpenNSAService(self.configIns.config_dict())
             factory, _ = nsa_service.setupServiceFactory()
             self.fail('Should have raised config.ConfigurationError')
         except config.ConfigurationError as e:
             pass
-
+        finally:
+            if tmp is not None:
+                tmp.close()
 
     def testConfigParsing(self):
 
@@ -161,24 +184,28 @@ class ConfigTest(unittest.TestCase):
                                                       db_password=self.db_password,
                                                       nrm_map=aruba_ojs.name)
 
-        raw_cfg = configparser.SafeConfigParser()
-        raw_cfg.read_string(config_file_content)
+        tmp = self._generate_temp_file(config_file_content)
+        cfg, vc = self.configIns.read_config(tmp.name)
 
-        cfg = config.readVerifyConfig(raw_cfg)
-        nsa_service = setup.OpenNSAService(cfg)
-        factory, _ = nsa_service.setupServiceFactory()
-
+        try:
+            nsa_service = setup.OpenNSAService(vc)
+            factory, _ = nsa_service.setupServiceFactory()
+        finally:
+            tmp.close()
+            aruba_ojs.close()
 
     def testInvalidLegacyConfig(self):
 
-        raw_cfg = configparser.SafeConfigParser()
-        raw_cfg.read_string(INVALID_LEGACY_CONFIG)
+        config_file_content = INVALID_LEGACY_CONFIG
+        tmp = self._generate_temp_file(config_file_content)
+
         try:
-            cfg = config.readVerifyConfig(raw_cfg)
+            cfg, vc = self.configIns.read_config(tmp.name)
             self.fail('Should have raised ConfigurationError')
         except config.ConfigurationError:
             pass
-
+        finally:
+            tmp.close()
 
     def testConfigParsingMultiBackend(self):
 
@@ -201,13 +228,13 @@ class ConfigTest(unittest.TestCase):
                                                             nrm_ojs=aruba_ojs.name,
                                                             nrm_san=aruba_san.name)
         # parse and verify config
+        tmp = self._generate_temp_file(config_file_content)
 
-        cfg = configparser.SafeConfigParser()
-        cfg.read_string(config_file_content)
+        try:
+            cfg, verified_config = self.configIns.read_config(tmp.name)
 
-        verified_config = config.readVerifyConfig(cfg)
-
-        # do the setup dance to see if all the wiring is working, but don't start anything
-        nsa_service = setup.OpenNSAService(verified_config)
-        factory, _ = nsa_service.setupServiceFactory()
-
+            # do the setup dance to see if all the wiring is working, but don't start anything
+            nsa_service = setup.OpenNSAService(verified_config)
+            factory, _ = nsa_service.setupServiceFactory()
+        finally:
+            tmp.close()

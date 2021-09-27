@@ -1,5 +1,5 @@
-OpenNSA 3 Configuration Migration
-=================================
+# OpenNSA 3 Configuration Migration
+
 
 With the port of OpenNSA from Python 2 to Python 3, and the subsequent release
 of OpenNSA 3, support for multiple backends was added. For this, some changes
@@ -12,7 +12,7 @@ The changes are:
 
 Example of old style:
 
-```
+```ini
 [service]
 network=aruba.net
 nrmmap=aruba.nrm
@@ -22,7 +22,7 @@ nrmmap=aruba.nrm
 
 Equivalent config in new style:
 
-```
+```ini
 [service]
 domain=aruba.net
 
@@ -32,7 +32,7 @@ nrmmap=aruba.nrm
 
 An example with multiple backends shows why the change was needed:
 
-```
+```ini
 [service]
 domain=aruba.net
 

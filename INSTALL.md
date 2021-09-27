@@ -31,24 +31,22 @@ Dmz vs. behind the firewall: Should work with both, not required.
 
 ## Dependencies:
 
-* Python 2.7 or later (Python 3 not supported yet)
+* Python 3 
 
-* Twisted 16.x.x or later, http://twistedmatrix.com/trac/
+* Twisted 21.x.x or later, http://twistedmatrix.com/trac/
 
-* Psycopg 2.5.0 or later (http://initd.org/psycopg/, 2.4.6 _might_ work)
+* Psycopg 2.9.0 or later (http://initd.org/psycopg/)
 
-* Twistar 1.1 or later (https://pypi.python.org/pypi/twistar/ & http://findingscience.com/twistar/ )
+* Twistar 2.0 or later (https://pypi.python.org/pypi/twistar/ & http://findingscience.com/twistar/ )
 
-* PostgreSQL (need 9.5 or later if using connection id assignment)
+* PostgreSQL (need 12 or later if using connection id assignment)
 
-* pyOpenSSL 0.14 (when running with SSL/TLS)
+* pyOpenSSL 17.5 or later (when running with SSL/TLS)
 
 Python and Twisted should be included in the package system in most recent
 Linux distributions.
 
-Older Twisted versions might work, Twisted 15.x and earlier won't work with
-OpenSSH 7.0 or later. If you see connection lost for ssh in the log, most
-likely your Twisted version is too old.
+If you see connection lost for ssh in the log, most likely your Twisted version is too old.
 
 Furthermore, for SSH based backends (Brocade, Force10, and Juniper), the
 packages pyasn1 and python-crypto are also required.
