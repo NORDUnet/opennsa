@@ -26,15 +26,15 @@ PORT = 7080
 def matchState(query_result, expected_state):
     state =  query_result.reservationSummary[0].connectionState
     if state == expected_state:
-        print 'State match (%s)' % expected_state
+        print('State match (%s)' % expected_state)
     else:
-        print "State mismatch. Was %s, should have been %s" % (state, expected_state)
+        print("State mismatch. Was %s, should have been %s" % (state, expected_state))
 
 
 @defer.inlineCallbacks
 def doMain():
 
-    print 'OpenNSA WS test client'
+    print('OpenNSA WS test client')
 
     wsdl_dir =  os.path.join(os.path.dirname(os.path.abspath(__file__)), 'wsdl')
 
@@ -70,10 +70,10 @@ def doMain():
     global_reservation_id = 'urn:uuid:' + str(uuid.uuid1())
     connection_id         = 'urn:uuid:' + str(uuid.uuid1())
 
-    print "Connection id", connection_id
+    print("Connection id", connection_id)
 
     r = yield client.reserve(client_nsa, provider.nsa, None, global_reservation_id, 'Test Connection', connection_id, service_params)
-    print "Reservation created. Connection ID:", connection_id
+    print("Reservation created. Connection ID:", connection_id)
 
     qr = yield client.query(client_nsa, provider.nsa, None, "Summary", connection_ids = [ connection_id ] )
     matchState(qr, 'Reserved')
@@ -84,19 +84,19 @@ def doMain():
     matchState(qr, 'Auto-Provision')
 
     yield d
-    print "Connection provisioned"
+    print("Connection provisioned")
 
     qr = yield client.query(client_nsa, provider.nsa, None, "Summary", connection_ids = [ connection_id ] )
     matchState(qr, 'Provisioned')
 
     _ = yield client.release(client_nsa, provider.nsa, None, connection_id)
-    print "Connection released"
+    print("Connection released")
 
     qr = yield client.query(client_nsa, provider.nsa, None, "Summary", connection_ids = [ connection_id ] )
     matchState(qr, 'Scheduled')
 
     _ = yield client.terminate(client_nsa, provider.nsa, None, connection_id)
-    print "Reservation terminated"
+    print("Reservation terminated")
 
     qr = yield client.query(client_nsa, provider.nsa, None, "Summary", connection_ids = [ connection_id ] )
     matchState(qr, 'Terminated')
