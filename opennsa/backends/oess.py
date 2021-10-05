@@ -387,13 +387,6 @@ class OESSConnectionManager:
     def canSwapLabel(self, label_type):
         return True
 
-    #def setupLink(self, connection_id, source_target, dest_target, bandwidth):
-    #    log.msg('OESS: setupLink', debug=True, system=self.log_system)
-    #    self.oess_conn.setupLink(source_target, dest_target)
-    #    log.msg('Link %s -> %s up' % (source_target, dest_target),
-    #            system=self.log_system)
-    #    return defer.succeed(None)
-
     def setupLink(self, connection_id, source_target, dest_target, bandwidth):
         def logSetupLink(pt, source_target, dest_target):
             log.msg('Link %s -> %s up' % (source_target, dest_target),
@@ -406,15 +399,7 @@ class OESSConnectionManager:
 
         return d
 
-    #def teardownLink(self, connection_id, source_target, dest_target, bandwidth):
-    #    # Debug
-    #    log.msg('OESS: teardownLink', system=self.log_system)
-    #    self.oess_conn.tearDownLink(source_target, dest_target)
-    #    log.msg('Link %s -> %s down' % (source_target, dest_target),
-    #            system=self.log_system)
-    #    return defer.succeed(None)
-
-    def teardownLink(self, connection_id, source_target, dest_target, bandwidth):
+  def teardownLink(self, connection_id, source_target, dest_target, bandwidth):
         def logTearDownLink(pt, source_target, dest_target):
             log.msg('Link %s -> %s down' % (source_target, dest_target),
                     system=self.log_system)
