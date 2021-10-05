@@ -1,0 +1,28 @@
+version: "3.7"
+
+services:
+  db:
+    image: postgres:12
+    expose:
+      - 5432
+    volumes:
+      - ./datafiles/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+      - opennsa-pgdata:/var/lib/postgresql/data
+    env_file: .env
+  opennsa:
+    image: opennsa:latest
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    env_file: .env
+    depends_on:
+      - db
+    ports:
+      - 9080:9080
+      - 9443:9443
+    volumes:
+      - ./config/opennsa.conf:/home/opennsa/opennsa/config/opennsa.conf:ro
+      - ./config/opennsa.nrm:/home/opennsa/opennsa/opennsa.nrm:ro
+
+volumes:
+  opennsa-pgdata:

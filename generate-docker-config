@@ -1,0 +1,7 @@
+#!/bin/sh
+
+cp docker/opennsa.conf.template config/opennsa.conf
+sed  -e "s/PASSWD_REPLACE/$(openssl rand -base64 18)/" env.template > .env
+
+echo "Start OpenNSA with: docker-compose up"
+

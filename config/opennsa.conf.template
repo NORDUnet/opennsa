@@ -1,0 +1,18 @@
+# Sample docker configuration file
+
+[service]
+domain=dockertest.net
+# log to stdout
+logfile=
+#peers=example.org@http://example.org:9080/NSI/topology/example.org.xml
+
+# These are set by the create-compose script
+dbhost=${POSTGRES_HOST}
+database=${POSTGRES_DB}
+dbuser=${POSTGRES_USER}
+dbpassword=${POSTGRES_PASSWORD}
+
+tls=${TLS_ENABLED}
+
+[dud:topology]
+nrmmap=${NRM_FILE}
