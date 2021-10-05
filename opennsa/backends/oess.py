@@ -399,7 +399,7 @@ class OESSConnectionManager:
 
         return d
 
-  def teardownLink(self, connection_id, source_target, dest_target, bandwidth):
+    def teardownLink(self, connection_id, source_target, dest_target, bandwidth):
         def logTearDownLink(pt, source_target, dest_target):
             log.msg('Link %s -> %s down' % (source_target, dest_target),
                     system=self.log_system)
