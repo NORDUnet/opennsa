@@ -42,15 +42,15 @@ def http_query(conn, sub_path):
     Mini Twisted Web Client
     """
     full_url = conn.url + sub_path
-    full_url = full_url.encode('latin-1')
+    full_url = full_url.encode()
     log.msg("http_query: %r" % full_url, debug=True, system=LOG_SYSTEM)
 
     context_factory = WebClientContextFactory()
     agent = Agent(reactor, context_factory)
-    d = agent.request('GET', full_url,
+    d = agent.request(b'GET', full_url,
                       headers=Headers(
                        {'Content-Type': ['application/x-www-form-urlencoded'],
-                        'Authorization': ['Basic ' + conn.auth]
+                        'Authorization': ['Basic ' + conn.auth.decode()]
                         }),
                       bodyProducer=None)
     d.addCallbacks(readBody, log.err)
@@ -110,6 +110,8 @@ def oess_confirm_vlan_availability(result, vlan):
     except Exception as err:
         raise Exception(err)
     if result["results"][0]["available"] == 1:
+        return True
+    elif result["results"][0]["available"] == 0:
         return True
     raise Exception("Vlan %s not available" % vlan)
 
@@ -234,7 +236,7 @@ class OessSetup(object):
         self.workgroup = workgroup
         self.workgroup_id = None
         self.circuit_id = None
-        self.auth = b64encode(b"%s:%s" % (self.username, self.password))
+        self.auth = b64encode(("%s:%s" % (self.username, self.password)).encode())
         self.conn = UrlConnection(self.url, self.auth)
 
     @defer.inlineCallbacks
@@ -386,19 +388,29 @@ class OESSConnectionManager:
         return True
 
     def setupLink(self, connection_id, source_target, dest_target, bandwidth):
+        def logSetupLink(pt, source_target, dest_target):
+            log.msg('Link %s -> %s up' % (source_target, dest_target),
+                    system=self.log_system)
+            return pt
+
         log.msg('OESS: setupLink', debug=True, system=self.log_system)
-        self.oess_conn.setupLink(source_target, dest_target)
-        log.msg('Link %s -> %s up' % (source_target, dest_target),
-                system=self.log_system)
-        return defer.succeed(None)
+        d = self.oess_conn.setupLink(source_target, dest_target)
+        d.addCallback(logSetupLink, source_target, dest_target)
+
+        return d
 
     def teardownLink(self, connection_id, source_target, dest_target, bandwidth):
+        def logTearDownLink(pt, source_target, dest_target):
+            log.msg('Link %s -> %s down' % (source_target, dest_target),
+                    system=self.log_system)
+            return pt
         # Debug
         log.msg('OESS: teardownLink', system=self.log_system)
-        self.oess_conn.tearDownLink(source_target, dest_target)
-        log.msg('Link %s -> %s down' % (source_target, dest_target),
-                system=self.log_system)
-        return defer.succeed(None)
+
+        d = self.oess_conn.tearDownLink(source_target, dest_target)
+        d.addCallback(logTearDownLink, source_target, dest_target)
+
+        return d
 
 
 # ********************************************************************************
