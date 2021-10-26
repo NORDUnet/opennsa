@@ -12,3 +12,4 @@ docker-compose.override.yml
 .devcontainer
 twistd.pid
 .env
+.DS_Store

@@ -11,6 +11,7 @@ dbhost=${POSTGRES_HOST}
 database=${POSTGRES_DB}
 dbuser=${POSTGRES_USER}
 dbpassword=${POSTGRES_PASSWORD}
+allowed_admins=${ALLOWED_ADMINS}
 
 tls=${TLS_ENABLED}
 

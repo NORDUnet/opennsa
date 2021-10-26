@@ -16,16 +16,14 @@ from twisted.application import internet, service
 
 from twisted.trial import unittest
 
+from opennsa.config import Config
 from opennsa import constants, config, setup, nsa
 from opennsa.protocols.shared import httpclient
-#from opennsa.protocols.nsi2 import requesterservice, requesterclient
+# from opennsa.protocols.nsi2 import requesterservice, requesterclient
 from opennsa.protocols.nsi2 import requesterclient
 from opennsa.discovery.bindings import discovery
 
-
 from . import db
-
-
 
 ARUBA_CONFIG = """
 [service]
@@ -95,15 +93,31 @@ ethernet    cur     curacao.net:topology#bon(-in|-out)  vlan:1780-1799      1000
 
 class MultipleInstancesTestMultipleInstancesTest(unittest.TestCase):
 
+    def load_config(self, buffer):
+        cfgIns = Config.instance()
+
+        try:
+            cfgIns._instance.cfg = None
+            cfgIns._instance.vc = None
+        except:
+            pass
+
+        tmp = tempfile.NamedTemporaryFile('w+t')
+        tmp.write(buffer)
+        tmp.flush()
+        cfg, vc = cfgIns.read_config(tmp.name)
+        tmp.close()
+        return cfg, vc
+
     def setUp(self):
 
         # database
 
-        tc = json.load( open(db.CONFIG_FILE) )
-        self.database    = tc['database']
-        self.db_user     = tc['user']
+        tc = json.load(open(db.CONFIG_FILE))
+        self.database = tc['database']
+        self.db_user = tc['user']
         self.db_password = tc['password']
-        self.db_host     = '127.0.0.1'
+        self.db_host = '127.0.0.1'
 
         # make temporary files for nrm map files
 
@@ -135,14 +149,8 @@ class MultipleInstancesTestMultipleInstancesTest(unittest.TestCase):
                                                bonaire_nrm=bonaire_nrm_file.name)
 
         # parse and verify config
-
-        aruba_cfg = configparser.SafeConfigParser()
-        aruba_cfg.read_string(aruba_config)
-        aruba_vc = config.readVerifyConfig(aruba_cfg)
-
-        bonaire_cfg = configparser.SafeConfigParser()
-        bonaire_cfg.read_string(bonaire_config)
-        bonaire_vc = config.readVerifyConfig(bonaire_cfg)
+        aruba_cfg, aruba_vc = self.load_config(aruba_config)
+        bonaire_cfg, bonaire_vc = self.load_config(bonaire_config)
 
         # setup service
 
@@ -159,11 +167,9 @@ class MultipleInstancesTestMultipleInstancesTest(unittest.TestCase):
 
         return self.top_service.startService()
 
-
     def tearDown(self):
 
         return self.top_service.stopService()
-
 
     @defer.inlineCallbacks
     def testDiscovery(self):
@@ -194,9 +200,8 @@ class MultipleInstancesTestMultipleInstancesTest(unittest.TestCase):
 
         self.failIfEqual(cs_service_url, None, 'No service url found')
 
-        #header = nsa.NSIHeader(requester_agent.urn(), aruba_discovery.id_)
-        #header.newCorrelationId()
+        # header = nsa.NSIHeader(requester_agent.urn(), aruba_discovery.id_)
+        # header.newCorrelationId()
 
-        #provider = requesterclient.RequesterClient(self.provider_agent.endpoint, self.requester_agent.endpoint)
-        #response_cid = yield self.provider.reserve(self.header, None, None, None, self.criteria)
-
+        # provider = requesterclient.RequesterClient(self.provider_agent.endpoint, self.requester_agent.endpoint)
+        # response_cid = yield self.provider.reserve(self.header, None, None, None, self.criteria)

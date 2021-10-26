@@ -24,18 +24,17 @@ from twisted.application import internet, service as twistedservice
 
 from opennsa import __version__ as version
 
+from opennsa.config import Config
 from opennsa import config, logging, constants as cnt, nsa, provreg, database, aggregator, viewresource
 from opennsa.topology import nrm, nml, linkvector, service as nmlservice
 from opennsa.protocols import rest, nsi2
 from opennsa.protocols.shared import httplog
 from opennsa.discovery import service as discoveryservice, fetcher
 
-
 NSI_RESOURCE = b'NSI'
 
 
 def setupBackend(backend_cfg, network_name, nrm_ports, parent_requester):
-
     bc = backend_cfg.copy()
     backend_type = backend_cfg.pop('_backend_type')
 
@@ -99,7 +98,6 @@ def setupBackend(backend_cfg, network_name, nrm_ports, parent_requester):
 
 
 def setupTLSContext(vc):
-
     # ssl/tls contxt
     if vc[config.TLS]:
         from opennsa.opennsaTlsContext import opennsa2WayTlsContext
@@ -130,10 +128,9 @@ class CS2RequesterCreator:
         self.ctx_factory = ctx_factory
 
     def create(self, nsi_agent):
-
         hash_input = nsi_agent.urn() + nsi_agent.endpoint
         resource_name = b'RequesterService2-' + \
-            hashlib.sha1(hash_input.encode()).hexdigest().encode()
+                        hashlib.sha1(hash_input.encode()).hexdigest().encode()
         return nsi2.setupRequesterPair(self.top_resource, self.host, self.port, nsi_agent.endpoint, self.aggregator,
                                        resource_name, tls=self.tls, ctx_factory=self.ctx_factory)
 
@@ -254,7 +251,7 @@ class OpenNSAService(twistedservice.MultiService):
                 for np in backend_nrm_ports:
                     if np.remote_network is not None:
                         link_vector.updateVector(backend_network_name, np.name, {
-                                                 np.remote_network: 1})  # hack
+                            np.remote_network: 1})  # hack
                         for network, cost in np.vectors.items():
                             link_vector.updateVector(np.name, {network: cost})
                     # build port map for aggreator to lookup
@@ -306,7 +303,6 @@ class OpenNSAService(twistedservice.MultiService):
             interfaces.append((cnt.OPENNSA_REST, rest_url, None))
 
         for backend_network_name, no in networks.items():
-
             nml_resource_name = '{}.nml.xml'.format(backend_network_name)
             nml_url = '%s/NSI/%s' % (base_url, nml_resource_name)
 
@@ -369,12 +365,11 @@ class OpenNSAService(twistedservice.MultiService):
 
 
 def createApplication(config_file=config.DEFAULT_CONFIG_FILE, debug=False, payload=False):
-
     application = twistedservice.Application('OpenNSA')
 
     try:
-        cfg = config.readConfig(config_file)
-        vc = config.readVerifyConfig(cfg)
+        configIns = Config.instance()
+        cfg, vc = configIns.read_config(config_file)
 
         # if log file is empty string use stdout
         if vc[config.LOG_FILE]:

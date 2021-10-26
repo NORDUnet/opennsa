@@ -1,5 +1,5 @@
-TLS/SSL Configuration
----------------------
+# TLS/SSL Configuration
+
 
 The configuration of TLS/SSL of OpenNSA is something that has confused several
 people. This guide tries to make it more comprehensible. OpenNSA is somewhat
@@ -18,7 +18,7 @@ When you have obtained a certificate you should have a private key and a
 certificate file (also contains the public key).
 
 
-** Configuration Options **
+## Configuration Options 
 
 `tls=true`
 Enable TLS.
@@ -40,7 +40,7 @@ If OpenNSA should verify the peer. You want this to true, unless debugging..
 Comma-seperated list of hosts that are allowed to make request to OpenNSA.
 
 
-** Common Issues ** 
+## Common Issues 
 
 If you get:
 AttributeError: 'OpenSSL.SSL.Context' object has no attribute 'set_session_cache_mode'

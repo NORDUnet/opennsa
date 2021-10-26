@@ -21,9 +21,7 @@ from opennsa.protocols.shared import minisoap, httpclient
 from opennsa.protocols.nsi2 import helper, queryhelper
 from opennsa.protocols.nsi2.bindings import actions, nsiconnection, p2pservices
 
-
-LOG_SYSTEM  = 'nsi2.RequesterClient'
-
+LOG_SYSTEM = 'nsi2.RequesterClient'
 
 
 @implementer(INSIProvider)
@@ -35,18 +33,16 @@ class RequesterClient:
         assert type(reply_to) is str, 'Reply to URL must be of type str'
 
         self.service_url = service_url.encode()
-        self.reply_to    = reply_to
+        self.reply_to = reply_to
         self.ctx_factory = ctx_factory
         self.http_headers = {}
         if authz_header:
             self.http_headers['Authorization'] = authz_header
 
-
     def _checkHeader(self, header):
 
         if header.reply_to and header.correlation_id is None:
             raise AssertionError('Header must specify correlation id, if reply to is specified')
-
 
     def _createGenericRequestType(self, body_element_name, header, connection_id):
 
@@ -55,8 +51,6 @@ class RequesterClient:
 
         payload = minisoap.createSoapPayload(body_element, header_element)
         return payload
-
-
 
     def _handleErrorReply(self, err, header):
 
@@ -90,7 +84,6 @@ class RequesterClient:
 
         return err
 
-
     def reserve(self, header, connection_id, global_reservation_id, description, criteria, request_info=None):
         # request_info is local only, so it isn't used
 
@@ -117,14 +110,16 @@ class RequesterClient:
         if not type(sd) is nsa.Point2PointService:
             raise ValueError('Cannot create request for service definition of type %s' % str(type(sd)))
 
-        params = [ p2pservices.TypeValueType(p[0], p[1]) for p in sd.parameters ] if sd.parameters else None
-        service_def = p2pservices.P2PServiceBaseType(sd.capacity, sd.directionality, sd.symmetric, sd.source_stp.urn(), sd.dest_stp.urn(), sd.ero, params)
+        params = [p2pservices.TypeValueType(p[0], p[1]) for p in sd.parameters] if sd.parameters else None
+        service_def = p2pservices.P2PServiceBaseType(sd.capacity, sd.directionality, sd.symmetric, sd.source_stp.urn(),
+                                                     sd.dest_stp.urn(), sd.ero, params)
 
         schedule_type = nsiconnection.ScheduleType(start_time, end_time)
 
-        #service_type = str(p2pservices.p2ps)
+        # service_type = str(p2pservices.p2ps)
         service_type = 'http://services.ogf.org/nsi/2013/12/descriptions/EVTS.A-GOLE'
-        criteria = nsiconnection.ReservationRequestCriteriaType(criteria.revision, schedule_type, service_type, service_def)
+        criteria = nsiconnection.ReservationRequestCriteriaType(criteria.revision, schedule_type, service_type,
+                                                                service_def)
 
         reservation = nsiconnection.ReserveType(connection_id, global_reservation_id, description, criteria)
 
@@ -135,10 +130,10 @@ class RequesterClient:
             header, ack = helper.parseRequest(soap_data)
             return ack.connectionId
 
-        d = httpclient.soapRequest(self.service_url, actions.RESERVE, payload, ctx_factory=self.ctx_factory, headers=self.http_headers)
+        d = httpclient.soapRequest(self.service_url, actions.RESERVE, payload, ctx_factory=self.ctx_factory,
+                                   headers=self.http_headers)
         d.addCallbacks(_handleAck, self._handleErrorReply, errbackArgs=(header,))
         return d
-
 
     def reserveCommit(self, header, connection_id, request_info=None):
 
@@ -146,10 +141,10 @@ class RequesterClient:
 
         payload = self._createGenericRequestType(nsiconnection.reserveCommit, header, connection_id)
 
-        d = httpclient.soapRequest(self.service_url, actions.RESERVE_COMMIT, payload, ctx_factory=self.ctx_factory, headers=self.http_headers)
-        d.addCallbacks(lambda sd : None, self._handleErrorReply, errbackArgs=(header,))
+        d = httpclient.soapRequest(self.service_url, actions.RESERVE_COMMIT, payload, ctx_factory=self.ctx_factory,
+                                   headers=self.http_headers)
+        d.addCallbacks(lambda sd: None, self._handleErrorReply, errbackArgs=(header,))
         return d
-
 
     def reserveAbort(self, header, connection_id, request_info=None):
 
@@ -157,42 +152,42 @@ class RequesterClient:
 
         payload = self._createGenericRequestType(nsiconnection.reserveAbort, header, connection_id)
 
-        d = httpclient.soapRequest(self.service_url, actions.RESERVE_ABORT, payload, ctx_factory=self.ctx_factory, headers=self.http_headers)
-        d.addCallbacks(lambda sd : None, self._handleErrorReply, errbackArgs=(header,))
+        d = httpclient.soapRequest(self.service_url, actions.RESERVE_ABORT, payload, ctx_factory=self.ctx_factory,
+                                   headers=self.http_headers)
+        d.addCallbacks(lambda sd: None, self._handleErrorReply, errbackArgs=(header,))
 
         return d
-
 
     def provision(self, header, connection_id, request_info=None):
 
         self._checkHeader(header)
 
         payload = self._createGenericRequestType(nsiconnection.provision, header, connection_id)
-        d = httpclient.soapRequest(self.service_url, actions.PROVISION, payload, ctx_factory=self.ctx_factory, headers=self.http_headers)
-        d.addCallbacks(lambda sd : None, self._handleErrorReply, errbackArgs=(header,))
+        d = httpclient.soapRequest(self.service_url, actions.PROVISION, payload, ctx_factory=self.ctx_factory,
+                                   headers=self.http_headers)
+        d.addCallbacks(lambda sd: None, self._handleErrorReply, errbackArgs=(header,))
 
         return d
-
 
     def release(self, header, connection_id, request_info=None):
 
         self._checkHeader(header)
 
         payload = self._createGenericRequestType(nsiconnection.release, header, connection_id)
-        d = httpclient.soapRequest(self.service_url, actions.RELEASE, payload, ctx_factory=self.ctx_factory, headers=self.http_headers)
-        d.addCallbacks(lambda sd : None, self._handleErrorReply, errbackArgs=(header,))
+        d = httpclient.soapRequest(self.service_url, actions.RELEASE, payload, ctx_factory=self.ctx_factory,
+                                   headers=self.http_headers)
+        d.addCallbacks(lambda sd: None, self._handleErrorReply, errbackArgs=(header,))
         return d
-
 
     def terminate(self, header, connection_id, request_info=None):
 
         self._checkHeader(header)
 
         payload = self._createGenericRequestType(nsiconnection.terminate, header, connection_id)
-        d = httpclient.soapRequest(self.service_url, actions.TERMINATE, payload, ctx_factory=self.ctx_factory, headers=self.http_headers)
-        d.addCallbacks(lambda sd : None, self._handleErrorReply, errbackArgs=(header,))
+        d = httpclient.soapRequest(self.service_url, actions.TERMINATE, payload, ctx_factory=self.ctx_factory,
+                                   headers=self.http_headers)
+        d.addCallbacks(lambda sd: None, self._handleErrorReply, errbackArgs=(header,))
         return d
-
 
     def querySummary(self, header, connection_ids=None, global_reservation_ids=None, request_info=None):
 
@@ -205,16 +200,16 @@ class RequesterClient:
 
         payload = minisoap.createSoapPayload(body_element, header_element)
 
-        d = httpclient.soapRequest(self.service_url, actions.QUERY_SUMMARY, payload, ctx_factory=self.ctx_factory, headers=self.http_headers)
-        d.addCallbacks(lambda sd : None, self._handleErrorReply, errbackArgs=(header,))
+        d = httpclient.soapRequest(self.service_url, actions.QUERY_SUMMARY, payload, ctx_factory=self.ctx_factory,
+                                   headers=self.http_headers)
+        d.addCallbacks(lambda sd: None, self._handleErrorReply, errbackArgs=(header,))
         return d
-
 
     def querySummarySync(self, header, connection_ids=None, global_reservation_ids=None, request_info=None):
 
         def gotReply(soap_data):
             header, query_confirmed = helper.parseRequest(soap_data)
-            return [ queryhelper.buildQueryResult(resv, header.provider_nsa) for resv in query_confirmed.reservations ]
+            return [queryhelper.buildQueryResult(resv, header.provider_nsa) for resv in query_confirmed.reservations]
 
         # don't need to check header here
         header_element = helper.convertProviderHeader(header, self.reply_to)
@@ -224,10 +219,10 @@ class RequesterClient:
 
         payload = minisoap.createSoapPayload(body_element, header_element)
 
-        d = httpclient.soapRequest(self.service_url, actions.QUERY_SUMMARY_SYNC, payload, ctx_factory=self.ctx_factory, headers=self.http_headers)
+        d = httpclient.soapRequest(self.service_url, actions.QUERY_SUMMARY_SYNC, payload, ctx_factory=self.ctx_factory,
+                                   headers=self.http_headers)
         d.addCallbacks(gotReply, self._handleErrorReply, errbackArgs=(header,))
         return d
-
 
     def queryRecursive(self, header, connection_ids, global_reservation_ids=None, request_info=None):
 
@@ -240,7 +235,7 @@ class RequesterClient:
 
         payload = minisoap.createSoapPayload(body_element, header_element)
 
-        d = httpclient.soapRequest(self.service_url, actions.QUERY_RECURSIVE, payload, ctx_factory=self.ctx_factory, headers=self.http_headers)
-        d.addCallbacks(lambda sd : None, self._handleErrorReply, errbackArgs=(header,))
+        d = httpclient.soapRequest(self.service_url, actions.QUERY_RECURSIVE, payload, ctx_factory=self.ctx_factory,
+                                   headers=self.http_headers)
+        d.addCallbacks(lambda sd: None, self._handleErrorReply, errbackArgs=(header,))
         return d
-

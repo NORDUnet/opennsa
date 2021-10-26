@@ -7,3 +7,4 @@ cryptography>=3.4.8
 python-dateutil>=2.8,<2.9
 service-identity>=21.1.0,<22.0.0
 idna>=3.2,<3.3
+pyasn1>=0.4.8

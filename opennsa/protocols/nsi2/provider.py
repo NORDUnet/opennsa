@@ -209,7 +209,7 @@ class Provider:
             return defer.succeed(None)
 
         if (header.correlation_id, QUERY_SUMMARY_RESPONSE) in self.notifications:
-            dc = self.notifications.pop( (header.correlation_id, QUERY_SUMMARY_RESPONSE) )
+            dc = self.notifications.pop((header.correlation_id, QUERY_SUMMARY_RESPONSE))
             dc.callback( reservations )
         else:
             return self.provider_client.querySummaryConfirmed(header.reply_to, header.requester_nsa, header.provider_nsa, header.correlation_id, reservations)
