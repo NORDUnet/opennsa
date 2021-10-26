@@ -32,7 +32,7 @@ class NCSVPNBackendTest(unittest.TestCase):
 
         self.backend.startService()
 
-        database.setupDatabase( tc['database'], tc['database-user'], tc['database-password'])
+        database.setupDatabase(tc['database'], tc['database-user'], tc['database-password'], host=tc['hostname'])
 
         self.requester_nsa = nsa.NetworkServiceAgent('test-requester', 'http://example.org/nsa-test-requester')
         self.provider_nsa  = nsa.NetworkServiceAgent('test-provider',  'http://example.org/nsa-test-provider')

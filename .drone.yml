@@ -1,0 +1,28 @@
+kind: pipeline
+name: default
+
+steps:
+  - name: build
+    image: python:3.9
+    environment:
+      POSTGRES_HOST: database
+    commands:
+      - apt update && apt-get install -y postgresql-client
+      - cat datafiles/schema.sql | PGPASSWORD="w1gWIn7NDGXjXMguiI2Qe05X" psql -U opennsa -h database  -d opennsatest
+      - python3 -m pip install -r requirements.txt
+      - cp util/integration-config.json  .opennsa-test.json
+      - cp config/opennsa.conf.template config/opennsa.conf
+      - PYTHONPATH=. trial test
+
+services:
+- name: database
+  image: postgres:12-alpine
+  environment:
+    POSTGRES_USER: opennsa
+    POSTGRES_PASSWORD: w1gWIn7NDGXjXMguiI2Qe05X
+    POSTGRES_DB: opennsatest
+
+trigger:
+  event:
+    - push
+    - pull_request

@@ -117,7 +117,7 @@ class MultipleInstancesTestMultipleInstancesTest(unittest.TestCase):
         self.database = tc['database']
         self.db_user = tc['user']
         self.db_password = tc['password']
-        self.db_host = '127.0.0.1'
+        self.db_host = tc['hostname']
 
         # make temporary files for nrm map files
 
