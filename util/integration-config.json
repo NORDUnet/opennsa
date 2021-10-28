@@ -1,0 +1,7 @@
+{
+    "container" : "opennsa-test-database",
+    "database"  : "opennsatest",
+    "user"      : "opennsa",
+    "hostname"  : "database",
+    "password"  : "w1gWIn7NDGXjXMguiI2Qe05X"
+}
