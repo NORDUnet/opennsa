@@ -44,6 +44,7 @@ LOG_FILE = 'logfile'
 HOST = 'host'
 PORT = 'port'
 TLS = 'tls'
+BASE_URL = 'base_url'
 REST = 'rest'
 NRM_MAP_FILE = 'nrmmap'
 PEERS = 'peers'
@@ -308,6 +309,11 @@ class Config(object):
         vc[HOST] = cfg.get(BLOCK_SERVICE, HOST, fallback=None)
         vc[TLS] = cfg.getboolean(BLOCK_SERVICE, TLS, fallback=DEFAULT_TLS)
         vc[PORT] = cfg.getint(BLOCK_SERVICE, PORT, fallback=DEFAULT_TLS_PORT if vc[TLS] else DEFAULT_TCP_PORT)
+
+        try:
+            vc[BASE_URL] = cfg.get(BLOCK_SERVICE, BASE_URL)
+        except configparser.NoOptionError:
+            vc[BASE_URL] = None
 
         try:
             policies = cfg.get(BLOCK_SERVICE, POLICY).split(',')
