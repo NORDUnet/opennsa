@@ -99,29 +99,16 @@ def setupBackend(backend_cfg, network_name, nrm_ports, parent_requester):
 
 def setupTLSContext(vc):
     # ssl/tls contxt
-    if vc[config.TLS]:
-        log.msg('setup for full client/server TLS mode')
+    if vc[config.KEY] and vc[config.CERTIFICATE]:
+        log.msg('setup full 2Way TLS context')
         from opennsa.opennsaTlsContext import opennsa2WayTlsContext
         ctx_factory = opennsa2WayTlsContext(
             vc[config.KEY], vc[config.CERTIFICATE], vc[config.CERTIFICATE_DIR], vc[config.VERIFY_CERT])
-    elif vc[config.CERTIFICATE_DIR]:
-        # create a context so we can verify https urls
-        if not os.path.isdir(vc[config.CERTIFICATE_DIR]):
-            raise config.ConfigurationError(
-                'certdir value {} is not a directory'.format(vc[config.CERTIFICATE_DIR]))
-        if vc[config.KEY] and vc[config.CERTIFICATE]:
-            # enable client authentication even when not in TLS mode
-            log.msg('setup for client TLS mode with client authentication')
-            from opennsa.opennsaTlsContext import opennsa2WayTlsContext
-            ctx_factory = opennsa2WayTlsContext(
-                vc[config.KEY], vc[config.CERTIFICATE], vc[config.CERTIFICATE_DIR], vc[config.VERIFY_CERT])
-        else:
-            from opennsa.opennsaTlsContext import opennsaTlsContext
-            log.msg('setup for client TLS mode without client authentication')
-            ctx_factory = opennsaTlsContext(
-                vc[config.CERTIFICATE_DIR], vc[config.VERIFY_CERT])
     else:
-        ctx_factory = None
+        from opennsa.opennsaTlsContext import opennsaTlsContext
+        log.msg('setup client TLS context without client authentication')
+        ctx_factory = opennsaTlsContext(
+            vc[config.CERTIFICATE_DIR], vc[config.VERIFY_CERT])
 
     return ctx_factory
 
