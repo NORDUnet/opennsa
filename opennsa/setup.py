@@ -99,20 +99,16 @@ def setupBackend(backend_cfg, network_name, nrm_ports, parent_requester):
 
 def setupTLSContext(vc):
     # ssl/tls contxt
-    if vc[config.TLS]:
+    if vc[config.KEY] and vc[config.CERTIFICATE]:
+        log.msg('setup full 2Way TLS context')
         from opennsa.opennsaTlsContext import opennsa2WayTlsContext
         ctx_factory = opennsa2WayTlsContext(
             vc[config.KEY], vc[config.CERTIFICATE], vc[config.CERTIFICATE_DIR], vc[config.VERIFY_CERT])
-    elif vc[config.CERTIFICATE_DIR]:
-        # create a context so we can verify https urls
-        if not os.path.isdir(vc[config.CERTIFICATE_DIR]):
-            raise config.ConfigurationError(
-                'certdir value {} is not a directory'.format(vc[config.CERTIFICATE_DIR]))
+    else:
         from opennsa.opennsaTlsContext import opennsaTlsContext
+        log.msg('setup client TLS context without client authentication')
         ctx_factory = opennsaTlsContext(
             vc[config.CERTIFICATE_DIR], vc[config.VERIFY_CERT])
-    else:
-        ctx_factory = None
 
     return ctx_factory
 
@@ -168,8 +164,11 @@ class OpenNSAService(twistedservice.MultiService):
         nsa_name = domain_name + ':nsa'
 
         # base url
-        base_protocol = 'https://' if vc[config.TLS] else 'http://'
-        base_url = base_protocol + vc[config.HOST] + ':' + str(vc[config.PORT])
+        if vc[config.BASE_URL]:
+            base_url = vc[config.BASE_URL]
+        else:
+            base_protocol = 'https://' if vc[config.TLS] else 'http://'
+            base_url = base_protocol + vc[config.HOST] + ':' + str(vc[config.PORT])
 
         # nsi endpoint and agent
         provider_endpoint = base_url + '/NSI/services/CS2'  # hardcode for now

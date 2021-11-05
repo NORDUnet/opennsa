@@ -44,6 +44,7 @@ LOG_FILE = 'logfile'
 HOST = 'host'
 PORT = 'port'
 TLS = 'tls'
+BASE_URL = 'base_url'
 REST = 'rest'
 NRM_MAP_FILE = 'nrmmap'
 PEERS = 'peers'
@@ -310,6 +311,21 @@ class Config(object):
         vc[PORT] = cfg.getint(BLOCK_SERVICE, PORT, fallback=DEFAULT_TLS_PORT if vc[TLS] else DEFAULT_TCP_PORT)
 
         try:
+            vc[BASE_URL] = cfg.get(BLOCK_SERVICE, BASE_URL)
+        except configparser.NoOptionError:
+            vc[BASE_URL] = None
+
+        try:
+            vc[KEY] = cfg.get(BLOCK_SERVICE, KEY)
+        except configparser.NoOptionError:
+            vc[KEY] = None
+
+        try:
+            vc[CERTIFICATE] = cfg.get(BLOCK_SERVICE, CERTIFICATE)
+        except configparser.NoOptionError:
+            vc[CERTIFICATE] = None
+
+        try:
             policies = cfg.get(BLOCK_SERVICE, POLICY).split(',')
             for policy in policies:
                 if not policy in (cnt.REQUIRE_USER, cnt.REQUIRE_TRACE, cnt.AGGREGATOR, cnt.ALLOW_HAIRPIN):
@@ -350,18 +366,19 @@ class Config(object):
         # tls
         if vc[TLS]:
             try:
-                hostkey = cfg.get(BLOCK_SERVICE, KEY)
-                hostcert = cfg.get(BLOCK_SERVICE, CERTIFICATE)
-
-                if not os.path.exists(hostkey):
+                if not vc[KEY]:
                     raise ConfigurationError(
-                        'Specified hostkey does not exist (%s)' % hostkey)
-                if not os.path.exists(hostcert):
+                        'must specify a key when TLS is enabled')
+                elif not os.path.exists(vc[KEY]):
                     raise ConfigurationError(
-                        'Specified hostcert does not exist (%s)' % hostcert)
+                        'Specified key does not exist (%s)' % vc[KEY])
 
-                vc[KEY] = hostkey
-                vc[CERTIFICATE] = hostcert
+                if not vc[CERTIFICATE]:
+                    raise ConfigurationError(
+                        'must specify a certificate when TLS is enabled')
+                elif not os.path.exists(vc[CERTIFICATE]):
+                    raise ConfigurationError(
+                        'Specified certificate does not exist (%s)' % vc[CERTIFICATE])
 
                 try:
                     allowed_hosts_cfg = cfg.get(BLOCK_SERVICE, ALLOWED_HOSTS)
