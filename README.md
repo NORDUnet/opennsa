@@ -1,3 +1,5 @@
+[![Build Status](https://cloud.drone.io/api/badges/NORDUnet/opennsa/status.svg)](https://cloud.drone.io/NORDUnet/opennsa)
+
 OpenNSA
 -------
 
