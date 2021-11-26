@@ -10,7 +10,7 @@ services:
       - opennsa-pgdata:/var/lib/postgresql/data
     env_file: .env
   opennsa:
-    image: opennsa:latest
+    image: jghnordunet/opennsa:latest
     build:
       context: .
       dockerfile: docker/Dockerfile
