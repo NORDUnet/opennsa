@@ -3,7 +3,7 @@ version: "3.7"
 
 services:
   opennsa:
-    image: opennsa:latest
+    image: jghnordunet/opennsa:latest
     command: Any valid command
     ## Mount entire project to volume avoids constant rebuilds.
     ## You may need to load the container as:
