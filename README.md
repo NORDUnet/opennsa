@@ -34,6 +34,7 @@ NORDUnet License (3-clause BSD). See LICENSE for more details.
 #### Contact
 
 * Johannes Garm Houen - jgh @ nordu.net
+* Samir Faci - samir @ es.net
 
 #### Copyright
 
