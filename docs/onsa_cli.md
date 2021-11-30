@@ -1,5 +1,4 @@
-Open NSA CLI
------------
+# Open NSA CLI
 
 A short primer on the onsa command line tool.
 
