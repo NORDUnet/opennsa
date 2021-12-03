@@ -7,7 +7,10 @@
 
 
 from opennsa import setup
+from dotenv import load_dotenv
 
+
+load_dotenv()  ## Loads ENV values from .env file
 # you can get debug and/or payload info in the log by setting one of the flags to true
-application = setup.createApplication('opennsa.conf', payload=False, debug=False)
+application = setup.createApplication('config/opennsa.conf', payload=False, debug=False)
 

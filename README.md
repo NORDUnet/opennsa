@@ -1,3 +1,5 @@
+[![Build Status](https://cloud.drone.io/api/badges/NORDUnet/opennsa/status.svg)](https://cloud.drone.io/NORDUnet/opennsa)
+
 OpenNSA
 -------
 
@@ -32,8 +34,10 @@ NORDUnet License (3-clause BSD). See LICENSE for more details.
 #### Contact
 
 * Johannes Garm Houen - jgh @ nordu.net
+* Samir Faci - samir @ es.net
 
 #### Copyright
 
 [NORDUnet](http://www.nordu.net) (2011-2015)
+
 

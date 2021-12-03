@@ -46,7 +46,7 @@ class ModifiableResource(resource.Resource):
         if self.representation is None:
             # we haven't been given a representation yet
             request.setResponseCode(500)
-            return 'Resource has not yet been created/updated.'
+            return b'Resource has not yet been created/updated.'
 
         # check for if-modified-since header, and send 304 back if it is not been modified
         msd_header = request.getHeader(IF_MODIFIED_SINCE)
@@ -55,7 +55,7 @@ class ModifiableResource(resource.Resource):
                 msd = datetime.datetime.strptime(msd_header, RFC850_FORMAT)
                 if msd >= self.last_update_time:
                     request.setResponseCode(304)
-                    return ''
+                    return b''
             except ValueError:
                 pass # error parsing timestamp
 

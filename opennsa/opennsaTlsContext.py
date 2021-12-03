@@ -44,11 +44,14 @@ class opennsaTlsContext:
             try:
                 CACertificates.append(ssl.Certificate.loadPEM(CAFileContent))
             except crypto.Error as error:
-                log.msg('Cannot load CA certificate from %s: %s' % (CAFilename, error), system = LOG_SYSTEM)
+                log.msg(f'Cannot load CA certificate from {CAFilename}: {error}', system=LOG_SYSTEM)
             else:
-                log.msg('Loaded CA certificate commonName %s' % (str(CACertificates[-1].getSubject().commonName)), system = LOG_SYSTEM)
+                try:
+                    log.msg(f'Loaded CA certificate {CACertificates[-1].getSubject()}', system=LOG_SYSTEM)
+                except:
+                    log.msg("Failed to serialize Certificate Subject")
         if len(CACertificates) == 0:
-            print('No certificiates loaded for CTX verificiation. CA verification will not work.')
+            print('No certificates loaded for CTX verification. CA verification will not work.')
         return ssl.trustRootFromCertificates(CACertificates)
 
     def getTrustRoot(self):

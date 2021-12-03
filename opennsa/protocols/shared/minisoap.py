@@ -153,8 +153,8 @@ def parseFault(payload):
     detail = None
 
     dt = fault.find('detail')
-    if dt is not None:
-        dc = dt.getchildren()[0]
+    if dt is not None and len(list(dt)) > 0:
+        dc = dt[0]
         if dc is not None:
             detail = ET.tostring(dc)
 

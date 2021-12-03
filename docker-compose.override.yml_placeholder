@@ -1,0 +1,21 @@
+## rename this file to docker-compose.override.yml any additional settings listed here will be merged with the docker-compose.yml file.
+version: "3.7"
+
+services:
+  opennsa:
+    image: jghnordunet/opennsa:latest
+    command: Any valid command
+    ## Mount entire project to volume avoids constant rebuilds.
+    ## You may need to load the container as:
+    ## UID=${UID} GID=${GID} docker-compose up linux FS can cause some issues with 
+    ## permissioning at times.
+    #volumes:
+    # - ./:/home/opennsa/opennsa
+    # Mount NRM file and leave ENV value the same
+    #volumes:
+    #  - ./config/myNRMFile.nrm:/home/opennsa/opennsa/config/opennsa.nrm
+  db:
+    image: postgres:12
+    ##Expose 5432 locally 
+    ports:
+      - 5432:5432

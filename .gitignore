@@ -4,3 +4,12 @@ build
 dist
 .opennsa-test.json
 .python-version
+docker/.env
+config/opennsa.conf
+docker-compose.override.yml
+
+.idea
+.devcontainer
+twistd.pid
+.env
+.DS_Store

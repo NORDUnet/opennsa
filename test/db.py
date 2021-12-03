@@ -15,6 +15,6 @@ def setupDatabase(config_file=CONFIG_FILE):
 
     tc = json.load( open(config_file) )
 
-    database.setupDatabase( tc['database'], tc['user'], tc['password'], host='127.0.0.1')
+    database.setupDatabase( tc['database'], tc['user'], tc['password'], host=tc['hostname'])
 
 

@@ -1,0 +1,53 @@
+kind: pipeline
+name: default
+
+steps:
+  - name: Test
+    image: python:3.9
+    environment:
+      POSTGRES_HOST: database
+    commands:
+      - apt update && apt-get install -y postgresql-client
+      - cat datafiles/schema.sql | PGPASSWORD="w1gWIn7NDGXjXMguiI2Qe05X" psql -U opennsa -h database  -d opennsatest
+      - python3 -m pip install -r requirements.txt
+      - cp util/integration-config.json  .opennsa-test.json
+      - cp config/opennsa.conf.template config/opennsa.conf
+      - PYTHONPATH=. trial test
+
+services:
+- name: database
+  image: postgres:12-alpine
+  environment:
+    POSTGRES_USER: opennsa
+    POSTGRES_PASSWORD: w1gWIn7NDGXjXMguiI2Qe05X
+    POSTGRES_DB: opennsatest
+
+trigger:
+  event:
+    - push
+    - pull_request
+
+--- 
+kind: pipeline 
+name: docker
+
+steps:
+  - name: docker
+    image: plugins/docker
+    pull: if-not-exists
+    settings:
+      repo: jghnordunet/opennsa
+      squash: true
+      auto_tag: true
+      dockerfile: docker/Dockerfile
+      username:
+        from_secret: DOCKER_USER
+      password:
+        from_secret: DOCKER_PASS
+
+trigger:
+  branch:
+    - master
+  event:
+    - tag
+    - push

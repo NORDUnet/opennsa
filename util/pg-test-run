@@ -1,5 +1,4 @@
 #!/bin/sh
-
 set -e
 
 # Run a PostgreSQL database for testing
@@ -22,7 +21,8 @@ echo "{
     \"container\" : \"$container\",
     \"database\"  : \"$database\",
     \"user\"      : \"$user\",
-    \"password\"  : \"$password\"
+    \"password\"  : \"$password\",
+    \"hostname\"  : \"127.0.0.1\"
 }" > "$configfile"
 
 
