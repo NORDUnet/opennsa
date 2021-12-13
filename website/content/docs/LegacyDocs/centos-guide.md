@@ -1,8 +1,13 @@
-Installing OpenNSA on CentOS 6.4
---------------------------------
-* Date: July 12 2013
-* Authors: Henrik Jensen/Nordu.net and Jeronimo Bezerra/AMPATH
-* Version: 1.1
+---
+categories: ["Legacy"]
+tags: ["install"]
+title: "Install on CentOS 6.4"
+linkTitle: "Install on CentOS 6.4"
+date: 2013-07-12
+description: >
+  Installation instruction for OpenNSA on CentOS 6.4
+---
+# Installing OpenNSA on CentOS 6.4
 
 1) Upgrade the CentOS 6.4:
 
@@ -14,6 +19,7 @@ Installing OpenNSA on CentOS 6.4
 
 3) Install Python 2.7 (CentOS depends of Python2.6 for its package system)
 
+```sh
     yum groupinstall "Development tools"
     yum install zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel tk-devel
     cd /usr/local/src
@@ -22,15 +28,18 @@ Installing OpenNSA on CentOS 6.4
     cd Python-2.7.3
     ./configure --prefix=/usr/local
     make && make altinstall
+```
 
 The Python2.7 interpreter is at /usr/local/bin/python2.7
 
 4) Install the Python Distribute
 
+```sh
     wget --no-check-certificate http://pypi.python.org/packages/source/d/distribute/distribute-0.6.35.tar.gz
     tar xf distribute-0.6.35.tar.gz
     cd distribute-0.6.35
     python2.7 setup.py install
+```
 
  This generates the script /usr/local/bin/easy_install-2.7 that you use to install packages for Python 2.7.
  It puts your packages in /usr/local/lib/python2.7/site-packages/
@@ -39,51 +48,68 @@ The Python2.7 interpreter is at /usr/local/bin/python2.7
 
 6) Install Twisted
 
+```sh
     wget --no-check-certificate https://pypi.python.org/packages/source/T/Twisted/Twisted-13.1.0.tar.bz2#md5=5609c91ed465f5a7da48d30a0e7b6960
     easy_install-2.7 Twisted-13.1.0.tar.bz2
+```
 
 7) Install Twistar-1.2
 
+```sh
     wget --no-check-certificate https://pypi.python.org/packages/source/t/twistar/twistar-1.2.tar.gz#md5=4f63af14339b1f2d9556395b527ea7a4
     easy_install-2.7 twistar-1.2.tar.gz
+```
 
 8) Install psycopg
 
+```sh
     wget http://initd.org/psycopg/tarballs/PSYCOPG-2-5/psycopg2-2.5.1.tar.gz
     easy_install-2.7 psycopg2-2.5.1.tar.gz
+```
 
 9) Install pycrypto-2.6 and pyasn1-0.1.7 (only necessary when using SSH backends)
 
+
+```sh
     wget --no-check-certificate https://pypi.python.org/packages/source/p/pycrypto/pycrypto-2.6.tar.gz
     easy_install-2.7 pycrypto-2.6.tar.gz
  
     wget --no-check-certificate https://pypi.python.org/packages/source/p/pyasn1/pyasn1-0.1.7.tar.gz#md5=2cbd80fcd4c7b1c82180d3d76fee18c8
     easy_install-2.7 pyasn1-0.1.7.tar.gz
+```
  
 10) Initialize and Start the PostgreSQL
 
+
+```sh
     service postgresql initdb
     service postgresql start
 
     ln -s /etc/init.d/postgresql /etc/rc3.d/S99postgresql
     ln -s /etc/init.d/postgresql /etc/rc3.d/K99postgresql
+```
 
 11) Prepare the environment for Opennsa
 
+```sh
     useradd opennsa
     su - opennsa
+```
 
 12) Install OpenNSA
 
+```sh
     git clone git://git.nordu.net/opennsa.git
     cd opennsa
     git checkout nsi2
     python2.7 setup.py build
     su
     python2.7 setup.py install
+```
  
 13) Create the database
 
+```sh
     cp datafiles/schema.sql /tmp/
     su - postgres
     createdb opennsa
@@ -95,18 +121,22 @@ The Python2.7 interpreter is at /usr/local/bin/python2.7
     exit
     <CTRL+D>
     exit
-
+```
 14) It's important to keep the server time accurate (NTP)
 
+```sh
     yum install ntp.x86_64
     ln -s /etc/init.d/ntpd /etc/rc3.d/S99ntpd
     ln -s /etc/init.d/ntpd /etc/rc3.d/K99ntpd
     /etc/init.d/ntpd start
+```
 
 15) Generate your SSH keys
 
+```sh
     su - opennsa
     ssh-keygen
+```
  
 
  Press <ENTER> 3 times. The keys `id_dsa` and `id_dsa.pub` will be created under `~opennsa/.ssh/`
@@ -119,7 +149,7 @@ The Python2.7 interpreter is at /usr/local/bin/python2.7
 
     vi opennsa.conf
 
-```
+```ini
  [service]
  network=<YOUR_NETWORK_NAME>
  logfile=
@@ -151,13 +181,15 @@ The Python2.7 interpreter is at /usr/local/bin/python2.7
 
 17) Create a `.opennsa-cli` file under `~opennsa/`
 
+```sh
     echo -e "bandwidth=200\nhost=localhost\nport=7080\nstarttime=+1\nendtime=+20" > ~opennsa/.opennsa-cli
- 
+``` 
+
  The starttime and the endtime represent when the circuit will start and end in seconds
 
 18) Configure your backend in the opennsa.conf
 
-```
+```ini
  # OpenNSA has support for the following backends: brocade, dell, etc...
  # So create a section for your backend with the following format:
  #
@@ -181,14 +213,16 @@ The Python2.7 interpreter is at /usr/local/bin/python2.7
 
 19) Start the OpenNSA:
 
+```sh
     su - opennsa
     cd opennsa
     twistd -ny opennsa.tac
     (-n to not create a daemon. There is also an init.d script)
+```
 
  You should see:
 
-``` 
+```sh 
  2013-07-02 14:17:08-0400 [-] Log opened.
  2013-07-02 14:17:08-0400 [-] twistd 13.1.0 (/usr/local/bin/python2.7 2.7.3) starting up.
  2013-07-02 14:17:08-0400 [-] reactor class: twisted.internet.epollreactor.EPollReactor.
@@ -208,7 +242,7 @@ The Python2.7 interpreter is at /usr/local/bin/python2.7
  
  As an example, in Brocade MLX switches you have to:
 
-```
+```sh
  a. cd ~opennsa/.ssh
  b. echo "---- BEGIN SSH2 PUBLIC KEY ----" > keys.txt
  c. cat id_dsa.pub >> keys.txt

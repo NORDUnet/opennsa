@@ -1,4 +1,12 @@
-
+---
+categories: ["Developer"]
+tags: ["developer","docs", "guide", "backends"] 
+title: "REST Interface"
+linkTitle: "REST Interface"
+weight: 4
+description: >
+  REST Interface guide
+---
 # OpenNSA rest interface
 
 The rest interface is an easy to use alternative interface to the NSI SOAP api.
@@ -13,7 +21,7 @@ Get connection status (stream)  GET     /connections/{connection_id}/status
 Change status                   POST    /connections/{connection_id}/status
 ```
 
-The /status GET is a stream that updates continously (server won't close connection and will emit new status each time it updates).
+The /status GET is a stream that updates continuously (server won't close connection and will emit new status each time it updates).
 
 ## Enabling rest
 

@@ -1,6 +1,12 @@
-# TLS/SSL Configuration
-
-
+---
+categories: ["Developer"]
+tags: ["developer","docs", "guide", "backends"] 
+title: "TLS/SSL Configuration Guide"
+linkTitle: "TLS/SSL Configuration"
+weight: 2
+description: >
+  TLS/SSL Configuration Guide
+---
 The configuration of TLS/SSL of OpenNSA is something that has confused several
 people. This guide tries to make it more comprehensible. OpenNSA is somewhat
 barebones in its configuration style, but uses standard X.509 certificates and

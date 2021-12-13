@@ -1,5 +1,13 @@
-# Open NSA CLI
+---
+categories: ["Guide"]
+tags: ["docs", "guide", "userguide"] 
+title: "User Guide"
+linkTitle: "User Guide"
+weight: 3
+description: >
+  A short primer on the onsa command line tool.
 
+---
 A short primer on the onsa command line tool.
 
 Disclaimer: There are still bugs and unfinished functionality.

@@ -1,9 +1,16 @@
-OpenNSA configuration
----------------------
+---
+categories: ["Guide"]
+tags: ["docs", "guide", "userguide"] 
+title: "Configuration Guide"
+linkTitle: "Configuration"
+weight: 1
+description: >
+  A short primer on the opennsa config
+---
 
 # Example Configuration
 
-```
+```ini
 [service]
 network=Aruba
 logfile=nsalog.log

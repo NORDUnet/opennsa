@@ -1,3 +1,13 @@
+---
+categories: ["Developer"]
+tags: ["install", "developer"]
+title: "Testing"
+linkTitle: "Testing"
+date: 2021-12-16
+description: >
+  Quick Developer Guide
+---
+
 How to run the the unit/integration tests for OpenNSA
 
 Make sure all the requirements are installed. Then:
