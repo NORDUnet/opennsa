@@ -1,0 +1,16 @@
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>OpenNSA – OpenNSA</title>
+    <link>https://NORDUnet.github.io/opennsa/</link>
+    <description>Recent content on OpenNSA</description>
+    <generator>Hugo -- gohugo.io</generator>
+    
+	  <atom:link href="https://NORDUnet.github.io/opennsa/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+      
+      
+    
+    
+  </channel>
+</rss>

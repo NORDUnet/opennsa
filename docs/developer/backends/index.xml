@@ -1,0 +1,45 @@
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>OpenNSA – Backends</title>
+    <link>https://NORDUnet.github.io/opennsa/docs/developer/backends/</link>
+    <description>Recent content in Backends on OpenNSA</description>
+    <generator>Hugo -- gohugo.io</generator>
+    
+	  <atom:link href="https://NORDUnet.github.io/opennsa/docs/developer/backends/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+      
+        
+      
+    
+    
+    <item>
+      <title>Docs: Brocade</title>
+      <link>https://NORDUnet.github.io/opennsa/docs/developer/backends/brocade/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://NORDUnet.github.io/opennsa/docs/developer/backends/brocade/</guid>
+      <description>
+        
+        
+        &lt;h1 id=&#34;brocade&#34;&gt;Brocade&lt;/h1&gt;
+&lt;p&gt;&lt;strong&gt;Config snippet:&lt;/strong&gt;&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;[brocade]
+host=206.196.xx.xx
+user=admin
+fingerprint=63:3f:f5:68:e5:15:a1:6d:b0:61:40:2b:22:83:xx:xx
+publickey=/home/opennsa/.ssh/id_rsa.pub
+privatekey=/home/opennsa/.ssh/id_rsa
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;&lt;strong&gt;Getting SSH keys in order:&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;ssh-keygen generates the rsa/dsa key with a ID and a user in the public
+key, for example:&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;---- BEGIN SSH2 PUBLIC KEY ----
+key-dsa (... key ...) jab@home 
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;but Brocade doesn&amp;rsquo;t understand the key with the index (key-dsa) and the
+user (jab@home) on it so I had to remove them to make it work.&lt;/p&gt;
+
+      </description>
+    </item>
+    
+  </channel>
+</rss>

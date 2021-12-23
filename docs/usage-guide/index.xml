@@ -1,0 +1,45 @@
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>OpenNSA – User Guide</title>
+    <link>https://NORDUnet.github.io/opennsa/docs/usage-guide/</link>
+    <description>Recent content in User Guide on OpenNSA</description>
+    <generator>Hugo -- gohugo.io</generator>
+    
+	  <atom:link href="https://NORDUnet.github.io/opennsa/docs/usage-guide/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+      
+        
+      
+    
+    
+    <item>
+      <title>Docs: CLI User Guide</title>
+      <link>https://NORDUnet.github.io/opennsa/docs/usage-guide/cli/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://NORDUnet.github.io/opennsa/docs/usage-guide/cli/</guid>
+      <description>
+        
+        
+        &lt;p&gt;CLI User Guide&lt;/p&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Docs: OpenNSA Server User Guide</title>
+      <link>https://NORDUnet.github.io/opennsa/docs/usage-guide/opennsa/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://NORDUnet.github.io/opennsa/docs/usage-guide/opennsa/</guid>
+      <description>
+        
+        
+        &lt;p&gt;OpenNSA Server User Guide&lt;/p&gt;
+
+      </description>
+    </item>
+    
+  </channel>
+</rss>

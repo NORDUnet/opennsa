@@ -1,0 +1,31 @@
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>OpenNSA – Placeholders</title>
+    <link>https://NORDUnet.github.io/opennsa/categories/placeholders/</link>
+    <description>Recent content in Placeholders on OpenNSA</description>
+    <generator>Hugo -- gohugo.io</generator>
+    
+	  <atom:link href="https://NORDUnet.github.io/opennsa/categories/placeholders/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+      
+        
+      
+    
+    
+    <item>
+      <title>Docs: Legacy Documentation</title>
+      <link>https://NORDUnet.github.io/opennsa/docs/legacydocs/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://NORDUnet.github.io/opennsa/docs/legacydocs/</guid>
+      <description>
+        
+        
+        &lt;p&gt;This is a collection of legacy documents that are likely no longer needed but kept for posterity&amp;rsquo;s sake.&lt;/p&gt;
+
+      </description>
+    </item>
+    
+  </channel>
+</rss>

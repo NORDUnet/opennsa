@@ -1,0 +1,776 @@
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>OpenNSA – Documentation</title>
+    <link>https://NORDUnet.github.io/opennsa/docs/</link>
+    <description>Recent content in Documentation on OpenNSA</description>
+    <generator>Hugo -- gohugo.io</generator>
+    
+	  <atom:link href="https://NORDUnet.github.io/opennsa/docs/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+      
+        
+      
+    
+    
+    <item>
+      <title>Docs: Configuration Guide</title>
+      <link>https://NORDUnet.github.io/opennsa/docs/usage-guide/opennsa/config/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://NORDUnet.github.io/opennsa/docs/usage-guide/opennsa/config/</guid>
+      <description>
+        
+        
+        &lt;h1 id=&#34;example-configuration&#34;&gt;Example Configuration&lt;/h1&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-ini&#34; data-lang=&#34;ini&#34;&gt;&lt;span style=&#34;color:#204a87;font-weight:bold&#34;&gt;[service]&lt;/span&gt;
+&lt;span style=&#34;color:#c4a000&#34;&gt;network&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;Aruba&lt;/span&gt;
+&lt;span style=&#34;color:#c4a000&#34;&gt;logfile&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;nsalog.log&lt;/span&gt;
+&lt;span style=&#34;color:#c4a000&#34;&gt;nrmfile&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;ports.nrm&lt;/span&gt;
+
+&lt;span style=&#34;color:#c4a000&#34;&gt;peers&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;http://host.example.org:9080/NSI/discovery.xml
+&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;      https://nsi.example.com/NSI/discovery.xml&lt;/span&gt;
+
+&lt;span style=&#34;color:#c4a000&#34;&gt;policies&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;requiretrace,requireuser&lt;/span&gt;
+
+&lt;span style=&#34;color:#c4a000&#34;&gt;serviceid_start&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;1900000&lt;/span&gt;
+
+&lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;# Database&lt;/span&gt;
+&lt;span style=&#34;color:#c4a000&#34;&gt;database&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;opennsa&lt;/span&gt;
+&lt;span style=&#34;color:#c4a000&#34;&gt;dbuser&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;dbuser&lt;/span&gt;
+&lt;span style=&#34;color:#c4a000&#34;&gt;dbpassword&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;dbpassword&lt;/span&gt;
+&lt;span style=&#34;color:#c4a000&#34;&gt;dbhost&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;127.0.0.1&lt;/span&gt;
+
+&lt;span style=&#34;color:#204a87;font-weight:bold&#34;&gt;[dud]&lt;/span&gt;
+&lt;span style=&#34;color:#c4a000&#34;&gt;option1&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;123&lt;/span&gt;
+&lt;span style=&#34;color:#c4a000&#34;&gt;option2&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;abc&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h1 id=&#34;service-block&#34;&gt;Service block&lt;/h1&gt;
+&lt;p&gt;These are the options for the service block:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;network&lt;/code&gt;  : The network name managed by OpenNSA. Mandatory.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;logfile&lt;/code&gt;  : File to log to. Default: /var/log/opennsa.log&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;nrmmap&lt;/code&gt;   : Path to port/topology NRM description file&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;peers&lt;/code&gt;    : URLs to NSAs to peer with control-plane wise.
+Separate multiple entries with newline (only peers= on the first
+line). If using multiple lines, the following peer urls must be in
+indented at least pass the &lt;code&gt;=&lt;/code&gt; on the first line (parser limitation).
+Optional. No peers will put OpenNSA into UPA mode.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;policies&lt;/code&gt; : What policies are required. Currently &lt;code&gt;requiretrace&lt;/code&gt;, &lt;code&gt;requireuser&lt;/code&gt;,
+and &lt;code&gt;aggregator&lt;/code&gt; are the possible options. These require a connection
+trace, a user security attribute, and allow proxy aggregation
+respectively. Optional.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;serviceid_start&lt;/code&gt; : Initial service id to set in the database. Requires a plugin
+to use. Optional.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;database&lt;/code&gt; : Name of the PostgreSQL database to connect to. Mandatory.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;dbuser&lt;/code&gt;   : Username to use when connecting to database. Mandatory.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;dbpassword&lt;/code&gt; : Password to use when connecting to database. Mandatory.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;dbhost&lt;/code&gt;   : Host to connect to for database. Optional. If not specified,
+OpenNSA will connect to PostgreSQL over the unix domain socket
+OpenNSA does not require anything big from the database, so using a
+different host/vm is almost surely a waste of resources. It is
+however useful when running a PostgreSQL in docker.&lt;/p&gt;
+&lt;h1 id=&#34;backend&#34;&gt;Backend&lt;/h1&gt;
+&lt;p&gt;A backend is configured by a section describing the type of backend, e.g. &lt;code&gt;dud&lt;/code&gt;
+(for testing) or &lt;code&gt;junosmx&lt;/code&gt;. The configuration options in the section are
+specific to the backend. Reading the setup code in backend, is the easiest way
+to see the options.&lt;/p&gt;
+&lt;h2 id=&#34;custom-backend&#34;&gt;Custom Backend&lt;/h2&gt;
+&lt;p&gt;If you have written your own backend that is specific to an organization or
+project, you can use the custombackend option:&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;[custombackend]
+module=mycustombackend
+op1=123
+op2=abc
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;This will import the Python module named &lt;code&gt;mycustombackend&lt;/code&gt; and pass along the
+configuration options. You will probably need to specify PYTHONPATH to include
+the path of the module.&lt;/p&gt;
+&lt;p&gt;It is strongly recommended that you keep the module out of the OpenNSA module
+such that you can upgrade OpenNSA without having to re-deploy your backend.&lt;/p&gt;
+&lt;h1 id=&#34;nrm-configuration&#34;&gt;NRM Configuration&lt;/h1&gt;
+&lt;p&gt;Configuration the nrm file is typically the most confusing parts of setting up
+OpenNSA. In short the NRM file defines the ports available through the NSI
+protocol, as OpenNSA does not make everything available. An NRM is line based
+and typically looks like this:&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;# type      name    remote                              label               bandwith    interface   attributes
+
+ethernet    ps      -                                   vlan:1780-1799,2000 1000        em0         user=johndoe@example.org
+ethernet    bon     bonaire.net:topology#arb(-in|-out)  vlan:1780-1799      1000        em3         restricttransit
+ethernet    cur     curacao.net:topology#arb(-in|-out)  vlan:1780-1799      1000        em3         restricttransit,hostdn=curacao.example.net
+
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Each line describes an STP (NSI term). An STP is more or less the same as a
+port. Note that two STPs can point to the same underlying interface / port,
+which can occasionally be useful (you will probably know if this happens).
+OpenNSA does reservations on the interface resources internally, to ensure that
+resource do not get double booked.&lt;/p&gt;
+&lt;h2 id=&#34;nrm-configuration-options&#34;&gt;NRM Configuration options&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;type&lt;/code&gt;  : The port type. Only ethernet is recognized at the moment.
+Bidirectional is implied.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;name&lt;/code&gt;  : The name of the STP. The STP address will be a URN with the network and name in it.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt; Remote&lt;/code&gt;   : The network and port the port is connected to. Format:
+&lt;code&gt;network#port(-inprefix|-outprefix)&lt;/code&gt;
+Use &amp;lsquo;-&amp;rsquo; if not connected to any network (termination inside the network).&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;label&lt;/code&gt; : STP configuration options. Currently &lt;code&gt;vlan&lt;/code&gt; and &lt;code&gt;mpls&lt;/code&gt; are supported.
+Note that not all backend support those. Can specify single values and ranges. Comma separated.
+Use &amp;lsquo;-&amp;rsquo; if no labels are to be used (i.e., ethernet trunk).&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;bandwidth&lt;/code&gt; : The available bandwidth on the port (or the bandwidth that is
+available to OpenNSA on the port).&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;interface&lt;/code&gt; : The interface / port on the network device.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;attributes&lt;/code&gt; : A list of comma separated attributes that describes security
+attributes or policies for the port. Security attributes always have the form
+&lt;code&gt;key=value&lt;/code&gt;, otherwise it is a policy. Despite the name, security attributes
+are not very secure.&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;           The hostdn will match against the hostname of a certificate. For this to work
+           OpenNSA must be configured to run with TLS (see docs/tls-guide).
+
+           The only supported policy at the moment is `restricttransit`. If
+           two ports both have the `restricttransit` attribute, connecions
+           between the two will not be allowed.
+&lt;/code&gt;&lt;/pre&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Docs: Brocade</title>
+      <link>https://NORDUnet.github.io/opennsa/docs/developer/backends/brocade/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://NORDUnet.github.io/opennsa/docs/developer/backends/brocade/</guid>
+      <description>
+        
+        
+        &lt;h1 id=&#34;brocade&#34;&gt;Brocade&lt;/h1&gt;
+&lt;p&gt;&lt;strong&gt;Config snippet:&lt;/strong&gt;&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;[brocade]
+host=206.196.xx.xx
+user=admin
+fingerprint=63:3f:f5:68:e5:15:a1:6d:b0:61:40:2b:22:83:xx:xx
+publickey=/home/opennsa/.ssh/id_rsa.pub
+privatekey=/home/opennsa/.ssh/id_rsa
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;&lt;strong&gt;Getting SSH keys in order:&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;ssh-keygen generates the rsa/dsa key with a ID and a user in the public
+key, for example:&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;---- BEGIN SSH2 PUBLIC KEY ----
+key-dsa (... key ...) jab@home 
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;but Brocade doesn&amp;rsquo;t understand the key with the index (key-dsa) and the
+user (jab@home) on it so I had to remove them to make it work.&lt;/p&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Docs: TLS/SSL Configuration Guide</title>
+      <link>https://NORDUnet.github.io/opennsa/docs/usage-guide/opennsa/tls-guide/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://NORDUnet.github.io/opennsa/docs/usage-guide/opennsa/tls-guide/</guid>
+      <description>
+        
+        
+        &lt;p&gt;The configuration of TLS/SSL of OpenNSA is something that has confused several
+people. This guide tries to make it more comprehensible. OpenNSA is somewhat
+barebones in its configuration style, but uses standard X.509 certificates and
+directory layouts. Prodding at TLS/SSL config until it works is usually a bad
+strategy. Understand it, and it should be straightforward.&lt;/p&gt;
+&lt;p&gt;First you need to get a certificate. Please don&amp;rsquo;t make a self-signed. Get one
+from a real certificate authority. Many NRENs can get certificates from TERENA
+or similar. These typically have guides as well and there is no purpose in
+repeating it here.&lt;/p&gt;
+&lt;p&gt;OpenNSA or its author cannot magically produce a certificate you (sorry).&lt;/p&gt;
+&lt;p&gt;When you have obtained a certificate you should have a private key and a
+certificate file (also contains the public key).&lt;/p&gt;
+&lt;h2 id=&#34;configuration-options&#34;&gt;Configuration Options&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;tls=true&lt;/code&gt;
+Enable TLS.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;key=/etc/hostcert/nsi.nordu.net.key&lt;/code&gt;
+Path to private key.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;certificate=/etc/hostcert/nsi.nordu.net.pem&lt;/code&gt;
+Path to the certificate.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;certdir=/etc/ssl/certs&lt;/code&gt;
+Directory for certificates authorities. OpenNSA uses the OpenSSL standard of seperate CA files ending with .0
+Only files ending with .0 are loaded.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;verify=true&lt;/code&gt;
+If OpenNSA should verify the peer. You want this to true, unless debugging..&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;allowedhosts=host1.example.org,host2.example.org&lt;/code&gt;
+Comma-seperated list of hosts that are allowed to make request to OpenNSA.&lt;/p&gt;
+&lt;h2 id=&#34;common-issues&#34;&gt;Common Issues&lt;/h2&gt;
+&lt;p&gt;If you get:
+AttributeError: &amp;lsquo;OpenSSL.SSL.Context&amp;rsquo; object has no attribute &amp;lsquo;set_session_cache_mode&amp;rsquo;&lt;/p&gt;
+&lt;p&gt;Upgrade pyOpenSSL to at least version 0.14 (as listed in the INSTALL file).&lt;/p&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Docs: NCS</title>
+      <link>https://NORDUnet.github.io/opennsa/docs/usage-guide/opennsa/ncs/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://NORDUnet.github.io/opennsa/docs/usage-guide/opennsa/ncs/</guid>
+      <description>
+        
+        
+        &lt;p&gt;url is an http url with the path /api/running/services, i.e.,&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;http://NCSHOST:8080/api/running/services&#34;&gt;http://NCSHOST:8080/api/running/services&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;the interface part should be of the format &amp;ldquo;router:interface&amp;rdquo;&lt;/p&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Docs: User Guide</title>
+      <link>https://NORDUnet.github.io/opennsa/docs/usage-guide/cli/onsa_cli/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://NORDUnet.github.io/opennsa/docs/usage-guide/cli/onsa_cli/</guid>
+      <description>
+        
+        
+        &lt;p&gt;A short primer on the onsa command line tool.&lt;/p&gt;
+&lt;p&gt;Disclaimer: There are still bugs and unfinished functionality.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Intro&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;The onsa command line tools allows the creation of connections and basic
+lifecycle management, along with query functionality.&lt;/p&gt;
+&lt;p&gt;If you cannot wait to get started, you can list the command options with:&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;$ onsa --help
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;The command line tool requires a command (e.g., reserve or provision), and a
+set of options, in order to carry out a command.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Defaults file&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;Often there will be a number of options, which will be the same or almost the
+same with every invocation, e.g., location of topology files, WSDL directory,
+identity of the client and so forth. To save time, the CLI will read on default
+options from a file, typically ~/.opennsa-cli, but it is possible to specify an
+alternate location using the -f (&amp;ndash;defaults-file) option.&lt;/p&gt;
+&lt;p&gt;Here is an example of a &lt;code&gt;.opennsa-cli&lt;/code&gt; defaults file:&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;bandwidth=200
+host=localhost
+port=7080
+starttime=+20
+endtime=+260
+
+nsa=aruba,aruba.net:2013:nsa,http://localhost:4080/NSI/services/CS2
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;The host and port options, will be used in setting up the callback URL. They
+will default to the value provided by &amp;ldquo;socket.getfqdn()&amp;rdquo; and 7080.&lt;/p&gt;
+&lt;p&gt;The starttime and endtime can be set to xsd datetime value, but can also be
+assigned a +X value, with X being the number of seconds into the future. This
+makes it easy to always get some usefull values when testing.&lt;/p&gt;
+&lt;p&gt;The nsa entry, allow a shorthand for specifying nsa id and service url. With
+the above example, one can use
+&amp;ldquo;-p aruba&amp;rdquo;
+instead
+&amp;ldquo;-p aruba.net:2013:nsa -u http://localhost:4080/NSI/services/CS2&amp;rdquo;
+This makes the command line tool a lot nicer to use. There can be multiple
+nsa shorthand entries.&lt;/p&gt;
+&lt;p&gt;If an option is specified both on the command line and in the defaults file,
+the command line value will be used.&lt;/p&gt;
+&lt;p&gt;It is possible to set all options which can be set on the command line in the
+defaults file, with the exception of the command to perform.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Using the tool&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;With a default options file created, a connection can be created like this:&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;$ ./onsa reserve --source northernlight.ets:ps --dest northernlight.ets:ams -p northernlight.ets
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;A connection id and global id is assigned automatically but can also be
+assigned using the -c and -g options.&lt;/p&gt;
+&lt;p&gt;To provision the connection:&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;./onsa provision -p northernlight.ets -c &amp;lt;connection-id&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Similarly with release and terminate, querysummary, and querydetails.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;STP Syntax&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;STP without VLAN (full port - rarely used)&lt;/p&gt;
+&lt;p&gt;northernlight.ets:ps&lt;/p&gt;
+&lt;p&gt;STP with VLAN 23, this is the typical one to use.&lt;/p&gt;
+&lt;p&gt;northernlight.ets:ps?vlan=23&lt;/p&gt;
+&lt;p&gt;There is also MPLS (you should know what you are doing wrt. labels)&lt;/p&gt;
+&lt;p&gt;northernlight.ets:ps?mpls=123:456&lt;/p&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Docs: REST Interface</title>
+      <link>https://NORDUnet.github.io/opennsa/docs/usage-guide/opennsa/rest-interface/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://NORDUnet.github.io/opennsa/docs/usage-guide/opennsa/rest-interface/</guid>
+      <description>
+        
+        
+        &lt;h1 id=&#34;opennsa-rest-interface&#34;&gt;OpenNSA rest interface&lt;/h1&gt;
+&lt;p&gt;The rest interface is an easy to use alternative interface to the NSI SOAP api.&lt;/p&gt;
+&lt;h2 id=&#34;url-design&#34;&gt;URL design&lt;/h2&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;List connections (filter)       GET     /connections
+Create new connection           POST    /connections
+Get connection information      GET     /connections/{connection_id}
+Get connection status (stream)  GET     /connections/{connection_id}/status
+Change status                   POST    /connections/{connection_id}/status
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;The /status GET is a stream that updates continuously (server won&amp;rsquo;t close connection and will emit new status each time it updates).&lt;/p&gt;
+&lt;h2 id=&#34;enabling-rest&#34;&gt;Enabling rest&lt;/h2&gt;
+&lt;p&gt;In [service] section add &lt;code&gt;rest=true&lt;/code&gt;&lt;/p&gt;
+&lt;h2 id=&#34;usage&#34;&gt;Usage&lt;/h2&gt;
+&lt;h3 id=&#34;create-a-connection&#34;&gt;Create a connection&lt;/h3&gt;
+&lt;p&gt;Example minimal json payload to create connection:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-json&#34; data-lang=&#34;json&#34;&gt;&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;{&lt;/span&gt;
+  &lt;span style=&#34;color:#204a87;font-weight:bold&#34;&gt;&amp;#34;source&amp;#34;&lt;/span&gt;        &lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt; &lt;span style=&#34;color:#4e9a06&#34;&gt;&amp;#34;nordu.net:topology:s1&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;,&lt;/span&gt;
+  &lt;span style=&#34;color:#204a87;font-weight:bold&#34;&gt;&amp;#34;destination&amp;#34;&lt;/span&gt;   &lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;:&lt;/span&gt; &lt;span style=&#34;color:#4e9a06&#34;&gt;&amp;#34;surfnet.nl:topology:ps&amp;#34;&lt;/span&gt;&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;,&lt;/span&gt;
+&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;Additional fields:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;start_time&lt;/code&gt; in iso8601 format&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;end_time&lt;/code&gt; in iso8601 format&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;capacity&lt;/code&gt; - bandwidth (megabits)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;auto_commit&lt;/code&gt; - Used to enable auto commit of reservation request. Defaults &lt;code&gt;true&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;auto_provision&lt;/code&gt; - Used to auto provision the link after the reservation is done. Default &lt;code&gt;false&lt;/code&gt;.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Date format is ISO8601, e.g., &amp;ldquo;2015-12-13T08:08:08Z&amp;rdquo;&lt;/p&gt;
+&lt;p&gt;Create a connection using curl:&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;curl -i -X POST -d &#39;{&amp;quot;source&amp;quot;: &amp;quot;TestNetwork:topology:port1?vlan=1781&amp;quot;, &amp;quot;destination&amp;quot;: &amp;quot;TestNetwork:topology:port2?vlan=1782&amp;quot;}&#39; http://localhost:9080/connections
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;You will get a location header back that contains the connection id.&lt;/p&gt;
+&lt;h3 id=&#34;provision-a-reserved-connection&#34;&gt;Provision a reserved connection&lt;/h3&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;curl -X POST -d &amp;quot;PROVISION&amp;quot; http://localhost:9080/connections/TE-03b16eea46/status
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;It will return an ACK, and start working on provisioning the link.
+The link will be up and ready to use when the &lt;code&gt;provision_state&lt;/code&gt; is &lt;code&gt;Provisioned&lt;/code&gt; and &lt;code&gt;data_plane_active&lt;/code&gt; is &lt;code&gt;true&lt;/code&gt;.&lt;/p&gt;
+&lt;h3 id=&#34;terminating-a-connection&#34;&gt;Terminating a connection&lt;/h3&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;curl -X POST -d &amp;quot;TERMINATE&amp;quot; http://localhost:9080/connections/TE-03b16eea46/status
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;The connection will then go into &lt;code&gt;lifecycle_state&lt;/code&gt; &lt;code&gt;Terminating&lt;/code&gt;, and when everything is released it will end up in &lt;code&gt;lifecycle_state&lt;/code&gt; &lt;code&gt;Terminated&lt;/code&gt;.&lt;/p&gt;
+&lt;h3 id=&#34;other-supported-status-operations&#34;&gt;Other supported status operations&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;COMMIT&lt;/code&gt; confirms the reserve commit (used if you set &lt;code&gt;auto_commit&lt;/code&gt; to &lt;code&gt;false&lt;/code&gt;).&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ABORT&lt;/code&gt; aborts the reservation.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;RELEASE&lt;/code&gt; used to release a provisioned connection, and return to it just being reserved.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;PROVISION&lt;/code&gt; described above&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TERMINATE&lt;/code&gt; described above&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;other-features&#34;&gt;Other features&lt;/h2&gt;
+&lt;p&gt;No:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;nsa identity (b0rked concept anyway)&lt;/li&gt;
+&lt;li&gt;global reservation id&lt;/li&gt;
+&lt;li&gt;Possibility to designate connection id&lt;/li&gt;
+&lt;li&gt;Time zones in datetime, always utc (end with Z)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;todo&#34;&gt;Todo&lt;/h3&gt;
+&lt;p&gt;Maybe:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;client correlation id&lt;/li&gt;
+&lt;/ul&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Docs: Quick Developer Guide</title>
+      <link>https://NORDUnet.github.io/opennsa/docs/developer/developer_guide/</link>
+      <pubDate>Thu, 16 Dec 2021 00:00:00 +0000</pubDate>
+      
+      <guid>https://NORDUnet.github.io/opennsa/docs/developer/developer_guide/</guid>
+      <description>
+        
+        
+        &lt;h1 id=&#34;quick-developer-guide&#34;&gt;Quick Developer Guide&lt;/h1&gt;
+&lt;h2 id=&#34;server-setup&#34;&gt;Server Setup&lt;/h2&gt;
+&lt;p&gt;For this guide we are assuming you are using the configuration templates and examples provided by default.  Any commands
+will likely need to be updated accordingly for your own topology and configuration.&lt;/p&gt;
+&lt;p&gt;We&amp;rsquo;ll assume that you are either running the server locally.  Both of those cases will require a running postgres database.  For simplicity sake I&amp;rsquo;m going to assume you have a docker-compose stack running.&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;./generate-docker-config  ## will create a .env file and config/opennsa.conf
+docker-compose up -d 
+&lt;/code&gt;&lt;/pre&gt;&lt;h2 id=&#34;usage-guide&#34;&gt;Usage Guide&lt;/h2&gt;
+&lt;p&gt;All operations in this case will be triggered via the client titled onsa which can be found in the root of the project.&lt;/p&gt;
+&lt;p&gt;There are a few &amp;lsquo;base&amp;rsquo; operation that are supported by the Network Service Interface (NSI) Spec which you can find &lt;a href=&#34;GFD.237.pdf&#34;&gt;here&lt;/a&gt;.  Others that are not listed in the document serve as a convenience method.&lt;/p&gt;
+&lt;p&gt;All operation are usually a sequence of: reserve, reserveCommit, provision, release, terminate.
+query related requests are for diagnostic purposes.&lt;/p&gt;
+&lt;h3 id=&#34;endpoints&#34;&gt;Endpoints&lt;/h3&gt;
+&lt;p&gt;The following endpoints will then be accessible if everything works as advertised.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;http://localhost:9080/NSI/dockertest.net:2021:topology.nml.xml&lt;/li&gt;
+&lt;li&gt;http://localhost:9080/NSI/discovery.xml&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;step-0-nsi-domain-knowledge&#34;&gt;Step 0 NSI Domain knowledge&lt;/h3&gt;
+&lt;h4 id=&#34;assumptions&#34;&gt;Assumptions:&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;TLS is not enabled.&lt;/li&gt;
+&lt;li&gt;running locally and exposed 9080 locally.&lt;/li&gt;
+&lt;li&gt;hostname is set to dockertest.net:2021 or similar value in the format of:&lt;/li&gt;
+&lt;/ul&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;{domain_name}:year
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;In our example and sample file we use &lt;code&gt;dockertest.net:2021&lt;/code&gt;&lt;/p&gt;
+&lt;h4 id=&#34;urn&#34;&gt;URN&lt;/h4&gt;
+&lt;p&gt;All resources are mapped using a URN pattern.&lt;/p&gt;
+&lt;p&gt;http://localhost:9080/NSI/dockertest.net:2021:topology.nml.xml will show you your current topology.&lt;/p&gt;
+&lt;p&gt;Resources are reference by URN which are in the following format:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;&amp;lt;prefix&amp;gt;:&amp;lt;organization&amp;gt;:&amp;lt;type&amp;gt;&lt;/code&gt;  example value is: &lt;code&gt;urn:ogf:network:dockertest.net:2021:topology:ps#vlan=1780&lt;/code&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;prefix:  should be &lt;code&gt;urn:ogf:network&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;organization: &amp;lt;domain_name&amp;gt;:year&lt;/li&gt;
+&lt;li&gt;type: in our example would &lt;code&gt;topology&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;resource: &lt;name&gt;#&amp;lt;label={vlan or mpls}&amp;gt;=&amp;lt;ID aka 1780&amp;gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;More info can be found in the &lt;a href=&#34;config.md&#34;&gt;config&lt;/a&gt; documentation.&lt;/p&gt;
+&lt;h4 id=&#34;selecting-source--destination&#34;&gt;Selecting Source / Destination&lt;/h4&gt;
+&lt;h2 id=&#34;reservation-step-1&#34;&gt;Reservation: Step 1&lt;/h2&gt;
+&lt;p&gt;NOTES: Currently the -s and -d strip away the prefix.  Please be aware when using the CLI client.&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt;onsa reserve &lt;span style=&#34;color:#4e9a06&#34;&gt;\
+&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;&lt;/span&gt;    -u http://localhost:9080/NSI/services/CS2 &lt;span style=&#34;color:#4e9a06&#34;&gt;\ &lt;/span&gt; &lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;##service from Docker &lt;/span&gt;
+    -g urn:uuid:d7a6a2ff-2cb5-4892-8bec-2a50140a6342 &lt;span style=&#34;color:#4e9a06&#34;&gt;\ &lt;/span&gt;&lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;##Global ID&lt;/span&gt;
+    -s &lt;span style=&#34;color:#4e9a06&#34;&gt;&amp;#34;dockertest.net:2021:topology:ps#vlan=1780&amp;#34;&lt;/span&gt; &lt;span style=&#34;color:#4e9a06&#34;&gt;\ &lt;/span&gt; &lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;## Source&lt;/span&gt;
+    -d &lt;span style=&#34;color:#4e9a06&#34;&gt;&amp;#34;dockertest.net:2021:topology:port1#vlan=1787&amp;#34;&lt;/span&gt; &lt;span style=&#34;color:#4e9a06&#34;&gt;\ &lt;/span&gt; &lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;## Destination&lt;/span&gt;
+    -b &lt;span style=&#34;color:#0000cf;font-weight:bold&#34;&gt;100&lt;/span&gt; &lt;span style=&#34;color:#4e9a06&#34;&gt;\ &lt;/span&gt; &lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;# bandwidth in Megabits&lt;/span&gt;
+    -a 2022-09-24T20:00:00 &lt;span style=&#34;color:#4e9a06&#34;&gt;\ &lt;/span&gt; &lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;#start date/time (has to be in the future)&lt;/span&gt;
+    -e 2022-09-24T21:00:00 &lt;span style=&#34;color:#4e9a06&#34;&gt;\ &lt;/span&gt; &lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;## end date/time (again in the future)&lt;/span&gt;
+    -p dockertest.net:2021:nsa &lt;span style=&#34;color:#4e9a06&#34;&gt;\ &lt;/span&gt; &lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;## provider&lt;/span&gt;
+    -r dockertest.net:2021:sense &lt;span style=&#34;color:#4e9a06&#34;&gt;\ &lt;/span&gt;&lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;##requested &lt;/span&gt;
+    -h 192.168.1.64 &lt;span style=&#34;color:#4e9a06&#34;&gt;\ &lt;/span&gt; &lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;## OpenNSA Server host (localhost won&amp;#39;t work if using docker)&lt;/span&gt;
+    -o &lt;span style=&#34;color:#0000cf;font-weight:bold&#34;&gt;8543&lt;/span&gt; &lt;span style=&#34;color:#4e9a06&#34;&gt;\ &lt;/span&gt; &lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;#Port &lt;/span&gt;
+    -v &lt;span style=&#34;color:#4e9a06&#34;&gt;\ &lt;/span&gt; &lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;## verbose&lt;/span&gt;
+    -q &lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;##dump payload message&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h3 id=&#34;query-validation&#34;&gt;Query Validation&lt;/h3&gt;
+&lt;p&gt;We&amp;rsquo;re going to query the data for the reservation we just created.&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt; ./onsa query &lt;span style=&#34;color:#4e9a06&#34;&gt;\ &lt;/span&gt;
+ -u http://localhost:9080/NSI/services/CS2  &lt;span style=&#34;color:#4e9a06&#34;&gt;\ &lt;/span&gt;
+ -p &lt;span style=&#34;color:#4e9a06&#34;&gt;&amp;#34;dockertest.net:2021:nsa&amp;#34;&lt;/span&gt;  &lt;span style=&#34;color:#4e9a06&#34;&gt;\
+&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;&lt;/span&gt; -r &lt;span style=&#34;color:#4e9a06&#34;&gt;&amp;#34;dockertest.net:2021:sense&amp;#34;&lt;/span&gt; &lt;span style=&#34;color:#4e9a06&#34;&gt;\
+&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;&lt;/span&gt; -h 192.168.1.64 -o &lt;span style=&#34;color:#0000cf;font-weight:bold&#34;&gt;8543&lt;/span&gt; &lt;span style=&#34;color:#4e9a06&#34;&gt;\
+&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;&lt;/span&gt; -q
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;Output:&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;Connection   DO-8108e03315 (urn:ogf:network:dockertest.net:2021:nsa)
+Global ID    urn:uuid:d7a6a2ff-2cb5-4892-8bec-2a50140a6342
+Description  Test Connection
+States       ReserveStart, Released, Created
+Dataplane    Active : False, Version: 0, Consistent False
+Start-End    2022-09-24 20:00:00 - 2022-09-24 21:00:00
+Path         dockertest.net:2021:topology:ps?vlan=1780 -- dockertest.net:2021:topology:port1?vlan=1787
+Bandwidth    100
+Direction    Bidirectionall
+&lt;/code&gt;&lt;/pre&gt;&lt;h2 id=&#34;provision-step-2&#34;&gt;Provision Step 2&lt;/h2&gt;
+&lt;p&gt;We&amp;rsquo;ll need the Connection ID from the query above for this step.&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt;./onsa provision &lt;span style=&#34;color:#4e9a06&#34;&gt;\ &lt;/span&gt;
+    -c  DO-8108e03315 &lt;span style=&#34;color:#4e9a06&#34;&gt;\ &lt;/span&gt; &lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;## Connection &lt;/span&gt;
+    -u http://localhost:9080/NSI/services/CS2 &lt;span style=&#34;color:#4e9a06&#34;&gt;\
+&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;&lt;/span&gt;    -p &lt;span style=&#34;color:#4e9a06&#34;&gt;&amp;#34;dockertest.net:2021:nsa&amp;#34;&lt;/span&gt; &lt;span style=&#34;color:#4e9a06&#34;&gt;\
+&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;&lt;/span&gt;    -r &lt;span style=&#34;color:#4e9a06&#34;&gt;&amp;#34;dockertest.net:2021:sense&amp;#34;&lt;/span&gt; &lt;span style=&#34;color:#4e9a06&#34;&gt;\
+&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;&lt;/span&gt;    -h 192.168.1.64 -o &lt;span style=&#34;color:#0000cf;font-weight:bold&#34;&gt;8543&lt;/span&gt; &lt;span style=&#34;color:#4e9a06&#34;&gt;\
+&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;&lt;/span&gt;    -v -q
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;Same Query as above should now show a new state of:&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;States       **ReserveHeld**, Provisioning, Created
+&lt;/code&gt;&lt;/pre&gt;&lt;h1 id=&#34;clean-up-operations&#34;&gt;Clean up Operations&lt;/h1&gt;
+&lt;h2 id=&#34;release-step-3&#34;&gt;Release Step 3&lt;/h2&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt;./onsa release &lt;span style=&#34;color:#4e9a06&#34;&gt;\ &lt;/span&gt;
+    -c  DO-8108e03315 &lt;span style=&#34;color:#4e9a06&#34;&gt;\ &lt;/span&gt; 
+    -u http://localhost:9080/NSI/services/CS2 &lt;span style=&#34;color:#4e9a06&#34;&gt;\
+&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;&lt;/span&gt;    -p &lt;span style=&#34;color:#4e9a06&#34;&gt;&amp;#34;dockertest.net:2021:nsa&amp;#34;&lt;/span&gt; &lt;span style=&#34;color:#4e9a06&#34;&gt;\
+&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;&lt;/span&gt;    -r &lt;span style=&#34;color:#4e9a06&#34;&gt;&amp;#34;dockertest.net:2021:sense&amp;#34;&lt;/span&gt; &lt;span style=&#34;color:#4e9a06&#34;&gt;\
+&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;&lt;/span&gt;    -h 192.168.1.64 -o &lt;span style=&#34;color:#0000cf;font-weight:bold&#34;&gt;8543&lt;/span&gt; &lt;span style=&#34;color:#4e9a06&#34;&gt;\
+&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;&lt;/span&gt;    -v -q
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id=&#34;terminate-step-4&#34;&gt;Terminate Step 4&lt;/h2&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt;./onsa terminate &lt;span style=&#34;color:#4e9a06&#34;&gt;\ &lt;/span&gt;
+    -c  DO-8108e03315 &lt;span style=&#34;color:#4e9a06&#34;&gt;\ &lt;/span&gt;
+    -u http://localhost:9080/NSI/services/CS2 &lt;span style=&#34;color:#4e9a06&#34;&gt;\
+&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;&lt;/span&gt;    -p &lt;span style=&#34;color:#4e9a06&#34;&gt;&amp;#34;dockertest.net:2021:nsa&amp;#34;&lt;/span&gt; &lt;span style=&#34;color:#4e9a06&#34;&gt;\ &lt;/span&gt;
+    -r &lt;span style=&#34;color:#4e9a06&#34;&gt;&amp;#34;dockertest.net:2021:sense&amp;#34;&lt;/span&gt; &lt;span style=&#34;color:#4e9a06&#34;&gt;\
+&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;&lt;/span&gt;    -h localhost -o &lt;span style=&#34;color:#0000cf;font-weight:bold&#34;&gt;8543&lt;/span&gt; &lt;span style=&#34;color:#4e9a06&#34;&gt;\
+&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;&lt;/span&gt;    -v -q
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+      </description>
+    </item>
+    
+    <item>
+      <title>Docs: Testing</title>
+      <link>https://NORDUnet.github.io/opennsa/docs/developer/test/</link>
+      <pubDate>Thu, 16 Dec 2021 00:00:00 +0000</pubDate>
+      
+      <guid>https://NORDUnet.github.io/opennsa/docs/developer/test/</guid>
+      <description>
+        
+        
+        &lt;p&gt;How to run the the unit/integration tests for OpenNSA&lt;/p&gt;
+&lt;p&gt;Make sure all the requirements are installed. Then:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt;./util/pg-test-run      &lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;# This will start a Postgres in docker&lt;/span&gt;
+&lt;span style=&#34;color:#000&#34;&gt;PYTHONPATH&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;. trial &lt;span style=&#34;color:#204a87&#34;&gt;test&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;Running the CI/CD pipeline locally:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;Install the CLI tooling according to: &lt;a href=&#34;https://docs.drone.io/quickstart/cli/&#34;&gt;https://docs.drone.io/quickstart/cli/&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Run the pipeline by using &lt;code&gt;drone exec&lt;/code&gt;.  Please ensure you have docker installed.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Docs: Configuration Migration</title>
+      <link>https://NORDUnet.github.io/opennsa/docs/legacydocs/migration/</link>
+      <pubDate>Fri, 12 Jul 2013 00:00:00 +0000</pubDate>
+      
+      <guid>https://NORDUnet.github.io/opennsa/docs/legacydocs/migration/</guid>
+      <description>
+        
+        
+        &lt;h1 id=&#34;opennsa-3-configuration-migration&#34;&gt;OpenNSA 3 Configuration Migration&lt;/h1&gt;
+&lt;p&gt;With the port of OpenNSA from Python 2 to Python 3, and the subsequent release
+of OpenNSA 3, support for multiple backends was added. For this, some changes
+in the configuration format was needed.&lt;/p&gt;
+&lt;p&gt;The changes are:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Use domain instead of network in &lt;code&gt;[service]&lt;/code&gt; block&lt;/li&gt;
+&lt;li&gt;Each backend must specify a network name in its block&lt;/li&gt;
+&lt;li&gt;NRM Map must now be specified per backend&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Example of old style:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-ini&#34; data-lang=&#34;ini&#34;&gt;&lt;span style=&#34;color:#204a87;font-weight:bold&#34;&gt;[service]&lt;/span&gt;
+&lt;span style=&#34;color:#c4a000&#34;&gt;network&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;aruba.net&lt;/span&gt;
+&lt;span style=&#34;color:#c4a000&#34;&gt;nrmmap&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;aruba.nrm&lt;/span&gt;
+
+&lt;span style=&#34;color:#204a87;font-weight:bold&#34;&gt;[dud]&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;Equivalent config in new style:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-ini&#34; data-lang=&#34;ini&#34;&gt;&lt;span style=&#34;color:#204a87;font-weight:bold&#34;&gt;[service]&lt;/span&gt;
+&lt;span style=&#34;color:#c4a000&#34;&gt;domain&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;aruba.net&lt;/span&gt;
+
+&lt;span style=&#34;color:#204a87;font-weight:bold&#34;&gt;[dud:topology]&lt;/span&gt;
+&lt;span style=&#34;color:#c4a000&#34;&gt;nrmmap&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;aruba.nrm&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;An example with multiple backends shows why the change was needed:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-ini&#34; data-lang=&#34;ini&#34;&gt;&lt;span style=&#34;color:#204a87;font-weight:bold&#34;&gt;[service]&lt;/span&gt;
+&lt;span style=&#34;color:#c4a000&#34;&gt;domain&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;aruba.net&lt;/span&gt;
+
+&lt;span style=&#34;color:#204a87;font-weight:bold&#34;&gt;[dud:topology1]&lt;/span&gt;
+&lt;span style=&#34;color:#c4a000&#34;&gt;nrmmap&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;aruba-topo1.nrm&lt;/span&gt;
+
+&lt;span style=&#34;color:#204a87;font-weight:bold&#34;&gt;[dud:topology1]&lt;/span&gt;
+&lt;span style=&#34;color:#c4a000&#34;&gt;nrmmap&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;aruba-topo2.nrm&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;Feel free to call your networks something better than topology, but use
+&amp;lsquo;topology&amp;rsquo; if you want to keep the old STP names.&lt;/p&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Docs: Install on CentOS 6.4</title>
+      <link>https://NORDUnet.github.io/opennsa/docs/legacydocs/centos-guide/</link>
+      <pubDate>Fri, 12 Jul 2013 00:00:00 +0000</pubDate>
+      
+      <guid>https://NORDUnet.github.io/opennsa/docs/legacydocs/centos-guide/</guid>
+      <description>
+        
+        
+        &lt;h1 id=&#34;installing-opennsa-on-centos-64&#34;&gt;Installing OpenNSA on CentOS 6.4&lt;/h1&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;Upgrade the CentOS 6.4:&lt;/p&gt;
+&lt;p&gt;yum update&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Install PostgreSQL Server and its development dependencies:&lt;/p&gt;
+&lt;p&gt;yum install postgresql-server.x86_64 postgresql-plpython.x86_64 postgresql-devel.x86_64&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Install Python 2.7 (CentOS depends of Python2.6 for its package system)&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt;    yum groupinstall &lt;span style=&#34;color:#4e9a06&#34;&gt;&amp;#34;Development tools&amp;#34;&lt;/span&gt;
+    yum install zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel tk-devel
+    &lt;span style=&#34;color:#204a87&#34;&gt;cd&lt;/span&gt; /usr/local/src
+    wget http://python.org/ftp/python/2.7.3/Python-2.7.3.tar.bz2
+    tar xf Python-2.7.3.tar.bz2
+    &lt;span style=&#34;color:#204a87&#34;&gt;cd&lt;/span&gt; Python-2.7.3
+    ./configure --prefix&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;/usr/local
+    make &lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;&amp;amp;&amp;amp;&lt;/span&gt; make altinstall
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;The Python2.7 interpreter is at /usr/local/bin/python2.7&lt;/p&gt;
+&lt;ol start=&#34;4&#34;&gt;
+&lt;li&gt;Install the Python Distribute&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt;    wget --no-check-certificate http://pypi.python.org/packages/source/d/distribute/distribute-0.6.35.tar.gz
+    tar xf distribute-0.6.35.tar.gz
+    &lt;span style=&#34;color:#204a87&#34;&gt;cd&lt;/span&gt; distribute-0.6.35
+    python2.7 setup.py install
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;This generates the script /usr/local/bin/easy_install-2.7 that you use to install packages for Python 2.7.
+It puts your packages in /usr/local/lib/python2.7/site-packages/&lt;/p&gt;
+&lt;ol start=&#34;5&#34;&gt;
+&lt;li&gt;
+&lt;p&gt;(Removed, to lazy to do renumbering)&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Install Twisted&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt;    wget --no-check-certificate https://pypi.python.org/packages/source/T/Twisted/Twisted-13.1.0.tar.bz2#md5&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;5609c91ed465f5a7da48d30a0e7b6960
+    easy_install-2.7 Twisted-13.1.0.tar.bz2
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ol start=&#34;7&#34;&gt;
+&lt;li&gt;Install Twistar-1.2&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt;    wget --no-check-certificate https://pypi.python.org/packages/source/t/twistar/twistar-1.2.tar.gz#md5&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;4f63af14339b1f2d9556395b527ea7a4
+    easy_install-2.7 twistar-1.2.tar.gz
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ol start=&#34;8&#34;&gt;
+&lt;li&gt;Install psycopg&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt;    wget http://initd.org/psycopg/tarballs/PSYCOPG-2-5/psycopg2-2.5.1.tar.gz
+    easy_install-2.7 psycopg2-2.5.1.tar.gz
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ol start=&#34;9&#34;&gt;
+&lt;li&gt;Install pycrypto-2.6 and pyasn1-0.1.7 (only necessary when using SSH backends)&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt;    wget --no-check-certificate https://pypi.python.org/packages/source/p/pycrypto/pycrypto-2.6.tar.gz
+    easy_install-2.7 pycrypto-2.6.tar.gz
+ 
+    wget --no-check-certificate https://pypi.python.org/packages/source/p/pyasn1/pyasn1-0.1.7.tar.gz#md5&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;2cbd80fcd4c7b1c82180d3d76fee18c8
+    easy_install-2.7 pyasn1-0.1.7.tar.gz
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ol start=&#34;10&#34;&gt;
+&lt;li&gt;Initialize and Start the PostgreSQL&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt;    service postgresql initdb
+    service postgresql start
+
+    ln -s /etc/init.d/postgresql /etc/rc3.d/S99postgresql
+    ln -s /etc/init.d/postgresql /etc/rc3.d/K99postgresql
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ol start=&#34;11&#34;&gt;
+&lt;li&gt;Prepare the environment for Opennsa&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt;    useradd opennsa
+    su - opennsa
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ol start=&#34;12&#34;&gt;
+&lt;li&gt;Install OpenNSA&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt;    git clone git://git.nordu.net/opennsa.git
+    &lt;span style=&#34;color:#204a87&#34;&gt;cd&lt;/span&gt; opennsa
+    git checkout nsi2
+    python2.7 setup.py build
+    su
+    python2.7 setup.py install
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ol start=&#34;13&#34;&gt;
+&lt;li&gt;Create the database&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt;    cp datafiles/schema.sql /tmp/
+    su - postgres
+    createdb opennsa
+    createuser -RSD opennsa 
+    &lt;span style=&#34;color:#204a87&#34;&gt;exit&lt;/span&gt;
+    su - opennsa
+    psql opennsa
+    &lt;span style=&#34;color:#000&#34;&gt;opennsa&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;# \i /tmp/schema.sql&lt;/span&gt;
+    &lt;span style=&#34;color:#204a87&#34;&gt;exit&lt;/span&gt;
+    &amp;lt;CTRL+D&amp;gt;
+    &lt;span style=&#34;color:#204a87&#34;&gt;exit&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ol start=&#34;14&#34;&gt;
+&lt;li&gt;It&amp;rsquo;s important to keep the server time accurate (NTP)&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt;    yum install ntp.x86_64
+    ln -s /etc/init.d/ntpd /etc/rc3.d/S99ntpd
+    ln -s /etc/init.d/ntpd /etc/rc3.d/K99ntpd
+    /etc/init.d/ntpd start
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ol start=&#34;15&#34;&gt;
+&lt;li&gt;Generate your SSH keys&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt;    su - opennsa
+    ssh-keygen
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;Press &lt;ENTER&gt; 3 times. The keys &lt;code&gt;id_dsa&lt;/code&gt; and &lt;code&gt;id_dsa.pub&lt;/code&gt; will be created under &lt;code&gt;~opennsa/.ssh/&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;They key needs to have this format for Twisted recognizes it:&lt;/p&gt;
+&lt;p&gt;ssh-rsa pub-key(3 or more lines) &lt;a href=&#34;mailto:user@server.ampath.net&#34;&gt;user@server.ampath.net&lt;/a&gt;&lt;/p&gt;
+&lt;ol start=&#34;16&#34;&gt;
+&lt;li&gt;
+&lt;p&gt;Edit these two configuration files accordingly to your environment (under /home/opennsa/opennsa):&lt;/p&gt;
+&lt;p&gt;vi opennsa.conf&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-ini&#34; data-lang=&#34;ini&#34;&gt; &lt;span style=&#34;color:#204a87;font-weight:bold&#34;&gt;[service]&lt;/span&gt;
+ &lt;span style=&#34;color:#c4a000&#34;&gt;network&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;&amp;lt;YOUR_NETWORK_NAME&amp;gt;
+&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt; logfile=
+&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt; nrmmap=opennsa.nrm
+&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt; host=&amp;lt;SERVER_FQDN&amp;gt;
+&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt; database=opennsa
+&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt; dbuser=opennsa
+&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt; dbpassword=&amp;lt;YOUR_PASS&amp;gt;
+&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt; tls=false&lt;/span&gt;
+
+ &lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;# vi opennsa.nrm (your topology)&lt;/span&gt;
+
+ &lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;# type          name        remote                labels              bandwith    interface&lt;/span&gt;
+ &lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;#&lt;/span&gt;
+ &lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;# Assuming that my IXP is IXP_A, follow an example:&lt;/span&gt;
+ &lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;#&lt;/span&gt;
+ &lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;# AMPATH &amp;lt;-- 2/2 IXP_A 2/1 --&amp;gt; NORDUNET&lt;/span&gt;
+ &lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;#&lt;/span&gt;
+ &lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;# bi-ethernet   nordunet    nordunet#IXP_A-(in|out) vlan:1779-1787      1000        2/1&lt;/span&gt;
+ &lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;# bi-ethernet   ampath      ampath#IXP_A-(in|out)   vlan:1779-1787      1000        2/2&lt;/span&gt;
+ &lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;#&lt;/span&gt;
+ &lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;# type          name        remote        labels              bandwith    interface&lt;/span&gt;
+ &lt;span style=&#34;color:#c4a000&#34;&gt;bi-ethernet     &amp;lt;REMOTE_1&amp;gt;  &amp;lt;REMOTE_1&amp;gt;#&amp;lt;YOUR_NETWORK&amp;gt;-(in|out) vlan:1779-1787      1000        &amp;lt;DEVICE_PORT_1&amp;gt;&lt;/span&gt;
+ &lt;span style=&#34;color:#c4a000&#34;&gt;bi-ethernet     &amp;lt;REMOTE_2&amp;gt;  &amp;lt;REMOTE_2&amp;gt;#&amp;lt;YOUR_NETWORK&amp;gt;-(in|out) vlan:1779-1787      1000        &amp;lt;DEVICE_PORT_2&amp;gt;&lt;/span&gt;
+ &lt;span style=&#34;color:#c4a000&#34;&gt;bi-ethernet     &amp;lt;REMOTE_3&amp;gt;  &amp;lt;REMOTE_3&amp;gt;#&amp;lt;YOUR_NETWORK&amp;gt;-(in|out) vlan:1779-1787      1000        &amp;lt;DEVICE_PORT_3&amp;gt;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ol start=&#34;17&#34;&gt;
+&lt;li&gt;Create a &lt;code&gt;.opennsa-cli&lt;/code&gt; file under &lt;code&gt;~opennsa/&lt;/code&gt;&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt;    &lt;span style=&#34;color:#204a87&#34;&gt;echo&lt;/span&gt; -e &lt;span style=&#34;color:#4e9a06&#34;&gt;&amp;#34;bandwidth=200\nhost=localhost\nport=7080\nstarttime=+1\nendtime=+20&amp;#34;&lt;/span&gt; &amp;gt; ~opennsa/.opennsa-cli
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;The starttime and the endtime represent when the circuit will start and end in seconds&lt;/p&gt;
+&lt;ol start=&#34;18&#34;&gt;
+&lt;li&gt;Configure your backend in the opennsa.conf&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-ini&#34; data-lang=&#34;ini&#34;&gt; &lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;# OpenNSA has support for the following backends: brocade, dell, etc...&lt;/span&gt;
+ &lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;# So create a section for your backend with the following format:&lt;/span&gt;
+ &lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;#&lt;/span&gt;
+ &lt;span style=&#34;color:#204a87;font-weight:bold&#34;&gt;[backend_type]&lt;/span&gt;
+ &lt;span style=&#34;color:#c4a000&#34;&gt;host&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;x.x.x.x
+&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt; user=opennsa
+&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt; fingerprint=xx:xx:xx:xx:xx:xx:xx...
+&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt; publickey=/home/opennsa/.ssh/id_rsa.pub
+&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt; privatekey=/home/opennsa/.ssh/id_rsa&lt;/span&gt;
+
+ &lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;# if your backend is Brocade, an example:&lt;/span&gt;
+ &lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;#&lt;/span&gt;
+ &lt;span style=&#34;color:#204a87;font-weight:bold&#34;&gt;[brocade]&lt;/span&gt;
+ &lt;span style=&#34;color:#c4a000&#34;&gt;host&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;x.x.x.x
+&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt; user=opennsa
+&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt; fingerprint=xx:xx:xx:xx:xx:xx:xx....
+&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt; publickey=/home/opennsa/.ssh/id_rsa.pub
+&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt; privatekey=/home/opennsa/.ssh/id_rsa
+&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt; enablepassword=XXXXX&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ol start=&#34;19&#34;&gt;
+&lt;li&gt;Start the OpenNSA:&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt;    su - opennsa
+    &lt;span style=&#34;color:#204a87&#34;&gt;cd&lt;/span&gt; opennsa
+    twistd -ny opennsa.tac
+    &lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;(&lt;/span&gt;-n to not create a daemon. There is also an init.d script&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;You should see:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt; 2013-07-02 14:17:08-0400 &lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;[&lt;/span&gt;-&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;]&lt;/span&gt; Log opened.
+ 2013-07-02 14:17:08-0400 &lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;[&lt;/span&gt;-&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;]&lt;/span&gt; twistd 13.1.0 &lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;(&lt;/span&gt;/usr/local/bin/python2.7 2.7.3&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;)&lt;/span&gt; starting up.
+ 2013-07-02 14:17:08-0400 &lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;[&lt;/span&gt;-&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;]&lt;/span&gt; reactor class: twisted.internet.epollreactor.EPollReactor.
+ 2013-07-02 14:17:08-0400 &lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;[&lt;/span&gt;-&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;]&lt;/span&gt; OpenNSA service initializing
+ 2013-07-02 14:17:08-0400 &lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;[&lt;/span&gt;-&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;]&lt;/span&gt; Provider URL: http://&amp;lt;SERVER_FQDN&amp;gt;:9080/NSI/services/CS2
+ 2013-07-02 14:17:08-0400 &lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;[&lt;/span&gt;-&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;]&lt;/span&gt; Topology URL: http://&amp;lt;SERVER_FQDN&amp;gt;:9080/NSI/topology/&amp;lt;YOUR_NETWORK&amp;gt;.xml
+ 2013-07-02 14:17:08-0400 &lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;[&lt;/span&gt;-&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;]&lt;/span&gt; Site starting on &lt;span style=&#34;color:#0000cf;font-weight:bold&#34;&gt;9080&lt;/span&gt;
+ 2013-07-02 14:17:08-0400 &lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;[&lt;/span&gt;-&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;]&lt;/span&gt; Starting factory &amp;lt;twisted.web.server.Siteinstance at 0x1df39e0&amp;gt;
+ 2013-07-02 14:17:08-0400 &lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;[&lt;/span&gt;-&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;]&lt;/span&gt; OpenNSA service started
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ol start=&#34;20&#34;&gt;
+&lt;li&gt;Configure your network device to support authentication using SSH keys&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;In general, you have to copy your public key (id_dsa.pub) to the network device
+and insert this key in the valid users key chain. Check your device&amp;rsquo;s documentation to confirm how to make this&lt;br&gt;
+configuration.&lt;/p&gt;
+&lt;p&gt;As an example, in Brocade MLX switches you have to:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt; a. &lt;span style=&#34;color:#204a87&#34;&gt;cd&lt;/span&gt; ~opennsa/.ssh
+ b. &lt;span style=&#34;color:#204a87&#34;&gt;echo&lt;/span&gt; &lt;span style=&#34;color:#4e9a06&#34;&gt;&amp;#34;---- BEGIN SSH2 PUBLIC KEY ----&amp;#34;&lt;/span&gt; &amp;gt; keys.txt
+ c. cat id_dsa.pub &amp;gt;&amp;gt; keys.txt
+ d. &lt;span style=&#34;color:#204a87&#34;&gt;echo&lt;/span&gt; &lt;span style=&#34;color:#4e9a06&#34;&gt;&amp;#34;---- END SSH2 PUBLIC KEY ----&amp;#34;&lt;/span&gt; &amp;gt;&amp;gt; keys.txt
+ e. Remove the encryption algorithm &lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;(&lt;/span&gt;ssh-rsa&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;)&lt;/span&gt;:  sed -i &lt;span style=&#34;color:#4e9a06&#34;&gt;&amp;#39;s/ssh-rsa //&amp;#39;&lt;/span&gt;keys.txt
+ d. Remove the user &lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;(&lt;/span&gt;opennsa@&amp;lt;SERVER_FQDN&amp;gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;)&lt;/span&gt;: sed -i &lt;span style=&#34;color:#4e9a06&#34;&gt;&amp;#39;s/opennsa@&amp;lt;SERVER_FQDN&amp;gt;//&amp;#39;&lt;/span&gt; keys.txt
+ f. Upload the keys.txt to your TFTP server
+ g. Log into your Brocade device and:
+ g1. SSH@Brocade# configure terminal
+ g2. SSH@Brocade&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;(&lt;/span&gt;config&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;)&lt;/span&gt;&lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;# ip ssh pub-key-file tftp &amp;lt;TFTP_SERVER&amp;gt; keys.txt&lt;/span&gt;
+ g3. SSH@Brocade&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;(&lt;/span&gt;config&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;)&lt;/span&gt;&lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;# ip ssh key-authentication yes&lt;/span&gt;
+ g4. SSH@Brocade&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;(&lt;/span&gt;config&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;)&lt;/span&gt;&lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;# end&lt;/span&gt;
+ g5. SSH@Brocade# write memory
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ol start=&#34;21&#34;&gt;
+&lt;li&gt;Now you are ready to run OpenNSA&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;Use the document docs/usage for understand how to use it (under development).&lt;/p&gt;
+&lt;p&gt;References:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/NORDUnet/opennsa/blob/nsi2/INSTALL&#34;&gt;https://github.com/NORDUnet/opennsa/blob/nsi2/INSTALL&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://toomuchdata.com/2012/06/25/how-to-install-python-2-7-3-on-centos-6-2/&#34;&gt;http://toomuchdata.com/2012/06/25/how-to-install-python-2-7-3-on-centos-6-2/&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+      </description>
+    </item>
+    
+  </channel>
+</rss>

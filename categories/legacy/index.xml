@@ -1,0 +1,306 @@
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>OpenNSA – Legacy</title>
+    <link>https://NORDUnet.github.io/opennsa/categories/legacy/</link>
+    <description>Recent content in Legacy on OpenNSA</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <lastBuildDate>Fri, 12 Jul 2013 00:00:00 +0000</lastBuildDate>
+    
+	  <atom:link href="https://NORDUnet.github.io/opennsa/categories/legacy/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+      
+        
+      
+    
+    
+    <item>
+      <title>Docs: Legacy Documentation</title>
+      <link>https://NORDUnet.github.io/opennsa/docs/legacydocs/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://NORDUnet.github.io/opennsa/docs/legacydocs/</guid>
+      <description>
+        
+        
+        &lt;p&gt;This is a collection of legacy documents that are likely no longer needed but kept for posterity&amp;rsquo;s sake.&lt;/p&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Docs: Configuration Migration</title>
+      <link>https://NORDUnet.github.io/opennsa/docs/legacydocs/migration/</link>
+      <pubDate>Fri, 12 Jul 2013 00:00:00 +0000</pubDate>
+      
+      <guid>https://NORDUnet.github.io/opennsa/docs/legacydocs/migration/</guid>
+      <description>
+        
+        
+        &lt;h1 id=&#34;opennsa-3-configuration-migration&#34;&gt;OpenNSA 3 Configuration Migration&lt;/h1&gt;
+&lt;p&gt;With the port of OpenNSA from Python 2 to Python 3, and the subsequent release
+of OpenNSA 3, support for multiple backends was added. For this, some changes
+in the configuration format was needed.&lt;/p&gt;
+&lt;p&gt;The changes are:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Use domain instead of network in &lt;code&gt;[service]&lt;/code&gt; block&lt;/li&gt;
+&lt;li&gt;Each backend must specify a network name in its block&lt;/li&gt;
+&lt;li&gt;NRM Map must now be specified per backend&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Example of old style:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-ini&#34; data-lang=&#34;ini&#34;&gt;&lt;span style=&#34;color:#204a87;font-weight:bold&#34;&gt;[service]&lt;/span&gt;
+&lt;span style=&#34;color:#c4a000&#34;&gt;network&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;aruba.net&lt;/span&gt;
+&lt;span style=&#34;color:#c4a000&#34;&gt;nrmmap&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;aruba.nrm&lt;/span&gt;
+
+&lt;span style=&#34;color:#204a87;font-weight:bold&#34;&gt;[dud]&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;Equivalent config in new style:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-ini&#34; data-lang=&#34;ini&#34;&gt;&lt;span style=&#34;color:#204a87;font-weight:bold&#34;&gt;[service]&lt;/span&gt;
+&lt;span style=&#34;color:#c4a000&#34;&gt;domain&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;aruba.net&lt;/span&gt;
+
+&lt;span style=&#34;color:#204a87;font-weight:bold&#34;&gt;[dud:topology]&lt;/span&gt;
+&lt;span style=&#34;color:#c4a000&#34;&gt;nrmmap&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;aruba.nrm&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;An example with multiple backends shows why the change was needed:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-ini&#34; data-lang=&#34;ini&#34;&gt;&lt;span style=&#34;color:#204a87;font-weight:bold&#34;&gt;[service]&lt;/span&gt;
+&lt;span style=&#34;color:#c4a000&#34;&gt;domain&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;aruba.net&lt;/span&gt;
+
+&lt;span style=&#34;color:#204a87;font-weight:bold&#34;&gt;[dud:topology1]&lt;/span&gt;
+&lt;span style=&#34;color:#c4a000&#34;&gt;nrmmap&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;aruba-topo1.nrm&lt;/span&gt;
+
+&lt;span style=&#34;color:#204a87;font-weight:bold&#34;&gt;[dud:topology1]&lt;/span&gt;
+&lt;span style=&#34;color:#c4a000&#34;&gt;nrmmap&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;aruba-topo2.nrm&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;Feel free to call your networks something better than topology, but use
+&amp;lsquo;topology&amp;rsquo; if you want to keep the old STP names.&lt;/p&gt;
+
+      </description>
+    </item>
+    
+    <item>
+      <title>Docs: Install on CentOS 6.4</title>
+      <link>https://NORDUnet.github.io/opennsa/docs/legacydocs/centos-guide/</link>
+      <pubDate>Fri, 12 Jul 2013 00:00:00 +0000</pubDate>
+      
+      <guid>https://NORDUnet.github.io/opennsa/docs/legacydocs/centos-guide/</guid>
+      <description>
+        
+        
+        &lt;h1 id=&#34;installing-opennsa-on-centos-64&#34;&gt;Installing OpenNSA on CentOS 6.4&lt;/h1&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;Upgrade the CentOS 6.4:&lt;/p&gt;
+&lt;p&gt;yum update&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Install PostgreSQL Server and its development dependencies:&lt;/p&gt;
+&lt;p&gt;yum install postgresql-server.x86_64 postgresql-plpython.x86_64 postgresql-devel.x86_64&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Install Python 2.7 (CentOS depends of Python2.6 for its package system)&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt;    yum groupinstall &lt;span style=&#34;color:#4e9a06&#34;&gt;&amp;#34;Development tools&amp;#34;&lt;/span&gt;
+    yum install zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel tk-devel
+    &lt;span style=&#34;color:#204a87&#34;&gt;cd&lt;/span&gt; /usr/local/src
+    wget http://python.org/ftp/python/2.7.3/Python-2.7.3.tar.bz2
+    tar xf Python-2.7.3.tar.bz2
+    &lt;span style=&#34;color:#204a87&#34;&gt;cd&lt;/span&gt; Python-2.7.3
+    ./configure --prefix&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;/usr/local
+    make &lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;&amp;amp;&amp;amp;&lt;/span&gt; make altinstall
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;The Python2.7 interpreter is at /usr/local/bin/python2.7&lt;/p&gt;
+&lt;ol start=&#34;4&#34;&gt;
+&lt;li&gt;Install the Python Distribute&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt;    wget --no-check-certificate http://pypi.python.org/packages/source/d/distribute/distribute-0.6.35.tar.gz
+    tar xf distribute-0.6.35.tar.gz
+    &lt;span style=&#34;color:#204a87&#34;&gt;cd&lt;/span&gt; distribute-0.6.35
+    python2.7 setup.py install
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;This generates the script /usr/local/bin/easy_install-2.7 that you use to install packages for Python 2.7.
+It puts your packages in /usr/local/lib/python2.7/site-packages/&lt;/p&gt;
+&lt;ol start=&#34;5&#34;&gt;
+&lt;li&gt;
+&lt;p&gt;(Removed, to lazy to do renumbering)&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Install Twisted&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt;    wget --no-check-certificate https://pypi.python.org/packages/source/T/Twisted/Twisted-13.1.0.tar.bz2#md5&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;5609c91ed465f5a7da48d30a0e7b6960
+    easy_install-2.7 Twisted-13.1.0.tar.bz2
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ol start=&#34;7&#34;&gt;
+&lt;li&gt;Install Twistar-1.2&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt;    wget --no-check-certificate https://pypi.python.org/packages/source/t/twistar/twistar-1.2.tar.gz#md5&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;4f63af14339b1f2d9556395b527ea7a4
+    easy_install-2.7 twistar-1.2.tar.gz
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ol start=&#34;8&#34;&gt;
+&lt;li&gt;Install psycopg&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt;    wget http://initd.org/psycopg/tarballs/PSYCOPG-2-5/psycopg2-2.5.1.tar.gz
+    easy_install-2.7 psycopg2-2.5.1.tar.gz
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ol start=&#34;9&#34;&gt;
+&lt;li&gt;Install pycrypto-2.6 and pyasn1-0.1.7 (only necessary when using SSH backends)&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt;    wget --no-check-certificate https://pypi.python.org/packages/source/p/pycrypto/pycrypto-2.6.tar.gz
+    easy_install-2.7 pycrypto-2.6.tar.gz
+ 
+    wget --no-check-certificate https://pypi.python.org/packages/source/p/pyasn1/pyasn1-0.1.7.tar.gz#md5&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;2cbd80fcd4c7b1c82180d3d76fee18c8
+    easy_install-2.7 pyasn1-0.1.7.tar.gz
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ol start=&#34;10&#34;&gt;
+&lt;li&gt;Initialize and Start the PostgreSQL&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt;    service postgresql initdb
+    service postgresql start
+
+    ln -s /etc/init.d/postgresql /etc/rc3.d/S99postgresql
+    ln -s /etc/init.d/postgresql /etc/rc3.d/K99postgresql
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ol start=&#34;11&#34;&gt;
+&lt;li&gt;Prepare the environment for Opennsa&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt;    useradd opennsa
+    su - opennsa
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ol start=&#34;12&#34;&gt;
+&lt;li&gt;Install OpenNSA&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt;    git clone git://git.nordu.net/opennsa.git
+    &lt;span style=&#34;color:#204a87&#34;&gt;cd&lt;/span&gt; opennsa
+    git checkout nsi2
+    python2.7 setup.py build
+    su
+    python2.7 setup.py install
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ol start=&#34;13&#34;&gt;
+&lt;li&gt;Create the database&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt;    cp datafiles/schema.sql /tmp/
+    su - postgres
+    createdb opennsa
+    createuser -RSD opennsa 
+    &lt;span style=&#34;color:#204a87&#34;&gt;exit&lt;/span&gt;
+    su - opennsa
+    psql opennsa
+    &lt;span style=&#34;color:#000&#34;&gt;opennsa&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;# \i /tmp/schema.sql&lt;/span&gt;
+    &lt;span style=&#34;color:#204a87&#34;&gt;exit&lt;/span&gt;
+    &amp;lt;CTRL+D&amp;gt;
+    &lt;span style=&#34;color:#204a87&#34;&gt;exit&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ol start=&#34;14&#34;&gt;
+&lt;li&gt;It&amp;rsquo;s important to keep the server time accurate (NTP)&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt;    yum install ntp.x86_64
+    ln -s /etc/init.d/ntpd /etc/rc3.d/S99ntpd
+    ln -s /etc/init.d/ntpd /etc/rc3.d/K99ntpd
+    /etc/init.d/ntpd start
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ol start=&#34;15&#34;&gt;
+&lt;li&gt;Generate your SSH keys&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt;    su - opennsa
+    ssh-keygen
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;Press &lt;ENTER&gt; 3 times. The keys &lt;code&gt;id_dsa&lt;/code&gt; and &lt;code&gt;id_dsa.pub&lt;/code&gt; will be created under &lt;code&gt;~opennsa/.ssh/&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;They key needs to have this format for Twisted recognizes it:&lt;/p&gt;
+&lt;p&gt;ssh-rsa pub-key(3 or more lines) &lt;a href=&#34;mailto:user@server.ampath.net&#34;&gt;user@server.ampath.net&lt;/a&gt;&lt;/p&gt;
+&lt;ol start=&#34;16&#34;&gt;
+&lt;li&gt;
+&lt;p&gt;Edit these two configuration files accordingly to your environment (under /home/opennsa/opennsa):&lt;/p&gt;
+&lt;p&gt;vi opennsa.conf&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-ini&#34; data-lang=&#34;ini&#34;&gt; &lt;span style=&#34;color:#204a87;font-weight:bold&#34;&gt;[service]&lt;/span&gt;
+ &lt;span style=&#34;color:#c4a000&#34;&gt;network&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;&amp;lt;YOUR_NETWORK_NAME&amp;gt;
+&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt; logfile=
+&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt; nrmmap=opennsa.nrm
+&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt; host=&amp;lt;SERVER_FQDN&amp;gt;
+&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt; database=opennsa
+&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt; dbuser=opennsa
+&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt; dbpassword=&amp;lt;YOUR_PASS&amp;gt;
+&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt; tls=false&lt;/span&gt;
+
+ &lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;# vi opennsa.nrm (your topology)&lt;/span&gt;
+
+ &lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;# type          name        remote                labels              bandwith    interface&lt;/span&gt;
+ &lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;#&lt;/span&gt;
+ &lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;# Assuming that my IXP is IXP_A, follow an example:&lt;/span&gt;
+ &lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;#&lt;/span&gt;
+ &lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;# AMPATH &amp;lt;-- 2/2 IXP_A 2/1 --&amp;gt; NORDUNET&lt;/span&gt;
+ &lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;#&lt;/span&gt;
+ &lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;# bi-ethernet   nordunet    nordunet#IXP_A-(in|out) vlan:1779-1787      1000        2/1&lt;/span&gt;
+ &lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;# bi-ethernet   ampath      ampath#IXP_A-(in|out)   vlan:1779-1787      1000        2/2&lt;/span&gt;
+ &lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;#&lt;/span&gt;
+ &lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;# type          name        remote        labels              bandwith    interface&lt;/span&gt;
+ &lt;span style=&#34;color:#c4a000&#34;&gt;bi-ethernet     &amp;lt;REMOTE_1&amp;gt;  &amp;lt;REMOTE_1&amp;gt;#&amp;lt;YOUR_NETWORK&amp;gt;-(in|out) vlan:1779-1787      1000        &amp;lt;DEVICE_PORT_1&amp;gt;&lt;/span&gt;
+ &lt;span style=&#34;color:#c4a000&#34;&gt;bi-ethernet     &amp;lt;REMOTE_2&amp;gt;  &amp;lt;REMOTE_2&amp;gt;#&amp;lt;YOUR_NETWORK&amp;gt;-(in|out) vlan:1779-1787      1000        &amp;lt;DEVICE_PORT_2&amp;gt;&lt;/span&gt;
+ &lt;span style=&#34;color:#c4a000&#34;&gt;bi-ethernet     &amp;lt;REMOTE_3&amp;gt;  &amp;lt;REMOTE_3&amp;gt;#&amp;lt;YOUR_NETWORK&amp;gt;-(in|out) vlan:1779-1787      1000        &amp;lt;DEVICE_PORT_3&amp;gt;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ol start=&#34;17&#34;&gt;
+&lt;li&gt;Create a &lt;code&gt;.opennsa-cli&lt;/code&gt; file under &lt;code&gt;~opennsa/&lt;/code&gt;&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt;    &lt;span style=&#34;color:#204a87&#34;&gt;echo&lt;/span&gt; -e &lt;span style=&#34;color:#4e9a06&#34;&gt;&amp;#34;bandwidth=200\nhost=localhost\nport=7080\nstarttime=+1\nendtime=+20&amp;#34;&lt;/span&gt; &amp;gt; ~opennsa/.opennsa-cli
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;The starttime and the endtime represent when the circuit will start and end in seconds&lt;/p&gt;
+&lt;ol start=&#34;18&#34;&gt;
+&lt;li&gt;Configure your backend in the opennsa.conf&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-ini&#34; data-lang=&#34;ini&#34;&gt; &lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;# OpenNSA has support for the following backends: brocade, dell, etc...&lt;/span&gt;
+ &lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;# So create a section for your backend with the following format:&lt;/span&gt;
+ &lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;#&lt;/span&gt;
+ &lt;span style=&#34;color:#204a87;font-weight:bold&#34;&gt;[backend_type]&lt;/span&gt;
+ &lt;span style=&#34;color:#c4a000&#34;&gt;host&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;x.x.x.x
+&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt; user=opennsa
+&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt; fingerprint=xx:xx:xx:xx:xx:xx:xx...
+&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt; publickey=/home/opennsa/.ssh/id_rsa.pub
+&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt; privatekey=/home/opennsa/.ssh/id_rsa&lt;/span&gt;
+
+ &lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;# if your backend is Brocade, an example:&lt;/span&gt;
+ &lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;#&lt;/span&gt;
+ &lt;span style=&#34;color:#204a87;font-weight:bold&#34;&gt;[brocade]&lt;/span&gt;
+ &lt;span style=&#34;color:#c4a000&#34;&gt;host&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt;x.x.x.x
+&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt; user=opennsa
+&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt; fingerprint=xx:xx:xx:xx:xx:xx:xx....
+&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt; publickey=/home/opennsa/.ssh/id_rsa.pub
+&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt; privatekey=/home/opennsa/.ssh/id_rsa
+&lt;/span&gt;&lt;span style=&#34;color:#4e9a06&#34;&gt; enablepassword=XXXXX&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ol start=&#34;19&#34;&gt;
+&lt;li&gt;Start the OpenNSA:&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt;    su - opennsa
+    &lt;span style=&#34;color:#204a87&#34;&gt;cd&lt;/span&gt; opennsa
+    twistd -ny opennsa.tac
+    &lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;(&lt;/span&gt;-n to not create a daemon. There is also an init.d script&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;You should see:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt; 2013-07-02 14:17:08-0400 &lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;[&lt;/span&gt;-&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;]&lt;/span&gt; Log opened.
+ 2013-07-02 14:17:08-0400 &lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;[&lt;/span&gt;-&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;]&lt;/span&gt; twistd 13.1.0 &lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;(&lt;/span&gt;/usr/local/bin/python2.7 2.7.3&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;)&lt;/span&gt; starting up.
+ 2013-07-02 14:17:08-0400 &lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;[&lt;/span&gt;-&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;]&lt;/span&gt; reactor class: twisted.internet.epollreactor.EPollReactor.
+ 2013-07-02 14:17:08-0400 &lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;[&lt;/span&gt;-&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;]&lt;/span&gt; OpenNSA service initializing
+ 2013-07-02 14:17:08-0400 &lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;[&lt;/span&gt;-&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;]&lt;/span&gt; Provider URL: http://&amp;lt;SERVER_FQDN&amp;gt;:9080/NSI/services/CS2
+ 2013-07-02 14:17:08-0400 &lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;[&lt;/span&gt;-&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;]&lt;/span&gt; Topology URL: http://&amp;lt;SERVER_FQDN&amp;gt;:9080/NSI/topology/&amp;lt;YOUR_NETWORK&amp;gt;.xml
+ 2013-07-02 14:17:08-0400 &lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;[&lt;/span&gt;-&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;]&lt;/span&gt; Site starting on &lt;span style=&#34;color:#0000cf;font-weight:bold&#34;&gt;9080&lt;/span&gt;
+ 2013-07-02 14:17:08-0400 &lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;[&lt;/span&gt;-&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;]&lt;/span&gt; Starting factory &amp;lt;twisted.web.server.Siteinstance at 0x1df39e0&amp;gt;
+ 2013-07-02 14:17:08-0400 &lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;[&lt;/span&gt;-&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;]&lt;/span&gt; OpenNSA service started
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ol start=&#34;20&#34;&gt;
+&lt;li&gt;Configure your network device to support authentication using SSH keys&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;In general, you have to copy your public key (id_dsa.pub) to the network device
+and insert this key in the valid users key chain. Check your device&amp;rsquo;s documentation to confirm how to make this&lt;br&gt;
+configuration.&lt;/p&gt;
+&lt;p&gt;As an example, in Brocade MLX switches you have to:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt; a. &lt;span style=&#34;color:#204a87&#34;&gt;cd&lt;/span&gt; ~opennsa/.ssh
+ b. &lt;span style=&#34;color:#204a87&#34;&gt;echo&lt;/span&gt; &lt;span style=&#34;color:#4e9a06&#34;&gt;&amp;#34;---- BEGIN SSH2 PUBLIC KEY ----&amp;#34;&lt;/span&gt; &amp;gt; keys.txt
+ c. cat id_dsa.pub &amp;gt;&amp;gt; keys.txt
+ d. &lt;span style=&#34;color:#204a87&#34;&gt;echo&lt;/span&gt; &lt;span style=&#34;color:#4e9a06&#34;&gt;&amp;#34;---- END SSH2 PUBLIC KEY ----&amp;#34;&lt;/span&gt; &amp;gt;&amp;gt; keys.txt
+ e. Remove the encryption algorithm &lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;(&lt;/span&gt;ssh-rsa&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;)&lt;/span&gt;:  sed -i &lt;span style=&#34;color:#4e9a06&#34;&gt;&amp;#39;s/ssh-rsa //&amp;#39;&lt;/span&gt;keys.txt
+ d. Remove the user &lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;(&lt;/span&gt;opennsa@&amp;lt;SERVER_FQDN&amp;gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;)&lt;/span&gt;: sed -i &lt;span style=&#34;color:#4e9a06&#34;&gt;&amp;#39;s/opennsa@&amp;lt;SERVER_FQDN&amp;gt;//&amp;#39;&lt;/span&gt; keys.txt
+ f. Upload the keys.txt to your TFTP server
+ g. Log into your Brocade device and:
+ g1. SSH@Brocade# configure terminal
+ g2. SSH@Brocade&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;(&lt;/span&gt;config&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;)&lt;/span&gt;&lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;# ip ssh pub-key-file tftp &amp;lt;TFTP_SERVER&amp;gt; keys.txt&lt;/span&gt;
+ g3. SSH@Brocade&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;(&lt;/span&gt;config&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;)&lt;/span&gt;&lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;# ip ssh key-authentication yes&lt;/span&gt;
+ g4. SSH@Brocade&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;(&lt;/span&gt;config&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;)&lt;/span&gt;&lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;# end&lt;/span&gt;
+ g5. SSH@Brocade# write memory
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ol start=&#34;21&#34;&gt;
+&lt;li&gt;Now you are ready to run OpenNSA&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;Use the document docs/usage for understand how to use it (under development).&lt;/p&gt;
+&lt;p&gt;References:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/NORDUnet/opennsa/blob/nsi2/INSTALL&#34;&gt;https://github.com/NORDUnet/opennsa/blob/nsi2/INSTALL&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://toomuchdata.com/2012/06/25/how-to-install-python-2-7-3-on-centos-6-2/&#34;&gt;http://toomuchdata.com/2012/06/25/how-to-install-python-2-7-3-on-centos-6-2/&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+      </description>
+    </item>
+    
+  </channel>
+</rss>

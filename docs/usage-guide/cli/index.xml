@@ -1,0 +1,87 @@
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>OpenNSA – CLI User Guide</title>
+    <link>https://NORDUnet.github.io/opennsa/docs/usage-guide/cli/</link>
+    <description>Recent content in CLI User Guide on OpenNSA</description>
+    <generator>Hugo -- gohugo.io</generator>
+    
+	  <atom:link href="https://NORDUnet.github.io/opennsa/docs/usage-guide/cli/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+      
+        
+      
+    
+    
+    <item>
+      <title>Docs: User Guide</title>
+      <link>https://NORDUnet.github.io/opennsa/docs/usage-guide/cli/onsa_cli/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://NORDUnet.github.io/opennsa/docs/usage-guide/cli/onsa_cli/</guid>
+      <description>
+        
+        
+        &lt;p&gt;A short primer on the onsa command line tool.&lt;/p&gt;
+&lt;p&gt;Disclaimer: There are still bugs and unfinished functionality.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Intro&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;The onsa command line tools allows the creation of connections and basic
+lifecycle management, along with query functionality.&lt;/p&gt;
+&lt;p&gt;If you cannot wait to get started, you can list the command options with:&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;$ onsa --help
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;The command line tool requires a command (e.g., reserve or provision), and a
+set of options, in order to carry out a command.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Defaults file&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;Often there will be a number of options, which will be the same or almost the
+same with every invocation, e.g., location of topology files, WSDL directory,
+identity of the client and so forth. To save time, the CLI will read on default
+options from a file, typically ~/.opennsa-cli, but it is possible to specify an
+alternate location using the -f (&amp;ndash;defaults-file) option.&lt;/p&gt;
+&lt;p&gt;Here is an example of a &lt;code&gt;.opennsa-cli&lt;/code&gt; defaults file:&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;bandwidth=200
+host=localhost
+port=7080
+starttime=+20
+endtime=+260
+
+nsa=aruba,aruba.net:2013:nsa,http://localhost:4080/NSI/services/CS2
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;The host and port options, will be used in setting up the callback URL. They
+will default to the value provided by &amp;ldquo;socket.getfqdn()&amp;rdquo; and 7080.&lt;/p&gt;
+&lt;p&gt;The starttime and endtime can be set to xsd datetime value, but can also be
+assigned a +X value, with X being the number of seconds into the future. This
+makes it easy to always get some usefull values when testing.&lt;/p&gt;
+&lt;p&gt;The nsa entry, allow a shorthand for specifying nsa id and service url. With
+the above example, one can use
+&amp;ldquo;-p aruba&amp;rdquo;
+instead
+&amp;ldquo;-p aruba.net:2013:nsa -u http://localhost:4080/NSI/services/CS2&amp;rdquo;
+This makes the command line tool a lot nicer to use. There can be multiple
+nsa shorthand entries.&lt;/p&gt;
+&lt;p&gt;If an option is specified both on the command line and in the defaults file,
+the command line value will be used.&lt;/p&gt;
+&lt;p&gt;It is possible to set all options which can be set on the command line in the
+defaults file, with the exception of the command to perform.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Using the tool&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;With a default options file created, a connection can be created like this:&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;$ ./onsa reserve --source northernlight.ets:ps --dest northernlight.ets:ams -p northernlight.ets
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;A connection id and global id is assigned automatically but can also be
+assigned using the -c and -g options.&lt;/p&gt;
+&lt;p&gt;To provision the connection:&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;./onsa provision -p northernlight.ets -c &amp;lt;connection-id&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Similarly with release and terminate, querysummary, and querydetails.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;STP Syntax&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;STP without VLAN (full port - rarely used)&lt;/p&gt;
+&lt;p&gt;northernlight.ets:ps&lt;/p&gt;
+&lt;p&gt;STP with VLAN 23, this is the typical one to use.&lt;/p&gt;
+&lt;p&gt;northernlight.ets:ps?vlan=23&lt;/p&gt;
+&lt;p&gt;There is also MPLS (you should know what you are doing wrt. labels)&lt;/p&gt;
+&lt;p&gt;northernlight.ets:ps?mpls=123:456&lt;/p&gt;
+
+      </description>
+    </item>
+    
+  </channel>
+</rss>

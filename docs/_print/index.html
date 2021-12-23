@@ -1,0 +1,1463 @@
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="generator" content="Hugo 0.88.1" />
+<link rel="canonical" type="text/html" href="https://NORDUnet.github.io/opennsa/docs/">
+<link rel="alternate" type="application/rss&#43;xml" href="https://NORDUnet.github.io/opennsa/docs/index.xml">
+<meta name="robots" content="noindex, nofollow">
+
+
+<link rel="shortcut icon" href="/opennsa/favicons/favicon.ico" >
+<link rel="apple-touch-icon" href="/opennsa/favicons/apple-touch-icon-180x180.png" sizes="180x180">
+<link rel="icon" type="image/png" href="/opennsa/favicons/favicon-16x16.png" sizes="16x16">
+<link rel="icon" type="image/png" href="/opennsa/favicons/favicon-32x32.png" sizes="32x32">
+<link rel="icon" type="image/png" href="/opennsa/favicons/android-36x36.png" sizes="36x36">
+<link rel="icon" type="image/png" href="/opennsa/favicons/android-48x48.png" sizes="48x48">
+<link rel="icon" type="image/png" href="/opennsa/favicons/android-72x72.png" sizes="72x72">
+<link rel="icon" type="image/png" href="/opennsa/favicons/android-96x96.png" sizes="96x96">
+<link rel="icon" type="image/png" href="/opennsa/favicons/android-144x144.png" sizes="144x144">
+<link rel="icon" type="image/png" href="/opennsa/favicons/android-192x192.png" sizes="192x192">
+
+<title>Documentation | OpenNSA</title>
+
+
+  
+  <meta name="description" content="">
+<meta property="og:title" content="Documentation" />
+<meta property="og:description" content="A Docsy example site" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://NORDUnet.github.io/opennsa/docs/" /><meta property="og:site_name" content="OpenNSA" />
+
+<meta itemprop="name" content="Documentation">
+<meta itemprop="description" content="A Docsy example site"><meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Documentation"/>
+<meta name="twitter:description" content="A Docsy example site"/>
+
+
+
+
+<link rel="preload" href="/opennsa/scss/main.min.77ad8086257c5b04aec72128f0eebde3c7c6696b921b68c53e5e0d3f187d0a84.css" as="style">
+<link href="/opennsa/scss/main.min.77ad8086257c5b04aec72128f0eebde3c7c6696b921b68c53e5e0d3f187d0a84.css" rel="stylesheet" integrity="">
+
+
+<script
+  src="https://code.jquery.com/jquery-3.5.1.min.js"
+  integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+  crossorigin="anonymous"></script>
+
+<script
+  src="https://unpkg.com/lunr@2.3.8/lunr.min.js"
+  integrity="sha384-vRQ9bDyE0Wnu+lMfm57BlYLO0/XauFuKpVsZPs7KEDwYKktWi5+Kz3MP8++DFlRY"
+  crossorigin="anonymous"></script>
+
+
+
+
+
+
+
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+	ga('create', 'UA-00000000-0', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
+
+
+
+
+  </head>
+  <body class="td-section">
+    <header>
+      
+<nav class="js-navbar-scroll navbar navbar-expand navbar-dark flex-column flex-md-row td-navbar">
+        <a class="navbar-brand" href="/opennsa/">
+		<span class="navbar-logo"><svg id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 500 500" style="enable-background:new 0 0 500 500"><g><path style="fill:#fff" d="M116.8525 421.9722c-5.7041.0-10.3442-4.3127-10.3442-9.6129V88.183c0-5.3002 4.6401-9.6117 10.3442-9.6117H320.858c3.0347.0 9.3959.5498 11.7506 2.6302l.3545.3442 58.905 63.2912c2.3101 2.491 2.9202 8.4928 2.9202 11.3184v256.2039c0 5.3002-4.6407 9.6129-10.3436 9.6129H116.8525z"/><g><g><g><path style="fill:#767676" d="M384.4445 423.2066H116.852c-6.3839.0-11.5786-4.8658-11.5786-10.8474V88.1831c0-5.9804 5.1947-10.8461 11.5786-10.8461h204.0062c.377.0 9.2786.0329 12.568 2.9389l.3947.3833 58.9508 63.337c3.2135 3.4652 3.2514 11.7924 3.2514 12.1593v256.2036C396.0231 418.3408 390.8284 423.2066 384.4445 423.2066zM116.5079 411.9189c.0848.0278.1999.0531.3441.0531h267.5925c.1442.0.2581-.0253.3441-.0531V156.1556c-.0076-.9033-.3593-3.7347-.7034-5.0037l-57.6527-61.9416c-1.4651-.3176-4.4533-.6389-5.5742-.6389H116.852c-.143.0-.2594.024-.3441.0531V411.9189zm267.4533-261.149zM327.0321 89.371v.0013V89.371z"/></g></g></g><g><g><path style="fill:#5b7fc0" d="M189.0874 210.1754l.0012-.0012c7.7751.0012 15.0295 4.1862 18.932 10.9234 1.9177 3.3159 2.9305 7.1011 2.9293 10.9378.0 5.8394-2.2733 11.3304-6.4032 15.4604-4.1288 4.1288-9.6186 6.4032-15.458 6.4032s-11.328-2.2733-15.458-6.4032-6.4032-9.6186-6.4056-15.4628c.0012-6.025 2.454-11.4897 6.4116-15.4473C177.5953 212.627 183.0601 210.1742 189.0874 210.1754zm7.993 21.8576c.0012-1.4042-.3687-2.7868-1.063-3.9887-1.4293-2.4684-4.0833-3.9995-6.9299-4.0019-4.4077.0024-7.993 3.5877-7.993 7.993.0 2.1356.832 4.1431 2.3427 5.6539 1.5083 1.5083 3.5159 2.3403 5.6503 2.3415 2.1356.0 4.1443-.8308 5.6539-2.3403S197.0816 234.1722 197.0804 232.033z"/><path style="opacity:.3;fill:#fff" d="M189.0898 210.176c7.7763.0 15.0283 4.1826 18.926 10.9151 1.9201 3.3136 2.9377 7.0988 2.9353 10.9462.0024 12.0643-9.8065 21.8636-21.8613 21.8613-12.0547.0024-21.8636-9.8066-21.8612-21.8613.0-6.0285 2.4516-11.4921 6.4116-15.452C177.5977 212.6276 183.0612 210.176 189.0898 210.176zm7.9941 21.8612c0-1.4078-.3711-2.7892-1.0702-3.9959-1.4269-2.466-4.0797-3.9983-6.924-3.9983-4.4005-.0048-7.9918 3.5817-7.9942 7.9942.0024 4.4077 3.5865 7.9918 7.9942 7.9942 2.2027.0 4.2018-.8978 5.6479-2.3439C196.1861 236.239 197.0839 234.2399 197.0839 232.0372z"/><g><defs><path id="SVGID_1_" d="M194.7376 237.6875c-1.4461 1.4461-3.4452 2.3439-5.6479 2.3439-4.4077-.0024-7.9918-3.5865-7.9942-7.9942.0024-4.4125 3.5937-7.999 7.9942-7.9942 2.8443.0 5.497 1.5323 6.924 3.9983.6991 1.2067 1.0702 2.5881 1.0702 3.9959C197.0839 234.2399 196.1861 236.239 194.7376 237.6875z"/></defs><clipPath id="SVGID_2_"><use xlink:href="#SVGID_1_" style="overflow:visible"/></clipPath><path style="clip-path:url(#SVGID_2_);fill:#fff" d="M190.0704 225.0237c-4.4005-.0048-7.9918 3.5817-7.9942 7.9942.0011 1.9546.7088 3.7452 1.8782 5.1354-1.7447-1.4674-2.8575-3.663-2.8588-6.116.0024-4.4125 3.5936-7.999 7.9942-7.9942 2.3802-1e-4 4.616 1.0833 6.1218 2.8788C193.7885 225.7247 191.9774 225.0237 190.0704 225.0237z"/><path style="opacity:.13;clip-path:url(#SVGID_2_);fill:#020202" d="M190.0704 225.0237c-4.4005-.0048-7.9918 3.5817-7.9942 7.9942.0011 1.9546.7088 3.7452 1.8782 5.1354-1.7447-1.4674-2.8575-3.663-2.8588-6.116.0024-4.4125 3.5936-7.999 7.9942-7.9942 2.3802-1e-4 4.616 1.0833 6.1218 2.8788C193.7885 225.7247 191.9774 225.0237 190.0704 225.0237z"/></g><g><defs><path id="SVGID_3_" d="M189.0898 210.176c7.7763.0 15.0283 4.1826 18.926 10.9151 1.9201 3.3136 2.9377 7.0988 2.9353 10.9462.0024 12.0643-9.8065 21.8636-21.8613 21.8613-12.0547.0024-21.8636-9.8066-21.8612-21.8613.0-6.0285 2.4516-11.4921 6.4116-15.452C177.5977 212.6276 183.0612 210.176 189.0898 210.176zm7.9941 21.8612c0-1.4078-.3711-2.7892-1.0702-3.9959-1.4269-2.466-4.0797-3.9983-6.924-3.9983-4.4005-.0048-7.9918 3.5817-7.9942 7.9942.0024 4.4077 3.5865 7.9918 7.9942 7.9942 2.2027.0 4.2018-.8978 5.6479-2.3439C196.1861 236.239 197.0839 234.2399 197.0839 232.0372z"/></defs><clipPath id="SVGID_4_"><use xlink:href="#SVGID_3_" style="overflow:visible"/></clipPath><path style="clip-path:url(#SVGID_4_);fill:#5b7fc0" d="M172.6595 215.6045c-3.96 3.96-6.4116 9.4235-6.4116 15.452-.0024 12.0547 9.8066 21.8636 21.8613 21.8612 12.0547.0024 21.8636-9.797 21.8613-21.8612.0024-3.8475-1.0151-7.6326-2.9353-10.9462-3.8977-6.7324-11.1497-10.9151-18.926-10.9151C182.0806 209.1953 176.6171 211.647 172.6595 215.6045z"/></g></g><rect x="198.8952" y="225.1043" style="fill:#5b7fc0" width="122.6266" height="13.8671"/></g><g><path style="fill:#d95140" d="M189.0874 155.7611l.0012-.0012c7.7751.0012 15.0295 4.1862 18.932 10.9234 1.9177 3.3159 2.9305 7.1011 2.9293 10.9378.0 5.8394-2.2733 11.3304-6.4032 15.4604-4.1288 4.1288-9.6186 6.4032-15.458 6.4032s-11.328-2.2733-15.458-6.4032-6.4032-9.6186-6.4056-15.4628c.0012-6.0249 2.454-11.4897 6.4116-15.4473C177.5953 158.2128 183.0601 155.7599 189.0874 155.7611zm7.993 21.8577c.0012-1.4042-.3687-2.7868-1.063-3.9887-1.4293-2.4684-4.0833-3.9995-6.9299-4.0019-4.4077.0024-7.993 3.5877-7.993 7.993.0 2.1356.832 4.1431 2.3427 5.6539 1.5083 1.5083 3.5159 2.3403 5.6503 2.3415 2.1356.0 4.1443-.8308 5.6539-2.3403C196.2508 181.7667 197.0816 179.758 197.0804 177.6188z"/><path style="opacity:.3;fill:#fff" d="M189.0898 155.7617c7.7763.0 15.0283 4.1826 18.926 10.9151 1.9201 3.3135 2.9377 7.0987 2.9353 10.9462.0024 12.0643-9.8065 21.8636-21.8613 21.8613-12.0547.0024-21.8636-9.8066-21.8612-21.8613.0-6.0285 2.4516-11.4921 6.4116-15.452C177.5977 158.2134 183.0612 155.7617 189.0898 155.7617zm7.9941 21.8613c0-1.4078-.3711-2.7892-1.0702-3.9959-1.4269-2.466-4.0797-3.9983-6.924-3.9983-4.4005-.0048-7.9918 3.5817-7.9942 7.9942.0024 4.4077 3.5865 7.9918 7.9942 7.9942 2.2027.0 4.2018-.8978 5.6479-2.3439C196.1861 181.8248 197.0839 179.8256 197.0839 177.623z"/><g><defs><path id="SVGID_5_" d="M194.7376 183.2733c-1.4461 1.4461-3.4452 2.3439-5.6479 2.3439-4.4077-.0024-7.9918-3.5865-7.9942-7.9942.0024-4.4125 3.5937-7.9989 7.9942-7.9942 2.8443.0 5.497 1.5323 6.924 3.9983.6991 1.2067 1.0702 2.5881 1.0702 3.9959C197.0839 179.8256 196.1861 181.8248 194.7376 183.2733z"/></defs><clipPath id="SVGID_6_"><use xlink:href="#SVGID_5_" style="overflow:visible"/></clipPath><path style="clip-path:url(#SVGID_6_);fill:#fff" d="M190.0704 170.6095c-4.4005-.0048-7.9918 3.5817-7.9942 7.9942.0011 1.9546.7088 3.7452 1.8782 5.1354-1.7447-1.4674-2.8575-3.663-2.8588-6.116.0024-4.4125 3.5936-7.999 7.9942-7.9942 2.3802-1e-4 4.616 1.0833 6.1218 2.8788C193.7885 171.3104 191.9774 170.6095 190.0704 170.6095z"/><path style="opacity:.13;clip-path:url(#SVGID_6_);fill:#020202" d="M190.0704 170.6095c-4.4005-.0048-7.9918 3.5817-7.9942 7.9942.0011 1.9546.7088 3.7452 1.8782 5.1354-1.7447-1.4674-2.8575-3.663-2.8588-6.116.0024-4.4125 3.5936-7.999 7.9942-7.9942 2.3802-1e-4 4.616 1.0833 6.1218 2.8788C193.7885 171.3104 191.9774 170.6095 190.0704 170.6095z"/></g><g><defs><path id="SVGID_7_" d="M189.0898 155.7617c7.7763.0 15.0283 4.1826 18.926 10.9151 1.9201 3.3135 2.9377 7.0987 2.9353 10.9462.0024 12.0643-9.8065 21.8636-21.8613 21.8613-12.0547.0024-21.8636-9.8066-21.8612-21.8613.0-6.0285 2.4516-11.4921 6.4116-15.452C177.5977 158.2134 183.0612 155.7617 189.0898 155.7617zm7.9941 21.8613c0-1.4078-.3711-2.7892-1.0702-3.9959-1.4269-2.466-4.0797-3.9983-6.924-3.9983-4.4005-.0048-7.9918 3.5817-7.9942 7.9942.0024 4.4077 3.5865 7.9918 7.9942 7.9942 2.2027.0 4.2018-.8978 5.6479-2.3439C196.1861 181.8248 197.0839 179.8256 197.0839 177.623z"/></defs><clipPath id="SVGID_8_"><use xlink:href="#SVGID_7_" style="overflow:visible"/></clipPath><path style="clip-path:url(#SVGID_8_);fill:#d95140" d="M172.6595 161.1903c-3.96 3.96-6.4116 9.4235-6.4116 15.452-.0024 12.0547 9.8066 21.8636 21.8613 21.8613 12.0547.0024 21.8636-9.797 21.8613-21.8613.0024-3.8474-1.0151-7.6326-2.9353-10.9462-3.8977-6.7324-11.1497-10.9151-18.926-10.9151C182.0806 154.7811 176.6171 157.2327 172.6595 161.1903z"/></g><rect x="198.8952" y="170.69" style="fill:#d95140" width="122.6266" height="13.8671"/></g><g><g><path style="fill:#56a55c" d="M189.5379 264.6147l.0012-.0012c7.7751.0012 15.0294 4.1862 18.932 10.9235 1.9177 3.3159 2.9305 7.1011 2.9293 10.9378.0 5.8394-2.2733 11.3304-6.4032 15.4604-4.1288 4.1288-9.6186 6.4032-15.458 6.4032-5.8394.0-11.3281-2.2733-15.458-6.4032-4.13-4.13-6.4032-9.6186-6.4056-15.4628.0012-6.0249 2.454-11.4897 6.4116-15.4472C178.0458 267.0663 183.5105 264.6135 189.5379 264.6147zm7.993 21.8576c.0012-1.4042-.3687-2.7868-1.063-3.9887-1.4293-2.4684-4.0833-3.9995-6.9299-4.0019-4.4077.0024-7.993 3.5877-7.993 7.993.0 2.1356.832 4.1431 2.3427 5.6538 1.5083 1.5083 3.5159 2.3403 5.6503 2.3415 2.1356.0 4.1443-.8308 5.6539-2.3403C196.7013 290.6202 197.5321 288.6115 197.5309 286.4723z"/><path style="opacity:.3;fill:#fff" d="M189.5403 264.6153c7.7763.0 15.0283 4.1826 18.926 10.9151 1.9201 3.3135 2.9377 7.0987 2.9353 10.9462.0024 12.0643-9.8065 21.8636-21.8613 21.8613-12.0547.0024-21.8636-9.8065-21.8612-21.8613.0-6.0285 2.4516-11.492 6.4116-15.452C178.0482 267.0669 183.5117 264.6153 189.5403 264.6153zm7.9941 21.8612c0-1.4078-.3711-2.7892-1.0702-3.9959-1.4269-2.466-4.0797-3.9983-6.924-3.9983-4.4005-.0048-7.9918 3.5817-7.9942 7.9941.0024 4.4077 3.5865 7.9918 7.9942 7.9942 2.2027.0 4.2018-.8978 5.6479-2.3439C196.6366 290.6783 197.5344 288.6792 197.5344 286.4765z"/><g><defs><path id="SVGID_9_" d="M195.1881 292.1268c-1.4461 1.4461-3.4452 2.3439-5.6479 2.3439-4.4077-.0024-7.9918-3.5865-7.9942-7.9942.0024-4.4125 3.5937-7.9989 7.9942-7.9941 2.8443.0 5.497 1.5323 6.924 3.9983.6991 1.2067 1.0702 2.5881 1.0702 3.9959C197.5344 288.6792 196.6366 290.6783 195.1881 292.1268z"/></defs><clipPath id="SVGID_10_"><use xlink:href="#SVGID_9_" style="overflow:visible"/></clipPath><path style="clip-path:url(#SVGID_10_);fill:#fff" d="M190.5209 279.463c-4.4005-.0048-7.9918 3.5817-7.9942 7.9941.0011 1.9547.7088 3.7452 1.8782 5.1354-1.7446-1.4674-2.8575-3.6631-2.8588-6.1161.0024-4.4125 3.5936-7.999 7.9942-7.9941 2.3802-1e-4 4.616 1.0833 6.1218 2.8788C194.239 280.164 192.4279 279.463 190.5209 279.463z"/><path style="opacity:.13;clip-path:url(#SVGID_10_);fill:#020202" d="M190.5209 279.463c-4.4005-.0048-7.9918 3.5817-7.9942 7.9941.0011 1.9547.7088 3.7452 1.8782 5.1354-1.7446-1.4674-2.8575-3.6631-2.8588-6.1161.0024-4.4125 3.5936-7.999 7.9942-7.9941 2.3802-1e-4 4.616 1.0833 6.1218 2.8788C194.239 280.164 192.4279 279.463 190.5209 279.463z"/></g><g><defs><path id="SVGID_11_" d="M189.5403 264.6153c7.7763.0 15.0283 4.1826 18.926 10.9151 1.9201 3.3135 2.9377 7.0987 2.9353 10.9462.0024 12.0643-9.8065 21.8636-21.8613 21.8613-12.0547.0024-21.8636-9.8065-21.8612-21.8613.0-6.0285 2.4516-11.492 6.4116-15.452C178.0482 267.0669 183.5117 264.6153 189.5403 264.6153zm7.9941 21.8612c0-1.4078-.3711-2.7892-1.0702-3.9959-1.4269-2.466-4.0797-3.9983-6.924-3.9983-4.4005-.0048-7.9918 3.5817-7.9942 7.9941.0024 4.4077 3.5865 7.9918 7.9942 7.9942 2.2027.0 4.2018-.8978 5.6479-2.3439C196.6366 290.6783 197.5344 288.6792 197.5344 286.4765z"/></defs><clipPath id="SVGID_12_"><use xlink:href="#SVGID_11_" style="overflow:visible"/></clipPath><path style="clip-path:url(#SVGID_12_);fill:#56a55c" d="M173.11 270.0439c-3.96 3.96-6.4116 9.4235-6.4116 15.452-.0024 12.0547 9.8066 21.8636 21.8613 21.8613 12.0547.0024 21.8636-9.797 21.8613-21.8613.0024-3.8474-1.0151-7.6326-2.9353-10.9462-3.8977-6.7325-11.1497-10.9151-18.926-10.9151C182.5311 263.6346 177.0676 266.0863 173.11 270.0439z"/></g></g><rect x="199.3456" y="279.5436" style="fill:#56a55c" width="122.6266" height="13.8671"/></g><g><g><path style="fill:#f1bc42" d="M189.0874 318.7208l.0012-.0012c7.7751.0012 15.0295 4.1862 18.932 10.9234 1.9177 3.3159 2.9305 7.1011 2.9293 10.9378.0 5.8394-2.2733 11.3305-6.4032 15.4604-4.1288 4.1288-9.6186 6.4032-15.458 6.4032s-11.328-2.2733-15.458-6.4032-6.4032-9.6186-6.4056-15.4628c.0012-6.025 2.454-11.4897 6.4116-15.4472C177.5953 321.1724 183.0601 318.7196 189.0874 318.7208zm7.993 21.8576c.0012-1.4042-.3687-2.7868-1.063-3.9887-1.4293-2.4684-4.0833-3.9995-6.9299-4.0019-4.4077.0024-7.993 3.5877-7.993 7.993.0 2.1356.832 4.1431 2.3427 5.6539 1.5083 1.5083 3.5159 2.3403 5.6503 2.3415 2.1356.0 4.1443-.8308 5.6539-2.3403S197.0816 342.7176 197.0804 340.5784z"/><path style="opacity:.3;fill:#fff" d="M189.0898 318.7214c7.7763.0 15.0283 4.1826 18.926 10.915 1.9201 3.3136 2.9377 7.0988 2.9353 10.9462.0024 12.0643-9.8065 21.8636-21.8613 21.8612-12.0547.0024-21.8636-9.8065-21.8612-21.8612.0-6.0285 2.4516-11.4921 6.4116-15.452C177.5977 321.173 183.0612 318.7214 189.0898 318.7214zm7.9941 21.8612c0-1.4078-.3711-2.7892-1.0702-3.9959-1.4269-2.466-4.0797-3.9983-6.924-3.9983-4.4005-.0048-7.9918 3.5817-7.9942 7.9942.0024 4.4077 3.5865 7.9918 7.9942 7.9942 2.2027.0 4.2018-.8978 5.6479-2.3439C196.1861 344.7844 197.0839 342.7853 197.0839 340.5826z"/><g><defs><path id="SVGID_13_" d="M194.7376 346.2329c-1.4461 1.4461-3.4452 2.3439-5.6479 2.3439-4.4077-.0024-7.9918-3.5865-7.9942-7.9942.0024-4.4125 3.5937-7.999 7.9942-7.9942 2.8443.0 5.497 1.5323 6.924 3.9983.6991 1.2067 1.0702 2.5881 1.0702 3.9959C197.0839 342.7853 196.1861 344.7844 194.7376 346.2329z"/></defs><clipPath id="SVGID_14_"><use xlink:href="#SVGID_13_" style="overflow:visible"/></clipPath><path style="clip-path:url(#SVGID_14_);fill:#fff" d="M190.0704 333.5691c-4.4005-.0048-7.9918 3.5817-7.9942 7.9942.0011 1.9547.7088 3.7452 1.8782 5.1354-1.7447-1.4674-2.8575-3.6631-2.8588-6.1161.0024-4.4125 3.5936-7.999 7.9942-7.9942 2.3802-1e-4 4.616 1.0834 6.1218 2.8788C193.7885 334.2701 191.9774 333.5691 190.0704 333.5691z"/><path style="opacity:.13;clip-path:url(#SVGID_14_);fill:#020202" d="M190.0704 333.5691c-4.4005-.0048-7.9918 3.5817-7.9942 7.9942.0011 1.9547.7088 3.7452 1.8782 5.1354-1.7447-1.4674-2.8575-3.6631-2.8588-6.1161.0024-4.4125 3.5936-7.999 7.9942-7.9942 2.3802-1e-4 4.616 1.0834 6.1218 2.8788C193.7885 334.2701 191.9774 333.5691 190.0704 333.5691z"/></g><g><defs><path id="SVGID_15_" d="M189.0898 318.7214c7.7763.0 15.0283 4.1826 18.926 10.915 1.9201 3.3136 2.9377 7.0988 2.9353 10.9462.0024 12.0643-9.8065 21.8636-21.8613 21.8612-12.0547.0024-21.8636-9.8065-21.8612-21.8612.0-6.0285 2.4516-11.4921 6.4116-15.452C177.5977 321.173 183.0612 318.7214 189.0898 318.7214zm7.9941 21.8612c0-1.4078-.3711-2.7892-1.0702-3.9959-1.4269-2.466-4.0797-3.9983-6.924-3.9983-4.4005-.0048-7.9918 3.5817-7.9942 7.9942.0024 4.4077 3.5865 7.9918 7.9942 7.9942 2.2027.0 4.2018-.8978 5.6479-2.3439C196.1861 344.7844 197.0839 342.7853 197.0839 340.5826z"/></defs><clipPath id="SVGID_16_"><use xlink:href="#SVGID_15_" style="overflow:visible"/></clipPath><path style="clip-path:url(#SVGID_16_);fill:#f1bc42" d="M172.6595 324.15c-3.96 3.96-6.4116 9.4235-6.4116 15.452-.0024 12.0547 9.8066 21.8636 21.8613 21.8612 12.0547.0024 21.8636-9.797 21.8613-21.8612.0024-3.8474-1.0151-7.6327-2.9353-10.9462-3.8977-6.7324-11.1497-10.9151-18.926-10.9151C182.0806 317.7407 176.6171 320.1924 172.6595 324.15z"/></g></g><rect x="198.8952" y="333.6497" style="fill:#f1bc42" width="122.6266" height="13.8671"/></g></g></svg></span><span class="text-uppercase font-weight-bold">OpenNSA</span>
+	</a>
+	<div class="td-navbar-nav-scroll ml-md-auto" id="main_navbar">
+		<ul class="navbar-nav mt-2 mt-lg-0">
+			
+			
+			<li class="nav-item mr-4 mb-2 mb-lg-0">
+				
+				
+				
+				
+				
+				
+				
+				
+				<a class="nav-link active" href="/opennsa/docs/" ><span class="active">Documentation</span></a>
+			</li>
+			
+			
+			
+		</ul>
+	</div>
+	<div class="navbar-nav d-none d-lg-block"><input
+  type="search"
+  class="form-control td-search-input"
+  placeholder="&#xf002; Search this site…"
+  aria-label="Search this site…"
+  autocomplete="off"
+  
+  data-offline-search-index-json-src="/opennsa/offline-search-index.af31363ce4ed1ca8646ab787f2115423.json"
+  data-offline-search-base-href="/"
+  data-offline-search-max-results="25"
+>
+</div>
+</nav>
+
+    </header>
+    <div class="container-fluid td-outer">
+      <div class="td-main">
+        <div class="row flex-xl-nowrap">
+          <div class="col-12 col-md-3 col-xl-2 td-sidebar d-print-none">
+          </div>
+          <div class="d-none d-xl-block col-xl-2 td-toc d-print-none">
+          </div>
+          <main class="col-12 col-md-9 col-xl-8 pl-md-5" role="main">
+            
+
+
+
+
+<div class="td-content">
+<div class="pageinfo pageinfo-primary d-print-none">
+<p>
+This the multi-page printable view of this section.
+<a href="#" onclick="print();return false;">Click here to print</a>.
+</p><p>
+<a href="/opennsa/docs/">Return to the regular view of this page</a>.
+</p>
+</div>
+
+
+
+<h1 class="title">Documentation</h1>
+
+
+
+
+
+    <ul>
+    
+  
+  
+  
+  
+
+  
+    
+    
+	
+<li>1: <a href="#pg-2cef3c6755217e322bb8d43947b44822">Developer</a></li>
+
+
+    
+    <ul>
+        
+  
+  
+  
+  
+
+  
+    
+    
+	
+<li>1.1: <a href="#pg-06a54add3ff12f26cff36645072a7c85">Backends</a></li>
+
+
+    
+    <ul>
+        
+  
+  
+  
+  
+
+  
+    
+    
+	
+<li>1.1.1: <a href="#pg-8cb46b3dddf362ef43889ada373ef999">Brocade</a></li>
+
+
+    
+  
+
+    </ul>
+    
+  
+    
+    
+	
+<li>1.2: <a href="#pg-fba977959d10f26b37dce7d18b58f12d">Quick Developer Guide</a></li>
+
+
+    
+  
+    
+    
+	
+<li>1.3: <a href="#pg-baa90afda2ccbc6fb0ef8c86d90e8926">Testing</a></li>
+
+
+    
+  
+
+    </ul>
+    
+  
+    
+    
+	
+<li>2: <a href="#pg-aae929108406e6d750ec2f45e0a04add">User Guide</a></li>
+
+
+    
+    <ul>
+        
+  
+  
+  
+  
+
+  
+    
+    
+	
+<li>2.1: <a href="#pg-3c48d0ff34a8fc5d172743004ce34254">CLI User Guide</a></li>
+
+
+    
+    <ul>
+        
+  
+  
+  
+  
+
+  
+    
+    
+	
+<li>2.1.1: <a href="#pg-71d312898e12fffda919d22e62a64fa8">User Guide</a></li>
+
+
+    
+  
+
+    </ul>
+    
+  
+    
+    
+	
+<li>2.2: <a href="#pg-167b27e0d1ef64b745f45217e8e8b02f">OpenNSA Server User Guide</a></li>
+
+
+    
+    <ul>
+        
+  
+  
+  
+  
+
+  
+    
+    
+	
+<li>2.2.1: <a href="#pg-fe3509f6ba8005ba27c63b6fbd5e9dc1">Configuration Guide</a></li>
+
+
+    
+  
+    
+    
+	
+<li>2.2.2: <a href="#pg-035c7169fb4e40e91c141bc35ff0c611">TLS/SSL Configuration Guide</a></li>
+
+
+    
+  
+    
+    
+	
+<li>2.2.3: <a href="#pg-9f4b0b29209fc3a4b715c4facf53cfc1">NCS</a></li>
+
+
+    
+  
+    
+    
+	
+<li>2.2.4: <a href="#pg-b4f2926f175a24e059333ca9c8f04404">REST Interface</a></li>
+
+
+    
+  
+
+    </ul>
+    
+  
+
+    </ul>
+    
+  
+    
+    
+	
+<li>3: <a href="#pg-753d5d127a9d70d9fc39ac716c7baa10">Legacy Documentation</a></li>
+
+
+    
+    <ul>
+        
+  
+  
+  
+  
+
+  
+    
+    
+	
+<li>3.1: <a href="#pg-38f876731fc2858e8f72e3337830699f">Configuration Migration</a></li>
+
+
+    
+  
+    
+    
+	
+<li>3.2: <a href="#pg-da339b05b276621fa2a786df71695195">Install on CentOS 6.4</a></li>
+
+
+    
+  
+
+    </ul>
+    
+  
+
+    </ul>
+
+
+<div class="content">
+      
+</div>
+</div>
+
+
+  
+  
+  
+  
+
+  
+  
+
+  
+    
+    
+	
+    
+
+<div class="td-content" style="">
+    
+	<h1 id="pg-2cef3c6755217e322bb8d43947b44822">1 - Developer</h1>
+    <div class="lead">Developer Documentation</div>
+	<p>This is a collection of developer guides and instruction that are tailored to the developer experience though might be helpful to the casual user.</p>
+
+</div>
+
+
+
+    
+      
+  
+  
+  
+  
+
+  
+  
+
+  
+    
+    
+	
+    
+
+<div class="td-content" style="">
+    
+	<h1 id="pg-06a54add3ff12f26cff36645072a7c85">1.1 - Backends</h1>
+    <div class="lead">Backends Documentation</div>
+	<p>Further document the various backends available.</p>
+
+</div>
+
+
+
+    
+      
+  
+  
+  
+  
+
+  
+  
+
+  
+    
+    
+	
+    
+
+<div class="td-content" style="">
+    
+	<h1 id="pg-8cb46b3dddf362ef43889ada373ef999">1.1.1 - Brocade</h1>
+    <div class="lead">Backends Documentation</div>
+	<h1 id="brocade">Brocade</h1>
+<p><strong>Config snippet:</strong></p>
+<pre tabindex="0"><code>[brocade]
+host=206.196.xx.xx
+user=admin
+fingerprint=63:3f:f5:68:e5:15:a1:6d:b0:61:40:2b:22:83:xx:xx
+publickey=/home/opennsa/.ssh/id_rsa.pub
+privatekey=/home/opennsa/.ssh/id_rsa
+</code></pre><p><strong>Getting SSH keys in order:</strong></p>
+<p>ssh-keygen generates the rsa/dsa key with a ID and a user in the public
+key, for example:</p>
+<pre tabindex="0"><code>---- BEGIN SSH2 PUBLIC KEY ----
+key-dsa (... key ...) jab@home 
+</code></pre><p>but Brocade doesn&rsquo;t understand the key with the index (key-dsa) and the
+user (jab@home) on it so I had to remove them to make it work.</p>
+
+</div>
+
+
+
+    
+	
+  
+
+    
+	
+  
+    
+    
+	
+    
+
+<div class="td-content" style="page-break-before: always">
+    
+	<h1 id="pg-fba977959d10f26b37dce7d18b58f12d">1.2 - Quick Developer Guide</h1>
+    <div class="lead">Quick Developer Guide</div>
+	<h1 id="quick-developer-guide">Quick Developer Guide</h1>
+<h2 id="server-setup">Server Setup</h2>
+<p>For this guide we are assuming you are using the configuration templates and examples provided by default.  Any commands
+will likely need to be updated accordingly for your own topology and configuration.</p>
+<p>We&rsquo;ll assume that you are either running the server locally.  Both of those cases will require a running postgres database.  For simplicity sake I&rsquo;m going to assume you have a docker-compose stack running.</p>
+<pre tabindex="0"><code>./generate-docker-config  ## will create a .env file and config/opennsa.conf
+docker-compose up -d 
+</code></pre><h2 id="usage-guide">Usage Guide</h2>
+<p>All operations in this case will be triggered via the client titled onsa which can be found in the root of the project.</p>
+<p>There are a few &lsquo;base&rsquo; operation that are supported by the Network Service Interface (NSI) Spec which you can find <a href="GFD.237.pdf">here</a>.  Others that are not listed in the document serve as a convenience method.</p>
+<p>All operation are usually a sequence of: reserve, reserveCommit, provision, release, terminate.
+query related requests are for diagnostic purposes.</p>
+<h3 id="endpoints">Endpoints</h3>
+<p>The following endpoints will then be accessible if everything works as advertised.</p>
+<ul>
+<li>http://localhost:9080/NSI/dockertest.net:2021:topology.nml.xml</li>
+<li>http://localhost:9080/NSI/discovery.xml</li>
+</ul>
+<h3 id="step-0-nsi-domain-knowledge">Step 0 NSI Domain knowledge</h3>
+<h4 id="assumptions">Assumptions:</h4>
+<ul>
+<li>TLS is not enabled.</li>
+<li>running locally and exposed 9080 locally.</li>
+<li>hostname is set to dockertest.net:2021 or similar value in the format of:</li>
+</ul>
+<pre tabindex="0"><code>{domain_name}:year
+</code></pre><p>In our example and sample file we use <code>dockertest.net:2021</code></p>
+<h4 id="urn">URN</h4>
+<p>All resources are mapped using a URN pattern.</p>
+<p>http://localhost:9080/NSI/dockertest.net:2021:topology.nml.xml will show you your current topology.</p>
+<p>Resources are reference by URN which are in the following format:</p>
+<p><code>&lt;prefix&gt;:&lt;organization&gt;:&lt;type&gt;</code>  example value is: <code>urn:ogf:network:dockertest.net:2021:topology:ps#vlan=1780</code></p>
+<ul>
+<li>prefix:  should be <code>urn:ogf:network</code></li>
+<li>organization: &lt;domain_name&gt;:year</li>
+<li>type: in our example would <code>topology</code></li>
+<li>resource: <name>#&lt;label={vlan or mpls}&gt;=&lt;ID aka 1780&gt;</li>
+</ul>
+<p>More info can be found in the <a href="config.md">config</a> documentation.</p>
+<h4 id="selecting-source--destination">Selecting Source / Destination</h4>
+<h2 id="reservation-step-1">Reservation: Step 1</h2>
+<p>NOTES: Currently the -s and -d strip away the prefix.  Please be aware when using the CLI client.</p>
+<div class="highlight"><pre tabindex="0" style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">onsa reserve <span style="color:#4e9a06">\
+</span><span style="color:#4e9a06"></span>    -u http://localhost:9080/NSI/services/CS2 <span style="color:#4e9a06">\ </span> <span style="color:#8f5902;font-style:italic">##service from Docker </span>
+    -g urn:uuid:d7a6a2ff-2cb5-4892-8bec-2a50140a6342 <span style="color:#4e9a06">\ </span><span style="color:#8f5902;font-style:italic">##Global ID</span>
+    -s <span style="color:#4e9a06">&#34;dockertest.net:2021:topology:ps#vlan=1780&#34;</span> <span style="color:#4e9a06">\ </span> <span style="color:#8f5902;font-style:italic">## Source</span>
+    -d <span style="color:#4e9a06">&#34;dockertest.net:2021:topology:port1#vlan=1787&#34;</span> <span style="color:#4e9a06">\ </span> <span style="color:#8f5902;font-style:italic">## Destination</span>
+    -b <span style="color:#0000cf;font-weight:bold">100</span> <span style="color:#4e9a06">\ </span> <span style="color:#8f5902;font-style:italic"># bandwidth in Megabits</span>
+    -a 2022-09-24T20:00:00 <span style="color:#4e9a06">\ </span> <span style="color:#8f5902;font-style:italic">#start date/time (has to be in the future)</span>
+    -e 2022-09-24T21:00:00 <span style="color:#4e9a06">\ </span> <span style="color:#8f5902;font-style:italic">## end date/time (again in the future)</span>
+    -p dockertest.net:2021:nsa <span style="color:#4e9a06">\ </span> <span style="color:#8f5902;font-style:italic">## provider</span>
+    -r dockertest.net:2021:sense <span style="color:#4e9a06">\ </span><span style="color:#8f5902;font-style:italic">##requested </span>
+    -h 192.168.1.64 <span style="color:#4e9a06">\ </span> <span style="color:#8f5902;font-style:italic">## OpenNSA Server host (localhost won&#39;t work if using docker)</span>
+    -o <span style="color:#0000cf;font-weight:bold">8543</span> <span style="color:#4e9a06">\ </span> <span style="color:#8f5902;font-style:italic">#Port </span>
+    -v <span style="color:#4e9a06">\ </span> <span style="color:#8f5902;font-style:italic">## verbose</span>
+    -q <span style="color:#8f5902;font-style:italic">##dump payload message</span>
+</code></pre></div><h3 id="query-validation">Query Validation</h3>
+<p>We&rsquo;re going to query the data for the reservation we just created.</p>
+<div class="highlight"><pre tabindex="0" style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh"> ./onsa query <span style="color:#4e9a06">\ </span>
+ -u http://localhost:9080/NSI/services/CS2  <span style="color:#4e9a06">\ </span>
+ -p <span style="color:#4e9a06">&#34;dockertest.net:2021:nsa&#34;</span>  <span style="color:#4e9a06">\
+</span><span style="color:#4e9a06"></span> -r <span style="color:#4e9a06">&#34;dockertest.net:2021:sense&#34;</span> <span style="color:#4e9a06">\
+</span><span style="color:#4e9a06"></span> -h 192.168.1.64 -o <span style="color:#0000cf;font-weight:bold">8543</span> <span style="color:#4e9a06">\
+</span><span style="color:#4e9a06"></span> -q
+</code></pre></div><p>Output:</p>
+<pre tabindex="0"><code>Connection   DO-8108e03315 (urn:ogf:network:dockertest.net:2021:nsa)
+Global ID    urn:uuid:d7a6a2ff-2cb5-4892-8bec-2a50140a6342
+Description  Test Connection
+States       ReserveStart, Released, Created
+Dataplane    Active : False, Version: 0, Consistent False
+Start-End    2022-09-24 20:00:00 - 2022-09-24 21:00:00
+Path         dockertest.net:2021:topology:ps?vlan=1780 -- dockertest.net:2021:topology:port1?vlan=1787
+Bandwidth    100
+Direction    Bidirectionall
+</code></pre><h2 id="provision-step-2">Provision Step 2</h2>
+<p>We&rsquo;ll need the Connection ID from the query above for this step.</p>
+<div class="highlight"><pre tabindex="0" style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">./onsa provision <span style="color:#4e9a06">\ </span>
+    -c  DO-8108e03315 <span style="color:#4e9a06">\ </span> <span style="color:#8f5902;font-style:italic">## Connection </span>
+    -u http://localhost:9080/NSI/services/CS2 <span style="color:#4e9a06">\
+</span><span style="color:#4e9a06"></span>    -p <span style="color:#4e9a06">&#34;dockertest.net:2021:nsa&#34;</span> <span style="color:#4e9a06">\
+</span><span style="color:#4e9a06"></span>    -r <span style="color:#4e9a06">&#34;dockertest.net:2021:sense&#34;</span> <span style="color:#4e9a06">\
+</span><span style="color:#4e9a06"></span>    -h 192.168.1.64 -o <span style="color:#0000cf;font-weight:bold">8543</span> <span style="color:#4e9a06">\
+</span><span style="color:#4e9a06"></span>    -v -q
+</code></pre></div><p>Same Query as above should now show a new state of:</p>
+<pre tabindex="0"><code>States       **ReserveHeld**, Provisioning, Created
+</code></pre><h1 id="clean-up-operations">Clean up Operations</h1>
+<h2 id="release-step-3">Release Step 3</h2>
+<div class="highlight"><pre tabindex="0" style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">./onsa release <span style="color:#4e9a06">\ </span>
+    -c  DO-8108e03315 <span style="color:#4e9a06">\ </span> 
+    -u http://localhost:9080/NSI/services/CS2 <span style="color:#4e9a06">\
+</span><span style="color:#4e9a06"></span>    -p <span style="color:#4e9a06">&#34;dockertest.net:2021:nsa&#34;</span> <span style="color:#4e9a06">\
+</span><span style="color:#4e9a06"></span>    -r <span style="color:#4e9a06">&#34;dockertest.net:2021:sense&#34;</span> <span style="color:#4e9a06">\
+</span><span style="color:#4e9a06"></span>    -h 192.168.1.64 -o <span style="color:#0000cf;font-weight:bold">8543</span> <span style="color:#4e9a06">\
+</span><span style="color:#4e9a06"></span>    -v -q
+</code></pre></div><h2 id="terminate-step-4">Terminate Step 4</h2>
+<div class="highlight"><pre tabindex="0" style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">./onsa terminate <span style="color:#4e9a06">\ </span>
+    -c  DO-8108e03315 <span style="color:#4e9a06">\ </span>
+    -u http://localhost:9080/NSI/services/CS2 <span style="color:#4e9a06">\
+</span><span style="color:#4e9a06"></span>    -p <span style="color:#4e9a06">&#34;dockertest.net:2021:nsa&#34;</span> <span style="color:#4e9a06">\ </span>
+    -r <span style="color:#4e9a06">&#34;dockertest.net:2021:sense&#34;</span> <span style="color:#4e9a06">\
+</span><span style="color:#4e9a06"></span>    -h localhost -o <span style="color:#0000cf;font-weight:bold">8543</span> <span style="color:#4e9a06">\
+</span><span style="color:#4e9a06"></span>    -v -q
+</code></pre></div>
+</div>
+
+
+
+    
+	
+  
+    
+    
+	
+    
+
+<div class="td-content" style="page-break-before: always">
+    
+	<h1 id="pg-baa90afda2ccbc6fb0ef8c86d90e8926">1.3 - Testing</h1>
+    <div class="lead">Quick Developer Guide</div>
+	<p>How to run the the unit/integration tests for OpenNSA</p>
+<p>Make sure all the requirements are installed. Then:</p>
+<div class="highlight"><pre tabindex="0" style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">./util/pg-test-run      <span style="color:#8f5902;font-style:italic"># This will start a Postgres in docker</span>
+<span style="color:#000">PYTHONPATH</span><span style="color:#ce5c00;font-weight:bold">=</span>. trial <span style="color:#204a87">test</span>
+</code></pre></div><p>Running the CI/CD pipeline locally:</p>
+<ol>
+<li>
+<p>Install the CLI tooling according to: <a href="https://docs.drone.io/quickstart/cli/">https://docs.drone.io/quickstart/cli/</a></p>
+</li>
+<li>
+<p>Run the pipeline by using <code>drone exec</code>.  Please ensure you have docker installed.</p>
+</li>
+</ol>
+
+</div>
+
+
+
+    
+	
+  
+
+    
+	
+  
+    
+    
+	
+    
+
+<div class="td-content" style="page-break-before: always">
+    
+	<h1 id="pg-aae929108406e6d750ec2f45e0a04add">2 - User Guide</h1>
+    <div class="lead">User Guide: This section focuses more on using OpenNSA, rather then the intricacies of developing, expending on it and developing new features for it.</div>
+	<p>This is a collection of guides related to using the OpenNSA tool</p>
+
+</div>
+
+
+
+    
+      
+  
+  
+  
+  
+
+  
+  
+
+  
+    
+    
+	
+    
+
+<div class="td-content" style="">
+    
+	<h1 id="pg-3c48d0ff34a8fc5d172743004ce34254">2.1 - CLI User Guide</h1>
+    <div class="lead">CLI User Guide</div>
+	<p>CLI User Guide</p>
+
+</div>
+
+
+
+    
+      
+  
+  
+  
+  
+
+  
+  
+
+  
+    
+    
+	
+    
+
+<div class="td-content" style="">
+    
+	<h1 id="pg-71d312898e12fffda919d22e62a64fa8">2.1.1 - User Guide</h1>
+    <div class="lead">A short primer on the onsa command line tool.</div>
+	<p>A short primer on the onsa command line tool.</p>
+<p>Disclaimer: There are still bugs and unfinished functionality.</p>
+<p><strong>Intro</strong></p>
+<p>The onsa command line tools allows the creation of connections and basic
+lifecycle management, along with query functionality.</p>
+<p>If you cannot wait to get started, you can list the command options with:</p>
+<pre><code>$ onsa --help
+</code></pre>
+<p>The command line tool requires a command (e.g., reserve or provision), and a
+set of options, in order to carry out a command.</p>
+<p><strong>Defaults file</strong></p>
+<p>Often there will be a number of options, which will be the same or almost the
+same with every invocation, e.g., location of topology files, WSDL directory,
+identity of the client and so forth. To save time, the CLI will read on default
+options from a file, typically ~/.opennsa-cli, but it is possible to specify an
+alternate location using the -f (&ndash;defaults-file) option.</p>
+<p>Here is an example of a <code>.opennsa-cli</code> defaults file:</p>
+<pre tabindex="0"><code>bandwidth=200
+host=localhost
+port=7080
+starttime=+20
+endtime=+260
+
+nsa=aruba,aruba.net:2013:nsa,http://localhost:4080/NSI/services/CS2
+</code></pre><p>The host and port options, will be used in setting up the callback URL. They
+will default to the value provided by &ldquo;socket.getfqdn()&rdquo; and 7080.</p>
+<p>The starttime and endtime can be set to xsd datetime value, but can also be
+assigned a +X value, with X being the number of seconds into the future. This
+makes it easy to always get some usefull values when testing.</p>
+<p>The nsa entry, allow a shorthand for specifying nsa id and service url. With
+the above example, one can use
+&ldquo;-p aruba&rdquo;
+instead
+&ldquo;-p aruba.net:2013:nsa -u http://localhost:4080/NSI/services/CS2&rdquo;
+This makes the command line tool a lot nicer to use. There can be multiple
+nsa shorthand entries.</p>
+<p>If an option is specified both on the command line and in the defaults file,
+the command line value will be used.</p>
+<p>It is possible to set all options which can be set on the command line in the
+defaults file, with the exception of the command to perform.</p>
+<p><strong>Using the tool</strong></p>
+<p>With a default options file created, a connection can be created like this:</p>
+<pre><code>$ ./onsa reserve --source northernlight.ets:ps --dest northernlight.ets:ams -p northernlight.ets
+</code></pre>
+<p>A connection id and global id is assigned automatically but can also be
+assigned using the -c and -g options.</p>
+<p>To provision the connection:</p>
+<pre><code>./onsa provision -p northernlight.ets -c &lt;connection-id&gt;
+</code></pre>
+<p>Similarly with release and terminate, querysummary, and querydetails.</p>
+<p><strong>STP Syntax</strong></p>
+<p>STP without VLAN (full port - rarely used)</p>
+<p>northernlight.ets:ps</p>
+<p>STP with VLAN 23, this is the typical one to use.</p>
+<p>northernlight.ets:ps?vlan=23</p>
+<p>There is also MPLS (you should know what you are doing wrt. labels)</p>
+<p>northernlight.ets:ps?mpls=123:456</p>
+
+</div>
+
+
+
+    
+	
+  
+
+    
+	
+  
+    
+    
+	
+    
+
+<div class="td-content" style="page-break-before: always">
+    
+	<h1 id="pg-167b27e0d1ef64b745f45217e8e8b02f">2.2 - OpenNSA Server User Guide</h1>
+    <div class="lead">OpenNSA Server User Guide</div>
+	<p>OpenNSA Server User Guide</p>
+
+</div>
+
+
+
+    
+      
+  
+  
+  
+  
+
+  
+  
+
+  
+    
+    
+	
+    
+
+<div class="td-content" style="">
+    
+	<h1 id="pg-fe3509f6ba8005ba27c63b6fbd5e9dc1">2.2.1 - Configuration Guide</h1>
+    <div class="lead">A short primer on the opennsa config</div>
+	<h1 id="example-configuration">Example Configuration</h1>
+<div class="highlight"><pre tabindex="0" style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ini" data-lang="ini"><span style="color:#204a87;font-weight:bold">[service]</span>
+<span style="color:#c4a000">network</span><span style="color:#ce5c00;font-weight:bold">=</span><span style="color:#4e9a06">Aruba</span>
+<span style="color:#c4a000">logfile</span><span style="color:#ce5c00;font-weight:bold">=</span><span style="color:#4e9a06">nsalog.log</span>
+<span style="color:#c4a000">nrmfile</span><span style="color:#ce5c00;font-weight:bold">=</span><span style="color:#4e9a06">ports.nrm</span>
+
+<span style="color:#c4a000">peers</span><span style="color:#ce5c00;font-weight:bold">=</span><span style="color:#4e9a06">http://host.example.org:9080/NSI/discovery.xml
+</span><span style="color:#4e9a06">      https://nsi.example.com/NSI/discovery.xml</span>
+
+<span style="color:#c4a000">policies</span><span style="color:#ce5c00;font-weight:bold">=</span><span style="color:#4e9a06">requiretrace,requireuser</span>
+
+<span style="color:#c4a000">serviceid_start</span><span style="color:#ce5c00;font-weight:bold">=</span><span style="color:#4e9a06">1900000</span>
+
+<span style="color:#8f5902;font-style:italic"># Database</span>
+<span style="color:#c4a000">database</span><span style="color:#ce5c00;font-weight:bold">=</span><span style="color:#4e9a06">opennsa</span>
+<span style="color:#c4a000">dbuser</span><span style="color:#ce5c00;font-weight:bold">=</span><span style="color:#4e9a06">dbuser</span>
+<span style="color:#c4a000">dbpassword</span><span style="color:#ce5c00;font-weight:bold">=</span><span style="color:#4e9a06">dbpassword</span>
+<span style="color:#c4a000">dbhost</span><span style="color:#ce5c00;font-weight:bold">=</span><span style="color:#4e9a06">127.0.0.1</span>
+
+<span style="color:#204a87;font-weight:bold">[dud]</span>
+<span style="color:#c4a000">option1</span><span style="color:#ce5c00;font-weight:bold">=</span><span style="color:#4e9a06">123</span>
+<span style="color:#c4a000">option2</span><span style="color:#ce5c00;font-weight:bold">=</span><span style="color:#4e9a06">abc</span>
+</code></pre></div><h1 id="service-block">Service block</h1>
+<p>These are the options for the service block:</p>
+<p><code>network</code>  : The network name managed by OpenNSA. Mandatory.</p>
+<p><code>logfile</code>  : File to log to. Default: /var/log/opennsa.log</p>
+<p><code>nrmmap</code>   : Path to port/topology NRM description file</p>
+<p><code>peers</code>    : URLs to NSAs to peer with control-plane wise.
+Separate multiple entries with newline (only peers= on the first
+line). If using multiple lines, the following peer urls must be in
+indented at least pass the <code>=</code> on the first line (parser limitation).
+Optional. No peers will put OpenNSA into UPA mode.</p>
+<p><code>policies</code> : What policies are required. Currently <code>requiretrace</code>, <code>requireuser</code>,
+and <code>aggregator</code> are the possible options. These require a connection
+trace, a user security attribute, and allow proxy aggregation
+respectively. Optional.</p>
+<p><code>serviceid_start</code> : Initial service id to set in the database. Requires a plugin
+to use. Optional.</p>
+<p><code>database</code> : Name of the PostgreSQL database to connect to. Mandatory.</p>
+<p><code>dbuser</code>   : Username to use when connecting to database. Mandatory.</p>
+<p><code>dbpassword</code> : Password to use when connecting to database. Mandatory.</p>
+<p><code>dbhost</code>   : Host to connect to for database. Optional. If not specified,
+OpenNSA will connect to PostgreSQL over the unix domain socket
+OpenNSA does not require anything big from the database, so using a
+different host/vm is almost surely a waste of resources. It is
+however useful when running a PostgreSQL in docker.</p>
+<h1 id="backend">Backend</h1>
+<p>A backend is configured by a section describing the type of backend, e.g. <code>dud</code>
+(for testing) or <code>junosmx</code>. The configuration options in the section are
+specific to the backend. Reading the setup code in backend, is the easiest way
+to see the options.</p>
+<h2 id="custom-backend">Custom Backend</h2>
+<p>If you have written your own backend that is specific to an organization or
+project, you can use the custombackend option:</p>
+<pre tabindex="0"><code>[custombackend]
+module=mycustombackend
+op1=123
+op2=abc
+</code></pre><p>This will import the Python module named <code>mycustombackend</code> and pass along the
+configuration options. You will probably need to specify PYTHONPATH to include
+the path of the module.</p>
+<p>It is strongly recommended that you keep the module out of the OpenNSA module
+such that you can upgrade OpenNSA without having to re-deploy your backend.</p>
+<h1 id="nrm-configuration">NRM Configuration</h1>
+<p>Configuration the nrm file is typically the most confusing parts of setting up
+OpenNSA. In short the NRM file defines the ports available through the NSI
+protocol, as OpenNSA does not make everything available. An NRM is line based
+and typically looks like this:</p>
+<pre tabindex="0"><code># type      name    remote                              label               bandwith    interface   attributes
+
+ethernet    ps      -                                   vlan:1780-1799,2000 1000        em0         user=johndoe@example.org
+ethernet    bon     bonaire.net:topology#arb(-in|-out)  vlan:1780-1799      1000        em3         restricttransit
+ethernet    cur     curacao.net:topology#arb(-in|-out)  vlan:1780-1799      1000        em3         restricttransit,hostdn=curacao.example.net
+
+</code></pre><p>Each line describes an STP (NSI term). An STP is more or less the same as a
+port. Note that two STPs can point to the same underlying interface / port,
+which can occasionally be useful (you will probably know if this happens).
+OpenNSA does reservations on the interface resources internally, to ensure that
+resource do not get double booked.</p>
+<h2 id="nrm-configuration-options">NRM Configuration options</h2>
+<p><code>type</code>  : The port type. Only ethernet is recognized at the moment.
+Bidirectional is implied.</p>
+<p><code>name</code>  : The name of the STP. The STP address will be a URN with the network and name in it.</p>
+<p><code> Remote</code>   : The network and port the port is connected to. Format:
+<code>network#port(-inprefix|-outprefix)</code>
+Use &lsquo;-&rsquo; if not connected to any network (termination inside the network).</p>
+<p><code>label</code> : STP configuration options. Currently <code>vlan</code> and <code>mpls</code> are supported.
+Note that not all backend support those. Can specify single values and ranges. Comma separated.
+Use &lsquo;-&rsquo; if no labels are to be used (i.e., ethernet trunk).</p>
+<p><code>bandwidth</code> : The available bandwidth on the port (or the bandwidth that is
+available to OpenNSA on the port).</p>
+<p><code>interface</code> : The interface / port on the network device.</p>
+<p><code>attributes</code> : A list of comma separated attributes that describes security
+attributes or policies for the port. Security attributes always have the form
+<code>key=value</code>, otherwise it is a policy. Despite the name, security attributes
+are not very secure.</p>
+<pre><code>           The hostdn will match against the hostname of a certificate. For this to work
+           OpenNSA must be configured to run with TLS (see docs/tls-guide).
+
+           The only supported policy at the moment is `restricttransit`. If
+           two ports both have the `restricttransit` attribute, connecions
+           between the two will not be allowed.
+</code></pre>
+
+</div>
+
+
+
+    
+	
+  
+    
+    
+	
+    
+
+<div class="td-content" style="page-break-before: always">
+    
+	<h1 id="pg-035c7169fb4e40e91c141bc35ff0c611">2.2.2 - TLS/SSL Configuration Guide</h1>
+    <div class="lead">TLS/SSL Configuration Guide</div>
+	<p>The configuration of TLS/SSL of OpenNSA is something that has confused several
+people. This guide tries to make it more comprehensible. OpenNSA is somewhat
+barebones in its configuration style, but uses standard X.509 certificates and
+directory layouts. Prodding at TLS/SSL config until it works is usually a bad
+strategy. Understand it, and it should be straightforward.</p>
+<p>First you need to get a certificate. Please don&rsquo;t make a self-signed. Get one
+from a real certificate authority. Many NRENs can get certificates from TERENA
+or similar. These typically have guides as well and there is no purpose in
+repeating it here.</p>
+<p>OpenNSA or its author cannot magically produce a certificate you (sorry).</p>
+<p>When you have obtained a certificate you should have a private key and a
+certificate file (also contains the public key).</p>
+<h2 id="configuration-options">Configuration Options</h2>
+<p><code>tls=true</code>
+Enable TLS.</p>
+<p><code>key=/etc/hostcert/nsi.nordu.net.key</code>
+Path to private key.</p>
+<p><code>certificate=/etc/hostcert/nsi.nordu.net.pem</code>
+Path to the certificate.</p>
+<p><code>certdir=/etc/ssl/certs</code>
+Directory for certificates authorities. OpenNSA uses the OpenSSL standard of seperate CA files ending with .0
+Only files ending with .0 are loaded.</p>
+<p><code>verify=true</code>
+If OpenNSA should verify the peer. You want this to true, unless debugging..</p>
+<p><code>allowedhosts=host1.example.org,host2.example.org</code>
+Comma-seperated list of hosts that are allowed to make request to OpenNSA.</p>
+<h2 id="common-issues">Common Issues</h2>
+<p>If you get:
+AttributeError: &lsquo;OpenSSL.SSL.Context&rsquo; object has no attribute &lsquo;set_session_cache_mode&rsquo;</p>
+<p>Upgrade pyOpenSSL to at least version 0.14 (as listed in the INSTALL file).</p>
+
+</div>
+
+
+
+    
+	
+  
+    
+    
+	
+    
+
+<div class="td-content" style="page-break-before: always">
+    
+	<h1 id="pg-9f4b0b29209fc3a4b715c4facf53cfc1">2.2.3 - NCS</h1>
+    <div class="lead">NCS</div>
+	<p>url is an http url with the path /api/running/services, i.e.,</p>
+<p><a href="http://NCSHOST:8080/api/running/services">http://NCSHOST:8080/api/running/services</a></p>
+<p>the interface part should be of the format &ldquo;router:interface&rdquo;</p>
+
+</div>
+
+
+
+    
+	
+  
+    
+    
+	
+    
+
+<div class="td-content" style="page-break-before: always">
+    
+	<h1 id="pg-b4f2926f175a24e059333ca9c8f04404">2.2.4 - REST Interface</h1>
+    <div class="lead">REST Interface guide</div>
+	<h1 id="opennsa-rest-interface">OpenNSA rest interface</h1>
+<p>The rest interface is an easy to use alternative interface to the NSI SOAP api.</p>
+<h2 id="url-design">URL design</h2>
+<pre tabindex="0"><code>List connections (filter)       GET     /connections
+Create new connection           POST    /connections
+Get connection information      GET     /connections/{connection_id}
+Get connection status (stream)  GET     /connections/{connection_id}/status
+Change status                   POST    /connections/{connection_id}/status
+</code></pre><p>The /status GET is a stream that updates continuously (server won&rsquo;t close connection and will emit new status each time it updates).</p>
+<h2 id="enabling-rest">Enabling rest</h2>
+<p>In [service] section add <code>rest=true</code></p>
+<h2 id="usage">Usage</h2>
+<h3 id="create-a-connection">Create a connection</h3>
+<p>Example minimal json payload to create connection:</p>
+<div class="highlight"><pre tabindex="0" style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json"><span style="color:#000;font-weight:bold">{</span>
+  <span style="color:#204a87;font-weight:bold">&#34;source&#34;</span>        <span style="color:#000;font-weight:bold">:</span> <span style="color:#4e9a06">&#34;nordu.net:topology:s1&#34;</span><span style="color:#000;font-weight:bold">,</span>
+  <span style="color:#204a87;font-weight:bold">&#34;destination&#34;</span>   <span style="color:#000;font-weight:bold">:</span> <span style="color:#4e9a06">&#34;surfnet.nl:topology:ps&#34;</span><span style="color:#000;font-weight:bold">,</span>
+<span style="color:#000;font-weight:bold">}</span>
+</code></pre></div><p>Additional fields:</p>
+<ul>
+<li><code>start_time</code> in iso8601 format</li>
+<li><code>end_time</code> in iso8601 format</li>
+<li><code>capacity</code> - bandwidth (megabits)</li>
+<li><code>auto_commit</code> - Used to enable auto commit of reservation request. Defaults <code>true</code>.</li>
+<li><code>auto_provision</code> - Used to auto provision the link after the reservation is done. Default <code>false</code>.</li>
+</ul>
+<p>Date format is ISO8601, e.g., &ldquo;2015-12-13T08:08:08Z&rdquo;</p>
+<p>Create a connection using curl:</p>
+<pre tabindex="0"><code>curl -i -X POST -d '{&quot;source&quot;: &quot;TestNetwork:topology:port1?vlan=1781&quot;, &quot;destination&quot;: &quot;TestNetwork:topology:port2?vlan=1782&quot;}' http://localhost:9080/connections
+</code></pre><p>You will get a location header back that contains the connection id.</p>
+<h3 id="provision-a-reserved-connection">Provision a reserved connection</h3>
+<pre tabindex="0"><code>curl -X POST -d &quot;PROVISION&quot; http://localhost:9080/connections/TE-03b16eea46/status
+</code></pre><p>It will return an ACK, and start working on provisioning the link.
+The link will be up and ready to use when the <code>provision_state</code> is <code>Provisioned</code> and <code>data_plane_active</code> is <code>true</code>.</p>
+<h3 id="terminating-a-connection">Terminating a connection</h3>
+<pre tabindex="0"><code>curl -X POST -d &quot;TERMINATE&quot; http://localhost:9080/connections/TE-03b16eea46/status
+</code></pre><p>The connection will then go into <code>lifecycle_state</code> <code>Terminating</code>, and when everything is released it will end up in <code>lifecycle_state</code> <code>Terminated</code>.</p>
+<h3 id="other-supported-status-operations">Other supported status operations</h3>
+<ul>
+<li><code>COMMIT</code> confirms the reserve commit (used if you set <code>auto_commit</code> to <code>false</code>).</li>
+<li><code>ABORT</code> aborts the reservation.</li>
+<li><code>RELEASE</code> used to release a provisioned connection, and return to it just being reserved.</li>
+<li><code>PROVISION</code> described above</li>
+<li><code>TERMINATE</code> described above</li>
+</ul>
+<h2 id="other-features">Other features</h2>
+<p>No:</p>
+<ul>
+<li>nsa identity (b0rked concept anyway)</li>
+<li>global reservation id</li>
+<li>Possibility to designate connection id</li>
+<li>Time zones in datetime, always utc (end with Z)</li>
+</ul>
+<h3 id="todo">Todo</h3>
+<p>Maybe:</p>
+<ul>
+<li>client correlation id</li>
+</ul>
+
+</div>
+
+
+
+    
+	
+  
+
+    
+	
+  
+
+    
+	
+  
+    
+    
+	
+    
+
+<div class="td-content" style="page-break-before: always">
+    
+	<h1 id="pg-753d5d127a9d70d9fc39ac716c7baa10">3 - Legacy Documentation</h1>
+    <div class="lead">Legacy Documentation</div>
+	<p>This is a collection of legacy documents that are likely no longer needed but kept for posterity&rsquo;s sake.</p>
+
+</div>
+
+
+
+    
+      
+  
+  
+  
+  
+
+  
+  
+
+  
+    
+    
+	
+    
+
+<div class="td-content" style="">
+    
+	<h1 id="pg-38f876731fc2858e8f72e3337830699f">3.1 - Configuration Migration</h1>
+    <div class="lead">Configuration Migration and py 2.x to 3.x changes</div>
+	<h1 id="opennsa-3-configuration-migration">OpenNSA 3 Configuration Migration</h1>
+<p>With the port of OpenNSA from Python 2 to Python 3, and the subsequent release
+of OpenNSA 3, support for multiple backends was added. For this, some changes
+in the configuration format was needed.</p>
+<p>The changes are:</p>
+<ul>
+<li>Use domain instead of network in <code>[service]</code> block</li>
+<li>Each backend must specify a network name in its block</li>
+<li>NRM Map must now be specified per backend</li>
+</ul>
+<p>Example of old style:</p>
+<div class="highlight"><pre tabindex="0" style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ini" data-lang="ini"><span style="color:#204a87;font-weight:bold">[service]</span>
+<span style="color:#c4a000">network</span><span style="color:#ce5c00;font-weight:bold">=</span><span style="color:#4e9a06">aruba.net</span>
+<span style="color:#c4a000">nrmmap</span><span style="color:#ce5c00;font-weight:bold">=</span><span style="color:#4e9a06">aruba.nrm</span>
+
+<span style="color:#204a87;font-weight:bold">[dud]</span>
+</code></pre></div><p>Equivalent config in new style:</p>
+<div class="highlight"><pre tabindex="0" style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ini" data-lang="ini"><span style="color:#204a87;font-weight:bold">[service]</span>
+<span style="color:#c4a000">domain</span><span style="color:#ce5c00;font-weight:bold">=</span><span style="color:#4e9a06">aruba.net</span>
+
+<span style="color:#204a87;font-weight:bold">[dud:topology]</span>
+<span style="color:#c4a000">nrmmap</span><span style="color:#ce5c00;font-weight:bold">=</span><span style="color:#4e9a06">aruba.nrm</span>
+</code></pre></div><p>An example with multiple backends shows why the change was needed:</p>
+<div class="highlight"><pre tabindex="0" style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ini" data-lang="ini"><span style="color:#204a87;font-weight:bold">[service]</span>
+<span style="color:#c4a000">domain</span><span style="color:#ce5c00;font-weight:bold">=</span><span style="color:#4e9a06">aruba.net</span>
+
+<span style="color:#204a87;font-weight:bold">[dud:topology1]</span>
+<span style="color:#c4a000">nrmmap</span><span style="color:#ce5c00;font-weight:bold">=</span><span style="color:#4e9a06">aruba-topo1.nrm</span>
+
+<span style="color:#204a87;font-weight:bold">[dud:topology1]</span>
+<span style="color:#c4a000">nrmmap</span><span style="color:#ce5c00;font-weight:bold">=</span><span style="color:#4e9a06">aruba-topo2.nrm</span>
+</code></pre></div><p>Feel free to call your networks something better than topology, but use
+&lsquo;topology&rsquo; if you want to keep the old STP names.</p>
+
+</div>
+
+
+
+    
+	
+  
+    
+    
+	
+    
+
+<div class="td-content" style="page-break-before: always">
+    
+	<h1 id="pg-da339b05b276621fa2a786df71695195">3.2 - Install on CentOS 6.4</h1>
+    <div class="lead">Installation instruction for OpenNSA on CentOS 6.4</div>
+	<h1 id="installing-opennsa-on-centos-64">Installing OpenNSA on CentOS 6.4</h1>
+<ol>
+<li>
+<p>Upgrade the CentOS 6.4:</p>
+<p>yum update</p>
+</li>
+<li>
+<p>Install PostgreSQL Server and its development dependencies:</p>
+<p>yum install postgresql-server.x86_64 postgresql-plpython.x86_64 postgresql-devel.x86_64</p>
+</li>
+<li>
+<p>Install Python 2.7 (CentOS depends of Python2.6 for its package system)</p>
+</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">    yum groupinstall <span style="color:#4e9a06">&#34;Development tools&#34;</span>
+    yum install zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel tk-devel
+    <span style="color:#204a87">cd</span> /usr/local/src
+    wget http://python.org/ftp/python/2.7.3/Python-2.7.3.tar.bz2
+    tar xf Python-2.7.3.tar.bz2
+    <span style="color:#204a87">cd</span> Python-2.7.3
+    ./configure --prefix<span style="color:#ce5c00;font-weight:bold">=</span>/usr/local
+    make <span style="color:#ce5c00;font-weight:bold">&amp;&amp;</span> make altinstall
+</code></pre></div><p>The Python2.7 interpreter is at /usr/local/bin/python2.7</p>
+<ol start="4">
+<li>Install the Python Distribute</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">    wget --no-check-certificate http://pypi.python.org/packages/source/d/distribute/distribute-0.6.35.tar.gz
+    tar xf distribute-0.6.35.tar.gz
+    <span style="color:#204a87">cd</span> distribute-0.6.35
+    python2.7 setup.py install
+</code></pre></div><p>This generates the script /usr/local/bin/easy_install-2.7 that you use to install packages for Python 2.7.
+It puts your packages in /usr/local/lib/python2.7/site-packages/</p>
+<ol start="5">
+<li>
+<p>(Removed, to lazy to do renumbering)</p>
+</li>
+<li>
+<p>Install Twisted</p>
+</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">    wget --no-check-certificate https://pypi.python.org/packages/source/T/Twisted/Twisted-13.1.0.tar.bz2#md5<span style="color:#ce5c00;font-weight:bold">=</span>5609c91ed465f5a7da48d30a0e7b6960
+    easy_install-2.7 Twisted-13.1.0.tar.bz2
+</code></pre></div><ol start="7">
+<li>Install Twistar-1.2</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">    wget --no-check-certificate https://pypi.python.org/packages/source/t/twistar/twistar-1.2.tar.gz#md5<span style="color:#ce5c00;font-weight:bold">=</span>4f63af14339b1f2d9556395b527ea7a4
+    easy_install-2.7 twistar-1.2.tar.gz
+</code></pre></div><ol start="8">
+<li>Install psycopg</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">    wget http://initd.org/psycopg/tarballs/PSYCOPG-2-5/psycopg2-2.5.1.tar.gz
+    easy_install-2.7 psycopg2-2.5.1.tar.gz
+</code></pre></div><ol start="9">
+<li>Install pycrypto-2.6 and pyasn1-0.1.7 (only necessary when using SSH backends)</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">    wget --no-check-certificate https://pypi.python.org/packages/source/p/pycrypto/pycrypto-2.6.tar.gz
+    easy_install-2.7 pycrypto-2.6.tar.gz
+ 
+    wget --no-check-certificate https://pypi.python.org/packages/source/p/pyasn1/pyasn1-0.1.7.tar.gz#md5<span style="color:#ce5c00;font-weight:bold">=</span>2cbd80fcd4c7b1c82180d3d76fee18c8
+    easy_install-2.7 pyasn1-0.1.7.tar.gz
+</code></pre></div><ol start="10">
+<li>Initialize and Start the PostgreSQL</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">    service postgresql initdb
+    service postgresql start
+
+    ln -s /etc/init.d/postgresql /etc/rc3.d/S99postgresql
+    ln -s /etc/init.d/postgresql /etc/rc3.d/K99postgresql
+</code></pre></div><ol start="11">
+<li>Prepare the environment for Opennsa</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">    useradd opennsa
+    su - opennsa
+</code></pre></div><ol start="12">
+<li>Install OpenNSA</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">    git clone git://git.nordu.net/opennsa.git
+    <span style="color:#204a87">cd</span> opennsa
+    git checkout nsi2
+    python2.7 setup.py build
+    su
+    python2.7 setup.py install
+</code></pre></div><ol start="13">
+<li>Create the database</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">    cp datafiles/schema.sql /tmp/
+    su - postgres
+    createdb opennsa
+    createuser -RSD opennsa 
+    <span style="color:#204a87">exit</span>
+    su - opennsa
+    psql opennsa
+    <span style="color:#000">opennsa</span><span style="color:#ce5c00;font-weight:bold">=</span><span style="color:#8f5902;font-style:italic"># \i /tmp/schema.sql</span>
+    <span style="color:#204a87">exit</span>
+    &lt;CTRL+D&gt;
+    <span style="color:#204a87">exit</span>
+</code></pre></div><ol start="14">
+<li>It&rsquo;s important to keep the server time accurate (NTP)</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">    yum install ntp.x86_64
+    ln -s /etc/init.d/ntpd /etc/rc3.d/S99ntpd
+    ln -s /etc/init.d/ntpd /etc/rc3.d/K99ntpd
+    /etc/init.d/ntpd start
+</code></pre></div><ol start="15">
+<li>Generate your SSH keys</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">    su - opennsa
+    ssh-keygen
+</code></pre></div><p>Press <ENTER> 3 times. The keys <code>id_dsa</code> and <code>id_dsa.pub</code> will be created under <code>~opennsa/.ssh/</code></p>
+<p>They key needs to have this format for Twisted recognizes it:</p>
+<p>ssh-rsa pub-key(3 or more lines) <a href="mailto:user@server.ampath.net">user@server.ampath.net</a></p>
+<ol start="16">
+<li>
+<p>Edit these two configuration files accordingly to your environment (under /home/opennsa/opennsa):</p>
+<p>vi opennsa.conf</p>
+</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ini" data-lang="ini"> <span style="color:#204a87;font-weight:bold">[service]</span>
+ <span style="color:#c4a000">network</span><span style="color:#ce5c00;font-weight:bold">=</span><span style="color:#4e9a06">&lt;YOUR_NETWORK_NAME&gt;
+</span><span style="color:#4e9a06"> logfile=
+</span><span style="color:#4e9a06"> nrmmap=opennsa.nrm
+</span><span style="color:#4e9a06"> host=&lt;SERVER_FQDN&gt;
+</span><span style="color:#4e9a06"> database=opennsa
+</span><span style="color:#4e9a06"> dbuser=opennsa
+</span><span style="color:#4e9a06"> dbpassword=&lt;YOUR_PASS&gt;
+</span><span style="color:#4e9a06"> tls=false</span>
+
+ <span style="color:#8f5902;font-style:italic"># vi opennsa.nrm (your topology)</span>
+
+ <span style="color:#8f5902;font-style:italic"># type          name        remote                labels              bandwith    interface</span>
+ <span style="color:#8f5902;font-style:italic">#</span>
+ <span style="color:#8f5902;font-style:italic"># Assuming that my IXP is IXP_A, follow an example:</span>
+ <span style="color:#8f5902;font-style:italic">#</span>
+ <span style="color:#8f5902;font-style:italic"># AMPATH &lt;-- 2/2 IXP_A 2/1 --&gt; NORDUNET</span>
+ <span style="color:#8f5902;font-style:italic">#</span>
+ <span style="color:#8f5902;font-style:italic"># bi-ethernet   nordunet    nordunet#IXP_A-(in|out) vlan:1779-1787      1000        2/1</span>
+ <span style="color:#8f5902;font-style:italic"># bi-ethernet   ampath      ampath#IXP_A-(in|out)   vlan:1779-1787      1000        2/2</span>
+ <span style="color:#8f5902;font-style:italic">#</span>
+ <span style="color:#8f5902;font-style:italic"># type          name        remote        labels              bandwith    interface</span>
+ <span style="color:#c4a000">bi-ethernet     &lt;REMOTE_1&gt;  &lt;REMOTE_1&gt;#&lt;YOUR_NETWORK&gt;-(in|out) vlan:1779-1787      1000        &lt;DEVICE_PORT_1&gt;</span>
+ <span style="color:#c4a000">bi-ethernet     &lt;REMOTE_2&gt;  &lt;REMOTE_2&gt;#&lt;YOUR_NETWORK&gt;-(in|out) vlan:1779-1787      1000        &lt;DEVICE_PORT_2&gt;</span>
+ <span style="color:#c4a000">bi-ethernet     &lt;REMOTE_3&gt;  &lt;REMOTE_3&gt;#&lt;YOUR_NETWORK&gt;-(in|out) vlan:1779-1787      1000        &lt;DEVICE_PORT_3&gt;</span>
+</code></pre></div><ol start="17">
+<li>Create a <code>.opennsa-cli</code> file under <code>~opennsa/</code></li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">    <span style="color:#204a87">echo</span> -e <span style="color:#4e9a06">&#34;bandwidth=200\nhost=localhost\nport=7080\nstarttime=+1\nendtime=+20&#34;</span> &gt; ~opennsa/.opennsa-cli
+</code></pre></div><p>The starttime and the endtime represent when the circuit will start and end in seconds</p>
+<ol start="18">
+<li>Configure your backend in the opennsa.conf</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ini" data-lang="ini"> <span style="color:#8f5902;font-style:italic"># OpenNSA has support for the following backends: brocade, dell, etc...</span>
+ <span style="color:#8f5902;font-style:italic"># So create a section for your backend with the following format:</span>
+ <span style="color:#8f5902;font-style:italic">#</span>
+ <span style="color:#204a87;font-weight:bold">[backend_type]</span>
+ <span style="color:#c4a000">host</span><span style="color:#ce5c00;font-weight:bold">=</span><span style="color:#4e9a06">x.x.x.x
+</span><span style="color:#4e9a06"> user=opennsa
+</span><span style="color:#4e9a06"> fingerprint=xx:xx:xx:xx:xx:xx:xx...
+</span><span style="color:#4e9a06"> publickey=/home/opennsa/.ssh/id_rsa.pub
+</span><span style="color:#4e9a06"> privatekey=/home/opennsa/.ssh/id_rsa</span>
+
+ <span style="color:#8f5902;font-style:italic"># if your backend is Brocade, an example:</span>
+ <span style="color:#8f5902;font-style:italic">#</span>
+ <span style="color:#204a87;font-weight:bold">[brocade]</span>
+ <span style="color:#c4a000">host</span><span style="color:#ce5c00;font-weight:bold">=</span><span style="color:#4e9a06">x.x.x.x
+</span><span style="color:#4e9a06"> user=opennsa
+</span><span style="color:#4e9a06"> fingerprint=xx:xx:xx:xx:xx:xx:xx....
+</span><span style="color:#4e9a06"> publickey=/home/opennsa/.ssh/id_rsa.pub
+</span><span style="color:#4e9a06"> privatekey=/home/opennsa/.ssh/id_rsa
+</span><span style="color:#4e9a06"> enablepassword=XXXXX</span>
+</code></pre></div><ol start="19">
+<li>Start the OpenNSA:</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">    su - opennsa
+    <span style="color:#204a87">cd</span> opennsa
+    twistd -ny opennsa.tac
+    <span style="color:#ce5c00;font-weight:bold">(</span>-n to not create a daemon. There is also an init.d script<span style="color:#ce5c00;font-weight:bold">)</span>
+</code></pre></div><p>You should see:</p>
+<div class="highlight"><pre tabindex="0" style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh"> 2013-07-02 14:17:08-0400 <span style="color:#ce5c00;font-weight:bold">[</span>-<span style="color:#ce5c00;font-weight:bold">]</span> Log opened.
+ 2013-07-02 14:17:08-0400 <span style="color:#ce5c00;font-weight:bold">[</span>-<span style="color:#ce5c00;font-weight:bold">]</span> twistd 13.1.0 <span style="color:#ce5c00;font-weight:bold">(</span>/usr/local/bin/python2.7 2.7.3<span style="color:#ce5c00;font-weight:bold">)</span> starting up.
+ 2013-07-02 14:17:08-0400 <span style="color:#ce5c00;font-weight:bold">[</span>-<span style="color:#ce5c00;font-weight:bold">]</span> reactor class: twisted.internet.epollreactor.EPollReactor.
+ 2013-07-02 14:17:08-0400 <span style="color:#ce5c00;font-weight:bold">[</span>-<span style="color:#ce5c00;font-weight:bold">]</span> OpenNSA service initializing
+ 2013-07-02 14:17:08-0400 <span style="color:#ce5c00;font-weight:bold">[</span>-<span style="color:#ce5c00;font-weight:bold">]</span> Provider URL: http://&lt;SERVER_FQDN&gt;:9080/NSI/services/CS2
+ 2013-07-02 14:17:08-0400 <span style="color:#ce5c00;font-weight:bold">[</span>-<span style="color:#ce5c00;font-weight:bold">]</span> Topology URL: http://&lt;SERVER_FQDN&gt;:9080/NSI/topology/&lt;YOUR_NETWORK&gt;.xml
+ 2013-07-02 14:17:08-0400 <span style="color:#ce5c00;font-weight:bold">[</span>-<span style="color:#ce5c00;font-weight:bold">]</span> Site starting on <span style="color:#0000cf;font-weight:bold">9080</span>
+ 2013-07-02 14:17:08-0400 <span style="color:#ce5c00;font-weight:bold">[</span>-<span style="color:#ce5c00;font-weight:bold">]</span> Starting factory &lt;twisted.web.server.Siteinstance at 0x1df39e0&gt;
+ 2013-07-02 14:17:08-0400 <span style="color:#ce5c00;font-weight:bold">[</span>-<span style="color:#ce5c00;font-weight:bold">]</span> OpenNSA service started
+</code></pre></div><ol start="20">
+<li>Configure your network device to support authentication using SSH keys</li>
+</ol>
+<p>In general, you have to copy your public key (id_dsa.pub) to the network device
+and insert this key in the valid users key chain. Check your device&rsquo;s documentation to confirm how to make this<br>
+configuration.</p>
+<p>As an example, in Brocade MLX switches you have to:</p>
+<div class="highlight"><pre tabindex="0" style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh"> a. <span style="color:#204a87">cd</span> ~opennsa/.ssh
+ b. <span style="color:#204a87">echo</span> <span style="color:#4e9a06">&#34;---- BEGIN SSH2 PUBLIC KEY ----&#34;</span> &gt; keys.txt
+ c. cat id_dsa.pub &gt;&gt; keys.txt
+ d. <span style="color:#204a87">echo</span> <span style="color:#4e9a06">&#34;---- END SSH2 PUBLIC KEY ----&#34;</span> &gt;&gt; keys.txt
+ e. Remove the encryption algorithm <span style="color:#ce5c00;font-weight:bold">(</span>ssh-rsa<span style="color:#ce5c00;font-weight:bold">)</span>:  sed -i <span style="color:#4e9a06">&#39;s/ssh-rsa //&#39;</span>keys.txt
+ d. Remove the user <span style="color:#ce5c00;font-weight:bold">(</span>opennsa@&lt;SERVER_FQDN&gt;<span style="color:#ce5c00;font-weight:bold">)</span>: sed -i <span style="color:#4e9a06">&#39;s/opennsa@&lt;SERVER_FQDN&gt;//&#39;</span> keys.txt
+ f. Upload the keys.txt to your TFTP server
+ g. Log into your Brocade device and:
+ g1. SSH@Brocade# configure terminal
+ g2. SSH@Brocade<span style="color:#ce5c00;font-weight:bold">(</span>config<span style="color:#ce5c00;font-weight:bold">)</span><span style="color:#8f5902;font-style:italic"># ip ssh pub-key-file tftp &lt;TFTP_SERVER&gt; keys.txt</span>
+ g3. SSH@Brocade<span style="color:#ce5c00;font-weight:bold">(</span>config<span style="color:#ce5c00;font-weight:bold">)</span><span style="color:#8f5902;font-style:italic"># ip ssh key-authentication yes</span>
+ g4. SSH@Brocade<span style="color:#ce5c00;font-weight:bold">(</span>config<span style="color:#ce5c00;font-weight:bold">)</span><span style="color:#8f5902;font-style:italic"># end</span>
+ g5. SSH@Brocade# write memory
+</code></pre></div><ol start="21">
+<li>Now you are ready to run OpenNSA</li>
+</ol>
+<p>Use the document docs/usage for understand how to use it (under development).</p>
+<p>References:</p>
+<ul>
+<li><a href="https://github.com/NORDUnet/opennsa/blob/nsi2/INSTALL">https://github.com/NORDUnet/opennsa/blob/nsi2/INSTALL</a></li>
+<li><a href="http://toomuchdata.com/2012/06/25/how-to-install-python-2-7-3-on-centos-6-2/">http://toomuchdata.com/2012/06/25/how-to-install-python-2-7-3-on-centos-6-2/</a></li>
+</ul>
+
+</div>
+
+
+
+    
+	
+  
+
+    
+	
+  
+
+
+
+          </main>
+        </div>
+      </div>
+      
+<footer class="bg-dark py-5 row d-print-none">
+  <div class="container-fluid mx-sm-5">
+    <div class="row">
+      <div class="col-6 col-sm-4 text-xs-center order-sm-2">
+        
+        
+        
+<ul class="list-inline mb-0">
+  
+  <li class="list-inline-item mx-2 h3" data-toggle="tooltip" data-placement="top" title="User mailing list" aria-label="User mailing list">
+    <a class="text-white" target="_blank" rel="noopener" href="https://example.org/mail" aria-label="User mailing list">
+      <i class="fa fa-envelope"></i>
+    </a>
+  </li>
+  
+  <li class="list-inline-item mx-2 h3" data-toggle="tooltip" data-placement="top" title="Twitter" aria-label="Twitter">
+    <a class="text-white" target="_blank" rel="noopener" href="https://example.org/twitter" aria-label="Twitter">
+      <i class="fab fa-twitter"></i>
+    </a>
+  </li>
+  
+  <li class="list-inline-item mx-2 h3" data-toggle="tooltip" data-placement="top" title="Stack Overflow" aria-label="Stack Overflow">
+    <a class="text-white" target="_blank" rel="noopener" href="https://example.org/stack" aria-label="Stack Overflow">
+      <i class="fab fa-stack-overflow"></i>
+    </a>
+  </li>
+  
+</ul>
+
+        
+        
+      </div>
+      <div class="col-6 col-sm-4 text-right text-xs-center order-sm-3">
+        
+        
+        
+<ul class="list-inline mb-0">
+  
+  <li class="list-inline-item mx-2 h3" data-toggle="tooltip" data-placement="top" title="GitHub" aria-label="GitHub">
+    <a class="text-white" target="_blank" rel="noopener" href="https://github.com/google/docsy" aria-label="GitHub">
+      <i class="fab fa-github"></i>
+    </a>
+  </li>
+  
+  <li class="list-inline-item mx-2 h3" data-toggle="tooltip" data-placement="top" title="Slack" aria-label="Slack">
+    <a class="text-white" target="_blank" rel="noopener" href="https://example.org/slack" aria-label="Slack">
+      <i class="fab fa-slack"></i>
+    </a>
+  </li>
+  
+  <li class="list-inline-item mx-2 h3" data-toggle="tooltip" data-placement="top" title="Developer mailing list" aria-label="Developer mailing list">
+    <a class="text-white" target="_blank" rel="noopener" href="https://example.org/mail" aria-label="Developer mailing list">
+      <i class="fa fa-envelope"></i>
+    </a>
+  </li>
+  
+</ul>
+
+        
+        
+      </div>
+      <div class="col-12 col-sm-4 text-center py-2 order-sm-2">
+        <small class="text-white">&copy; 2022 The Docsy Authors All Rights Reserved</small>
+        <small class="ml-1"><a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Privacy Policy</a></small>
+	
+		
+	
+      </div>
+    </div>
+  </div>
+</footer>
+
+
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.min.js" integrity="sha384-+YQ4JLhjyBLPDQt//I+STsc9iw4uQqACwlvpslubQzn4u2UU2UFM80nGisd026JF" crossorigin="anonymous"></script>
+
+
+
+
+
+<script src='/opennsa/js/tabpane-persist.js'></script>
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script src="/opennsa/js/main.min.3b172c13b62c2bea8b1c9d2599cddc8cf89718a92d792c680871c81ba43d8c85.js" integrity="sha256-OxcsE7YsK&#43;qLHJ0lmc3cjPiXGKkteSxoCHHIG6Q9jIU=" crossorigin="anonymous"></script>
+
+
+
+
+  </body>
+</html>
