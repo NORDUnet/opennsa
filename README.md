@@ -26,6 +26,10 @@ only partially implemented.
 * PostgreSQL for database
 * Includes command line tool for basic operations
 
+#### Documentation 
+
+Full and detailed documentation available [here](https://NORDUnet.github.io/opennsa/)
+
 
 #### License
 

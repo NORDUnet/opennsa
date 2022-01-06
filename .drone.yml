@@ -15,20 +15,20 @@ steps:
       - PYTHONPATH=. trial test
 
 services:
-- name: database
-  image: postgres:12-alpine
-  environment:
-    POSTGRES_USER: opennsa
-    POSTGRES_PASSWORD: w1gWIn7NDGXjXMguiI2Qe05X
-    POSTGRES_DB: opennsatest
+  - name: database
+    image: postgres:12-alpine
+    environment:
+      POSTGRES_USER: opennsa
+      POSTGRES_PASSWORD: w1gWIn7NDGXjXMguiI2Qe05X
+      POSTGRES_DB: opennsatest
 
 trigger:
   event:
     - push
     - pull_request
 
---- 
-kind: pipeline 
+---
+kind: pipeline
 name: docker
 
 steps:
@@ -44,6 +44,53 @@ steps:
         from_secret: DOCKER_USER
       password:
         from_secret: DOCKER_PASS
+
+trigger:
+  branch:
+    - master
+  event:
+    - tag
+    - push
+
+---
+kind: pipeline
+name: documentation
+
+steps:
+  - name: Submodule sync
+    image: alpine/git
+    commands:
+      - "git submodule update --init --recursive"
+  - name: build
+    image: plugins/hugo:latest
+    settings:
+      extended: true
+    commands:
+      - cd website
+      - "apk add --update nghttp2-dev nodejs nodejs-npm npm wget"
+      - npm install -D --save autoprefixer postcss-cli postcss
+      - wget "https://github.com/gohugoio/hugo/releases/download/v0.91.0/hugo_extended_0.91.0_Linux-64bit.tar.gz"
+      - tar xvfz hugo_extended_0.91.0_Linux-64bit.tar.gz
+      - npm install
+      - "./hugo version"
+      - "./hugo --destination public --baseURL https://NORDUnet.github.io/opennsa/"
+  - name: publish
+    image: plugins/gh-pages
+    settings:
+      pages_directory: website/public
+      upstream_name: origin
+      remote_url: https://github.com/NORDUnet/opennsa.git
+      target_branch: gh-pages
+      force_push: true
+      delete: true
+      username:
+        from_secret: gh_username
+      password:
+        from_secret: gh_password
+      when:
+        branch: 
+          - master
+        event: push
 
 trigger:
   branch:

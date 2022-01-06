@@ -1,3 +1,12 @@
+---
+categories: ["Developer"]
+tags: ["install", "developer"]
+title: "Quick Developer Guide"
+linkTitle: "Quick Developer Guide"
+date: 2021-12-16
+description: >
+  Quick Developer Guide
+---
 # Quick Developer Guide
 
 
