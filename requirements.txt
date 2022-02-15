@@ -1,4 +1,4 @@
-twisted>=21.2.0
+twisted>=21.2.0,<21.7.0
 twistar>=2.0
 psycopg2>=2.9,<2.10 --no-binary psycopg2
 pyOpenSSL>=17.5.0
