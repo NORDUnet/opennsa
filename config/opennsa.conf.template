@@ -1,7 +1,7 @@
 # Sample docker configuration file
 
 [service]
-domain=dockertest.net
+domain=dockertest.net:2021
 # log to stdout
 logfile=
 #peers=example.org@http://example.org:9080/NSI/topology/example.org.xml

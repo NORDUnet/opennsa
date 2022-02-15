@@ -1,4 +1,12 @@
-
+---
+categories: ["Developer"]
+tags: ["developer","docs", "guide", "backends"] 
+title: "REST Interface"
+linkTitle: "REST Interface"
+weight: 4
+description: >
+  REST Interface guide
+---
 # OpenNSA rest interface
 
 The rest interface is an easy to use alternative interface to the NSI SOAP api.
@@ -13,7 +21,7 @@ Get connection status (stream)  GET     /connections/{connection_id}/status
 Change status                   POST    /connections/{connection_id}/status
 ```
 
-The /status GET is a stream that updates continously (server won't close connection and will emit new status each time it updates).
+The /status GET is a stream that updates continuously (server won't close connection and will emit new status each time it updates).
 
 ## Enabling rest
 
@@ -23,7 +31,7 @@ In [service] section add `rest=true`
 
 ### Create a connection
 
-Example minimal json payload to create connnection:
+Example minimal json payload to create connection:
 
 ```json
 {
@@ -59,13 +67,13 @@ curl -X POST -d "PROVISION" http://localhost:9080/connections/TE-03b16eea46/stat
 It will return an ACK, and start working on provisioning the link.
 The link will be up and ready to use when the `provision_state` is `Provisioned` and `data_plane_active` is `true`.
 
-### Terminatning a connectiond
+### Terminating a connection
 
 ```
 curl -X POST -d "TERMINATE" http://localhost:9080/connections/TE-03b16eea46/status
 ```
 
-The conneciton will then go into `lifecycle_state` `Terminating`, and when everything is released it will end up in `lifecycle_state` `Terminated`.
+The connection will then go into `lifecycle_state` `Terminating`, and when everything is released it will end up in `lifecycle_state` `Terminated`.
 
 ### Other supported status operations
 

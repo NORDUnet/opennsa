@@ -13,3 +13,6 @@ docker-compose.override.yml
 twistd.pid
 .env
 .DS_Store
+node_modules
+public
+resources

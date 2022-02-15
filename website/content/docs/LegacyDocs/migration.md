@@ -1,3 +1,12 @@
+---
+categories: ["Legacy"]
+tags: ["install"]
+title: "Configuration Migration"
+linkTitle: "Configuration Migration"
+date: 2013-07-12
+description: >
+  Configuration Migration and py 2.x to 3.x changes
+---
 # OpenNSA 3 Configuration Migration
 
 

@@ -1,9 +1,16 @@
-OpenNSA configuration
----------------------
+---
+categories: ["Guide"]
+tags: ["docs", "guide", "userguide"] 
+title: "Configuration Guide"
+linkTitle: "Configuration"
+weight: 1
+description: >
+  A short primer on the opennsa config
+---
 
 # Example Configuration
 
-```
+```ini
 [service]
 network=Aruba
 logfile=nsalog.log
@@ -38,7 +45,7 @@ These are the options for the service block:
 `nrmmap`   : Path to port/topology NRM description file
 
 `peers`    : URLs to NSAs to peer with control-plane wise.
-             Seperate multiple entries with newline (only peers= on the first
+             Separate multiple entries with newline (only peers= on the first
              line). If using multiple lines, the following peer urls must be in
              indented at least pass the `=` on the first line (parser limitation).
              Optional. No peers will put OpenNSA into UPA mode.
@@ -46,20 +53,20 @@ These are the options for the service block:
 `policies` : What policies are required. Currently `requiretrace`, `requireuser`,
              and `aggregator` are the possible options. These require a connection
              trace, a user security attribute, and allow proxy aggregation
-             respecitively. Optional.
+             respectively. Optional.
 
 `serviceid_start` : Initial service id to set in the database. Requires a plugin
                     to use. Optional.
 
-`database` : Name of the PostgreSQL databse to connect to. Mandatory.
+`database` : Name of the PostgreSQL database to connect to. Mandatory.
 
 `dbuser`   : Username to use when connecting to database. Mandatory.
 
 `dbpassword` : Password to use when connecting to database. Mandatory.
 
-`dbhost`   : Host to connect to for database. Optional. If not specificed,
+`dbhost`   : Host to connect to for database. Optional. If not specified,
              OpenNSA will connect to PostgreSQL over the unix domain socket
-             OpenNSA does not require anything big from the datebase, so using a
+             OpenNSA does not require anything big from the database, so using a
              different host/vm is almost surely a waste of resources. It is
              however useful when running a PostgreSQL in docker.
 
@@ -126,7 +133,7 @@ resource do not get double booked.
               Use '-' if not connected to any network (termination inside the network).
 
 `label` : STP configuration options. Currently `vlan` and `mpls` are supported.
-          Note that not all backend support those. Can specify single values and ranges. Comma seperated.
+          Note that not all backend support those. Can specify single values and ranges. Comma separated.
           Use '-' if no labels are to be used (i.e., ethernet trunk).
 
 `bandwidth` : The available bandwidth on the port (or the bandwidth that is
@@ -134,7 +141,7 @@ resource do not get double booked.
 
 `interface` : The interface / port on the network device.
 
-`attributes` : A list of comma seperated attributes that describes security
+`attributes` : A list of comma separated attributes that describes security
                attributes or policies for the port. Security attributes always have the form
               `key=value`, otherwise it is a policy. Despite the name, security attributes
                are not very secure.
