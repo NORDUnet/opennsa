@@ -185,7 +185,7 @@ def oess_query_vlan_availability(conn, sw, intf, vlan):
 
 @defer.inlineCallbacks
 def oess_get_switch_ports(conn, node):
-    query = 'services/data.cgi?action=get_node_interfaces&node=%s' % node
+    query = 'services/data.cgi?action=get_node_interfaces&node=%s&show_down=1&show_trunk=1' % node
     retval = yield http_query(conn, query)
     defer.returnValue(retval)
 
