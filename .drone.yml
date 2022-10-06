@@ -67,7 +67,7 @@ steps:
       extended: true
     commands:
       - cd website
-      - "apk add --update nghttp2-dev nodejs nodejs-npm npm wget"
+      - "apk add --update nghttp2-dev npm wget"
       - npm install -D --save autoprefixer postcss-cli postcss
       - wget "https://github.com/gohugoio/hugo/releases/download/v0.91.0/hugo_extended_0.91.0_Linux-64bit.tar.gz"
       - tar xvfz hugo_extended_0.91.0_Linux-64bit.tar.gz
