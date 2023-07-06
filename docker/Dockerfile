@@ -21,10 +21,10 @@ RUN apt update \
    libpq-dev \
    python3 \
    python3-pip \
-   netcat \
-   iputils-ping \
-   && pip3 install -r /home/$USER/opennsa/requirements.txt \
-   && chown $USER:$USER -R /home/opennsa/opennsa \
+   netcat-openbsd \
+   iputils-ping && \
+   pip3 install --break-system-packages -r /home/$USER/opennsa/requirements.txt  && \
+   chown $USER:$USER -R /home/opennsa/opennsa \
    # -- Cleanup --
    && apt remove -y python3-pip  \
    && apt autoremove -y \
