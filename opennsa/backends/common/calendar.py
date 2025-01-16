@@ -73,8 +73,8 @@ class ReservationCalendar:
                 raise error.PayloadError('Invalid request: Start time in the past (Startime: %s, Delta: %s)' % (stamp, str(delta)), variables=variables )
 
             # check the start time makes sense
-            if start_time > datetime.datetime(2025, 1, 1):
-                raise error.PayloadError('Invalid request: Start time after year 2025')
+            if start_time > datetime.datetime(2095, 1, 1):
+                raise error.PayloadError('Invalid request: Start time after year 2095')
 
         for (c_resource, c_start_time, c_end_time) in self.reservations:
             if resource == c_resource:
