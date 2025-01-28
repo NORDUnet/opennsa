@@ -82,6 +82,10 @@ def setupBackend(backend_cfg, network_name, nrm_ports, parent_requester):
         from opennsa.backends import oess
         BackendConstructer = oess.OESSBackend
 
+    elif backend_type == config.BLOCK_KYTOS:
+        from opennsa.backends import kytos
+        BackendConstructer = kytos.KytosBackend
+
     elif backend_type == config.BLOCK_CUSTOM_BACKEND:
         module_name = backend_cfg.pop('module')
         try:
