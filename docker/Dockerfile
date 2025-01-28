@@ -1,6 +1,6 @@
 # OpenNSA docker image
 
-FROM debian:stable-slim
+FROM debian:12-slim
 
 LABEL maintainer="Henrik Thostrup Jensen <htj@nordu.net>"
 
