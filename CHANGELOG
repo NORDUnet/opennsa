@@ -5,6 +5,7 @@ Future release
 --------------
 
 * Support for ERO on the client (no server side yet)
+* Fixed error with twistar on python 3.11 for Debian bookworm
 
 
 OpenNSA 3.0.1
