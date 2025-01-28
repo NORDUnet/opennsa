@@ -34,6 +34,7 @@ BLOCK_JUNOSMX = 'junosmx'
 BLOCK_JUNOSEX = 'junosex'
 BLOCK_JUNOSSPACE = 'junosspace'
 BLOCK_OESS = 'oess'
+BLOCK_KYTOS = 'kytos'
 BLOCK_CUSTOM_BACKEND = 'custombackend'
 
 
@@ -143,6 +144,11 @@ OESS_URL = 'url'
 OESS_USER = 'username'
 OESS_PASSWORD = 'password'
 OESS_WORKGROUP = 'workgroup'
+
+# Kytos
+KYTOS_URL = 'url'
+KYTOS_USER = 'username'
+KYTOS_PASSWORD = 'password'
 
 
 class ConfigurationError(Exception):
@@ -415,7 +421,7 @@ class Config(object):
 
             if backend_type in (
                     BLOCK_DUD, BLOCK_JUNIPER_EX, BLOCK_JUNIPER_VPLS, BLOCK_JUNOSMX, BLOCK_FORCE10, BLOCK_BROCADE,
-                    BLOCK_NCSVPN, BLOCK_PICA8OVS, BLOCK_OESS, BLOCK_JUNOSSPACE, BLOCK_JUNOSEX,
+                    BLOCK_NCSVPN, BLOCK_PICA8OVS, BLOCK_OESS, BLOCK_KYTOS, BLOCK_JUNOSSPACE, BLOCK_JUNOSEX,
                     BLOCK_CUSTOM_BACKEND, 'asyncfail'):
                 backend_conf = dict(cfg.items(section))
                 backend_conf['_backend_type'] = backend_type
